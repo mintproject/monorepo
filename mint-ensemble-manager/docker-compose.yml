@@ -1,0 +1,10 @@
+version: '3'
+services:
+  ensemble-manager:
+    build: .
+    image: mintproject/ensemble-manager
+    restart: always
+    env_file:
+     - .env
+    ports:
+     - "25001:3000"
