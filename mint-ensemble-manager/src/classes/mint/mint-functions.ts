@@ -50,6 +50,8 @@ export const saveAndRunExecutableEnsemblesForModel = async(modelid: string,
             submission_time: Date.now() - 20000 // Less 20 seconds to counter for clock skews
         } as ExecutableEnsembleSummary
 
+        updatePathway(scenario, pathway);
+        
         // Work in batches
         let batchSize = 100; // Deal with ensembles from firebase in this batch size
         let batchid = 0; // Use to create batchids in firebase for storing ensemble ids

@@ -7,6 +7,7 @@ import path from "path";
 
 import v1ApiDoc from './api/api-doc';
 import v1ExecutionsService from './api/api-v1/services/executionsService';
+import v1ExecutionsLocalService from './api/api-v1/services/executionsLocalService';
 import v1MonitorsService from './api/api-v1/services/monitorsService';
 
 import { initialize } from "express-openapi";
@@ -21,6 +22,7 @@ initialize({
     apiDoc: v1ApiDoc,
     dependencies: {
         executionsService: v1ExecutionsService,
+        executionsLocalService: v1ExecutionsLocalService,
         monitorsService: v1MonitorsService
     },
     paths: path.resolve(__dirname, './api/api-v1/paths'),

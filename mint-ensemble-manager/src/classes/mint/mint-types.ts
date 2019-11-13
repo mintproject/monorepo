@@ -11,6 +11,7 @@ export interface IdNameObject {
   
 export interface MintPreferences {
     wings: WingsPreferences,
+    localex?: LocalExecutionPreferences,
     ingestion_api: string,
     visualization_url: string,
     data_catalog_api: string,
@@ -27,6 +28,13 @@ export interface WingsPreferences {
     dotpath: string,
     onturl: string,
     api: string,
+}
+
+export interface LocalExecutionPreferences {
+    inputdir: string,
+    outputdir: string,
+    codedir: string,
+    logdir: string
 }
 
 export interface ModelingState {
