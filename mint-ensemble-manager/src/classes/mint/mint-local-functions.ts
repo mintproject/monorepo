@@ -1,7 +1,7 @@
 import { Pathway, Model, DataEnsembleMap, Scenario, MintPreferences, ExecutableEnsembleSummary, ExecutableEnsemble, DataResource } from "./mint-types";
 import { setupModelWorkflow, fetchWingsTemplate, loginToWings, runModelEnsembles, fetchWingsRunsStatuses, fetchWingsRunResults } from "../wings/wings-functions";
 import { getModelInputEnsembles, getModelInputConfigurations, deleteAllPathwayEnsembleIds, setPathwayEnsembleIds, addPathwayEnsembles, getEnsembleHash, listAlreadyRunEnsembleIds, getAllPathwayEnsembleIds, listEnsembles, updatePathwayEnsembles, updatePathway, getPathway } from "./firebase-functions";
-import { runModelEnsemblesLocally, loadModelWCM } from "../wings/local-execution-functions";
+import { runModelEnsemblesLocally, loadModelWCM } from "../localex/local-execution-functions";
 
 export const saveAndRunExecutableEnsemblesLocally = async(
         pathway: Pathway, 
