@@ -132,15 +132,20 @@ export const loadModelWCM = async(url: string, prefs: MintPreferences) => {
 export const runModelLocally = (seed: ComponentSeed, prefs: MintPreferences) => {
     return new Promise<ExecutableEnsemble>((resolve, reject) => {
         let comp = seed.component;
-        let inputdir = prefs.localex.inputdir;
-        let outputdir = prefs.localex.outputdir;
+        let inputdir = prefs.localex.datadir;
+        let outputdir = prefs.localex.datadir;
     
+        // Create temporary directory
         let ostmp = os.tmpdir();
         let tmpprefix = ostmp + "/" + seed.ensemble.modelid.replace(/.*\//, '');
         let tempdir = fs.mkdtempSync(tmpprefix);
     
+        // Copy component run directory to tempdir
         fs.copySync(comp.rundir, tempdir);
     
+        // Set the execution engine used for this ensemble
+        seed.ensemble.execution_engine = "localex";
+
         // Data/Parameter arguments to the script (will be setup below)        
         let args : string[] = [];
         let plainargs : string[] = [];
@@ -179,6 +184,7 @@ export const runModelLocally = (seed: ComponentSeed, prefs: MintPreferences) => 
             else {
                 let datasets = seed.datasets[input.role];
                 datasets.map((ds) => {
+                    // Copy input files to tempdir
                     let ifile = inputdir + "/" + ds;
                     let newifile = tempdir + "/" + ds;
                     fs.copyFileSync(ifile, newifile);
@@ -196,9 +202,11 @@ export const runModelLocally = (seed: ComponentSeed, prefs: MintPreferences) => 
             let opfilename = output.role + "-" + opsuffix;
             let opfilepath = outputdir + "/" + opfilename;
             args.push(opfilename);
+            let opfileurl = opfilename.replace(prefs.localex.datadir, prefs.localex.dataurl);
             results[output.role] = {
                 id: output.role,
                 name: opfilename,
+                url: opfileurl,
                 location: opfilepath
             }
         })
@@ -229,15 +237,19 @@ export const runModelLocally = (seed: ComponentSeed, prefs: MintPreferences) => 
             seed.ensemble.run_progress = 1;        
             if(code == 0) {
                 seed.ensemble.status = "SUCCESS";
+                // Copy output files from tempdir to output dir
                 Object.values(results).map((result: any) => {
                     fs.copyFileSync(tempdir + "/" + result.name, result.location);
                 });
+                // Remove tempdir
                 fs.remove(tempdir);
+                // Set the results
                 seed.ensemble.results = results;
             }
             else {
                 seed.ensemble.status = "FAILURE";
             }
+            // Resolve the promise with this ensemble
             resolve(seed.ensemble);
             //console.log(`Finished with code ${code}`);
         })
@@ -315,7 +327,7 @@ export const runModelEnsemblesLocally =
     // Register any datasets that need to be registered
     for(let resid in registered_resources) {
         let args = registered_resources[resid];
-        let inputpath = prefs.localex.inputdir + "/" + args[0];
+        let inputpath = prefs.localex.datadir + "/" + args[0];
         let inputurl = args[2];
         if(!fs.existsSync(inputpath))
             downloadInputPromises.push(_downloadFile(inputurl, inputpath));

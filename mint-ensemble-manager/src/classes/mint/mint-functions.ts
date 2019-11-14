@@ -101,6 +101,7 @@ export const saveAndRunExecutableEnsemblesForModel = async(modelid: string,
                     for(let j=0; j<eslice_nr.length; j++) {
                         eslice_nr[j].runid = runids[j];
                         eslice_nr[j].status = "WAITING";
+                        eslice_nr[j].execution_engine = "wings";
                         eslice_nr[j].run_progress = 0;
                     }
                     addPathwayEnsembles(eslice_nr);
