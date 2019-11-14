@@ -198,6 +198,7 @@ export const runModelLocally = (seed: ComponentSeed, prefs: MintPreferences) => 
             args.push(opfilename);
             results[output.role] = {
                 id: output.role,
+                name: opfilename,
                 location: opfilepath
             }
         })
@@ -227,8 +228,11 @@ export const runModelLocally = (seed: ComponentSeed, prefs: MintPreferences) => 
             logerrstream.close();
             seed.ensemble.run_progress = 1;        
             if(code == 0) {
-                fs.removeSync(tempdir);
                 seed.ensemble.status = "SUCCESS";
+                Object.values(results).map((result: any) => {
+                    fs.copyFileSync(tempdir + "/" + result.name, result.location);
+                });
+                fs.remove(tempdir);
                 seed.ensemble.results = results;
             }
             else {
