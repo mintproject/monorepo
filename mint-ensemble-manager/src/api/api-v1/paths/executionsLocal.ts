@@ -19,7 +19,7 @@ export default function(executionsLocalService: any) {
     // NOTE: We could also use a YAML string here.
     POST.apiDoc = {
       summary: 'Submit modeling thread for local execution.',
-      operationId: 'submitExecution',
+      operationId: 'submitLocalExecution',
       parameters: [
         {
             in: 'body',

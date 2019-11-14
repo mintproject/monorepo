@@ -141,9 +141,30 @@ export const runModelLocally = (seed: ComponentSeed, prefs: MintPreferences) => 
     
         fs.copySync(comp.rundir, tempdir);
     
-        let command = "bash";
-        let args : string[] = [tempdir + "/run"];
+        // Data/Parameter arguments to the script (will be setup below)        
+        let args : string[] = [];
         let plainargs : string[] = [];
+
+        // Default invocation is via Bash
+        let command = "bash";
+
+        // Check if a singularity image is present
+        // If so, change invocation command to singularity
+        let pegasus_jobprops_file = comp.rundir + "/__pegasus-job.properties";
+        if(fs.existsSync(pegasus_jobprops_file)) {
+            let jobprops = fs.readFileSync(pegasus_jobprops_file);
+            let matches : RegExpMatchArray = jobprops.toString().match(/SingularityImage = "(.+)"/);
+            if(matches.length > 1) {
+                command = "singularity";
+                args.push("exec");
+                args.push(matches[1]);
+            }
+        }
+
+        // The entry point of the component (run script)
+        args.push("./run");
+
+        // Set the Input file/parameter arguments for the command
         comp.inputs.map((input) => {
             args.push(input.prefix);
             plainargs.push(input.prefix);
@@ -161,28 +182,31 @@ export const runModelLocally = (seed: ComponentSeed, prefs: MintPreferences) => 
                     let ifile = inputdir + "/" + ds;
                     let newifile = tempdir + "/" + ds;
                     fs.copyFileSync(ifile, newifile);
-                    args.push(newifile)
+                    args.push(ds)
                     plainargs.push(ds);
                 });
             }
         })
+        // Set the output file arguments for the command
+        // Create the output file suffix based on a hash of inputs
         let opsuffix = Md5.hashAsciiStr(seed.ensemble.modelid + plainargs.join());
         let results : any = {};
         comp.outputs.map((output) => {
             args.push(output.prefix);
             let opfilename = output.role + "-" + opsuffix;
             let opfilepath = outputdir + "/" + opfilename;
-            args.push(opfilepath);
+            args.push(opfilename);
             results[output.role] = {
                 id: output.role,
                 location: opfilepath
             }
         })
     
-        // Run the process
+        // Setup log files
         let logstdout = prefs.localex.logdir + "/" + seed.ensemble.id + ".log";
         let logstderr = prefs.localex.logdir + "/" + seed.ensemble.id + ".err.log";
 
+        // Spawn the process
         let proc: ChildProcess = child_process.spawn(command, args, {
             detached: true,
             shell: true,
@@ -190,13 +214,14 @@ export const runModelLocally = (seed: ComponentSeed, prefs: MintPreferences) => 
             cwd: tempdir
         });
 
+        // Pipe logs
         let logstream = fs.createWriteStream(logstdout);
         logstream.write(command + " " + args.join(" "));
         proc.stdout.pipe(logstream);
-
         let logerrstream = fs.createWriteStream(logstderr);
         proc.stderr.pipe(logerrstream);
 
+        // Set the ensemble status (results) on process exit and resolve the promise
         proc.on('exit', (code) => {
             logstream.close();
             logerrstream.close();
@@ -296,5 +321,7 @@ export const runModelEnsemblesLocally =
     if(downloadInputPromises.length > 0)
         await Promise.all(downloadInputPromises);    
 
+    // Run all seed locally - Call the execution function for the seed
+    // - Returns a promise that waits for all of them to finish
     return Promise.all(seeds.map((seed) => runModelLocally(seed, prefs)));
 }
