@@ -11,20 +11,25 @@ export const MINT_PREFERENCES = {
         "dotpath": "/usr/bin/dot",
         "onturl": "http://www.wings-workflows.org/ontology",
         "api": "https://api.wings.mint.isi.edu/v1.0.0",
+        "datadir" : "/data/storage/mint/data-catalog/production",
+        "dataurl" : "https://data.mint.isi.edu/files"
     },
     "localex": {
-        "inputdir" : "/tmp/inputs",
-        "outputdir" : "/tmp/outputs",
-        "codedir" : "/tmp/code",
-        "logdir" : "/tmp/logs"
+        "datadir" : "/data/storage/mint/data-catalog/production/local-execution",
+        "dataurl" : "https://data.mint.isi.edu/files/local-execution",
+        "logdir" : "/data/storage/mint/data-catalog/production/local-execution/logs",
+        "logurl" : "https://data.mint.isi.edu/files/local-execution/logs",
+        "codedir" : "/data/storage/mint/local-execution/code"
     },
+    "execution_engine": "localex",
     "ingestion_api": "https://ingestion.mint.isi.edu/v1.0.0",
     "model_catalog_api": "https://query.mint.isi.edu/api/mintproject/MINT-ModelCatalogQueries",
     "data_catalog_api": "https://api.mint-data-catalog.org",
     "visualization_url": "https://dev.viz.mint.isi.edu",
 } as MintPreferences;
 
-export const MINT_PREFERENCES_LOCAL = {
+/*
+export const MINT_PREFERENCES = {
     "wings": {
         "server": "http://localhost:9090/wings-portal",
         "export_url": "http://localhost:9090/wings-portal",
@@ -34,15 +39,21 @@ export const MINT_PREFERENCES_LOCAL = {
         "storage": "/Users/varun/.wings/storage",
         "dotpath": "/usr/local/bin/dot",
         "onturl": "http://www.wings-workflows.org/ontology",
-        "api": "http://localhost:8080/v1.0.0"
+        "api": "http://localhost:8080/v1.0.0",
+        "datadir" : "/data/storage/mint/data-catalog/production",
+        "dataurl" : "https://data.mint.isi.edu/files"
     },
     "localex": {
-        "inputdir" : "/tmp/inputs",
-        "outputdir" : "/tmp/outputs",
-        "codedir" : "/tmp/code"
-    },    
+        "datadir" : "/data/storage/mint/data-catalog/production/local-execution",
+        "dataurl" : "https://data.mint.isi.edu/files/local-execution",
+        "logdir" : "/data/storage/mint/data-catalog/production/local-execution/logs",
+        "logurl" : "https://data.mint.isi.edu/files/local-execution/logs",
+        "codedir" : "/data/storage/mint/local-execution/code"
+    },
+    "execution_engine": "localex",
     "ingestion_api": "https://ingestion.mint.isi.edu/v1.0.0",
     "model_catalog_api": "https://query.mint.isi.edu/api/mintproject/MINT-ModelCatalogQueries",
     "data_catalog_api": "https://api.mint-data-catalog.org",
     "visualization_url": "https://dev.viz.mint.isi.edu",
 } as MintPreferences;
+*/
