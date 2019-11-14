@@ -1,7 +1,7 @@
 import { getPathway, getScenario } from "../../../classes/mint/firebase-functions";
 import { Pathway, Scenario } from "../../../classes/mint/mint-types";
 import { saveAndRunExecutableEnsemblesLocally } from "../../../classes/mint/mint-local-functions";
-import { MINT_PREFERENCES as mint_prefs} from "../../../config/wings";
+import { MINT_PREFERENCES as mint_prefs} from "../../../config/mint";
 
 // ./api-v1/services/executionsLocalService.js
 

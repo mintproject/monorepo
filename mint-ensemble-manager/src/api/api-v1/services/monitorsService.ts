@@ -1,7 +1,7 @@
 import { getPathway, getScenario } from "../../../classes/mint/firebase-functions";
 import { Pathway, Scenario } from "../../../classes/mint/mint-types";
 import { monitorAllEnsembles } from "../../../classes/mint/mint-functions";
-import { MINT_PREFERENCES as mint_prefs} from "../../../config/wings";
+import { MINT_PREFERENCES as mint_prefs} from "../../../config/mint";
 
 // ./api-v1/services/monitorsService.js
 
