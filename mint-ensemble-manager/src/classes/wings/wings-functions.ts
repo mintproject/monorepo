@@ -550,7 +550,7 @@ export const registerWingsComponent = async(name: string, uri: string, config: M
     }
     return new Promise<string>((resolve, reject) => {
         postJSONResource({
-            url: config_wings.api + "/components",
+            url: config.wings_api + "/components",
             onLoad: function(e: any) {
                 let compjson = JSON.parse(e.target.responseText);
                 resolve(compjson.id);
@@ -581,7 +581,7 @@ export const registerWingsDataset = async(dcid: string, name: string, type: stri
     }
     return new Promise<void>((resolve, reject) => {
         postJSONResource({
-            url: config_wings.api + "/datasets",
+            url: config.wings_api + "/datasets",
             onLoad: function(e: any) {
                 resolve();
             },

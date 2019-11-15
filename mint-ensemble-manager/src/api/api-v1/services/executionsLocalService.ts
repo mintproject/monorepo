@@ -1,7 +1,6 @@
-import { getPathway, getScenario } from "../../../classes/mint/firebase-functions";
+import { getPathway, getScenario, fetchMintConfig } from "../../../classes/mint/firebase-functions";
 import { Pathway, Scenario } from "../../../classes/mint/mint-types";
 import { saveAndRunExecutableEnsemblesLocally } from "../../../classes/mint/mint-local-functions";
-import { MINT_PREFERENCES as mint_prefs} from "../../../config/mint";
 
 // ./api-v1/services/executionsLocalService.js
 
@@ -18,6 +17,7 @@ const executionsLocalService = {
         if(scenario) {
             let pathway: Pathway = await getPathway(thread.scenario_id, thread.thread_id); //.then((pathway: Pathway) => {
             if(pathway) {
+                let mint_prefs = await fetchMintConfig();
                 saveAndRunExecutableEnsemblesLocally(pathway, scenario, mint_prefs);
                 return createResponse("success",
                     "Thread " + thread.thread_id + " submitted for execution !");

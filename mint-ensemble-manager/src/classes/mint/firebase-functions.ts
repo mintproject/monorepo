@@ -1,8 +1,30 @@
-import { Model, Pathway, DataEnsembleMap, ExecutableEnsemble, DataResource, Scenario } from "./mint-types";
+import { Model, Pathway, DataEnsembleMap, ExecutableEnsemble, DataResource, Scenario, MintPreferences } from "./mint-types";
 import { Md5 } from 'ts-md5/dist/md5'
 import { db } from "../../config/firebase";
 import { isObject } from "util";
 import { WriteResult, QuerySnapshot, DocumentSnapshot } from "@google-cloud/firestore";
+
+export const fetchMintConfig = (): Promise<MintPreferences> => {
+    return new Promise<MintPreferences>((resolve, reject) => {
+        db.doc("configs/main").get().then((doc) => {
+            let prefs = doc.data() as MintPreferences;
+            if(prefs.execution_engine == "wings") {
+              fetch(prefs.wings.server + "/config").then((res) => {
+                res.json().then((wdata) => {
+                  prefs.wings.export_url = wdata["internal_server"]
+                  prefs.wings.storage = wdata["storage"];
+                  prefs.wings.dotpath = wdata["dotpath"];
+                  prefs.wings.onturl = wdata["ontology"];
+                  resolve(prefs);
+                })
+              })
+            }
+            else {
+              resolve(prefs);
+            }
+          })
+    })
+};
 
 export const getScenario = async(scenarioid: string) : Promise<Scenario> => {
     let doc = await db.doc("scenarios/"+scenarioid).get();

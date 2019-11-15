@@ -12,26 +12,27 @@ export interface IdNameObject {
 export interface MintPreferences {
     wings: WingsPreferences,
     localex?: LocalExecutionPreferences,
-    execution_engine?: "wings" | "localex"
+    execution_engine?: "wings" | "localex",
+    wings_api: string,
     ingestion_api: string,
     visualization_url: string,
     data_catalog_api: string,
     model_catalog_api: string
-}
+  }
   
-export interface WingsPreferences {
+  export interface WingsPreferences {
     server: string,
-    export_url: string,
     domain: string,
     username: string,
     password: string,
-    storage: string,
-    dotpath: string,
-    onturl: string,
-    api: string,
     datadir: string,
     dataurl: string
-}
+    // The following is retrieved from wings itself
+    export_url?: string,
+    storage?: string,
+    dotpath?: string,
+    onturl?: string,
+  }
 
 export interface LocalExecutionPreferences {
     datadir: string,
