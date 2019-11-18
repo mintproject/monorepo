@@ -5,17 +5,19 @@ import { getModelInputEnsembles, getModelInputConfigurations, deleteAllPathwayEn
 export const saveAndRunExecutableEnsembles = async(
         pathway: Pathway, 
         scenario: Scenario,
+        modelid: string,
         prefs: MintPreferences) => {
 
     // Setup Model for execution on Wings
     await loginToWings(prefs); // Login to Wings now Happens at the top app level            
 
-    for(let modelid in pathway.model_ensembles) {
-        await saveAndRunExecutableEnsemblesForModel(modelid, pathway, scenario, prefs);
+    for(let pmodelid in pathway.model_ensembles) {
+        if(!modelid || (modelid == pmodelid))
+            await saveAndRunExecutableEnsemblesForModel(modelid, pathway, scenario, prefs);
     }
     console.log("Finished sending all ensembles for execution");
 
-    monitorAllEnsembles(pathway, scenario, prefs);
+    monitorAllEnsembles(pathway, scenario, modelid, prefs);
 }
 
 export const saveAndRunExecutableEnsemblesForModel = async(modelid: string, 
@@ -121,13 +123,14 @@ export const saveAndRunExecutableEnsemblesForModel = async(modelid: string,
 export const monitorAllEnsembles = async(
         pathway: Pathway, 
         scenario: Scenario,
+        modelid: string,
         prefs: MintPreferences) => {
 
     let currentTimeout = 30000; // Check every 30 seconds
 
     console.log("Start monitoring for "+pathway.id);
 
-    checkStatusAllEnsembles(pathway, scenario, prefs).then(() => {
+    checkStatusAllEnsembles(pathway, scenario, modelid, prefs).then(() => {
         console.log("Status checking finished");
         getPathway(scenario.id, pathway.id).then((pway) => {
             pathway = pway;
@@ -141,7 +144,7 @@ export const monitorAllEnsembles = async(
             // FIXME: Check for a global shared variable if a request comes to abort for this thread
             if(!done) {
                 setTimeout(() => {
-                    monitorAllEnsembles(pathway, scenario, prefs)
+                    monitorAllEnsembles(pathway, scenario, modelid, prefs)
                 }, currentTimeout);
             } else {
                 console.log("Finished Monitoring for "+pathway.id+". Thread runs have finished")
@@ -153,14 +156,15 @@ export const monitorAllEnsembles = async(
 export const checkStatusAllEnsembles = async(
         pathway: Pathway, 
         scenario: Scenario,
+        modelid: string,
         prefs: MintPreferences) => {
 
     // Setup Model for execution on Wings
     await loginToWings(prefs); // Login to Wings now Happens at the top app level            
 
-    for(let modelid in pathway.model_ensembles) {
-        await checkStatusAllEnsemblesForModel(
-            modelid, pathway, scenario, prefs);
+    for(let pmodelid in pathway.model_ensembles) {
+        if(!modelid || modelid==pmodelid)
+            await checkStatusAllEnsemblesForModel(modelid, pathway, scenario, prefs);
     }
     console.log("Finished checking ensembles");
 }

@@ -14,17 +14,21 @@ const apiDoc = {
         type: 'object',
         properties: {
           scenario_id: {
-            description: '',
+            description: 'The Problem Statement (Scenario) id',
             type: 'string'
           },
           subgoal_id: {
-            description: '',
+            description: 'The Task (Subgoal) id',
             type: 'string'
           },
           thread_id: {
-            description: '',
+            description: 'The Modeling thread id',
             type: 'string'
           },
+          model_id: {
+            description: 'The Model id (optional. Set to null to run all)',
+            type: 'string'
+          }
         }
       }
     },

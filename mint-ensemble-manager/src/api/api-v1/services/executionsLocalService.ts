@@ -18,7 +18,7 @@ const executionsLocalService = {
             let pathway: Pathway = await getPathway(thread.scenario_id, thread.thread_id); //.then((pathway: Pathway) => {
             if(pathway) {
                 let mint_prefs = await fetchMintConfig();
-                saveAndRunExecutableEnsemblesLocally(pathway, scenario, mint_prefs);
+                saveAndRunExecutableEnsemblesLocally(pathway, scenario, thread.model_id, mint_prefs);
                 return createResponse("success",
                     "Thread " + thread.thread_id + " submitted for execution !");
             }

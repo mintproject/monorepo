@@ -6,10 +6,12 @@ import { runModelEnsemblesLocally, loadModelWCM } from "../localex/local-executi
 export const saveAndRunExecutableEnsemblesLocally = async(
         pathway: Pathway, 
         scenario: Scenario,
+        modelid: string,
         prefs: MintPreferences) => {
 
-    for(let modelid in pathway.model_ensembles) {
-        await saveAndRunExecutableEnsemblesForModelLocally(modelid, pathway, scenario, prefs);
+    for(let pmodelid in pathway.model_ensembles) {
+        if(!modelid || (modelid == pmodelid))
+            await saveAndRunExecutableEnsemblesForModelLocally(modelid, pathway, scenario, prefs);
     }
     console.log("Finished sending all ensembles for local execution");
 

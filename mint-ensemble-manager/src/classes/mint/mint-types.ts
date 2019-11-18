@@ -13,6 +13,7 @@ export interface MintPreferences {
     wings: WingsPreferences,
     localex?: LocalExecutionPreferences,
     execution_engine?: "wings" | "localex",
+    ensemble_manager_api: string,
     wings_api: string,
     ingestion_api: string,
     visualization_url: string,
