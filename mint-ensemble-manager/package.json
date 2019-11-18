@@ -26,6 +26,7 @@
   "dependencies": {
     "@types/fs-extra": "^8.0.1",
     "@types/request": "^2.48.3",
+    "cors": "^2.8.5",
     "express": "^4.17.1",
     "express-openapi": "^5.0.0",
     "express-openapi-validator": "^2.14.2",
@@ -38,6 +39,7 @@
   "devDependencies": {
     "@types/body-parser": "^1.17.1",
     "@types/cookie-parser": "^1.4.2",
+    "@types/cors": "^2.8.6",
     "@types/express": "^4.17.2",
     "@types/express-openapi": "^1.9.0",
     "@types/js-yaml": "^3.12.1",

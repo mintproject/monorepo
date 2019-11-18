@@ -1,9 +1,7 @@
 import bodyParser from "body-parser";
-import cookieParser from "cookie-parser";
 import express from "express";
-import http from "http";
-import logger from "morgan";
 import path from "path";
+import cors from "cors";
 
 import v1ApiDoc from './api/api-doc';
 import v1ExecutionsService from './api/api-v1/services/executionsService';
@@ -16,6 +14,7 @@ const app = express();
 const port = 3000; // default port to listen
 
 app.use(bodyParser.json());
+app.use(cors());
 
 initialize({
     app,    
