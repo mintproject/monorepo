@@ -11,7 +11,7 @@ export const saveAndRunExecutableEnsemblesLocally = async(
 
     for(let pmodelid in pathway.model_ensembles) {
         if(!modelid || (modelid == pmodelid))
-            await saveAndRunExecutableEnsemblesForModelLocally(modelid, pathway, scenario, prefs);
+            await saveAndRunExecutableEnsemblesForModelLocally(pmodelid, pathway, scenario, prefs);
     }
     console.log("Finished sending all ensembles for local execution");
 

@@ -13,7 +13,7 @@ export const saveAndRunExecutableEnsembles = async(
 
     for(let pmodelid in pathway.model_ensembles) {
         if(!modelid || (modelid == pmodelid))
-            await saveAndRunExecutableEnsemblesForModel(modelid, pathway, scenario, prefs);
+            await saveAndRunExecutableEnsemblesForModel(pmodelid, pathway, scenario, prefs);
     }
     console.log("Finished sending all ensembles for execution");
 
@@ -164,7 +164,7 @@ export const checkStatusAllEnsembles = async(
 
     for(let pmodelid in pathway.model_ensembles) {
         if(!modelid || modelid==pmodelid)
-            await checkStatusAllEnsemblesForModel(modelid, pathway, scenario, prefs);
+            await checkStatusAllEnsemblesForModel(pmodelid, pathway, scenario, prefs);
     }
     console.log("Finished checking ensembles");
 }
