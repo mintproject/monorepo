@@ -77,7 +77,7 @@ export const getModelInputEnsembles = (model: Model, pathway: Pathway) => {
     return [dataEnsemble, inputIds];
 };
 
-const MAX_CONFIGURATIONS = 10000;
+const MAX_CONFIGURATIONS = 1000000;
 export const getModelInputConfigurations = (
         dataEnsemble: DataEnsembleMap,
         inputIds: string[]) => {
@@ -91,7 +91,6 @@ export const getModelInputConfigurations = (
         return cartProd(inputBindings);
     }
     else {
-        alert("Error: Too many Input combinations: " + totalproducts +". Max allowed : " + MAX_CONFIGURATIONS);
         return null;
     }
 }
