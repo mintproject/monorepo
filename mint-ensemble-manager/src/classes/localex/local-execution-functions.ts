@@ -341,3 +341,13 @@ export const runModelEnsemblesLocally =
     // - Returns a promise that waits for all of them to finish
     return Promise.all(seeds.map((seed) => runModelLocally(seed, prefs)));
 }
+
+export const fetchLocalRunLog = (ensembleid:string, prefs: MintPreferences) => {
+    let logstdout = prefs.localex.logdir + "/" + ensembleid + ".log";
+    let logstderr = prefs.localex.logdir + "/" + ensembleid + ".err.log";
+    let log = "\n ----------- STDOUT ---------- ";
+    log += fs.readFileSync(logstdout);
+    log += "\n ----------- STDERR ---------- ";
+    log += fs.readFileSync(logstderr);
+    return log;
+}

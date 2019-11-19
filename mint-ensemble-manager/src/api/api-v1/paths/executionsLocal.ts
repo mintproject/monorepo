@@ -31,7 +31,7 @@ export default function(executionsLocalService: any) {
         }
       ],
       responses: {
-          "201": {
+          "202": {
               description: "Successful response"
           },
           default: {

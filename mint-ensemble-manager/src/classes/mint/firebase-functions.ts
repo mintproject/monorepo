@@ -36,6 +36,11 @@ export const getPathway = async(scenarioid: string, pathwayid: string) : Promise
     return doc.data() as Pathway;
 }
 
+export const getExecutableEnsemble = async(ensembleid: string) : Promise<ExecutableEnsemble> => {
+    let doc = await db.doc("ensembles/"+ensembleid).get();
+    return doc.data() as ExecutableEnsemble;
+}
+
 export const getModelInputEnsembles = (model: Model, pathway: Pathway) => {
     let dataEnsemble = Object.assign({}, pathway.model_ensembles[model.id]);
     let inputIds : any[] = [];
