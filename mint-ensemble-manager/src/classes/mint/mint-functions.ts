@@ -91,7 +91,8 @@ export const saveAndRunExecutableEnsemblesForModel = async(modelid: string,
 
             // Check if any current ensembles already exist 
             // - Note: ensemble ids are uniquely defined by the model id and inputs
-            let current_ensemble_ids = await listAlreadyRunEnsembleIds(ensembleids);
+            let all_ensemble_ids : any[] = await listAlreadyRunEnsembleIds(ensembleids);
+            let current_ensemble_ids = all_ensemble_ids.filter((eid) => eid); // Filter for null/undefined ensemble ids
 
             // Run ensembles in smaller batches
             for(let i=0; i<ensembles.length; i+= executionBatchSize) {

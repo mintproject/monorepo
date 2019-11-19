@@ -91,7 +91,9 @@ export const saveAndRunExecutableEnsemblesForModelLocally = async(modelid: strin
 
             // Check if any current ensembles already exist 
             // - Note: ensemble ids are uniquely defined by the model id and inputs
-            let current_ensemble_ids : any[] = await listAlreadyRunEnsembleIds(ensembleids);
+            let all_ensemble_ids : any[] = await listAlreadyRunEnsembleIds(ensembleids);
+            let current_ensemble_ids = all_ensemble_ids.filter((eid) => eid); // Filter for null/undefined ensemble ids
+
             pathway.executable_ensemble_summary[modelid].submitted_runs += current_ensemble_ids.length;
             pathway.executable_ensemble_summary[modelid].successful_runs += current_ensemble_ids.length;
             await updatePathway(scenario, pathway);
