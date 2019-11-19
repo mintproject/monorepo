@@ -216,43 +216,48 @@ export const runModelLocally = (seed: ComponentSeed, prefs: MintPreferences) => 
         let logstderr = prefs.localex.logdir + "/" + seed.ensemble.id + ".err.log";
 
         // Spawn the process
-        let proc: ChildProcess = child_process.spawn(command, args, {
-            detached: true,
-            shell: true,
-            stdio: 'pipe',
-            cwd: tempdir
-        });
+        (async () => {
+            let proc: ChildProcess = child_process.spawn(command, args, {
+                detached: true,
+                shell: true,
+                stdio: 'pipe',
+                cwd: tempdir
+            });
 
-        // Pipe logs
-        let logstream = fs.createWriteStream(logstdout);
-        logstream.write(command + " " + args.join(" "));
-        proc.stdout.pipe(logstream);
-        let logerrstream = fs.createWriteStream(logstderr);
-        proc.stderr.pipe(logerrstream);
+            // Pipe logs
+            let logstream = fs.createWriteStream(logstdout);
+            logstream.write(command + " " + args.join(" "));
+            proc.stdout.pipe(logstream);
+            let logerrstream = fs.createWriteStream(logstderr);
+            proc.stderr.pipe(logerrstream);
 
-        // Set the ensemble status (results) on process exit and resolve the promise
-        proc.on('exit', (code) => {
-            logstream.close();
-            logerrstream.close();
-            seed.ensemble.run_progress = 1;        
-            if(code == 0) {
-                seed.ensemble.status = "SUCCESS";
-                // Copy output files from tempdir to output dir
-                Object.values(results).map((result: any) => {
-                    fs.copyFileSync(tempdir + "/" + result.name, result.location);
-                });
-                // Remove tempdir
-                fs.remove(tempdir);
-                // Set the results
-                seed.ensemble.results = results;
-            }
-            else {
-                seed.ensemble.status = "FAILURE";
-            }
-            // Resolve the promise with this ensemble
-            resolve(seed.ensemble);
-            //console.log(`Finished with code ${code}`);
-        })
+            // Set the ensemble status (results) on process exit and resolve the promise
+            proc.on('exit', (code) => {
+                logstream.close();
+                logerrstream.close();
+                seed.ensemble.run_progress = 1;        
+                if(code == 0) {
+                    seed.ensemble.status = "SUCCESS";
+                    // Copy output files from tempdir to output dir
+                    Object.values(results).map((result: any) => {
+                        fs.copyFileSync(tempdir + "/" + result.name, result.location);
+                    });
+                    // Remove tempdir
+                    fs.remove(tempdir);
+                    // Set the results
+                    seed.ensemble.results = results;
+                }
+                else {
+                    seed.ensemble.status = "FAILURE";
+                }
+                // Resolve the promise with this ensemble
+                resolve(seed.ensemble);
+                //console.log(`Finished with code ${code}`);
+            })
+        })()
+        .catch(e =>
+            console.error(e)
+        );
     });
 }
 
