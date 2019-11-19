@@ -11,7 +11,7 @@ const logsService = {
     async fetchLog(ensemble_id: string) {
         let mint_prefs = await fetchMintConfig();
         let ensemble: ExecutableEnsemble = await getExecutableEnsemble(ensemble_id);
-        if(ensemble.execution_engine == "wings") {
+        if(!ensemble.execution_engine || ensemble.execution_engine == "wings") {
             let log = await fetchWingsRunLog(ensemble.runid, mint_prefs);
             return log;
         }
