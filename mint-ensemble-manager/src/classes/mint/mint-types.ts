@@ -40,7 +40,8 @@ export interface LocalExecutionPreferences {
     dataurl: string,
     logdir: string,
     logurl: string,
-    codedir: string
+    codedir: string,
+    parallelism: number
 }
 
 export interface ModelingState {

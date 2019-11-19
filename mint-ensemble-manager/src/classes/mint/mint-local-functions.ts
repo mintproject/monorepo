@@ -55,7 +55,7 @@ export const saveAndRunExecutableEnsemblesForModelLocally = async(modelid: strin
         let batchid = 0; // Use to create batchids in firebase for storing ensemble ids
 
         // Run models locally in these number of parallel threads
-        let executionBatchSize = 10; 
+        let executionBatchSize = prefs.localex.parallelism ? prefs.localex.parallelism : 10; 
         
         // Create ensembles in batches
         for(let i=0; i<configs.length; i+= batchSize) {
