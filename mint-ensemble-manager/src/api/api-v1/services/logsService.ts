@@ -4,7 +4,7 @@ import { saveAndRunExecutableEnsembles, monitorAllEnsembles } from "../../../cla
 import { fetchWingsRunLog } from "../../../classes/wings/wings-functions";
 import { fetchLocalRunLog } from "../../../classes/localex/local-execution-functions";
 
-// ./api-v1/services/executionsService.js
+// ./api-v1/services/logsService.js
 
 const createResponse = (result: string, message: string) => {
     return {
@@ -13,7 +13,7 @@ const createResponse = (result: string, message: string) => {
     };
 }
 
-const executionsService = {
+const logsService = {
     async fetchLog(ensemble_id: string) {
         let mint_prefs = await fetchMintConfig();
         let ensemble: ExecutableEnsemble = await getExecutableEnsemble(ensemble_id);
@@ -28,4 +28,4 @@ const executionsService = {
     }
 };
 
-export default executionsService;
+export default logsService;
