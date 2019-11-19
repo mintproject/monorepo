@@ -202,7 +202,7 @@ export const runModelLocally = (seed: ComponentSeed, prefs: MintPreferences) => 
             let opfilename = output.role + "-" + opsuffix;
             let opfilepath = outputdir + "/" + opfilename;
             args.push(opfilename);
-            let opfileurl = opfilename.replace(prefs.localex.datadir, prefs.localex.dataurl);
+            let opfileurl = opfilepath.replace(prefs.localex.datadir, prefs.localex.dataurl);
             results[output.role] = {
                 id: output.role,
                 name: opfilename,
