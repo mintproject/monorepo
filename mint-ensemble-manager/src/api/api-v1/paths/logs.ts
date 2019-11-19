@@ -6,7 +6,7 @@ export default function(logsService: any) {
     };
    
     function GET(req: any, res: any, next: any) {
-        logsService.fetchLog(req.query.ensemble_id).then((result: any) => {
+        logsService.fetchLog(req.query.ensemble_id).then((result: string) => {
             res.status(200).json(result);
         });
     }
@@ -25,8 +25,7 @@ export default function(logsService: any) {
       ],
       responses: {
           "200": {
-              description: "Log Details",
-              type: 'string'
+              description: "Log Details"
           },
           default: {
             description: 'An error occurred',
@@ -38,4 +37,4 @@ export default function(logsService: any) {
     };
    
     return operations;
-  }
+}

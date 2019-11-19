@@ -6,12 +6,6 @@ import { fetchLocalRunLog } from "../../../classes/localex/local-execution-funct
 
 // ./api-v1/services/logsService.js
 
-const createResponse = (result: string, message: string) => {
-    return {
-        result: result,
-        message: message
-    };
-}
 
 const logsService = {
     async fetchLog(ensemble_id: string) {
@@ -19,11 +13,11 @@ const logsService = {
         let ensemble: ExecutableEnsemble = await getExecutableEnsemble(ensemble_id);
         if(ensemble.execution_engine == "wings") {
             let log = await fetchWingsRunLog(ensemble.runid, mint_prefs);
-            return createResponse(log, "Log found");
+            return log;
         }
         else if(ensemble.execution_engine == "localex") {
             let log = fetchLocalRunLog(ensemble_id, mint_prefs);
-            return createResponse(log, "Log found");
+            return log;
         }
     }
 };
