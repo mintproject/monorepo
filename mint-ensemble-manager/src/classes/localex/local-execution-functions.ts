@@ -209,32 +209,34 @@ export const runModelLocally = (seed: ComponentSeed, prefs: MintPreferences) => 
                 url: opfileurl,
                 location: opfilepath
             }
-        })
-    
-        // Setup log files
-        let logstdout = prefs.localex.logdir + "/" + seed.ensemble.id + ".log";
-        let logstderr = prefs.localex.logdir + "/" + seed.ensemble.id + ".err.log";
+        });
 
-        // Spawn the process
         (async () => {
+            // Setup log file
+            let logstdout = prefs.localex.logdir + "/" + seed.ensemble.id + ".log";            
+            let logstream = fs.createWriteStream(logstdout);
+
+            logstream.write(command + " " + args.join(" "));
+            
+            // Spawn the process & pipe stdout and stderr
             let proc: ChildProcess = child_process.spawn(command, args, {
                 detached: true,
                 shell: true,
                 stdio: 'pipe',
                 cwd: tempdir
-            });
-
-            // Pipe logs
-            let logstream = fs.createWriteStream(logstdout);
-            logstream.write(command + " " + args.join(" "));
-            proc.stdout.pipe(logstream);
-            let logerrstream = fs.createWriteStream(logstderr);
-            proc.stderr.pipe(logerrstream);
+            });            
+            proc.stdout.on('data', (data) => {
+                if(logstream && !logstream.writableEnded)
+                    logstream.write(`${data}`);
+            })
+            proc.stderr.on('data', (data) => {
+                if(logstream && !logstream.writableEnded)
+                    logstream.write(`${data}`);
+            })
 
             // Set the ensemble status (results) on process exit and resolve the promise
             proc.on('exit', (code) => {
                 logstream.close();
-                logerrstream.close();
                 seed.ensemble.run_progress = 1;        
                 if(code == 0) {
                     seed.ensemble.status = "SUCCESS";
@@ -349,10 +351,5 @@ export const runModelEnsemblesLocally =
 
 export const fetchLocalRunLog = (ensembleid:string, prefs: MintPreferences) => {
     let logstdout = prefs.localex.logdir + "/" + ensembleid + ".log";
-    let logstderr = prefs.localex.logdir + "/" + ensembleid + ".err.log";
-    let log = "\n ----------- STDOUT ---------- \n";
-    log += fs.readFileSync(logstdout);
-    log += "\n ----------- STDERR ---------- \n";
-    log += fs.readFileSync(logstderr);
-    return log;
+    return fs.readFileSync(logstdout);
 }
