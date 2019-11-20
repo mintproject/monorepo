@@ -213,31 +213,30 @@ export const runModelLocally = (seed: ComponentSeed, prefs: MintPreferences) => 
 
         (async () => {
             // Setup log file
-            let logstdout = prefs.localex.logdir + "/" + seed.ensemble.id + ".log";            
-            let logstream = fs.createWriteStream(logstdout);
+            let logstdout = prefs.localex.logdir + "/" + seed.ensemble.id + ".log";
+            let log = command + " " + args.join(" ") + "\n";
 
-            logstream.write(command + " " + args.join(" "));
-            
             // Spawn the process & pipe stdout and stderr
             let proc: ChildProcess = child_process.spawn(command, args, {
-                detached: true,
-                shell: true,
-                stdio: ['ignore', logstream, logstream],
+                //detached: true,
+                //shell: true,
+                stdio: 'pipe',
                 cwd: tempdir
             });            
             proc.stdout.on('data', (data) => {
-                if(logstream && !logstream.writableEnded)
-                    logstream.write(`${data}`);
+                log += data + "\n";
             })
             proc.stderr.on('data', (data) => {
-                if(logstream && !logstream.writableEnded)
-                    logstream.write(`${data}`);
+                log += data + "\n";
             })
 
             // Set the ensemble status (results) on process exit and resolve the promise
             proc.on('exit', (code) => {
-                logstream.end();
-                seed.ensemble.run_progress = 1;        
+                let logstream = fs.createWriteStream(logstdout);
+                logstream.write(log);
+                logstream.close();
+
+                seed.ensemble.run_progress = 1;
                 if(code == 0) {
                     seed.ensemble.status = "SUCCESS";
                     // Copy output files from tempdir to output dir
