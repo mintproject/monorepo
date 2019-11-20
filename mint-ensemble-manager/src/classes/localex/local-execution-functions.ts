@@ -219,23 +219,43 @@ export const runModelLocally = (seed: ComponentSeed, prefs: MintPreferences) => 
             logstream.write(command + " " + args.join(" "));
             
             // Spawn the process & pipe stdout and stderr
-            let procDetails = child_process.spawnSync(command, args, {
+            let proc: ChildProcess = child_process.spawn(command, args, {
+                detached: true,
                 shell: true,
+                stdio: ['ignore', logstream, logstream],
                 cwd: tempdir
-            });
-            seed.ensemble.run_progress = 1;
-            if(procDetails.error || procDetails.status != 0) {
-                if(procDetails.error) {
-                    logstream.write(procDetails.error.message);
+            });            
+            proc.stdout.on('data', (data) => {
+                if(logstream && !logstream.writableEnded)
+                    logstream.write(`${data}`);
+            })
+            proc.stderr.on('data', (data) => {
+                if(logstream && !logstream.writableEnded)
+                    logstream.write(`${data}`);
+            })
+
+            // Set the ensemble status (results) on process exit and resolve the promise
+            proc.on('exit', (code) => {
+                logstream.end();
+                seed.ensemble.run_progress = 1;        
+                if(code == 0) {
+                    seed.ensemble.status = "SUCCESS";
+                    // Copy output files from tempdir to output dir
+                    Object.values(results).map((result: any) => {
+                        fs.copyFileSync(tempdir + "/" + result.name, result.location);
+                    });
+                    // Remove tempdir
+                    fs.remove(tempdir);
+                    // Set the results
+                    seed.ensemble.results = results;
                 }
-                logstream.write(procDetails.stderr);
-                seed.ensemble.status = "FAILURE";
-            }
-            else {
-                logstream.write(procDetails.stdout);
-                seed.ensemble.status = "SUCCESS";
-            }
-            resolve(seed.ensemble);
+                else {
+                    seed.ensemble.status = "FAILURE";
+                }
+                // Resolve the promise with this ensemble
+                resolve(seed.ensemble);
+                //console.log(`Finished with code ${code}`);
+            })
         })()
         .catch(e => {
             console.error(e);
