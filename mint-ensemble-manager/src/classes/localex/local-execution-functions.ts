@@ -354,5 +354,5 @@ export const runModelEnsemblesLocally =
 
 export const fetchLocalRunLog = (ensembleid:string, prefs: MintPreferences) => {
     let logstdout = prefs.localex.logdir + "/" + ensembleid + ".log";
-    return fs.readFileSync(logstdout);
+    return fs.readFileSync(logstdout).toString();
 }
