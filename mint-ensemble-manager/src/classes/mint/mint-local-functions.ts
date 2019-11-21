@@ -87,7 +87,7 @@ export const saveAndRunExecutableEnsemblesForModelLocally = async(modelid: strin
             })
 
             // Save pathway ensemble ids (to be used for later retrieval of ensembles)
-            await setPathwayEnsembleIds(scenario.id, pathway.id, model.id, batchid, ensembleids);
+            setPathwayEnsembleIds(scenario.id, pathway.id, model.id, batchid, ensembleids);
 
             // Check if any current ensembles already exist 
             // - Note: ensemble ids are uniquely defined by the model id and inputs
@@ -96,7 +96,7 @@ export const saveAndRunExecutableEnsemblesForModelLocally = async(modelid: strin
 
             pathway.executable_ensemble_summary[modelid].submitted_runs += current_ensemble_ids.length;
             pathway.executable_ensemble_summary[modelid].successful_runs += current_ensemble_ids.length;
-            await updatePathway(scenario, pathway);
+            updatePathway(scenario, pathway);
 
             // Run ensembles in smaller batches
             for(let i=0; i<ensembles.length; i+= executionBatchSize) {
@@ -105,6 +105,8 @@ export const saveAndRunExecutableEnsemblesForModelLocally = async(modelid: strin
                 let eslice_nr = eslice.filter((ensemble) => current_ensemble_ids.indexOf(ensemble.id) < 0);
                 if(eslice_nr.length > 0) {
                     pathway.executable_ensemble_summary[modelid].submitted_runs += eslice_nr.length;
+
+                    updatePathway(scenario, pathway);
 
                     // The following will create multiple threads and update the ensembles inside the thread itself
                     eslice_nr = await runModelEnsemblesLocally(pathway, component, eslice_nr, prefs);
@@ -116,7 +118,7 @@ export const saveAndRunExecutableEnsemblesForModelLocally = async(modelid: strin
                         else if(finished_ensemble.status == "SUCCESS")
                             pathway.executable_ensemble_summary[modelid].successful_runs++;
                     });
-                    await updatePathway(scenario, pathway);
+                    updatePathway(scenario, pathway);
 
                     // Store the ensembles in Firebase
                     await addPathwayEnsembles(eslice_nr);
