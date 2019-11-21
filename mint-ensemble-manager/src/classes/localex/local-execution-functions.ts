@@ -108,6 +108,9 @@ const _downloadWCM = async (url: string, prefs: MintPreferences) => {
 
 const _getModelDetails = (modeldir: string) => {
     let ymlfile = modeldir + "/wings-component.yml";
+    if(!fs.existsSync(ymlfile)) {
+        ymlfile = modeldir + "/wings-component.yaml";
+    }
     let comp : Component = {
         rundir: modeldir + "/src",
         inputs: [],

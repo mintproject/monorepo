@@ -15,7 +15,7 @@ const app = express();
 const port = 3000; // default port to listen
 
 app.use(bodyParser.json());
-//app.use(cors()); //Commenting this out, as CORS is also implemented in the NGINX redirect to this service
+app.use(cors());
 
 initialize({
     app,    
