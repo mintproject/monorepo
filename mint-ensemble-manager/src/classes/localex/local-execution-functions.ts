@@ -233,6 +233,11 @@ export const runModelLocally = (seed: ComponentSeed, prefs: MintPreferences) => 
                     seed.ensemble.status = "FAILURE";
                 else 
                     seed.ensemble.status = "SUCCESS";
+                
+                // Remove temporary directory
+                fs.remove(tempdir); 
+
+                // Return modified ensemble
                 resolve(seed.ensemble);
             });
         })()
