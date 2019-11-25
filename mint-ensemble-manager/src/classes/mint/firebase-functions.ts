@@ -205,7 +205,17 @@ export const getEnsembleHash = (ensemble: ExecutableEnsemble) : string => {
     return Md5.hashStr(str).toString();
 }
 
-// Add Ensembles
+// Set Ensembles
+export const setPathwayEnsembles = (ensembles: ExecutableEnsemble[]) => {
+    let ensemblesRef = db.collection("ensembles");
+    let batch = db.batch();
+    let i = 0;
+    ensembles.map((ensemble) => {
+        batch.set(ensemblesRef.doc(ensemble.id), ensemble);
+    })
+    return batch.commit();
+}
+
 export const addPathwayEnsembles = (ensembles: ExecutableEnsemble[]) => {
     let ensemblesRef = db.collection("ensembles");
     // Read all docs (to check if they exist or not)

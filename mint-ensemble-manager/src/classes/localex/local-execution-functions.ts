@@ -215,49 +215,26 @@ export const runModelLocally = (seed: ComponentSeed, prefs: MintPreferences) => 
         });
 
         (async () => {
-            // Setup log file
-            let logstdout = prefs.localex.logdir + "/" + seed.ensemble.id + ".log";
-            let log = command + " " + args.join(" ") + "\n";
-
             // Spawn the process & pipe stdout and stderr
-            let proc: ChildProcess = child_process.spawn(command, args, {
-                //detached: true,
-                //shell: true,
-                stdio: 'pipe',
+            child_process.execFile(command, args, {
                 cwd: tempdir
-            });            
-            proc.stdout.on('data', (data) => {
-                log += data + "\n";
-            })
-            proc.stderr.on('data', (data) => {
-                log += data + "\n";
-            })
-
-            // Set the ensemble status (results) on process exit and resolve the promise
-            proc.on('exit', (code) => {
+            }, (error, stdout, stderr) => {
+                // Write log file
+                let logstdout = prefs.localex.logdir + "/" + seed.ensemble.id + ".log";
                 let logstream = fs.createWriteStream(logstdout);
-                logstream.write(log);
+                logstream.write(command + " " + args.join(" ") + "\n");
+                logstream.write(stderr);
+                logstream.write(stdout);
                 logstream.close();
 
+                // Update ensemble status
                 seed.ensemble.run_progress = 1;
-                if(code == 0) {
-                    seed.ensemble.status = "SUCCESS";
-                    // Copy output files from tempdir to output dir
-                    Object.values(results).map((result: any) => {
-                        fs.copyFileSync(tempdir + "/" + result.name, result.location);
-                    });
-                    // Remove tempdir
-                    fs.remove(tempdir);
-                    // Set the results
-                    seed.ensemble.results = results;
-                }
-                else {
+                if(error)
                     seed.ensemble.status = "FAILURE";
-                }
-                // Resolve the promise with this ensemble
+                else 
+                    seed.ensemble.status = "SUCCESS";
                 resolve(seed.ensemble);
-                //console.log(`Finished with code ${code}`);
-            })
+            });
         })()
         .catch(e => {
             console.error(e);

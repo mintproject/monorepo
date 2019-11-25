@@ -1,6 +1,6 @@
 import { Pathway, Model, DataEnsembleMap, Scenario, MintPreferences, ExecutableEnsembleSummary, ExecutableEnsemble, DataResource } from "./mint-types";
 import { setupModelWorkflow, fetchWingsTemplate, loginToWings, runModelEnsembles, fetchWingsRunsStatuses, fetchWingsRunResults } from "../wings/wings-functions";
-import { getModelInputEnsembles, getModelInputConfigurations, deleteAllPathwayEnsembleIds, setPathwayEnsembleIds, addPathwayEnsembles, getEnsembleHash, listAlreadyRunEnsembleIds, getAllPathwayEnsembleIds, listEnsembles, updatePathwayEnsembles, updatePathway, getPathway } from "./firebase-functions";
+import { getModelInputEnsembles, getModelInputConfigurations, deleteAllPathwayEnsembleIds, setPathwayEnsembleIds, addPathwayEnsembles, getEnsembleHash, listAlreadyRunEnsembleIds, getAllPathwayEnsembleIds, listEnsembles, updatePathwayEnsembles, updatePathway, getPathway, setPathwayEnsembles } from "./firebase-functions";
 import { runModelEnsemblesLocally, loadModelWCM } from "../localex/local-execution-functions";
 
 export const saveAndRunExecutableEnsemblesLocally = async(
@@ -106,6 +106,8 @@ export const saveAndRunExecutableEnsemblesForModelLocally = async(modelid: strin
                 if(eslice_nr.length > 0) {
                     pathway.executable_ensemble_summary[modelid].submitted_runs += eslice_nr.length;
 
+                    // Store the ensembles in Firebase (empty status)
+                    await setPathwayEnsembles(eslice_nr);
                     updatePathway(scenario, pathway);
 
                     // The following will create multiple threads and update the ensembles inside the thread itself
@@ -118,10 +120,10 @@ export const saveAndRunExecutableEnsemblesForModelLocally = async(modelid: strin
                         else if(finished_ensemble.status == "SUCCESS")
                             pathway.executable_ensemble_summary[modelid].successful_runs++;
                     });
-                    updatePathway(scenario, pathway);
 
-                    // Store the ensembles in Firebase
-                    await addPathwayEnsembles(eslice_nr);
+                    // Store the updated ensembles in Firebase (updated status)
+                    await setPathwayEnsembles(eslice_nr);
+                    updatePathway(scenario, pathway);
                 }
             }
 
