@@ -360,16 +360,21 @@ export const fetchWingsRunLog = (runid: string, config: MintPreferences)
         postFormResource({
             url: purl + "/executions/getRunDetails",
             onLoad: function(e: any) {
-                let response = JSON.parse(e.target.responseText);
-                let ex = response.execution;
-                let log = ex.runtimeInfo.log;
-                log += "\n----------------------------------------------\n";
-                ex.queue.steps.map((step: any) => {
-                    log += step.id.replace(/.*#/, '') + "\n"
-                    log += step.runtimeInfo.log;
+                try {
+                    let response = JSON.parse(e.target.responseText);
+                    let ex = response.execution;
+                    let log = ex.runtimeInfo.log;
                     log += "\n----------------------------------------------\n";
-                })
-                resolve(log);
+                    ex.queue.steps.map((step: any) => {
+                        log += step.id.replace(/.*#/, '') + "\n"
+                        log += step.runtimeInfo.log;
+                        log += "\n----------------------------------------------\n";
+                    })
+                    resolve(log);
+                }
+                catch(e) {
+                    reject();
+                }
             },
             onError: function() {
                 reject("Cannot get run details");

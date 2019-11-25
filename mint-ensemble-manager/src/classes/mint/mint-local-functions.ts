@@ -74,6 +74,7 @@ export const saveAndRunExecutableEnsemblesForModelLocally = async(modelid: strin
                 let ensemble = {
                     modelid: modelid,
                     bindings: inputBindings,
+                    execution_engine: "localex",
                     runid: null,
                     status: null,
                     results: {},
