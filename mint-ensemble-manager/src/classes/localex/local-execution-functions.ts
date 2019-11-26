@@ -229,10 +229,20 @@ export const runModelLocally = (seed: ComponentSeed, prefs: MintPreferences) => 
 
                 // Update ensemble status
                 seed.ensemble.run_progress = 1;
-                if(error)
+                if(error) {
                     seed.ensemble.status = "FAILURE";
-                else 
+                }
+                else {
                     seed.ensemble.status = "SUCCESS";
+
+                    // Copy output files from tempdir to output dir
+                    Object.values(results).map((result: any) => {
+                        fs.copyFileSync(tempdir + "/" + result.name, result.location);
+                    });
+
+                    // Set the results
+                    seed.ensemble.results = results;                    
+                }
                 
                 // Remove temporary directory
                 fs.remove(tempdir); 
