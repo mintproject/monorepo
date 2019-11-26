@@ -85,7 +85,8 @@ export const getModelInputConfigurations = (
     let totalproducts = 1;
     inputIds.map((inputid) => {
         inputBindings.push(dataEnsemble[inputid]);
-        totalproducts *= dataEnsemble[inputid].length;
+        if(dataEnsemble[inputid])
+            totalproducts *= dataEnsemble[inputid].length;
     });
     if(totalproducts < MAX_CONFIGURATIONS) {
         return cartProd(inputBindings);
