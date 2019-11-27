@@ -226,7 +226,7 @@ export const runModelLocally = (seed: ComponentSeed, prefs: MintPreferences) => 
                 cwd: tempdir
             }, (error, stdout, stderr) => {
                 // Write log file
-                let logstream = fs.createWriteStream(logstdout);
+                let logstream = fs.createWriteStream(logstdout, {'flags': 'a'});
                 logstream.write("\n------- STDERR ---------\n");
                 logstream.write(stderr);
                 logstream.write("\n------- STDOUT ---------\n");
