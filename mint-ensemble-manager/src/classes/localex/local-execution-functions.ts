@@ -215,15 +215,21 @@ export const runModelLocally = (seed: ComponentSeed, prefs: MintPreferences) => 
         });
 
         (async () => {
+            let logstdout = prefs.localex.logdir + "/" + seed.ensemble.id + ".log";
+
+            let logstream = fs.createWriteStream(logstdout);
+            logstream.write(command + " " + args.join(" ") + "\n");
+            logstream.close();
+
             // Spawn the process & pipe stdout and stderr
             child_process.execFile(command, args, {
                 cwd: tempdir
             }, (error, stdout, stderr) => {
                 // Write log file
-                let logstdout = prefs.localex.logdir + "/" + seed.ensemble.id + ".log";
                 let logstream = fs.createWriteStream(logstdout);
-                logstream.write(command + " " + args.join(" ") + "\n");
+                logstream.write("\n------- STDERR ---------\n");
                 logstream.write(stderr);
+                logstream.write("\n------- STDOUT ---------\n");
                 logstream.write(stdout);
                 logstream.close();
 
