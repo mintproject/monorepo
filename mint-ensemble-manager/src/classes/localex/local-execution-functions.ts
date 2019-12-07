@@ -224,7 +224,7 @@ export const runModelLocally = (seed: ComponentSeed, prefs: MintPreferences) => 
             // Spawn the process & pipe stdout and stderr
             child_process.execFile(command, args, {
                 cwd: tempdir,
-                maxBuffer: 1024*1024*5 // 5 MB of log cutoff
+                maxBuffer: 1024*1024*50 // 50 MB of log cutoff
             }, (error, stdout, stderr) => {
                 // Write log file
                 let logstream = fs.createWriteStream(logstdout, {'flags': 'a'});
