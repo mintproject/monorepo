@@ -1,7 +1,8 @@
-import { Pathway, Model, DataEnsembleMap, Scenario, MintPreferences, ExecutableEnsembleSummary, ExecutableEnsemble, DataResource } from "./mint-types";
-import { setupModelWorkflow, fetchWingsTemplate, loginToWings, runModelEnsembles, fetchWingsRunsStatuses, fetchWingsRunResults } from "../wings/wings-functions";
-import { getModelInputEnsembles, getModelInputConfigurations, deleteAllPathwayEnsembleIds, setPathwayEnsembleIds, addPathwayEnsembles, getEnsembleHash, listAlreadyRunEnsembleIds, getAllPathwayEnsembleIds, listEnsembles, updatePathwayEnsembles, updatePathway, getPathway, setPathwayEnsembles } from "./firebase-functions";
-import { runModelEnsemblesLocally, loadModelWCM } from "../localex/local-execution-functions";
+import { Pathway, Model, DataEnsembleMap, Scenario, MintPreferences, ExecutableEnsembleSummary, ExecutableEnsemble } from "./mint-types";
+import { getModelInputEnsembles, getModelInputConfigurations, deleteAllPathwayEnsembleIds, setPathwayEnsembleIds, getEnsembleHash, listAlreadyRunEnsembleIds, getAllPathwayEnsembleIds, listEnsembles, updatePathwayEnsembles, updatePathway, setPathwayEnsembles, deletePathwayEnsembles } from "./firebase-functions";
+import { runModelEnsemblesLocally, loadModelWCM, getModelCacheDirectory } from "../localex/local-execution-functions";
+
+import fs from "fs-extra";
 
 export const saveAndRunExecutableEnsemblesLocally = async(
         pathway: Pathway, 
@@ -45,6 +46,7 @@ export const saveAndRunExecutableEnsemblesForModelLocally = async(modelid: strin
             failed_runs: 0,
             successful_runs: 0,
             workflow_name: "", // No workflow. Local execution
+            submitted_for_execution: true,
             submission_time: Date.now() - 20000 // Less 20 seconds to counter for clock skews
         } as ExecutableEnsembleSummary
 
@@ -132,4 +134,50 @@ export const saveAndRunExecutableEnsemblesForModelLocally = async(modelid: strin
         }
     }
     console.log("Finished submitting all executions for model: " + modelid);
+}
+
+export const deleteExecutableCacheLocally = async(
+    pathway: Pathway, 
+    scenario: Scenario,
+    modelid: string,
+    prefs: MintPreferences) => {
+
+for(let pmodelid in pathway.model_ensembles) {
+    if(!modelid || (modelid == pmodelid))
+        await deleteExecutableCacheForModelLocally(pmodelid, pathway, scenario, prefs);
+}
+console.log("Finished deleting all execution cache for local execution");
+
+//monitorAllEnsembles(pathway, scenario, prefs);
+}
+
+export const deleteExecutableCacheForModelLocally = async(modelid: string, 
+    pathway: Pathway, 
+    scenario: Scenario,
+    prefs: MintPreferences) => {
+
+    let model = pathway.models[modelid];
+    let ensembleids = await getAllPathwayEnsembleIds(scenario.id, pathway.id, modelid);
+
+    // Delete existing pathway ensemble ids (*NOT DELETING GLOBAL ENSEMBLE DOCUMENTS .. Only clearing list of the pathway's ensemble ids)
+    await deleteAllPathwayEnsembleIds(scenario.id, pathway.id, modelid);
+
+    // Delete the actual ensemble documents
+    await deletePathwayEnsembles(ensembleids);
+
+    // Delete cached model directory and zip file
+    let modeldir = getModelCacheDirectory(model.wcm_uri, prefs);
+    if(modeldir != null) {
+        fs.remove(modeldir);
+        fs.remove(modeldir + ".zip");
+    }
+
+    // Remove all executable information and update the pathway
+    pathway.executable_ensemble_summary[modelid].successful_runs = 0;
+    pathway.executable_ensemble_summary[modelid].failed_runs = 0;
+    pathway.executable_ensemble_summary[modelid].submitted_runs = 0;
+    pathway.executable_ensemble_summary[modelid].submission_time = 0;
+    pathway.executable_ensemble_summary[modelid].submitted_for_execution = false;
+
+    await updatePathway(scenario, pathway);
 }

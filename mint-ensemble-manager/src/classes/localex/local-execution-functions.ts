@@ -127,6 +127,17 @@ const _getModelDetails = (modeldir: string) => {
     return comp;
 }
 
+export const getModelCacheDirectory = (url: string, prefs: MintPreferences) => {
+    // Get zip file name from url
+    let plainurl = url.replace(/\?.*$/, '');
+    let zipfile = plainurl.replace(/.+\//, "");
+    let compname = zipfile.replace(/\.zip/i, "");
+
+    let codedir = prefs.localex.codedir;
+    let modeldir = codedir + "/" + compname;
+    return modeldir;
+}
+
 export const loadModelWCM = async(url: string, prefs: MintPreferences) => {
     let modeldir = await _downloadWCM(url, prefs);
     return _getModelDetails(modeldir);

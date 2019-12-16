@@ -248,6 +248,17 @@ export const updatePathwayEnsembles = (ensembles: ExecutableEnsemble[]) => {
     return batch.commit();
 }
 
+// Delete Pathway Ensembles
+export const deletePathwayEnsembles = (ensembleids: string[]) => {
+    let ensemblesRef = db.collection("ensembles");
+    let batch = db.batch();
+    let i = 0;
+    ensembleids.map((ensembleid) => {
+        batch.delete(ensemblesRef.doc(ensembleid));
+    })
+    return batch.commit();
+}
+
 export const updatePathway = (scenario: Scenario, pathway: Pathway) =>  {
     let npathway = Object.assign({}, pathway);
     delete npathway.unsubscribe;
