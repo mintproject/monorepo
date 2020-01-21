@@ -8,10 +8,6 @@ export const fetchMintConfig = (): Promise<MintPreferences> => {
     return new Promise<MintPreferences>((resolve, reject) => {
         db.doc("configs/main").get().then((doc) => {
             let prefs = doc.data() as MintPreferences;
-            prefs.localex.datadir = "/Users/Varun" + prefs.localex.datadir;
-            prefs.localex.codedir = "/Users/Varun" + prefs.localex.codedir;
-            prefs.localex.logdir = "/Users/Varun" + prefs.localex.logdir;
-
             if(prefs.execution_engine == "wings") {
               fetch(prefs.wings.server + "/config").then((res) => {
                 res.json().then((wdata) => {
