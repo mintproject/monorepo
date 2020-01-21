@@ -1,6 +1,6 @@
-import { Model, Pathway, DataEnsembleMap, ExecutableEnsemble, DataResource, Scenario, MintPreferences } from "./mint-types";
+import { Model, Pathway, DataEnsembleMap, ExecutableEnsemble, DataResource, Scenario, MintPreferences, SubGoal, Goal, PathwayInfo, Region } from "./mint-types";
 import { Md5 } from 'ts-md5/dist/md5'
-import { db } from "../../config/firebase";
+import { db, fieldValue } from "../../config/firebase";
 import { isObject } from "util";
 import { WriteResult, QuerySnapshot, DocumentSnapshot } from "@google-cloud/firestore";
 
@@ -8,6 +8,10 @@ export const fetchMintConfig = (): Promise<MintPreferences> => {
     return new Promise<MintPreferences>((resolve, reject) => {
         db.doc("configs/main").get().then((doc) => {
             let prefs = doc.data() as MintPreferences;
+            prefs.localex.datadir = "/Users/Varun" + prefs.localex.datadir;
+            prefs.localex.codedir = "/Users/Varun" + prefs.localex.codedir;
+            prefs.localex.logdir = "/Users/Varun" + prefs.localex.logdir;
+
             if(prefs.execution_engine == "wings") {
               fetch(prefs.wings.server + "/config").then((res) => {
                 res.json().then((wdata) => {
@@ -29,6 +33,11 @@ export const fetchMintConfig = (): Promise<MintPreferences> => {
 export const getScenario = async(scenarioid: string) : Promise<Scenario> => {
     let doc = await db.doc("scenarios/"+scenarioid).get();
     return doc.data() as Scenario;
+}
+
+export const getSubgoal = async(scenarioid: string, subgoalid: string) : Promise<SubGoal> => {
+    let doc = await db.doc("scenarios/"+scenarioid+"/subgoals/"+subgoalid).get();
+    return doc.data() as SubGoal;
 }
 
 export const getPathway = async(scenarioid: string, pathwayid: string) : Promise<Pathway> => {
@@ -78,6 +87,38 @@ export const getModelInputEnsembles = (model: Model, pathway: Pathway) => {
 };
 
 const MAX_CONFIGURATIONS = 1000000;
+export const getTotalConfigurations = (model: Model, bindings: DataEnsembleMap, pathway: Pathway) => {
+    let totalconfigs = 1;
+    model.input_files.map((io) => {
+        if(!io.value) {
+            // Expand a dataset to it's constituent resources
+            // FIXME: Create a collection if the model input has dimensionality of 1
+            if(bindings[io.id]) {
+                let nensemble : any[] = [];
+                bindings[io.id].map((dsid) => {
+                    let ds = pathway.datasets[dsid];
+                    let selected_resources = ds.resources.filter((res) => res.selected);
+                    // Fix for older saved resources
+                    if(selected_resources.length == 0) 
+                        selected_resources = ds.resources;
+                    nensemble = nensemble.concat(selected_resources);
+                });
+                totalconfigs *= nensemble.length;
+            }
+        }
+        else {
+            totalconfigs *= (io.value.resources as any[]).length;
+        }
+    })
+    
+    // Add adjustable parameters to the input ids
+    model.input_parameters.map((io) => {
+        if(!io.value)
+            totalconfigs *= bindings[io.id].length;
+    });
+
+    return totalconfigs;
+}
 export const getModelInputConfigurations = (
         dataEnsemble: DataEnsembleMap,
         inputIds: string[]) => {
@@ -259,6 +300,84 @@ export const deletePathwayEnsembles = (ensembleids: string[]) => {
     return batch.commit();
 }
 
+// Region information
+
+// Get details about a particular region/subregion
+export const getRegionDetails = (regionid: string, subregionid: string) => {
+    let docpath = "regions/"+regionid + (subregionid ? ("/subregions/" + subregionid) : "");
+    let docRef = db.doc(docpath);
+    return new Promise<Region>((resolve, reject) => {
+        docRef.get().then((doc) => {
+            resolve(doc.data() as Region);
+        })
+    });
+};
+
+
+// Scenario/Task/Thread editing
+
+// Add Scenario
+export const addScenario = async(scenario:Scenario) =>  {
+    let scenarioRef = db.collection("scenarios").doc();
+    scenario.last_update = Date.now().toString();
+    scenario.last_update_user = "api";
+    scenario.id = scenarioRef.id;
+    await scenarioRef.set(scenario);
+    return scenarioRef.id;
+};
+
+// Add SubGoal
+export const addSubGoal = async (scenario:Scenario, subgoal: SubGoal) =>  {
+    let subgoalRef = db.collection("scenarios/"+scenario.id+"/subgoals").doc();
+    subgoal.id = subgoalRef.id;
+    await subgoalRef.set(subgoal);
+    updateScenario(scenario);
+    return subgoalRef.id;
+};
+
+// Add Pathway
+export const addPathway = async (scenario:Scenario, subgoalid: string, pathway:Pathway) =>  {
+    let pathwayRef = db.collection("scenarios/"+scenario.id+"/pathways").doc();
+    let pathwayinfo = {
+        id: pathwayRef.id,
+        name: pathway.name,
+        dates: pathway.dates
+    };
+    pathway.id = pathwayRef.id;
+    await Promise.all([
+        db.collection("scenarios/"+scenario.id+"/subgoals").doc(subgoalid).update({
+            [`pathways.${pathwayinfo.id}`]: pathwayinfo
+        }),
+        pathwayRef.set(pathway)
+    ]);
+    updateScenario(scenario);
+
+    return pathwayRef.id;
+};
+
+// Update Scenario
+export const updateScenario = (scenario: Scenario) =>  {
+    let scenarioRef = db.collection("scenarios").doc(scenario.id);
+    scenario.last_update = Date.now().toString();
+    scenario.last_update_user = "api";
+    if(!scenario.subregionid)
+        scenario.subregionid = null;
+    scenarioRef.set(scenario);
+};
+
+// Update Goal
+export const updateGoal = (scenario: Scenario, goal: Goal) =>  {
+    let goalRef = db.collection("scenarios/"+scenario.id+"/goals").doc(goal.id);
+    goalRef.set(goal).then(() => updateScenario(scenario));
+};
+
+// Update Sub Goal
+export const updateSubGoal = (scenario: Scenario, subgoal: SubGoal) =>  {
+    let goalRef = db.collection("scenarios/"+scenario.id+"/subgoals").doc(subgoal.id);
+    goalRef.set(subgoal).then(() => updateScenario(scenario));
+};
+
+// Update Pathway
 export const updatePathway = (scenario: Scenario, pathway: Pathway) =>  {
     let npathway = Object.assign({}, pathway);
     delete npathway.unsubscribe;
@@ -267,3 +386,14 @@ export const updatePathway = (scenario: Scenario, pathway: Pathway) =>  {
     //console.log(pathway);
     return pathwayRef.set(npathway); //.then(() => updateScenario(scenario));
 };
+
+export const updatePathwayInfo = (scenario: Scenario, subgoalid: string, pathwayinfo: PathwayInfo) => {
+    let pathwayRef = db.collection("scenarios/"+scenario.id+"/pathways").doc(pathwayinfo.id);
+    Promise.all([
+        db.collection("scenarios/"+scenario.id+"/subgoals").doc(subgoalid).update({
+            [`pathways.${pathwayinfo.id}`]: pathwayinfo
+        }),
+        pathwayRef.set(pathwayinfo, {merge: true})
+    ])
+    .then(() => updateScenario(scenario));
+}

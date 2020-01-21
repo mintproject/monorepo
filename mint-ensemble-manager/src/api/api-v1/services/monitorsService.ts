@@ -29,6 +29,13 @@ const monitorsService = {
         else {
             return createResponse("failure", "Problem " + thread.scenario_id + " not found !");
         }
+    },
+    async fetchRunStatus(scenarioid: string, threadid: string) {
+        let thread = await getPathway(scenarioid, threadid);
+        if(thread)
+            return thread.executable_ensemble_summary;
+        else 
+            return createResponse("failure", "Thread not found");
     }
 };
 

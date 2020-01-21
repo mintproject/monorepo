@@ -34,11 +34,6 @@ export const saveAndRunExecutableEnsemblesForModelLocally = async(modelid: strin
     let configs = getModelInputConfigurations(dataEnsemble, inputIds);
     
     if(configs != null) {
-        let component = await loadModelWCM(model.wcm_uri, prefs);
-
-        // Delete existing pathway ensemble ids (*NOT DELETING GLOBAL ENSEMBLE DOCUMENTS .. Only clearing list of the pathway's ensemble ids)
-        await deleteAllPathwayEnsembleIds(scenario.id, pathway.id, modelid);
-    
         // Setup some book-keeping to help in searching for results
         pathway.executable_ensemble_summary[modelid] = {
             total_runs: configs.length,
@@ -52,6 +47,12 @@ export const saveAndRunExecutableEnsemblesForModelLocally = async(modelid: strin
 
         await updatePathway(scenario, pathway);
         
+        // Load the component model
+        let component = await loadModelWCM(model.wcm_uri, prefs);
+
+        // Delete existing pathway ensemble ids (*NOT DELETING GLOBAL ENSEMBLE DOCUMENTS .. Only clearing list of the pathway's ensemble ids)
+        await deleteAllPathwayEnsembleIds(scenario.id, pathway.id, modelid);
+
         // Work in batches
         let batchSize = 100; // Deal with ensembles from firebase in this batch size
         let batchid = 0; // Use to create batchids in firebase for storing ensemble ids
