@@ -48,7 +48,7 @@ export const saveAndRunExecutableEnsemblesForModelLocally = async(modelid: strin
         await updatePathway(scenario, pathway);
         
         // Load the component model
-        let component = await loadModelWCM(model.wcm_uri, prefs);
+        let component = await loadModelWCM(model.wcm_uri, model, prefs);
 
         // Delete existing pathway ensemble ids (*NOT DELETING GLOBAL ENSEMBLE DOCUMENTS .. Only clearing list of the pathway's ensemble ids)
         await deleteAllPathwayEnsembleIds(scenario.id, pathway.id, modelid);

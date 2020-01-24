@@ -1,4 +1,4 @@
-import { Pathway, ExecutableEnsemble, MintPreferences, DataResource } from "../mint/mint-types";
+import { Pathway, ExecutableEnsemble, MintPreferences, DataResource, Model, ModelIO, ModelParameter } from "../mint/mint-types";
 import { Component, ComponentArgument, ComponentSeed } from "./local-execution-types";
 
 import fs from "fs-extra";
@@ -106,7 +106,7 @@ const _downloadWCM = async (url: string, prefs: MintPreferences) => {
     return modeldir;
 }
 
-const _getModelDetails = (modeldir: string) => {
+const _getModelDetailsFromYAML = (modeldir: string) => {
     let ymlfile = modeldir + "/wings-component.yml";
     if(!fs.existsSync(ymlfile)) {
         ymlfile = modeldir + "/wings-component.yaml";
@@ -127,6 +127,66 @@ const _getModelDetails = (modeldir: string) => {
     return comp;
 }
 
+const _getModelIODetails = (io: ModelIO, iotype: string) => {
+    if(!io.position) {
+        return null;
+    }
+    let pfx = (iotype == "input") ? "-i" : "-o";    
+    return {
+        role: io.name,
+        prefix: pfx + io.position,
+        isParam: false,
+        type: io.type
+    }
+}
+
+const _getModelParamDetails = (param: ModelParameter) => {
+    if(!param.position) {
+        return null;
+    }
+    return {
+        role: param.name,
+        prefix: "-p" + param.position,
+        isParam: true,
+        type: param.type
+    }
+}
+
+const _getModelDetails = (model: Model, modeldir: string) => {
+    let comp : Component = {
+        rundir: modeldir + "/src",
+        inputs: [],
+        outputs: [],
+    };
+    let ok = true;
+    model.input_files.map((input) => {
+        let details = _getModelIODetails(input, "input");
+        if(!details) 
+            ok = false;
+        else
+            comp.inputs.push(details);
+    })
+    model.input_parameters.map((param) => {
+        let details = _getModelParamDetails(param);
+        if(!details) 
+            ok = false;
+        else
+            comp.inputs.push(details);
+    })    
+    model.output_files.map((output) => {
+        let details = _getModelIODetails(output, "output");
+        if(!details) 
+            ok = false;
+        else
+            comp.outputs.push(details);
+    })    
+    if(ok) 
+        return comp;
+    else
+        return null;
+}
+
+
 export const getModelCacheDirectory = (url: string, prefs: MintPreferences) => {
     // Get zip file name from url
     let plainurl = url.replace(/\?.*$/, '');
@@ -138,9 +198,14 @@ export const getModelCacheDirectory = (url: string, prefs: MintPreferences) => {
     return modeldir;
 }
 
-export const loadModelWCM = async(url: string, prefs: MintPreferences) => {
+export const loadModelWCM = async(url: string, model: Model, prefs: MintPreferences) => {
     let modeldir = await _downloadWCM(url, prefs);
-    return _getModelDetails(modeldir);
+    let details = _getModelDetails(model, modeldir);
+    // If we cannot get the details from just the model cache, then try to get it from the yaml
+    if(!details) {
+        details = _getModelDetailsFromYAML(modeldir);
+    }
+    return details;
 }
 
 export const runModelLocally = (seed: ComponentSeed, prefs: MintPreferences) => {
