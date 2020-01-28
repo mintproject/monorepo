@@ -143,13 +143,29 @@ export const deleteExecutableCacheLocally = async(
     modelid: string,
     prefs: MintPreferences) => {
 
-for(let pmodelid in pathway.model_ensembles) {
-    if(!modelid || (modelid == pmodelid))
-        await deleteExecutableCacheForModelLocally(pmodelid, pathway, scenario, prefs);
-}
-console.log("Finished deleting all execution cache for local execution");
+    for(let pmodelid in pathway.model_ensembles) {
+        if(!modelid || (modelid == pmodelid))
+            await deleteExecutableCacheForModelLocally(pmodelid, pathway, scenario, prefs);
+    }
+    console.log("Finished deleting all execution cache for local execution");
 
-//monitorAllEnsembles(pathway, scenario, prefs);
+    //monitorAllEnsembles(pathway, scenario, prefs);
+}
+
+export const deleteModelInputCacheLocally = (
+    pathway: Pathway,
+    prefs: MintPreferences) => {
+
+    for(let dsid in pathway.datasets) {
+        let ds = pathway.datasets[dsid];
+        ds.resources.map((res) => {
+            let file = prefs.localex.datadir + "/" + res.name;
+            if(fs.existsSync(file)) {
+                fs.remove(file)
+            }
+        })
+    }
+
 }
 
 export const deleteExecutableCacheForModelLocally = async(modelid: string, 
@@ -172,6 +188,8 @@ export const deleteExecutableCacheForModelLocally = async(modelid: string,
         fs.remove(modeldir);
         fs.remove(modeldir + ".zip");
     }
+
+    deleteModelInputCacheLocally(pathway, prefs);
 
     // Remove all executable information and update the pathway
     pathway.executable_ensemble_summary[modelid].successful_runs = 0;
