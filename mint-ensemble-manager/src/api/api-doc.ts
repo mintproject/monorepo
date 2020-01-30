@@ -1,9 +1,10 @@
 const apiDoc = {
     swagger: '2.0',
     basePath: '/v1',
+    host: 'ensemble.mint.isi.edu',
     info: {
-      title: 'A getting started API.',
-      version: '1.0.0'
+      title: 'Ensemble Manager API',
+      version: '2.0.0'
     },
     definitions: {
       ModelThread: {
