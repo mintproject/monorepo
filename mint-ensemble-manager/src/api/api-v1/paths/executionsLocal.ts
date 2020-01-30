@@ -18,7 +18,7 @@ export default function(executionsLocalService: any) {
     }
 
     function DELETE(req: any, res: any, next: any) {
-      executionsLocalService.deleteExecutionCache(req.query.scenario_id, req.query.subgoal_id, req.query.thread_id).then((result: any) => {
+      executionsLocalService.deleteExecutionCache(req.body).then((result: any) => {
         if(result.result == "error") {
           res.status(406).json(result);
         }
@@ -61,19 +61,12 @@ export default function(executionsLocalService: any) {
       operationId: 'deleteLocalExecutionCache',
       parameters: [
         {
-          in: 'query',
-          name: 'scenario_id',
-          type: 'string'
-        },
-        {
-          in: 'query',
-          name: 'subgoal_id',
-          type: 'string'
-        },
-        {
-          in: 'query',
-          name: 'thread_id',
-          type: 'string'
+            in: 'body',
+            name: 'thread',
+            required: true,
+            schema: {
+                $ref: '#/definitions/ModelThread'
+            }
         }
       ],
       responses: {
