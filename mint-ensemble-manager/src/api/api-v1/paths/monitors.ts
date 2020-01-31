@@ -38,7 +38,7 @@ export default function(monitorsService: any) {
             name: 'thread',
             required: true,
             schema: {
-                $ref: '#/definitions/ModelThread'
+                $ref: '#/components/schemas/ModelThread'
             }
         }
       ],
@@ -47,10 +47,7 @@ export default function(monitorsService: any) {
               description: "Successful response"
           },
           default: {
-            description: 'An error occurred',
-            schema: {
-              additionalProperties: true
-            }
+            description: 'An error occurred'
           }
       }
     };
@@ -63,13 +60,17 @@ export default function(monitorsService: any) {
           in: 'query',
           name: 'scenario_id',
           required: true,
-          type: 'string'
+          schema: {
+            type: 'string'
+          }
         },
         {
             in: 'query',
             name: 'thread_id',
             required: true,
-            type: 'string'
+            schema: {
+              type: 'string'
+            }
         }
       ],
       responses: {
@@ -77,10 +78,7 @@ export default function(monitorsService: any) {
               description: "Thread Details"
           },
           default: {
-            description: 'An error occurred',
-            schema: {
-              additionalProperties: true
-            }
+            description: 'An error occurred'
           }
       }
     };

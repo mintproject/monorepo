@@ -26,7 +26,7 @@ export default function(threadsService: any) {
             name: 'thread',
             required: true,
             schema: {
-                $ref: '#/definitions/NewModelThread'
+                $ref: '#/components/schemas/NewModelThread'
             }
         }
       ],
@@ -35,10 +35,7 @@ export default function(threadsService: any) {
               description: "Successful response"
           },
           default: {
-            description: 'An error occurred',
-            schema: {
-              additionalProperties: true
-            }
+            description: 'An error occurred'
           }
       }
     };

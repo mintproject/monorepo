@@ -38,7 +38,7 @@ export default function(executionsLocalService: any) {
             name: 'thread',
             required: true,
             schema: {
-                $ref: '#/definitions/ModelThread'
+                $ref: '#/components/schemas/ModelThread'
             }
         }
       ],
@@ -47,10 +47,7 @@ export default function(executionsLocalService: any) {
               description: "Successful response"
           },
           default: {
-            description: 'An error occurred',
-            schema: {
-              additionalProperties: true
-            }
+            description: 'An error occurred'
           }
       }
     };
@@ -65,7 +62,7 @@ export default function(executionsLocalService: any) {
             name: 'thread',
             required: true,
             schema: {
-                $ref: '#/definitions/ModelThread'
+                $ref: '#/components/schemas/ModelThread'
             }
         }
       ],
@@ -74,10 +71,7 @@ export default function(executionsLocalService: any) {
               description: "Successful response"
           },
           default: {
-            description: 'An error occurred',
-            schema: {
-              additionalProperties: true
-            }
+            description: 'An error occurred'
           }
       }
     };

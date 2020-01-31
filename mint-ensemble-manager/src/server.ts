@@ -4,7 +4,6 @@ import path from "path";
 import cors from "cors";
 import swaggerUi from "swagger-ui-express";
 
-import v1ApiDoc from './api/api-doc';
 import v1ExecutionsService from './api/api-v1/services/executionsService';
 import v1ExecutionsLocalService from './api/api-v1/services/executionsLocalService';
 import v1MonitorsService from './api/api-v1/services/monitorsService';
@@ -18,6 +17,7 @@ const app = express();
 const port = 3000; // default port to listen
 const version = 'v1';
 
+var v1ApiDoc = require('./api/api-doc');
 app.use(bodyParser.json());
 app.use(cors());
 

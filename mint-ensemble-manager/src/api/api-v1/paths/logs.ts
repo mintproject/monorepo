@@ -20,7 +20,9 @@ export default function(logsService: any) {
             in: 'query',
             name: 'ensemble_id',
             required: true,
-            type: 'string'
+            schema: {
+              type: 'string'
+            }
         }
       ],
       responses: {
@@ -28,10 +30,7 @@ export default function(logsService: any) {
               description: "Log Details"
           },
           default: {
-            description: 'An error occurred',
-            schema: {
-              additionalProperties: true
-            }
+            description: 'An error occurred'
           }
       }
     };
