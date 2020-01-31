@@ -100,7 +100,7 @@ const _downloadWCM = async (url: string, prefs: MintPreferences) => {
 
     let codedir = prefs.localex.codedir;
     let modeldir = codedir + "/" + compname;
-    if(!fs.existsSync(modeldir)) {
+    if(!fs.existsSync(modeldir + "/src")) {
         await _downloadAndUnzipToDirectory(url, modeldir, compname);
     }
     return modeldir;
