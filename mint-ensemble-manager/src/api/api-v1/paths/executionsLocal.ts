@@ -32,16 +32,17 @@ export default function(executionsLocalService: any) {
     POST.apiDoc = {
       summary: 'Submit modeling thread for local execution.',
       operationId: 'submitLocalExecution',
-      parameters: [
-        {
-            in: 'body',
-            name: 'thread',
-            required: true,
+      requestBody: {
+        description: 'Modeling thread scenario/subgoal/id',
+        required: true,
+        content: {
+          'application/json': {
             schema: {
                 $ref: '#/components/schemas/ModelThread'
             }
+          }
         }
-      ],
+      },
       responses: {
           "202": {
               description: "Successful response"
@@ -56,16 +57,17 @@ export default function(executionsLocalService: any) {
     DELETE.apiDoc = {
       summary: 'Delete cached results, cached models and cached data for local execution.',
       operationId: 'deleteLocalExecutionCache',
-      parameters: [
-        {
-            in: 'body',
-            name: 'thread',
-            required: true,
+      requestBody: {
+        description: 'Modeling thread scenario/subgoal/id',
+        required: true,
+        content: {
+          'application/json': {
             schema: {
                 $ref: '#/components/schemas/ModelThread'
             }
+          }
         }
-      ],
+      },
       responses: {
           "202": {
               description: "Successful response"

@@ -32,16 +32,17 @@ export default function(monitorsService: any) {
     POST.apiDoc = {
       summary: 'Submit modeling thread for monitoring.',
       operationId: 'submitMonitor',
-      parameters: [
-        {
-            in: 'body',
-            name: 'thread',
-            required: true,
+      requestBody: {
+        description: 'Modeling thread scenario/subgoal/id',
+        required: true,
+        content: {
+          'application/json': {
             schema: {
                 $ref: '#/components/schemas/ModelThread'
             }
+          }
         }
-      ],
+      },
       responses: {
           "201": {
               description: "Successful response"

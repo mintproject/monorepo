@@ -20,16 +20,17 @@ export default function(threadsService: any) {
     POST.apiDoc = {
       summary: 'Create modeling thread in MINT.',
       operationId: 'createThread',
-      parameters: [
-        {
-            in: 'body',
-            name: 'thread',
-            required: true,
+      requestBody: {
+        description: 'New modeling thread details',
+        required: true,
+        content: {
+          'application/json': {
             schema: {
                 $ref: '#/components/schemas/NewModelThread'
             }
+          }
         }
-      ],
+      },
       responses: {
           "202": {
               description: "Successful response"

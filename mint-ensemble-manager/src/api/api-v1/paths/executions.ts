@@ -20,16 +20,17 @@ export default function(executionsService: any) {
     POST.apiDoc = {
       summary: 'Submit modeling thread for execution.',
       operationId: 'submitExecution',
-      parameters: [
-        {
-            in: 'body',
-            name: 'thread',
-            required: true,
+      requestBody: {
+        description: 'Modeling thread scenario/subgoal/id',
+        required: true,
+        content: {
+          'application/json': {
             schema: {
                 $ref: '#/components/schemas/ModelThread'
             }
+          }
         }
-      ],
+      },
       responses: {
           "202": {
               description: "Successful response"
