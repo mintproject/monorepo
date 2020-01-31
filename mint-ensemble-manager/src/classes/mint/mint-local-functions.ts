@@ -154,8 +154,10 @@ export const deleteExecutableCacheLocally = async(
 
 export const deleteModelInputCacheLocally = (
     pathway: Pathway,
+    modelid: string,
     prefs: MintPreferences) => {
 
+    // Delete the selected datasets
     for(let dsid in pathway.datasets) {
         let ds = pathway.datasets[dsid];
         ds.resources.map((res) => {
@@ -165,6 +167,28 @@ export const deleteModelInputCacheLocally = (
             }
         })
     }
+
+    // Also delete any model setup hardcoded input datasets
+    let model = pathway.models[modelid];
+    model.input_files.map((io) => {
+        if(io.value) {
+            // There is a hardcoded value in the model itself
+            let resources = io.value.resources;
+            if(resources.length > 0) {
+                let type = io.type.replace(/^.*#/, '');
+                resources.map((res) => {
+                    if(res.url) {
+                        let filename =  res.url.replace(/^.*(#|\/)/, '');
+                        filename = filename.replace(/^([0-9])/, '_$1');
+                        let file = prefs.localex.datadir + "/" + filename;
+                        if(fs.existsSync(file)) {
+                            fs.remove(file)
+                        }
+                    }
+                })
+            }
+        }
+    });
 
 }
 
@@ -189,7 +213,7 @@ export const deleteExecutableCacheForModelLocally = async(modelid: string,
         fs.remove(modeldir + ".zip");
     }
 
-    deleteModelInputCacheLocally(pathway, prefs);
+    deleteModelInputCacheLocally(pathway, modelid, prefs);
 
     // Remove all executable information and update the pathway
     pathway.executable_ensemble_summary[modelid].successful_runs = 0;
