@@ -92,14 +92,16 @@ const _downloadAndUnzipToDirectory = (url: string, modeldir: string, compname: s
     });
 }
 
-const _downloadWCM = async (url: string, prefs: MintPreferences) => {
+const _downloadWCM = async (url: string, model: Model, prefs: MintPreferences) => {
+    // Get the name of the model configuration
+    let model_configuation = Model.model_configuration
     // Get zip file name from url
     let plainurl = url.replace(/\?.*$/, '');
     let zipfile = plainurl.replace(/.+\//, "");
     let compname = zipfile.replace(/\.zip/i, "");
 
     let codedir = prefs.localex.codedir;
-    let modeldir = codedir + "/" + compname;
+    let modeldir = codedir + "/" + model_configuration + "_" + compname;
     if(!fs.existsSync(modeldir + "/src")) {
         await _downloadAndUnzipToDirectory(url, modeldir, compname);
     }
@@ -199,7 +201,7 @@ export const getModelCacheDirectory = (url: string, prefs: MintPreferences) => {
 }
 
 export const loadModelWCM = async(url: string, model: Model, prefs: MintPreferences) => {
-    let modeldir = await _downloadWCM(url, prefs);
+    let modeldir = await _downloadWCM(url, model, prefs);
     let details = _getModelDetails(model, modeldir);
     // If we cannot get the details from just the model cache, then try to get it from the yaml
     if(!details) {
