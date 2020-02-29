@@ -94,7 +94,7 @@ const _downloadAndUnzipToDirectory = (url: string, modeldir: string, compname: s
 
 const _downloadWCM = async (url: string, model: Model, prefs: MintPreferences) => {
     // Get the name of the model configuration
-    let model_configuration = model.model_configuration
+    let model_configuation = Model.model_configuration
     // Get zip file name from url
     let plainurl = url.replace(/\?.*$/, '');
     let zipfile = plainurl.replace(/.+\//, "");
