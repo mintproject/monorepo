@@ -1,5 +1,5 @@
 import { Pathway, Model, DataEnsembleMap, Scenario, MintPreferences, ExecutableEnsembleSummary, ExecutableEnsemble } from "./mint-types";
-import { getModelInputEnsembles, getModelInputConfigurations, deleteAllPathwayEnsembleIds, setPathwayEnsembleIds, getEnsembleHash, listAlreadyRunEnsembleIds, getAllPathwayEnsembleIds, listEnsembles, updatePathwayEnsembles, updatePathway, setPathwayEnsembles, deletePathwayEnsembles } from "./firebase-functions";
+import { getModelInputEnsembles, getModelInputConfigurations, deleteAllPathwayEnsembleIds, setPathwayEnsembleIds, getEnsembleHash, listAlreadyRunEnsembleIds, getAllPathwayEnsembleIds, listEnsembles, updatePathwayEnsembles, updatePathway, setPathwayEnsembles, deletePathwayEnsembles, updatePathwayExecutionSummary } from "./firebase-functions";
 import { runModelEnsemblesLocally, loadModelWCM, getModelCacheDirectory } from "../localex/local-execution-functions";
 
 import fs from "fs-extra";
@@ -54,7 +54,7 @@ export const saveAndRunExecutableEnsemblesForModelLocally = async(modelid: strin
         await deleteAllPathwayEnsembleIds(scenario.id, pathway.id, modelid);
 
         // Work in batches
-        let batchSize = 100; // Deal with ensembles from firebase in this batch size
+        let batchSize = 500; // Deal with ensembles from firebase in this batch size
         let batchid = 0; // Use to create batchids in firebase for storing ensemble ids
 
         // Run models locally in these number of parallel threads
@@ -103,8 +103,8 @@ export const saveAndRunExecutableEnsemblesForModelLocally = async(modelid: strin
             updatePathway(scenario, pathway);
 
             // Run ensembles in smaller batches
-            for(let i=0; i<ensembles.length; i+= executionBatchSize) {
-                let eslice = ensembles.slice(i, i+executionBatchSize);
+            for(let j=0; j<ensembles.length; j+= executionBatchSize) {
+                let eslice = ensembles.slice(j, j+executionBatchSize);
                 // Get ensembles that arent already run
                 let eslice_nr = eslice.filter((ensemble) => current_ensemble_ids.indexOf(ensemble.id) < 0);
                 if(eslice_nr.length > 0) {
@@ -112,7 +112,7 @@ export const saveAndRunExecutableEnsemblesForModelLocally = async(modelid: strin
 
                     // Store the ensembles in Firebase (empty status)
                     await setPathwayEnsembles(eslice_nr);
-                    updatePathway(scenario, pathway);
+                    await updatePathwayExecutionSummary(scenario, pathway);
 
                     // The following will create multiple threads and update the ensembles inside the thread itself
                     eslice_nr = await runModelEnsemblesLocally(pathway, component, eslice_nr, prefs);
@@ -127,7 +127,7 @@ export const saveAndRunExecutableEnsemblesForModelLocally = async(modelid: strin
 
                     // Store the updated ensembles in Firebase (updated status)
                     await setPathwayEnsembles(eslice_nr);
-                    updatePathway(scenario, pathway);
+                    await updatePathwayExecutionSummary(scenario, pathway);
                 }
             }
 

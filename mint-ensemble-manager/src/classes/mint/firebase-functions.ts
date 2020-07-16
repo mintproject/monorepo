@@ -383,6 +383,13 @@ export const updatePathway = (scenario: Scenario, pathway: Pathway) =>  {
     return pathwayRef.set(npathway); //.then(() => updateScenario(scenario));
 };
 
+// Update Pathway Execution Summary
+export const updatePathwayExecutionSummary = (scenario: Scenario, pathway: Pathway) =>  {
+    return db.collection("scenarios/"+scenario.id+"/pathways").doc(pathway.id).update({
+        executable_ensemble_summary: pathway.executable_ensemble_summary
+    });
+};
+
 export const updatePathwayInfo = (scenario: Scenario, subgoalid: string, pathwayinfo: PathwayInfo) => {
     let pathwayRef = db.collection("scenarios/"+scenario.id+"/pathways").doc(pathwayinfo.id);
     Promise.all([
