@@ -10,3 +10,5 @@ export const initializeFirebase = () => {
 let app = initializeFirebase();
 export const db = admin.firestore(app);
 export const fieldValue = admin.firestore.FieldValue;
+export const fieldPath = admin.firestore.FieldPath;
+export const increment = admin.firestore.FieldValue.increment(1);

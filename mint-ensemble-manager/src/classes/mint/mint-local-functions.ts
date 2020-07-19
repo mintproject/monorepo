@@ -1,8 +1,15 @@
 import { Pathway, Model, DataEnsembleMap, Scenario, MintPreferences, ExecutableEnsembleSummary, ExecutableEnsemble } from "./mint-types";
-import { getModelInputEnsembles, getModelInputConfigurations, deleteAllPathwayEnsembleIds, setPathwayEnsembleIds, getEnsembleHash, listAlreadyRunEnsembleIds, getAllPathwayEnsembleIds, listEnsembles, updatePathwayEnsembles, updatePathway, setPathwayEnsembles, deletePathwayEnsembles, updatePathwayExecutionSummary } from "./firebase-functions";
+import { getModelInputEnsembles, getModelInputConfigurations, deleteAllPathwayEnsembleIds, setPathwayEnsembleIds, getEnsembleHash, successfulEnsembleIds, getAllPathwayEnsembleIds, listEnsembles, updatePathwayEnsembles, updatePathway, setPathwayEnsembles, deletePathwayEnsembles, updatePathwayExecutionSummary } from "./firebase-functions";
 import { runModelEnsemblesLocally, loadModelWCM, getModelCacheDirectory } from "../localex/local-execution-functions";
 
 import fs from "fs-extra";
+
+import Queue from "bull";
+import {MONITOR_QUEUE_NAME, REDIS_URL } from "../../config/redis";
+import { monitorThread } from "../localex/thread-execution-monitor";
+
+let monitorQueue = new Queue(MONITOR_QUEUE_NAME, REDIS_URL);
+monitorQueue.process((job) => monitorThread(job));
 
 export const saveAndRunExecutableEnsemblesLocally = async(
         pathway: Pathway, 
@@ -11,12 +18,14 @@ export const saveAndRunExecutableEnsemblesLocally = async(
         prefs: MintPreferences) => {
 
     for(let pmodelid in pathway.model_ensembles) {
-        if(!modelid || (modelid == pmodelid))
+        if(!modelid || (modelid == pmodelid)) {
             await saveAndRunExecutableEnsemblesForModelLocally(pmodelid, pathway, scenario, prefs);
+            monitorQueue.add({ scenario_id: scenario.id, pathway_id: pathway.id, model_id: modelid } , {
+                delay: 1000*30 // 30 seconds delay before monitoring for the first time
+            });
+        }
     }
-    console.log("Finished sending all ensembles for local execution");
-
-    //monitorAllEnsembles(pathway, scenario, prefs);
+    console.log("Finished sending all ensembles for local execution. Adding Monitor");
 }
 
 export const saveAndRunExecutableEnsemblesForModelLocally = async(modelid: string, 
@@ -31,11 +40,19 @@ export const saveAndRunExecutableEnsemblesForModelLocally = async(modelid: strin
     let ensemble_details = getModelInputEnsembles(model, pathway);
     let dataEnsemble = ensemble_details[0] as DataEnsembleMap;
     let inputIds = ensemble_details[1] as string[];
+
+    // This is the part that creates all different run configurations
+    // - Cross product of all input collections
+    // - TODO: Change to allow flexibility
     let configs = getModelInputConfigurations(dataEnsemble, inputIds);
     
     if(configs != null) {
+        /*
+            Pre-Run Setup
+        */
+
         // Setup some book-keeping to help in searching for results
-        pathway.executable_ensemble_summary[modelid] = {
+        let summary = {
             total_runs: configs.length,
             submitted_runs : 0,
             failed_runs: 0,
@@ -45,7 +62,7 @@ export const saveAndRunExecutableEnsemblesForModelLocally = async(modelid: strin
             submission_time: Date.now() - 20000 // Less 20 seconds to counter for clock skews
         } as ExecutableEnsembleSummary
 
-        await updatePathway(scenario, pathway);
+        await updatePathwayExecutionSummary(scenario.id, pathway.id, modelid, summary);
         
         // Load the component model
         let component = await loadModelWCM(model.wcm_uri, model, prefs);
@@ -55,11 +72,8 @@ export const saveAndRunExecutableEnsemblesForModelLocally = async(modelid: strin
 
         // Work in batches
         let batchSize = 500; // Deal with ensembles from firebase in this batch size
-        let batchid = 0; // Use to create batchids in firebase for storing ensemble ids
+        let batchid = 0;
 
-        // Run models locally in these number of parallel threads
-        let executionBatchSize = prefs.localex.parallelism ? prefs.localex.parallelism : 10; 
-        
         // Create ensembles in batches
         for(let i=0; i<configs.length; i+= batchSize) {
             let bindings = configs.slice(i, i+batchSize);
@@ -90,48 +104,31 @@ export const saveAndRunExecutableEnsemblesForModelLocally = async(modelid: strin
                 ensembles.push(ensemble);
             })
 
-            // Save pathway ensemble ids (to be used for later retrieval of ensembles)
             setPathwayEnsembleIds(scenario.id, pathway.id, model.id, batchid, ensembleids);
 
             // Check if any current ensembles already exist 
             // - Note: ensemble ids are uniquely defined by the model id and inputs
-            let all_ensemble_ids : any[] = await listAlreadyRunEnsembleIds(ensembleids);
-            let current_ensemble_ids = all_ensemble_ids.filter((eid) => eid); // Filter for null/undefined ensemble ids
+            let all_ensembles : ExecutableEnsemble[] = await listEnsembles(ensembleids);
+            let successful_ensemble_ids = all_ensembles
+                .filter((e) => (e != null && e.status == "SUCCESS"))
+                .map((e) => e.id);
 
-            pathway.executable_ensemble_summary[modelid].submitted_runs += current_ensemble_ids.length;
-            pathway.executable_ensemble_summary[modelid].successful_runs += current_ensemble_ids.length;
-            updatePathway(scenario, pathway);
+            let ensembles_to_be_run = ensembles.filter((e) => successful_ensemble_ids.indexOf(e.id) < 0);
 
-            // Run ensembles in smaller batches
-            for(let j=0; j<ensembles.length; j+= executionBatchSize) {
-                let eslice = ensembles.slice(j, j+executionBatchSize);
-                // Get ensembles that arent already run
-                let eslice_nr = eslice.filter((ensemble) => current_ensemble_ids.indexOf(ensemble.id) < 0);
-                if(eslice_nr.length > 0) {
-                    pathway.executable_ensemble_summary[modelid].submitted_runs += eslice_nr.length;
+            // Clear out the pathway ensembles to be empty
+            // setPathwayEnsembles(ensembles_to_be_run);
+            // Clear out the pathway ensembles to be empty
+            await setPathwayEnsembles(ensembles_to_be_run);
 
-                    // Store the ensembles in Firebase (empty status)
-                    await setPathwayEnsembles(eslice_nr);
-                    await updatePathwayExecutionSummary(scenario, pathway);
+            summary.submitted_runs += ensembles.length;
+            summary.successful_runs += successful_ensemble_ids.length;
+            updatePathwayExecutionSummary(scenario.id, pathway.id, modelid, summary);
 
-                    // The following will create multiple threads and update the ensembles inside the thread itself
-                    eslice_nr = await runModelEnsemblesLocally(pathway, component, eslice_nr, prefs);
-
-                    // Update the ensemble summary
-                    eslice_nr.map((finished_ensemble) => {
-                        if(finished_ensemble.status == "FAILURE")
-                            pathway.executable_ensemble_summary[modelid].failed_runs++;
-                        else if(finished_ensemble.status == "SUCCESS")
-                            pathway.executable_ensemble_summary[modelid].successful_runs++;
-                    });
-
-                    // Store the updated ensembles in Firebase (updated status)
-                    await setPathwayEnsembles(eslice_nr);
-                    await updatePathwayExecutionSummary(scenario, pathway);
-                }
-            }
-
-            batchid++;
+            // Run the model ensembles
+            runModelEnsemblesLocally(pathway, component, ensembles_to_be_run, scenario.id, prefs);
+            
+            batchid ++;
+            
         }
     }
     console.log("Finished submitting all executions for model: " + modelid);
@@ -198,13 +195,21 @@ export const deleteExecutableCacheForModelLocally = async(modelid: string,
     prefs: MintPreferences) => {
 
     let model = pathway.models[modelid];
-    let ensembleids = await getAllPathwayEnsembleIds(scenario.id, pathway.id, modelid);
+    let all_ensemble_ids = await getAllPathwayEnsembleIds(scenario.id, pathway.id, modelid);
 
     // Delete existing pathway ensemble ids (*NOT DELETING GLOBAL ENSEMBLE DOCUMENTS .. Only clearing list of the pathway's ensemble ids)
-    await deleteAllPathwayEnsembleIds(scenario.id, pathway.id, modelid);
+    deleteAllPathwayEnsembleIds(scenario.id, pathway.id, modelid);
 
-    // Delete the actual ensemble documents
-    await deletePathwayEnsembles(ensembleids);
+    // Work in batches
+    let batchSize = 500; // Deal with ensembles from firebase in this batch size
+
+    // Process ensembles in batches
+    for(let i=0; i<all_ensemble_ids.length; i+= batchSize) {
+        let ensembleids = all_ensemble_ids.slice(i, i+batchSize);
+           
+        // Delete the actual ensemble documents
+        deletePathwayEnsembles(ensembleids);
+    }
 
     // Delete cached model directory and zip file
     let modeldir = getModelCacheDirectory(model.wcm_uri, prefs);
@@ -214,13 +219,14 @@ export const deleteExecutableCacheForModelLocally = async(modelid: string,
     }
 
     deleteModelInputCacheLocally(pathway, modelid, prefs);
-
+    
     // Remove all executable information and update the pathway
-    pathway.executable_ensemble_summary[modelid].successful_runs = 0;
-    pathway.executable_ensemble_summary[modelid].failed_runs = 0;
-    pathway.executable_ensemble_summary[modelid].submitted_runs = 0;
-    pathway.executable_ensemble_summary[modelid].submission_time = 0;
-    pathway.executable_ensemble_summary[modelid].submitted_for_execution = false;
+    let summary = pathway.executable_ensemble_summary[modelid];
+    summary.successful_runs = 0;
+    summary.failed_runs = 0;
+    summary.submitted_runs = 0;
+    summary.submission_time = 0;
+    summary.submitted_for_execution = false;
 
-    await updatePathway(scenario, pathway);
+    await updatePathwayExecutionSummary(scenario.id, pathway.id, modelid, summary);
 }

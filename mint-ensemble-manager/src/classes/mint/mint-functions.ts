@@ -1,6 +1,6 @@
 import { Pathway, Model, DataEnsembleMap, Scenario, MintPreferences, ExecutableEnsembleSummary, ExecutableEnsemble, DataResource } from "./mint-types";
 import { setupModelWorkflow, fetchWingsTemplate, loginToWings, runModelEnsembles, fetchWingsRunsStatuses, fetchWingsRunResults } from "../wings/wings-functions";
-import { getModelInputEnsembles, getModelInputConfigurations, deleteAllPathwayEnsembleIds, setPathwayEnsembleIds, addPathwayEnsembles, getEnsembleHash, listAlreadyRunEnsembleIds, getAllPathwayEnsembleIds, listEnsembles, updatePathwayEnsembles, updatePathway, getPathway } from "./firebase-functions";
+import { getModelInputEnsembles, getModelInputConfigurations, deleteAllPathwayEnsembleIds, setPathwayEnsembleIds, addPathwayEnsembles, getEnsembleHash, successfulEnsembleIds, getAllPathwayEnsembleIds, listEnsembles, updatePathwayEnsembles, updatePathway, getPathway } from "./firebase-functions";
 
 export const saveAndRunExecutableEnsembles = async(
         pathway: Pathway, 
@@ -91,7 +91,7 @@ export const saveAndRunExecutableEnsemblesForModel = async(modelid: string,
 
             // Check if any current ensembles already exist 
             // - Note: ensemble ids are uniquely defined by the model id and inputs
-            let all_ensemble_ids : any[] = await listAlreadyRunEnsembleIds(ensembleids);
+            let all_ensemble_ids : any[] = await successfulEnsembleIds(ensembleids);
             let current_ensemble_ids = all_ensemble_ids.filter((eid) => eid); // Filter for null/undefined ensemble ids
 
             // Run ensembles in smaller batches

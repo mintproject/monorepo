@@ -1,6 +1,6 @@
-import { Model, Pathway, DataEnsembleMap, ExecutableEnsemble, DataResource, Scenario, MintPreferences, SubGoal, Goal, PathwayInfo, Region } from "./mint-types";
+import { Model, Pathway, DataEnsembleMap, ExecutableEnsemble, DataResource, Scenario, MintPreferences, SubGoal, Goal, PathwayInfo, Region, ExecutableEnsembleSummary } from "./mint-types";
 import { Md5 } from 'ts-md5/dist/md5'
-import { db, fieldValue } from "../../config/firebase";
+import { db, fieldPath, increment } from "../../config/firebase";
 import { isObject } from "util";
 import { WriteResult, QuerySnapshot, DocumentSnapshot } from "@google-cloud/firestore";
 
@@ -8,6 +8,16 @@ export const fetchMintConfig = (): Promise<MintPreferences> => {
     return new Promise<MintPreferences>((resolve, reject) => {
         db.doc("configs/main").get().then((doc) => {
             let prefs = doc.data() as MintPreferences;
+            
+            // TEMPORARY
+            prefs.ensemble_manager_api = "http://localhost:3000/v1";
+            prefs.localex.datadir = "/Users/varun/mintproject/data";
+            prefs.localex.codedir = "/Users/varun/mintproject/code";
+            prefs.localex.logdir = "/Users/varun/mintproject/logs";
+            prefs.localex.dataurl = "file:///Users/varun/mintproject/data";
+            prefs.localex.logurl = "file:///Users/varun/mintproject/logs";
+            // END TEMPORARY
+
             if(prefs.execution_engine == "wings") {
               fetch(prefs.wings.server + "/config").then((res) => {
                 res.json().then((wdata) => {
@@ -182,7 +192,8 @@ export const deleteAllPathwayEnsembleIds = async (scenarioid: string, pathwayid:
 
 export const getAllPathwayEnsembleIds = async (scenarioid: string, pathwayid: string,
     modelid: string) : Promise<string[]> => {
-    let pathwayEnsembleIdsRef = db.collection("scenarios").doc(scenarioid).collection("pathways").doc(pathwayid).collection("ensembleids")
+    let pathwayEnsembleIdsRef = db.collection("scenarios").doc(scenarioid).collection("pathways").doc(pathwayid)
+        .collection("ensembleids")
         .where("modelid", "==", modelid);
 
     return pathwayEnsembleIdsRef.get().then((snapshot: QuerySnapshot) => {
@@ -199,9 +210,11 @@ export const listEnsembles = (ensembleids: string[]) : Promise<ExecutableEnsembl
     let ensemblesRef = db.collection("ensembles");
     return Promise.all(ensembleids.map((ensembleid) => {
         return ensemblesRef.doc(ensembleid).get().then((sdoc) => {
-            let ensemble = sdoc.data() as ExecutableEnsemble;
-            ensemble.id = sdoc.id;
-            return ensemble;
+            if(sdoc.exists) {
+                let ensemble = sdoc.data() as ExecutableEnsemble;
+                ensemble.id = sdoc.id;
+                return ensemble;
+            }
         })
     }));
 };
@@ -218,7 +231,7 @@ export const listExistingEnsembleIds = (ensembleids: string[]) : Promise<string[
 };
 
 // List Ensemble Ids (i.e. which ensemble ids exist)
-export const listAlreadyRunEnsembleIds = (ensembleids: string[]) : Promise<string[]> => {
+export const successfulEnsembleIds = (ensembleids: string[]) : Promise<string[]> => {
     let ensemblesRef = db.collection("ensembles");
     return Promise.all(ensembleids.map((ensembleid) => {
         return ensemblesRef.doc(ensembleid).get().then((sdoc) => {
@@ -309,6 +322,20 @@ export const getRegionDetails = (regionid: string, subregionid: string) => {
     });
 };
 
+export const updatePathwayEnsembleStatus = (ensemble: ExecutableEnsemble) => {
+    let ensembleRef = db.collection("ensembles").doc(ensemble.id);
+    return ensembleRef.update({
+        run_progress: ensemble.run_progress,
+        status: ensemble.status,
+        results: ensemble.results
+    });
+};
+
+export const saveEnsemble = (ensemble: ExecutableEnsemble) => {
+    let ensembleRef = db.collection("ensembles").doc(ensemble.id);
+    return ensembleRef.set(ensemble);
+};
+
 
 // Scenario/Task/Thread editing
 
@@ -384,10 +411,28 @@ export const updatePathway = (scenario: Scenario, pathway: Pathway) =>  {
 };
 
 // Update Pathway Execution Summary
-export const updatePathwayExecutionSummary = (scenario: Scenario, pathway: Pathway) =>  {
-    return db.collection("scenarios/"+scenario.id+"/pathways").doc(pathway.id).update({
-        executable_ensemble_summary: pathway.executable_ensemble_summary
-    });
+export const updatePathwayExecutionSummary = (scenarioid: string, pathwayid: string, 
+        modelid: string, summary: ExecutableEnsembleSummary) =>  {
+    let field = new fieldPath("executable_ensemble_summary", modelid);
+    return db.collection("scenarios/"+scenarioid+"/pathways").doc(pathwayid).update(
+        field, summary
+    );
+};
+
+// Increment pathway successful runs
+export const incrementPathwaySuccessfulRuns = (scenarioid: string, pathwayid: string, modelid: string) =>  {
+    let field = new fieldPath("executable_ensemble_summary", modelid, "successful_runs");
+    return db.collection("scenarios/"+scenarioid+"/pathways").doc(pathwayid).update(
+        field, increment
+    );
+};
+
+// Increment pathway failed runs
+export const incrementPathwayFailedRuns = (scenarioid: string, pathwayid: string, modelid: string) =>  {
+    let field = new fieldPath("executable_ensemble_summary", modelid, "failed_runs");
+    return db.collection("scenarios/"+scenarioid+"/pathways").doc(pathwayid).update(
+        field, increment
+    );
 };
 
 export const updatePathwayInfo = (scenario: Scenario, subgoalid: string, pathwayinfo: PathwayInfo) => {

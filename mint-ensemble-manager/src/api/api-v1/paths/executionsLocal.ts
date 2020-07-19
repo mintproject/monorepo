@@ -3,7 +3,8 @@
 export default function(executionsLocalService: any) {
     let operations = {
       POST,
-      DELETE
+      DELETE,
+      EMPTY
     };
    
     function POST(req: any, res: any, next: any) {
@@ -26,7 +27,18 @@ export default function(executionsLocalService: any) {
           res.status(202).json(result);
         }
       });
-    }    
+    }
+    
+    function EMPTY(req:any, res: any, next: any) {
+      executionsLocalService.emptyExecutionQueue().then((result: any) => {
+        if(result.result == "error") {
+          res.status(406).json(result);
+        }
+        else {
+          res.status(202).json(result);
+        }
+      });
+    }
    
     // NOTE: We could also use a YAML string here.
     POST.apiDoc = {
@@ -52,6 +64,8 @@ export default function(executionsLocalService: any) {
           }
       }
     };
+
+
   
     // NOTE: We could also use a YAML string here.
     DELETE.apiDoc = {
@@ -68,6 +82,20 @@ export default function(executionsLocalService: any) {
           }
         }
       },
+      responses: {
+          "202": {
+              description: "Successful response"
+          },
+          default: {
+            description: 'An error occurred'
+          }
+      }
+    };
+
+    // NOTE: We could also use a YAML string here.
+    EMPTY.apiDoc = {
+      summary: 'Empty Local Execution Queue.',
+      operationId: 'emptyExecutionQueue',
       responses: {
           "202": {
               description: "Successful response"

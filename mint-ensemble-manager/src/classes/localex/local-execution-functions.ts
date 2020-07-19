@@ -1,22 +1,30 @@
 import { Pathway, ExecutableEnsemble, MintPreferences, DataResource, Model, ModelIO, ModelParameter } from "../mint/mint-types";
-import { Component, ComponentArgument, ComponentSeed } from "./local-execution-types";
+import { Component, ComponentSeed } from "./local-execution-types";
 
+import path from "path";
 import fs from "fs-extra";
 import request from "request";
 import yauzl from "yauzl";
 import yaml from "js-yaml";
-import { Md5 } from "ts-md5";
-import os from "os";
 
-import child_process, { ChildProcess } from "child_process";
-import { updatePathwayEnsembles } from "../mint/firebase-functions";
+import Queue from "bull";
+import { CONCURRENCY, EXECUTION_QUEUE_NAME, REDIS_URL } from "../../config/redis";
 
-const _downloadFile = (url: string, filepath: string) : Promise<void> => {
+var appDir = path.dirname(require.main.filename);
+let executionQueue = new Queue(EXECUTION_QUEUE_NAME, REDIS_URL);
+executionQueue.process(CONCURRENCY, appDir + '/../dist/classes/localex/seed-execution.js');
+
+// You can listen to global events to get notified when jobs are processed
+/*executionQueue.on('global:completed', (jobId, result) => {
+    console.log(`Job completed with result ${result}`);
+});*/
+
+const _downloadFile = (url: string, filepath: string): Promise<void> => {
     const file = fs.createWriteStream(filepath);
     return new Promise<void>((resolve, reject) => {
-        request.get(url).on('response', (res)=> {
+        request.get(url).on('response', (res) => {
             res.pipe(file);
-            res.on( 'end', function(){
+            res.on('end', function () {
                 resolve();
             });
         });
@@ -24,22 +32,22 @@ const _downloadFile = (url: string, filepath: string) : Promise<void> => {
 }
 
 // TODO: Unzip the wcm zip file
-const _unzipFile = (zipfile: string, dirname: string, topdir: string) : Promise<string> => {
+const _unzipFile = (zipfile: string, dirname: string, topdir: string): Promise<string> => {
     return new Promise<string>((resolve, reject) => {
         fs.mkdirSync(dirname);
-        yauzl.open(zipfile, {lazyEntries: true}, function(err, zipfile) {
+        yauzl.open(zipfile, { lazyEntries: true }, function (err, zipfile) {
             if (err) throw err;
             zipfile.readEntry();
-            zipfile.on("entry", function(entry) {
+            zipfile.on("entry", function (entry) {
                 // Ignore some files/directories
-                if(entry.fileName.match(/__MACOSX/) || entry.fileName.match(/.DS_Store/i)) {
+                if (entry.fileName.match(/__MACOSX/) || entry.fileName.match(/.DS_Store/i)) {
                     zipfile.readEntry();
                     return;
                 }
                 // Only process if this is a subtree from the required topdir
-                if(entry.fileName.indexOf(topdir) == 0) {
-                    let filename = entry.fileName.substr(topdir.length+1);
-                    if(!filename) {
+                if (entry.fileName.indexOf(topdir) == 0) {
+                    let filename = entry.fileName.substr(topdir.length + 1);
+                    if (!filename) {
                         zipfile.readEntry();
                         return;
                     }
@@ -49,15 +57,15 @@ const _unzipFile = (zipfile: string, dirname: string, topdir: string) : Promise<
                         fs.mkdirSync(dirname + "/" + filename);
                     } else {
                         // Files
-                        zipfile.openReadStream(entry, function(err, readStream) {
+                        zipfile.openReadStream(entry, function (err, readStream) {
                             if (err) throw err;
-                            readStream.on("end", function() {
+                            readStream.on("end", function () {
                                 zipfile.readEntry();
                             });
-                            let filepath = dirname + "/" +filename;
+                            let filepath = dirname + "/" + filename;
                             let outstream = fs.createWriteStream(filepath)
                             readStream.pipe(outstream);
-                            readStream.on( 'end', () => {
+                            readStream.on('end', () => {
                                 // Make it executable
                                 outstream.close();
                                 fs.chmodSync(filepath, "755");
@@ -67,7 +75,7 @@ const _unzipFile = (zipfile: string, dirname: string, topdir: string) : Promise<
                 }
 
             });
-            zipfile.once("end", function() {
+            zipfile.once("end", function () {
                 resolve(dirname);
                 zipfile.close();
             });
@@ -80,7 +88,7 @@ const _downloadAndUnzipToDirectory = (url: string, modeldir: string, compname: s
     return new Promise<void>((resolve, reject) => {
         _downloadFile(url, zipfile).then(() => {
             // Unzip file
-            if(fs.existsSync(zipfile)) {
+            if (fs.existsSync(zipfile)) {
                 _unzipFile(zipfile, modeldir, compname).then(() => {
                     resolve();
                 })
@@ -100,7 +108,7 @@ const _downloadWCM = async (url: string, prefs: MintPreferences) => {
 
     let codedir = prefs.localex.codedir;
     let modeldir = codedir + "/" + compname;
-    if(!fs.existsSync(modeldir + "/src")) {
+    if (!fs.existsSync(modeldir + "/src")) {
         await _downloadAndUnzipToDirectory(url, modeldir, compname);
     }
     return modeldir;
@@ -108,10 +116,10 @@ const _downloadWCM = async (url: string, prefs: MintPreferences) => {
 
 const _getModelDetailsFromYAML = (modeldir: string) => {
     let ymlfile = modeldir + "/wings-component.yml";
-    if(!fs.existsSync(ymlfile)) {
+    if (!fs.existsSync(ymlfile)) {
         ymlfile = modeldir + "/wings-component.yaml";
     }
-    let comp : Component = {
+    let comp: Component = {
         rundir: modeldir + "/src",
         inputs: [],
         outputs: [],
@@ -128,10 +136,10 @@ const _getModelDetailsFromYAML = (modeldir: string) => {
 }
 
 const _getModelIODetails = (io: ModelIO, iotype: string) => {
-    if(!io.position) {
+    if (!io.position) {
         return null;
     }
-    let pfx = (iotype == "input") ? "-i" : "-o";    
+    let pfx = (iotype == "input") ? "-i" : "-o";
     return {
         role: io.name,
         prefix: pfx + io.position,
@@ -141,7 +149,7 @@ const _getModelIODetails = (io: ModelIO, iotype: string) => {
 }
 
 const _getModelParamDetails = (param: ModelParameter) => {
-    if(!param.position) {
+    if (!param.position) {
         return null;
     }
     return {
@@ -153,7 +161,7 @@ const _getModelParamDetails = (param: ModelParameter) => {
 }
 
 const _getModelDetails = (model: Model, modeldir: string) => {
-    let comp : Component = {
+    let comp: Component = {
         rundir: modeldir + "/src",
         inputs: [],
         outputs: [],
@@ -161,26 +169,26 @@ const _getModelDetails = (model: Model, modeldir: string) => {
     let ok = true;
     model.input_files.map((input) => {
         let details = _getModelIODetails(input, "input");
-        if(!details) 
+        if (!details)
             ok = false;
         else
             comp.inputs.push(details);
     })
     model.input_parameters.map((param) => {
         let details = _getModelParamDetails(param);
-        if(!details) 
+        if (!details)
             ok = false;
         else
             comp.inputs.push(details);
-    })    
+    })
     model.output_files.map((output) => {
         let details = _getModelIODetails(output, "output");
-        if(!details) 
+        if (!details)
             ok = false;
         else
             comp.outputs.push(details);
-    })    
-    if(ok) 
+    })
+    if (ok)
         return comp;
     else
         return null;
@@ -198,236 +206,113 @@ export const getModelCacheDirectory = (url: string, prefs: MintPreferences) => {
     return modeldir;
 }
 
-export const loadModelWCM = async(url: string, model: Model, prefs: MintPreferences) => {
+export const loadModelWCM = async (url: string, model: Model, prefs: MintPreferences) => {
     let modeldir = await _downloadWCM(url, prefs);
     let details = _getModelDetails(model, modeldir);
     // If we cannot get the details from just the model cache, then try to get it from the yaml
-    if(!details) {
+    if (!details) {
         details = _getModelDetailsFromYAML(modeldir);
     }
     return details;
 }
 
-export const runModelLocally = (seed: ComponentSeed, prefs: MintPreferences) => {
-    return new Promise<ExecutableEnsemble>((resolve, reject) => {
-        let comp = seed.component;
-        let inputdir = prefs.localex.datadir;
-        let outputdir = prefs.localex.datadir;
-    
-        // Create temporary directory
-        let ostmp = os.tmpdir();
-        let tmpprefix = ostmp + "/" + seed.ensemble.modelid.replace(/.*\//, '');
-        let tempdir = fs.mkdtempSync(tmpprefix);
-    
-        // Copy component run directory to tempdir
-        fs.copySync(comp.rundir, tempdir);
-    
-        // Set the execution engine used for this ensemble
-        seed.ensemble.execution_engine = "localex";
+// Create Jobs (Seeds) and Queue them
+export const runModelEnsemblesLocally =
+    async (pathway: Pathway,
+        component: Component,
+        ensembles: ExecutableEnsemble[],
+        scenario_id: string,
+        prefs: MintPreferences): Promise<Queue.Job<any>[]> => {
 
-        // Data/Parameter arguments to the script (will be setup below)        
-        let args : string[] = [];
-        let plainargs : string[] = [];
+        let seeds: ComponentSeed[] = [];
+        let registered_resources: any = {};
 
-        // Default invocation is via Bash
-        let command = "bash";
+        let downloadInputPromises = [];
 
-        // Check if a singularity image is present
-        // If so, change invocation command to singularity
-        let pegasus_jobprops_file = comp.rundir + "/__pegasus-job.properties";
-        if(fs.existsSync(pegasus_jobprops_file)) {
-            let jobprops = fs.readFileSync(pegasus_jobprops_file);
-            let matches : RegExpMatchArray = jobprops.toString().match(/SingularityImage = "(.+)"/);
-            if(matches.length > 1) {
-                command = "singularity";
-                args.push("exec");
-                args.push(matches[1]);
-            }
+        // Get all input dataset bindings and parameter bindings
+        ensembles.map((ensemble) => {
+            let model = pathway.models[ensemble.modelid];
+            let bindings = ensemble.bindings;
+            let datasets: any = {};
+            let parameters: any = {};
+            let paramtypes: any = {};
+
+            // Get input datasets
+            model.input_files.map((io) => {
+                let resources: DataResource[] = [];
+                let dsid = null;
+                if (bindings[io.id]) {
+                    // We have a dataset binding from the user for it
+                    resources = [bindings[io.id] as DataResource];
+                }
+                else if (io.value) {
+                    // There is a hardcoded value in the model itself
+                    dsid = io.value.id;
+                    resources = io.value.resources;
+                }
+                if (resources.length > 0) {
+                    let type = io.type.replace(/^.*#/, '');
+                    resources.map((res) => {
+                        if (res.url) {
+                            res.name = res.url.replace(/^.*(#|\/)/, '');
+                            res.name = res.name.replace(/^([0-9])/, '_$1');
+                            if (!res.id)
+                                res.id = res.name;
+                        }
+                        registered_resources[res.id] = [res.name, type, res.url];
+                    })
+                    datasets[io.name] = resources.map((res) => res.name);
+                }
+            });
+
+            // Get Input parameters
+            model.input_parameters.map((ip) => {
+                if (ip.value) {
+                    parameters[ip.name] = ip.value;
+                }
+                else if (bindings[ip.id]) {
+                    let value = bindings[ip.id];
+                    parameters[ip.name] = value;
+                }
+                paramtypes[ip.name] = ip.type;
+            });
+
+            seeds.push({
+                component: component,
+                ensemble: ensemble,
+                datasets: datasets,
+                parameters: parameters,
+                paramtypes: paramtypes
+            } as ComponentSeed);
+        });
+
+        // Add Download Job to Queue (if it doesn't already exist)
+        for (let resid in registered_resources) {
+            let args = registered_resources[resid];
+            let inputpath = prefs.localex.datadir + "/" + args[0];
+            let inputurl = args[2];
+            if (!fs.existsSync(inputpath))
+                downloadInputPromises.push(_downloadFile(inputurl, inputpath));
         }
 
-        // The entry point of the component (run script)
-        args.push("./run");
+        // Download all datasets
+        if (downloadInputPromises.length > 0)
+            await Promise.all(downloadInputPromises);
 
-        // Set the Input file/parameter arguments for the command
-        comp.inputs.map((input) => {
-            args.push(input.prefix);
-            plainargs.push(input.prefix);
-            if(input.isParam) {
-                //let paramtype = seed.paramtypes[input.role];
-                let paramvalue = seed.parameters[input.role];
-                if(!paramvalue)
-                    paramvalue = input.paramDefaultValue;
-                args.push(paramvalue);
-                plainargs.push(paramvalue);
-            }
-            else {
-                let datasets = seed.datasets[input.role];
-                datasets.map((ds) => {
-                    // Copy input files to tempdir
-                    let ifile = inputdir + "/" + ds;
-                    let newifile = tempdir + "/" + ds;
-                    fs.copyFileSync(ifile, newifile);
-                    args.push(ds)
-                    plainargs.push(ds);
-                });
-            }
-        })
-        // Set the output file arguments for the command
-        // Create the output file suffix based on a hash of inputs
-        let opsuffix = Md5.hashAsciiStr(seed.ensemble.modelid + plainargs.join());
-        let results : any = {};
-        comp.outputs.map((output) => {
-            args.push(output.prefix);
-            let opfilename = output.role + "-" + opsuffix;
-            let opfilepath = outputdir + "/" + opfilename;
-            args.push(opfilename);
-            let opfileurl = opfilepath.replace(prefs.localex.datadir, prefs.localex.dataurl);
-            results[output.role] = {
-                id: output.role,
-                name: opfilename,
-                url: opfileurl,
-                location: opfilepath
-            }
-        });
-
-        (async () => {
-            let logstdout = prefs.localex.logdir + "/" + seed.ensemble.id + ".log";
-
-            let logstream = fs.createWriteStream(logstdout);
-            logstream.write(command + " " + args.join(" ") + "\n");
-            logstream.close();
-
-            // Spawn the process & pipe stdout and stderr
-            child_process.execFile(command, args, {
-                cwd: tempdir,
-                maxBuffer: 1024*1024*50 // 50 MB of log cutoff
-            }, (error, stdout, stderr) => {
-                // Write log file
-                let logstream = fs.createWriteStream(logstdout, {'flags': 'a'});
-                logstream.write("\n------- STDERR ---------\n");
-                logstream.write(stderr);
-                logstream.write("\n------- STDOUT ---------\n");
-                logstream.write(stdout);
-                logstream.close();
-
-                // Update ensemble status
-                seed.ensemble.run_progress = 1;
-                if(error) {
-                    seed.ensemble.status = "FAILURE";
-                }
-                else {
-                    seed.ensemble.status = "SUCCESS";
-
-                    // Copy output files from tempdir to output dir
-                    Object.values(results).map((result: any) => {
-                        fs.copyFileSync(tempdir + "/" + result.name, result.location);
-                    });
-
-                    // Set the results
-                    seed.ensemble.results = results;                    
-                }
-                
-                // Remove temporary directory
-                fs.remove(tempdir); 
-
-                // Return modified ensemble
-                resolve(seed.ensemble);
-            });
-        })()
-        .catch(e => {
-            console.error(e);
-            reject();
-        });
-    });
+        // Once all Downloads are finished, Add all execution jobs (seeds) to queue
+        return Promise.all(seeds.map((seed) => executionQueue.add({ 
+                seed: seed, 
+                prefs: prefs.localex,
+                scenario_id: scenario_id,
+                pathway_id: pathway.id,
+            }, {
+            //jobId: seed.ensemble.id,
+            //removeOnComplete: true,
+            attempts: 2
+        })));
 }
 
-export const runModelEnsemblesLocally = 
-    async(pathway: Pathway, 
-        component: Component,
-        ensembles: ExecutableEnsemble[], 
-        prefs: MintPreferences) : Promise<ExecutableEnsemble[]> => {
-
-    let seeds : ComponentSeed[] = [];
-    let registered_resources: any = {};
-
-    let downloadInputPromises = [];
-
-    // Get all input dataset bindings and parameter bindings
-    ensembles.map((ensemble) => {
-        let model = pathway.models[ensemble.modelid];
-        let bindings = ensemble.bindings;
-        let datasets : any = {};
-        let parameters : any = {};
-        let paramtypes : any= {};
-
-        // Get input datasets
-        model.input_files.map((io) => {
-            let resources : DataResource[] = [];
-            let dsid = null;
-            if(bindings[io.id]) {
-                // We have a dataset binding from the user for it
-                resources = [ bindings[io.id] as DataResource ];
-            }
-            else if(io.value) {
-                // There is a hardcoded value in the model itself
-                dsid = io.value.id;
-                resources = io.value.resources;
-            }
-            if(resources.length > 0) {
-                let type = io.type.replace(/^.*#/, '');
-                resources.map((res) => {
-                    if(res.url) {
-                        res.name =  res.url.replace(/^.*(#|\/)/, '');
-                        res.name = res.name.replace(/^([0-9])/, '_$1');
-                        if(!res.id)
-                            res.id = res.name;
-                    }
-                    registered_resources[res.id] = [res.name, type, res.url];
-                })
-                datasets[io.name] = resources.map((res) => res.name);
-            }
-        });
-
-        // Get Input parameters
-        model.input_parameters.map((ip) => {
-            if(ip.value) {
-                parameters[ip.name] = ip.value;
-            }
-            else if(bindings[ip.id]) {
-                let value = bindings[ip.id];
-                parameters[ip.name] = value;
-            }
-            paramtypes[ip.name] = ip.type;
-        });
-
-        seeds.push({
-            component: component,
-            ensemble: ensemble,
-            datasets: datasets,
-            parameters: parameters,
-            paramtypes: paramtypes
-        } as ComponentSeed);
-    });
-
-    // Register any datasets that need to be registered
-    for(let resid in registered_resources) {
-        let args = registered_resources[resid];
-        let inputpath = prefs.localex.datadir + "/" + args[0];
-        let inputurl = args[2];
-        if(!fs.existsSync(inputpath))
-            downloadInputPromises.push(_downloadFile(inputurl, inputpath));
-    }
-
-    // Download all datasets
-    if(downloadInputPromises.length > 0)
-        await Promise.all(downloadInputPromises);    
-
-    // Run all seed locally - Call the execution function for the seed
-    // - Returns a promise that waits for all of them to finish
-    return Promise.all(seeds.map((seed) => runModelLocally(seed, prefs)));
-}
-
-export const fetchLocalRunLog = (ensembleid:string, prefs: MintPreferences) => {
+export const fetchLocalRunLog = (ensembleid: string, prefs: MintPreferences) => {
     let logstdout = prefs.localex.logdir + "/" + ensembleid + ".log";
     return fs.readFileSync(logstdout).toString();
 }
