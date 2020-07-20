@@ -54,7 +54,7 @@ const _monitorEnsembles = async(modelid: string,
         summary.successful_runs += successful_ensemble_ids.length;
         summary.failed_runs += failed_ensemble_ids.length;
     }
-    updatePathwayExecutionSummary(scenario.id, pathway.id, modelid, summary);
+    await updatePathwayExecutionSummary(scenario.id, pathway.id, modelid, summary);
 
     if(summary.submitted_runs > (summary.failed_runs + summary.successful_runs)) {
         // If the failed + successful runs != submitted, i.e. there are still some runs waiting to run, keep monitoring

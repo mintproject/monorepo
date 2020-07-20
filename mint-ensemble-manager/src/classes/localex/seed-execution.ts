@@ -4,7 +4,7 @@ import { Md5 } from "ts-md5";
 import child_process, { spawn } from "child_process";
 import { incrementPathwaySuccessfulRuns, updatePathwayEnsembleStatus, incrementPathwayFailedRuns, saveEnsemble } from "../mint/firebase-functions";
 
-module.exports = function (job: any) {
+module.exports = async function (job: any) {
     // Run the model seed (model config + bindings)
     var scenario_id: string = job.data.scenario_id;
     var pathway_id: string = job.data.pathway_id;
@@ -155,7 +155,7 @@ module.exports = function (job: any) {
     fs.remove(tempdir);
 
     // Update ensemble status and results in backend
-    saveEnsemble(seed.ensemble);
+    await saveEnsemble(seed.ensemble);
 
     // Return job ensemble or error
     if(seed.ensemble.status == "SUCCESS")
