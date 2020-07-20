@@ -8,17 +8,16 @@ export const fetchMintConfig = (): Promise<MintPreferences> => {
     return new Promise<MintPreferences>((resolve, reject) => {
         db.doc("configs/main").get().then((doc) => {
             let prefs = doc.data() as MintPreferences;
-            /*
-            // DEV
+
+            /* DEV
             prefs.ensemble_manager_api = "http://localhost:3000/v1";
             prefs.localex.datadir = "/Users/varun/mintproject/data";
             prefs.localex.codedir = "/Users/varun/mintproject/code";
             prefs.localex.logdir = "/Users/varun/mintproject/logs";
             prefs.localex.dataurl = "file:///Users/varun/mintproject/data";
             prefs.localex.logurl = "file:///Users/varun/mintproject/logs";
-            // END DEV
             */
-
+           
             if(prefs.execution_engine == "wings") {
               fetch(prefs.wings.server + "/config").then((res) => {
                 res.json().then((wdata) => {

@@ -4,6 +4,8 @@ import { getScenario, getPathway, fetchMintConfig } from "../mint/firebase-funct
 
 import Queue from "bull";
 import {MONITOR_QUEUE_NAME, REDIS_URL } from "../../config/redis";
+let monitorQueue = new Queue(MONITOR_QUEUE_NAME, REDIS_URL);
+monitorQueue.process((job) => monitorThread(job));
 
 export const monitorThread = async function (job: any) {
     var scenario_id: string = job.data.scenario_id;
@@ -55,11 +57,10 @@ const _monitorEnsembles = async(modelid: string,
     updatePathwayExecutionSummary(scenario.id, pathway.id, modelid, summary);
 
     if(summary.submitted_runs > (summary.failed_runs + summary.successful_runs)) {
-        let monitorQueue = new Queue(MONITOR_QUEUE_NAME, REDIS_URL);
-        monitorQueue.process((job) => monitorThread(job));
         // If the failed + successful runs != submitted, i.e. there are still some runs waiting to run, keep monitoring
         monitorQueue.add({ scenario_id: scenario.id, pathway_id: pathway.id, model_id: modelid } , {
-            delay: 1000*60*5 // 5 minute delay before monitoring again
+            //delay: 1000*30 // DEV: 30 second delay before monitoring again
+            delay: 1000*60*3 // 3 minute delay before monitoring again
         })
     }
 }
