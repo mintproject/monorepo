@@ -1,7 +1,7 @@
 import os from "os";
 import fs from "fs-extra";
 import { Md5 } from "ts-md5";
-import child_process from "child_process";
+import child_process, { spawn } from "child_process";
 import { incrementPathwaySuccessfulRuns, updatePathwayEnsembleStatus, incrementPathwayFailedRuns, saveEnsemble } from "../mint/firebase-functions";
 
 module.exports = function (job: any) {
@@ -101,63 +101,59 @@ module.exports = function (job: any) {
     logstream.close();
 
     // Spawn the process & pipe stdout and stderr
-    child_process.execFile(command, args, {
+    let spawnResult = child_process.spawnSync(command, args, {
         cwd: tempdir,
         shell: true,
         maxBuffer: 1024 * 1024 * 50 // 50 MB of log cutoff
-    }, (error, stdout, stderr) => {
-        // Write log file
-        let logstream = fs.createWriteStream(logstdout, { 'flags': 'a' });
-        logstream.write("\n------- STDERR ---------\n");
-        logstream.write(stderr);
-        if (error) {
-            logstream.write(error.message);
-        }
-        logstream.write("\n------- STDOUT ---------\n");
-        logstream.write(stdout);
-        logstream.close();
-
-        // Update ensemble status
-        seed.ensemble.run_progress = 1;
-        if (error) {
-            seed.ensemble.status = "FAILURE";
-        }
-        else {
-            seed.ensemble.status = "SUCCESS";
-
-            // Copy output files from tempdir to output dir
-            Object.values(results).map((result: any) => {
-                var tmpfile = tempdir + "/" + result.name;
-                if (fs.existsSync(tmpfile)) {
-                    fs.copyFileSync(tmpfile, result.location);
-                }
-                else {
-                    console.log(`${tmpfile} not found!`)
-                    seed.ensemble.status = "FAILURE";
-                }
-            });
-
-            // Set the results
-            seed.ensemble.results = results;
-        }
-
-        // Remove temporary directory
-        fs.remove(tempdir);
-
-        // Update ensemble status and results
-        saveEnsemble(seed.ensemble);
-        // updatePathwayEnsembleStatus(seed.ensemble);
-
-        // Increment number of successful/failed runs
-        // - Doing this in another monitor job, otherwise it results in too many updates
-        /*
-        if(seed.ensemble.status == "SUCCESS")
-            incrementPathwaySuccessfulRuns(scenario_id, pathway_id, ensemble.modelid)
-        if(seed.ensemble.status == "FAILURE")
-            incrementPathwayFailedRuns(scenario_id, pathway_id, ensemble.modelid) 
-            */
-
-        return Promise.resolve(seed.ensemble);
     });
+    
+    // Write log file
+    logstream = fs.createWriteStream(logstdout, { 'flags': 'a' });
+    logstream.write("\n------- STDOUT ---------\n");
+    logstream.write(spawnResult.stdout);
+    if (spawnResult.error)
+        logstream.write(spawnResult.error.message);
+    logstream.write("\n------- STDERR ---------\n");
+    logstream.write(spawnResult.stderr);    
+    logstream.close();
+
+    let error = null;
+
+    // Update ensemble status
+    seed.ensemble.status = "SUCCESS";    
+    seed.ensemble.run_progress = 1;
+
+    if (spawnResult.error) {
+        error = spawnResult.error.message;
+    }
+    else {
+        // Copy output files from tempdir to output dir
+        Object.values(results).map((result: any) => {
+            var tmpfile = tempdir + "/" + result.name;
+            if (fs.existsSync(tmpfile)) {
+                fs.copyFileSync(tmpfile, result.location);
+            }
+            else {
+                //console.log(`${tmpfile} not found!`)
+                error = `${tmpfile} not found!`;
+            }
+        });
+        // Set the results
+        seed.ensemble.results = results;
+    }
+    if(error) {
+        seed.ensemble.status = "FAILURE";
+    }
+
+    // Remove temporary directory
+    fs.remove(tempdir);
+
+    // Update ensemble status and results
+    saveEnsemble(seed.ensemble);
+
+    if(seed.ensemble.status == "SUCCESS")
+        return Promise.resolve(seed.ensemble);
+    else
+        return Promise.reject(new Error(error));
 
 }
