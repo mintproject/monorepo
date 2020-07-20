@@ -119,15 +119,17 @@ module.exports = function (job: any) {
 
     let error = null;
 
-    // Update ensemble status
-    seed.ensemble.status = "SUCCESS";    
-    seed.ensemble.run_progress = 1;
-
+    // Check for Errors
     if (spawnResult.error) {
         error = spawnResult.error.message;
     }
+    else if(spawnResult.status != 0) {
+        error = "Execution returned with non-zero status code";
+    }
     else {
-        // Copy output files from tempdir to output dir
+        // Check results (output files)
+        // - Copy output files from tempdir to output dir
+        // - Mark an error if any output file is missing
         Object.values(results).map((result: any) => {
             var tmpfile = tempdir + "/" + result.name;
             if (fs.existsSync(tmpfile)) {
@@ -141,6 +143,10 @@ module.exports = function (job: any) {
         // Set the results
         seed.ensemble.results = results;
     }
+
+    // Set the ensemble status
+    seed.ensemble.status = "SUCCESS";    
+    seed.ensemble.run_progress = 1;
     if(error) {
         seed.ensemble.status = "FAILURE";
     }
@@ -148,9 +154,10 @@ module.exports = function (job: any) {
     // Remove temporary directory
     fs.remove(tempdir);
 
-    // Update ensemble status and results
+    // Update ensemble status and results in backend
     saveEnsemble(seed.ensemble);
 
+    // Return job ensemble or error
     if(seed.ensemble.status == "SUCCESS")
         return Promise.resolve(seed.ensemble);
     else
