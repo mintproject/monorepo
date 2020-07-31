@@ -3,6 +3,9 @@ import fs from "fs-extra";
 import { Md5 } from "ts-md5";
 import child_process, { spawn } from "child_process";
 import { incrementPathwaySuccessfulRuns, updatePathwayEnsembleStatus, incrementPathwayFailedRuns, saveEnsemble } from "../mint/firebase-functions";
+import { Component } from "./local-execution-types";
+import { runImage } from "./docker-functions";
+import { Container } from "dockerode";
 
 module.exports = async function (job: any) {
     // Run the model seed (model config + bindings)
@@ -11,7 +14,7 @@ module.exports = async function (job: any) {
     var seed: any = job.data.seed;
     var localex: any = job.data.prefs;
 
-    let comp = seed.component;
+    let comp : Component = seed.component;
     let inputdir = localex.datadir;
     let outputdir = localex.datadir;
 
@@ -32,19 +35,6 @@ module.exports = async function (job: any) {
 
     // Default invocation is via Bash
     let command = "bash";
-
-    // Check if a singularity image is present
-    // If so, change invocation command to singularity
-    let pegasus_jobprops_file = comp.rundir + "/__pegasus-job.properties";
-    if (fs.existsSync(pegasus_jobprops_file)) {
-        let jobprops = fs.readFileSync(pegasus_jobprops_file);
-        let matches: RegExpMatchArray = jobprops.toString().match(/SingularityImage = "(.+)"/);
-        if (matches.length > 1) {
-            command = "singularity";
-            args.push("exec");
-            args.push(matches[1]);
-        }
-    }
 
     // The entry point of the component (run script)
     args.push("./run");
@@ -100,30 +90,62 @@ module.exports = async function (job: any) {
     logstream.write(command + " " + args.join(" ") + "\n");
     logstream.close();
 
-    // Spawn the process & pipe stdout and stderr
-    let spawnResult = child_process.spawnSync(command, args, {
-        cwd: tempdir,
-        shell: true,
-        maxBuffer: 1024 * 1024 * 50 // 50 MB of log cutoff
-    });
-    
-    // Write log file
-    logstream = fs.createWriteStream(logstdout, { 'flags': 'a' });
-    logstream.write("\n------- STDOUT ---------\n");
-    logstream.write(spawnResult.stdout);
-    if (spawnResult.error)
-        logstream.write(spawnResult.error.message);
-    logstream.write("\n------- STDERR ---------\n");
-    logstream.write(spawnResult.stderr);    
-    logstream.close();
+    // Check if this component requires a docker image via the model definition
+    // - or via the older pegasus job properties file
 
+    let softwareImage = comp.softwareImage;
     let error = null;
+    let statusCode = 0;
+    if (softwareImage != null) {
+        logstream = fs.createWriteStream(logstdout, { 'flags': 'a' });
+        
+        // Run command in docker image
+        let folderBindings = [`${tempdir}:${tempdir}`, `${localex.datadir}:${localex.datadir}`];
+        let data = await runImage(args, softwareImage, logstream, tempdir, folderBindings);
+        var output = data[0];
+        var container: Container = data[1];
+        statusCode = output.StatusCode;
+        
+        // Clean up
+        logstream.close();
+        await container.remove({force: true});
+    }
+    else {
+        let pegasus_jobprops_file = comp.rundir + "/__pegasus-job.properties";
+        if (fs.existsSync(pegasus_jobprops_file)) {
+            let jobprops = fs.readFileSync(pegasus_jobprops_file);
+            let matches: RegExpMatchArray = jobprops.toString().match(/SingularityImage = "(.+)"/);
+            if (matches.length > 1) {
+                command = "singularity";
+                args.push("exec");
+                args.push(matches[1]);
+            }
+        }
+
+        // Spawn the process & pipe stdout and stderr
+        let spawnResult = child_process.spawnSync(command, args, {
+            cwd: tempdir,
+            shell: true,
+            maxBuffer: 1024 * 1024 * 50 // 50 MB of log cutoff
+        });
+        
+        // Write log file
+        logstream = fs.createWriteStream(logstdout, { 'flags': 'a' });
+        logstream.write("\n------- STDOUT ---------\n");
+        logstream.write(spawnResult.stdout);
+        if (spawnResult.error)
+            logstream.write(spawnResult.error.message);
+        logstream.write("\n------- STDERR ---------\n");
+        logstream.write(spawnResult.stderr);    
+        logstream.close();
+        if (spawnResult.error) {
+            error = spawnResult.error.message;
+        }
+        statusCode = spawnResult.status;
+    }
 
     // Check for Errors
-    if (spawnResult.error) {
-        error = spawnResult.error.message;
-    }
-    else if(spawnResult.status != 0) {
+    if(statusCode != 0) {
         error = "Execution returned with non-zero status code";
     }
     else {

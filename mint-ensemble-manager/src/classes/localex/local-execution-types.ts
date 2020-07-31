@@ -20,6 +20,7 @@ export interface ComponentParameterTypes {
 
 export interface Component {
     rundir: string,
+    softwareImage?: string,
     inputs: ComponentArgument[],
     outputs: ComponentArgument[]
 }

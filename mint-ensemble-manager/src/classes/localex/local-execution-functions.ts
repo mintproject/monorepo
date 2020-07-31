@@ -9,6 +9,7 @@ import yaml from "js-yaml";
 
 import Queue from "bull";
 import { CONCURRENCY, EXECUTION_QUEUE_NAME, REDIS_URL } from "../../config/redis";
+import { pullImage } from "./docker-functions";
 
 var appDir = path.dirname(require.main.filename);
 let executionQueue = new Queue(EXECUTION_QUEUE_NAME, REDIS_URL);
@@ -163,6 +164,7 @@ const _getModelParamDetails = (param: ModelParameter) => {
 const _getModelDetails = (model: Model, modeldir: string) => {
     let comp: Component = {
         rundir: modeldir + "/src",
+        softwareImage: model.software_image,
         inputs: [],
         outputs: [],
     };
@@ -208,6 +210,10 @@ export const getModelCacheDirectory = (url: string, prefs: MintPreferences) => {
 
 export const loadModelWCM = async (url: string, model: Model, prefs: MintPreferences) => {
     let modeldir = await _downloadWCM(url, prefs);
+    if(model.software_image != null) {
+        // Pull docker image if needed
+        await pullImage(model.software_image);
+    }
     let details = _getModelDetails(model, modeldir);
     // If we cannot get the details from just the model cache, then try to get it from the yaml
     if (!details) {

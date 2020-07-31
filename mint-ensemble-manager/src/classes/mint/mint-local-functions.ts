@@ -116,8 +116,6 @@ export const saveAndRunExecutableEnsemblesForModelLocally = async(modelid: strin
             let ensembles_to_be_run = ensembles.filter((e) => successful_ensemble_ids.indexOf(e.id) < 0);
 
             // Clear out the pathway ensembles to be empty
-            // setPathwayEnsembles(ensembles_to_be_run);
-            // Clear out the pathway ensembles to be empty
             await setPathwayEnsembles(ensembles_to_be_run);
 
             summary.submitted_runs += ensembles.length;

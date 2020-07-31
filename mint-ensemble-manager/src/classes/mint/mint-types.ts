@@ -214,6 +214,7 @@ export interface Model extends IdNameObject {
     target_variable_for_parameter_assignment?: string,
     modeled_processes?: string[],
     dimensionality?: number,
+    software_image?: string,
     spatial_grid_type?: string,
     spatial_grid_resolution?: string,
     minimum_output_time_interval?: string,
