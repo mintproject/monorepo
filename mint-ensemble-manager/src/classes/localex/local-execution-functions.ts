@@ -10,6 +10,7 @@ import yaml from "js-yaml";
 import Queue from "bull";
 import { CONCURRENCY, EXECUTION_QUEUE_NAME, REDIS_URL } from "../../config/redis";
 import { pullImage } from "./docker-functions";
+import { Md5 } from "ts-md5";
 
 var appDir = path.dirname(require.main.filename);
 let executionQueue = new Queue(EXECUTION_QUEUE_NAME, REDIS_URL);
@@ -102,12 +103,17 @@ const _downloadAndUnzipToDirectory = (url: string, modeldir: string, compname: s
 }
 
 const _downloadWCM = async (url: string, prefs: MintPreferences) => {
+    let hashdir = Md5.hashStr(url).toString();
+    
     // Get zip file name from url
     let plainurl = url.replace(/\?.*$/, '');
     let zipfile = plainurl.replace(/.+\//, "");
     let compname = zipfile.replace(/\.zip/i, "");
 
-    let codedir = prefs.localex.codedir;
+    let codedir = prefs.localex.codedir + "/" + hashdir;
+    if(!fs.existsSync(codedir))
+        fs.mkdirsSync(codedir);
+
     let modeldir = codedir + "/" + compname;
     if (!fs.existsSync(modeldir + "/src")) {
         await _downloadAndUnzipToDirectory(url, modeldir, compname);
@@ -198,13 +204,15 @@ const _getModelDetails = (model: Model, modeldir: string) => {
 
 
 export const getModelCacheDirectory = (url: string, prefs: MintPreferences) => {
+    let hashdir = Md5.hashStr(url).toString();
+
     // Get zip file name from url
     let plainurl = url.replace(/\?.*$/, '');
     let zipfile = plainurl.replace(/.+\//, "");
     let compname = zipfile.replace(/\.zip/i, "");
 
     let codedir = prefs.localex.codedir;
-    let modeldir = codedir + "/" + compname;
+    let modeldir = codedir + "/" + hashdir + "/" + compname;
     return modeldir;
 }
 

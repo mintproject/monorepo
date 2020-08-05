@@ -3,20 +3,21 @@ import { Md5 } from 'ts-md5/dist/md5'
 import { db, fieldPath, increment } from "../../config/firebase";
 import { isObject } from "util";
 import { WriteResult, QuerySnapshot, DocumentSnapshot } from "@google-cloud/firestore";
+import { DEVMODE, DEVHOMEDIR, PORT } from "../../config/app";
 
 export const fetchMintConfig = (): Promise<MintPreferences> => {
     return new Promise<MintPreferences>((resolve, reject) => {
         db.doc("configs/main").get().then((doc) => {
             let prefs = doc.data() as MintPreferences;
 
-            /* DEV
-            prefs.ensemble_manager_api = "http://localhost:3000/v1";
-            prefs.localex.datadir = "/Users/varun/mintproject/data";
-            prefs.localex.codedir = "/Users/varun/mintproject/code";
-            prefs.localex.logdir = "/Users/varun/mintproject/logs";
-            prefs.localex.dataurl = "file:///Users/varun/mintproject/data";
-            prefs.localex.logurl = "file:///Users/varun/mintproject/logs";
-            */
+            if(DEVMODE) {
+                prefs.ensemble_manager_api = "http://localhost:" + PORT + "/v1";
+                prefs.localex.datadir = DEVHOMEDIR + "/data";
+                prefs.localex.codedir = DEVHOMEDIR + "/code";
+                prefs.localex.logdir = DEVHOMEDIR + "/logs";
+                prefs.localex.dataurl = "file://" + DEVHOMEDIR + "/data";
+                prefs.localex.logurl = "file://" + DEVHOMEDIR + "/logs";
+            }
            
             if(prefs.execution_engine == "wings") {
               fetch(prefs.wings.server + "/config").then((res) => {

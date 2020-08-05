@@ -7,6 +7,7 @@ import fs from "fs-extra";
 import Queue from "bull";
 import {MONITOR_QUEUE_NAME, REDIS_URL } from "../../config/redis";
 import { monitorThread } from "../localex/thread-execution-monitor";
+import { DEVMODE } from "../../config/app";
 
 let monitorQueue = new Queue(MONITOR_QUEUE_NAME, REDIS_URL);
 monitorQueue.process((job) => monitorThread(job));
@@ -20,9 +21,11 @@ export const saveAndRunExecutableEnsemblesLocally = async(
     for(let pmodelid in pathway.model_ensembles) {
         if(!modelid || (modelid == pmodelid)) {
             await saveAndRunExecutableEnsemblesForModelLocally(pmodelid, pathway, scenario, prefs);
-            monitorQueue.add({ scenario_id: scenario.id, pathway_id: pathway.id, model_id: modelid } , {
-                delay: 1000*30 // 30 seconds delay before monitoring for the first time
-            });
+            if(!DEVMODE) {
+                monitorQueue.add({ scenario_id: scenario.id, pathway_id: pathway.id, model_id: modelid } , {
+                    delay: 1000*30 // 30 seconds delay before monitoring for the first time
+                });
+            }
         }
     }
     console.log("Finished sending all ensembles for local execution. Adding Monitor");
@@ -62,13 +65,15 @@ export const saveAndRunExecutableEnsemblesForModelLocally = async(modelid: strin
             submission_time: Date.now() - 20000 // Less 20 seconds to counter for clock skews
         } as ExecutableEnsembleSummary
 
-        await updatePathwayExecutionSummary(scenario.id, pathway.id, modelid, summary);
+        if(!DEVMODE)
+            await updatePathwayExecutionSummary(scenario.id, pathway.id, modelid, summary);
         
         // Load the component model
         let component = await loadModelWCM(model.wcm_uri, model, prefs);
 
         // Delete existing pathway ensemble ids (*NOT DELETING GLOBAL ENSEMBLE DOCUMENTS .. Only clearing list of the pathway's ensemble ids)
-        await deleteAllPathwayEnsembleIds(scenario.id, pathway.id, modelid);
+        if(!DEVMODE)
+            await deleteAllPathwayEnsembleIds(scenario.id, pathway.id, modelid);
 
         // Work in batches
         let batchSize = 500; // Deal with ensembles from firebase in this batch size
@@ -104,11 +109,12 @@ export const saveAndRunExecutableEnsemblesForModelLocally = async(modelid: strin
                 ensembles.push(ensemble);
             })
 
-            setPathwayEnsembleIds(scenario.id, pathway.id, model.id, batchid, ensembleids);
+            if(!DEVMODE)
+                setPathwayEnsembleIds(scenario.id, pathway.id, model.id, batchid, ensembleids);
 
             // Check if any current ensembles already exist 
             // - Note: ensemble ids are uniquely defined by the model id and inputs
-            let all_ensembles : ExecutableEnsemble[] = await listEnsembles(ensembleids);
+            let all_ensembles : ExecutableEnsemble[] = DEVMODE ? [] : await listEnsembles(ensembleids);
             let successful_ensemble_ids = all_ensembles
                 .filter((e) => (e != null && e.status == "SUCCESS"))
                 .map((e) => e.id);
@@ -116,11 +122,13 @@ export const saveAndRunExecutableEnsemblesForModelLocally = async(modelid: strin
             let ensembles_to_be_run = ensembles.filter((e) => successful_ensemble_ids.indexOf(e.id) < 0);
 
             // Clear out the pathway ensembles to be empty
-            await setPathwayEnsembles(ensembles_to_be_run);
+            if(!DEVMODE)
+                await setPathwayEnsembles(ensembles_to_be_run);
 
             summary.submitted_runs += ensembles.length;
             summary.successful_runs += successful_ensemble_ids.length;
-            updatePathwayExecutionSummary(scenario.id, pathway.id, modelid, summary);
+            if(!DEVMODE)
+                updatePathwayExecutionSummary(scenario.id, pathway.id, modelid, summary);
 
             // Run the model ensembles
             runModelEnsemblesLocally(pathway, component, ensembles_to_be_run, scenario.id, prefs);

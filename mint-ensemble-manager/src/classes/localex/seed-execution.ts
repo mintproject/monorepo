@@ -6,6 +6,7 @@ import { incrementPathwaySuccessfulRuns, updatePathwayEnsembleStatus, incrementP
 import { Component } from "./local-execution-types";
 import { runImage } from "./docker-functions";
 import { Container } from "dockerode";
+import { DEVMODE } from "../../config/app";
 
 module.exports = async function (job: any) {
     // Run the model seed (model config + bindings)
@@ -177,7 +178,8 @@ module.exports = async function (job: any) {
     fs.remove(tempdir);
 
     // Update ensemble status and results in backend
-    await saveEnsemble(seed.ensemble);
+    if(!DEVMODE)
+        await saveEnsemble(seed.ensemble);
 
     // Return job ensemble or error
     if(seed.ensemble.status == "SUCCESS")
