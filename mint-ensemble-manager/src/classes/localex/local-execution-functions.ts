@@ -36,7 +36,9 @@ const _downloadFile = (url: string, filepath: string): Promise<void> => {
 // TODO: Unzip the wcm zip file
 const _unzipFile = (zipfile: string, dirname: string, topdir: string): Promise<string> => {
     return new Promise<string>((resolve, reject) => {
-        fs.mkdirSync(dirname);
+        if (!fs.existsSync(dirname)){
+            fs.mkdirSync(dirname);
+        }
         yauzl.open(zipfile, { lazyEntries: true }, function (err, zipfile) {
             if (err) throw err;
             zipfile.readEntry();
