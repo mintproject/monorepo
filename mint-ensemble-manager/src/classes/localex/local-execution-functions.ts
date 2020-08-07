@@ -34,7 +34,7 @@ const _downloadFile = (url: string, filepath: string): Promise<void> => {
 }
 
 // TODO: Unzip the wcm zip file
-const _unzipFile = (zipfile: string, dirname: string, topdir: string): Promise<string> => {
+const _unzipFile = (zipfile: string, dirname: string): Promise<string> => {
     return new Promise<string>((resolve, reject) => {
         if (!fs.existsSync(dirname)){
             fs.mkdirSync(dirname);
@@ -48,9 +48,9 @@ const _unzipFile = (zipfile: string, dirname: string, topdir: string): Promise<s
                     zipfile.readEntry();
                     return;
                 }
-                // Only process if this is a subtree from the required topdir
-                if (entry.fileName.indexOf(topdir) == 0) {
-                    let filename = entry.fileName.substr(topdir.length + 1);
+                // If this is a directory, then copy its contents to dirname
+                if(entry.fileName.indexOf("/") >= 0) {
+                   let filename = entry.fileName.substr(entry.fileName.indexOf("/") + 1);
                     if (!filename) {
                         zipfile.readEntry();
                         return;
@@ -93,7 +93,7 @@ const _downloadAndUnzipToDirectory = (url: string, modeldir: string, compname: s
         _downloadFile(url, zipfile).then(() => {
             // Unzip file
             if (fs.existsSync(zipfile)) {
-                _unzipFile(zipfile, modeldir, compname).then(() => {
+                _unzipFile(zipfile, modeldir).then(() => {
                     resolve();
                 })
             }
