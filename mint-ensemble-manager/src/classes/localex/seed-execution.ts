@@ -1,17 +1,15 @@
 import os from "os";
 import fs from "fs-extra";
 import { Md5 } from "ts-md5";
-import child_process, { spawn } from "child_process";
-import { incrementPathwaySuccessfulRuns, updatePathwayEnsembleStatus, incrementPathwayFailedRuns, saveEnsemble } from "../mint/firebase-functions";
+import child_process from "child_process";
+import { saveExecution } from "../graphql/graphql_functions";
 import { Component } from "./local-execution-types";
 import { runImage } from "./docker-functions";
 import { Container } from "dockerode";
 import { DEVMODE } from "../../config/app";
 
-module.exports = async function (job: any) {
+module.exports = async (job: any) => {
     // Run the model seed (model config + bindings)
-    var scenario_id: string = job.data.scenario_id;
-    var pathway_id: string = job.data.pathway_id;
     var seed: any = job.data.seed;
     var localex: any = job.data.prefs;
 
@@ -21,14 +19,14 @@ module.exports = async function (job: any) {
 
     // Create temporary directory
     let ostmp = os.tmpdir();
-    let tmpprefix = ostmp + "/" + seed.ensemble.modelid.replace(/.*\//, '');
+    let tmpprefix = ostmp + "/" + seed.execution.modelid.replace(/.*\//, '');
     let tempdir = fs.mkdtempSync(tmpprefix);
 
     // Copy component run directory to tempdir
     fs.copySync(comp.rundir, tempdir);
 
-    // Set the execution engine used for this ensemble
-    seed.ensemble.execution_engine = "localex";
+    // Set the execution engine used for this execution
+    seed.execution.execution_engine = "localex";
 
     // Data/Parameter arguments to the script (will be setup below)        
     let args: string[] = [];
@@ -68,7 +66,7 @@ module.exports = async function (job: any) {
     
     // Set the output file arguments for the command
     // Create the output file suffix based on a hash of inputs
-    let opsuffix = Md5.hashAsciiStr(seed.ensemble.modelid + plainargs.join());
+    let opsuffix = Md5.hashAsciiStr(seed.execution.modelid + plainargs.join());
     let results: any = {};
     comp.outputs.map((output: any) => {
         args.push(output.prefix);
@@ -84,7 +82,7 @@ module.exports = async function (job: any) {
         }
     });
 
-    let logstdout = localex.logdir + "/" + seed.ensemble.id + ".log";
+    let logstdout = localex.logdir + "/" + seed.execution.id + ".log";
 
     let logstream = fs.createWriteStream(logstdout);
     logstream.write("current working directory: " + tempdir + "\n");
@@ -164,26 +162,26 @@ module.exports = async function (job: any) {
             }
         });
         // Set the results
-        seed.ensemble.results = results;
+        seed.execution.results = results;
     }
 
-    // Set the ensemble status
-    seed.ensemble.status = "SUCCESS";    
-    seed.ensemble.run_progress = 1;
+    // Set the execution status
+    seed.execution.status = "SUCCESS";    
+    seed.execution.run_progress = 1;
     if(error) {
-        seed.ensemble.status = "FAILURE";
+        seed.execution.status = "FAILURE";
     }
 
     // Remove temporary directory
     fs.remove(tempdir);
 
-    // Update ensemble status and results in backend
+    // Update execution status and results in backend
     if(!DEVMODE)
-        await saveEnsemble(seed.ensemble);
+        await saveExecution(seed.execution);
 
-    // Return job ensemble or error
-    if(seed.ensemble.status == "SUCCESS")
-        return Promise.resolve(seed.ensemble);
+    // Return job execution or error
+    if(seed.execution.status == "SUCCESS")
+        return Promise.resolve(seed.execution);
     else
         return Promise.reject(new Error(error));
 

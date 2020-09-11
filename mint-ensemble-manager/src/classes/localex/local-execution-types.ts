@@ -1,8 +1,8 @@
-import { ExecutableEnsemble } from "../mint/mint-types";
+import { Execution } from "../mint/mint-types";
 
 export interface ComponentSeed {
     component: Component,
-    ensemble: ExecutableEnsemble,
+    execution: Execution,
     datasets: ComponentDataBindings,
     parameters: ComponentParameterBindings,
     paramtypes: ComponentParameterTypes,

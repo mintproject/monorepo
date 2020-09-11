@@ -65,12 +65,11 @@ export const queryDatasetDetails = async (modelid: string, inputid: string, driv
     dsid: string, dates: DateRange, region: Region, prefs:MintPreferences ) : Promise<Dataset> => {
     
     return new Promise<any>((resolve, reject) => {
-        let geojson = JSON.parse(region.geojson_blob);
         let dsQueryData = {
             standard_variable_names__in: driving_variables,
-            spatial_coverage__intersects: geojson.geometry,
-            end_time__gte: fromTimeStampToString(dates.start_date).replace(/\.\d{3}Z$/,''),
-            start_time__lte: fromTimeStampToString(dates.end_date).replace(/\.\d{3}Z$/,''),
+            spatial_coverage__intersects: region.geometries[0],
+            end_time__gte: dates.start_date.toISOString().replace(/\.\d{3}Z$/,''),
+            start_time__lte: dates.end_date.toISOString().replace(/\.\d{3}Z$/,''),
             dataset_ids__in: [dsid],
             limit: 100
         }
@@ -78,9 +77,9 @@ export const queryDatasetDetails = async (modelid: string, inputid: string, driv
         let resQueryData : any = {
             dataset_id: dsid,
             filter: {
-                spatial_coverage__intersects: geojson.geometry,
-                end_time__gte: fromTimeStampToString(dates.start_date).replace(/\.\d{3}Z$/,''),
-                start_time__lte: fromTimeStampToString(dates.end_date).replace(/\.\d{3}Z$/,'')
+                spatial_coverage__intersects: region.geometries[0],
+                end_time__gte: dates.start_date.toISOString().replace(/\.\d{3}Z$/,''),
+                start_time__lte: dates.end_date.toISOString().replace(/\.\d{3}Z$/,'')
             },
             limit: 5000
         }

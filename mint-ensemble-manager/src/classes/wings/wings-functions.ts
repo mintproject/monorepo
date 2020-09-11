@@ -1,5 +1,5 @@
 import { getResource, postFormResource, postJSONResource } from "./xhr-requests";
-import {IdMap, IdNameObject, MintPreferences, ExecutableEnsemble, Pathway, Model, DataResource} from "../mint/mint-types";
+import {IdMap, MintPreferences, Execution, Thread, Model, DataResource} from "../mint/mint-types";
 import { WingsComponent, WingsTemplatePackage, WingsTemplate, WingsDataBindings, WingsParameterBindings, WingsTemplateMetadata, WingsPort, WingsPortRole, WingsDataVariable, WingsParameterVariable, WingsNode, WingsComponentVariable, WingsTemplateSeed, WingsParameterTypes } from "./wings-types";
 
 export const loginToWings = async(config: MintPreferences) : Promise<void> => {
@@ -307,25 +307,25 @@ const _fetchWingsRunsStatuses = (template_name: string, start_time: number, star
     });
 }
 
-export const fetchWingsRunResults = (ensemble: ExecutableEnsemble, config: MintPreferences)
+export const fetchWingsRunResults = (execution: Execution, config: MintPreferences)
         : Promise<any> => {
 
     let config_wings = config.wings;
     return new Promise<any>((resolve, reject) => {
         var purl = config_wings.server + "/users/" + config_wings.username + "/" + config_wings.domain;
-        if(!ensemble.runid) {
+        if(!execution.runid) {
             reject();
             return;
         }
 
         let data = {
-            run_id: ensemble.runid,
+            run_id: execution.runid,
         };
         postFormResource({
             url: purl + "/executions/getRunPlan",
             onLoad: function(e: any) {
                 let ex = JSON.parse(e.target.responseText);
-                if(ensemble.status == "SUCCESS") {                    
+                if(execution.status == "SUCCESS") {                    
                     // Look for outputs that aren't inputs to any other steps
                     let outputfiles : any = {};
                     ex.plan.steps.map((step: any) => {
@@ -663,16 +663,16 @@ const _runModelTemplates = (
     );
 }
 
-export const setupModelWorkflow = async(model: Model, pathway: Pathway, prefs: MintPreferences) => {
+export const setupModelWorkflow = async(model: Model, thread: Thread, prefs: MintPreferences) => {
     let cname = model.model_configuration;
-    let compid = await registerWingsComponent(cname, model.wcm_uri, prefs);
+    let compid = await registerWingsComponent(cname, model.code_url, prefs);
     let compname = compid.replace(/^.*#/, '');
     let templateid = await _createModelTemplate(compname, prefs);
     return templateid;
 }
 
-export const runModelEnsembles = async(pathway: Pathway, 
-    ensembles: ExecutableEnsemble[], 
+export const runModelExecutions = async(thread: Thread, 
+    executions: Execution[], 
     existing_registered_resources: any,
     tpl_package: WingsTemplatePackage,
     prefs: MintPreferences) => {
@@ -681,9 +681,9 @@ export const runModelEnsembles = async(pathway: Pathway,
     let registered_resources: any = {};
 
     // Get all input dataset bindings and parameter bindings
-    ensembles.map((ensemble) => {
-        let model = pathway.models[ensemble.modelid];
-        let bindings = ensemble.bindings;
+    executions.map((execution) => {
+        let model = thread.models[execution.modelid];
+        let bindings = execution.bindings;
         let datasets : any = {};
         let parameters : any = {};
         let paramtypes : any= {};

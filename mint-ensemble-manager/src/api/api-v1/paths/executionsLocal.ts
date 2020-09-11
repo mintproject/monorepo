@@ -45,7 +45,7 @@ export default function(executionsLocalService: any) {
       summary: 'Submit modeling thread for local execution.',
       operationId: 'submitLocalExecution',
       requestBody: {
-        description: 'Modeling thread scenario/subgoal/id',
+        description: 'Modeling thread',
         required: true,
         content: {
           'application/json': {
@@ -72,7 +72,7 @@ export default function(executionsLocalService: any) {
       summary: 'Delete cached results, cached models and cached data for local execution.',
       operationId: 'deleteLocalExecutionCache',
       requestBody: {
-        description: 'Modeling thread scenario/subgoal/id',
+        description: 'Modeling thread',
         required: true,
         content: {
           'application/json': {

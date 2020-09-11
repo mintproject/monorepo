@@ -9,7 +9,6 @@ import v1ExecutionsLocalService from './api/api-v1/services/executionsLocalServi
 import v1ExecutionQueService from './api/api-v1/services/executionQueueService';
 import v1MonitorsService from './api/api-v1/services/monitorsService';
 import v1LogsService from './api/api-v1/services/logsService';
-import v1ThreadsService from './api/api-v1/services/threadsService';
 
 
 import { initialize } from "express-openapi";
@@ -20,6 +19,11 @@ import { UI, setQueues } from "bull-board";
 import { EXECUTION_QUEUE_NAME, REDIS_URL, MONITOR_QUEUE_NAME } from "./config/redis";
 import { PORT, VERSION } from "./config/app";
 
+import * as webpack from "webpack";
+import * as webpackDevMiddleware from "webpack-dev-middleware";
+
+const config = require('../webpack.config.js');
+const compiler = webpack.default(config);
 
 // Main Express Server
 const app = express();
@@ -31,6 +35,9 @@ var v1ApiDoc = require('./api/api-doc');
 app.use(bodyParser.json());
 app.use(cors());
 
+// Use webpack middleware
+//app.use(webpackDevMiddleware.default(compiler, {publicPath: config.output.publicPath}));
+
 initialize({
     app,    
     apiDoc: v1ApiDoc,
@@ -39,8 +46,7 @@ initialize({
         executionsLocalService: v1ExecutionsLocalService,
         executionQueueService: v1ExecutionQueService,
         monitorsService: v1MonitorsService,
-        logsService: v1LogsService,
-        threadsService: v1ThreadsService
+        logsService: v1LogsService
     },
     paths: path.resolve(__dirname, './api/api-v1/paths'),
     routesGlob: '**/*.{ts,js}',

@@ -1,7 +1,6 @@
-import { Pathway, ExecutableEnsemble, MintPreferences, DataResource, Model, ModelIO, ModelParameter } from "../mint/mint-types";
+import { Thread, Execution, MintPreferences, DataResource, Model, ModelIO, ModelParameter } from "../mint/mint-types";
 import { Component, ComponentSeed } from "./local-execution-types";
 
-import path from "path";
 import fs from "fs-extra";
 import request from "request";
 import yauzl from "yauzl";
@@ -12,9 +11,8 @@ import { CONCURRENCY, EXECUTION_QUEUE_NAME, REDIS_URL } from "../../config/redis
 import { pullImage } from "./docker-functions";
 import { Md5 } from "ts-md5";
 
-var appDir = path.dirname(require.main.filename);
 let executionQueue = new Queue(EXECUTION_QUEUE_NAME, REDIS_URL);
-executionQueue.process(CONCURRENCY, appDir + '/../dist/classes/localex/seed-execution.js');
+executionQueue.process(CONCURRENCY, __dirname + '/execution.js');
 
 // You can listen to global events to get notified when jobs are processed
 /*executionQueue.on('global:completed', (jobId, result) => {
@@ -233,11 +231,10 @@ export const loadModelWCM = async (url: string, model: Model, prefs: MintPrefere
 }
 
 // Create Jobs (Seeds) and Queue them
-export const runModelEnsemblesLocally =
-    async (pathway: Pathway,
+export const runModelExecutionsLocally =
+    async (thread: Thread,
         component: Component,
-        ensembles: ExecutableEnsemble[],
-        scenario_id: string,
+        executions: Execution[],
         prefs: MintPreferences): Promise<Queue.Job<any>[]> => {
 
         let seeds: ComponentSeed[] = [];
@@ -246,15 +243,15 @@ export const runModelEnsemblesLocally =
         let downloadInputPromises = [];
 
         // Get all input dataset bindings and parameter bindings
-        ensembles.map((ensemble) => {
-            let model = pathway.models[ensemble.modelid];
-            let bindings = ensemble.bindings;
+        executions.map((execution) => {
+            let model = thread.models[execution.modelid];
+            let bindings = execution.bindings;
             let datasets: any = {};
             let parameters: any = {};
             let paramtypes: any = {};
 
             // Get input datasets
-            model.input_files.map((io) => {
+            model.input_files.map((io: ModelIO) => {
                 let resources: DataResource[] = [];
                 let dsid = null;
                 if (bindings[io.id]) {
@@ -268,16 +265,20 @@ export const runModelEnsemblesLocally =
                 }
                 if (resources.length > 0) {
                     let type = io.type.replace(/^.*#/, '');
+                    let newnames: any = {};
                     resources.map((res) => {
+                        let resid = res.id;
+                        let resname = res.name;
                         if (res.url) {
-                            res.name = res.url.replace(/^.*(#|\/)/, '');
-                            res.name = res.name.replace(/^([0-9])/, '_$1');
-                            if (!res.id)
-                                res.id = res.name;
+                            resname = res.url.replace(/^.*(#|\/)/, '');
+                            resname = resname.replace(/^([0-9])/, '_$1');
+                            if (!resid)
+                                resid = resname;
                         }
-                        registered_resources[res.id] = [res.name, type, res.url];
+                        newnames[resid] = resname;
+                        registered_resources[resid] = [resname, type, res.url];
                     })
-                    datasets[io.name] = resources.map((res) => res.name);
+                    datasets[io.name] = resources.map((res) => newnames[res.id]);
                 }
             });
 
@@ -295,7 +296,7 @@ export const runModelEnsemblesLocally =
 
             seeds.push({
                 component: component,
-                ensemble: ensemble,
+                execution: execution,
                 datasets: datasets,
                 parameters: parameters,
                 paramtypes: paramtypes
@@ -319,17 +320,16 @@ export const runModelEnsemblesLocally =
         return Promise.all(seeds.map((seed) => executionQueue.add({ 
                 seed: seed, 
                 prefs: prefs.localex,
-                scenario_id: scenario_id,
-                pathway_id: pathway.id,
+                thread_id: thread.id,
             }, {
-            //jobId: seed.ensemble.id,
+            //jobId: seed.execution.id,
             //removeOnComplete: true,
-            attempts: 2
+            //attempts: 2
         })));
 }
 
-export const fetchLocalRunLog = (ensembleid: string, prefs: MintPreferences) => {
-    let logstdout = prefs.localex.logdir + "/" + ensembleid + ".log";
+export const fetchLocalRunLog = (executionid: string, prefs: MintPreferences) => {
+    let logstdout = prefs.localex.logdir + "/" + executionid + ".log";
     if(fs.existsSync(logstdout))
         return fs.readFileSync(logstdout).toString();
     return "Job not yet started running";
