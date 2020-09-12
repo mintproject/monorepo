@@ -1,6 +1,11 @@
-import { Thread, ProblemStatement, MintPreferences, ExecutionSummary, Execution, ModelIOBindings, ThreadModelMap } from "./mint-types";
-import { setupModelWorkflow, fetchWingsTemplate, loginToWings, runModelExecutions, fetchWingsRunsStatuses, fetchWingsRunResults } from "../wings/wings-functions";
-import { getModelInputBindings, getModelInputConfigurations, deleteAllThreadExecutionIds, setThreadExecutionIds, addThreadExecutions, getExecutionHash, successfulExecutionIds, getAllThreadExecutionIds, listExecutions, updateThreadExecutions, getThread, updateThreadExecutionSummary } from "../graphql/graphql_functions";
+import { Thread, ProblemStatement, MintPreferences, ExecutionSummary, Execution, 
+    ModelIOBindings, ThreadModelMap } from "./mint-types";
+import { setupModelWorkflow, fetchWingsTemplate, loginToWings, runModelExecutions, 
+    fetchWingsRunsStatuses, fetchWingsRunResults } from "../wings/wings-functions";
+import { getModelInputBindings, getModelInputConfigurations, deleteThreadModelExecutionIds, 
+    setThreadModelExecutionIds, getExecutionHash, listSuccessfulExecutionIds, 
+    getThreadModelExecutionIds, getExecutions, setExecutions, getThread, 
+    setThreadModelExecutionSummary } from "../graphql/graphql_functions";
 
 export const saveAndRunExecutions = async(
         thread: Thread, 
@@ -25,6 +30,7 @@ export const saveAndRunExecutionsForModel = async(modelid: string,
     if(!thread.execution_summary)
         thread.execution_summary = {};
     
+    let thread_model_id = thread.model_ensembles[modelid].id;
     let model = thread.models[modelid];
     let execution_details = getModelInputBindings(model, thread);
     let threadModel = execution_details[0] as ThreadModelMap;
@@ -32,12 +38,10 @@ export const saveAndRunExecutionsForModel = async(modelid: string,
     let configs = getModelInputConfigurations(threadModel, inputIds);
     
     if(configs != null) {
-        // Delete existing thread execution ids (*NOT DELETING GLOBAL ENSEMBLE DOCUMENTS .. Only clearing list of the thread's execution ids)
-        deleteAllThreadExecutionIds(thread.id, modelid);
+        // Delete existing thread model execution ids
+        deleteThreadModelExecutionIds(thread_model_id);
 
         // Setup Model for execution on Wings
-        // await loginToWings(prefs); // Login to Wings now Happens at the top app level
-        
         let workflowid = await setupModelWorkflow(model, thread, prefs);
         let tpl_package = await fetchWingsTemplate(workflowid, prefs);
 
@@ -47,10 +51,10 @@ export const saveAndRunExecutionsForModel = async(modelid: string,
         let execution_summary = {
             total_runs: configs.length,
             workflow_name: workflowid.replace(/.+#/, ''),
-            submission_time: Date.now() - 20000 // Less 20 seconds to counter for clock skews
+            submission_time: new Date()
         } as ExecutionSummary
 
-        updateThreadExecutionSummary(thread.id, model.id, execution_summary);
+        setThreadModelExecutionSummary(thread_model_id, execution_summary);
         
         // Work in batches
         let batchSize = 100; // Deal with executions from firebase in this batch size
@@ -78,7 +82,7 @@ export const saveAndRunExecutionsForModel = async(modelid: string,
                     runid: null,
                     status: null,
                     results: [],
-                    submission_time: Date.now(),
+                    start_time: new Date(),
                     selected: true
                 } as Execution;
                 execution.id = getExecutionHash(execution);
@@ -89,7 +93,7 @@ export const saveAndRunExecutionsForModel = async(modelid: string,
 
             // Check if any current executions already exist 
             // - Note: execution ids are uniquely defined by the model id and inputs
-            let all_execution_ids : any[] = await successfulExecutionIds(executionids);
+            let all_execution_ids : any[] = await listSuccessfulExecutionIds(executionids);
             let current_execution_ids = all_execution_ids.filter((eid) => eid); // Filter for null/undefined execution ids
 
             // Run executions in smaller batches
@@ -105,12 +109,12 @@ export const saveAndRunExecutionsForModel = async(modelid: string,
                         eslice_nr[j].execution_engine = "wings";
                         eslice_nr[j].run_progress = 0;
                     }
-                    addThreadExecutions(eslice_nr);
+                    setExecutions(eslice_nr);
                 }
             }
 
             // Save thread execution ids (to be used for later retrieval of executions)
-            setThreadExecutionIds(thread.id, model.id, executionids);
+            setThreadModelExecutionIds(thread_model_id, executionids);
             batchid++;
         }
     }
@@ -169,13 +173,14 @@ export const checkStatusAllExecutionsForModel = async(
         thread: Thread, 
         prefs: MintPreferences) => {
     let model = thread.models[modelid];
+    let thread_model_id = thread.model_ensembles[modelid].id;
     let summary = thread.execution_summary[modelid];
     
     // await loginToWings(prefs); // Login to Wings handled at the top now
     
     // FIXME: Some problem with the submission times
     let runtimeInfos : any = await fetchWingsRunsStatuses(summary.workflow_name, 
-        Math.floor(summary.submission_time/1000), summary.total_runs, prefs);
+        Math.floor(summary.submission_time.getTime()), summary.total_runs, prefs);
 
     let start = 0;
     let pageSize = 100;
@@ -183,11 +188,11 @@ export const checkStatusAllExecutionsForModel = async(
     let numFailed = 0;
     let numRunning = 0;
 
-    let threadModelExecutionIds =  await getAllThreadExecutionIds(thread.id, modelid);
+    let threadModelExecutionIds =  await getThreadModelExecutionIds(thread_model_id);
 
     while(true) {
         let executionids = threadModelExecutionIds.slice(start, start+pageSize);
-        let executions = await listExecutions(executionids);
+        let executions = await getExecutions(executionids);
         start += pageSize;
 
         if(!executions || executions.length == 0)
@@ -238,12 +243,12 @@ export const checkStatusAllExecutionsForModel = async(
         }
 
         // Update all executions
-        updateThreadExecutions(changed_executions);
+        setExecutions(changed_executions);
     }
     
     summary.successful_runs = numSuccessful;
     summary.failed_runs = numFailed;
     summary.submitted_runs = numRunning + numSuccessful + numFailed;
     
-    await updateThreadExecutionSummary(thread.id, modelid, summary);
+    await setThreadModelExecutionSummary(thread_model_id, summary);
 }

@@ -11,13 +11,27 @@ import { GraphQL } from '../../config/graphql';
 import getProblemStatementGQL from './queries/problem-statement/get.graphql';
 import getTaskGQL from './queries/task/get.graphql';
 import getThreadGQL from './queries/thread/get.graphql';
+
 import getExecutionGQL from './queries/execution/get.graphql';
-import executionIdsForThreadGQL from './queries/execution/executionids-for-thread.graphql';
-import listExecutionsListGQL from './queries/execution/list.graphql';
+import listSuccessfulIdsGQL from './queries/execution/list-successful-ids.graphql';
+import getExecutionsGQL from './queries/execution/list.graphql';
+import setExecutionsGQL from './queries/execution/new.graphql';
+import updateExecutionStatusResultsGQL from './queries/execution/update-status-results.graphql';
+import deleteExecutionsGQL from './queries/execution/delete.graphql';
+
+import updateExecutionSummary from './queries/execution/update-execution-summary.graphql';
+import incFailedRunsGQL from './queries/execution/increment-failed-runs.graphql';
+import incSuccessfulRunsGQL from './queries/execution/increment-successful-runs.graphql';
+import incSubmittedRunsGQL from './queries/execution/increment-submitted-runs.graphql';
+
+import listThreadModelExecutionIdsGQL from './queries/execution/list-thread-model-executions.graphql';
+import newThreadModelExecutionsGQL from './queries/execution/new-thread-model-executions.graphql';
+import deleteThreadModelExecutionsGQL from './queries/execution/delete-thread-model-executions.graphql';
 
 import { problemStatementFromGQL, taskFromGQL, threadFromGQL, 
-    threadInfoFromGQL,
-    executionFromGQL} from './graphql_adapter';
+    executionFromGQL,
+    executionToGQL,
+    executionResultsToGQL} from './graphql_adapter';
 import { isObject } from 'util';
 import { Md5 } from 'ts-md5';
 
@@ -29,14 +43,14 @@ export const fetchMintConfig = (): Promise<MintPreferences> => {
         db.doc("configs/main").get().then((doc) => {
             let prefs = doc.data() as MintPreferences;
 
-            if(DEVMODE) {
+            //if(DEVMODE) {
                 prefs.ensemble_manager_api = "http://localhost:" + PORT + "/v1";
                 prefs.localex.datadir = DEVHOMEDIR + "/data";
                 prefs.localex.codedir = DEVHOMEDIR + "/code";
                 prefs.localex.logdir = DEVHOMEDIR + "/logs";
                 prefs.localex.dataurl = "file://" + DEVHOMEDIR + "/data";
                 prefs.localex.logurl = "file://" + DEVHOMEDIR + "/logs";
-            }
+            //}
            
             if(prefs.execution_engine == "wings") {
               fetch(prefs.wings.server + "/config").then((res) => {
@@ -120,6 +134,123 @@ export const getThread = async(threadid: string) : Promise<Thread> => {
     });
 }
 
+const MAX_CONFIGURATIONS = 1000000;
+export const getTotalConfigurations = (model: Model, bindings: ModelIOBindings, thread: Thread) => {
+    let totalconfigs = 1;
+    model.input_files.map((io) => {
+        if(!io.value) {
+            // Expand a dataset to it's constituent resources
+            // FIXME: Create a collection if the model input has dimensionality of 1
+            if(bindings[io.id]) {
+                let nexecution : any[] = [];
+                bindings[io.id].map((dsid) => {
+                    let ds = thread.data[dsid];
+                    let selected_resources = ds.resources.filter((res) => res.selected);
+                    // Fix for older saved resources
+                    if(selected_resources.length == 0) 
+                        selected_resources = ds.resources;
+                    nexecution = nexecution.concat(selected_resources);
+                });
+                totalconfigs *= nexecution.length;
+            }
+        }
+        else {
+            totalconfigs *= (io.value.resources as any[]).length;
+        }
+    })
+    
+    // Add adjustable parameters to the input ids
+    model.input_parameters.map((io) => {
+        if(!io.value)
+            totalconfigs *= bindings[io.id].length;
+    });
+
+    return totalconfigs;
+}
+
+const cartProd = (lists : any[]) => {
+    let ps : any[] = [],
+        acc : any [][] = [
+            []
+        ],
+        i = lists.length;
+    while (i--) {
+        let subList = lists[i],
+            j = subList.length;
+        while (j--) {
+            let x = subList[j],
+                k = acc.length;
+            while (k--) ps.push([x].concat(acc[k]))
+        };
+        acc = ps;
+        ps = [];
+    };
+    return acc.reverse();
+};
+
+export const getModelInputConfigurations = (
+        threadModel: ThreadModelMap,
+        inputIds: string[]) => {
+    let dataBindings = threadModel.bindings;
+    let inputBindings : any[] = [];
+    let totalproducts = 1;
+    inputIds.map((inputid) => {
+        inputBindings.push(dataBindings[inputid]);
+        if(dataBindings[inputid])
+            totalproducts *= dataBindings[inputid].length;
+    });
+    if(totalproducts < MAX_CONFIGURATIONS) {
+        return cartProd(inputBindings);
+    }
+    else {
+        return null;
+    }
+}
+
+export const getModelInputBindings = (model: Model, thread: Thread) => {
+    let me = thread.model_ensembles[model.id];
+    let threadModel = {
+        id: me.id,
+        bindings: Object.assign({}, me.bindings)
+    } as ThreadModelMap;
+    let inputIds : any[] = [];
+
+    model.input_files.map((io) => {
+        inputIds.push(io.id);
+        if(!io.value) {
+            // Expand a dataset to it's constituent "selected" resources
+            // FIXME: Create a collection if the model input has dimensionality of 1
+            if(threadModel.bindings[io.id]) {
+                let nexecution : any[] = [];
+                threadModel.bindings[io.id].map((dsid) => {
+                    let ds = thread.data[dsid];
+                    let selected_resources = ds.resources.filter((res) => res.selected);
+                    // Fix for older saved resources
+                    if(selected_resources.length == 0) 
+                        selected_resources = ds.resources;
+                    nexecution = nexecution.concat(selected_resources);
+                });
+                threadModel.bindings[io.id] = nexecution;
+            }
+        }
+        else {
+            threadModel.bindings[io.id] = io.value.resources as any[];
+        }
+    })
+    
+    // Add adjustable parameters to the input ids
+    model.input_parameters.map((io) => {
+        if(!io.value) inputIds.push(io.id);
+    })
+    // Get cartesian product of inputs to get all model configurations
+
+    return [threadModel, inputIds];
+};
+
+
+/* 
+    Executions
+*/
 export const getExecution = async(executionid: string) : Promise<Execution> => {
     return APOLLO_CLIENT.query({
         query: getExecutionGQL,
@@ -141,75 +272,10 @@ export const getExecution = async(executionid: string) : Promise<Execution> => {
     });
 }
 
-export const setThreadExecutionIds = (thread_id: string, modelid: string, executionids: string[]) : Promise<void> => {
-    // TODO
-    return null;
-}
-
-export const deleteAllThreadExecutionIds = async (thread_id: string, modelid: string) => {
-    // TODO
-}
-
-export const getAllThreadExecutionIds = async (thread_id: string, modelid: string) : Promise<string[]> => {
+// Get Executions
+export const getExecutions = (executionids: string[]) : Promise<Execution[]> => {
     return APOLLO_CLIENT.query({
-        query: executionIdsForThreadGQL,
-        variables: {
-            id: thread_id,
-            modelId: modelid
-        }
-    }).then((result) => {
-        if(result.errors && result.errors.length > 0) {
-            console.log("ERROR");
-            console.log(result);
-        }
-        else {
-            if(result.data.thread_by_pk.thread_models.length > 0)
-                return result.data.thread_by_pk.thread_models[0].executions.map((ex:any) => ex.execution_id);
-        }
-        return null;        
-    });
-}
-
-// Update Thread Executions
-export const setThreadExecutions = (executions: Execution[]) => {
-    /*
-    let executionsRef = db.collection("executions");
-    let batch = db.batch();
-    let i = 0;
-    executions.map((execution) => {
-        batch.update(executionsRef.doc(execution.id), execution);
-    })
-    return batch.commit();*/
-}
-
-// Add Executions
-export const addThreadExecutions = (executions: Execution[]) => {
-    /*
-    let executionsRef = db.collection("executions");
-    // Read all docs (to check if they exist or not)
-    let readpromises = [];
-    executions.map((execution) => {
-        readpromises.push(executionsRef.doc(execution.id).get());
-    });
-    let batch = db.batch();
-    let i = 0;
-    return Promise.all(readpromises).then((docs) => {
-        docs.map((curdoc: firebase.firestore.DocumentSnapshot) => {
-            // If doc doesn't exist, write execution
-            let execution = executions[i++];
-            //if(!curdoc.exists)
-            batch.set(curdoc.ref, execution);
-        })
-        return batch.commit();
-    })*/
-}
-
-/* Execution Functions */
-
-// List Executions
-export const listExecutions = (executionids: string[]) : Promise<Execution[]> => {
-    return APOLLO_CLIENT.query({
-        query: listExecutionsListGQL,
+        query: getExecutionsGQL,
         variables: {
             ids: executionids
         }
@@ -245,170 +311,149 @@ export const getExecutionHash = (execution: Execution) : string => {
     return Md5.hashStr(str).toString();
 }
 
-const MAX_CONFIGURATIONS = 1000000;
-export const getTotalConfigurations = (model: Model, bindings: ModelIOBindings, thread: Thread) => {
-    let totalconfigs = 1;
-    model.input_files.map((io) => {
-        if(!io.value) {
-            // Expand a dataset to it's constituent resources
-            // FIXME: Create a collection if the model input has dimensionality of 1
-            if(bindings[io.id]) {
-                let nexecution : any[] = [];
-                bindings[io.id].map((dsid) => {
-                    let ds = thread.data[dsid];
-                    let selected_resources = ds.resources.filter((res) => res.selected);
-                    // Fix for older saved resources
-                    if(selected_resources.length == 0) 
-                        selected_resources = ds.resources;
-                    nexecution = nexecution.concat(selected_resources);
-                });
-                totalconfigs *= nexecution.length;
-            }
+// List Successful Execution Ids
+export const listSuccessfulExecutionIds = (executionids: string[]) : Promise<string[]> => {
+    return APOLLO_CLIENT.query({
+        query: listSuccessfulIdsGQL,
+        variables: {
+            ids: executionids
+        }
+    }).then((result) => {
+        if(result.errors && result.errors.length > 0) {
+            console.log("ERROR");
+            console.log(result);
         }
         else {
-            totalconfigs *= (io.value.resources as any[]).length;
+            return result.data.execution.map((ex:any) => ex["id"]);
         }
-    })
-    
-    // Add adjustable parameters to the input ids
-    model.input_parameters.map((io) => {
-        if(!io.value)
-            totalconfigs *= bindings[io.id].length;
+        return null;        
     });
+};
 
-    return totalconfigs;
-}
-export const getModelInputConfigurations = (
-        threadModel: ThreadModelMap,
-        inputIds: string[]) => {
-    let dataExecution = threadModel.bindings;
-    let inputBindings : any[] = [];
-    let totalproducts = 1;
-    inputIds.map((inputid) => {
-        inputBindings.push(dataExecution[inputid]);
-        if(dataExecution[inputid])
-            totalproducts *= dataExecution[inputid].length;
+// Update Executions
+export const setExecutions = (executions: Execution[]) => {
+    return APOLLO_CLIENT.mutate({
+        mutation: setExecutionsGQL,
+        variables: {
+            ids: executions.map((ex) => ex.id),
+            executions: executions.map((ex) => executionToGQL(ex))
+        }
     });
-    if(totalproducts < MAX_CONFIGURATIONS) {
-        return cartProd(inputBindings);
-    }
-    else {
-        return null;
-    }
 }
 
-export const getModelInputBindings = (model: Model, thread: Thread) => {
-    let me = thread.model_ensembles[model.id];
-    let threadModel = {
-        id: me.id,
-        bindings: Object.assign({}, me.bindings)
-    } as ThreadModelMap;
-    let inputIds : any[] = [];
+// Update Execution status and results only
+export const updateExecutionStatusAndResults = (execution: Execution) => {
+    return APOLLO_CLIENT.mutate({
+        mutation: updateExecutionStatusResultsGQL,
+        variables: {
+            id: execution.id,
+            start_time: execution.start_time,
+            end_time: execution.end_time,
+            run_progress: execution.run_progress,
+            status: execution.status,
+            results: executionResultsToGQL(execution.results).map((exres:any) => {
+                exres["execution_id"] = execution.id;
+                return exres;
+            })
+        }
+    });
+}
 
-    model.input_files.map((io) => {
-        inputIds.push(io.id);
-        if(!io.value) {
-            // Expand a dataset to it's constituent resources
-            // FIXME: Create a collection if the model input has dimensionality of 1
-            if(threadModel.bindings[io.id]) {
-                let nexecution : any[] = [];
-                threadModel.bindings[io.id].map((dsid) => {
-                    let ds = thread.data[dsid];
-                    let selected_resources = ds.resources.filter((res) => res.selected);
-                    // Fix for older saved resources
-                    if(selected_resources.length == 0) 
-                        selected_resources = ds.resources;
-                    nexecution = nexecution.concat(selected_resources);
-                });
-                threadModel.bindings[io.id] = nexecution;
-            }
+// Delete Executions
+export const deleteExecutions = (executionids: string[]) => {
+    return APOLLO_CLIENT.mutate({
+        mutation: deleteExecutionsGQL,
+        variables: {
+            ids: executionids
+        }
+    });
+}
+
+
+/* 
+    Thread Model Execution Mappings 
+*/
+export const getThreadModelExecutionIds = async (thread_model_id: string) : Promise<string[]> => {
+    return APOLLO_CLIENT.query({
+        query: listThreadModelExecutionIdsGQL,
+        variables: {
+            threadModelId: thread_model_id
+        }
+    }).then((result) => {
+        if(result.errors && result.errors.length > 0) {
+            console.log("ERROR");
+            console.log(result);
         }
         else {
-            threadModel.bindings[io.id] = io.value.resources as any[];
+            return result.data.thread_model_by_pk.executions.map((ex:any) => ex.execution_id);
         }
-    })
-    
-    // Add adjustable parameters to the input ids
-    model.input_parameters.map((io) => {
-        if(!io.value) inputIds.push(io.id);
-    })
-    // Get cartesian product of inputs to get all model configurations
-
-    return [threadModel, inputIds];
-};
-
-const cartProd = (lists : any[]) => {
-    let ps : any[] = [],
-        acc : any [][] = [
-            []
-        ],
-        i = lists.length;
-    while (i--) {
-        let subList = lists[i],
-            j = subList.length;
-        while (j--) {
-            let x = subList[j],
-                k = acc.length;
-            while (k--) ps.push([x].concat(acc[k]))
-        };
-        acc = ps;
-        ps = [];
-    };
-    return acc.reverse();
-};
-
-
-// List Execution Ids (i.e. which execution ids exist)
-export const listExistingExecutionIds = (executionids: string[]) : Promise<string[]> => {
-    // TODO
-    return null;
-};
-
-// List Execution Ids (i.e. which execution ids exist)
-export const successfulExecutionIds = (executionids: string[]) : Promise<string[]> => {
-    // TODO
-    return null;
-};
-
-// Update Thread Executions
-export const updateThreadExecutions = (executions: Execution[]) => {
-    // TODO
+        return null;        
+    });
 }
 
-// Delete Thread Executions
-export const deleteThreadExecutions = (executionids: string[]) => {
-    // TODO
+export const setThreadModelExecutionIds = (thread_model_id: string, executionids: string[]) => {
+    let tmexids = executionids.map((exid) => {
+        return {
+            thread_model_id: thread_model_id,
+            execution_id: exid
+        }
+    });
+    return APOLLO_CLIENT.mutate({
+        mutation: newThreadModelExecutionsGQL,
+        variables: {
+            threadModelExecutions: tmexids
+        }
+    });
 }
 
-// Region information
+export const deleteThreadModelExecutionIds = async (thread_model_id: string) => {
+    return APOLLO_CLIENT.mutate({
+        mutation: deleteThreadModelExecutionsGQL,
+        variables: {
+            threadModelId: thread_model_id
+        }
+    });
+}
 
-// Get details about a particular region/subregion
-export const getRegionDetails = (regionid: string, subregionid: string) => {
-    // TODO
+/* 
+    Thread Model Execution Summaries 
+*/
+export const setThreadModelExecutionSummary = (thread_model_id: string, summary: ExecutionSummary) =>  {
+    return APOLLO_CLIENT.mutate({
+        mutation: updateExecutionSummary,
+        variables: {
+            threadModelId: thread_model_id,
+            summary: summary
+        }
+    });
 };
 
-export const updateThreadExecutionStatus = (execution: Execution) => {
-    // TODO: Update Execution ? run_progress, status, results ?
-};
-
-export const saveExecution = (execution: Execution) => {
-    // TODO: Update Execution
-};
-
-
-// ProblemStatement/Task/Thread editing
-
-// Update Thread Execution Summary
-export const updateThreadExecutionSummary = (threadid: string, modelid: string, summary: ExecutionSummary) =>  {
-    // TODO
+// Increment thread submitted runs
+export const incrementThreadModelSubmittedRuns = (thread_model_id: string) =>  {
+    return APOLLO_CLIENT.mutate({
+        mutation: incSubmittedRunsGQL,
+        variables: {
+            threadModelId: thread_model_id
+        }
+    });
 };
 
 // Increment thread successful runs
-export const incrementThreadSuccessfulRuns = (problem_statement_id: string, threadid: string, modelid: string) =>  {
-    // TODO
+export const incrementThreadModelSuccessfulRuns = (thread_model_id: string) =>  {
+    return APOLLO_CLIENT.mutate({
+        mutation: incSuccessfulRunsGQL,
+        variables: {
+            threadModelId: thread_model_id
+        }
+    });
 };
 
 // Increment thread failed runs
-export const incrementThreadFailedRuns = (problem_statement_id: string, threadid: string, modelid: string) =>  {
-    // TODO
+export const incrementThreadModelFailedRuns = (thread_model_id: string) =>  {
+    return APOLLO_CLIENT.mutate({
+        mutation: incFailedRunsGQL,
+        variables: {
+            threadModelId: thread_model_id
+        }
+    });
 };

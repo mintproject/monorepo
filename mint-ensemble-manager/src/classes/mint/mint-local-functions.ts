@@ -1,6 +1,9 @@
 import { Thread, Model, ThreadModelMap, ProblemStatement, MintPreferences, ExecutionSummary, Execution } from "./mint-types";
-import { getModelInputConfigurations, deleteAllThreadExecutionIds, setThreadExecutionIds, getExecutionHash, successfulExecutionIds, getAllThreadExecutionIds, listExecutions, updateThreadExecutions, setThreadExecutions, deleteThreadExecutions, updateThreadExecutionSummary, getModelInputBindings } from "../graphql/graphql_functions";
-import { runModelExecutionsLocally, loadModelWCM, getModelCacheDirectory } from "../localex/local-execution-functions";
+import { getModelInputConfigurations, deleteThreadModelExecutionIds, setThreadModelExecutionIds, 
+    getExecutionHash, getThreadModelExecutionIds, getExecutions, 
+    setExecutions, deleteExecutions, 
+    setThreadModelExecutionSummary, getModelInputBindings, listSuccessfulExecutionIds } from "../graphql/graphql_functions";
+import { loadModelWCM, getModelCacheDirectory, queueModelExecutionsLocally } from "../localex/local-execution-functions";
 
 import fs from "fs-extra";
 
@@ -12,7 +15,7 @@ import { DEVMODE } from "../../config/app";
 let monitorQueue = new Queue(MONITOR_QUEUE_NAME, REDIS_URL);
 monitorQueue.process((job) => monitorThread(job));
 
-export const saveAndRunExecutionsLocally = async(
+export const saveAndRunExecutionsLocally = async (
         thread: Thread, 
         modelid: string,
         prefs: MintPreferences) => {
@@ -20,122 +23,114 @@ export const saveAndRunExecutionsLocally = async(
     for(let pmodelid in thread.model_ensembles) {
         if(!modelid || (modelid == pmodelid)) {
             await saveAndRunExecutionsForModelLocally(pmodelid, thread, prefs);
+            /*
             if(!DEVMODE) {
                 monitorQueue.add({ thread_id: thread.id, model_id: modelid } , {
                     delay: 1000*30 // 30 seconds delay before monitoring for the first time
                 });
             }
+            */
         }
     }
-    console.log("Finished sending all executions for local execution. Adding Monitor");
+    console.log("Finished sending all executions for local execution");
 }
 
 export const saveAndRunExecutionsForModelLocally = async(modelid: string, 
         thread: Thread, 
         prefs: MintPreferences) => {
-    if(!thread.execution_summary)
-        thread.execution_summary = {};
-    
-    let model = thread.models[modelid];
-    
-    let execution_details = getModelInputBindings(model, thread);
-    let threadModel = execution_details[0] as ThreadModelMap;
-    let inputIds = execution_details[1] as string[];
 
-    // This is the part that creates all different run configurations
-    // - Cross product of all input collections
-    // - TODO: Change to allow flexibility
-    let configs = getModelInputConfigurations(threadModel, inputIds);
-    
-    if(configs != null) {
-        /*
-            Pre-Run Setup
-        */
-
-        // Setup some book-keeping to help in searching for results
-        let summary = {
-            total_runs: configs.length,
-            submitted_runs : 0,
-            failed_runs: 0,
-            successful_runs: 0,
-            workflow_name: "", // No workflow. Local execution
-            submitted_for_execution: true,
-            submission_time: Date.now() - 20000 // Less 20 seconds to counter for clock skews
-        } as ExecutionSummary
-
-        if(!DEVMODE)
-            await updateThreadExecutionSummary(thread.id, modelid, summary);
+    try {
+        if(!thread.execution_summary)
+            thread.execution_summary = {};
         
-        // Load the component model
-        let component = await loadModelWCM(model.code_url, model, prefs);
+        let model = thread.models[modelid];
+        let thread_model_id = thread.model_ensembles[modelid].id;
+        
+        let execution_details = getModelInputBindings(model, thread);
+        let threadModel = execution_details[0] as ThreadModelMap;
+        let inputIds = execution_details[1] as string[];
 
-        // Delete existing thread execution ids (*NOT DELETING GLOBAL ENSEMBLE DOCUMENTS .. Only clearing list of the thread's execution ids)
-        if(!DEVMODE)
-            await deleteAllThreadExecutionIds(thread.id, modelid);
+        // This is the part that creates all different run configurations
+        // - Cross product of all input collections
+        // - TODO: Change to allow flexibility
+        let configs = getModelInputConfigurations(threadModel, inputIds);
+        
+        if(configs != null) {
+            // Pre-Run Setup
+            // Reset execution summary
+            let summary = {
+                total_runs: configs.length,
+                submitted_runs : 0,
+                failed_runs: 0,
+                successful_runs: 0,
+                workflow_name: "", // No workflow. Local execution
+                submitted_for_execution: true,
+                submission_time: new Date()
+            } as ExecutionSummary
 
-        // Work in batches
-        let batchSize = 500; // Deal with executions from firebase in this batch size
-        let batchid = 0;
+            if(!DEVMODE)
+                await setThreadModelExecutionSummary(thread_model_id, summary);
+            
+            // Load the component model
+            let component = await loadModelWCM(model.code_url, model, prefs);
 
-        // Create executions in batches
-        for(let i=0; i<configs.length; i+= batchSize) {
-            let bindings = configs.slice(i, i+batchSize);
+            // Delete existing thread execution ids
+            if(!DEVMODE)
+                await deleteThreadModelExecutionIds(thread_model_id);
 
-            let executions : Execution[] = [];
-            let executionids : string[] = [];
+            
+            // Work in batches
+            let batchSize = 500; // Store executions in the database in batches
 
-            // Create executions for this batch
-            bindings.map((binding) => {
-                let inputBindings : any = {};
-                for(let j=0; j<inputIds.length; j++) {
-                    inputBindings[inputIds[j]] = binding[j];
+            // Create executions in batches
+            for(let i=0; i<configs.length; i+= batchSize) {
+                let bindings = configs.slice(i, i+batchSize);
+
+                let executions : Execution[] = [];
+                let executionids : string[] = [];
+
+                // Create executions for this batch
+                bindings.map((binding) => {
+                    let inputBindings : any = {};
+                    for(let j=0; j<inputIds.length; j++) {
+                        inputBindings[inputIds[j]] = binding[j];
+                    }
+                    //console.log(inputBindings);
+                    let execution = {
+                        modelid: modelid,
+                        bindings: inputBindings,
+                        execution_engine: "localex",
+                        runid: null,
+                        status: null,
+                        results: {},
+                        start_time: new Date(),
+                        selected: true
+                    } as Execution;
+                    execution.id = getExecutionHash(execution);
+
+                    executionids.push(execution.id);
+                    executions.push(execution);
+                })
+
+                // Fetch only successful executions
+                let successful_execution_ids : string[] = DEVMODE ? [] : await listSuccessfulExecutionIds(executionids);
+                let executions_to_be_run = executions.filter((e) => successful_execution_ids.indexOf(e.id) < 0);
+
+                // Create Executions and Thread Model Mappings to those executions
+                if(!DEVMODE) {
+                    await setExecutions(executions_to_be_run);
+                    await setThreadModelExecutionIds(thread_model_id, executionids);
                 }
-                //console.log(inputBindings);
-                let execution = {
-                    modelid: modelid,
-                    bindings: inputBindings,
-                    execution_engine: "localex",
-                    runid: null,
-                    status: null,
-                    results: {},
-                    submission_time: Date.now(),
-                    selected: true
-                } as Execution;
-                execution.id = getExecutionHash(execution);
 
-                executionids.push(execution.id);
-                executions.push(execution);
-            })
-
-            if(!DEVMODE)
-                setThreadExecutionIds(thread.id, model.id, executionids);
-
-            // Check if any current executions already exist 
-            // - Note: execution ids are uniquely defined by the model id and inputs
-            let all_executions : Execution[] = DEVMODE ? [] : await listExecutions(executionids);
-            let successful_execution_ids = all_executions
-                .filter((e) => (e != null && e.status == "SUCCESS"))
-                .map((e) => e.id);
-
-            let executions_to_be_run = executions.filter((e) => successful_execution_ids.indexOf(e.id) < 0);
-
-            // Clear out the thread executions to be empty
-            if(!DEVMODE)
-                await setThreadExecutions(executions_to_be_run);
-
-            summary.submitted_runs += executions.length;
-            summary.successful_runs += successful_execution_ids.length;
-            if(!DEVMODE)
-                updateThreadExecutionSummary(thread.id, modelid, summary);
-
-            // Run the model executions
-            runModelExecutionsLocally(thread, component, executions_to_be_run, prefs);
-            
-            batchid ++;
-            
+                // Queue the model executions
+                queueModelExecutionsLocally(thread, modelid, component, executions_to_be_run, prefs);
+            }
         }
+        console.log("Finished submitting all executions for model: " + modelid);
     }
-    console.log("Finished submitting all executions for model: " + modelid);
+    catch(e) {
+        console.log(e);
+    }
 }
 
 export const deleteExecutableCacheLocally = async(
@@ -197,10 +192,11 @@ export const deleteExecutableCacheForModelLocally = async(modelid: string,
     prefs: MintPreferences) => {
 
     let model = thread.models[modelid];
-    let all_execution_ids = await getAllThreadExecutionIds(thread.id, modelid);
+    let thread_model_id = thread.model_ensembles[modelid].id;
+    let all_execution_ids = await getThreadModelExecutionIds(thread_model_id);
 
     // Delete existing thread execution ids (*NOT DELETING GLOBAL ENSEMBLE DOCUMENTS .. Only clearing list of the thread's execution ids)
-    deleteAllThreadExecutionIds(thread.id, modelid);
+    deleteThreadModelExecutionIds(thread_model_id);
 
     // Work in batches
     let batchSize = 500; // Deal with executions from firebase in this batch size
@@ -210,7 +206,7 @@ export const deleteExecutableCacheForModelLocally = async(modelid: string,
         let executionids = all_execution_ids.slice(i, i+batchSize);
            
         // Delete the actual execution documents
-        deleteThreadExecutions(executionids);
+        deleteExecutions(executionids);
     }
 
     // Delete cached model directory and zip file
@@ -227,8 +223,8 @@ export const deleteExecutableCacheForModelLocally = async(modelid: string,
     summary.successful_runs = 0;
     summary.failed_runs = 0;
     summary.submitted_runs = 0;
-    summary.submission_time = 0;
+    summary.submission_time = null;
     summary.submitted_for_execution = false;
 
-    await updateThreadExecutionSummary(thread.id, modelid, summary);
+    await setThreadModelExecutionSummary(thread_model_id, summary);
 }

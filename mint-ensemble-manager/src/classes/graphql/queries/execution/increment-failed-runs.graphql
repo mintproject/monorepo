@@ -1,0 +1,5 @@
+mutation increment_failed_runs($threadModelId: uuid!) {
+  update_thread_model_execution_summary_by_pk(pk_columns: {thread_model_id: $threadModelId}, _inc: {failed_runs: 1}) {
+    thread_model_id
+  }
+}

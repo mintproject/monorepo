@@ -1,4 +1,4 @@
-import { Execution } from "../mint/mint-types";
+import { Execution, DataResource } from "../mint/mint-types";
 
 export interface ComponentSeed {
     component: Component,
@@ -9,7 +9,7 @@ export interface ComponentSeed {
 }
 
 export interface ComponentDataBindings {
-    [inputid: string] : string[]
+    [inputid: string] : DataResource[]
 }
 export interface ComponentParameterBindings {
     [inputid: string] : string
@@ -26,6 +26,7 @@ export interface Component {
 }
 
 export interface ComponentArgument {
+    id: string,
     type: string,
     role: string,
     prefix: string,

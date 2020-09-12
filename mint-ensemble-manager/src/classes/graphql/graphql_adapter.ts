@@ -276,9 +276,95 @@ export const modelEnsembleFromGQL = (dbs: any[], pbs: any[]): ModelIOBindings =>
     return bindings;
 }
 
+export const toDateString = (date: Date) : string => {
+    if(!date)
+        return null;
+    let dateString = typeof(date) == "string" ? date : date.toISOString();
+    return dateString.split('T')[0]
+}
+
+export const toDateTimeString = (date: Date) : string => {
+    if(!date)
+        return null;
+    return date.toLocaleDateString() + " " + date.toLocaleTimeString();
+}
+
+export const getDates = (dates:any) => {
+    let start = dates["start_date"]
+    let end = dates["end_date"]
+    return {
+        "start_date" : toDateString(start),
+        "end_date": toDateString(end)
+    }
+}
+
+export const getResourceData = (data:any) => {
+    let dates = getDates(data["time_period"])
+    return {
+        "data": {
+            "id": getMd5Hash(data["url"]),
+            "dcid": data["id"],
+            "name": data["name"],
+            "spatial_coverage": data["spatial_coverage"],
+            "start_date": dates?.start_date,
+            "end_date": dates?.end_date,
+            "url": data["url"]
+        },
+        "on_conflict": {
+            "constraint": "resource_pkey",
+            "update_columns": ["id"]
+        }
+    }
+}
+
+export const executionResultsToGQL = (results: any) => {
+    let data: any = [];
+    Object.keys(results).forEach((outid) => {
+        let result = results[outid];
+        data.push({
+            model_io_id: outid,
+            resource: getResourceData(result)
+        });
+    })
+    return data;
+}
+
 export const executionToGQL = (ex: Execution) : any => {
-    console.log(ex);
-    return null;
+    let exobj = {
+        id: ex.id,
+        model_id: ex.modelid,
+        status: ex.status,
+        start_time: ex.start_time,
+        execution_engine: ex.execution_engine,
+        run_progress: ex.run_progress,
+        run_id: ex.runid,
+        parameter_bindings: {
+            data: [] as any
+        },
+        data_bindings: {
+            data: [] as any
+        },
+        results: {
+            data: [] as any
+        }
+    }
+    Object.keys(ex.bindings).forEach((ioid) => {
+        let binding = ex.bindings[ioid];
+        if (typeof(binding) == 'string') {
+            exobj.parameter_bindings.data.push({
+                model_parameter_id: ioid,
+                parameter_value: binding+"",
+            })
+        }
+        else {
+            exobj.data_bindings.data.push({
+                model_io_id: ioid,
+                resource_id: binding["id"]
+            })
+        }
+    })
+    exobj.results.data = executionResultsToGQL(ex.results);
+    return exobj;
 }
 
 export const executionFromGQL = (ex: any) : Execution => {
@@ -286,7 +372,8 @@ export const executionFromGQL = (ex: any) : Execution => {
         id: ex.id,
         modelid: ex.model_id,
         status: ex.status,
-        submission_time: ex.start_time,
+        start_time: ex.start_time,
+        end_time: ex.end_time,
         execution_engine: ex.execution_engine,
         run_progress: ex.run_progress,
         runid: ex.run_id,
@@ -341,4 +428,16 @@ export const getAutoID = () => {
 
 const getMd5Hash = (str2hash: string) => {
     return crypto.createHash('md5').update(str2hash).digest("hex");
+}
+
+
+export const executionSummaryToGQL = (summary: ExecutionSummary) => {
+    let exobj = Object.assign({}, summary) as any;
+    exobj["submission_time"] = toDateTimeString(summary.submission_time);
+    return exobj;
+}
+
+export const executionSummaryFromGQL = (summary: any) : ExecutionSummary => {
+    let exobj = Object.assign({}, summary) as ExecutionSummary;
+    return exobj;
 }

@@ -1,5 +1,5 @@
 import { Thread, Execution, MintPreferences, DataResource, Model, ModelIO, ModelParameter } from "../mint/mint-types";
-import { Component, ComponentSeed } from "./local-execution-types";
+import { Component, ComponentSeed, ComponentParameterBindings, ComponentDataBindings, ComponentParameterTypes } from "./local-execution-types";
 
 import fs from "fs-extra";
 import request from "request";
@@ -148,6 +148,7 @@ const _getModelIODetails = (io: ModelIO, iotype: string) => {
     }
     let pfx = (iotype == "input") ? "-i" : "-o";
     return {
+        id: io.id,
         role: io.name,
         prefix: pfx + io.position,
         isParam: false,
@@ -160,6 +161,7 @@ const _getModelParamDetails = (param: ModelParameter) => {
         return null;
     }
     return {
+        id: param.id,
         role: param.name,
         prefix: "-p" + param.position,
         isParam: true,
@@ -231,24 +233,26 @@ export const loadModelWCM = async (url: string, model: Model, prefs: MintPrefere
 }
 
 // Create Jobs (Seeds) and Queue them
-export const runModelExecutionsLocally =
+export const queueModelExecutionsLocally =
     async (thread: Thread,
+        modelid: string,
         component: Component,
         executions: Execution[],
         prefs: MintPreferences): Promise<Queue.Job<any>[]> => {
 
         let seeds: ComponentSeed[] = [];
         let registered_resources: any = {};
-
         let downloadInputPromises = [];
+
+        let model = thread.models[modelid];
+        let thread_model_id = thread.model_ensembles[modelid].id;
 
         // Get all input dataset bindings and parameter bindings
         executions.map((execution) => {
-            let model = thread.models[execution.modelid];
             let bindings = execution.bindings;
-            let datasets: any = {};
-            let parameters: any = {};
-            let paramtypes: any = {};
+            let datasets: ComponentDataBindings = {};
+            let parameters: ComponentParameterBindings = {};
+            let paramtypes: ComponentParameterTypes = {};
 
             // Get input datasets
             model.input_files.map((io: ModelIO) => {
@@ -265,7 +269,7 @@ export const runModelExecutionsLocally =
                 }
                 if (resources.length > 0) {
                     let type = io.type.replace(/^.*#/, '');
-                    let newnames: any = {};
+                    let newresources: any = {};
                     resources.map((res) => {
                         let resid = res.id;
                         let resname = res.name;
@@ -275,23 +279,29 @@ export const runModelExecutionsLocally =
                             if (!resid)
                                 resid = resname;
                         }
-                        newnames[resid] = resname;
+                        newresources[resid] = {
+                            id: resid,
+                            url: res.url,
+                            name: resname,
+                            time_period: res.time_period,
+                            spatial_coverage: res.spatial_coverage
+                        } as DataResource
                         registered_resources[resid] = [resname, type, res.url];
                     })
-                    datasets[io.name] = resources.map((res) => newnames[res.id]);
+                    datasets[io.id] = resources.map((res) => newresources[res.id]);
                 }
             });
 
             // Get Input parameters
             model.input_parameters.map((ip) => {
                 if (ip.value) {
-                    parameters[ip.name] = ip.value;
+                    parameters[ip.id] = ip.value.toString();
                 }
                 else if (bindings[ip.id]) {
                     let value = bindings[ip.id];
-                    parameters[ip.name] = value;
+                    parameters[ip.id] = value.toString();
                 }
-                paramtypes[ip.name] = ip.type;
+                paramtypes[ip.id] = ip.type;
             });
 
             seeds.push({
@@ -321,6 +331,7 @@ export const runModelExecutionsLocally =
                 seed: seed, 
                 prefs: prefs.localex,
                 thread_id: thread.id,
+                thread_model_id: thread_model_id
             }, {
             //jobId: seed.execution.id,
             //removeOnComplete: true,

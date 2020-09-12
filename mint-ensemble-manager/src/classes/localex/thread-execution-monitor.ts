@@ -1,5 +1,5 @@
-import { Thread, MintPreferences, Execution, ExecutionSummary } from "../mint/mint-types";
-import { getAllThreadExecutionIds, listExecutions, updateThreadExecutionSummary, getThread } from "../graphql/graphql_functions";
+import { Thread, Execution, ExecutionSummary } from "../mint/mint-types";
+import { getThreadModelExecutionIds, getExecutions, getThread, setThreadModelExecutionSummary } from "../graphql/graphql_functions";
 
 import Queue from "bull";
 import {MONITOR_QUEUE_NAME, REDIS_URL } from "../../config/redis";
@@ -18,6 +18,7 @@ export const monitorThread = async function (job: any) {
 }
 
 const _monitorEnsembles = async(modelid: string, thread: Thread) => {
+    let thread_model_id = thread.model_ensembles[modelid].id;
     let summary = thread.execution_summary[modelid];
     if(!summary)
         summary = {} as ExecutionSummary;
@@ -25,7 +26,7 @@ const _monitorEnsembles = async(modelid: string, thread: Thread) => {
     // Work in batches
     let batchSize = 500; // Deal with ensembles from firebase in this batch size
     
-    let all_ensemble_ids = await getAllThreadExecutionIds(thread.id, modelid);
+    let all_ensemble_ids = await getThreadModelExecutionIds(thread_model_id);
     
     summary.successful_runs = 0;
     summary.failed_runs = 0;
@@ -36,7 +37,7 @@ const _monitorEnsembles = async(modelid: string, thread: Thread) => {
         let ensembleids = all_ensemble_ids.slice(i, i+batchSize);
 
         // Check Status of all ensembles
-        let all_ensembles : Execution[] = await listExecutions(ensembleids);
+        let all_ensembles : Execution[] = await getExecutions(ensembleids);
         let successful_ensemble_ids = all_ensembles
             .filter((e) => (e != null && e.status == "SUCCESS"))
             .map((e) => e.id);
@@ -47,7 +48,7 @@ const _monitorEnsembles = async(modelid: string, thread: Thread) => {
         summary.successful_runs += successful_ensemble_ids.length;
         summary.failed_runs += failed_ensemble_ids.length;
     }
-    await updateThreadExecutionSummary(thread.id, modelid, summary);
+    await setThreadModelExecutionSummary(thread_model_id, summary);
 
     if(summary.submitted_runs > (summary.failed_runs + summary.successful_runs)) {
         // If the failed + successful runs != submitted, i.e. there are still some runs waiting to run, keep monitoring
