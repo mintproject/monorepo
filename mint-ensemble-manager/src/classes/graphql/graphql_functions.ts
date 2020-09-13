@@ -43,14 +43,14 @@ export const fetchMintConfig = (): Promise<MintPreferences> => {
         db.doc("configs/main").get().then((doc) => {
             let prefs = doc.data() as MintPreferences;
 
-            //if(DEVMODE) {
+            if(DEVMODE) {
                 prefs.ensemble_manager_api = "http://localhost:" + PORT + "/v1";
                 prefs.localex.datadir = DEVHOMEDIR + "/data";
                 prefs.localex.codedir = DEVHOMEDIR + "/code";
                 prefs.localex.logdir = DEVHOMEDIR + "/logs";
                 prefs.localex.dataurl = "file://" + DEVHOMEDIR + "/data";
                 prefs.localex.logurl = "file://" + DEVHOMEDIR + "/logs";
-            //}
+            }
            
             if(prefs.execution_engine == "wings") {
               fetch(prefs.wings.server + "/config").then((res) => {
