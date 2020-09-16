@@ -77,7 +77,6 @@ export const saveAndRunExecutionsForModelLocally = async(modelid: string,
             // Delete existing thread execution ids
             if(!DEVMODE)
                 await deleteThreadModelExecutionIds(thread_model_id);
-
             
             // Work in batches
             let batchSize = 500; // Store executions in the database in batches
