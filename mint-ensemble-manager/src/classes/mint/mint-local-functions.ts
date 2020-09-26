@@ -7,13 +7,7 @@ import { loadModelWCM, getModelCacheDirectory, queueModelExecutionsLocally } fro
 
 import fs from "fs-extra";
 
-import Queue from "bull";
-import {MONITOR_QUEUE_NAME, REDIS_URL } from "../../config/redis";
-import { monitorThread } from "../localex/thread-execution-monitor";
 import { DEVMODE } from "../../config/app";
-
-let monitorQueue = new Queue(MONITOR_QUEUE_NAME, REDIS_URL);
-monitorQueue.process((job) => monitorThread(job));
 
 export const saveAndRunExecutionsLocally = async (
         thread: Thread, 
