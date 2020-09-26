@@ -387,7 +387,7 @@ export const executionFromGQL = (ex: any) : Execution => {
         exobj.bindings[data.model_io_id] = data.resource as DataResource;
     });
     ex.results.forEach((data:any) => {
-        exobj.results[data.model_output_id] = data.resource as DataResource;
+        exobj.results[data.model_io_id] = data.resource as DataResource;
     });
     return exobj;
 }
