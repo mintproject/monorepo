@@ -209,11 +209,13 @@ module.exports = async (job: any) => {
 
     // Return job execution or error
     if(seed.execution.status == "SUCCESS") {
-        incrementThreadModelSuccessfulRuns(thread_model_id);
+        if(!DEVMODE)
+            incrementThreadModelSuccessfulRuns(thread_model_id);
         return Promise.resolve(seed.execution);
     }
     else {
-        incrementThreadModelFailedRuns(thread_model_id);
+        if(!DEVMODE)
+            incrementThreadModelFailedRuns(thread_model_id);
         return Promise.reject(new Error(error));
     }
 
