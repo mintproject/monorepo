@@ -16,14 +16,12 @@ import { getResource } from "./classes/wings/xhr-requests";
 
 import Queue from "bull";
 import { UI, setQueues } from "bull-board";
-import { EXECUTION_QUEUE_NAME, REDIS_URL, MONITOR_QUEUE_NAME } from "./config/redis";
+import { EXECUTION_QUEUE_NAME, REDIS_URL } from "./config/redis";
 import { PORT, VERSION } from "./config/app";
 
 import * as webpack from "webpack";
-import * as webpackDevMiddleware from "webpack-dev-middleware";
 
 const config = require('../webpack.config.js');
-const compiler = webpack.default(config);
 
 // Main Express Server
 const app = express();
@@ -34,9 +32,6 @@ const version = VERSION;
 var v1ApiDoc = require('./api/api-doc');
 app.use(bodyParser.json());
 app.use(cors());
-
-// Use webpack middleware
-//app.use(webpackDevMiddleware.default(compiler, {publicPath: config.output.publicPath}));
 
 initialize({
     app,    
@@ -62,8 +57,7 @@ app.use(((err, req, res, next) => {
 
 // Setup Bull Queue Dashboard
 let executionQueue = new Queue(EXECUTION_QUEUE_NAME, REDIS_URL);
-let monitorQueue = new Queue(MONITOR_QUEUE_NAME, REDIS_URL);
-setQueues([executionQueue, monitorQueue]);
+setQueues([executionQueue]);
 app.use('/admin/queues', UI)
 
 // Express start
