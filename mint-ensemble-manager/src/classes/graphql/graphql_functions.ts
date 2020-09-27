@@ -38,39 +38,6 @@ import { Md5 } from 'ts-md5';
 
 const APOLLO_CLIENT = GraphQL.instance();
 
-export const fetchMintConfig = (): Promise<MintPreferences> => {
-    return new Promise<MintPreferences>((resolve, reject) => {
-        db.doc("configs/main").get().then((doc) => {
-            let prefs = doc.data() as MintPreferences;
-
-            if(DEVMODE) {
-                prefs.ensemble_manager_api = "http://localhost:" + PORT + "/v1";
-                prefs.localex.datadir = DEVHOMEDIR + "/data";
-                prefs.localex.codedir = DEVHOMEDIR + "/code";
-                prefs.localex.logdir = DEVHOMEDIR + "/logs";
-                prefs.localex.dataurl = "file://" + DEVHOMEDIR + "/data";
-                prefs.localex.logurl = "file://" + DEVHOMEDIR + "/logs";
-            }
-           
-            if(prefs.execution_engine == "wings") {
-              fetch(prefs.wings.server + "/config").then((res) => {
-                res.json().then((wdata) => {
-                  prefs.wings.export_url = wdata["internal_server"]
-                  prefs.wings.storage = wdata["storage"];
-                  prefs.wings.dotpath = wdata["dotpath"];
-                  prefs.wings.onturl = wdata["ontology"];
-                  resolve(prefs);
-                })
-              })
-            }
-            else {
-              resolve(prefs);
-            }
-          })
-    })
-};
-
-
 export const getProblemStatement = async(problem_statement_id: string) : Promise<ProblemStatement> => {
     return APOLLO_CLIENT.query({
         query: getProblemStatementGQL,

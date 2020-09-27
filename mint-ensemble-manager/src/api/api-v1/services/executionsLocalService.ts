@@ -1,6 +1,7 @@
-import { getThread, getProblemStatement, fetchMintConfig } from "../../../classes/graphql/graphql_functions";
+import { getThread, getProblemStatement } from "../../../classes/graphql/graphql_functions";
 import { Thread, ProblemStatement } from "../../../classes/mint/mint-types";
 import { saveAndRunExecutionsLocally, deleteExecutableCacheLocally } from "../../../classes/mint/mint-local-functions";
+import { fetchMintConfig } from "../../../classes/mint/mint-functions";
 
 // ./api-v1/services/executionsLocalService.js
 

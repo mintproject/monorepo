@@ -7,6 +7,31 @@ import { getModelInputBindings, getModelInputConfigurations, deleteThreadModelEx
     getThreadModelExecutionIds, getExecutions, setExecutions, getThread, 
     setThreadModelExecutionSummary } from "../graphql/graphql_functions";
 
+import * as mintConfig from '../../config/config.json';
+import { DEVMODE } from "../../config/app";
+import { DEVHOMEDIR } from "../../config/app";
+import { PORT } from "../../config/app";
+export const fetchMintConfig = async () => {
+    let prefs = mintConfig["default"] as MintPreferences;
+    if(prefs.execution_engine == "wings") {
+        let res = await fetch(prefs.wings.server + "/config");
+        let wdata = await res.json();
+        prefs.wings.export_url = wdata["internal_server"]
+        prefs.wings.storage = wdata["storage"];
+        prefs.wings.dotpath = wdata["dotpath"];
+        prefs.wings.onturl = wdata["ontology"];
+    }
+    if(DEVMODE) {
+        prefs.ensemble_manager_api = "http://localhost:" + PORT + "/v1";
+        prefs.localex.datadir = DEVHOMEDIR + "/data";
+        prefs.localex.codedir = DEVHOMEDIR + "/code";
+        prefs.localex.logdir = DEVHOMEDIR + "/logs";
+        prefs.localex.dataurl = "file://" + DEVHOMEDIR + "/data";
+        prefs.localex.logurl = "file://" + DEVHOMEDIR + "/logs";
+    }    
+    return prefs;
+};
+
 export const saveAndRunExecutions = async(
         thread: Thread, 
         modelid: string,

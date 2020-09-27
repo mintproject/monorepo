@@ -1,6 +1,6 @@
-import { getThread, getProblemStatement, fetchMintConfig } from "../../../classes/graphql/graphql_functions";
+import { getThread, getProblemStatement } from "../../../classes/graphql/graphql_functions";
 import { Thread, ProblemStatement } from "../../../classes/mint/mint-types";
-import { monitorAllExecutions } from "../../../classes/mint/mint-functions";
+import { monitorAllExecutions, fetchMintConfig } from "../../../classes/mint/mint-functions";
 
 // ./api-v1/services/monitorsService.js
 
