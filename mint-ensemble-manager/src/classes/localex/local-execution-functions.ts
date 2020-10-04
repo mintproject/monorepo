@@ -1,4 +1,4 @@
-import { Pathway, ExecutableEnsemble, MintPreferences, DataResource, Model, ModelIO, ModelParameter } from "../mint/mint-types";
+import { Pathway, ExecutableEnsemble, MintPreferences, DataResource, Model, ModelIO, ModelParameter, Wcm } from "../mint/mint-types";
 import { Component, ComponentSeed } from "./local-execution-types";
 
 import path from "path";
@@ -133,12 +133,12 @@ const _getModelDetailsFromYAML = (modeldir: string) => {
         inputs: [],
         outputs: [],
     };
-    let yml = yaml.safeLoad(fs.readFileSync(ymlfile, 'utf8'));
+    let yml = yaml.safeLoad(fs.readFileSync(ymlfile, 'utf8')) as Wcm;
     let wings = yml["wings"]
-    wings["inputs"].map((input: any) => {
+    wings.inputs.map((input: any) => {
         comp.inputs.push(input);
     })
-    wings["outputs"].map((output: any) => {
+    wings.outputs.map((output: any) => {
         comp.outputs.push(output);
     })
     return comp;
