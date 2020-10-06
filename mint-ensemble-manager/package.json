@@ -17,7 +17,7 @@
     "watch": [
       "src"
     ],
-    "exec": "npm start",
+    "exec": "npm run-script build && npm start",
     "ext": "ts"
   },
   "keywords": [],
