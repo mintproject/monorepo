@@ -1,4 +1,4 @@
-import { Pathway, ExecutableEnsemble, MintPreferences, DataResource, Model, ModelIO, ModelParameter } from "../mint/mint-types";
+import { Pathway, ExecutableEnsemble, MintPreferences, DataResource, Model, ModelIO, ModelParameter, Wcm } from "../mint/mint-types";
 import { Component, ComponentSeed } from "./local-execution-types";
 
 import path from "path";
@@ -104,21 +104,45 @@ const _downloadAndUnzipToDirectory = (url: string, modeldir: string, compname: s
     });
 }
 
+const _downloadCwlToDirectory = (url: string, modeldir: string) => {
+    let cwlfile = modeldir + '/run.cwl'
+    return new Promise<void>((resolve, reject) => {
+        _downloadFile(url, cwlfile).then(() => {
+            // Unzip file
+            if (fs.existsSync(cwlfile)) {
+                    resolve();
+            }
+            else {
+                reject();
+            }
+        });
+    });
+}
+
 const _downloadWCM = async (url: string, prefs: MintPreferences) => {
     let hashdir = Md5.hashStr(url).toString();
     
     // Get zip file name from url
     let plainurl = url.replace(/\?.*$/, '');
-    let zipfile = plainurl.replace(/.+\//, "");
-    let compname = zipfile.replace(/\.zip/i, "");
+    let component_file = plainurl.replace(/.+\//, "");
+    let extension = path.extname(component_file)
+    let compname = path.basename(component_file, extension)
 
     let codedir = prefs.localex.codedir + "/" + hashdir;
     if(!fs.existsSync(codedir))
         fs.mkdirsSync(codedir);
 
     let modeldir = codedir + "/" + compname;
-    if (!fs.existsSync(modeldir + "/src")) {
-        await _downloadAndUnzipToDirectory(url, modeldir, compname);
+    let src_dir = modeldir + "/" + "src"
+    if (!fs.existsSync(src_dir)) {
+        if (extension == ".zip")
+            await _downloadAndUnzipToDirectory(url, modeldir, compname);
+        else if (extension == ".cwl"){
+            if(!fs.existsSync(modeldir))
+                fs.mkdirSync(modeldir)
+            fs.mkdirSync(src_dir)
+            await _downloadCwlToDirectory(url, src_dir);
+        }
     }
     return modeldir;
 }
@@ -133,12 +157,12 @@ const _getModelDetailsFromYAML = (modeldir: string) => {
         inputs: [],
         outputs: [],
     };
-    let yml = yaml.safeLoad(fs.readFileSync(ymlfile, 'utf8'));
+    let yml = yaml.safeLoad(fs.readFileSync(ymlfile, 'utf8')) as Wcm;
     let wings = yml["wings"]
-    wings["inputs"].map((input: any) => {
+    wings.inputs.map((input: any) => {
         comp.inputs.push(input);
     })
-    wings["outputs"].map((output: any) => {
+    wings.outputs.map((output: any) => {
         comp.outputs.push(output);
     })
     return comp;
@@ -234,7 +258,7 @@ export const loadModelWCM = async (url: string, model: Model, prefs: MintPrefere
 
 // Create Jobs (Seeds) and Queue them
 export const runModelEnsemblesLocally =
-    async (pathway: Pathway,
+        async (pathway: Pathway,
         component: Component,
         ensembles: ExecutableEnsemble[],
         scenario_id: string,

@@ -8,7 +8,19 @@ export interface IdNameObject {
     id?: string
     name?: string
 }
-  
+
+export interface Wcm {
+    wings: any ;
+}
+
+export interface WingsWcm {
+    inputs: ModelIO[],
+    outputs: ModelIO[],
+
+}
+
+
+
 export interface MintPreferences {
     wings: WingsPreferences,
     localex?: LocalExecutionPreferences,
