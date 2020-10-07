@@ -10,6 +10,7 @@ import { Container } from "dockerode";
 import { DEVMODE } from "../../config/app";
 import { YAMLException } from "js-yaml";
 import { deleteModelInputCacheLocally } from "../mint/mint-local-functions";
+import path from "path";
 
 module.exports = async function (job: any) {
     // Run the model seed (model config + bindings)
@@ -102,12 +103,14 @@ module.exports = async function (job: any) {
 
     let cwl_file = comp.rundir + "/run.cwl";
     console.log(cwl_file)
+    let cwl_outputs: any = {}
     if (fs.existsSync(cwl_file)) {
         if (! fs.existsSync(tempdir))
             fs.mkdirSync(tempdir)
-        let cwl_values_file = write_cwl_values(comp, seed, inputdir, tempdir)
+        let cwl_values_file = write_cwl_values(comp, seed, inputdir, tempdir, outputdir, plainargs)
         let cwl_args: string[] = [];
         let cwl_command = "cwltool"
+        cwl_args.push("--copy-outputs")
         cwl_args.push(cwl_file)
         cwl_args.push(cwl_values_file)
         console.log("running a new execution " + logstdout)
@@ -133,6 +136,9 @@ module.exports = async function (job: any) {
             error = spawnResult.error.message;
         }
         statusCode = spawnResult.status;
+        if (statusCode == 0){
+            cwl_outputs = JSON.parse(spawnResult.stdout.toString())
+        }
     }
     else if (softwareImage != null) {
         logstream = fs.createWriteStream(logstdout, { 'flags': 'a' });
@@ -186,6 +192,23 @@ module.exports = async function (job: any) {
     if(statusCode != 0) {
         error = "Execution returned with non-zero status code";
     }
+    else if (fs.existsSync(cwl_file)) {
+        Object.values(results).map((result: any) => {
+            let tmpfile = cwl_outputs[result.id]["path"]
+            let extension = path.extname(tmpfile)
+            result.location = result.location + extension
+
+            if (fs.existsSync(tmpfile)) {
+                fs.copyFileSync(tmpfile, result.location);
+            }
+            else {
+                //console.log(`${tmpfile} not found!`)
+                error = `${tmpfile} not found!`;
+            }
+        });
+        // Set the results
+        seed.ensemble.results = results;
+    }
     else {
         // Check results (output files)
         // - Copy output files from tempdir to output dir
@@ -227,8 +250,8 @@ module.exports = async function (job: any) {
 }
 
 
-
-const write_cwl_values = (comp: Component, seed: any, inputdir: string, tempdir: string) => {
+const write_cwl_values = (comp: Component, seed: any, inputdir: string, 
+    tempdir: string, outputdir: string, plainargs: string[]) => {
     let execution_dir = comp.rundir 
     interface CwlValueFile {
         class: string,
@@ -256,6 +279,16 @@ const write_cwl_values = (comp: Component, seed: any, inputdir: string, tempdir:
             });
         }
     })
+
+    // Set the output file arguments for the command
+    // Create the output file suffix based on a hash of inputs
+    let opsuffix = Md5.hashAsciiStr(seed.ensemble.modelid + plainargs.join());
+    let results: any = {};
+    comp.outputs.map((output: any) => {
+        let opfilename = output.role + "-" + opsuffix;
+        let opfilepath = outputdir + "/" + opfilename;
+        data[output.role] = {"class": "File", "location": opfilename}
+    });
 
     let valuesFile = execution_dir + "/values.yml";
     let ymlStr = yaml.safeDump(data);
