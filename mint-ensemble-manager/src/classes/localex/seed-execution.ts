@@ -111,6 +111,8 @@ module.exports = async function (job: any) {
         let cwl_args: string[] = [];
         let cwl_command = "cwltool"
         cwl_args.push("--copy-outputs")
+        cwl_args.push("--debug")
+        cwl_args.push("--enable-pull")
         cwl_args.push(cwl_file)
         cwl_args.push(cwl_values_file)
         console.log("running a new execution " + logstdout)
@@ -194,10 +196,10 @@ module.exports = async function (job: any) {
     }
     else if (fs.existsSync(cwl_file)) {
         Object.values(results).map((result: any) => {
-            let tmpfile = cwl_outputs[result.id]["path"]
-            let extension = path.extname(tmpfile)
-            result.location = result.location + extension
-
+            let tmpfile = cwl_outputs[result.id]["path"];
+            let extension = path.extname(tmpfile);
+            result.location = result.location + extension;
+            result.url = result.url + extension;
             if (fs.existsSync(tmpfile)) {
                 fs.copyFileSync(tmpfile, result.location);
             }
