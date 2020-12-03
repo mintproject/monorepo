@@ -9,6 +9,9 @@ mutation new_executions ($ids: [uuid!]!, $executions: [execution_insert_input!]!
     delete_execution_parameter_binding(where: {execution_id: {_in: $ids}}) {
         affected_rows
     }
+    delete_thread_model_execution(where: {execution_id: {_in: $ids}}) {
+        affected_rows
+    }
     delete_execution(where: {id: {_in: $ids}}) {
         affected_rows
     }    
