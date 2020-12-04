@@ -172,8 +172,6 @@ module.exports = async (job: any) => {
             // - Mark an error if any output file is missing
             Object.values(results).map((result: DataResource) => {
                 var tmpfile = tempdir + "/" + result.name;
-                // FIXME: Remove temporary write
-                fs.writeFileSync(tmpfile, "Test");
                 if (fs.existsSync(tmpfile)) {
                     let opfilepath = outputdir + "/" + result.name;
                     fs.copyFileSync(tmpfile, opfilepath);
