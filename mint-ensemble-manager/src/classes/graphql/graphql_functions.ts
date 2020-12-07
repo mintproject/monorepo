@@ -396,31 +396,34 @@ export const setThreadModelExecutionSummary = (thread_model_id: string, summary:
 };
 
 // Increment thread submitted runs
-export const incrementThreadModelSubmittedRuns = (thread_model_id: string) =>  {
+export const incrementThreadModelSubmittedRuns = (thread_model_id: string, num: number = 1) =>  {
     return APOLLO_CLIENT.mutate({
         mutation: incSubmittedRunsGQL,
         variables: {
-            threadModelId: thread_model_id
+            threadModelId: thread_model_id,
+            inc: num
         }
     });
 };
 
 // Increment thread successful runs
-export const incrementThreadModelSuccessfulRuns = (thread_model_id: string) =>  {
+export const incrementThreadModelSuccessfulRuns = (thread_model_id: string, num: number = 1) =>  {
     return APOLLO_CLIENT.mutate({
         mutation: incSuccessfulRunsGQL,
         variables: {
-            threadModelId: thread_model_id
+            threadModelId: thread_model_id,
+            inc: num
         }
     });
 };
 
 // Increment thread failed runs
-export const incrementThreadModelFailedRuns = (thread_model_id: string) =>  {
+export const incrementThreadModelFailedRuns = (thread_model_id: string, num: number = 1) =>  {
     return APOLLO_CLIENT.mutate({
         mutation: incFailedRunsGQL,
         variables: {
-            threadModelId: thread_model_id
+            threadModelId: thread_model_id,
+            inc: num
         }
     });
 };

@@ -2,7 +2,7 @@ import { Thread, Model, ThreadModelMap, ProblemStatement, MintPreferences, Execu
 import { getModelInputConfigurations, deleteThreadModelExecutionIds, setThreadModelExecutionIds, 
     getExecutionHash, getThreadModelExecutionIds, getExecutions, 
     setExecutions, deleteExecutions, 
-    setThreadModelExecutionSummary, getModelInputBindings, listSuccessfulExecutionIds } from "../graphql/graphql_functions";
+    setThreadModelExecutionSummary, getModelInputBindings, listSuccessfulExecutionIds, incrementThreadModelSubmittedRuns, incrementThreadModelSuccessfulRuns } from "../graphql/graphql_functions";
 import { loadModelWCM, getModelCacheDirectory, queueModelExecutionsLocally } from "../localex/local-execution-functions";
 
 import fs from "fs-extra";
@@ -113,6 +113,12 @@ export const saveAndRunExecutionsForModelLocally = async(modelid: string,
                 if(!DEVMODE) {
                     await setExecutions(executions_to_be_run);
                     await setThreadModelExecutionIds(thread_model_id, executionids);
+                    
+                    let num_already_run = successful_execution_ids.length;
+                    if(num_already_run > 0) {
+                        await incrementThreadModelSubmittedRuns(thread_model_id, num_already_run);
+                        await incrementThreadModelSuccessfulRuns(thread_model_id, num_already_run);
+                    }
                 }
 
                 // Queue the model executions
