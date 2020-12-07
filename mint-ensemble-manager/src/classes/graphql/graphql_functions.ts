@@ -291,7 +291,7 @@ export const listSuccessfulExecutionIds = (executionids: string[]) : Promise<str
             console.log(result);
         }
         else {
-            return result.data.execution.map((ex:any) => ex["id"]);
+            return result.data.execution.map((ex:any) => ex["id"].replace(/-/g, ""));
         }
         return null;        
     });
