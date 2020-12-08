@@ -56,7 +56,8 @@ const _unzipFile = (zipfile: string, dirname: string): Promise<string> => {
                     if (/\/$/.test(filename)) {
                         // Directories
                         zipfile.readEntry();
-                        fs.mkdirSync(dirname + "/" + filename);
+                        if(!fs.existsSync(dirname + "/" + filename))
+                            fs.mkdirSync(dirname + "/" + filename);
                     } else {
                         // Files
                         zipfile.openReadStream(entry, function (err, readStream) {
@@ -70,7 +71,8 @@ const _unzipFile = (zipfile: string, dirname: string): Promise<string> => {
                             readStream.on('end', () => {
                                 // Make it executable
                                 outstream.close();
-                                fs.chmodSync(filepath, "755");
+                                if(fs.existsSync(filepath))
+                                    fs.chmodSync(filepath, "755");
                             });
                         });
                     }
