@@ -134,7 +134,7 @@ export const saveAndRunExecutionsForModel = async(modelid: string,
                         eslice_nr[j].execution_engine = "wings";
                         eslice_nr[j].run_progress = 0;
                     }
-                    setExecutions(eslice_nr);
+                    setExecutions(eslice_nr, thread_model_id);
                 }
             }
 
@@ -268,7 +268,7 @@ export const checkStatusAllExecutionsForModel = async(
         }
 
         // Update all executions
-        setExecutions(changed_executions);
+        setExecutions(changed_executions, thread_model_id);
     }
     
     summary.successful_runs = numSuccessful;
