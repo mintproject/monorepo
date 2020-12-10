@@ -12,9 +12,9 @@ mutation new_executions ($ids: [uuid!]!, $tmid: uuid!, $executions: [execution_i
     delete_thread_model_execution(where: {_and: {thread_model_id: {_eq: $tmid}, execution_id: {_in: $ids}}}) {
         affected_rows
     }
-    delete_execution(where: {id: {_in: $ids}}) {
-        affected_rows
-    }    
+    #delete_execution(where: {id: {_in: $ids}}) {
+    #    affected_rows
+    #}    
     # Insert new executions
     insert_execution (
         objects: $executions,
