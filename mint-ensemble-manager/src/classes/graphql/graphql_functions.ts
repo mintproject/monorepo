@@ -14,6 +14,7 @@ import getThreadGQL from './queries/thread/get.graphql';
 
 import getExecutionGQL from './queries/execution/get.graphql';
 import listSuccessfulIdsGQL from './queries/execution/list-successful-ids.graphql';
+import listExistingIdStatusGQL from './queries/execution/list-existing-ids.graphql';
 import getExecutionsGQL from './queries/execution/list.graphql';
 import setExecutionsGQL from './queries/execution/new.graphql';
 import updateExecutionStatusResultsGQL from './queries/execution/update-status-results.graphql';
@@ -278,6 +279,28 @@ export const getExecutionHash = (execution: Execution) : string => {
     return Md5.hashStr(str).toString();
 }
 
+// List Existing Execution Ids
+export const listExistingExecutionIdStatus = (executionids: string[]) : Promise<Map<string,string>> => {
+    return APOLLO_CLIENT.query({
+        query: listExistingIdStatusGQL,
+        variables: {
+            ids: executionids
+        }
+    }).then((result) => {
+        if(result.errors && result.errors.length > 0) {
+            console.log("ERROR");
+            console.log(result);
+        }
+        else {
+            let idstatus = {}
+            result.data.execution.forEach((ex:any) => { 
+                idstatus[ex["id"].replace(/-/g, "")] = ex["status"];
+            });
+        }
+        return null;        
+    });
+};
+
 // List Successful Execution Ids
 export const listSuccessfulExecutionIds = (executionids: string[]) : Promise<string[]> => {
     return APOLLO_CLIENT.query({
@@ -298,11 +321,12 @@ export const listSuccessfulExecutionIds = (executionids: string[]) : Promise<str
 };
 
 // Update Executions
-export const setExecutions = (executions: Execution[]) => {
+export const setExecutions = (executions: Execution[], thread_model_id: string) => {
     return APOLLO_CLIENT.mutate({
         mutation: setExecutionsGQL,
         variables: {
             ids: executions.map((ex) => ex.id),
+            tmid: thread_model_id,
             executions: executions.map((ex) => executionToGQL(ex))
         }
     });

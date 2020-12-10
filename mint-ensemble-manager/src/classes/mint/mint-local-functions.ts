@@ -111,7 +111,7 @@ export const saveAndRunExecutionsForModelLocally = async(modelid: string,
 
                 // Create Executions and Thread Model Mappings to those executions
                 if(!DEVMODE) {
-                    await setExecutions(executions_to_be_run);
+                    await setExecutions(executions_to_be_run, thread_model_id);
                     await setThreadModelExecutionIds(thread_model_id, executionids);
                     
                     let num_already_run = successful_execution_ids.length;
