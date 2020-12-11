@@ -1,4 +1,4 @@
-export const PORT = 3000;
+export const PORT = 3001
 export const VERSION = "v1";
 
 export const DEVMODE = false;

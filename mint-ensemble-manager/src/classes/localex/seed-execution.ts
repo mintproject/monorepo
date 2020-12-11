@@ -68,8 +68,8 @@ module.exports = async (job: any) => {
                     // Copy input files to tempdir
                     let ifile = inputdir + "/" + ds.name;
                     let newifile = tempdir + "/" + ds.name;
-                    //fs.symlinkSync(ifile, newifile);
-                    fs.copyFileSync(ifile, newifile);
+                    fs.symlinkSync(ifile, newifile);
+                    //fs.copyFileSync(ifile, newifile);
                     args.push(ds.name)
                     plainargs.push(ds.name);
 
