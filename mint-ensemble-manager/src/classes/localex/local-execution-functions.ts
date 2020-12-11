@@ -329,12 +329,18 @@ export const queueModelExecutionsLocally =
             await Promise.all(downloadInputPromises);
 
         // Once all Downloads are finished, Add all execution jobs (seeds) to queue
+        let numseeds = seeds.length;
+        let priority = numseeds < 10 ? 1 : 
+            numseeds < 50 ? 2 : numseeds < 200 ? 3 :
+            numseeds < 500 ? 4 : 5;
+
         return Promise.all(seeds.map((seed) => executionQueue.add({ 
                 seed: seed, 
                 prefs: prefs.localex,
                 thread_id: thread.id,
                 thread_model_id: thread_model_id
             }, {
+                priority: priority
             //jobId: seed.execution.id,
             //removeOnComplete: true,
             //attempts: 2
