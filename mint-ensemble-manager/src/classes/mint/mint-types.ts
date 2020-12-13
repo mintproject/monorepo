@@ -211,7 +211,8 @@ export interface ModelIO extends IdNameObject {
     type?: string,
     variables: string[],
     value?: Dataslice,
-    position?: number
+    position?: number,
+    format: string
 }
 
 export interface ModelParameter extends IdNameObject {

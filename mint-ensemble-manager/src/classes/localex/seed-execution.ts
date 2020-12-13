@@ -90,6 +90,9 @@ module.exports = async (job: any) => {
             args.push(output.prefix);
             let opid = output.id + opsuffix;
             let opfilename = output.role + opsuffix;
+            if(output.format) {
+                opfilename += "." + output.format;
+            }
             let opfilepath = outputdir + "/" + opfilename;
             args.push(opfilename);
             let opfileurl = opfilepath.replace(localex.datadir, localex.dataurl);

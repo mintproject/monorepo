@@ -154,6 +154,7 @@ const _getModelIODetails = (io: ModelIO, iotype: string) => {
         role: io.name,
         prefix: pfx + io.position,
         isParam: false,
+        format: io.format,
         type: io.type
     }
 }

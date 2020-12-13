@@ -30,6 +30,7 @@ export interface ComponentArgument {
     type: string,
     role: string,
     prefix: string,
+    format?: string,
     isParam?: boolean,
     dimensionality?: number,
     paramDefaultValue?: any,
