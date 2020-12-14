@@ -231,6 +231,7 @@ export const modelIOFromGQL = (model_io: any) => {
         id: io["id"],
         name: io["name"],
         type: io["type"],
+        format: io["format"],
         value: fixed_ds,
         position: model_io["position"],
         variables: io["variables"].map((varobj:any) => {
