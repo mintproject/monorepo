@@ -57,6 +57,7 @@ export const fetchModelFromCatalog = (response_variables: string[],
                                     id: value.io.value,
                                     name: value.iolabel.value,
                                     type: value.type.value,
+                                    format: value.format.value,
                                     variables: []
                                 };
                                 if(value.fixedValueURL) {
