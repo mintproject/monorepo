@@ -43,6 +43,7 @@ fragment model_info on model {
             id
             name
             type
+            format
             variables {
                 variable {
                     id
