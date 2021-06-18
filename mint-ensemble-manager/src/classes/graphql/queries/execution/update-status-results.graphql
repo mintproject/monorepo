@@ -1,0 +1,14 @@
+mutation update_execution_status_results (
+    $id: uuid!, $start_time: timestamp!, $end_time: timestamp, 
+  	$status: String!, $run_progress: float8!
+    $results:[execution_result_insert_input!]! ) {
+  delete_execution_result(where: {execution_id: {_eq: $id}}) {
+    affected_rows
+  }
+  insert_execution_result(objects: $results) {
+    affected_rows
+  }
+  update_execution_by_pk(pk_columns: {id: $id}, _set: {start_time: $start_time, end_time: $end_time, status: $status, run_progress: $run_progress}) {
+    id
+  }
+}

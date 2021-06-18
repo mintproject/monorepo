@@ -1,168 +1,159 @@
-import { Pathway, Model, DataEnsembleMap, Scenario, MintPreferences, ExecutableEnsembleSummary, ExecutableEnsemble } from "./mint-types";
-import { getModelInputEnsembles, getModelInputConfigurations, deleteAllPathwayEnsembleIds, setPathwayEnsembleIds, getEnsembleHash, successfulEnsembleIds, getAllPathwayEnsembleIds, listEnsembles, updatePathwayEnsembles, updatePathway, setPathwayEnsembles, deletePathwayEnsembles, updatePathwayExecutionSummary } from "./firebase-functions";
-import { runModelEnsemblesLocally, loadModelWCM, getModelCacheDirectory } from "../localex/local-execution-functions";
+import { Thread, Model, ThreadModelMap, ProblemStatement, MintPreferences, ExecutionSummary, Execution } from "./mint-types";
+import { getModelInputConfigurations, deleteThreadModelExecutionIds, setThreadModelExecutionIds, 
+    getExecutionHash, getThreadModelExecutionIds, getExecutions, 
+    setExecutions, deleteExecutions, 
+    setThreadModelExecutionSummary, getModelInputBindings, listSuccessfulExecutionIds, incrementThreadModelSubmittedRuns, incrementThreadModelSuccessfulRuns } from "../graphql/graphql_functions";
+import { loadModelWCM, getModelCacheDirectory, queueModelExecutionsLocally } from "../localex/local-execution-functions";
 
 import fs from "fs-extra";
 
-import Queue from "bull";
-import {MONITOR_QUEUE_NAME, REDIS_URL } from "../../config/redis";
-import { monitorThread } from "../localex/thread-execution-monitor";
 import { DEVMODE } from "../../config/app";
 
-let monitorQueue = new Queue(MONITOR_QUEUE_NAME, REDIS_URL);
-monitorQueue.process((job) => monitorThread(job));
-
-export const saveAndRunExecutableEnsemblesLocally = async(
-        pathway: Pathway, 
-        scenario: Scenario,
+export const saveAndRunExecutionsLocally = async (
+        thread: Thread, 
         modelid: string,
         prefs: MintPreferences) => {
 
-    for(let pmodelid in pathway.model_ensembles) {
+    for(let pmodelid in thread.model_ensembles) {
         if(!modelid || (modelid == pmodelid)) {
-            await saveAndRunExecutableEnsemblesForModelLocally(pmodelid, pathway, scenario, prefs);
+            await saveAndRunExecutionsForModelLocally(pmodelid, thread, prefs);
+            /*
             if(!DEVMODE) {
-                monitorQueue.add({ scenario_id: scenario.id, pathway_id: pathway.id, model_id: modelid } , {
+                monitorQueue.add({ thread_id: thread.id, model_id: modelid } , {
                     delay: 1000*30 // 30 seconds delay before monitoring for the first time
                 });
             }
+            */
         }
     }
-    console.log("Finished sending all ensembles for local execution. Adding Monitor");
+    console.log("Finished sending all executions for local execution");
 }
 
-export const saveAndRunExecutableEnsemblesForModelLocally = async(modelid: string, 
-        pathway: Pathway, 
-        scenario: Scenario,
+export const saveAndRunExecutionsForModelLocally = async(modelid: string, 
+        thread: Thread, 
         prefs: MintPreferences) => {
-    if(!pathway.executable_ensemble_summary)
-        pathway.executable_ensemble_summary = {};
-    
-    let model = pathway.models[modelid];
-    
-    let ensemble_details = getModelInputEnsembles(model, pathway);
-    let dataEnsemble = ensemble_details[0] as DataEnsembleMap;
-    let inputIds = ensemble_details[1] as string[];
 
-    // This is the part that creates all different run configurations
-    // - Cross product of all input collections
-    // - TODO: Change to allow flexibility
-    let configs = getModelInputConfigurations(dataEnsemble, inputIds);
-    
-    if(configs != null) {
-        /*
-            Pre-Run Setup
-        */
-
-        // Setup some book-keeping to help in searching for results
-        let summary = {
-            total_runs: configs.length,
-            submitted_runs : 0,
-            failed_runs: 0,
-            successful_runs: 0,
-            workflow_name: "", // No workflow. Local execution
-            submitted_for_execution: true,
-            submission_time: Date.now() - 20000 // Less 20 seconds to counter for clock skews
-        } as ExecutableEnsembleSummary
-
-        if(!DEVMODE)
-            await updatePathwayExecutionSummary(scenario.id, pathway.id, modelid, summary);
+    try {
+        if(!thread.execution_summary)
+            thread.execution_summary = {};
         
-        // Load the component model
-        let component = await loadModelWCM(model.wcm_uri, model, prefs);
+        let model = thread.models[modelid];
+        let thread_model_id = thread.model_ensembles[modelid].id;
+        
+        let execution_details = getModelInputBindings(model, thread);
+        let threadModel = execution_details[0] as ThreadModelMap;
+        let inputIds = execution_details[1] as string[];
 
-        // Delete existing pathway ensemble ids (*NOT DELETING GLOBAL ENSEMBLE DOCUMENTS .. Only clearing list of the pathway's ensemble ids)
-        if(!DEVMODE)
-            await deleteAllPathwayEnsembleIds(scenario.id, pathway.id, modelid);
+        // This is the part that creates all different run configurations
+        // - Cross product of all input collections
+        // - TODO: Change to allow flexibility
+        let configs = getModelInputConfigurations(threadModel, inputIds);
+        
+        if(configs != null) {
+            // Pre-Run Setup
+            // Reset execution summary
+            let summary = {
+                total_runs: configs.length,
+                submitted_runs : 0,
+                failed_runs: 0,
+                successful_runs: 0,
+                workflow_name: "", // No workflow. Local execution
+                submitted_for_execution: true,
+                submission_time: new Date()
+            } as ExecutionSummary
 
-        // Work in batches
-        let batchSize = 500; // Deal with ensembles from firebase in this batch size
-        let batchid = 0;
+            if(!DEVMODE)
+                await setThreadModelExecutionSummary(thread_model_id, summary);
+            
+            // Load the component model
+            let component = await loadModelWCM(model.code_url, model, prefs);
 
-        // Create ensembles in batches
-        for(let i=0; i<configs.length; i+= batchSize) {
-            let bindings = configs.slice(i, i+batchSize);
+            // Delete existing thread execution ids
+            if(!DEVMODE)
+                await deleteThreadModelExecutionIds(thread_model_id);
+            
+            // Work in batches
+            let batchSize = 500; // Store executions in the database in batches
 
-            let ensembles : ExecutableEnsemble[] = [];
-            let ensembleids : string[] = [];
+            // Create executions in batches
+            for(let i=0; i<configs.length; i+= batchSize) {
+                let bindings = configs.slice(i, i+batchSize);
 
-            // Create ensembles for this batch
-            bindings.map((binding) => {
-                let inputBindings : any = {};
-                for(let j=0; j<inputIds.length; j++) {
-                    inputBindings[inputIds[j]] = binding[j];
+                let executions : Execution[] = [];
+                let executionids : string[] = [];
+
+                // Create executions for this batch
+                bindings.map((binding) => {
+                    let inputBindings : any = {};
+                    for(let j=0; j<inputIds.length; j++) {
+                        inputBindings[inputIds[j]] = binding[j];
+                    }
+                    //console.log(inputBindings);
+                    let execution = {
+                        modelid: modelid,
+                        bindings: inputBindings,
+                        execution_engine: "localex",
+                        runid: null,
+                        status: null,
+                        results: {},
+                        start_time: new Date(),
+                        selected: true
+                    } as Execution;
+                    execution.id = getExecutionHash(execution);
+
+                    executionids.push(execution.id);
+                    executions.push(execution);
+                })
+
+                // Fetch only successful executions
+                let successful_execution_ids : string[] = DEVMODE ? [] : await listSuccessfulExecutionIds(executionids);
+                let executions_to_be_run = executions.filter((e) => successful_execution_ids.indexOf(e.id) < 0);
+
+                // Create Executions and Thread Model Mappings to those executions
+                if(!DEVMODE) {
+                    await setExecutions(executions_to_be_run, thread_model_id);
+                    await setThreadModelExecutionIds(thread_model_id, executionids);
+                    
+                    let num_already_run = successful_execution_ids.length;
+                    if(num_already_run > 0) {
+                        await incrementThreadModelSubmittedRuns(thread_model_id, num_already_run);
+                        await incrementThreadModelSuccessfulRuns(thread_model_id, num_already_run);
+                    }
                 }
-                //console.log(inputBindings);
-                let ensemble = {
-                    modelid: modelid,
-                    bindings: inputBindings,
-                    execution_engine: "localex",
-                    runid: null,
-                    status: null,
-                    results: {},
-                    submission_time: Date.now(),
-                    selected: true
-                } as ExecutableEnsemble;
-                ensemble.id = getEnsembleHash(ensemble);
 
-                ensembleids.push(ensemble.id);
-                ensembles.push(ensemble);
-            })
-
-            if(!DEVMODE)
-                setPathwayEnsembleIds(scenario.id, pathway.id, model.id, batchid, ensembleids);
-
-            // Check if any current ensembles already exist 
-            // - Note: ensemble ids are uniquely defined by the model id and inputs
-            let all_ensembles : ExecutableEnsemble[] = DEVMODE ? [] : await listEnsembles(ensembleids);
-            let successful_ensemble_ids = all_ensembles
-                .filter((e) => (e != null && e.status == "SUCCESS"))
-                .map((e) => e.id);
-
-            let ensembles_to_be_run = ensembles.filter((e) => successful_ensemble_ids.indexOf(e.id) < 0);
-
-            // Clear out the pathway ensembles to be empty
-            if(!DEVMODE)
-                await setPathwayEnsembles(ensembles_to_be_run);
-
-            summary.submitted_runs += ensembles.length;
-            summary.successful_runs += successful_ensemble_ids.length;
-            if(!DEVMODE)
-                updatePathwayExecutionSummary(scenario.id, pathway.id, modelid, summary);
-
-            // Run the model ensembles
-            runModelEnsemblesLocally(pathway, component, ensembles_to_be_run, scenario.id, prefs);
-            
-            batchid ++;
-            
+                // Queue the model executions
+                queueModelExecutionsLocally(thread, modelid, component, executions_to_be_run, prefs);
+            }
         }
+        console.log("Finished submitting all executions for model: " + modelid);
     }
-    console.log("Finished submitting all executions for model: " + modelid);
+    catch(e) {
+        console.log(e);
+    }
 }
 
 export const deleteExecutableCacheLocally = async(
-    pathway: Pathway, 
-    scenario: Scenario,
+    thread: Thread, 
     modelid: string,
     prefs: MintPreferences) => {
 
-    for(let pmodelid in pathway.model_ensembles) {
+    for(let pmodelid in thread.model_ensembles) {
         if(!modelid || (modelid == pmodelid))
-            await deleteExecutableCacheForModelLocally(pmodelid, pathway, scenario, prefs);
+            await deleteExecutableCacheForModelLocally(pmodelid, thread, prefs);
     }
     console.log("Finished deleting all execution cache for local execution");
 
-    //monitorAllEnsembles(pathway, scenario, prefs);
+    //monitorAllEnsembles(thread, problem_statement, prefs);
 }
 
 export const deleteModelInputCacheLocally = (
-    pathway: Pathway,
+    thread: Thread,
     modelid: string,
     prefs: MintPreferences) => {
 
     // Delete the selected datasets
-    for(let dsid in pathway.datasets) {
-        let ds = pathway.datasets[dsid];
+    for(let dsid in thread.data) {
+        let ds = thread.data[dsid];
         ds.resources.map((res) => {
             let file = prefs.localex.datadir + "/" + res.name;
             if(fs.existsSync(file)) {
@@ -172,7 +163,7 @@ export const deleteModelInputCacheLocally = (
     }
 
     // Also delete any model setup hardcoded input datasets
-    let model = pathway.models[modelid];
+    let model = thread.models[modelid];
     model.input_files.map((io) => {
         if(io.value) {
             // There is a hardcoded value in the model itself
@@ -196,43 +187,43 @@ export const deleteModelInputCacheLocally = (
 }
 
 export const deleteExecutableCacheForModelLocally = async(modelid: string, 
-    pathway: Pathway, 
-    scenario: Scenario,
+    thread: Thread, 
     prefs: MintPreferences) => {
 
-    let model = pathway.models[modelid];
-    let all_ensemble_ids = await getAllPathwayEnsembleIds(scenario.id, pathway.id, modelid);
+    let model = thread.models[modelid];
+    let thread_model_id = thread.model_ensembles[modelid].id;
+    let all_execution_ids = await getThreadModelExecutionIds(thread_model_id);
 
-    // Delete existing pathway ensemble ids (*NOT DELETING GLOBAL ENSEMBLE DOCUMENTS .. Only clearing list of the pathway's ensemble ids)
-    deleteAllPathwayEnsembleIds(scenario.id, pathway.id, modelid);
+    // Delete existing thread execution ids (*NOT DELETING GLOBAL ENSEMBLE DOCUMENTS .. Only clearing list of the thread's execution ids)
+    deleteThreadModelExecutionIds(thread_model_id);
 
     // Work in batches
-    let batchSize = 500; // Deal with ensembles from firebase in this batch size
+    let batchSize = 500; // Deal with executions from firebase in this batch size
 
-    // Process ensembles in batches
-    for(let i=0; i<all_ensemble_ids.length; i+= batchSize) {
-        let ensembleids = all_ensemble_ids.slice(i, i+batchSize);
+    // Process executions in batches
+    for(let i=0; i<all_execution_ids.length; i+= batchSize) {
+        let executionids = all_execution_ids.slice(i, i+batchSize);
            
-        // Delete the actual ensemble documents
-        deletePathwayEnsembles(ensembleids);
+        // Delete the actual execution documents
+        deleteExecutions(executionids);
     }
 
     // Delete cached model directory and zip file
-    let modeldir = getModelCacheDirectory(model.wcm_uri, prefs);
+    let modeldir = getModelCacheDirectory(model.code_url, prefs);
     if(modeldir != null) {
         fs.remove(modeldir);
         fs.remove(modeldir + ".zip");
     }
 
-    deleteModelInputCacheLocally(pathway, modelid, prefs);
+    deleteModelInputCacheLocally(thread, modelid, prefs);
     
-    // Remove all executable information and update the pathway
-    let summary = pathway.executable_ensemble_summary[modelid];
+    // Remove all executable information and update the thread
+    let summary = thread.execution_summary[modelid];
     summary.successful_runs = 0;
     summary.failed_runs = 0;
     summary.submitted_runs = 0;
-    summary.submission_time = 0;
+    summary.submission_time = null;
     summary.submitted_for_execution = false;
 
-    await updatePathwayExecutionSummary(scenario.id, pathway.id, modelid, summary);
+    await setThreadModelExecutionSummary(thread_model_id, summary);
 }

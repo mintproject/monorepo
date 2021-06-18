@@ -1,143 +1,167 @@
-import { Pathway, Model, DataEnsembleMap, Scenario, MintPreferences, ExecutableEnsembleSummary, ExecutableEnsemble, DataResource } from "./mint-types";
-import { setupModelWorkflow, fetchWingsTemplate, loginToWings, runModelEnsembles, fetchWingsRunsStatuses, fetchWingsRunResults } from "../wings/wings-functions";
-import { getModelInputEnsembles, getModelInputConfigurations, deleteAllPathwayEnsembleIds, setPathwayEnsembleIds, addPathwayEnsembles, getEnsembleHash, successfulEnsembleIds, getAllPathwayEnsembleIds, listEnsembles, updatePathwayEnsembles, updatePathway, getPathway } from "./firebase-functions";
+import { Thread, ProblemStatement, MintPreferences, ExecutionSummary, Execution, 
+    ModelIOBindings, ThreadModelMap } from "./mint-types";
+import { setupModelWorkflow, fetchWingsTemplate, loginToWings, runModelExecutions, 
+    fetchWingsRunsStatuses, fetchWingsRunResults } from "../wings/wings-functions";
+import { getModelInputBindings, getModelInputConfigurations, deleteThreadModelExecutionIds, 
+    setThreadModelExecutionIds, getExecutionHash, listSuccessfulExecutionIds, 
+    getThreadModelExecutionIds, getExecutions, setExecutions, getThread, 
+    setThreadModelExecutionSummary } from "../graphql/graphql_functions";
 
-export const saveAndRunExecutableEnsembles = async(
-        pathway: Pathway, 
-        scenario: Scenario,
+import * as mintConfig from '../../config/config.json';
+import { DEVMODE } from "../../config/app";
+import { DEVHOMEDIR } from "../../config/app";
+import { PORT } from "../../config/app";
+export const fetchMintConfig = async () => {
+    let prefs = mintConfig["default"] as MintPreferences;
+    if(prefs.execution_engine == "wings") {
+        let res = await fetch(prefs.wings.server + "/config");
+        let wdata = await res.json();
+        prefs.wings.export_url = wdata["internal_server"]
+        prefs.wings.storage = wdata["storage"];
+        prefs.wings.dotpath = wdata["dotpath"];
+        prefs.wings.onturl = wdata["ontology"];
+    }
+    if(DEVMODE) {
+        prefs.ensemble_manager_api = "http://localhost:" + PORT + "/v1";
+        prefs.localex.datadir = DEVHOMEDIR + "/data";
+        prefs.localex.codedir = DEVHOMEDIR + "/code";
+        prefs.localex.logdir = DEVHOMEDIR + "/logs";
+        prefs.localex.dataurl = "file://" + DEVHOMEDIR + "/data";
+        prefs.localex.logurl = "file://" + DEVHOMEDIR + "/logs";
+    }    
+    return prefs;
+};
+
+export const saveAndRunExecutions = async(
+        thread: Thread, 
         modelid: string,
         prefs: MintPreferences) => {
 
     // Setup Model for execution on Wings
     await loginToWings(prefs); // Login to Wings now Happens at the top app level            
 
-    for(let pmodelid in pathway.model_ensembles) {
+    for(let pmodelid in thread.model_ensembles) {
         if(!modelid || (modelid == pmodelid))
-            await saveAndRunExecutableEnsemblesForModel(pmodelid, pathway, scenario, prefs);
+            await saveAndRunExecutionsForModel(pmodelid, thread, prefs);
     }
-    console.log("Finished sending all ensembles for execution");
+    console.log("Finished sending all executions for execution");
 
-    monitorAllEnsembles(pathway, scenario, modelid, prefs);
+    monitorAllExecutions(thread, modelid, prefs);
 }
 
-export const saveAndRunExecutableEnsemblesForModel = async(modelid: string, 
-        pathway: Pathway, 
-        scenario: Scenario,
+export const saveAndRunExecutionsForModel = async(modelid: string, 
+        thread: Thread, 
         prefs: MintPreferences) => {
-    if(!pathway.executable_ensemble_summary)
-        pathway.executable_ensemble_summary = {};
+    if(!thread.execution_summary)
+        thread.execution_summary = {};
     
-    let model = pathway.models[modelid];
-    let ensemble_details = getModelInputEnsembles(model, pathway);
-    let dataEnsemble = ensemble_details[0] as DataEnsembleMap;
-    let inputIds = ensemble_details[1] as string[];
-    let configs = getModelInputConfigurations(dataEnsemble, inputIds);
+    let thread_model_id = thread.model_ensembles[modelid].id;
+    let model = thread.models[modelid];
+    let execution_details = getModelInputBindings(model, thread);
+    let threadModel = execution_details[0] as ThreadModelMap;
+    let inputIds = execution_details[1] as string[];
+    let configs = getModelInputConfigurations(threadModel, inputIds);
     
     if(configs != null) {
-        // Delete existing pathway ensemble ids (*NOT DELETING GLOBAL ENSEMBLE DOCUMENTS .. Only clearing list of the pathway's ensemble ids)
-        deleteAllPathwayEnsembleIds(scenario.id, pathway.id, modelid);
+        // Delete existing thread model execution ids
+        deleteThreadModelExecutionIds(thread_model_id);
 
         // Setup Model for execution on Wings
-        // await loginToWings(prefs); // Login to Wings now Happens at the top app level
-        
-        let workflowid = await setupModelWorkflow(model, pathway, prefs);
+        let workflowid = await setupModelWorkflow(model, thread, prefs);
         let tpl_package = await fetchWingsTemplate(workflowid, prefs);
 
         let datasets = {}; // Map of datasets to be registered (passed to Wings to keep track)
     
         // Setup some book-keeping to help in searching for results
-        pathway.executable_ensemble_summary[modelid] = {
+        let execution_summary = {
             total_runs: configs.length,
             workflow_name: workflowid.replace(/.+#/, ''),
-            submission_time: Date.now() - 20000 // Less 20 seconds to counter for clock skews
-        } as ExecutableEnsembleSummary
+            submission_time: new Date()
+        } as ExecutionSummary
 
-        updatePathway(scenario, pathway);
+        setThreadModelExecutionSummary(thread_model_id, execution_summary);
         
         // Work in batches
-        let batchSize = 100; // Deal with ensembles from firebase in this batch size
-        let batchid = 0; // Use to create batchids in firebase for storing ensemble ids
+        let batchSize = 100; // Deal with executions from firebase in this batch size
+        let batchid = 0; // Use to create batchids in firebase for storing execution ids
 
         let executionBatchSize = 10; // Run workflows in Wings in batches
         
-        // Create ensembles in batches
+        // Create executions in batches
         for(let i=0; i<configs.length; i+= batchSize) {
             let bindings = configs.slice(i, i+batchSize);
 
-            let ensembles : ExecutableEnsemble[] = [];
-            let ensembleids : string[] = [];
+            let executions : Execution[] = [];
+            let executionids : string[] = [];
 
-            // Create ensembles for this batch
+            // Create executions for this batch
             bindings.map((binding) => {
                 let inputBindings : any = {};
                 for(let j=0; j<inputIds.length; j++) {
                     inputBindings[inputIds[j]] = binding[j];
                 }
                 //console.log(inputBindings);
-                let ensemble = {
+                let execution = {
                     modelid: modelid,
                     bindings: inputBindings,
                     runid: null,
                     status: null,
                     results: [],
-                    submission_time: Date.now(),
+                    start_time: new Date(),
                     selected: true
-                } as ExecutableEnsemble;
-                ensemble.id = getEnsembleHash(ensemble);
+                } as Execution;
+                execution.id = getExecutionHash(execution);
 
-                ensembleids.push(ensemble.id);
-                ensembles.push(ensemble);
+                executionids.push(execution.id);
+                executions.push(execution);
             })
 
-            // Check if any current ensembles already exist 
-            // - Note: ensemble ids are uniquely defined by the model id and inputs
-            let all_ensemble_ids : any[] = await successfulEnsembleIds(ensembleids);
-            let current_ensemble_ids = all_ensemble_ids.filter((eid) => eid); // Filter for null/undefined ensemble ids
+            // Check if any current executions already exist 
+            // - Note: execution ids are uniquely defined by the model id and inputs
+            let all_execution_ids : any[] = await listSuccessfulExecutionIds(executionids);
+            let current_execution_ids = all_execution_ids.filter((eid) => eid); // Filter for null/undefined execution ids
 
-            // Run ensembles in smaller batches
-            for(let i=0; i<ensembles.length; i+= executionBatchSize) {
-                let eslice = ensembles.slice(i, i+executionBatchSize);
-                // Get ensembles that arent already run
-                let eslice_nr = eslice.filter((ensemble) => current_ensemble_ids.indexOf(ensemble.id) < 0);
+            // Run executions in smaller batches
+            for(let i=0; i<executions.length; i+= executionBatchSize) {
+                let eslice = executions.slice(i, i+executionBatchSize);
+                // Get executions that arent already run
+                let eslice_nr = eslice.filter((execution) => current_execution_ids.indexOf(execution.id) < 0);
                 if(eslice_nr.length > 0) {
-                    let runids = await runModelEnsembles(pathway, eslice_nr, datasets, tpl_package, prefs);
+                    let runids = await runModelExecutions(thread, eslice_nr, datasets, tpl_package, prefs);
                     for(let j=0; j<eslice_nr.length; j++) {
                         eslice_nr[j].runid = runids[j];
                         eslice_nr[j].status = "WAITING";
                         eslice_nr[j].execution_engine = "wings";
                         eslice_nr[j].run_progress = 0;
                     }
-                    addPathwayEnsembles(eslice_nr);
+                    setExecutions(eslice_nr, thread_model_id);
                 }
             }
 
-            // Save pathway ensemble ids (to be used for later retrieval of ensembles)
-            setPathwayEnsembleIds(scenario.id, pathway.id,
-                model.id, batchid, ensembleids);
-
+            // Save thread execution ids (to be used for later retrieval of executions)
+            setThreadModelExecutionIds(thread_model_id, executionids);
             batchid++;
         }
     }
     console.log("Finished submitting all executions for model: " + modelid);
 }
 
-export const monitorAllEnsembles = async(
-        pathway: Pathway, 
-        scenario: Scenario,
+export const monitorAllExecutions = async(
+        thread: Thread, 
         modelid: string,
         prefs: MintPreferences) => {
 
     let currentTimeout = 30000; // Check every 30 seconds
 
-    console.log("Start monitoring for "+pathway.id);
+    console.log("Start monitoring for "+thread.id);
 
-    checkStatusAllEnsembles(pathway, scenario, modelid, prefs).then(() => {
+    checkStatusAllExecutions(thread, modelid, prefs).then(() => {
         console.log("Status checking finished");
-        getPathway(scenario.id, pathway.id).then((pway) => {
-            pathway = pway;
+        getThread(thread.id).then((thr: Thread) => {
+            thread = thr;
             let done = true;
-            Object.keys(pathway.model_ensembles).map((modelid) => {
-                let summary = pathway.executable_ensemble_summary[modelid];
+            Object.keys(thread.model_ensembles).map((modelid) => {
+                let summary = thread.execution_summary[modelid];
                 if(summary.total_runs != (summary.successful_runs + summary.failed_runs)) {
                     done = false;
                 }
@@ -145,44 +169,43 @@ export const monitorAllEnsembles = async(
             // FIXME: Check for a global shared variable if a request comes to abort for this thread
             if(!done) {
                 setTimeout(() => {
-                    monitorAllEnsembles(pathway, scenario, modelid, prefs)
+                    monitorAllExecutions(thread, modelid, prefs)
                 }, currentTimeout);
             } else {
-                console.log("Finished Monitoring for "+pathway.id+". Thread runs have finished")
+                console.log("Finished Monitoring for "+thread.id+". Thread runs have finished")
             }
         })
     });
 }
 
-export const checkStatusAllEnsembles = async(
-        pathway: Pathway, 
-        scenario: Scenario,
+export const checkStatusAllExecutions = async(
+        thread: Thread, 
         modelid: string,
         prefs: MintPreferences) => {
 
     // Setup Model for execution on Wings
     await loginToWings(prefs); // Login to Wings now Happens at the top app level            
 
-    for(let pmodelid in pathway.model_ensembles) {
+    for(let pmodelid in thread.model_ensembles) {
         if(!modelid || modelid==pmodelid)
-            await checkStatusAllEnsemblesForModel(pmodelid, pathway, scenario, prefs);
+            await checkStatusAllExecutionsForModel(pmodelid, thread, prefs);
     }
-    console.log("Finished checking ensembles");
+    console.log("Finished checking executions");
 }
 
-export const checkStatusAllEnsemblesForModel = async(
+export const checkStatusAllExecutionsForModel = async(
         modelid: string,
-        pathway: Pathway, 
-        scenario: Scenario,
+        thread: Thread, 
         prefs: MintPreferences) => {
-    let model = pathway.models[modelid];
-    let summary = pathway.executable_ensemble_summary[modelid];
+    let model = thread.models[modelid];
+    let thread_model_id = thread.model_ensembles[modelid].id;
+    let summary = thread.execution_summary[modelid];
     
     // await loginToWings(prefs); // Login to Wings handled at the top now
     
     // FIXME: Some problem with the submission times
     let runtimeInfos : any = await fetchWingsRunsStatuses(summary.workflow_name, 
-        Math.floor(summary.submission_time/1000), summary.total_runs, prefs);
+        Math.floor(summary.submission_time.getTime()), summary.total_runs, prefs);
 
     let start = 0;
     let pageSize = 100;
@@ -190,37 +213,37 @@ export const checkStatusAllEnsemblesForModel = async(
     let numFailed = 0;
     let numRunning = 0;
 
-    let pathwayModelEnsembleIds =  await getAllPathwayEnsembleIds(scenario.id, pathway.id, modelid);
+    let threadModelExecutionIds =  await getThreadModelExecutionIds(thread_model_id);
 
     while(true) {
-        let ensembleids = pathwayModelEnsembleIds.slice(start, start+pageSize);
-        let ensembles = await listEnsembles(ensembleids);
+        let executionids = threadModelExecutionIds.slice(start, start+pageSize);
+        let executions = await getExecutions(executionids);
         start += pageSize;
 
-        if(!ensembles || ensembles.length == 0)
+        if(!executions || executions.length == 0)
             break;
 
-        let changed_ensembles : ExecutableEnsemble[] = [];
+        let changed_executions : Execution[] = [];
 
-        ensembles.map((ensemble) => {
-            // Check if the ensemble is not already finished (probably from another run)
-            if(ensemble.status == "WAITING" || ensemble.status == "RUNNING") {
-                let runtimeInfo = runtimeInfos[ensemble.runid];
+        executions.map((execution) => {
+            // Check if the execution is not already finished (probably from another run)
+            if(execution.status == "WAITING" || execution.status == "RUNNING") {
+                let runtimeInfo = runtimeInfos[execution.runid];
                 if(runtimeInfo) {
-                    if(runtimeInfo.status != ensemble.status) {
+                    if(runtimeInfo.status != execution.status) {
                         if(runtimeInfo.status == "SUCCESS" || runtimeInfo.status == "FAILURE") {
-                            ensemble.run_progress = 1;
+                            execution.run_progress = 1;
                         }
-                        ensemble.status = runtimeInfo.status;
-                        changed_ensembles.push(ensemble);
+                        execution.status = runtimeInfo.status;
+                        changed_executions.push(execution);
                     }
                 }
                 else {
-                    // Ensemble not yet submitted
-                    //console.log(ensemble);
+                    // Execution not yet submitted
+                    //console.log(execution);
                 }
             }
-            switch(ensemble.status) {
+            switch(execution.status) {
                 case "RUNNING":
                     numRunning++;
                     break;
@@ -233,24 +256,24 @@ export const checkStatusAllEnsemblesForModel = async(
             }
         });
 
-        let finished_ensembles = changed_ensembles.filter((ensemble) => ensemble.status == "SUCCESS");
+        let finished_executions = changed_executions.filter((execution) => execution.status == "SUCCESS");
 
-        // Fetch Results of ensembles that have finished
-        let results = await Promise.all(finished_ensembles.map((ensemble) => {
-            return fetchWingsRunResults(ensemble, prefs);
+        // Fetch Results of executions that have finished
+        let results = await Promise.all(finished_executions.map((execution) => {
+            return fetchWingsRunResults(execution, prefs);
         }));
-        for(let i=0; i<finished_ensembles.length; i++) {
+        for(let i=0; i<finished_executions.length; i++) {
             if(results[i])
-                finished_ensembles[i].results = results[i];
+                finished_executions[i].results = results[i];
         }
 
-        // Update all ensembles
-        updatePathwayEnsembles(changed_ensembles);
+        // Update all executions
+        setExecutions(changed_executions, thread_model_id);
     }
     
     summary.successful_runs = numSuccessful;
     summary.failed_runs = numFailed;
     summary.submitted_runs = numRunning + numSuccessful + numFailed;
     
-    await updatePathway(scenario, pathway);
+    await setThreadModelExecutionSummary(thread_model_id, summary);
 }

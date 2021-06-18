@@ -1,4 +1,4 @@
-import { Model, MintPreferences, ModelIO, Dataset, ModelParameter } from "./mint-types";
+import { Model, MintPreferences, ModelIO, Dataset, ModelParameter, Dataslice } from "./mint-types";
 import * as rp from "request-promise-native";
 
 // Query Model Catalog By Variables, 
@@ -57,6 +57,7 @@ export const fetchModelFromCatalog = (response_variables: string[],
                                     id: value.io.value,
                                     name: value.iolabel.value,
                                     type: value.type.value,
+                                    format: value.format.value,
                                     variables: []
                                 };
                                 if(value.fixedValueURL) {
@@ -72,9 +73,11 @@ export const fetchModelFromCatalog = (response_variables: string[],
                                         };
                                     });
                                     io.value = {
-                                        id: dcids[0],
+                                        dataset: {
+                                            id: dcids[0],
+                                        },
                                         resources: resources
-                                    } as Dataset;
+                                    } as Dataslice;
                                 }
                                 fileio[value.io.value] = io;
                                 if(value.prop) {
@@ -142,25 +145,25 @@ export const fetchModelFromCatalog = (response_variables: string[],
                                 id: calibid,
                                 localname: calibid.substr(modelid.lastIndexOf("/") + 1),
                                 name: meta['label'] ? meta['label']['value'] : "",
-                                calibrated_region: meta['regionName'] ? meta['regionName']['value'] : "",
+                                region_name: meta['regionName'] ? meta['regionName']['value'] : "",
                                 description: row['desc'] ? row['desc']['value'] : "",
                                 category: row['category'] ? row['category']['value'] : "",
-                                wcm_uri: row['compLoc'] ? row['compLoc']['value'] : "",
+                                code_url: row['compLoc'] ? row['compLoc']['value'] : "",
                                 input_files: input_files,
                                 input_parameters: input_parameters,
                                 output_files: output_files,
-                                original_model: row["model"]["value"].replace(/.*\//, ""),
+                                model_name: row["model"]["value"].replace(/.*\//, ""),
                                 model_version: row["version"]["value"].replace(/.*\//, ""),
                                 model_configuration: row["configuration"]["value"].replace(/.*\//, ""),
                                 model_type: "",
                                 parameter_assignment: meta["paramAssignMethod"] ? meta['paramAssignMethod']['value'] : "",
                                 parameter_assignment_details: "",
-                                target_variable_for_parameter_assignment: (meta["targetVariables"] || []).join(", "),
+                                calibration_target_variable: (meta["targetVariables"] || []).join(", "),
                                 modeled_processes: meta['processes'] ? meta['processes']['value'] : "",
                                 dimensionality: meta['gridDim'] ? meta['gridDim']['value'] : "",
                                 spatial_grid_type: (meta['gridType'] ? meta['gridType']['value'] : "").replace(/.*#/, ''),
                                 spatial_grid_resolution: meta['gridSpatial'] ? meta['gridSpatial']['value'] : "",
-                                minimum_output_time_interval: "",
+                                output_time_interval: "",
                                 usage_notes: meta['usageNotes'] ? meta['usageNotes']['value'] : "",
                             };
                             resolve(model);

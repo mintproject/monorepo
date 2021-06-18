@@ -1,9 +1,5 @@
-import { getPathway, getScenario, fetchMintConfig } from "../../../classes/mint/firebase-functions";
-import { Pathway, Scenario } from "../../../classes/mint/mint-types";
-import { saveAndRunExecutableEnsemblesLocally, deleteExecutableCacheLocally } from "../../../classes/mint/mint-local-functions";
-
 import Queue from "bull";
-import { EXECUTION_QUEUE_NAME, REDIS_URL, MONITOR_QUEUE_NAME } from "../../../config/redis";
+import { EXECUTION_QUEUE_NAME, REDIS_URL } from "../../../config/redis";
 
 // ./api-v1/services/executionsLocalService.js
 
@@ -30,9 +26,7 @@ const cleanQueue = (queue: Queue.Queue) => {
 const executionQueueService = {
     async emptyExecutionQueue() {
         let executionQueue = new Queue(EXECUTION_QUEUE_NAME, REDIS_URL);
-        let monitorQueue = new Queue(MONITOR_QUEUE_NAME, REDIS_URL);        
         cleanQueue(executionQueue);
-        cleanQueue(monitorQueue);
         return createResponse("success", "Queues emptied");
     },
     async getExecutionQueue(thread: any) {

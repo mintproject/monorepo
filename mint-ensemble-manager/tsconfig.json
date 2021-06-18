@@ -3,11 +3,19 @@
         "module": "commonjs",
         "esModuleInterop": true,
         "target": "es6",
-        "noImplicitAny": true,
+        "noImplicitAny": false,
         "moduleResolution": "node",
         "sourceMap": true,
         "outDir": "dist",
         "baseUrl": ".",
+
+        "experimentalDecorators": true,
+        "emitDecoratorMetadata": true,
+        "lib": [
+          "dom",
+          "esnext"
+        ],  
+
         "paths": {
             "*": [
                 "node_modules/*"
@@ -15,6 +23,7 @@
         }
     },
     "include": [
+        "src/typings/**/*.d.ts",
         "src/**/*.ts", "paths"
     ],
     "exclude": [

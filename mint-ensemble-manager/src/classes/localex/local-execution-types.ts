@@ -1,15 +1,15 @@
-import { ExecutableEnsemble } from "../mint/mint-types";
+import { Execution, DataResource } from "../mint/mint-types";
 
 export interface ComponentSeed {
     component: Component,
-    ensemble: ExecutableEnsemble,
+    execution: Execution,
     datasets: ComponentDataBindings,
     parameters: ComponentParameterBindings,
     paramtypes: ComponentParameterTypes,
 }
 
 export interface ComponentDataBindings {
-    [inputid: string] : string[]
+    [inputid: string] : DataResource[]
 }
 export interface ComponentParameterBindings {
     [inputid: string] : string
@@ -26,9 +26,11 @@ export interface Component {
 }
 
 export interface ComponentArgument {
+    id: string,
     type: string,
     role: string,
     prefix: string,
+    format?: string,
     isParam?: boolean,
     dimensionality?: number,
     paramDefaultValue?: any,

@@ -9,7 +9,6 @@ import v1ExecutionsLocalService from './api/api-v1/services/executionsLocalServi
 import v1ExecutionQueService from './api/api-v1/services/executionQueueService';
 import v1MonitorsService from './api/api-v1/services/monitorsService';
 import v1LogsService from './api/api-v1/services/logsService';
-import v1ThreadsService from './api/api-v1/services/threadsService';
 
 
 import { initialize } from "express-openapi";
@@ -17,9 +16,12 @@ import { getResource } from "./classes/wings/xhr-requests";
 
 import Queue from "bull";
 import { UI, setQueues } from "bull-board";
-import { EXECUTION_QUEUE_NAME, REDIS_URL, MONITOR_QUEUE_NAME } from "./config/redis";
+import { EXECUTION_QUEUE_NAME, REDIS_URL } from "./config/redis";
 import { PORT, VERSION } from "./config/app";
 
+import * as webpack from "webpack";
+
+const config = require('../webpack.config.js');
 
 // Main Express Server
 const app = express();
@@ -39,8 +41,7 @@ initialize({
         executionsLocalService: v1ExecutionsLocalService,
         executionQueueService: v1ExecutionQueService,
         monitorsService: v1MonitorsService,
-        logsService: v1LogsService,
-        threadsService: v1ThreadsService
+        logsService: v1LogsService
     },
     paths: path.resolve(__dirname, './api/api-v1/paths'),
     routesGlob: '**/*.{ts,js}',
@@ -56,8 +57,7 @@ app.use(((err, req, res, next) => {
 
 // Setup Bull Queue Dashboard
 let executionQueue = new Queue(EXECUTION_QUEUE_NAME, REDIS_URL);
-let monitorQueue = new Queue(MONITOR_QUEUE_NAME, REDIS_URL);
-setQueues([executionQueue, monitorQueue]);
+setQueues([executionQueue]);
 app.use('/admin/queues', UI)
 
 // Express start
