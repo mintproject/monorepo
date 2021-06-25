@@ -650,6 +650,17 @@
       ],
       "select_permissions": [
         {
+          "role": "anonymous",
+          "permission": {
+            "columns": [
+              "id",
+              "name",
+              "description"
+            ],
+            "filter": {}
+          }
+        },
+        {
           "role": "user",
           "permission": {
             "columns": [
@@ -1814,6 +1825,19 @@
       ],
       "select_permissions": [
         {
+          "role": "anonymous",
+          "permission": {
+            "columns": [
+              "id",
+              "name",
+              "parent_region_id",
+              "category_id",
+              "model_catalog_uri"
+            ],
+            "filter": {}
+          }
+        },
+        {
           "role": "user",
           "permission": {
             "columns": [
@@ -1887,6 +1911,17 @@
       ],
       "select_permissions": [
         {
+          "role": "anonymous",
+          "permission": {
+            "columns": [
+              "id",
+              "name",
+              "citation"
+            ],
+            "filter": {}
+          }
+        },
+        {
           "role": "user",
           "permission": {
             "columns": [
@@ -1933,6 +1968,16 @@
       ],
       "select_permissions": [
         {
+          "role": "anonymous",
+          "permission": {
+            "columns": [
+              "region_category_id",
+              "region_category_parent_id"
+            ],
+            "filter": {}
+          }
+        },
+        {
           "role": "user",
           "permission": {
             "columns": [
@@ -1972,6 +2017,17 @@
         }
       ],
       "select_permissions": [
+        {
+          "role": "anonymous",
+          "permission": {
+            "columns": [
+              "id",
+              "region_id",
+              "geometry"
+            ],
+            "filter": {}
+          }
+        },
         {
           "role": "user",
           "permission": {
@@ -4695,6 +4751,21 @@
       ],
       "select_permissions": [
         {
+          "role": "anonymous",
+          "permission": {
+            "columns": [
+              "id",
+              "description",
+              "url",
+              "name",
+              "is_adjustment_variable",
+              "is_indicator",
+              "intervention_id"
+            ],
+            "filter": {}
+          }
+        },
+        {
           "role": "user",
           "permission": {
             "columns": [
@@ -4739,6 +4810,16 @@
         }
       ],
       "select_permissions": [
+        {
+          "role": "anonymous",
+          "permission": {
+            "columns": [
+              "variable_id",
+              "category"
+            ],
+            "filter": {}
+          }
+        },
         {
           "role": "user",
           "permission": {
