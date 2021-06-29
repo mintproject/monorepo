@@ -29,10 +29,13 @@ $ docker-compose ps
 You must import the database schema and some example data (regions and variables)
 
 ```bash
-cat hasura_metadata.json | docker-compose exec -T postgres psql -U postgres
+container_name=$(docker-compose ps -q postgres)
+#check if the variable is not null
+echo ${container_name}
 #import sample regions
-cat sql/all_regions.sql | docker-compose exec -T postgres psql -U postgres
+cat sql/01_schema.sql | docker exec -i ${container_name} psql -U postgres
+cat sql/all_regions.sql | docker exec -i ${container_name} -U postgres
 #import variables
-cat sql/intervention.sql | docker-compose exec -T postgres psql -U postgres
-cat sql/variable.sql | docker-compose exec -T postgres psql -U postgres
+cat sql/intervention.sql | docker exec -i ${container_name} psql -U postgres
+cat sql/variable.sql | docker exec -i ${container_name} psql -U postgres
 ```
