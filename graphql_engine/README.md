@@ -34,7 +34,7 @@ container_name=$(docker-compose ps -q postgres)
 echo ${container_name}
 #import sample regions
 cat sql/01_schema.sql | docker exec -i ${container_name} psql -U postgres
-cat sql/all_regions.sql | docker exec -i ${container_name} -U postgres
+cat sql/all_regions.sql | docker exec -i ${container_name} psql -U postgres
 #import variables
 cat sql/intervention.sql | docker exec -i ${container_name} psql -U postgres
 cat sql/variable.sql | docker exec -i ${container_name} psql -U postgres
