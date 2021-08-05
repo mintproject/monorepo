@@ -122,7 +122,7 @@ export interface ExecutionSummary {
     workflow_name: string
 
     submitted_for_execution: boolean
-    submission_time: Date    
+    submission_time: Date
     total_runs: number
     submitted_runs: number
     successful_runs: number
@@ -169,13 +169,13 @@ export interface Model extends IdNameObject {
     model_type?: string,
     model_name?: string,
     model_version?: string,
-    model_configuration?:string,
+    model_configuration?: string,
     parameter_assignment?: string,
     parameter_assignment_details?: string,
     software_image?: string,
     calibration_target_variable?: string,
     modeled_processes?: string[],
-    dimensionality?: number|string,
+    dimensionality?: number | string,
     spatial_grid_type?: string,
     spatial_grid_resolution?: string,
     output_time_interval?: string,
@@ -183,13 +183,13 @@ export interface Model extends IdNameObject {
     hasRegion?: any
 };
 
-const getLastPart = (s:string) => {
+const getLastPart = (s: string) => {
     let sp = s.split('/');
     if (sp && sp.length > 0) return sp.pop();
     return '';
 }
 
-export const getPathFromModel = (m:Model) => {
+export const getPathFromModel = (m: Model) => {
     let path = "";
     let model = getLastPart(m.model_name);
     if (model) {
@@ -234,7 +234,7 @@ export interface ModelDetail extends Model {
     image: string
 }
 
-export type VariableModels = Map<string, Model[]> 
+export type VariableModels = Map<string, Model[]>
 
 export type RegionMap = IdMap<Region>;
 
@@ -264,20 +264,29 @@ export interface Point {
 
 export interface IdMap<T> {
     [id: string]: T
-  }
-  
-  export interface IdNameObject {
+}
+
+export interface IdNameObject {
     id?: string
     name?: string
-  }
-  
-  export interface UserPreferences {
+}
+
+export interface UserPreferences {
     mint: MintPreferences,
     modelCatalog: ModelCatalogPreferences,
     profile?: UserProfile
-  }
-  
-  export interface MintPreferences {
+}
+
+export interface Wcm {
+    wings: any;
+}
+
+export interface WingsWcm {
+    inputs: ModelIO[],
+    outputs: ModelIO[],
+}
+
+export interface MintPreferences {
     wings: WingsPreferences,
     localex?: LocalExecutionPreferences,
     execution_engine?: "wings" | "localex",
@@ -287,9 +296,9 @@ export interface IdMap<T> {
     visualization_url: string,
     data_catalog_api: string,
     model_catalog_api: string
-  }
-  
-  export interface WingsPreferences {
+}
+
+export interface WingsPreferences {
     server: string,
     domain: string,
     username: string,
@@ -301,29 +310,29 @@ export interface IdMap<T> {
     storage?: string,
     dotpath?: string,
     onturl?: string,
-  }
-  
-  export interface LocalExecutionPreferences {
+}
+
+export interface LocalExecutionPreferences {
     datadir: string,
     dataurl: string,
     logdir: string,
     logurl: string,
     codedir: string
-  }
-  
-  type ModelCatalogStatus = 'LOADING' | 'DONE' | 'ERROR';
-  export interface ModelCatalogPreferences {
+}
+
+type ModelCatalogStatus = 'LOADING' | 'DONE' | 'ERROR';
+export interface ModelCatalogPreferences {
     username: string,
     accessToken: string,
     status: ModelCatalogStatus
-  }
-  
-  export type UserProfile = {
-      mainRegion: string,
-      graph: string,
-  }
+}
 
-  export interface Dataset extends IdNameObject {
+export type UserProfile = {
+    mainRegion: string,
+    graph: string,
+}
+
+export interface Dataset extends IdNameObject {
     region: string,
     variables: string[],
     datatype: string,
@@ -354,7 +363,7 @@ export interface DataResource extends IdNameObject {
     url: string
     time_period?: DateRange,
     spatial_coverage?: any
-    selected? : boolean
+    selected?: boolean
 }
 
 export interface DatasetDetail extends Dataset {
