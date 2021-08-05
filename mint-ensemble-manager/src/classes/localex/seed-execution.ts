@@ -214,12 +214,13 @@ module.exports = async (job: any) => {
             error = "Execution returned with non-zero status code";
         }
         else if (fs.existsSync(cwl_file)) {
-            Object.values(results).map((result: any) => {
+            Object.values(results).map((result: DataResource) => {
                 let tmpfile = cwl_outputs[result.id]["path"]
                 let extension = path.extname(tmpfile)
-                result.location = result.location + extension
+                let opfilepath = outputdir + "/" + result.name + extension;
+                result.url = result.url + extension
                 if (fs.existsSync(tmpfile)) {
-                    fs.copyFileSync(tmpfile, result.location);
+                    fs.copyFileSync(tmpfile, opfilepath);
                 }
                 else {
                     //console.log(`${tmpfile} not found!`)
@@ -291,7 +292,7 @@ const write_cwl_values = (comp: Component, seed: any, inputdir: string,
     }
     let data : Record<string, string | CwlValueFile> = {}
 
-    comp.inputs.map((input: any) => {
+    comp.inputs.map((input: ComponentArgument) => {
         if (input.isParam) {
             //let paramtype = seed.paramtypes[input.role];
             let paramvalue = seed.parameters[input.role];
