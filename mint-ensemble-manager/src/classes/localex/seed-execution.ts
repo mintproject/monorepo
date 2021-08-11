@@ -218,11 +218,11 @@ module.exports = async (job: any) => {
             error = "Execution returned with non-zero status code";
         }
         else if (fs.existsSync(cwl_file)) {
+            //print the results
             Object.values(results).map((result: any) => {
                 result.name = result.role
                 if (result.role in cwl_outputs){
                     if (result.role !== undefined && result.role in cwl_outputs) {
-                        //assuming one result per output
                         let cwl_output = cwl_outputs[result.role];
                         let output_suffix_cwl = Md5.hashAsciiStr(seed.execution.modelid + plainargs.join());
                         let output_directory = outputdir + '/' + output_suffix_cwl;
@@ -231,6 +231,7 @@ module.exports = async (job: any) => {
                         }
                         let output_file = output_directory + '/' + cwl_output['basename'];
                         let tmpfile = cwl_output['path']
+                        console.log("the temporal file " + tmpfile )
                         if (fs.existsSync(tmpfile)) {
                             fs.copyFileSync(tmpfile, output_file);
                             console.log("copy the outputs " + output_file )
@@ -244,7 +245,7 @@ module.exports = async (job: any) => {
                         }
                     }
                 } 
-            });
+            );
             // Set the results
             seed.execution.results = results;
         }        
