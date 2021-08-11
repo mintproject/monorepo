@@ -218,29 +218,39 @@ module.exports = async (job: any) => {
             error = "Execution returned with non-zero status code";
         }
         else if (fs.existsSync(cwl_file)) {
+            //print the results
+            console.log(JSON.parse(results));
             Object.values(results).map((result: any) => {
                 result.name = result.role
                 if (result.role in cwl_outputs){
-                    //TODO: this assumes one resource per output FIXIT
-                    let outputs = cwl_outputs[result.role].map((file: any) => {
-                        let output_suffix_cwl = Md5.hashAsciiStr(seed.execution.modelid + plainargs.join());
-                        let output_directory = outputdir + '/' + output_suffix_cwl;
-                        if (!fs.existsSync(output_directory)){
-                            fs.mkdirSync(output_directory)
-                        }
-                        let output_file = output_directory + '/' + file['basename'];
-                        let tmpfile = file['path']
+                    if (result.role !== undefined && result.role in cwl_outputs) {
+                        let cwl_output = cwl_outputs[result.role];
+                        //check if the outputs contains any results
+                        //if is array there results
+                        if (cwl_output instanceof Array){
+                            cwl_output.map((file: any) => {
+                                let output_suffix_cwl = Md5.hashAsciiStr(seed.execution.modelid + plainargs.join());
+                                let output_directory = outputdir + '/' + output_suffix_cwl;
+                                if (!fs.existsSync(output_directory)){
+                                    fs.mkdirSync(output_directory)
+                                }
+                                let output_file = output_directory + '/' + file['basename'];
+                                let tmpfile = file['path']
 
-                        console.log("the temporal file " + tmpfile )
-                        if (fs.existsSync(tmpfile)) {
-                            fs.copyFileSync(tmpfile, output_file);
-                            console.log("copy the outputs " + output_file )
+                                console.log("the temporal file " + tmpfile )
+                                if (fs.existsSync(tmpfile)) {
+                                    fs.copyFileSync(tmpfile, output_file);
+                                    console.log("copy the outputs " + output_file )
+                                }
+                                let url =  output_file.replace(localex.datadir, localex.dataurl);
+                                console.log("the url is going to be" + url)
+                                result.url = url;
+                            })
                         }
-                        let url =  output_file.replace(localex.datadir, localex.dataurl);
-                        console.log("the url is going to be" + url)
-                        result.url = url;
-                        return url
-                    })
+                        else {
+                            console.log("The input %s has been declared in the cwl document but cwltool doesn't match any results in the executions. Probably, you need to check the binding", result.role)
+                        }
+                    }
                 } 
             });
             // Set the results
