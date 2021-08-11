@@ -240,12 +240,11 @@ module.exports = async (job: any) => {
                         console.log("the url is going to be" + url)
                         result.url = url;
                         }
-                        else {
-                            console.log("The input %s has been declared in the cwl document but cwltool doesn't match any results in the executions. Probably, you need to check the binding", result.role)
-                        }
+                    else {
+                        console.log("The input %s has been declared in the cwl document but cwltool doesn't match any results in the executions. Probably, you need to check the binding", result.role)
                     }
-                } 
-            );
+                }
+            });
             // Set the results
             seed.execution.results = results;
         }        
