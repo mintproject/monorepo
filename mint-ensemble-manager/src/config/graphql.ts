@@ -1,8 +1,9 @@
 import 'cross-fetch/polyfill';
 import { ApolloClient, createHttpLink, InMemoryCache, NormalizedCacheObject } from '@apollo/client';
 
-const ENDPOINT = "graphql.mint.isi.edu/v1/graphql";
-const SECRET = "WmGrIc4MxU";
+const ENDPOINT = "graphql.dev.mint.isi.edu/v1/graphql";
+//const SECRET = "WmGrIc4MxU";
+const SECRET = "secret";
 
 export class GraphQL {
   static client : ApolloClient<NormalizedCacheObject>;
