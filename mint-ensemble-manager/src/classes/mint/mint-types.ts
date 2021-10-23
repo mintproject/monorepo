@@ -1,8 +1,320 @@
+export interface IdMap<T> {
+    [id: string]: T
+}
+
+export interface IdNameObject {
+    id?: string
+    name?: string
+}
+
+export interface User {
+    email: string
+    uid: string
+    region: string
+    graph: string
+}
+
+export interface AppState {
+    page: string,
+    subpage: string,
+    user?: User,
+    prefs?: UserPreferences
+}
+
+export interface UserPreferences {
+    mint: MintPreferences
+}
+
+export interface MintPreferences {
+    data_catalog_api: string,
+    model_catalog_api?: string,
+    ensemble_manager_api: string,
+    ingestion_api: string,
+    visualization_url: string,
+    execution_engine?: "wings" | "localex",
+    // Local Execution
+    localex?: LocalExecutionPreferences,
+    // Wings Execution  
+    wings?: WingsPreferences,
+    graphql?: GraphQLPreferences,
+    wings_api?: string,
+    //maps
+    google_maps_key: string,
+    //auth
+    auth_server: string,
+    auth_realm: string,
+    auth_client_id: string,
+
+    //old
+    apiKey: string,
+    authDomain: string,
+    databaseURL: string,
+    projectId: string,
+    storageBucket: string,
+    messagingSenderId: string,
+    appId: string,
+    cromo_api?: string
+}
+
+export interface GraphQLPreferences {
+    endpoint: string,
+    enable_ssl: boolean,
+    secret: string,
+    username: string,
+    password: string
+}
+
+export interface WingsPreferences {
+    server: string,
+    domain: string,
+    username: string,
+    password: string,
+    datadir: string,
+    dataurl: string
+    // The following is retrieved from wings itself
+    export_url?: string,
+    storage?: string,
+    dotpath?: string,
+    onturl?: string,
+}
+
+export interface LocalExecutionPreferences {
+    datadir: string,
+    dataurl: string,
+    logdir: string,
+    logurl: string,
+    codedir: string
+}
+
+export type RegionMap = IdMap<Region>;
+
+export interface Region extends IdNameObject {
+    bounding_box?: BoundingBox,
+    model_catalog_uri?: string,
+    category_id: string,
+    geometries: any[]
+}
+
+export interface RegionsState {
+    regions?: RegionMap,
+    top_region_ids?: string[],
+    sub_region_ids?: IdMap<string[]>,
+    categories?: IdMap<RegionCategory>
+    bbox_preview?: BoundingBox[]
+}
+
+export interface RegionCategory extends IdNameObject {
+    citation?: string,
+    subcategories?: RegionCategory[]
+}
+
+export interface BoundingBox {
+    xmin: number
+    xmax: number
+    ymin: number
+    ymax: number
+}
+
+export interface Point {
+    x: number,
+    y: number
+}
+
+export interface Dataset extends IdNameObject {
+    region: string,
+    variables: string[],
+    datatype: string,
+    time_period: DateRange,
+    description: string,
+    version: string,
+    limitations: string,
+    source: Source,
+    categories?: string[],
+    is_cached?: boolean,
+    resource_repr?: any,
+    dataset_repr?: any,
+    resources: DataResource[],
+    resources_loaded?: boolean,
+    resource_count?: number,
+    spatial_coverage?: any,
+};
+
+export interface Dataslice extends IdNameObject {
+    dataset: Dataset,
+    total_resources?: number,
+    selected_resources?: number,
+    resources: DataResource[],
+    resources_loaded?: boolean,
+    time_period: DateRange,
+    spatial_coverage?: any
+}
+
+export interface DataResource extends IdNameObject {
+    url: string
+    time_period?: DateRange,
+    spatial_coverage?: any
+    selected? : boolean
+}
+
+export interface DatasetDetail extends Dataset {
+    documentation: string,
+    image: string
+}
+
+export interface Source {
+    name: string,
+    url: string,
+    type: string
+}
+
+export interface DatasetQueryParameters {
+    spatialCoverage?: BoundingBox,
+    dateRange?: DateRange,
+    name?: string,
+    variables?: string[]
+}
+
+export interface DatasetsState {
+    model_datasets?: ModelDatasets
+    query_datasets?: DatasetsWithStatus
+    region_datasets?: DatasetsWithStatus
+    dataset?: DatasetWithStatus
+    datasets?: IdMap<Dataset>
+}
+export interface DatasetsWithStatus {
+    loading: boolean,
+    datasets: Dataset[]
+}
+export interface DatasetWithStatus {
+    loading: boolean,
+    dataset: Dataset
+}
+export type ModelInputDatasets = Map<string, DatasetsWithStatus[]>
+export type ModelDatasets = Map<string, ModelInputDatasets>
+
+export interface Model extends IdNameObject {
+    localname?: string,
+    region_name: string,
+    description?: string,
+    category: string,
+    input_files: ModelIO[],
+    input_parameters: ModelParameter[],
+    output_files: ModelIO[],
+    code_url?: string,
+    model_type?: string,
+    model_name?: string,
+    model_version?: string,
+    model_configuration?:string,
+    parameter_assignment?: string,
+    parameter_assignment_details?: string,
+    software_image?: string,
+    calibration_target_variable?: string,
+    modeled_processes?: string[],
+    dimensionality?: number|string,
+    spatial_grid_type?: string,
+    spatial_grid_resolution?: string,
+    output_time_interval?: string,
+    usage_notes?: string,
+    indicators?: string,
+    hasRegion?: any
+};
+
+const getLastPart = (s:string) => {
+    let sp = s.split('/');
+    if (sp && sp.length > 0) return sp.pop();
+    return '';
+}
+
+export const getPathFromModel = (m:Model) => {
+    let path = "";
+    let model = getLastPart(m.model_name);
+    if (model) {
+        path += "/" + model;
+        let version = getLastPart(m.model_version);
+        if (version) {
+            path += "/" + version;
+            let cfg = getLastPart(m.model_configuration)
+            if (cfg) {
+                path += "/" + cfg;
+                path += "/" + getLastPart(m.id);
+            }
+        }
+    }
+    return path;
+}
+
+export interface ModelIO extends IdNameObject {
+    type?: string,
+    variables: string[],
+    value?: Dataslice,
+    position?: number
+}
+
+export interface ModelParameter extends IdNameObject {
+    type: string,
+    description?: string,
+    min?: string,
+    max?: string,
+    unit?: string,
+    default?: string,
+    value?: string,
+    adjustment_variable?: string,
+    accepted_values?: string[],
+    position?: number
+}
+
+export interface ModelDetail extends Model {
+    documentation: string,
+    lookupTable: string,
+    image: string
+}
+
+export interface ModelsState {
+    models: VariableModels,
+    model: ModelDetail | null,
+    loading: boolean
+}
+
+export type VariableModels = Map<string, Model[]> // Map of response variable to models
+
+export interface ModelingState {
+    problem_statements?: ProblemStatementList
+    problem_statement?: ProblemStatement
+    thread?: Thread
+    execution_summaries?: ThreadModelExecutionSummary
+    executions?: ThreadModelExecutions
+}
+
 export interface ExecutionsWithStatus {
     loading: boolean,
+    changed: boolean,
     executions: Execution[]
 }
-export type ModelExecutions = Map<string, ExecutionsWithStatus[]>
+
+export type ModelExecutions = {
+    [modelid: string]: ExecutionsWithStatus
+}
+
+export type ThreadModelExecutions = {
+    [threadid: string]: ModelExecutions
+}
+
+
+export type ThreadModelExecutionSummary = {
+    [threadid: string]: ModelExecutionSummary
+}
+
+export type ModelExecutionSummary = {
+    [modelid: string]: ExecutionSummary
+}
+
+export interface MintPermission {
+    userid: string,
+    read: boolean,
+    write: boolean,
+    execute: boolean,
+    owner: boolean
+}
 
 export interface MintEvent {
     event: string,
@@ -32,7 +344,9 @@ export interface ProblemStatementList {
 export interface ProblemStatementInfo extends IdNameObject {
     regionid: string
     dates: DateRange
-    events: ProblemStatementEvent[]
+    events?: ProblemStatementEvent[]
+    permissions?: MintPermission[]
+    preview?: string[]
 }
 
 export interface DateRange {
@@ -53,6 +367,7 @@ export interface ThreadInfo extends IdNameObject {
     response_variables: string[]
     regionid?: string
     events?: ThreadEvent[]
+    permissions?: MintPermission[]
 }
 
 export interface ThreadList {
@@ -65,10 +380,13 @@ export interface Thread extends ThreadInfo {
     models?: ModelMap
     data?: DataMap
     model_ensembles?: ModelEnsembleMap
+    //data_transformations?: IdMap<DataTransformation>
+    model_dt_ensembles?: ModelEnsembleMap
     execution_summary: IdMap<ExecutionSummary>
     visualizations?: Visualization[]
     events: ThreadEvent[]
     changed?: boolean
+    refresh?: boolean
     unsubscribe?: Function
 }
 
@@ -99,7 +417,8 @@ export interface Task extends IdNameObject {
     driving_variables: string[],
     regionid?: string,
     threads?: IdMap<ThreadInfo>
-    events: TaskEvent[]
+    events?: TaskEvent[]
+    permissions?: MintPermission[]
     unsubscribe?: Function
 }
 
@@ -109,7 +428,7 @@ export interface ModelEnsembleMap {
 }
 
 export interface ThreadModelMap {
-    id?: string,
+    id: string,
     bindings: ModelIOBindings
 }
 
@@ -119,7 +438,9 @@ export interface ModelIOBindings {
 }
 
 export interface ExecutionSummary {
-    workflow_name: string
+    workflow_name?: string
+    changed?: boolean
+    unsubscribe?: Function
 
     submitted_for_execution: boolean
     submission_time: Date
@@ -157,240 +478,30 @@ export interface InputBindings {
     [input: string]: string | DataResource
 }
 
-export interface Model extends IdNameObject {
-    localname?: string,
-    region_name: string,
-    description?: string,
-    category: string,
-    input_files: ModelIO[],
-    input_parameters: ModelParameter[],
-    output_files: ModelIO[],
-    code_url?: string,
-    model_type?: string,
-    model_name?: string,
-    model_version?: string,
-    model_configuration?: string,
-    parameter_assignment?: string,
-    parameter_assignment_details?: string,
-    software_image?: string,
-    calibration_target_variable?: string,
-    modeled_processes?: string[],
-    dimensionality?: number | string,
-    spatial_grid_type?: string,
-    spatial_grid_resolution?: string,
-    output_time_interval?: string,
-    usage_notes?: string,
-    hasRegion?: any
-};
+export type VariableMap = IdMap<Variable>;
 
-const getLastPart = (s: string) => {
-    let sp = s.split('/');
-    if (sp && sp.length > 0) return sp.pop();
-    return '';
+export interface Variable extends IdNameObject {
+    description: string,
+    is_adjustment_variable: boolean,
+    is_indicator: boolean,
+    categories: string[],
+    intervention: Intervention
 }
 
-export const getPathFromModel = (m: Model) => {
-    let path = "";
-    let model = getLastPart(m.model_name);
-    if (model) {
-        path += "/" + model;
-        let version = getLastPart(m.model_version);
-        if (version) {
-            path += "/" + version;
-            let cfg = getLastPart(m.model_configuration)
-            if (cfg) {
-                path += "/" + cfg;
-                path += "/" + getLastPart(m.id);
-            }
-        }
-    }
-    return path;
+export interface Intervention extends IdNameObject {
+    description: string
 }
 
-export interface ModelIO extends IdNameObject {
-    type?: string,
-    variables: string[],
-    value?: Dataslice,
-    position?: number,
-    format: string
-}
-
-export interface ModelParameter extends IdNameObject {
-    type: string,
-    description?: string,
-    min?: string,
-    max?: string,
-    unit?: string,
-    default?: string,
-    value?: string,
-    adjustment_variable?: string,
-    accepted_values?: string[],
-    position?: number
-}
-
-export interface ModelDetail extends Model {
-    documentation: string,
-    lookupTable: string,
-    image: string
-}
-
-export type VariableModels = Map<string, Model[]>
-
-export type RegionMap = IdMap<Region>;
-
-export interface Region extends IdNameObject {
-    bounding_box?: BoundingBox,
-    model_catalog_uri?: string,
-    category_id: string,
-    geometries: any[]
-}
-
-export interface RegionCategory extends IdNameObject {
-    citation?: string,
-    subcategories?: RegionCategory[]
-}
-
-export interface BoundingBox {
-    xmin: number
-    xmax: number
-    ymin: number
-    ymax: number
-}
-
-export interface Point {
-    x: number,
-    y: number
-}
-
-export interface IdMap<T> {
-    [id: string]: T
-}
-
-export interface IdNameObject {
-    id?: string
-    name?: string
-}
-
-export interface UserPreferences {
-    mint: MintPreferences,
-    modelCatalog: ModelCatalogPreferences,
-    profile?: UserProfile
+export interface VariablesState {
+    variables?: VariableMap
 }
 
 export interface Wcm {
-    wings: any;
+    wings: any ;
 }
 
 export interface WingsWcm {
     inputs: ModelIO[],
     outputs: ModelIO[],
-}
 
-export interface MintPreferences {
-    wings: WingsPreferences,
-    localex?: LocalExecutionPreferences,
-    execution_engine?: "wings" | "localex",
-    wings_api: string,
-    ensemble_manager_api: string,
-    ingestion_api: string,
-    visualization_url: string,
-    data_catalog_api: string,
-    model_catalog_api: string
 }
-
-export interface WingsPreferences {
-    server: string,
-    domain: string,
-    username: string,
-    password: string,
-    datadir: string,
-    dataurl: string
-    // The following is retrieved from wings itself
-    export_url?: string,
-    storage?: string,
-    dotpath?: string,
-    onturl?: string,
-}
-
-export interface LocalExecutionPreferences {
-    datadir: string,
-    dataurl: string,
-    logdir: string,
-    logurl: string,
-    codedir: string
-}
-
-type ModelCatalogStatus = 'LOADING' | 'DONE' | 'ERROR';
-export interface ModelCatalogPreferences {
-    username: string,
-    accessToken: string,
-    status: ModelCatalogStatus
-}
-
-export type UserProfile = {
-    mainRegion: string,
-    graph: string,
-}
-
-export interface Dataset extends IdNameObject {
-    region: string,
-    variables: string[],
-    datatype: string,
-    time_period: DateRange,
-    description: string,
-    version: string,
-    limitations: string,
-    source: Source,
-    categories?: string[],
-    is_cached?: boolean,
-    resource_repr?: any,
-    dataset_repr?: any,
-    resources: DataResource[],
-    resources_loaded?: boolean,
-    resource_count?: number,
-    spatial_coverage?: any,
-};
-
-export interface Dataslice extends IdNameObject {
-    dataset: Dataset,
-    resources: DataResource[],
-    resources_loaded?: boolean,
-    time_period: DateRange,
-    spatial_coverage?: any
-}
-
-export interface DataResource extends IdNameObject {
-    url: string
-    time_period?: DateRange,
-    spatial_coverage?: any
-    selected?: boolean
-}
-
-export interface DatasetDetail extends Dataset {
-    documentation: string,
-    image: string
-}
-
-export interface Source {
-    name: string,
-    url: string,
-    type: string
-}
-
-export interface DatasetQueryParameters {
-    spatialCoverage?: BoundingBox,
-    dateRange?: DateRange,
-    name?: string,
-    variables?: string[]
-}
-
-export interface DatasetsWithStatus {
-    loading: boolean,
-    datasets: Dataset[]
-}
-export interface DatasetWithStatus {
-    loading: boolean,
-    dataset: Dataset
-}
-export type ModelInputDatasets = Map<string, DatasetsWithStatus[]>
-export type ModelDatasets = Map<string, ModelInputDatasets>

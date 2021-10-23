@@ -1,4 +1,3 @@
-import { toTimeStamp, fromTimeStampToString } from "./date-utils";
 import { DateRange, Region, MintPreferences, DatasetQueryParameters, Dataset } from "./mint-types";
 import * as rp from "request-promise-native";
 
@@ -12,10 +11,10 @@ const getDatasetsFromDCResponse = (obj: any, queryParameters: DatasetQueryParame
             variables: queryParameters.variables,
             time_period: dmeta['temporal_coverage'] ? {
                 start_date: (dmeta['temporal_coverage']['start_time'] ?
-                    toTimeStamp(dmeta['temporal_coverage']['start_time'])
+                    new Date(dmeta['temporal_coverage']['start_time'])
                     : null),
                 end_date: (dmeta['temporal_coverage']['end_time'] ?
-                    toTimeStamp(dmeta['temporal_coverage']['end_time'])
+                    new Date(dmeta['temporal_coverage']['end_time'])
                     : null),
             } : null,
             description: dmeta['dataset_description'] || '',
@@ -42,8 +41,8 @@ const getDatasetResourceListFromDCResponse = (obj: any) => {
         let rmeta = row["resource_metadata"];
         let tcover = rmeta["temporal_coverage"];
         let scover = rmeta["spatial_coverage"];
-        let tcoverstart = tcover ? toTimeStamp(tcover["start_time"]) : null;
-        let tcoverend = tcover ? toTimeStamp(tcover["end_time"]) : null;
+        let tcoverstart = tcover ? new Date(tcover["start_time"]) : null;
+        let tcoverend = tcover ? new Date(tcover["end_time"]) : null;
         
         resources.push({
             id: row["resource_id"],

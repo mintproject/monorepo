@@ -25,6 +25,7 @@
   "license": "ISC",
   "dependencies": {
     "@apollo/client": "^3.1.4",
+    "@mintproject/modelcatalog_client": "^8.0.0",
     "@types/bull-board": "^0.6.0",
     "@types/fs-extra": "^8.0.1",
     "@types/request": "^2.48.3",
@@ -42,8 +43,7 @@
     "express-openapi": "^5.0.0",
     "express-openapi-validator": "^2.14.2",
     "fetch": "^1.1.0",
-    "firebase": "^7.20.0",
-    "firebase-admin": "^8.7.0",
+    "form-data": "^2.3.3",
     "fs-extra": "^8.1.0",
     "graphql": "^15.3.0",
     "graphql-tag": "^2.11.0",

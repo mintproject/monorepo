@@ -1,39 +1,36 @@
 import 'cross-fetch/polyfill';
-import { ApolloClient, createHttpLink, InMemoryCache, NormalizedCacheObject } from '@apollo/client';
+import { ApolloClient, createHttpLink, InMemoryCache, NormalizedCacheObject, split } from '@apollo/client';
+import { MintPreferences, User } from '../classes/mint/mint-types';
 
-const ENDPOINT = "graphql.dev.mint.isi.edu/v1/graphql";
-//const SECRET = "WmGrIc4MxU";
-const SECRET = "secret";
+import * as mintConfig from './config.json';
+import { KeycloakAdapter } from './keycloak-adapter';
 
 export class GraphQL {
   static client : ApolloClient<NormalizedCacheObject>;
+  static userId;
 
-  static instance = () => {
-    if(GraphQL.client != null)
+  static instance = (auth:User) => {
+    if(GraphQL.client != null && auth.email && auth.email == GraphQL.userId)
       return GraphQL.client
+    GraphQL.userId = auth?.email;
 
     // Create the Apollo GraphQL Client
     GraphQL.client = new ApolloClient({
       link: GraphQL.getHTTPSLink(),
-      cache: new InMemoryCache(),
-      defaultOptions: {
-        query: {
-          fetchPolicy: 'no-cache',
-          errorPolicy: 'all',
-        }
-      }
+      cache: new InMemoryCache()
     });
-
     return GraphQL.client;
   }
 
   static getHTTPSLink() {
+    let prefs = mintConfig["default"] as MintPreferences;
     // Normal HTTP Link
+    let protocol = prefs.graphql.enable_ssl? "https://" : "http://"
+    let uri = protocol + prefs.graphql.endpoint
+    
     return createHttpLink({
-      uri: "https://" + ENDPOINT,
-      headers: {
-        "X-Hasura-Admin-Secret": SECRET
-      }
+      uri: uri,
+      headers: KeycloakAdapter.getAccessTokenHeader()
     });
   }
 }

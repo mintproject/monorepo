@@ -1,7 +1,17 @@
 {
     "data_catalog_api": "https://data-catalog.mint.isi.edu",
+    "model_catalog_api": "https://api.models.dev.mint.isi.edu/v1.8.0/",
     "ensemble_manager_api": "https://dev.ensemble.mint.isi.edu/v1",
     "execution_engine": "localex",
+    "auth_server": "https://auth.mint.isi.edu/auth/",
+    "auth_realm": "production",
+    "auth_client_id": "mint-ui",    
+    "graphql": {
+        "endpoint": "graphql.dev.mint.isi.edu/v1/graphql",
+        "enable_ssl": true,
+        "username": "mint@isi.edu",
+        "password": "Mint123!"
+    },
     "localex": {
         "codedir":"/data/storage/mint/local-execution/code",
         "datadir": "/data/storage/mint/data-catalog/production/local-execution",

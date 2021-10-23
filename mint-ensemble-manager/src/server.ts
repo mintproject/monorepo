@@ -9,6 +9,7 @@ import v1ExecutionsLocalService from './api/api-v1/services/executionsLocalServi
 import v1ExecutionQueService from './api/api-v1/services/executionQueueService';
 import v1MonitorsService from './api/api-v1/services/monitorsService';
 import v1LogsService from './api/api-v1/services/logsService';
+import v1ThreadsService from './api/api-v1/services/threadsService';
 
 
 import { initialize } from "express-openapi";
@@ -20,8 +21,14 @@ import { EXECUTION_QUEUE_NAME, REDIS_URL } from "./config/redis";
 import { PORT, VERSION } from "./config/app";
 
 import * as webpack from "webpack";
-
 const config = require('../webpack.config.js');
+
+import * as mintConfig from './config/config.json';
+import { MintPreferences } from "./classes/mint/mint-types";
+import { KeycloakAdapter } from "./config/keycloak-adapter";
+
+let prefs = mintConfig["default"] as MintPreferences;
+KeycloakAdapter.signIn(prefs.graphql.username, prefs.graphql.password)
 
 // Main Express Server
 const app = express();
@@ -41,6 +48,7 @@ initialize({
         executionsLocalService: v1ExecutionsLocalService,
         executionQueueService: v1ExecutionQueService,
         monitorsService: v1MonitorsService,
+        threadsService: v1ThreadsService,
         logsService: v1LogsService
     },
     paths: path.resolve(__dirname, './api/api-v1/paths'),

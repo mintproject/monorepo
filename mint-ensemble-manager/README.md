@@ -1,9 +1,9 @@
 # mint-ensemble-manager
 Ensemble Manager for MINT
 
-* Set environment variable GOOGLE_APPLICATION_CREDENTIALS
+* Configure MINT servers
 ```
-export GOOGLE_APPLICATION_CREDENTIALS="./src/config/mint-full-4dc148cc116b.json" 
+edit src/config/config.json
 ```
 
 * Start node
