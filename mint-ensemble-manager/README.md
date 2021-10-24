@@ -11,4 +11,6 @@ edit src/config/config.json
 npm start
 ```
 
-* Go to http://localhost:3000
+* Go to http://localhost:3000/v1/ui
+
+
