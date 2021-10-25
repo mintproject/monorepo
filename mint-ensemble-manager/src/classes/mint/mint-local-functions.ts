@@ -194,7 +194,7 @@ export const deleteExecutableCacheForModelLocally = async(modelid: string,
     let thread_model_id = thread.model_ensembles[modelid].id;
     let all_execution_ids = await getThreadModelExecutionIds(thread_model_id);
 
-    // Delete existing thread execution ids (*NOT DELETING GLOBAL ENSEMBLE DOCUMENTS .. Only clearing list of the thread's execution ids)
+    // Delete existing thread execution ids (*NOT* deleting global execution records  .. Only clearing list of the thread's execution id mappings)
     deleteThreadModelExecutionIds(thread_model_id);
 
     // Work in batches

@@ -527,8 +527,42 @@ export const modelEnsembleFromGQL = (dbs: any[], pbs: any[]): ModelIOBindings =>
     return bindings;
 }
 
-export const executionToGQL = (ex: Execution) => {
-    return null;
+export const executionToGQL = (ex: Execution) : any => {
+    let exobj = {
+        id: ex.id,
+        model_id: ex.modelid,
+        status: ex.status,
+        start_time: ex.start_time,
+        execution_engine: ex.execution_engine,
+        run_progress: ex.run_progress,
+        run_id: ex.runid,
+        parameter_bindings: {
+            data: [] as any
+        },
+        data_bindings: {
+            data: [] as any
+        },
+        results: {
+            data: [] as any
+        }
+    }
+    Object.keys(ex.bindings).forEach((ioid) => {
+        let binding = ex.bindings[ioid];
+        if (typeof(binding) == 'string') {
+            exobj.parameter_bindings.data.push({
+                model_parameter_id: ioid,
+                parameter_value: binding+"",
+            })
+        }
+        else {
+            exobj.data_bindings.data.push({
+                model_io_id: ioid,
+                resource_id: binding["id"]
+            })
+        }
+    })
+    exobj.results.data = executionResultsToGQL(ex.results);
+    return exobj;
 }
 
 export const executionFromGQL = (ex: any, emulator=false) : Execution => {
