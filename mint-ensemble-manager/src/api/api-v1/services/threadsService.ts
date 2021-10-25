@@ -15,6 +15,16 @@ const createResponse = (result: string, message: string) => {
     };
 }
 
+function flatten(array)
+{
+    if(array.length == 0)
+        return array;
+    else if(Array.isArray(array[0]))
+        return flatten(array[0]).concat(flatten(array.slice(1)));
+    else
+        return [array[0]].concat(flatten(array.slice(1)));
+}
+
 const threadsService = {
     async createThread(desc: any) {
         let mint_prefs = await fetchMintConfig();
@@ -120,7 +130,7 @@ const threadsService = {
                             if(pres.hasStandardVariable) 
                                 return pres.hasStandardVariable.map((sv)=>sv.label)
                         });
-                        let variables = variables_arr.flat().flat();
+                        let variables = flatten(variables_arr);
                         variables = variables.filter((v) => v);
                         let dataset : Dataset = await queryDatasetDetails(model.id, input_file.id, 
                             variables, dsid, thread.dates, region, mint_prefs);
