@@ -48,9 +48,9 @@ export class KeycloakAdapter {
         return KeycloakAdapter.server + "realms/" + KeycloakAdapter.realm + "/protocol/openid-connect/token";
     }
 
-    private static nodejs_atob (str): string {
-        let buff = Buffer.from(str, 'utf-8');
-        return buff.toString('base64');
+    private static nodejs_atob (base64): string {
+        let buff = Buffer.from(base64, 'base64');
+        return buff.toString('utf-8');
     }
 
     private static saveTokenResponse (tkn: tokenResponse) : void {
