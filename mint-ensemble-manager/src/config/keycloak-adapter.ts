@@ -48,6 +48,11 @@ export class KeycloakAdapter {
         return KeycloakAdapter.server + "realms/" + KeycloakAdapter.realm + "/protocol/openid-connect/token";
     }
 
+    private static nodejs_atob (str): string {
+        let buff = Buffer.from(str, 'utf-8');
+        return buff.toString('base64');
+    }
+
     private static saveTokenResponse (tkn: tokenResponse) : void {
         KeycloakAdapter.accessToken = tkn.access_token;
         KeycloakAdapter.refreshToken = tkn.refresh_token;
@@ -57,7 +62,7 @@ export class KeycloakAdapter {
         //KeycloakAdapter.setLocalStorage();
 
         //Decode token
-        let decoded : decodedToken = JSON.parse(atob(KeycloakAdapter.accessToken.split(".")[1]));
+        let decoded : decodedToken = JSON.parse(KeycloakAdapter.nodejs_atob(KeycloakAdapter.accessToken.split(".")[1]));
         KeycloakAdapter.username = decoded.preferred_username;
         KeycloakAdapter.userid = decoded.sub
         KeycloakAdapter.email = decoded.email
