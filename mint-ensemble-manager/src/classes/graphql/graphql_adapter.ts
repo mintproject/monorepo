@@ -27,6 +27,9 @@ export const fromTimestampIntegerToDateString = (timestamp: number) : string => 
 export const toDateString = (date: Date) : string => {
     if(!date)
         return null;
+    if(typeof date === 'string') {
+        return (date+"").split('T')[0]
+    }
     return date.toISOString().split('T')[0]
 }
 

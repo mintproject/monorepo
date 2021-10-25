@@ -3,21 +3,25 @@ import os, { type } from "os";
 import fs from "fs-extra";
 import { Md5 } from "ts-md5";
 import child_process from "child_process";
-import { setExecutions, incrementThreadModelSubmittedRuns, incrementThreadModelSuccessfulRuns, incrementThreadModelFailedRuns, updateExecutionStatusAndResults } from "../graphql/graphql_functions";
+import { incrementThreadModelSubmittedRuns, incrementThreadModelSuccessfulRuns, incrementThreadModelFailedRuns, updateExecutionStatusAndResults } from "../graphql/graphql_functions";
 import { Component, ComponentSeed, ComponentArgument } from "./local-execution-types";
 import { runImage } from "./docker-functions";
 import { Container } from "dockerode";
 import { DEVMODE } from "../../config/app";
-import { YAMLException } from "js-yaml";
-import { deleteModelInputCacheLocally } from "../mint/mint-local-functions";
-import path from "path";
 import { LocalExecutionPreferences, DataResource, DateRange } from "../mint/mint-types";
+
+import * as mintConfig from '../../config/config.json';
+import { MintPreferences } from "../mint/mint-types";
+import { KeycloakAdapter } from "../../config/keycloak-adapter";
 
 module.exports = async (job: any) => {
     // Run the model seed (model config + bindings)
     var seed: ComponentSeed = job.data.seed;
     var localex: LocalExecutionPreferences = job.data.prefs;
     var thread_model_id: string = job.data.thread_model_id;
+
+    let prefs = mintConfig["default"] as MintPreferences;
+    await KeycloakAdapter.signIn(prefs.graphql.username, prefs.graphql.password)
 
     // Only increment submitted runs if this isn't a retry
     if(seed.execution.status != "FAILURE")
