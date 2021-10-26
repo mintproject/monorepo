@@ -109,6 +109,7 @@ export const getThread = async(threadid: string) : Promise<Thread> => {
     let APOLLO_CLIENT = GraphQL.instance(KeycloakAdapter.getUser());
     return APOLLO_CLIENT.query({
         query: getThreadGQL,
+        fetchPolicy: 'no-cache',
         variables: {
             id: threadid
         }
