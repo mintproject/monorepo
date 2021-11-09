@@ -5,6 +5,7 @@ import { addProblemStatement, addTask, addThread, getProblemStatement, getRegion
 import { getCreateEvent, uuidv4 } from "../../../classes/graphql/graphql_adapter";
 import { fetchMintConfig } from "../../../classes/mint/mint-functions";
 import { ModelConfigurationSetup } from '@mintproject/modelcatalog_client';
+import { KeycloakAdapter } from "../../../config/keycloak-adapter";
 
 // ./api-v1/services/threadsService.js
 
@@ -28,6 +29,7 @@ function flatten(array)
 const threadsService = {
     async createThread(desc: any) {
         let mint_prefs = await fetchMintConfig();
+        KeycloakAdapter.signIn(mint_prefs.graphql.username, mint_prefs.graphql.password)
 
         // Create Problem Statement if needed
         let prob_desc = desc.problem_statement;

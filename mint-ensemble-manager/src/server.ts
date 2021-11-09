@@ -23,12 +23,14 @@ import { PORT, VERSION } from "./config/app";
 import * as webpack from "webpack";
 const config = require('../webpack.config.js');
 
+/*
 import * as mintConfig from './config/config.json';
 import { MintPreferences } from "./classes/mint/mint-types";
 import { KeycloakAdapter } from "./config/keycloak-adapter";
 
 let prefs = mintConfig["default"] as MintPreferences;
 KeycloakAdapter.signIn(prefs.graphql.username, prefs.graphql.password)
+*/
 
 // Main Express Server
 const app = express();
