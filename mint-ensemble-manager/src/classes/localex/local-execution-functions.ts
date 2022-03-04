@@ -33,13 +33,17 @@ const _downloadFile = (url: string, filepath: string): Promise<void> => {
 }
 
 // TODO: Unzip the wcm zip file
-const _unzipFile = (zipfile: string, dirname: string): Promise<string> => {
+const _unzipFile = (zipfilename: string, dirname: string): Promise<string> => {
     return new Promise<string>((resolve, reject) => {
         if (!fs.existsSync(dirname)){
             fs.mkdirSync(dirname);
         }
-        yauzl.open(zipfile, { lazyEntries: true }, function (err, zipfile) {
-            if (err) throw err;
+        yauzl.open(zipfilename, { lazyEntries: true }, function (err, zipfile) {
+            if (err) {
+                console.log(err);
+                reject();
+                return;
+            }
             zipfile.readEntry();
             zipfile.on("entry", function (entry) {
                 // Ignore some files/directories
@@ -49,7 +53,7 @@ const _unzipFile = (zipfile: string, dirname: string): Promise<string> => {
                 }
                 // If this is a directory, then copy its contents to dirname
                 if(entry.fileName.indexOf("/") >= 0) {
-                   let filename = entry.fileName.substr(entry.fileName.indexOf("/") + 1);
+                let filename = entry.fileName.substr(entry.fileName.indexOf("/") + 1);
                     if (!filename) {
                         zipfile.readEntry();
                         return;
@@ -96,6 +100,9 @@ const _downloadAndUnzipToDirectory = (url: string, modeldir: string, compname: s
             if (fs.existsSync(zipfile)) {
                 _unzipFile(zipfile, modeldir).then(() => {
                     resolve();
+                }).catch((e) => {
+                    console.log(e);
+                    reject();
                 })
             }
             else {
@@ -204,29 +211,31 @@ const _getModelDetails = (model: Model, modeldir: string) => {
         inputs: [],
         outputs: [],
     };
-    let ok = true;
+    let okinput = true;
+    let okparam = true;
+    let okoutput = true;
     model.input_files.map((input) => {
         let details = _getModelIODetails(input, "input");
         if (!details)
-            ok = false;
+            okinput = false;
         else
             comp.inputs.push(details);
     })
     model.input_parameters.map((param) => {
         let details = _getModelParamDetails(param);
         if (!details)
-            ok = false;
+            okparam = false;
         else
             comp.inputs.push(details);
     })
     model.output_files.map((output) => {
         let details = _getModelIODetails(output, "output");
         if (!details)
-            ok = false;
+            okoutput = false;
         else
             comp.outputs.push(details);
     })
-    if (ok)
+    if (okoutput && (okinput || okparam))
         return comp;
     else
         return null;
