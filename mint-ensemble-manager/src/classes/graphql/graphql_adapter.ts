@@ -360,7 +360,7 @@ export const threadFromGQL = (thread: any) => {
         (tm["execution_summary"] ?? []).forEach((tmex) => {
             fbthread.execution_summary[model.id] = threadModelExecutionSummaryFromGQL(tmex);
             // Set summary changed to true, to load the executions initially
-            fbthread.execution_summary[model.id].changed = true;
+            //fbthread.execution_summary[model.id].changed = true;
         });
     })
     return fbthread;
