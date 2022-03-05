@@ -1,0 +1,40 @@
+mutation delete_model($id: String!) {
+  # Delete thread model executions
+  delete_thread_model_execution_summary(where: {thread_model: {model_id: {_eq: $id}}}) {
+    affected_rows
+  }
+  delete_thread_model_execution(where: {thread_model: {model_id: {_eq: $id}}}) {
+    affected_rows
+  }
+
+  # Delete thread model data binding
+  delete_thread_model_io(where: {thread_model: {model_id: {_eq: $id}}}) {
+    affected_rows
+  }
+
+  # Delete thread model parameter binding
+  delete_thread_model_parameter(where: {thread_model: {model_id: {_eq: $id}}}) {
+    affected_rows
+  }
+
+  # Delete thread models
+  delete_thread_model(where: {model_id: {_eq: $id}}) {
+    affected_rows
+  }
+
+  # Delete model inputs and outputs
+  delete_model_input(where: {model_id: {_eq: $id}}) {
+    affected_rows
+  }
+  delete_model_parameter(where: {model_id: {_eq: $id}}) {
+    affected_rows
+  }
+  delete_model_output(where: {model_id: {_eq: $id}}) {
+    affected_rows
+  }     
+
+  # Delete model
+  delete_model_by_pk(id: $id) {
+    id
+  }
+}
