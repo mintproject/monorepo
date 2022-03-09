@@ -138,6 +138,7 @@ module.exports = async (job: any) => {
             let cwl_values_file = write_cwl_values(comp, seed, inputdir, tempdir, outputdir, plainargs)
             let cwl_args: string[] = [];
             let cwl_command = "cwltool"
+            cwl_args.push("--no-read-only")
             cwl_args.push("--copy-outputs")
             cwl_args.push(cwl_file)
             cwl_args.push(cwl_values_file)
