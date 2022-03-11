@@ -315,10 +315,12 @@ const write_cwl_values = (comp: Component, seed: any, inputdir: string,
     let data : Record<string, string | CwlValueFile> = {}
     comp.inputs.map((input: any) => {
         if (input.isParam) {
-            //let paramtype = seed.paramtypes[input.role];
+            let paramtype = seed.paramtypes[input.id];
             let paramvalue = seed.parameters[input.id];
             if (!paramvalue)
                 paramvalue = input.paramDefaultValue;
+            if (paramtype == "int")
+                paramvalue = parseInt(paramvalue);
             data[input.role] = paramvalue
         }
         else {
