@@ -38,6 +38,7 @@ query query_thread($id: String!) {
                 model_io {
                     id
                     name
+                    format
                 }
                 dataslice_id
             }

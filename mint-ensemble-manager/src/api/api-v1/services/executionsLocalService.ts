@@ -16,7 +16,8 @@ const createResponse = (result: string, message: string) => {
 const executionsLocalService = {
     async submitExecution(threadmodel: any) {
         let mint_prefs = await fetchMintConfig();
-        await KeycloakAdapter.signIn(mint_prefs.graphql.username, mint_prefs.graphql.password)
+        if (KeycloakAdapter.getUser().uid != null) KeycloakAdapter.signOut()
+        await KeycloakAdapter.signIn(mint_prefs.graphql.username, mint_prefs.graphql.password)    
 
         let thread: Thread = await getThread(threadmodel.thread_id); //.then((thread: Thread) => {
         if(thread) {
@@ -30,7 +31,8 @@ const executionsLocalService = {
     },
     async deleteExecutionCache(threadmodel: any) {
         let mint_prefs = await fetchMintConfig();
-        await KeycloakAdapter.signIn(mint_prefs.graphql.username, mint_prefs.graphql.password)
+        if (KeycloakAdapter.getUser().uid != null) KeycloakAdapter.signOut()
+        await KeycloakAdapter.signIn(mint_prefs.graphql.username, mint_prefs.graphql.password)     
 
         let thread: Thread = await getThread(threadmodel.thread_id); //.then((thread: Thread) => {
         if(thread) {

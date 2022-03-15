@@ -1,9 +1,23 @@
 mutation delete_model($id: String!) {
+  delete_execution_data_binding(where: {execution: {model_id:{_eq:$id}}}) {
+    affected_rows
+  }
+  delete_execution_parameter_binding(where: {execution: {model_id:{_eq:$id}}}) {
+    affected_rows
+  }
+  delete_execution_result(where: {execution: {model_id:{_eq:$id}}}) {
+    affected_rows
+  }
+  
   # Delete thread model executions
   delete_thread_model_execution_summary(where: {thread_model: {model_id: {_eq: $id}}}) {
     affected_rows
   }
   delete_thread_model_execution(where: {thread_model: {model_id: {_eq: $id}}}) {
+    affected_rows
+  }
+  
+  delete_execution(where:{model_id:{_eq: $id}}) {
     affected_rows
   }
 
@@ -38,3 +52,4 @@ mutation delete_model($id: String!) {
     id
   }
 }
+

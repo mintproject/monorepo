@@ -71,7 +71,7 @@ module.exports = async (job: any) => {
                 plainargs.push(paramvalue);
             }
             else {
-                let datasets = seed.datasets[input.id];
+                let datasets = seed.datasets[input.id] || [];
                 datasets.map((ds: DataResource) => {
                     // Copy input files to tempdir
                     let ifile = inputdir + "/" + ds.name;
@@ -128,14 +128,13 @@ module.exports = async (job: any) => {
         let statusCode = 0;
 
         let cwl_file = comp.rundir + "/run.cwl";
-        console.log(cwl_file)
         let cwl_outputs: any = {}
 
         if (fs.existsSync(cwl_file)) {
             console.log("Running cwl:" )
             if (! fs.existsSync(tempdir))
                 fs.mkdirSync(tempdir)
-            let cwl_values_file = write_cwl_values(comp, seed, inputdir, tempdir, outputdir, plainargs)
+            let cwl_values_file = write_cwl_values(comp, seed, results, inputdir, tempdir, outputdir, plainargs)
             let cwl_args: string[] = [];
             let cwl_command = "cwltool"
             cwl_args.push("--no-read-only")
@@ -305,7 +304,7 @@ module.exports = async (job: any) => {
 
 }
 
-const write_cwl_values = (comp: Component, seed: any, inputdir: string, 
+const write_cwl_values = (comp: Component, seed: any, results: any, inputdir: string, 
     tempdir: string, outputdir: string, plainargs: string[]) => {
     let execution_dir = comp.rundir 
     interface CwlValueFile {
@@ -324,7 +323,7 @@ const write_cwl_values = (comp: Component, seed: any, inputdir: string,
             data[input.role] = paramvalue
         }
         else {
-            let datasets = seed.datasets[input.id];
+            let datasets = seed.datasets[input.id] || [];
             datasets.map((ds: string) => {
                 // Copy input files to tempdir
                 data[input.role] = {"class": "File", "location": ds["url"]}
@@ -333,11 +332,12 @@ const write_cwl_values = (comp: Component, seed: any, inputdir: string,
         }
     })
 
-    // Set the output file arguments for the command
-    // Create the output file suffix based on a hash of inputs
-    let opsuffix = Md5.hashAsciiStr(seed.execution.modelid + plainargs.join());
-    let results: any = {};
-    let valuesFile = execution_dir + "/values.yml";
+    // Set output file names
+    Object.values(results).map((result: any) => {
+        data[result.role] = {"class": "File", "location": result.name}
+    })
+
+    let valuesFile = tempdir + "/values.yml";
     let ymlStr = yaml.safeDump(data);
     fs.writeFileSync(valuesFile, ymlStr, 'utf8')
     console.log("writing the values file " + valuesFile);

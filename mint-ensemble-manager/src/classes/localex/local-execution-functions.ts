@@ -186,7 +186,7 @@ const _getModelIODetails = (io: ModelIO, iotype: string) => {
         role: io.name,
         prefix: pfx + io.position,
         isParam: false,
-        //format: io.format,
+        format: io.format,
         type: io.type
     }
 }
@@ -235,7 +235,7 @@ const _getModelDetails = (model: Model, modeldir: string) => {
         else
             comp.outputs.push(details);
     })
-    if (okoutput && (okinput || okparam))
+    if (okoutput)
         return comp;
     else
         return null;
