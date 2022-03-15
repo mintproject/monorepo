@@ -1,7 +1,6 @@
 import { MintPreferences, User } from '../classes/mint/mint-types';
 
 import * as mintConfig from './config.json';
-
 let prefs = mintConfig["default"] as MintPreferences;
 
 interface tokenResponse {
@@ -59,7 +58,7 @@ export class KeycloakAdapter {
         KeycloakAdapter.sessionState = tkn.session_state;
         KeycloakAdapter.expiresIn = tkn.expires_in;
         KeycloakAdapter.refreshExpiresIn = tkn.refresh_expires_in;
-        //KeycloakAdapter.setLocalStorage();
+        KeycloakAdapter.setLocalStorage();
 
         //Decode token
         let decoded : decodedToken = JSON.parse(KeycloakAdapter.nodejs_atob(KeycloakAdapter.accessToken.split(".")[1]));
