@@ -92,6 +92,8 @@ export class KeycloakAdapter {
                     jsn.catch(reject);
                     jsn.then((tkn:tokenResponse) => {
                         KeycloakAdapter.saveTokenResponse(tkn);
+                        //Logged in, we need to start to auto refresh
+                        setTimeout(() => { KeycloakAdapter.refresh(KeycloakAdapter.refreshToken) }, KeycloakAdapter.refreshExpiresIn * 100);
                         resolve();
                     })
                 } else {
@@ -120,6 +122,8 @@ export class KeycloakAdapter {
                 if (response.status === 200) {
                     response.json().then((tkn : tokenResponse) => {
                         KeycloakAdapter.saveTokenResponse(tkn);
+                        // Everything is ok autorefresh
+                        setTimeout(() => { KeycloakAdapter.refresh(KeycloakAdapter.refreshToken) }, KeycloakAdapter.refreshExpiresIn * 100);
                         resolve(true);
                     });
                 } else {
