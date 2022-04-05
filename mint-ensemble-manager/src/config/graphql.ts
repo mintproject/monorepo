@@ -30,7 +30,8 @@ export class GraphQL {
     
     return createHttpLink({
       uri: uri,
-      headers: KeycloakAdapter.getAccessTokenHeader()
+      headers: prefs.graphql.secret ?  
+        { "X-Hasura-Admin-Secret": prefs.graphql.secret } :  KeycloakAdapter.getAccessTokenHeader()
     });
   }
 }

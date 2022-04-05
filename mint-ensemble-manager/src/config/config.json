@@ -9,6 +9,8 @@
     "graphql": {
         "endpoint": "graphql.dev.mint.isi.edu/v1/graphql",
         "enable_ssl": true,
+        "use_secret": true,
+        "secret": "secret",
         "username": "mint@isi.edu",
         "password": "Mint123!"
     },
