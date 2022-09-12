@@ -2,40 +2,28 @@
 
 This repository contains the schema and metadata of the MINT GraphQL.
 
-There are two types files:
-
-- `sql/*.sql`: The files required to create the postgres database
-- `hasura_metadata.json` Hasura metadata which is used to describe the exposed GraphQL API.
-
 ## How to run?
 
-Edit the `.env` to change password and secret
+### Prerequisites  
 
-Run the container using `docker-compose`
+1. Install the [Hasura CLI](https://hasura.io/docs/latest/migrations-metadata-seeds/migrations-metadata-setup/#step-1-install-the-hasura-cli)
+2. Install MINT using Helm chart
 
-```bash
-$ docker-compose up -d
-```
-
-Check the status
-
-```bash
-$ docker-compose ps
-```
+### Run
 
 
-## Database schema
 
-You must import the database schema and some example data (regions and variables)
+Apply the metadata to the MINT GraphQL
 
 ```bash
-container_name=$(docker-compose ps -q postgres)
-#check if the variable is not null
-echo ${container_name}
-#import sample regions
-cat sql/01_schema.sql | docker exec -i ${container_name} psql -U postgres
-cat sql/all_regions.sql | docker exec -i ${container_name} psql -U postgres
-#import variables
-cat sql/intervention.sql | docker exec -i ${container_name} psql -U postgres
-cat sql/variable.sql | docker exec -i ${container_name} psql -U postgres
+$ export HASURA_GRAPHQL_ADMIN_SECRET=<admin-secret>
+$ hasura migrate apply
+$ hasura metadata apply
 ```
+
+Populate the database with the seed data
+
+```bash
+$ hasura seeds apply
+```
+
