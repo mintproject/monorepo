@@ -46,6 +46,23 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v3.0.0
         with:
+          context: .
+          tags: ${{ env.DOCKER_IMAGE_REPOSITORY }}/${{ env.DOCKER_IMAGE_NAME }}:${{ steps.branch-name.outputs.current_branch }}, ${{ env.DOCKER_IMAGE_REPOSITORY }}/${{ env.DOCKER_IMAGE_NAME }}:${{ env.DOCKER_TAG }}
+          file: ${{ env.DOCKER_FILE}}
+        
+      - name: Test if container runs correctly
+        uses: addnab/docker-run-action@v3
+        with:
+          image: ${{ env.DOCKER_IMAGE_REPOSITORY }}/${{ env.DOCKER_IMAGE_NAME }}:${{ steps.branch-name.outputs.current_branch }}
+          options: -e HASURA_GRAPHQL_ADMIN_SECRET="admin"
+          run: |
+            hasura migrate apply --endpoint http://localhost:8080 --admin-secret $HASURA_GRAPHQL_ADMIN_SECRET
+            hasura metadata apply --endpoint http://localhost:8080 --admin-secret $HASURA_GRAPHQL_ADMIN_SECRET
+            hasura seeds apply --endpoint http://localhost:8080 --admin-secret $HASURA_GRAPHQL_ADMIN_SECRET
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v3.0.0
+        with:
           push: true
           context: .
           tags: ${{ env.DOCKER_IMAGE_REPOSITORY }}/${{ env.DOCKER_IMAGE_NAME }}:${{ steps.branch-name.outputs.current_branch }}, ${{ env.DOCKER_IMAGE_REPOSITORY }}/${{ env.DOCKER_IMAGE_NAME }}:${{ env.DOCKER_TAG }}
