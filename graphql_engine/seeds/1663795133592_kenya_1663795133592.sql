@@ -1,3 +1,4 @@
+INSERT INTO public.region (id, name, parent_region_id, category_id, model_catalog_uri) VALUES ('kenya', 'Kenya', NULL, NULL, 'https://w3id.org/okn/i/mint/Kenya');
 INSERT INTO public.region (id, name, parent_region_id, category_id, model_catalog_uri) VALUES ('iyHxcvrW5yfsOR2EUmVC', '805', 'kenya', 'administrative_level_2', NULL);
 INSERT INTO public.region (id, name, parent_region_id, category_id, model_catalog_uri) VALUES ('QwrRe04p3zoYj7cNh9Yd', 'Baringo Central', 'kenya', 'administrative_level_2', NULL);
 INSERT INTO public.region (id, name, parent_region_id, category_id, model_catalog_uri) VALUES ('FXukxB24SLAUEasZ3ulp', 'Baringo North', 'kenya', 'administrative_level_2', NULL);
@@ -311,7 +312,6 @@ INSERT INTO public.region (id, name, parent_region_id, category_id, model_catalo
 INSERT INTO public.region (id, name, parent_region_id, category_id, model_catalog_uri) VALUES ('TIlRdWBacZNceY0NRPOR', 'Bogusero', 'kenya', 'administrative_level_3', NULL);
 INSERT INTO public.region (id, name, parent_region_id, category_id, model_catalog_uri) VALUES ('m8trEhyW6sUHpuJ5Wd8A', 'Kitutu   Central', 'kenya', 'administrative_level_3', NULL);
 INSERT INTO public.region (id, name, parent_region_id, category_id, model_catalog_uri) VALUES ('PrffmGMVb3qIX7pFDVxp', 'Nyakoe', 'kenya', 'administrative_level_3', NULL);
-INSERT INTO public.region (id, name, parent_region_id, category_id, model_catalog_uri) VALUES ('kenya', 'Kenya', NULL, NULL, 'https://w3id.org/okn/i/mint/Kenya');
 INSERT INTO public.region (id, name, parent_region_id, category_id, model_catalog_uri) VALUES ('r9s28WbPkbZJuIxyljJv', 'Nyatieko', 'kenya', 'administrative_level_3', NULL);
 INSERT INTO public.region (id, name, parent_region_id, category_id, model_catalog_uri) VALUES ('bkrMxY2qf41YV2cwVrOl', 'Birongo', 'kenya', 'administrative_level_3', NULL);
 INSERT INTO public.region (id, name, parent_region_id, category_id, model_catalog_uri) VALUES ('edt1Jpft8xGxKhkcBjwp', 'Bobaracho', 'kenya', 'administrative_level_3', NULL);

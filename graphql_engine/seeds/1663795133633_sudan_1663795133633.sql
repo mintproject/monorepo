@@ -1,3 +1,5 @@
+INSERT INTO public.region (id, name, parent_region_id, category_id, model_catalog_uri) VALUES ('south_sudan', 'South Sudan', NULL, NULL, 'https://w3id.org/okn/i/mint/South_Sudan');
+INSERT INTO public.region (id, name, parent_region_id, category_id, model_catalog_uri) VALUES ('sudan', 'Sudan', NULL, NULL, 'https://w3id.org/okn/i/mint/Sudan');
 INSERT INTO public.region (id, name, parent_region_id, category_id, model_catalog_uri) VALUES ('D6YKAE48sLMsBubx9UMY', 'Al Jazirah', 'sudan', 'administrative', NULL);
 INSERT INTO public.region (id, name, parent_region_id, category_id, model_catalog_uri) VALUES ('cI9k2KV8mYQDb4ZDF91U', 'Al Qadarif', 'sudan', 'administrative', NULL);
 INSERT INTO public.region (id, name, parent_region_id, category_id, model_catalog_uri) VALUES ('Chafks0Aj4rDIqntgdVD', 'Blue Nile', 'sudan', 'administrative', NULL);
@@ -368,8 +370,6 @@ INSERT INTO public.region (id, name, parent_region_id, category_id, model_catalo
 INSERT INTO public.region (id, name, parent_region_id, category_id, model_catalog_uri) VALUES ('wNzL5BFVOCysYbmgIiIO', 'Ezura', 'south_sudan', 'administrative_level_3', NULL);
 INSERT INTO public.region (id, name, parent_region_id, category_id, model_catalog_uri) VALUES ('NIqh4sUHvJJPHVgzc9aP', 'Tombura', 'south_sudan', 'administrative_level_3', NULL);
 INSERT INTO public.region (id, name, parent_region_id, category_id, model_catalog_uri) VALUES ('qD9Ov8cesb2S4W4JPI4X', 'Yambio', 'south_sudan', 'administrative_level_3', NULL);
-INSERT INTO public.region (id, name, parent_region_id, category_id, model_catalog_uri) VALUES ('south_sudan', 'South Sudan', NULL, NULL, 'https://w3id.org/okn/i/mint/South_Sudan');
-INSERT INTO public.region (id, name, parent_region_id, category_id, model_catalog_uri) VALUES ('sudan', 'Sudan', NULL, NULL, 'https://w3id.org/okn/i/mint/Sudan');
 INSERT INTO public.region (id, name, parent_region_id, category_id, model_catalog_uri) VALUES ('v2Ma3NAJpsu7AwI6JDBW', 'Central Equatoria', 'south_sudan', 'administrative', NULL);
 INSERT INTO public.region (id, name, parent_region_id, category_id, model_catalog_uri) VALUES ('J7XlLJtDrpdq6xh9z94X', 'Eastern Equatoria', 'south_sudan', 'administrative', NULL);
 INSERT INTO public.region (id, name, parent_region_id, category_id, model_catalog_uri) VALUES ('jZl8S5JHJvNdIwTJOKEY', 'Jungoli', 'south_sudan', 'administrative', NULL);

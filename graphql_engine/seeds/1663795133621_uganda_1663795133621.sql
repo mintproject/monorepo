@@ -1,3 +1,4 @@
+INSERT INTO public.region (id, name, parent_region_id, category_id, model_catalog_uri) VALUES ('uganda', 'Uganda', NULL, NULL, 'https://w3id.org/okn/i/mint/Uganda');
 INSERT INTO public.region (id, name, parent_region_id, category_id, model_catalog_uri) VALUES ('f6dauXvfdf59Pixmo4J7', 'Adjumani', 'uganda', 'administrative', NULL);
 INSERT INTO public.region (id, name, parent_region_id, category_id, model_catalog_uri) VALUES ('bnWh2vj7y0WuRiBkrIA0', 'Apac', 'uganda', 'administrative', NULL);
 INSERT INTO public.region (id, name, parent_region_id, category_id, model_catalog_uri) VALUES ('wZxRgNPQR8iQor5nuLAt', 'Arua', 'uganda', 'administrative', NULL);
@@ -35,7 +36,6 @@ INSERT INTO public.region (id, name, parent_region_id, category_id, model_catalo
 INSERT INTO public.region (id, name, parent_region_id, category_id, model_catalog_uri) VALUES ('DqWROStcDpPETlB27NVK', 'Masaka', 'uganda', 'administrative', NULL);
 INSERT INTO public.region (id, name, parent_region_id, category_id, model_catalog_uri) VALUES ('uFeTPVhgvolFfkpKXd9i', 'Masindi', 'uganda', 'administrative', NULL);
 INSERT INTO public.region (id, name, parent_region_id, category_id, model_catalog_uri) VALUES ('LutxvFhzYXCgcRsYA5ay', 'Mayuge', 'uganda', 'administrative', NULL);
-INSERT INTO public.region (id, name, parent_region_id, category_id, model_catalog_uri) VALUES ('uganda', 'Uganda', NULL, NULL, 'https://w3id.org/okn/i/mint/Uganda');
 INSERT INTO public.region (id, name, parent_region_id, category_id, model_catalog_uri) VALUES ('pZsV1y3ud3ynWf2cw25A', 'Mbale', 'uganda', 'administrative', NULL);
 INSERT INTO public.region (id, name, parent_region_id, category_id, model_catalog_uri) VALUES ('NsyvZHToOjVjn7KHCcFH', 'Mbarara', 'uganda', 'administrative', NULL);
 INSERT INTO public.region (id, name, parent_region_id, category_id, model_catalog_uri) VALUES ('DWPICDYESp6pWXch34HU', 'Moroto', 'uganda', 'administrative', NULL);
