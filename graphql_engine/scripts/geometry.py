@@ -3,19 +3,19 @@ Parse MINT Table region_geometry per region and write to file
 """
 
 import argparse
-from typing import List, dict
+from typing import List, Dict
 
 import sqlglot
 import sqlglot.expressions as exp
 
-def read_geometry_file(file: argparse.FileType) -> dict[str, List[str]]:
+def read_geometry_file(file: argparse.FileType) -> Dict[str, List[str]]:
     """Reads a geometry file and returns a dictionary of region names to geometry
 
     Args:
         file (argparse.FileType): The file to read
 
     Returns:
-        dict[str, List[str]]: A dictionary of region names to geometry
+        Dict[str, List[str]]: A dictionary of region names to geometry
     """
     geometry = {}
     for line in file:
