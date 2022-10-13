@@ -1,7 +1,6 @@
 # Split the region dump into different files
 
-regions=$(cat regions.txt)
-pushd ../
+regions=$(cat scripts/regions.txt)
 for region in ${regions}
 do
     echo "Splitting ${region}..."
@@ -9,4 +8,3 @@ do
     echo ${timestamp}
     cat hasura/dev/region.sql | /home/mosorio/.cargo/bin/pg-dump2insert | grep -i ${region} | grep INSERT > seeds/${timestamp}_${region}_${timestamp}.sql
 done
-popd
