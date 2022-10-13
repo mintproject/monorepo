@@ -1,4 +1,4 @@
-INSERT INTO public.region (id, name, parent_region_id, category_id, model_catalog_uri) VALUES ('kyrgyzstan', 'Kyrgyzstan', NULL, NULL, 'https://w3id.org/okn/i/mint/Kyrgyzstan');
+INSERT INTO public.region (id, name, parent_region_id, category_id, model_catalog_uri) VALUES ('kyrgyzstan', 'Kyrgyztan', NULL, NULL, 'https://w3id.org/okn/i/mint/Kyrgyztan');
 INSERT INTO public.region (id, name, parent_region_id, category_id, model_catalog_uri) VALUES ('KYJML0mulgTOrJlN5AEB', 'Alai', 'kyrgyzstan', 'administrative_level_2', NULL);
 INSERT INTO public.region (id, name, parent_region_id, category_id, model_catalog_uri) VALUES ('tBPoleboxue8xTK4s7C7', 'Song-Kol', 'kyrgyzstan', 'administrative_level_2', NULL);
 INSERT INTO public.region (id, name, parent_region_id, category_id, model_catalog_uri) VALUES ('ktKwcqmR8Si61m7JCS3Q', 'Togus-Toro', 'kyrgyzstan', 'administrative_level_2', NULL);
