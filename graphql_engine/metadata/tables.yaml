@@ -1101,14 +1101,6 @@
   insert_permissions:
     - role: user
       permission:
-        check:
-          problem_statement:
-            events:
-              _and:
-                - event:
-                    _eq: CREATE
-                - userid:
-                    _eq: X-Hasura-User-Id
         columns:
           - problem_statement_id
           - read
@@ -1641,14 +1633,6 @@
   insert_permissions:
     - role: user
       permission:
-        check:
-          task:
-            events:
-              _and:
-                - event:
-                    _eq: CREATE
-                - userid:
-                    _eq: X-Hasura-User-Id
         columns:
           - task_id
           - read
@@ -2679,14 +2663,6 @@
   insert_permissions:
     - role: user
       permission:
-        check:
-          thread:
-            events:
-              _and:
-                - event:
-                    _eq: CREATE
-                - userid:
-                    _eq: X-Hasura-User-Id
         columns:
           - thread_id
           - read
