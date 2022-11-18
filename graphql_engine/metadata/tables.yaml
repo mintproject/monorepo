@@ -1101,6 +1101,7 @@
   insert_permissions:
     - role: user
       permission:
+        check: null
         columns:
           - problem_statement_id
           - read
@@ -1633,6 +1634,7 @@
   insert_permissions:
     - role: user
       permission:
+        check: null
         columns:
           - task_id
           - read
@@ -2663,6 +2665,7 @@
   insert_permissions:
     - role: user
       permission:
+        check: null
         columns:
           - thread_id
           - read
