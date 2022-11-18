@@ -1,14 +1,14 @@
 - table:
-    schema: public
     name: dataset
+    schema: public
   array_relationships:
     - name: dataslices
       using:
         foreign_key_constraint_on:
           column: dataset_id
           table:
-            schema: public
             name: dataslice
+            schema: public
   insert_permissions:
     - role: user
       permission:
@@ -22,7 +22,6 @@
           - start_date
           - end_date
           - spatial_coverage
-        backend_only: false
   select_permissions:
     - role: user
       permission:
@@ -44,8 +43,8 @@
         filter: {}
         check: null
 - table:
-    schema: public
     name: dataslice
+    schema: public
   object_relationships:
     - name: dataset
       using:
@@ -59,22 +58,22 @@
         foreign_key_constraint_on:
           column: dataslice_id
           table:
-            schema: public
             name: dataslice_resource
+            schema: public
     - name: thread_data
       using:
         foreign_key_constraint_on:
           column: dataslice_id
           table:
-            schema: public
             name: thread_data
+            schema: public
     - name: thread_model_ios
       using:
         foreign_key_constraint_on:
           column: dataslice_id
           table:
-            schema: public
             name: thread_model_io
+            schema: public
   insert_permissions:
     - role: user
       permission:
@@ -87,7 +86,6 @@
           - end_date
           - region_id
           - resource_count
-        backend_only: false
   select_permissions:
     - role: anonymous
       permission:
@@ -146,6 +144,7 @@
   delete_permissions:
     - role: user
       permission:
+        backend_only: false
         filter:
           thread_data:
             thread:
@@ -165,8 +164,8 @@
                       - userid:
                           _eq: X-Hasura-User-Id
 - table:
-    schema: public
     name: dataslice_resource
+    schema: public
   object_relationships:
     - name: dataslice
       using:
@@ -182,7 +181,6 @@
           - dataslice_id
           - resource_id
           - selected
-        backend_only: false
   select_permissions:
     - role: anonymous
       permission:
@@ -230,6 +228,7 @@
   delete_permissions:
     - role: user
       permission:
+        backend_only: false
         filter:
           dataslice:
             thread_data:
@@ -250,8 +249,8 @@
                         - userid:
                             _eq: X-Hasura-User-Id
 - table:
-    schema: public
     name: execution
+    schema: public
   object_relationships:
     - name: model
       using:
@@ -262,29 +261,29 @@
         foreign_key_constraint_on:
           column: execution_id
           table:
-            schema: public
             name: execution_data_binding
+            schema: public
     - name: parameter_bindings
       using:
         foreign_key_constraint_on:
           column: execution_id
           table:
-            schema: public
             name: execution_parameter_binding
+            schema: public
     - name: results
       using:
         foreign_key_constraint_on:
           column: execution_id
           table:
-            schema: public
             name: execution_result
+            schema: public
     - name: thread_model_executions
       using:
         foreign_key_constraint_on:
           column: execution_id
           table:
-            schema: public
             name: thread_model_execution
+            schema: public
   insert_permissions:
     - role: user
       permission:
@@ -298,7 +297,6 @@
           - end_time
           - run_progress
           - run_id
-        backend_only: false
   select_permissions:
     - role: anonymous
       permission:
@@ -343,10 +341,11 @@
   delete_permissions:
     - role: user
       permission:
+        backend_only: false
         filter: {}
 - table:
-    schema: public
     name: execution_data_binding
+    schema: public
   object_relationships:
     - name: execution
       using:
@@ -365,7 +364,6 @@
           - execution_id
           - model_io_id
           - resource_id
-        backend_only: false
   select_permissions:
     - role: anonymous
       permission:
@@ -395,10 +393,11 @@
   delete_permissions:
     - role: user
       permission:
+        backend_only: false
         filter: {}
 - table:
-    schema: public
     name: execution_parameter_binding
+    schema: public
   object_relationships:
     - name: execution
       using:
@@ -414,7 +413,6 @@
           - model_parameter_id
           - parameter_value
           - execution_id
-        backend_only: false
   select_permissions:
     - role: anonymous
       permission:
@@ -444,10 +442,11 @@
   delete_permissions:
     - role: user
       permission:
+        backend_only: false
         filter: {}
 - table:
-    schema: public
     name: execution_result
+    schema: public
   object_relationships:
     - name: execution
       using:
@@ -466,7 +465,6 @@
           - execution_id
           - model_io_id
           - resource_id
-        backend_only: false
   select_permissions:
     - role: anonymous
       permission:
@@ -496,18 +494,19 @@
   delete_permissions:
     - role: user
       permission:
+        backend_only: false
         filter: {}
 - table:
-    schema: public
     name: intervention
+    schema: public
   array_relationships:
     - name: variables
       using:
         foreign_key_constraint_on:
           column: intervention_id
           table:
-            schema: public
             name: variable
+            schema: public
   select_permissions:
     - role: anonymous
       permission:
@@ -526,44 +525,44 @@
         filter: {}
         allow_aggregations: true
 - table:
-    schema: public
     name: model
+    schema: public
   array_relationships:
     - name: executions
       using:
         foreign_key_constraint_on:
           column: model_id
           table:
-            schema: public
             name: execution
+            schema: public
     - name: inputs
       using:
         foreign_key_constraint_on:
           column: model_id
           table:
-            schema: public
             name: model_input
+            schema: public
     - name: outputs
       using:
         foreign_key_constraint_on:
           column: model_id
           table:
-            schema: public
             name: model_output
+            schema: public
     - name: parameters
       using:
         foreign_key_constraint_on:
           column: model_id
           table:
-            schema: public
             name: model_parameter
+            schema: public
     - name: thread_models
       using:
         foreign_key_constraint_on:
           column: model_id
           table:
-            schema: public
             name: thread_model
+            schema: public
   insert_permissions:
     - role: user
       permission:
@@ -589,7 +588,6 @@
           - model_configuration
           - software_image
           - user_id
-        backend_only: false
   select_permissions:
     - role: anonymous
       permission:
@@ -648,8 +646,8 @@
         filter: {}
         check: null
 - table:
-    schema: public
     name: model_input
+    schema: public
   object_relationships:
     - name: model
       using:
@@ -665,7 +663,6 @@
           - model_id
           - model_io_id
           - position
-        backend_only: false
   select_permissions:
     - role: anonymous
       permission:
@@ -690,8 +687,8 @@
         filter: {}
         check: null
 - table:
-    schema: public
     name: model_input_fixed_binding
+    schema: public
   object_relationships:
     - name: model_io
       using:
@@ -706,7 +703,6 @@
         columns:
           - model_io_id
           - resource_id
-        backend_only: false
   select_permissions:
     - role: anonymous
       permission:
@@ -729,58 +725,58 @@
         filter: {}
         check: null
 - table:
-    schema: public
     name: model_io
+    schema: public
   array_relationships:
     - name: execution_data_bindings
       using:
         foreign_key_constraint_on:
           column: model_io_id
           table:
-            schema: public
             name: execution_data_binding
+            schema: public
     - name: execution_results
       using:
         foreign_key_constraint_on:
           column: model_io_id
           table:
-            schema: public
             name: execution_result
+            schema: public
     - name: fixed_bindings
       using:
         foreign_key_constraint_on:
           column: model_io_id
           table:
-            schema: public
             name: model_input_fixed_binding
+            schema: public
     - name: model_inputs
       using:
         foreign_key_constraint_on:
           column: model_io_id
           table:
-            schema: public
             name: model_input
+            schema: public
     - name: model_outputs
       using:
         foreign_key_constraint_on:
           column: model_io_id
           table:
-            schema: public
             name: model_output
+            schema: public
     - name: thread_model_ios
       using:
         foreign_key_constraint_on:
           column: model_io_id
           table:
-            schema: public
             name: thread_model_io
+            schema: public
     - name: variables
       using:
         foreign_key_constraint_on:
           column: model_io_id
           table:
-            schema: public
             name: model_io_variable
+            schema: public
   insert_permissions:
     - role: user
       permission:
@@ -791,7 +787,6 @@
           - type
           - description
           - format
-        backend_only: false
   select_permissions:
     - role: anonymous
       permission:
@@ -820,8 +815,8 @@
         filter: {}
         check: null
 - table:
-    schema: public
     name: model_io_variable
+    schema: public
   object_relationships:
     - name: model_io
       using:
@@ -836,7 +831,6 @@
         columns:
           - model_io_id
           - variable_id
-        backend_only: false
   select_permissions:
     - role: user
       permission:
@@ -852,8 +846,8 @@
         filter: {}
         check: null
 - table:
-    schema: public
     name: model_output
+    schema: public
   object_relationships:
     - name: model
       using:
@@ -869,7 +863,6 @@
           - model_id
           - model_io_id
           - position
-        backend_only: false
   select_permissions:
     - role: anonymous
       permission:
@@ -894,8 +887,8 @@
         filter: {}
         check: null
 - table:
-    schema: public
     name: model_parameter
+    schema: public
   object_relationships:
     - name: model
       using:
@@ -906,15 +899,15 @@
         foreign_key_constraint_on:
           column: model_parameter_id
           table:
-            schema: public
             name: execution_parameter_binding
+            schema: public
     - name: thread_model_parameters
       using:
         foreign_key_constraint_on:
           column: model_parameter_id
           table:
-            schema: public
             name: thread_model_parameter
+            schema: public
   insert_permissions:
     - role: user
       permission:
@@ -934,7 +927,6 @@
           - model_id
           - position
           - datatype
-        backend_only: false
   select_permissions:
     - role: anonymous
       permission:
@@ -981,8 +973,8 @@
         filter: {}
         check: null
 - table:
-    schema: public
     name: problem_statement
+    schema: public
   object_relationships:
     - name: region
       using:
@@ -993,22 +985,22 @@
         foreign_key_constraint_on:
           column: problem_statement_id
           table:
-            schema: public
             name: problem_statement_provenance
+            schema: public
     - name: permissions
       using:
         foreign_key_constraint_on:
           column: problem_statement_id
           table:
-            schema: public
             name: problem_statement_permission
+            schema: public
     - name: tasks
       using:
         foreign_key_constraint_on:
           column: problem_statement_id
           table:
-            schema: public
             name: task
+            schema: public
   insert_permissions:
     - role: user
       permission:
@@ -1019,7 +1011,6 @@
           - name
           - region_id
           - start_date
-        backend_only: false
   select_permissions:
     - role: anonymous
       permission:
@@ -1084,6 +1075,7 @@
   delete_permissions:
     - role: user
       permission:
+        backend_only: false
         filter:
           events:
             _and:
@@ -1092,8 +1084,8 @@
               - userid:
                   _eq: X-Hasura-User-Id
 - table:
-    schema: public
     name: problem_statement_permission
+    schema: public
   object_relationships:
     - name: problem_statement
       using:
@@ -1101,13 +1093,12 @@
   insert_permissions:
     - role: user
       permission:
-        check: {} 
+        check: {}
         columns:
           - problem_statement_id
           - read
           - write
           - user_id
-        backend_only: false
   select_permissions:
     - role: user
       permission:
@@ -1137,6 +1128,7 @@
   delete_permissions:
     - role: user
       permission:
+        backend_only: false
         filter:
           problem_statement:
             events:
@@ -1146,8 +1138,8 @@
                 - userid:
                     _eq: X-Hasura-User-Id
 - table:
-    schema: public
     name: problem_statement_provenance
+    schema: public
   object_relationships:
     - name: problem_statement
       using:
@@ -1162,7 +1154,6 @@
           - problem_statement_id
           - userid
           - timestamp
-        backend_only: false
   select_permissions:
     - role: user
       permission:
@@ -1192,6 +1183,7 @@
   delete_permissions:
     - role: user
       permission:
+        backend_only: false
         filter:
           problem_statement:
             events:
@@ -1201,11 +1193,11 @@
                 - userid:
                     _eq: X-Hasura-User-Id
 - table:
-    schema: public
     name: profile
-- table:
     schema: public
+- table:
     name: region
+    schema: public
   object_relationships:
     - name: parent_region
       using:
@@ -1219,43 +1211,43 @@
         foreign_key_constraint_on:
           column: region_id
           table:
-            schema: public
             name: dataslice
+            schema: public
     - name: geometries
       using:
         foreign_key_constraint_on:
           column: region_id
           table:
-            schema: public
             name: region_geometry
+            schema: public
     - name: problem_statements
       using:
         foreign_key_constraint_on:
           column: region_id
           table:
-            schema: public
             name: problem_statement
+            schema: public
     - name: subregions
       using:
         foreign_key_constraint_on:
           column: parent_region_id
           table:
-            schema: public
             name: region
+            schema: public
     - name: tasks
       using:
         foreign_key_constraint_on:
           column: region_id
           table:
-            schema: public
             name: task
+            schema: public
     - name: threads
       using:
         foreign_key_constraint_on:
           column: region_id
           table:
-            schema: public
             name: thread
+            schema: public
   insert_permissions:
     - role: user
       permission:
@@ -1266,7 +1258,6 @@
           - parent_region_id
           - category_id
           - model_catalog_uri
-        backend_only: false
   select_permissions:
     - role: anonymous
       permission:
@@ -1287,30 +1278,30 @@
           - parent_region_id
         filter: {}
 - table:
-    schema: public
     name: region_category
+    schema: public
   array_relationships:
     - name: category_trees
       using:
         foreign_key_constraint_on:
           column: region_category_id
           table:
-            schema: public
             name: region_category_tree
+            schema: public
     - name: regions
       using:
         foreign_key_constraint_on:
           column: category_id
           table:
-            schema: public
             name: region
+            schema: public
     - name: sub_categories
       using:
         foreign_key_constraint_on:
           column: region_category_parent_id
           table:
-            schema: public
             name: region_category_tree
+            schema: public
   insert_permissions:
     - role: user
       permission:
@@ -1319,7 +1310,6 @@
           - id
           - name
           - citation
-        backend_only: false
   select_permissions:
     - role: anonymous
       permission:
@@ -1336,8 +1326,8 @@
           - citation
         filter: {}
 - table:
-    schema: public
     name: region_category_tree
+    schema: public
   object_relationships:
     - name: parent_region_category
       using:
@@ -1352,7 +1342,6 @@
         columns:
           - region_category_id
           - region_category_parent_id
-        backend_only: false
   select_permissions:
     - role: anonymous
       permission:
@@ -1367,8 +1356,8 @@
           - region_category_parent_id
         filter: {}
 - table:
-    schema: public
     name: region_geometry
+    schema: public
   object_relationships:
     - name: region
       using:
@@ -1381,7 +1370,6 @@
           - id
           - region_id
           - geometry
-        backend_only: false
   select_permissions:
     - role: anonymous
       permission:
@@ -1398,40 +1386,40 @@
           - region_id
         filter: {}
 - table:
-    schema: public
     name: regions_containing_point
-- table:
     schema: public
+- table:
     name: resource
+    schema: public
   array_relationships:
     - name: dataslice_resources
       using:
         foreign_key_constraint_on:
           column: resource_id
           table:
-            schema: public
             name: dataslice_resource
+            schema: public
     - name: execution_data_bindings
       using:
         foreign_key_constraint_on:
           column: resource_id
           table:
-            schema: public
             name: execution_data_binding
+            schema: public
     - name: execution_results
       using:
         foreign_key_constraint_on:
           column: resource_id
           table:
-            schema: public
             name: execution_result
+            schema: public
     - name: model_input_fixed_bindings
       using:
         foreign_key_constraint_on:
           column: resource_id
           table:
-            schema: public
             name: model_input_fixed_binding
+            schema: public
   insert_permissions:
     - role: user
       permission:
@@ -1444,7 +1432,6 @@
           - end_date
           - spatial_coverage
           - dcid
-        backend_only: false
   select_permissions:
     - role: anonymous
       permission:
@@ -1478,8 +1465,8 @@
         filter: {}
         check: null
 - table:
-    schema: public
     name: task
+    schema: public
   object_relationships:
     - name: driving_variable
       using:
@@ -1499,22 +1486,22 @@
         foreign_key_constraint_on:
           column: task_id
           table:
-            schema: public
             name: task_provenance
+            schema: public
     - name: permissions
       using:
         foreign_key_constraint_on:
           column: task_id
           table:
-            schema: public
             name: task_permission
+            schema: public
     - name: threads
       using:
         foreign_key_constraint_on:
           column: task_id
           table:
-            schema: public
             name: thread
+            schema: public
   insert_permissions:
     - role: user
       permission:
@@ -1545,7 +1532,6 @@
           - region_id
           - start_date
           - end_date
-        backend_only: false
   select_permissions:
     - role: anonymous
       permission:
@@ -1617,6 +1603,7 @@
   delete_permissions:
     - role: user
       permission:
+        backend_only: false
         filter:
           events:
             _and:
@@ -1625,8 +1612,8 @@
               - userid:
                   _eq: X-Hasura-User-Id
 - table:
-    schema: public
     name: task_permission
+    schema: public
   object_relationships:
     - name: task
       using:
@@ -1634,13 +1621,12 @@
   insert_permissions:
     - role: user
       permission:
-        check: {} 
+        check: {}
         columns:
           - task_id
           - read
           - write
           - user_id
-        backend_only: false
   select_permissions:
     - role: user
       permission:
@@ -1670,6 +1656,7 @@
   delete_permissions:
     - role: user
       permission:
+        backend_only: false
         filter:
           task:
             events:
@@ -1679,8 +1666,8 @@
                 - userid:
                     _eq: X-Hasura-User-Id
 - table:
-    schema: public
     name: task_provenance
+    schema: public
   object_relationships:
     - name: task
       using:
@@ -1695,7 +1682,6 @@
           - task_id
           - userid
           - timestamp
-        backend_only: false
   select_permissions:
     - role: user
       permission:
@@ -1725,6 +1711,7 @@
   delete_permissions:
     - role: user
       permission:
+        backend_only: false
         filter:
           task:
             events:
@@ -1734,8 +1721,8 @@
                 - userid:
                     _eq: X-Hasura-User-Id
 - table:
-    schema: public
     name: thread
+    schema: public
   object_relationships:
     - name: driving_variable
       using:
@@ -1755,29 +1742,29 @@
         foreign_key_constraint_on:
           column: thread_id
           table:
-            schema: public
             name: thread_provenance
+            schema: public
     - name: permissions
       using:
         foreign_key_constraint_on:
           column: thread_id
           table:
-            schema: public
             name: thread_permission
+            schema: public
     - name: thread_data
       using:
         foreign_key_constraint_on:
           column: thread_id
           table:
-            schema: public
             name: thread_data
+            schema: public
     - name: thread_models
       using:
         foreign_key_constraint_on:
           column: thread_id
           table:
-            schema: public
             name: thread_model
+            schema: public
   insert_permissions:
     - role: user
       permission:
@@ -1808,7 +1795,6 @@
           - end_date
           - region_id
           - task_id
-        backend_only: false
   select_permissions:
     - role: anonymous
       permission:
@@ -1881,6 +1867,7 @@
   delete_permissions:
     - role: user
       permission:
+        backend_only: false
         filter:
           events:
             _and:
@@ -1889,8 +1876,8 @@
               - userid:
                   _eq: X-Hasura-User-Id
 - table:
-    schema: public
     name: thread_data
+    schema: public
   object_relationships:
     - name: dataslice
       using:
@@ -1921,7 +1908,6 @@
         columns:
           - thread_id
           - dataslice_id
-        backend_only: false
   select_permissions:
     - role: user
       permission:
@@ -1973,6 +1959,7 @@
   delete_permissions:
     - role: user
       permission:
+        backend_only: false
         filter:
           thread:
             _or:
@@ -1991,8 +1978,8 @@
                     - userid:
                         _eq: X-Hasura-User-Id
 - table:
-    schema: public
     name: thread_model
+    schema: public
   object_relationships:
     - name: model
       using:
@@ -2006,29 +1993,29 @@
         foreign_key_constraint_on:
           column: thread_model_id
           table:
-            schema: public
             name: thread_model_io
-    - name: executions
-      using:
-        foreign_key_constraint_on:
-          column: thread_model_id
-          table:
             schema: public
-            name: thread_model_execution
     - name: execution_summary
       using:
         foreign_key_constraint_on:
           column: thread_model_id
           table:
-            schema: public
             name: thread_model_execution_summary
+            schema: public
+    - name: executions
+      using:
+        foreign_key_constraint_on:
+          column: thread_model_id
+          table:
+            name: thread_model_execution
+            schema: public
     - name: parameter_bindings
       using:
         foreign_key_constraint_on:
           column: thread_model_id
           table:
-            schema: public
             name: thread_model_parameter
+            schema: public
   insert_permissions:
     - role: user
       permission:
@@ -2053,7 +2040,6 @@
           - model_id
           - thread_id
           - id
-        backend_only: false
   select_permissions:
     - role: anonymous
       permission:
@@ -2115,6 +2101,7 @@
   delete_permissions:
     - role: user
       permission:
+        backend_only: false
         filter:
           thread:
             _or:
@@ -2133,8 +2120,8 @@
                     - userid:
                         _eq: X-Hasura-User-Id
 - table:
-    schema: public
     name: thread_model_execution
+    schema: public
   object_relationships:
     - name: execution
       using:
@@ -2166,7 +2153,6 @@
         columns:
           - thread_model_id
           - execution_id
-        backend_only: false
   select_permissions:
     - role: anonymous
       permission:
@@ -2227,6 +2213,7 @@
   delete_permissions:
     - role: user
       permission:
+        backend_only: false
         filter:
           thread_model:
             thread:
@@ -2246,8 +2233,8 @@
                       - userid:
                           _eq: X-Hasura-User-Id
 - table:
-    schema: public
     name: thread_model_execution_summary
+    schema: public
   object_relationships:
     - name: thread_model
       using:
@@ -2292,7 +2279,6 @@
           - registration_time
           - submission_time
           - thread_model_id
-        backend_only: false
   select_permissions:
     - role: anonymous
       permission:
@@ -2400,6 +2386,7 @@
   delete_permissions:
     - role: user
       permission:
+        backend_only: false
         filter:
           thread_model:
             thread:
@@ -2419,8 +2406,8 @@
                       - userid:
                           _eq: X-Hasura-User-Id
 - table:
-    schema: public
     name: thread_model_io
+    schema: public
   object_relationships:
     - name: dataslice
       using:
@@ -2456,7 +2443,6 @@
           - thread_model_id
           - model_io_id
           - dataslice_id
-        backend_only: false
   select_permissions:
     - role: anonymous
       permission:
@@ -2520,6 +2506,7 @@
   delete_permissions:
     - role: user
       permission:
+        backend_only: false
         filter:
           thread_model:
             thread:
@@ -2539,8 +2526,8 @@
                       - userid:
                           _eq: X-Hasura-User-Id
 - table:
-    schema: public
     name: thread_model_parameter
+    schema: public
   object_relationships:
     - name: model_parameter
       using:
@@ -2573,7 +2560,6 @@
           - thread_model_id
           - model_parameter_id
           - parameter_value
-        backend_only: false
   select_permissions:
     - role: anonymous
       permission:
@@ -2637,6 +2623,7 @@
   delete_permissions:
     - role: user
       permission:
+        backend_only: false
         filter:
           thread_model:
             thread:
@@ -2656,8 +2643,8 @@
                       - userid:
                           _eq: X-Hasura-User-Id
 - table:
-    schema: public
     name: thread_permission
+    schema: public
   object_relationships:
     - name: thread
       using:
@@ -2665,14 +2652,13 @@
   insert_permissions:
     - role: user
       permission:
-        check: {} 
+        check: {}
         columns:
           - thread_id
           - read
           - write
           - execute
           - user_id
-        backend_only: false
   select_permissions:
     - role: user
       permission:
@@ -2704,6 +2690,7 @@
   delete_permissions:
     - role: user
       permission:
+        backend_only: false
         filter:
           thread:
             events:
@@ -2713,8 +2700,8 @@
                 - userid:
                     _eq: X-Hasura-User-Id
 - table:
-    schema: public
     name: thread_provenance
+    schema: public
   object_relationships:
     - name: thread
       using:
@@ -2729,7 +2716,6 @@
           - timestamp
           - userid
           - notes
-        backend_only: false
   select_permissions:
     - role: user
       permission:
@@ -2760,6 +2746,7 @@
   delete_permissions:
     - role: user
       permission:
+        backend_only: false
         filter:
           thread:
             events:
@@ -2769,8 +2756,8 @@
                 - userid:
                     _eq: X-Hasura-User-Id
 - table:
-    schema: public
     name: variable
+    schema: public
   object_relationships:
     - name: intervention
       using:
@@ -2781,43 +2768,43 @@
         foreign_key_constraint_on:
           column: variable_id
           table:
-            schema: public
             name: variable_category
+            schema: public
     - name: model_ios
       using:
         foreign_key_constraint_on:
           column: variable_id
           table:
-            schema: public
             name: model_io_variable
+            schema: public
     - name: tasksByDrivingVariable
       using:
         foreign_key_constraint_on:
           column: driving_variable_id
           table:
-            schema: public
             name: task
+            schema: public
     - name: tasksByResponseVariable
       using:
         foreign_key_constraint_on:
           column: response_variable_id
           table:
-            schema: public
             name: task
+            schema: public
     - name: threadsByDrivingVariable
       using:
         foreign_key_constraint_on:
           column: driving_variable_id
           table:
-            schema: public
             name: thread
+            schema: public
     - name: threadsByResponseVariable
       using:
         foreign_key_constraint_on:
           column: response_variable_id
           table:
-            schema: public
             name: thread
+            schema: public
   insert_permissions:
     - role: user
       permission:
@@ -2830,7 +2817,6 @@
           - is_adjustment_variable
           - is_indicator
           - intervention_id
-        backend_only: false
   select_permissions:
     - role: anonymous
       permission:
@@ -2865,8 +2851,8 @@
         filter: {}
         check: null
 - table:
-    schema: public
     name: variable_category
+    schema: public
   object_relationships:
     - name: variable
       using:
