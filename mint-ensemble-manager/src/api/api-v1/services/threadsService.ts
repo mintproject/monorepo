@@ -99,7 +99,7 @@ const threadsService = {
         thread.id = await addThread(task, thread);
 
         // Fetch region details
-        let region: Region = await getRegionDetails(prob.regionid, task.regionid);
+        let region: Region = await getRegionDetails(task.regionid);
 
         /*
         Set Thread Model

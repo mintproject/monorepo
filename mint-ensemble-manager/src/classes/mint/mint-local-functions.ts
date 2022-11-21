@@ -2,7 +2,7 @@ import { Thread, Model, ThreadModelMap, ProblemStatement, MintPreferences, Execu
 import { getModelInputConfigurations, deleteThreadModelExecutionIds, setThreadModelExecutionIds, 
     getExecutionHash, getThreadModelExecutionIds, getExecutions, 
     setExecutions, deleteExecutions, 
-    setThreadModelExecutionSummary, getModelInputBindings, listSuccessfulExecutionIds, incrementThreadModelSubmittedRuns, incrementThreadModelSuccessfulRuns } from "../graphql/graphql_functions";
+    setThreadModelExecutionSummary, getModelInputBindings, listSuccessfulExecutionIds, incrementThreadModelSubmittedRuns, incrementThreadModelSuccessfulRuns, getRegionDetails } from "../graphql/graphql_functions";
 import { loadModelWCM, getModelCacheDirectory, queueModelExecutionsLocally } from "../localex/local-execution-functions";
 
 import fs from "fs-extra";
@@ -40,7 +40,9 @@ export const saveAndRunExecutionsForModelLocally = async(modelid: string,
         let model = thread.models[modelid];
         let thread_model_id = thread.model_ensembles[modelid].id;
         
-        let execution_details = getModelInputBindings(model, thread);
+        let thread_region = await getRegionDetails(thread.regionid)
+        let execution_details = getModelInputBindings(model, thread, thread_region);
+
         let threadModel = execution_details[0] as ThreadModelMap;
         let inputIds = execution_details[1] as string[];
 
@@ -48,7 +50,7 @@ export const saveAndRunExecutionsForModelLocally = async(modelid: string,
         // - Cross product of all input collections
         // - TODO: Change to allow flexibility
         let configs = getModelInputConfigurations(threadModel, inputIds);
-        
+
         if(configs != null) {
             // Pre-Run Setup
             // Reset execution summary

@@ -5,7 +5,8 @@ import { setupModelWorkflow, fetchWingsTemplate, loginToWings, runModelExecution
 import { getModelInputBindings, getModelInputConfigurations, deleteThreadModelExecutionIds, 
     setThreadModelExecutionIds, getExecutionHash, listSuccessfulExecutionIds, 
     getThreadModelExecutionIds, getExecutions, setExecutions, getThread, 
-    setThreadModelExecutionSummary } from "../graphql/graphql_functions";
+    setThreadModelExecutionSummary, 
+    getRegionDetails} from "../graphql/graphql_functions";
 
 import * as mintConfig from '../../config/config.json';
 import { DEVMODE } from "../../config/app";
@@ -57,7 +58,9 @@ export const saveAndRunExecutionsForModel = async(modelid: string,
     
     let thread_model_id = thread.model_ensembles[modelid].id;
     let model = thread.models[modelid];
-    let execution_details = getModelInputBindings(model, thread);
+    
+    let thread_region = await getRegionDetails(thread.regionid)
+    let execution_details = getModelInputBindings(model, thread, thread_region);
     let threadModel = execution_details[0] as ThreadModelMap;
     let inputIds = execution_details[1] as string[];
     let configs = getModelInputConfigurations(threadModel, inputIds);

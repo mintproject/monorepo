@@ -201,7 +201,16 @@ export const getModelInputConfigurations = (
     }
 }
 
-export const getModelInputBindings = (model: Model, thread: Thread) => {
+const _getRegionGeoJson = (region: Region) => {
+    let geojson = {"type":"FeatureCollection","features":[]};
+    region.geometries.map((geom) => {
+        let feature = {"type": "Feature", "geometry": geom};
+        geojson["features"].push(feature)
+    });
+    return JSON.stringify(geojson)
+}
+
+export const getModelInputBindings = (model: Model, thread: Thread, region: Region) => {
     let me = thread.model_ensembles[model.id];
     let threadModel = {
         id: me.id,
@@ -235,8 +244,13 @@ export const getModelInputBindings = (model: Model, thread: Thread) => {
     // Add adjustable parameters to the input ids
     model.input_parameters.map((io) => {
         if(!io.value) inputIds.push(io.id);
+        
+        // HACK: Substitute __region_geojson with the actual region geojson
+        if(io.value == "__region_geojson") {
+            let region_geojson = _getRegionGeoJson(region)
+            threadModel.bindings[io.id] = [ region_geojson ];
+        }
     })
-    // Get cartesian product of inputs to get all model configurations
 
     return [threadModel, inputIds];
 };
@@ -688,13 +702,13 @@ export const setThreadParameters = (model_ensembles: ModelEnsembleMap,
 };
 
 // Get details about a particular region/subregion
-export const getRegionDetails = (regionid: string, subregionid: string) => {
+export const getRegionDetails = (regionid: string) => {
     let APOLLO_CLIENT = GraphQL.instance(KeycloakAdapter.getUser());
     return new Promise<Region>((resolve, reject) => {
         APOLLO_CLIENT.query({
             query: getRegionDetailsGQL,
             variables: {
-                id: subregionid
+                id: regionid
             }
         }).then(result => {
             if(!result || (result.errors && result.errors.length > 0)) {
