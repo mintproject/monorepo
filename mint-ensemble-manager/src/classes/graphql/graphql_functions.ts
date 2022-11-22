@@ -248,7 +248,7 @@ export const getModelInputBindings = (model: Model, thread: Thread, region: Regi
         // HACK: Substitute __region_geojson with the actual region geojson
         if(io.value == "__region_geojson") {
             let region_geojson = _getRegionGeoJson(region)
-            threadModel.bindings[io.id] = [ region_geojson ];
+            io.value = region_geojson;
         }
     })
 

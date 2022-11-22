@@ -24,7 +24,7 @@ module.exports = async (job: any) => {
     await KeycloakAdapter.signIn(prefs.graphql.username, prefs.graphql.password)
 
     // Only increment submitted runs if this isn't a retry
-    if(seed.execution.status != "FAILURE")
+    if(seed.execution.status != "FAILURE" && !DEVMODE)
         incrementThreadModelSubmittedRuns(thread_model_id);
 
     seed.execution.start_time = new Date();
@@ -320,6 +320,10 @@ const write_cwl_values = (comp: Component, seed: any, results: any, inputdir: st
                 paramvalue = input.paramDefaultValue;
             if (paramtype == "int")
                 paramvalue = parseInt(paramvalue);
+            else if (paramtype == "float")
+                paramvalue = parseFloat(paramvalue);
+            else
+                paramvalue = paramvalue.toString();
             data[input.role] = paramvalue
         }
         else {
