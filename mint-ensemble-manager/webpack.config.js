@@ -14,7 +14,7 @@ module.exports = {
         server: './src/server.ts'
     },
     output: {
-        library: '', 
+        library: 'ensemble-manager', 
         libraryTarget: 'umd',        
         filename: '[name].js',
         path: path.resolve(__dirname, 'dist')
