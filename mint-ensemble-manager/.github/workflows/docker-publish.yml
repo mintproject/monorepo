@@ -9,7 +9,7 @@ on:
   pull_request:
 
 env:
-  IMAGE_NAME: ensemble_manager
+  IMAGE_NAME: mintproject/ensemble-manager
 
 jobs:
   push:
