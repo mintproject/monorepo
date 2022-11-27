@@ -1,3 +1,5 @@
+import { env } from "process"
+
 export interface IdMap<T> {
     [id: string]: T
 }
@@ -83,7 +85,8 @@ export interface LocalExecutionPreferences {
     dataurl: string,
     logdir: string,
     logurl: string,
-    codedir: string
+    codedir: string,
+    tempdir: string
 }
 
 export type RegionMap = IdMap<Region>;
@@ -505,4 +508,10 @@ export interface WingsWcm {
     inputs: ModelIO[],
     outputs: ModelIO[],
 
+}
+
+export function fillConfigurationFromEnvironment(prefs: MintPreferences) {
+    if (prefs.graphql && !prefs.graphql.secret && env.HASURA_GRAPHQL_ADMIN_SECRET) {
+        prefs.graphql.secret = env.HASURA_GRAPHQL_ADMIN_SECRET;
+    }
 }

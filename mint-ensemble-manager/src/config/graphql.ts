@@ -1,6 +1,6 @@
 import 'cross-fetch/polyfill';
 import { ApolloClient, createHttpLink, InMemoryCache, NormalizedCacheObject, split } from '@apollo/client';
-import { MintPreferences, User } from '../classes/mint/mint-types';
+import { fillConfigurationFromEnvironment, MintPreferences, User } from '../classes/mint/mint-types';
 
 import * as mintConfig from './config.json';
 import { KeycloakAdapter } from './keycloak-adapter';
@@ -24,6 +24,8 @@ export class GraphQL {
 
   static getHTTPSLink() {
     let prefs = mintConfig["default"] as MintPreferences;
+    fillConfigurationFromEnvironment(prefs)
+    
     // Normal HTTP Link
     let protocol = prefs.graphql.enable_ssl? "https://" : "http://"
     let uri = protocol + prefs.graphql.endpoint

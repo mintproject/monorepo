@@ -29,6 +29,7 @@ import { MintPreferences } from "./classes/mint/mint-types";
 import { KeycloakAdapter } from "./config/keycloak-adapter";
 
 let prefs = mintConfig["default"] as MintPreferences;
+fillConfigurationFromEnvironment(prefs)
 KeycloakAdapter.signIn(prefs.graphql.username, prefs.graphql.password)
 */
 

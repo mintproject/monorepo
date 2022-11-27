@@ -8,7 +8,7 @@ import { Component, ComponentSeed, ComponentArgument } from "./local-execution-t
 import { runImage } from "./docker-functions";
 import { Container } from "dockerode";
 import { DEVMODE } from "../../config/app";
-import { LocalExecutionPreferences, DataResource, DateRange } from "../mint/mint-types";
+import { LocalExecutionPreferences, DataResource, DateRange, fillConfigurationFromEnvironment } from "../mint/mint-types";
 
 import * as mintConfig from '../../config/config.json';
 import { MintPreferences } from "../mint/mint-types";
@@ -21,6 +21,8 @@ module.exports = async (job: any) => {
     var thread_model_id: string = job.data.thread_model_id;
 
     let prefs = mintConfig["default"] as MintPreferences;
+    fillConfigurationFromEnvironment(prefs)
+    
     await KeycloakAdapter.signIn(prefs.graphql.username, prefs.graphql.password)
 
     // Only increment submitted runs if this isn't a retry
@@ -35,7 +37,9 @@ module.exports = async (job: any) => {
     let outputdir = localex.datadir;
 
     // Create temporary directory
-    let ostmp = os.tmpdir();
+    let ostmp = localex.tempdir;
+    if (! fs.existsSync(ostmp))
+        fs.mkdirsSync(ostmp)
     let tmpprefix = ostmp + "/" + seed.execution.modelid.replace(/.*\//, '');
     let tempdir = fs.mkdtempSync(tmpprefix);
 
@@ -114,6 +118,9 @@ module.exports = async (job: any) => {
             } as DataResource
         });
 
+        if (! fs.existsSync(localex.logdir))
+            fs.mkdirsSync(localex.logdir)
+
         let logstdout = localex.logdir + "/" + seed.execution.id + ".log";
 
         let logstream = fs.createWriteStream(logstdout);
@@ -133,7 +140,7 @@ module.exports = async (job: any) => {
         if (fs.existsSync(cwl_file)) {
             console.log("Running cwl:" )
             if (! fs.existsSync(tempdir))
-                fs.mkdirSync(tempdir)
+                fs.mkdirsSync(tempdir)
             let cwl_values_file = write_cwl_values(comp, seed, results, inputdir, tempdir, outputdir, plainargs)
             let cwl_args: string[] = [];
             let cwl_command = "cwltool"
@@ -231,7 +238,7 @@ module.exports = async (job: any) => {
                         let output_suffix_cwl = Md5.hashAsciiStr(seed.execution.modelid + plainargs.join());
                         let output_directory = outputdir + '/' + output_suffix_cwl;
                         if (!fs.existsSync(output_directory)){
-                            fs.mkdirSync(output_directory)
+                            fs.mkdirsSync(output_directory)
                         }
                         let output_file = output_directory + '/' + cwl_output['basename'];
                         let tmpfile = cwl_output['path']
@@ -322,6 +329,8 @@ const write_cwl_values = (comp: Component, seed: any, results: any, inputdir: st
                 paramvalue = parseInt(paramvalue);
             else if (paramtype == "float")
                 paramvalue = parseFloat(paramvalue);
+            else if (paramtype == "boolean")
+                paramvalue = (paramvalue.toString().toLowerCase() == "true")
             else
                 paramvalue = paramvalue.toString();
             data[input.role] = paramvalue

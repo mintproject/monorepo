@@ -1,5 +1,5 @@
 import { Thread, ProblemStatement, MintPreferences, ExecutionSummary, Execution, 
-    ModelIOBindings, ThreadModelMap } from "./mint-types";
+    ModelIOBindings, ThreadModelMap, fillConfigurationFromEnvironment } from "./mint-types";
 import { setupModelWorkflow, fetchWingsTemplate, loginToWings, runModelExecutions, 
     fetchWingsRunsStatuses, fetchWingsRunResults } from "../wings/wings-functions";
 import { getModelInputBindings, getModelInputConfigurations, deleteThreadModelExecutionIds, 
@@ -12,8 +12,11 @@ import * as mintConfig from '../../config/config.json';
 import { DEVMODE } from "../../config/app";
 import { DEVHOMEDIR } from "../../config/app";
 import { PORT } from "../../config/app";
+
 export const fetchMintConfig = async () => {
     let prefs = mintConfig["default"] as MintPreferences;
+    fillConfigurationFromEnvironment(prefs)
+    
     if(prefs.execution_engine == "wings") {
         let res = await fetch(prefs.wings.server + "/config");
         let wdata = await res.json();

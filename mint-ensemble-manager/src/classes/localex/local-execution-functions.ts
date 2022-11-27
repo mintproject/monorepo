@@ -36,7 +36,7 @@ const _downloadFile = (url: string, filepath: string): Promise<void> => {
 const _unzipFile = (zipfilename: string, dirname: string): Promise<string> => {
     return new Promise<string>((resolve, reject) => {
         if (!fs.existsSync(dirname)){
-            fs.mkdirSync(dirname);
+            fs.mkdirsSync(dirname);
         }
         yauzl.open(zipfilename, { lazyEntries: true }, function (err, zipfile) {
             if (err) {
@@ -62,7 +62,7 @@ const _unzipFile = (zipfilename: string, dirname: string): Promise<string> => {
                         // Directories
                         zipfile.readEntry();
                         if(!fs.existsSync(dirname + "/" + filename))
-                            fs.mkdirSync(dirname + "/" + filename);
+                            fs.mkdirsSync(dirname + "/" + filename);
                     } else {
                         // Files
                         zipfile.openReadStream(entry, function (err, readStream) {
@@ -147,8 +147,8 @@ const _downloadWCM = async (url: string, prefs: MintPreferences) => {
             await _downloadAndUnzipToDirectory(url, modeldir, compname);
         else if (extension == ".cwl"){
             if(!fs.existsSync(modeldir))
-                fs.mkdirSync(modeldir)
-            fs.mkdirSync(src_dir)
+                fs.mkdirsSync(modeldir)
+            fs.mkdirsSync(src_dir)
             await _downloadCwlToDirectory(url, src_dir);
         }
     }

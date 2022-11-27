@@ -3,14 +3,37 @@ services:
   redis:
     image: redis
     ports:
-      - "26379:6379"
+      - "7379:6379"
+  dind:
+    build: .
+    image: docker:20.10.21-dind
+    command: "dockerd --host tcp://127.0.0.1:2375"
+    privileged: true
+    ports:
+      - "2375:2375"
+    volumes:
+      - docker:/var/lib/docker
+      - data:/data
+      - temp:/temp
   ensemble-manager:
     build: .
-    image: mintproject/ensemble-manager
+    image: kcapd/ensemble-manager
     restart: always
+    privileged: true
+    user: "1000:1000"
     depends_on:
       - redis
-    env_file:
-     - .env
+      - dind
+    environment:
+     - DOCKER_HOST=tcp://localhost:2375
+     - REDIS_URL=redis://redis:6379
     ports:
-     - "25001:3000"
+     - "3000:3000"
+    volumes:
+      - data:/data
+      - temp:/temp
+
+volumes:
+  docker:
+  data:
+  temp:

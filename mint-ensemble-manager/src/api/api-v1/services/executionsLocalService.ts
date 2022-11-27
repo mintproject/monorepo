@@ -1,5 +1,5 @@
 import { getThread, getProblemStatement } from "../../../classes/graphql/graphql_functions";
-import { Thread, ProblemStatement } from "../../../classes/mint/mint-types";
+import { Thread, ProblemStatement, fillConfigurationFromEnvironment } from "../../../classes/mint/mint-types";
 import { saveAndRunExecutionsLocally, deleteExecutableCacheLocally } from "../../../classes/mint/mint-local-functions";
 import { fetchMintConfig } from "../../../classes/mint/mint-functions";
 import { KeycloakAdapter } from "../../../config/keycloak-adapter";
@@ -7,7 +7,9 @@ import { MintPreferences, User } from '../../../classes/mint/mint-types';
 
 import * as mintConfig from '../../../config/config.json';
 let prefs = mintConfig["default"] as MintPreferences;
-KeycloakAdapter.signIn(prefs.graphql.username, prefs.graphql.password);
+fillConfigurationFromEnvironment(prefs)
+
+//KeycloakAdapter.signIn(prefs.graphql.username, prefs.graphql.password);
 
 const createResponse = (result: string, message: string) => {
     return {
