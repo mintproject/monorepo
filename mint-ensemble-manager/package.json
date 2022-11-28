@@ -24,7 +24,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@apollo/client": "^3.1.4",
+    "@apollo/client": "^3.7.1",
     "@mintproject/modelcatalog_client": "^8.0.0",
     "@types/fs-extra": "^8.0.1",
     "@types/request": "^2.48.3",
@@ -32,6 +32,7 @@
     "@types/webpack": "^5.28.0",
     "@types/webpack-dev-middleware": "^3.7.2",
     "apollo-boost": "^0.4.9",
+    "react-dom": "^18.2.0",
     "bull": "^4.10.2",
     "@bull-board/express": "^4.6.4",
     "@bull-board/api": "^4.6.4",
