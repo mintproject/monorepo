@@ -15,12 +15,12 @@
         "password": "Mint123!"
     },
     "localex": {
-        "codedir":"/data/storage/mint/local-execution/code",
-        "datadir": "/data/storage/mint/data-catalog/production/local-execution",
-        "dataurl": "https://data.mint.isi.edu/files/local-execution",
-        "logdir": "/data/storage/mint/data-catalog/production/local-execution/logs",
-        "logurl": "https://data.mint.isi.edu/files/local-execution/logs",
-        "tempdir": "/data/storage/mint/temp",
+        "codedir":"~/mint/code",
+        "datadir": "~/mint/data",
+        "dataurl": "file://~/mint/data",
+        "logdir": "~/mint/logs",
+        "logurl": "file://~/mint/data",
+        "tempdir": "/tmp",
         "parallelism": 50
     }, 
     "visualization_url": "https://dev.viz.mint.isi.edu",

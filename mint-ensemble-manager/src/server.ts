@@ -16,7 +16,10 @@ import { initialize } from "express-openapi";
 import { getResource } from "./classes/wings/xhr-requests";
 
 import Queue from "bull";
-import { UI, setQueues } from "bull-board";
+const { createBullBoard } = require('@bull-board/api');
+const { BullAdapter } = require('@bull-board/api/bullAdapter');
+const { ExpressAdapter } = require('@bull-board/express');
+
 import { EXECUTION_QUEUE_NAME, REDIS_URL } from "./config/redis";
 import { PORT, VERSION } from "./config/app";
 
@@ -37,6 +40,7 @@ KeycloakAdapter.signIn(prefs.graphql.username, prefs.graphql.password)
 const app = express();
 const port = PORT; 
 const version = VERSION;
+const dashboard_url = '/admin/queues';
 
 // Setup API
 var v1ApiDoc = require('./api/api-doc');
@@ -66,10 +70,19 @@ app.use(((err, req, res, next) => {
     res.status(status).json(err);
 }) as express.ErrorRequestHandler);
 
-// Setup Bull Queue Dashboard
+// Setup Queue
 let executionQueue = new Queue(EXECUTION_QUEUE_NAME, REDIS_URL);
-setQueues([executionQueue]);
-app.use('/admin/queues', UI)
+
+// Setup Bull Dashboard
+const serverAdapter = new ExpressAdapter();
+serverAdapter.setBasePath(dashboard_url);
+
+const { addQueue, removeQueue, setQueues, replaceQueues } = createBullBoard({
+  queues: [new BullAdapter(executionQueue)],
+  serverAdapter: serverAdapter,
+});
+
+app.use(dashboard_url, serverAdapter.getRouter())
 
 // Express start
 app.listen(port, () => {
