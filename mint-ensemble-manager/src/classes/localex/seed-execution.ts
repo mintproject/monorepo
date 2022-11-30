@@ -8,11 +8,10 @@ import { Component, ComponentSeed, ComponentArgument } from "./local-execution-t
 import { runImage } from "./docker-functions";
 import { Container } from "dockerode";
 import { DEVMODE } from "../../config/app";
-import { LocalExecutionPreferences, DataResource, DateRange, fillConfigurationFromEnvironment } from "../mint/mint-types";
+import { LocalExecutionPreferences, DataResource, DateRange } from "../mint/mint-types";
 
-import * as mintConfig from '../../config/config.json';
-import { MintPreferences } from "../mint/mint-types";
 import { KeycloakAdapter } from "../../config/keycloak-adapter";
+import { getConfiguration } from "../mint/mint-functions";
 
 module.exports = async (job: any) => {
     // Run the model seed (model config + bindings)
@@ -20,8 +19,7 @@ module.exports = async (job: any) => {
     var localex: LocalExecutionPreferences = job.data.prefs;
     var thread_model_id: string = job.data.thread_model_id;
 
-    let prefs = mintConfig["default"] as MintPreferences;
-    fillConfigurationFromEnvironment(prefs)
+    let prefs = getConfiguration()
     
     await KeycloakAdapter.signIn(prefs.graphql.username, prefs.graphql.password)
 

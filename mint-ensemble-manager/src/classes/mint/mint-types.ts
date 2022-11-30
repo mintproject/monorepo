@@ -509,9 +509,3 @@ export interface WingsWcm {
     outputs: ModelIO[],
 
 }
-
-export function fillConfigurationFromEnvironment(prefs: MintPreferences) {
-    if (prefs.graphql && !prefs.graphql.secret && env.HASURA_GRAPHQL_ADMIN_SECRET) {
-        prefs.graphql.secret = env.HASURA_GRAPHQL_ADMIN_SECRET;
-    }
-}

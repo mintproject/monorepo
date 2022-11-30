@@ -1,8 +1,7 @@
-import { fillConfigurationFromEnvironment, MintPreferences, User } from '../classes/mint/mint-types';
+import { getConfiguration } from '../classes/mint/mint-functions';
+import { User } from '../classes/mint/mint-types';
 
-import * as mintConfig from './config.json';
-let prefs = mintConfig["default"] as MintPreferences;
-fillConfigurationFromEnvironment(prefs)
+let prefs = getConfiguration();
 
 interface tokenResponse {
     access_token: string,

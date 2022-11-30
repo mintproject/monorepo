@@ -1,5 +1,5 @@
 import { Thread, ProblemStatement, MintPreferences, ExecutionSummary, Execution, 
-    ModelIOBindings, ThreadModelMap, fillConfigurationFromEnvironment } from "./mint-types";
+    ModelIOBindings, ThreadModelMap } from "./mint-types";
 import { setupModelWorkflow, fetchWingsTemplate, loginToWings, runModelExecutions, 
     fetchWingsRunsStatuses, fetchWingsRunResults } from "../wings/wings-functions";
 import { getModelInputBindings, getModelInputConfigurations, deleteThreadModelExecutionIds, 
@@ -8,15 +8,26 @@ import { getModelInputBindings, getModelInputConfigurations, deleteThreadModelEx
     setThreadModelExecutionSummary, 
     getRegionDetails} from "../graphql/graphql_functions";
 
-import * as mintConfig from '../../config/config.json';
+import fs from "fs-extra";
+
 import { DEVMODE } from "../../config/app";
 import { DEVHOMEDIR } from "../../config/app";
 import { PORT } from "../../config/app";
 
+export const getConfiguration = () : MintPreferences => {
+    let config_file = process.env.ENSEMBLE_MANAGER_CONFIG_FILE
+    if (!config_file) {
+        config_file = "./config/config.json"
+    }
+    let prefs = JSON.parse(fs.readFileSync(config_file, 'utf8')) as MintPreferences;
+    if (prefs.graphql && !prefs.graphql.secret && process.env.HASURA_GRAPHQL_ADMIN_SECRET) {
+        prefs.graphql.secret = process.env.HASURA_GRAPHQL_ADMIN_SECRET;
+    }
+    return prefs;
+};
+
 export const fetchMintConfig = async () => {
-    let prefs = mintConfig["default"] as MintPreferences;
-    fillConfigurationFromEnvironment(prefs)
-    
+    let prefs = getConfiguration();
     if(prefs.execution_engine == "wings") {
         let res = await fetch(prefs.wings.server + "/config");
         let wdata = await res.json();

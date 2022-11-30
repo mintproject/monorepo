@@ -27,12 +27,10 @@ import * as webpack from "webpack";
 const config = require('../webpack.config.js');
 
 /*
-import * as mintConfig from './config/config.json';
 import { MintPreferences } from "./classes/mint/mint-types";
 import { KeycloakAdapter } from "./config/keycloak-adapter";
 
-let prefs = mintConfig["default"] as MintPreferences;
-fillConfigurationFromEnvironment(prefs)
+let prefs = getConfiguration()
 KeycloakAdapter.signIn(prefs.graphql.username, prefs.graphql.password)
 */
 
