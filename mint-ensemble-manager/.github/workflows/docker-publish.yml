@@ -52,13 +52,6 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v3.0.0
         with:
-          context: .
-          tags: ${{ env.DOCKER_IMAGE_REPOSITORY }}/${{ env.DOCKER_IMAGE_NAME }}:${{ steps.branch-name.outputs.current_branch }}, ${{ env.DOCKER_IMAGE_REPOSITORY }}/${{ env.DOCKER_IMAGE_NAME }}:${{ env.DOCKER_TAG }}
-          file: ${{ env.DOCKER_FILE}}
-        
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v3.0.0
-        with:
           push: true
           context: .
           tags: ${{ env.DOCKER_IMAGE_REPOSITORY }}/${{ env.DOCKER_IMAGE_NAME }}:${{ steps.branch-name.outputs.current_branch }}, ${{ env.DOCKER_IMAGE_REPOSITORY }}/${{ env.DOCKER_IMAGE_NAME }}:${{ env.DOCKER_TAG }}
