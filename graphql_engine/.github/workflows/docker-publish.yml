@@ -9,12 +9,12 @@ on:
   pull_request:
 
 env:
-  IMAGE_NAME: ensemble-manager
+  IMAGE_NAME: graphql-engine
   #variables related with the repository
   REPOSITORY_MAIN_BRANCH: "master"
   #variables related with the docker imager registry
   DOCKER_IMAGE_REPOSITORY: mintproject
-  DOCKER_IMAGE_NAME: ensemble-manager
+  DOCKER_IMAGE_NAME: graphql-engine
   DOCKER_FILE: "Dockerfile"
 
 jobs:
@@ -66,6 +66,7 @@ jobs:
           context: .
           tags: ${{ env.DOCKER_IMAGE_REPOSITORY }}/${{ env.DOCKER_IMAGE_NAME }}:latest
           file: ${{ env.DOCKER_FILE}}
+          platforms: linux/amd64,linux/arm64
 
   security:
     permissions:
