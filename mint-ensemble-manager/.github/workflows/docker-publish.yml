@@ -58,15 +58,6 @@ jobs:
           file: ${{ env.DOCKER_FILE}}
           platforms: linux/amd64,linux/arm64
 
-      - name: Running on the default branch.
-        if: steps.branch-name.outputs.is_default == 'true'
-        uses: docker/build-push-action@v3.0.0
-        with:
-          push: true
-          context: .
-          tags: ${{ env.DOCKER_IMAGE_REPOSITORY }}/${{ env.DOCKER_IMAGE_NAME }}:latest
-          file: ${{ env.DOCKER_FILE}}
-
   security:
     permissions:
       contents: read
