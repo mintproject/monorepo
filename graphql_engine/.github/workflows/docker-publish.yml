@@ -1,4 +1,4 @@
-name: ensemble-manager
+name: hasura
 
 on:
   push:
@@ -129,9 +129,9 @@ jobs:
         if: github.event_name == 'push' && github.ref == 'refs/heads/master'
         with:
           valueFile: isi/values.yaml
-          propertyPath: "MINT.components.ensemble_manager.image.tag"
+          propertyPath: "MINT.components.hasura.image.tag"
           value: ${{ env.DOCKER_TAG }}
-          message: "Update ensemble_manager"
+          message: "Update hasura"
           repository: mintproject/mint-instances
           workDir: infrastructure
           branch: master 
@@ -142,9 +142,9 @@ jobs:
         if: github.event_name == 'push' && github.ref == 'refs/heads/master'
         with:
           valueFile: wifire/values.yaml
-          propertyPath: "MINT.components.ensemble_manager.image.tag"
+          propertyPath: "MINT.components.hasura.image.tag"
           value: ${{ env.DOCKER_TAG }}
-          message: "Update ensemble_manager"
+          message: "Update hasura"
           repository: mintproject/mint-instances
           workDir: infrastructure
           branch: master 
@@ -155,9 +155,9 @@ jobs:
         if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
         with:
           valueFile: isi-dev/values.yaml
-          propertyPath: "MINT.components.ensemble_manager.image.tag"
+          propertyPath: "MINT.components.hasura.image.tag"
           value: ${{ env.DOCKER_TAG }}
-          message: "Update ensemble_manager"
+          message: "Update hasura"
           repository: mintproject/mint-instances
           workDir: infrastructure
           branch: master 
@@ -169,9 +169,9 @@ jobs:
         if: github.event_name == 'push' && github.ref == 'refs/heads/master'
         with:
           valueFile: helm/values.yaml
-          propertyPath: "components.ensemble_manager.image.tag"
+          propertyPath: "components.hasura.image.tag"
           value: ${{ env.DOCKER_TAG }}
-          message: "Update ensemble_manager"
+          message: "Update hasura"
           repository: mintproject/mint
           workDir: mint-chart/
           branch: main
