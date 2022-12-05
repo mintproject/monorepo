@@ -17,7 +17,7 @@ import { PORT } from "../../config/app";
 export const getConfiguration = () : MintPreferences => {
     let config_file = process.env.ENSEMBLE_MANAGER_CONFIG_FILE
     if (!config_file) {
-        config_file = "./config/config.json"
+        config_file = __dirname + "/config/config.json"
     }
     let prefs = JSON.parse(fs.readFileSync(config_file, 'utf8')) as MintPreferences;
     if (prefs.graphql && !prefs.graphql.secret && process.env.HASURA_GRAPHQL_ADMIN_SECRET) {

@@ -10,16 +10,16 @@ import { KeycloakAdapter } from "../../../config/keycloak-adapter";
 
 const logsService = {
     async fetchLog(execution_id: string) {
-        let mint_prefs = await fetchMintConfig();
-        KeycloakAdapter.signIn(mint_prefs.graphql.username, mint_prefs.graphql.password)
+        let prefs = await fetchMintConfig();
+        KeycloakAdapter.signIn(prefs.graphql.username, prefs.graphql.password)
 
         let ensemble: Execution = await getExecution(execution_id);
         if(!ensemble.execution_engine || ensemble.execution_engine == "wings") {
-            let log = await fetchWingsRunLog(ensemble.runid, mint_prefs);
+            let log = await fetchWingsRunLog(ensemble.runid, prefs);
             return log;
         }
         else if(ensemble.execution_engine == "localex") {
-            let log = fetchLocalRunLog(execution_id, mint_prefs);
+            let log = fetchLocalRunLog(execution_id, prefs);
             return log;
         }
     }

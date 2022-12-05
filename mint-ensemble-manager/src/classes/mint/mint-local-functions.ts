@@ -14,9 +14,13 @@ export const saveAndRunExecutionsLocally = async (
         modelid: string,
         prefs: MintPreferences) => {
 
+    let ok = false;
     for(let pmodelid in thread.model_ensembles) {
         if(!modelid || (modelid == pmodelid)) {
-            await saveAndRunExecutionsForModelLocally(pmodelid, thread, prefs);
+            ok = await saveAndRunExecutionsForModelLocally(pmodelid, thread, prefs);
+            if (!ok) {
+                return false;
+            }
             /*
             if(!DEVMODE) {
                 monitorQueue.add({ thread_id: thread.id, model_id: modelid } , {
@@ -26,7 +30,13 @@ export const saveAndRunExecutionsLocally = async (
             */
         }
     }
-    console.log("Finished sending all executions for local execution");
+    if (ok) {
+        console.log("Finished sending all executions for local execution");
+        return true;
+    }
+    else {
+        return false;
+    }
 }
 
 export const saveAndRunExecutionsForModelLocally = async(modelid: string, 
@@ -128,10 +138,12 @@ export const saveAndRunExecutionsForModelLocally = async(modelid: string,
             }
         }
         console.log("Finished submitting all executions for model: " + modelid);
+        return true;
     }
     catch(e) {
         console.log(e);
     }
+    return false;
 }
 
 export const deleteExecutableCacheLocally = async(

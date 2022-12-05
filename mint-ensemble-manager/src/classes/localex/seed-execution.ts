@@ -11,7 +11,7 @@ import { DEVMODE } from "../../config/app";
 import { LocalExecutionPreferences, DataResource, DateRange } from "../mint/mint-types";
 
 import { KeycloakAdapter } from "../../config/keycloak-adapter";
-import { getConfiguration } from "../mint/mint-functions";
+import { fetchMintConfig } from "../mint/mint-functions";
 
 module.exports = async (job: any) => {
     // Run the model seed (model config + bindings)
@@ -19,8 +19,7 @@ module.exports = async (job: any) => {
     var localex: LocalExecutionPreferences = job.data.prefs;
     var thread_model_id: string = job.data.thread_model_id;
 
-    let prefs = getConfiguration()
-    
+    let prefs = await fetchMintConfig()
     await KeycloakAdapter.signIn(prefs.graphql.username, prefs.graphql.password)
 
     // Only increment submitted runs if this isn't a retry
@@ -144,6 +143,8 @@ module.exports = async (job: any) => {
             let cwl_command = "cwltool"
             cwl_args.push("--no-read-only")
             cwl_args.push("--copy-outputs")
+            cwl_args.push("--user-space-docker-cmd")
+            cwl_args.push("docker")
             cwl_args.push(cwl_file)
             cwl_args.push(cwl_values_file)
             console.log("running a new execution " + logstdout)

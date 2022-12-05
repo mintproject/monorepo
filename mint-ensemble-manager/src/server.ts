@@ -23,17 +23,6 @@ const { ExpressAdapter } = require('@bull-board/express');
 import { EXECUTION_QUEUE_NAME, REDIS_URL } from "./config/redis";
 import { PORT, VERSION } from "./config/app";
 
-import * as webpack from "webpack";
-const config = require('../webpack.config.js');
-
-/*
-import { MintPreferences } from "./classes/mint/mint-types";
-import { KeycloakAdapter } from "./config/keycloak-adapter";
-
-let prefs = getConfiguration()
-KeycloakAdapter.signIn(prefs.graphql.username, prefs.graphql.password)
-*/
-
 // Main Express Server
 const app = express();
 const port = PORT; 

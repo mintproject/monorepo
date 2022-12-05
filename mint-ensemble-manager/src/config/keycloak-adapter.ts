@@ -71,7 +71,9 @@ export class KeycloakAdapter {
     }
 
     public static signIn (username: string, password:string) : Promise<void> {
-        return; // Signin causes issues. Ignoring it now
+        if (!username || !password) {
+            return;
+        }
         let uri : string = KeycloakAdapter.getTokenUri();
         let data = {
             client_id: KeycloakAdapter.clientId,
@@ -190,12 +192,21 @@ export class KeycloakAdapter {
     }
 
     public static getUser () : User {
-        return {
-            email: KeycloakAdapter.username,
-            uid: KeycloakAdapter.userid,
-            region: KeycloakAdapter.region,
-            graph: KeycloakAdapter.graph
-        } as User;
+        if(KeycloakAdapter.username) {
+            return {
+                email: KeycloakAdapter.username,
+                uid: KeycloakAdapter.userid,
+                region: KeycloakAdapter.region,
+                graph: KeycloakAdapter.graph
+            } as User;
+        }
+        else {
+            // Secret based login. Return a fake user
+            return {
+                email: "mint@isi.edu",
+                uid: "mint@isi.edu"
+            } as User;
+        }
     }
 
     public static updateProfile (u: User) : void {

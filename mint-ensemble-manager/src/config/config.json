@@ -1,28 +1,26 @@
 {
-    "data_catalog_api": "https://data-catalog.dev.mint.isi.edu",
-    "model_catalog_api": "https://api.models.dev.mint.isi.edu/v1.8.0/",
-    "ensemble_manager_api": "http://localhost:3000/v1",
-    "execution_engine": "localex",
-    "auth_server": "https://auth.mint.isi.edu/auth/",
-    "auth_realm": "production",
-    "auth_client_id": "mint-ui",    
+    "data_catalog_api": "http://localhost:30002",
+    "model_catalog_api": "http://localhost:30004/v1.8.0",
+    "ensemble_manager_api": "http://localhost:30008/v1",
     "graphql": {
-        "endpoint": "graphql.dev.mint.isi.edu/v1/graphql",
-        "enable_ssl": true,
-        "use_secret": true,
-        "secret": "SqPC5a1Sqe",
-        "username": "mint@isi.edu",
-        "password": "Mint123!"
+       "endpoint": "127.0.0.1:30003/v1/graphql",
+       "enable_ssl": false,
+       "use_secret": true
     },
+    "execution_engine": "localex",
     "localex": {
-        "codedir":"~/mint/code",
-        "datadir": "~/mint/data",
-        "dataurl": "file://~/mint/data",
-        "logdir": "~/mint/logs",
-        "logurl": "file://~/mint/data",
-        "tempdir": "/tmp",
-        "parallelism": 50
-    }, 
-    "visualization_url": "https://dev.viz.mint.isi.edu",
-    "ingestion_api": "https://node1.ingestion.mint.isi.edu/v1.3.0"    
+       "codedir":"~/mintproject/data/code",
+       "datadir":"~/mintproject/data/data",
+       "tempdir":"~/mintproject/data/temp",
+       "logdir":"~/mintproject/data/logs",
+       "dataurl":"http://file://~/mintproject/data",
+       "logurl":"http://file://~/mintproject/logs",
+       "parallelism": 2
+    },
+ 
+    "auth_server": "https://auth.mint.isi.edu/",
+    "auth_realm": "production",
+    "auth_client_id": "mint-ui",
+    "visualization_url": "",
+    "ingestion_api": ""
 }

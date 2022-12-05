@@ -80,6 +80,14 @@ export const getProblemStatement = async(problem_statement_id: string) : Promise
             }
         }
         return null;
+    }).catch((e) => {
+        console.log("ERROR");
+        console.log(e);
+        return null;
+    }).catch((e) => {
+        console.log("ERROR");
+        console.log(e);
+        return null;
     });
 }
 
@@ -101,6 +109,10 @@ export const getTask = async(taskid: string) : Promise<Task> => {
                 return taskFromGQL(task);
             }
         }
+        return null;
+    }).catch((e) => {
+        console.log("ERROR");
+        console.log(e);
         return null;
     });
 }
@@ -124,6 +136,10 @@ export const getThread = async(threadid: string) : Promise<Thread> => {
                 return threadFromGQL(thread);
             }
         }
+        return null;
+    }).catch((e) => {
+        console.log("ERROR");
+        console.log(e);
         return null;
     });
 }
@@ -278,6 +294,10 @@ export const getExecution = async(executionid: string) : Promise<Execution> => {
             }
         }
         return null;
+    }).catch((e) => {
+        console.log("ERROR");
+        console.log(e);
+        return null;
     });
 }
 
@@ -298,6 +318,10 @@ export const getExecutions = (executionids: string[]) : Promise<Execution[]> => 
             return result.data.execution.map((ex:any) => executionFromGQL(ex));
         }
         return null;        
+    }).catch((e) => {
+        console.log("ERROR");
+        console.log(e);
+        return null;
     });
 };
 
@@ -341,6 +365,10 @@ export const listExistingExecutionIdStatus = (executionids: string[]) : Promise<
             });
         }
         return null;        
+    }).catch((e) => {
+        console.log("ERROR");
+        console.log(e);
+        return null;
     });
 };
 
@@ -361,6 +389,10 @@ export const listSuccessfulExecutionIds = (executionids: string[]) : Promise<str
             return result.data.execution.map((ex:any) => ex["id"].replace(/-/g, ""));
         }
         return null;        
+    }).catch((e) => {
+        console.log("ERROR");
+        console.log(e);
+        return null;
     });
 };
 
@@ -427,6 +459,10 @@ export const getThreadModelExecutionIds = async (thread_model_id: string) : Prom
             return result.data.thread_model_by_pk.executions.map((ex:any) => ex.execution_id);
         }
         return null;        
+    }).catch((e) => {
+        console.log("ERROR");
+        console.log(e);
+        return null;
     });
 }
 
@@ -526,6 +562,10 @@ export const addProblemStatement = (problem_statement:ProblemStatementInfo) : Pr
             return result.data.insert_problem_statement.returning[0].id;
         }
         return null;        
+    }).catch((e) => {
+        console.log("ERROR");
+        console.log(e);
+        return null;
     });
 };
 
@@ -547,6 +587,10 @@ export const addTask = (problem_statement: ProblemStatementInfo, task: Task) : P
             return result.data.insert_task.returning[0].id;
         }
         return null;        
+    }).catch((e) => {
+        console.log("ERROR");
+        console.log(e);
+        return null;
     });
 };
 
@@ -575,6 +619,10 @@ export const addTaskWithThread = (problem_statement: ProblemStatementInfo, task:
             ];
         }
         return null;        
+    }).catch((e) => {
+        console.log("ERROR");
+        console.log(e);
+        return null;
     });
 };
 
@@ -597,6 +645,10 @@ export const addThread = (task:Task, thread: ThreadInfo) : Promise<string> =>  {
             return result.data.insert_thread.returning[0].id;
         }
         return null;        
+    }).catch((e) => {
+        console.log("ERROR");
+        console.log(e);
+        return null;
     });
 };
 
@@ -721,6 +773,10 @@ export const getRegionDetails = (regionid: string) => {
                 region.bounding_box = _calculateBoundingBox(region.geometries)
                 resolve(region);
             }
+        }).catch((e) => {
+            console.log("ERROR");
+            console.log(e);
+            return null;
         });
     });
 };
