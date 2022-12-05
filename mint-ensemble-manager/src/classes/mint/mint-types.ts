@@ -86,7 +86,8 @@ export interface LocalExecutionPreferences {
     logdir: string,
     logurl: string,
     codedir: string,
-    tempdir: string
+    tempdir: string,
+    parallelism: number
 }
 
 export type RegionMap = IdMap<Region>;
