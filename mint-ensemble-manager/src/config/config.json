@@ -9,12 +9,12 @@
     },
     "execution_engine": "localex",
     "localex": {
-       "codedir":"~/mintproject/data/code",
-       "datadir":"~/mintproject/data/data",
-       "tempdir":"~/mintproject/data/temp",
-       "logdir":"~/mintproject/data/logs",
-       "dataurl":"http://file://~/mintproject/data",
-       "logurl":"http://file://~/mintproject/logs",
+       "codedir":"/tmp/mintproject/data/code",
+       "datadir":"/tmp/mintproject/data/data",
+       "tempdir":"/tmp/mintproject/data/temp",
+       "logdir":"/tmp/mintproject/data/logs",
+       "dataurl":"http://file:///tmp/mintproject/data",
+       "logurl":"http://file:///tmp/mintproject/logs",
        "parallelism": 2
     },
  

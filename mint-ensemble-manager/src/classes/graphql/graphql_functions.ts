@@ -28,6 +28,7 @@ import listExistingIdStatusGQL from './queries/execution/list-existing-ids.graph
 import getExecutionsGQL from './queries/execution/list.graphql';
 import setExecutionsGQL from './queries/execution/new.graphql';
 import updateExecutionStatusResultsGQL from './queries/execution/update-status-results.graphql';
+import updateExecutionStatusGQL from './queries/execution/update-status-results.graphql';
 import deleteExecutionsGQL from './queries/execution/delete.graphql';
 
 import getRegionDetailsGQL from './queries/region/get.graphql';
@@ -424,6 +425,20 @@ export const updateExecutionStatusAndResults = (execution: Execution) => {
                 exres["execution_id"] = execution.id;
                 return exres;
             })
+        }
+    });
+}
+
+// Update Execution status only
+export const updateExecutionStatus = (execution: Execution) => {
+    let APOLLO_CLIENT = GraphQL.instance(KeycloakAdapter.getUser());
+    return APOLLO_CLIENT.mutate({
+        mutation: updateExecutionStatusGQL,
+        variables: {
+            id: execution.id,
+            start_time: execution.start_time,
+            run_progress: execution.run_progress,
+            status: execution.status
         }
     });
 }

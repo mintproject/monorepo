@@ -3,7 +3,7 @@ import os, { type } from "os";
 import fs from "fs-extra";
 import { Md5 } from "ts-md5";
 import child_process from "child_process";
-import { incrementThreadModelSubmittedRuns, incrementThreadModelSuccessfulRuns, incrementThreadModelFailedRuns, updateExecutionStatusAndResults } from "../graphql/graphql_functions";
+import { incrementThreadModelSubmittedRuns, incrementThreadModelSuccessfulRuns, incrementThreadModelFailedRuns, updateExecutionStatusAndResults, updateExecutionStatus } from "../graphql/graphql_functions";
 import { Component, ComponentSeed, ComponentArgument } from "./local-execution-types";
 import { runImage } from "./docker-functions";
 import { Container } from "dockerode";
@@ -15,6 +15,10 @@ import { fetchMintConfig } from "../mint/mint-functions";
 
 module.exports = async (job: any) => {
     // Run the model seed (model config + bindings)
+
+    // Clone the job data object
+    job.data = JSON.parse(JSON.stringify(job.data)); 
+
     var seed: ComponentSeed = job.data.seed;
     var localex: LocalExecutionPreferences = job.data.prefs;
     var thread_model_id: string = job.data.thread_model_id;
@@ -28,6 +32,13 @@ module.exports = async (job: any) => {
 
     seed.execution.start_time = new Date();
 
+    // Initialize log file
+    if (! fs.existsSync(localex.logdir))
+    fs.mkdirsSync(localex.logdir)
+    let logstdout = localex.logdir + "/" + seed.execution.id + ".log";
+    fs.removeSync(logstdout);
+
+    // Setup execution
     let error = null;
     let comp : Component = seed.component;
     let inputdir = localex.datadir;
@@ -39,6 +50,7 @@ module.exports = async (job: any) => {
         fs.mkdirsSync(ostmp)
     let tmpprefix = ostmp + "/" + seed.execution.modelid.replace(/.*\//, '');
     let tempdir = fs.mkdtempSync(tmpprefix);
+    console.log(tempdir);
 
     try {
         // Copy component run directory to tempdir
@@ -115,11 +127,6 @@ module.exports = async (job: any) => {
             } as DataResource
         });
 
-        if (! fs.existsSync(localex.logdir))
-            fs.mkdirsSync(localex.logdir)
-
-        let logstdout = localex.logdir + "/" + seed.execution.id + ".log";
-
         let logstream = fs.createWriteStream(logstdout);
         logstream.write("current working directory: " + tempdir + "\n");
         logstream.write(command + " " + args.join(" ") + "\n");
@@ -133,22 +140,34 @@ module.exports = async (job: any) => {
 
         let cwl_file = comp.rundir + "/run.cwl";
         let cwl_outputs: any = {}
+        let is_cwl = false;
+
+        if (! fs.existsSync(tempdir))
+            fs.mkdirsSync(tempdir)
 
         if (fs.existsSync(cwl_file)) {
             console.log("Running cwl:" )
-            if (! fs.existsSync(tempdir))
-                fs.mkdirsSync(tempdir)
+            is_cwl = true;
+
+            // Create cwl output directory
+            let output_suffix_cwl = Md5.hashAsciiStr(seed.execution.modelid + plainargs.join());
+            outputdir = outputdir + '/' + output_suffix_cwl;
+            if (!fs.existsSync(outputdir)) {
+                fs.mkdirsSync(outputdir)
+            }
+
             let cwl_values_file = write_cwl_values(comp, seed, results, inputdir, tempdir, outputdir, plainargs)
             let cwl_args: string[] = [];
             let cwl_command = "cwltool"
             cwl_args.push("--no-read-only")
             cwl_args.push("--copy-outputs")
-            cwl_args.push("--user-space-docker-cmd")
-            cwl_args.push("docker")
+            cwl_args.push("--no-match-user")
+            //cwl_args.push("--user-space-docker-cmd")
+            //cwl_args.push("docker")
             cwl_args.push(cwl_file)
             cwl_args.push(cwl_values_file)
             console.log("running a new execution " + logstdout)
-            console.log("temporal directory " + tempdir)
+            console.log("temporary directory " + tempdir)
     
             console.log(cwl_command + " " + cwl_args.join(" ") + "\n");
             let spawnResult = child_process.spawnSync(cwl_command, cwl_args, {
@@ -223,62 +242,48 @@ module.exports = async (job: any) => {
             }
             statusCode = spawnResult.status;
         }
-        // Check for Errors
+
+
+        // Check for Errors & Process Results
         if(statusCode != 0) {
             error = "Execution returned with non-zero status code";
         }
-        else if (fs.existsSync(cwl_file)) {
-            //print the results
+        else {
+            // Process Results
             Object.values(results).map((result: any) => {
-                result.name = result.role
-                if (result.role in cwl_outputs){
+                // Rename temporary output files to desired output name
+                let desired_output_file = null;
+                let tmp_output_file = null;
+                if(is_cwl) {
+                    result.name = result.role
                     if (result.role !== undefined && result.role in cwl_outputs) {
                         let cwl_output = cwl_outputs[result.role];
-                        let output_suffix_cwl = Md5.hashAsciiStr(seed.execution.modelid + plainargs.join());
-                        let output_directory = outputdir + '/' + output_suffix_cwl;
-                        if (!fs.existsSync(output_directory)){
-                            fs.mkdirsSync(output_directory)
-                        }
-                        let output_file = output_directory + '/' + cwl_output['basename'];
-                        let tmpfile = cwl_output['path']
-                        console.log("the temporal file " + tmpfile )
-                        if (fs.existsSync(tmpfile)) {
-                            fs.copyFileSync(tmpfile, output_file);
-                            console.log("copy the outputs " + output_file )
-                        }
-                        let url =  output_file.replace(localex.datadir, localex.dataurl);
-                        console.log("the url is going to be" + url)
-                        result.url = url;
-                        }
-                    else {
-                        console.log("The input %s has been declared in the cwl document but cwltool doesn't match any results in the executions. Probably, you need to check the binding", result.role)
+                        desired_output_file = outputdir + '/' + cwl_output['basename'];
+                        tmp_output_file = cwl_output['path']
                     }
                 }
-            });
-            // Set the results
-            seed.execution.results = results;
-        }        
-        else {
-            // Check results (output files)
-            // - Copy output files from tempdir to output dir
-            // - Mark an error if any output file is missing
-            Object.values(results).map((result: DataResource) => {
-                var tmpfile = tempdir + "/" + result.name;
-                if (fs.existsSync(tmpfile)) {
-                    let opfilepath = outputdir + "/" + result.name;
-                    fs.copyFileSync(tmpfile, opfilepath);
-                }
                 else {
-                    //console.log(`${tmpfile} not found!`)
-                    error = `${tmpfile} not found!`;
+                    tmp_output_file = tempdir + "/" + result.name;
+                    desired_output_file = outputdir + "/" + result.name;
+                }
+                // Copy over the tempfile to desired output file
+                if (tmp_output_file && desired_output_file) {
+                    if (fs.existsSync(tmp_output_file)) {
+                        fs.copyFileSync(tmp_output_file, desired_output_file);
+                    }
+                    let url =  desired_output_file.replace(localex.datadir, localex.dataurl);
+                    result.url = url;
                 }
             });
-            // Set the results
             seed.execution.results = results;
         }
     }
     catch(e) {
-        error = e + "";
+        error = "ERROR: " + e;
+        let logstream = fs.createWriteStream(logstdout);
+        logstream.write("ERROR in Execution: \n");
+        logstream.write(error + "\n");
+        logstream.close();        
     }
 
     // Set the execution status
