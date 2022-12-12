@@ -2,7 +2,7 @@ import { Thread, Model, ThreadModelMap, ProblemStatement, MintPreferences, Execu
 import { getModelInputConfigurations, deleteThreadModelExecutionIds, setThreadModelExecutionIds, 
     getExecutionHash, getThreadModelExecutionIds, getExecutions, 
     setExecutions, deleteExecutions, 
-    setThreadModelExecutionSummary, getModelInputBindings, listSuccessfulExecutionIds, incrementThreadModelSubmittedRuns, incrementThreadModelSuccessfulRuns, getRegionDetails } from "../graphql/graphql_functions";
+    setThreadModelExecutionSummary, getModelInputBindings, listSuccessfulExecutionIds, incrementThreadModelSubmittedRuns, incrementThreadModelSuccessfulRuns, getRegionDetails, deleteModel } from "../graphql/graphql_functions";
 import { loadModelWCM, getModelCacheDirectory, queueModelExecutionsLocally } from "../localex/local-execution-functions";
 
 import fs from "fs-extra";
@@ -134,7 +134,7 @@ export const saveAndRunExecutionsForModelLocally = async(modelid: string,
                 }
 
                 // Queue the model executions
-                queueModelExecutionsLocally(thread, modelid, component, executions_to_be_run, prefs);
+                queueModelExecutionsLocally(thread, modelid, component, thread_region, executions_to_be_run, prefs);
             }
         }
         console.log("Finished submitting all executions for model: " + modelid);
@@ -200,12 +200,28 @@ export const deleteModelInputCacheLocally = (
 
 }
 
+export const deleteModelCache = (
+    model: Model,
+    prefs: MintPreferences) => {
+        // Delete cached model directory and zip file
+        let modeldir = getModelCacheDirectory(model.code_url, prefs);
+        if(modeldir != null) {
+            console.log("Deleting model directory: " + modeldir)
+            fs.remove(modeldir);
+            fs.remove(modeldir + ".zip");
+        }
+
+        deleteModel(model.id);
+        
+}
+
 export const deleteExecutableCacheForModelLocally = async(modelid: string, 
     thread: Thread, 
     prefs: MintPreferences) => {
 
     let model = thread.models[modelid];
     let thread_model_id = thread.model_ensembles[modelid].id;
+
     let all_execution_ids = await getThreadModelExecutionIds(thread_model_id);
 
     // Delete existing thread execution ids (*NOT* deleting global execution records  .. Only clearing list of the thread's execution id mappings)
@@ -217,6 +233,7 @@ export const deleteExecutableCacheForModelLocally = async(modelid: string,
     // Process executions in batches
     for(let i=0; i<all_execution_ids.length; i+= batchSize) {
         let executionids = all_execution_ids.slice(i, i+batchSize);
+        console.log("Deleteting executions: " + executionids.length)
            
         // Delete the actual execution documents
         deleteExecutions(executionids);
@@ -225,6 +242,7 @@ export const deleteExecutableCacheForModelLocally = async(modelid: string,
     // Delete cached model directory and zip file
     let modeldir = getModelCacheDirectory(model.code_url, prefs);
     if(modeldir != null) {
+        console.log("Deleting model directory: " + modeldir)
         fs.remove(modeldir);
         fs.remove(modeldir + ".zip");
     }

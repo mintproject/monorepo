@@ -1,0 +1,7 @@
+#import "../fragments/model-info.graphql"
+
+query query_model($id: String!) {
+    model_by_pk(id:$id) {
+        ...model_info
+    }
+}

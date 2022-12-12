@@ -1,5 +1,3 @@
-import { DEVMODE, DEVHOMEDIR, PORT } from "../../config/app";
-
 import {
     ProblemStatement,  Thread, Task, Model, DataResource,
     Execution, ExecutionSummary, MintPreferences, ModelIOBindings, ThreadModelMap, ProblemStatementInfo, ThreadInfo, DataMap, ModelEnsembleMap, IdMap, Region, BoundingBox } from '../mint/mint-types';
@@ -42,6 +40,9 @@ import listThreadModelExecutionIdsGQL from './queries/execution/list-thread-mode
 import newThreadModelExecutionsGQL from './queries/execution/new-thread-model-executions.graphql';
 import deleteThreadModelExecutionsGQL from './queries/execution/delete-thread-model-executions.graphql';
 
+import getModelGQL from './queries/model/get.graphql';
+import deleteModelGQL from './queries/model/delete.graphql';
+
 import { problemStatementFromGQL, taskFromGQL, threadFromGQL, 
     executionFromGQL,
     executionToGQL, 
@@ -56,9 +57,9 @@ import { problemStatementFromGQL, taskFromGQL, threadFromGQL,
     threadParameterBindingsToGQL,
     executionResultsToGQL,
     regionFromGQL,
-    eventToGQL} from './graphql_adapter';
+    eventToGQL,
+    modelFromGQL} from './graphql_adapter';
 import { Md5 } from 'ts-md5';
-import { isObject } from "util";
 import { KeycloakAdapter } from "../../config/keycloak-adapter";
 
 
@@ -145,6 +146,33 @@ export const getThread = async(threadid: string) : Promise<Thread> => {
     });
 }
 
+export const getModel = async(modelid: string) : Promise<Model> => {
+    let APOLLO_CLIENT = GraphQL.instance(KeycloakAdapter.getUser());
+    return APOLLO_CLIENT.query({
+        query: getModelGQL,
+        fetchPolicy: 'no-cache',
+        variables: {
+            id: modelid
+        }
+    }).then(result => {
+        if(!result || (result.errors && result.errors.length > 0)) {
+            console.log("ERROR");
+            console.log(result);
+        }
+        else {
+            let model = result.data.model_by_pk;
+            if(model) {
+                return modelFromGQL(model);
+            }
+        }
+        return null;
+    }).catch((e) => {
+        console.log("ERROR");
+        console.log(e);
+        return null;
+    });
+}
+
 const MAX_CONFIGURATIONS = 1000000;
 export const getTotalConfigurations = (model: ModelConfigurationSetup, bindings: ModelIOBindings, data: DataMap) => {
     let totalconfigs = 1;
@@ -218,15 +246,6 @@ export const getModelInputConfigurations = (
     }
 }
 
-const _getRegionGeoJson = (region: Region) => {
-    let geojson = {"type":"FeatureCollection","features":[]};
-    region.geometries.map((geom) => {
-        let feature = {"type": "Feature", "geometry": geom};
-        geojson["features"].push(feature)
-    });
-    return JSON.stringify(geojson)
-}
-
 export const getModelInputBindings = (model: Model, thread: Thread, region: Region) => {
     let me = thread.model_ensembles[model.id];
     let threadModel = {
@@ -260,18 +279,32 @@ export const getModelInputBindings = (model: Model, thread: Thread, region: Regi
     
     // Add adjustable parameters to the input ids
     model.input_parameters.map((io) => {
-        if(!io.value) inputIds.push(io.id);
+        inputIds.push(io.id);
+
+        if(io.value) {
+            // If this is a non-adjustable parameter, set the binding value to the fixed value
+            threadModel.bindings[io.id] = [io.value];
+        }
         
-        // HACK: Substitute __region_geojson with the actual region geojson
-        if(io.value == "__region_geojson") {
-            let region_geojson = _getRegionGeoJson(region)
-            io.value = region_geojson;
+        // HACK: Add region id to __region_geojson (Not replacing )
+        if(threadModel.bindings[io.id][0] == "__region_geojson") {
+            threadModel.bindings[io.id] = ["__region_geojson:"+region.id];
         }
     })
 
     return [threadModel, inputIds];
 };
 
+
+export const deleteModel = async (model_id: string) => {
+    let APOLLO_CLIENT = GraphQL.instance(KeycloakAdapter.getUser());
+    return APOLLO_CLIENT.mutate({
+        mutation: deleteModelGQL,
+        variables: {
+            id: model_id
+        }
+    });
+}
 
 /* 
     Executions
@@ -340,7 +373,7 @@ export const getExecutionHash = (execution: Execution) : string => {
     let varids = Object.keys(execution.bindings).sort();
     varids.map((varid) => {
         let binding = execution.bindings[varid];
-        let bindingid = isObject(binding) ? (binding as DataResource).id : binding;
+        let bindingid = (binding !== null && typeof binding === 'object') ? (binding as DataResource).id : binding;
         str += varid + "=" + bindingid + "&";
     })
     return Md5.hashStr(str).toString();
@@ -400,13 +433,18 @@ export const listSuccessfulExecutionIds = (executionids: string[]) : Promise<str
 // Update Executions
 export const setExecutions = (executions: Execution[], thread_model_id: string) => {
     let APOLLO_CLIENT = GraphQL.instance(KeycloakAdapter.getUser());
+    let exobjs = executions.map((ex) => executionToGQL(ex))
+    let exids = executions.map((ex) => ex.id)
     return APOLLO_CLIENT.mutate({
         mutation: setExecutionsGQL,
         variables: {
-            ids: executions.map((ex) => ex.id),
+            ids: exids,
             tmid: thread_model_id,
-            executions: executions.map((ex) => executionToGQL(ex))
+            executions: exobjs
         }
+    }).catch((e) => {
+        console.log("ERROR");
+        console.log(e);
     });
 }
 

@@ -12,6 +12,7 @@ import { EXECUTION_QUEUE_NAME, REDIS_URL } from "../../config/redis";
 import { pullImage } from "./docker-functions";
 import { Md5 } from "ts-md5";
 import { getConfiguration } from "../mint/mint-functions";
+import { Region } from "../mint/mint-types";
 
 let prefs = getConfiguration();
 
@@ -272,11 +273,22 @@ export const loadModelWCM = async (url: string, model: Model, prefs: MintPrefere
     return details;
 }
 
+
+const _getRegionGeoJson = (region: Region) => {
+    let geojson = {"type":"FeatureCollection","features":[]};
+    region.geometries.map((geom) => {
+        let feature = {"type": "Feature", "geometry": geom};
+        geojson["features"].push(feature)
+    });
+    return JSON.stringify(geojson)
+}
+
 // Create Jobs (Seeds) and Queue them
 export const queueModelExecutionsLocally =
     async (thread: Thread,
         modelid: string,
         component: Component,
+        region: Region,
         executions: Execution[],
         prefs: MintPreferences): Promise<Queue.Job<any>[]> => {
 
@@ -341,6 +353,12 @@ export const queueModelExecutionsLocally =
                     let value = bindings[ip.id];
                     parameters[ip.id] = value.toString();
                 }
+                // HACK: Replace region geojson
+                if(parameters[ip.id].match(/__region_geojson:(.+)/)) {
+                    let region_geojson = _getRegionGeoJson(region);
+                    parameters[ip.id] = region_geojson;
+                }
+
                 paramtypes[ip.id] = ip.type;
             });
 
