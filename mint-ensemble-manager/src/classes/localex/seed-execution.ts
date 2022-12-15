@@ -295,7 +295,8 @@ module.exports = async (job: any) => {
     }
 
     // Remove temporary directory
-    fs.remove(tempdir)
+    fs.removeSync(tempdir)
+    
     // Update execution status and results in backend
     if(!DEVMODE) {
         updateExecutionStatusAndResults(seed.execution);
