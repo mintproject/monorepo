@@ -61,6 +61,11 @@ export const saveAndRunExecutionsForModelLocally = async(modelid: string,
         // - TODO: Change to allow flexibility
         let configs = getModelInputConfigurations(threadModel, inputIds);
 
+        let datadir = prefs.localex.datadir;
+
+        if(!fs.existsSync(datadir))
+            fs.mkdirsSync(datadir);
+
         if(configs != null) {
             // Pre-Run Setup
             // Reset execution summary
