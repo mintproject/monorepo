@@ -277,6 +277,9 @@ module.exports = async (job: any) => {
             });
             seed.execution.results = results;
         }
+        
+        // Remove temporary directory
+        fs.removeSync(tempdir)        
     }
     catch(e) {
         error = "ERROR: " + e;
@@ -294,9 +297,6 @@ module.exports = async (job: any) => {
         seed.execution.status = "FAILURE";
     }
 
-    // Remove temporary directory
-    fs.removeSync(tempdir)
-    
     // Update execution status and results in backend
     if(!DEVMODE) {
         updateExecutionStatusAndResults(seed.execution);
