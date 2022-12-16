@@ -298,19 +298,18 @@ module.exports = async (job: any) => {
     }
 
     // Update execution status and results in backend
-    if(!DEVMODE) {
-        updateExecutionStatusAndResults(seed.execution);
-    }
+    if(!DEVMODE)
+        await updateExecutionStatusAndResults(seed.execution);
 
     // Return job execution or error
     if(seed.execution.status == "SUCCESS") {
         if(!DEVMODE)
-            incrementThreadModelSuccessfulRuns(thread_model_id);
+            await incrementThreadModelSuccessfulRuns(thread_model_id);
         return Promise.resolve(seed.execution);
     }
     else {
         if(!DEVMODE)
-            incrementThreadModelFailedRuns(thread_model_id);
+            await incrementThreadModelFailedRuns(thread_model_id);
         return Promise.reject(new Error(error));
     }
 
