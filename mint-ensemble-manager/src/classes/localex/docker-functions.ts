@@ -16,6 +16,7 @@ export const runImage = async (cmd: string[], image: string, logstream:any,
     return dockerode.run(image, cmd, logstream, {
         'WorkingDir': workingDirectory,
         'Binds': folderBindings,
-        'EntryPoint': ""
+        'EntryPoint': "",
+        'User': "1000:1000"
     });
 }
