@@ -160,16 +160,23 @@ const _downloadWCM = async (url: string, prefs: MintPreferences) => {
 }
 
 const _getModelDetailsFromYAML = (modeldir: string) => {
-    let ymlfile = modeldir + "/wings-component.yml";
-    if (!fs.existsSync(ymlfile)) {
-        ymlfile = modeldir + "/wings-component.yaml";
+    const wcmYamlFileName = modeldir + "/wings-component.yml";
+    const wcmYamlFileNameAlternative = modeldir + "/wings-component.yaml";
+
+    if (fs.existsSync(wcmYamlFileName)) {
+        const wcmYamlFile = wcmYamlFileName;
+    } else if (fs.existsSync(wcmYamlFileName)) {
+        const wcmYamlFile = wcmYamlFileNameAlternative;
+    } else {
+        throw new Error("The component is not a valid WINGS component.");
     }
+    
     let comp: Component = {
         rundir: modeldir + "/src",
         inputs: [],
         outputs: [],
     };
-    let yml = yaml.safeLoad(fs.readFileSync(ymlfile, 'utf8')) as Wcm;
+    let yml = yaml.safeLoad(fs.readFileSync(wcmYamlFileName, 'utf8')) as Wcm;
     let wings = yml["wings"]
     wings.inputs.map((input: any) => {
         comp.inputs.push(input);
@@ -220,22 +227,28 @@ const _getModelDetails = (model: Model, modeldir: string) => {
     let okoutput = true;
     model.input_files.map((input) => {
         let details = _getModelIODetails(input, "input");
-        if (!details)
+        if (!details){
             okinput = false;
+            console.error("Input file missing position: " + input.id);
+        }
         else
             comp.inputs.push(details);
     })
     model.input_parameters.map((param) => {
         let details = _getModelParamDetails(param);
-        if (!details)
+        if (!details){
             okparam = false;
+            console.error("Input parameter missing position: " + param.id);
+        }
         else
             comp.inputs.push(details);
     })
     model.output_files.map((output) => {
         let details = _getModelIODetails(output, "output");
-        if (!details)
+        if (!details){
             okoutput = false;
+            console.error("Output file missing position: " + output.id);
+        }
         else
             comp.outputs.push(details);
     })
