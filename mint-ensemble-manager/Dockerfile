@@ -26,6 +26,8 @@ COPY --chown=node:node . .
 
 RUN mkdir -p /data && chown -R node:node /data
 
+RUN apk add --no-cache tini
+ENTRYPOINT ["/sbin/tini", "--"]
 # Build ensemble manager
 USER node
 RUN NODE_OPTIONS=--openssl-legacy-provider npm run build
