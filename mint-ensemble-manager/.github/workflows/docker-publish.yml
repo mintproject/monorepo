@@ -141,7 +141,7 @@ jobs:
           token: ${{ secrets.MINT_INSTANCES }}
 
 
-      - name: Update MINT ISI WIFIRE 
+      - name: Update MINT TACC 
         uses: fjogeleit/yaml-update-action@main
         if: github.event_name == 'push' && github.ref == 'refs/heads/master'
         with:
