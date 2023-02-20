@@ -140,6 +140,21 @@ jobs:
           branch: master 
           token: ${{ secrets.MINT_INSTANCES }}
 
+
+      - name: Update MINT ISI WIFIRE 
+        uses: fjogeleit/yaml-update-action@main
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        with:
+          valueFile: tacc/values.yaml
+          propertyPath: "MINT.components.ensemble_manager.image.tag"
+          value: ${{ env.DOCKER_TAG }}
+          message: "Update ensemble_manager"
+          repository: mintproject/mint-instances
+          workDir: infrastructure
+          branch: master 
+          token: ${{ secrets.MINT_INSTANCES }}
+
+
       - name: Update MINT ISI dev
         uses: fjogeleit/yaml-update-action@main
         if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
