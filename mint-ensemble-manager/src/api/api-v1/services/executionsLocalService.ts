@@ -3,13 +3,7 @@ import { Thread } from "../../../classes/mint/mint-types";
 import { saveAndRunExecutionsLocally, deleteExecutableCacheLocally } from "../../../classes/mint/mint-local-functions";
 import { fetchMintConfig } from "../../../classes/mint/mint-functions";
 import { KeycloakAdapter } from "../../../config/keycloak-adapter";
-
-const createResponse = (result: string, message: string) => {
-    return {
-        result: result,
-        message: message
-    };
-}
+import { createResponse } from "./util";
 
 const executionsLocalService = {
     async submitExecution(threadmodel: any) {

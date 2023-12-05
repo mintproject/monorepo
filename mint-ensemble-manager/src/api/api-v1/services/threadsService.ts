@@ -6,15 +6,9 @@ import { getCreateEvent, uuidv4 } from "../../../classes/graphql/graphql_adapter
 import { fetchMintConfig } from "../../../classes/mint/mint-functions";
 import { ModelConfigurationSetup } from '@mintproject/modelcatalog_client';
 import { KeycloakAdapter } from "../../../config/keycloak-adapter";
+import { createResponse } from "./util";
 
 // ./api-v1/services/threadsService.js
-
-const createResponse = (result: string, message: string) => {
-    return {
-        result: result,
-        message: message
-    };
-}
 
 function flatten(array)
 {

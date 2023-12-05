@@ -1,15 +1,9 @@
 import { getThread, getProblemStatement } from "../../../classes/graphql/graphql_functions";
 import { Thread, ProblemStatement } from "../../../classes/mint/mint-types";
 import { monitorAllExecutions, fetchMintConfig } from "../../../classes/mint/mint-functions";
+import { createResponse } from "./util";
 
 // ./api-v1/services/monitorsService.js
-
-const createResponse = (result: string, message: string) => {
-    return {
-        result: result,
-        message: message
-    };
-}
 
 const monitorsService = {
     async submitMonitor(threadmodel: any) {

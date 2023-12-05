@@ -1,13 +1,14 @@
-import { Thread, Model, ThreadModelMap, ProblemStatement, MintPreferences, ExecutionSummary, Execution } from "./mint-types";
+import { Thread, Model, ThreadModelMap, ProblemStatement, MintPreferences, ExecutionSummary, Execution, Dataset } from "./mint-types";
 import { getModelInputConfigurations, deleteThreadModelExecutionIds, setThreadModelExecutionIds, 
     getExecutionHash, getThreadModelExecutionIds, getExecutions, 
     setExecutions, deleteExecutions, 
-    setThreadModelExecutionSummary, getModelInputBindings, listSuccessfulExecutionIds, incrementThreadModelSubmittedRuns, incrementThreadModelSuccessfulRuns, getRegionDetails, deleteModel } from "../graphql/graphql_functions";
+    setThreadModelExecutionSummary, getModelInputBindings, listSuccessfulExecutionIds, incrementThreadModelSubmittedRuns, incrementThreadModelSuccessfulRuns, getRegionDetails, deleteModel, updateExecutionStatus, incrementThreadModelRegisteredRuns } from "../graphql/graphql_functions";
 import { loadModelWCM, getModelCacheDirectory, queueModelExecutionsLocally } from "../localex/local-execution-functions";
 
 import fs from "fs-extra";
 
 import { DEVMODE } from "../../config/app";
+import { registerDataset } from "./data-catalog-functions";
 
 export const saveAndRunExecutionsLocally = async (
         thread: Thread, 
@@ -233,12 +234,12 @@ export const deleteExecutableCacheForModelLocally = async(modelid: string,
     deleteThreadModelExecutionIds(thread_model_id);
 
     // Work in batches
-    let batchSize = 500; // Deal with executions from firebase in this batch size
+    let batchSize = 500; 
 
     // Process executions in batches
     for(let i=0; i<all_execution_ids.length; i+= batchSize) {
         let executionids = all_execution_ids.slice(i, i+batchSize);
-        console.log("Deleteting executions: " + executionids.length)
+        console.log("Deleting executions: " + executionids.length)
            
         // Delete the actual execution documents
         deleteExecutions(executionids);
@@ -263,4 +264,126 @@ export const deleteExecutableCacheForModelLocally = async(modelid: string,
     summary.submitted_for_execution = false;
 
     await setThreadModelExecutionSummary(thread_model_id, summary);
+}
+
+
+export const registerExecutionResults = async (
+    thread: Thread, 
+    modelid: string,
+    prefs: MintPreferences) => {
+
+    let ok = false;
+    for(let pmodelid in thread.model_ensembles) {
+        if(!modelid || (modelid == pmodelid)) {
+            ok = await registerModelExecutionResults(pmodelid, thread, prefs);
+            if (!ok) {
+                return false;
+            }
+        }
+    }
+    if (ok) {
+        console.log("Finished registering all execution outputs");
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+
+export const registerModelExecutionResults = async(modelid: string, 
+    thread: Thread, 
+    prefs: MintPreferences) => {
+
+    try {
+        if(!thread.execution_summary)
+            thread.execution_summary = {};
+        
+        let model = thread.models[modelid];
+        let thread_model_id = thread.model_ensembles[modelid].id;
+        
+        await setThreadModelExecutionSummary(thread_model_id, {
+            submitted_for_ingestion: true,
+            submitted_for_publishing: true,
+            submitted_for_registration: true
+        } as ExecutionSummary);
+
+        let all_execution_ids = await getThreadModelExecutionIds(thread_model_id);
+
+        // Work in batches
+        let batchSize = 500; 
+
+        // Process executions in batches
+        for(let i=0; i<all_execution_ids.length; i+= batchSize) {
+            let executionids = all_execution_ids.slice(i, i+batchSize);
+            console.log("Registering outputs for executions: " + executionids.length)
+            //console.log(executionids);
+            
+            // Register the execution outputs
+            await registerExecutionOutputsInCatalog(executionids, model, prefs);
+            await incrementThreadModelRegisteredRuns(thread_model_id, executionids.length);
+        }
+    }
+    catch(e) {
+        console.log(e);
+    }
+    return false;
+}
+
+
+export const registerExecutionOutputsInCatalog = async(
+    executionids: string[],
+    model: Model,
+    prefs: MintPreferences) => {
+        
+    let executions = await getExecutions(executionids);
+
+    executions.map(async (execution) => {
+        // Only register outputs of successful executions
+        if(execution.status == "SUCCESS") {
+            // Copy any input's spatial/temporal input (if any)
+            let spatial = null;
+            let temporal = null;
+            for(let inputid in execution.bindings) {
+                let input = execution.bindings[inputid];
+                if(input["spatial_coverage"]) {
+                    spatial = JSON.stringify(input["spatial_coverage"])
+                }
+                if(input["start_date"] && input["end_date"]) {
+                    temporal = input["start_date"] + " to " + input["end_date"];
+                }
+            }
+
+            let promises = [];
+
+            // Register outputs in the data catalog
+            model.output_files.map((outf) => {
+                if (execution.results[outf.id]) {
+                    // Register output with the appropriate variable and spatio-temporal information from input (if transferred) 
+                    let output = execution.results[outf.id];
+                    let ds = {
+                        name: `${outf.name}-${execution.id}`,
+                        variables: outf.variables,
+                        datatype: output.type,
+                        time_period: null, // Fixme
+                        is_cached: false,
+                        resource_repr: null,
+                        dataset_repr: null,
+                        resources: [{
+                            name: `${output.name}-${execution.id}`,
+                            url: output.url
+                        }],
+                        resource_count: 1,
+                        spatial_coverage: spatial,
+                    } as Dataset
+
+                    promises.push(registerDataset(ds, prefs));
+                }
+            });
+
+            let values = await Promise.all(promises);
+            if (values.length == model.output_files.length) {
+                console.log("Finished registering outputs for execution: " + execution.id);
+            }
+        }
+    });
 }

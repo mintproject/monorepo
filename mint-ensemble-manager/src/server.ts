@@ -6,7 +6,8 @@ import swaggerUi from "swagger-ui-express";
 
 import v1ExecutionsService from './api/api-v1/services/executionsService';
 import v1ExecutionsLocalService from './api/api-v1/services/executionsLocalService';
-import v1ExecutionQueService from './api/api-v1/services/executionQueueService';
+import v1RegistrationService from './api/api-v1/services/registrationService';
+import v1ExecutionQueueService from './api/api-v1/services/executionQueueService';
 import v1MonitorsService from './api/api-v1/services/monitorsService';
 import v1LogsService from './api/api-v1/services/logsService';
 import v1ThreadsService from './api/api-v1/services/threadsService';
@@ -41,7 +42,8 @@ initialize({
     dependencies: {
         executionsService: v1ExecutionsService,
         executionsLocalService: v1ExecutionsLocalService,
-        executionQueueService: v1ExecutionQueService,
+        executionQueueService: v1ExecutionQueueService,
+        registrationService: v1RegistrationService,
         monitorsService: v1MonitorsService,
         threadsService: v1ThreadsService,
         logsService: v1LogsService,

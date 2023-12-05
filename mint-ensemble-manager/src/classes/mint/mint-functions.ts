@@ -19,6 +19,7 @@ export const getConfiguration = () : MintPreferences => {
     if (!config_file) {
         config_file = __dirname + "/config/config.json"
     }
+
     let prefs = JSON.parse(fs.readFileSync(config_file, 'utf8')) as MintPreferences;
     if (prefs.graphql && !prefs.graphql.secret && process.env.HASURA_GRAPHQL_ADMIN_SECRET) {
         prefs.graphql.secret = process.env.HASURA_GRAPHQL_ADMIN_SECRET;

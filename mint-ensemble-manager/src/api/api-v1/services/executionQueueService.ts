@@ -1,15 +1,8 @@
 import Queue from "bull";
 import { EXECUTION_QUEUE_NAME, REDIS_URL } from "../../../config/redis";
+import { createResponse } from "./util";
 
 // ./api-v1/services/executionsLocalService.js
-
-const createResponse = (result: string, message: string) => {
-    return {
-        result: result,
-        message: message
-    };
-}
-
 const cleanQueue = (queue: Queue.Queue) => {
     queue.empty();
     queue.clean(0, 'delayed');

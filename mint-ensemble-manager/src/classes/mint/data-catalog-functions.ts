@@ -109,3 +109,55 @@ export const queryDatasetDetails = async (modelid: string, inputid: string, driv
         });
     });
 };
+
+export const registerDataset = async (dataset: Dataset, prefs: MintPreferences) : Promise<boolean> => {
+    // If datacatalog is CKAN, we need to convert the dataset object to CKAN format and convert
+    if (prefs.data_catalog_type == "CKAN") {
+        return await registerCKANDataset(dataset, prefs);
+    }
+    else {
+        // Register in internal data catalog
+    }
+};
+
+export const registerCKANDataset = async (dataset: Dataset, prefs: MintPreferences) : Promise<boolean> => {
+    let ckan_dataset = {
+        name: dataset.name,
+        title: dataset.name,
+        notes: dataset.description,
+        owner_org: prefs.data_catalog_extra.owner_organization_id,
+        private: false,
+        version: dataset.version,
+        extras: [
+            { 
+                key: "spatial",
+                value: dataset.spatial_coverage || ""
+            }
+        ],
+        tags: dataset.variables.map((v) => { 
+            return { name: "stdvar." + v }
+        }),
+        resources: dataset.resources.map((res) => {
+            return {
+                name: res.name,
+                url: res.url
+            }
+        })
+    };
+    return new Promise<boolean>((resolve, reject) => {
+        rp.post({
+            url: prefs.data_catalog_api + "/api/action/package_create",
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': prefs.data_catalog_key
+            },
+            body: ckan_dataset,
+            json: true
+        }).then((obj) => {
+            resolve(true);
+        }).catch((err) => {
+            console.log(err);
+            reject(err);
+        });
+    });
+}

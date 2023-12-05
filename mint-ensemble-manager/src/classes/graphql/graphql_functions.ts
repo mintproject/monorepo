@@ -35,6 +35,7 @@ import updateExecutionSummary from './queries/execution/update-execution-summary
 import incFailedRunsGQL from './queries/execution/increment-failed-runs.graphql';
 import incSuccessfulRunsGQL from './queries/execution/increment-successful-runs.graphql';
 import incSubmittedRunsGQL from './queries/execution/increment-submitted-runs.graphql';
+import incRegisteredRunsGQL from './queries/execution/increment-registered-runs.graphql';
 
 import listThreadModelExecutionIdsGQL from './queries/execution/list-thread-model-executions.graphql';
 import newThreadModelExecutionsGQL from './queries/execution/new-thread-model-executions.graphql';
@@ -595,6 +596,17 @@ export const incrementThreadModelFailedRuns = (thread_model_id: string, num: num
     });
 };
 
+// Increment thread outputs registered runs
+export const incrementThreadModelRegisteredRuns = (thread_model_id: string, num: number = 1) =>  {
+    let APOLLO_CLIENT = GraphQL.instance(KeycloakAdapter.getUser());
+    return APOLLO_CLIENT.mutate({
+        mutation: incRegisteredRunsGQL,
+        variables: {
+            threadModelId: thread_model_id,
+            inc: num
+        }
+    });
+};
 
 /* Update Functions */
 // Add ProblemStatement
