@@ -1,247 +1,247 @@
-import { env } from "process"
+import { env } from "process";
 
 export interface IdMap<T> {
-    [id: string]: T
+    [id: string]: T;
 }
 
 export interface IdNameObject {
-    id?: string
-    name?: string
+    id?: string;
+    name?: string;
 }
 
 export interface User {
-    email: string
-    uid: string
-    region: string
-    graph: string
+    email: string;
+    uid: string;
+    region: string;
+    graph: string;
 }
 
 export interface AppState {
-    page: string,
-    subpage: string,
-    user?: User,
-    prefs?: UserPreferences
+    page: string;
+    subpage: string;
+    user?: User;
+    prefs?: UserPreferences;
 }
 
 export interface UserPreferences {
-    mint: MintPreferences
+    mint: MintPreferences;
 }
 
 export interface MintPreferences {
-    data_catalog_api: string,
-    data_catalog_type: string,
-    data_catalog_key: string,
-    data_catalog_extra: any,
+    data_catalog_api: string;
+    data_catalog_type: string;
+    data_catalog_key: string;
+    data_catalog_extra: any;
 
-    model_catalog_api?: string,
-    ensemble_manager_api: string,
-    ingestion_api: string,
-    visualization_url: string,
-    execution_engine?: "wings" | "localex",
+    model_catalog_api?: string;
+    ensemble_manager_api: string;
+    ingestion_api: string;
+    visualization_url: string;
+    execution_engine?: "wings" | "localex";
     // Local Execution
-    localex?: LocalExecutionPreferences,
-    // Wings Execution  
-    wings?: WingsPreferences,
-    graphql?: GraphQLPreferences,
-    wings_api?: string,
+    localex?: LocalExecutionPreferences;
+    // Wings Execution
+    wings?: WingsPreferences;
+    graphql?: GraphQLPreferences;
+    wings_api?: string;
     //maps
-    google_maps_key: string,
+    google_maps_key: string;
     //auth
-    auth_server: string,
-    auth_realm: string,
-    auth_client_id: string,
+    auth_server: string;
+    auth_realm: string;
+    auth_client_id: string;
 
     //old
-    apiKey: string,
-    authDomain: string,
-    databaseURL: string,
-    projectId: string,
-    storageBucket: string,
-    messagingSenderId: string,
-    appId: string,
-    cromo_api?: string
+    apiKey: string;
+    authDomain: string;
+    databaseURL: string;
+    projectId: string;
+    storageBucket: string;
+    messagingSenderId: string;
+    appId: string;
+    cromo_api?: string;
 }
 
 export interface GraphQLPreferences {
-    endpoint: string,
-    enable_ssl: boolean,
-    secret: string,
-    username: string,
-    password: string
+    endpoint: string;
+    enable_ssl: boolean;
+    secret: string;
+    username: string;
+    password: string;
 }
 
 export interface WingsPreferences {
-    server: string,
-    domain: string,
-    username: string,
-    password: string,
-    datadir: string,
-    dataurl: string
+    server: string;
+    domain: string;
+    username: string;
+    password: string;
+    datadir: string;
+    dataurl: string;
     // The following is retrieved from wings itself
-    export_url?: string,
-    storage?: string,
-    dotpath?: string,
-    onturl?: string,
+    export_url?: string;
+    storage?: string;
+    dotpath?: string;
+    onturl?: string;
 }
 
 export interface LocalExecutionPreferences {
-    datadir: string,
-    dataurl: string,
-    logdir: string,
-    logurl: string,
-    codedir: string,
-    tempdir: string,
-    parallelism: number
+    datadir: string;
+    dataurl: string;
+    logdir: string;
+    logurl: string;
+    codedir: string;
+    tempdir: string;
+    parallelism: number;
 }
 
 export type RegionMap = IdMap<Region>;
 
 export interface Region extends IdNameObject {
-    bounding_box?: BoundingBox,
-    model_catalog_uri?: string,
-    category_id: string,
-    geometries: any[]
+    bounding_box?: BoundingBox;
+    model_catalog_uri?: string;
+    category_id: string;
+    geometries: any[];
 }
 
 export interface RegionsState {
-    regions?: RegionMap,
-    top_region_ids?: string[],
-    sub_region_ids?: IdMap<string[]>,
-    categories?: IdMap<RegionCategory>
-    bbox_preview?: BoundingBox[]
+    regions?: RegionMap;
+    top_region_ids?: string[];
+    sub_region_ids?: IdMap<string[]>;
+    categories?: IdMap<RegionCategory>;
+    bbox_preview?: BoundingBox[];
 }
 
 export interface RegionCategory extends IdNameObject {
-    citation?: string,
-    subcategories?: RegionCategory[]
+    citation?: string;
+    subcategories?: RegionCategory[];
 }
 
 export interface BoundingBox {
-    xmin: number
-    xmax: number
-    ymin: number
-    ymax: number
+    xmin: number;
+    xmax: number;
+    ymin: number;
+    ymax: number;
 }
 
 export interface Point {
-    x: number,
-    y: number
+    x: number;
+    y: number;
 }
 
 export interface Dataset extends IdNameObject {
-    region: string,
-    variables: string[],
-    datatype: string,
-    time_period: DateRange,
-    description: string,
-    version: string,
-    limitations: string,
-    source: Source,
-    categories?: string[],
-    is_cached?: boolean,
-    resource_repr?: any,
-    dataset_repr?: any,
-    resources: DataResource[],
-    resources_loaded?: boolean,
-    resource_count?: number,
-    spatial_coverage?: any,
-};
+    region: string;
+    variables: string[];
+    datatype: string;
+    time_period: DateRange;
+    description: string;
+    version: string;
+    limitations: string;
+    source: Source;
+    categories?: string[];
+    is_cached?: boolean;
+    resource_repr?: any;
+    dataset_repr?: any;
+    resources: DataResource[];
+    resources_loaded?: boolean;
+    resource_count?: number;
+    spatial_coverage?: any;
+}
 
 export interface Dataslice extends IdNameObject {
-    dataset: Dataset,
-    total_resources?: number,
-    selected_resources?: number,
-    resources: DataResource[],
-    resources_loaded?: boolean,
-    time_period: DateRange,
-    spatial_coverage?: any
+    dataset: Dataset;
+    total_resources?: number;
+    selected_resources?: number;
+    resources: DataResource[];
+    resources_loaded?: boolean;
+    time_period: DateRange;
+    spatial_coverage?: any;
 }
 
 export interface DataResource extends IdNameObject {
-    url: string
-    time_period?: DateRange,
-    spatial_coverage?: any
-    selected? : boolean
+    url: string;
+    time_period?: DateRange;
+    spatial_coverage?: any;
+    selected?: boolean;
 }
 
 export interface DatasetDetail extends Dataset {
-    documentation: string,
-    image: string
+    documentation: string;
+    image: string;
 }
 
 export interface Source {
-    name: string,
-    url: string,
-    type: string
+    name: string;
+    url: string;
+    type: string;
 }
 
 export interface DatasetQueryParameters {
-    spatialCoverage?: BoundingBox,
-    dateRange?: DateRange,
-    name?: string,
-    variables?: string[]
+    spatialCoverage?: BoundingBox;
+    dateRange?: DateRange;
+    name?: string;
+    variables?: string[];
 }
 
 export interface DatasetsState {
-    model_datasets?: ModelDatasets
-    query_datasets?: DatasetsWithStatus
-    region_datasets?: DatasetsWithStatus
-    dataset?: DatasetWithStatus
-    datasets?: IdMap<Dataset>
+    model_datasets?: ModelDatasets;
+    query_datasets?: DatasetsWithStatus;
+    region_datasets?: DatasetsWithStatus;
+    dataset?: DatasetWithStatus;
+    datasets?: IdMap<Dataset>;
 }
 export interface DatasetsWithStatus {
-    loading: boolean,
-    datasets: Dataset[]
+    loading: boolean;
+    datasets: Dataset[];
 }
 export interface DatasetWithStatus {
-    loading: boolean,
-    dataset: Dataset
+    loading: boolean;
+    dataset: Dataset;
 }
-export type ModelInputDatasets = Map<string, DatasetsWithStatus[]>
-export type ModelDatasets = Map<string, ModelInputDatasets>
+export type ModelInputDatasets = Map<string, DatasetsWithStatus[]>;
+export type ModelDatasets = Map<string, ModelInputDatasets>;
 
 export interface Model extends IdNameObject {
-    localname?: string,
-    region_name: string,
-    description?: string,
-    category: string,
-    input_files: ModelIO[],
-    input_parameters: ModelParameter[],
-    output_files: ModelIO[],
-    code_url?: string,
-    model_type?: string,
-    model_name?: string,
-    model_version?: string,
-    model_configuration?:string,
-    parameter_assignment?: string,
-    parameter_assignment_details?: string,
-    software_image?: string,
-    calibration_target_variable?: string,
-    modeled_processes?: string[],
-    dimensionality?: number|string,
-    spatial_grid_type?: string,
-    spatial_grid_resolution?: string,
-    output_time_interval?: string,
-    usage_notes?: string,
-    indicators?: string,
-    hasRegion?: any
-};
-
-const getLastPart = (s:string) => {
-    let sp = s.split('/');
-    if (sp && sp.length > 0) return sp.pop();
-    return '';
+    localname?: string;
+    region_name: string;
+    description?: string;
+    category: string;
+    input_files: ModelIO[];
+    input_parameters: ModelParameter[];
+    output_files: ModelIO[];
+    code_url?: string;
+    model_type?: string;
+    model_name?: string;
+    model_version?: string;
+    model_configuration?: string;
+    parameter_assignment?: string;
+    parameter_assignment_details?: string;
+    software_image?: string;
+    calibration_target_variable?: string;
+    modeled_processes?: string[];
+    dimensionality?: number | string;
+    spatial_grid_type?: string;
+    spatial_grid_resolution?: string;
+    output_time_interval?: string;
+    usage_notes?: string;
+    indicators?: string;
+    hasRegion?: any;
 }
 
-export const getPathFromModel = (m:Model) => {
+const getLastPart = (s: string) => {
+    const sp = s.split("/");
+    if (sp && sp.length > 0) return sp.pop();
+    return "";
+};
+
+export const getPathFromModel = (m: Model) => {
     let path = "";
-    let model = getLastPart(m.model_name);
+    const model = getLastPart(m.model_name);
     if (model) {
         path += "/" + model;
-        let version = getLastPart(m.model_version);
+        const version = getLastPart(m.model_version);
         if (version) {
             path += "/" + version;
-            let cfg = getLastPart(m.model_configuration)
+            const cfg = getLastPart(m.model_configuration);
             if (cfg) {
                 path += "/" + cfg;
                 path += "/" + getLastPart(m.id);
@@ -249,268 +249,274 @@ export const getPathFromModel = (m:Model) => {
         }
     }
     return path;
-}
+};
 
 export interface ModelIO extends IdNameObject {
-    type?: string,
-    variables: string[],
-    value?: Dataslice,
-    position?: number,
-    format?: string
+    type?: string;
+    variables: string[];
+    value?: Dataslice;
+    position?: number;
+    format?: string;
 }
 
 export interface ModelParameter extends IdNameObject {
-    type: string,
-    description?: string,
-    min?: string,
-    max?: string,
-    unit?: string,
-    default?: string,
-    value?: string,
-    adjustment_variable?: string,
-    accepted_values?: string[],
-    position?: number
+    type: string;
+    description?: string;
+    min?: string;
+    max?: string;
+    unit?: string;
+    default?: string;
+    value?: string;
+    adjustment_variable?: string;
+    accepted_values?: string[];
+    position?: number;
 }
 
 export interface ModelDetail extends Model {
-    documentation: string,
-    lookupTable: string,
-    image: string
+    documentation: string;
+    lookupTable: string;
+    image: string;
 }
 
 export interface ModelsState {
-    models: VariableModels,
-    model: ModelDetail | null,
-    loading: boolean
+    models: VariableModels;
+    model: ModelDetail | null;
+    loading: boolean;
 }
 
-export type VariableModels = Map<string, Model[]> // Map of response variable to models
+export type VariableModels = Map<string, Model[]>; // Map of response variable to models
 
 export interface ModelingState {
-    problem_statements?: ProblemStatementList
-    problem_statement?: ProblemStatement
-    thread?: Thread
-    execution_summaries?: ThreadModelExecutionSummary
-    executions?: ThreadModelExecutions
+    problem_statements?: ProblemStatementList;
+    problem_statement?: ProblemStatement;
+    thread?: Thread;
+    execution_summaries?: ThreadModelExecutionSummary;
+    executions?: ThreadModelExecutions;
 }
 
 export interface ExecutionsWithStatus {
-    loading: boolean,
-    changed: boolean,
-    executions: Execution[]
+    loading: boolean;
+    changed: boolean;
+    executions: Execution[];
 }
 
 export type ModelExecutions = {
-    [modelid: string]: ExecutionsWithStatus
-}
+    [modelid: string]: ExecutionsWithStatus;
+};
 
 export type ThreadModelExecutions = {
-    [threadid: string]: ModelExecutions
-}
-
+    [threadid: string]: ModelExecutions;
+};
 
 export type ThreadModelExecutionSummary = {
-    [threadid: string]: ModelExecutionSummary
-}
+    [threadid: string]: ModelExecutionSummary;
+};
 
 export type ModelExecutionSummary = {
-    [modelid: string]: ExecutionSummary
-}
+    [modelid: string]: ExecutionSummary;
+};
 
 export interface MintPermission {
-    userid: string,
-    read: boolean,
-    write: boolean,
-    execute: boolean,
-    owner: boolean
+    userid: string;
+    read: boolean;
+    write: boolean;
+    execute: boolean;
+    owner: boolean;
 }
 
 export interface MintEvent {
-    event: string,
-    userid: string
-    timestamp: Date
-    notes: string
+    event: string;
+    userid: string;
+    timestamp: Date;
+    notes: string;
 }
 
 export interface ProblemStatementEvent extends MintEvent {
-    event: "CREATE" | "UPDATE" | "ADD_TASK" | "DELETE_TASK"
+    event: "CREATE" | "UPDATE" | "ADD_TASK" | "DELETE_TASK";
 }
 
 export interface TaskEvent extends MintEvent {
-    event: "CREATE" | "UPDATE" | "ADD_THREAD" | "DELETE_THREAD"
+    event: "CREATE" | "UPDATE" | "ADD_THREAD" | "DELETE_THREAD";
 }
 
 export interface ThreadEvent extends MintEvent {
-    event: "CREATE" | "UPDATE" | "SELECT_DATA" | "SELECT_MODELS" | "SELECT_PARAMETERS" | "EXECUTE" | "INGEST" | "VISUALIZE"
+    event:
+        | "CREATE"
+        | "UPDATE"
+        | "SELECT_DATA"
+        | "SELECT_MODELS"
+        | "SELECT_PARAMETERS"
+        | "EXECUTE"
+        | "INGEST"
+        | "VISUALIZE";
 }
 
 export interface ProblemStatementList {
-    problem_statement_ids: string[]
-    problem_statements: IdMap<ProblemStatementInfo>
-    unsubscribe?: Function
+    problem_statement_ids: string[];
+    problem_statements: IdMap<ProblemStatementInfo>;
+    unsubscribe?: Function;
 }
 
 export interface ProblemStatementInfo extends IdNameObject {
-    regionid: string
-    dates: DateRange
-    events?: ProblemStatementEvent[]
-    permissions?: MintPermission[]
-    preview?: string[]
+    regionid: string;
+    dates: DateRange;
+    events?: ProblemStatementEvent[];
+    permissions?: MintPermission[];
+    preview?: string[];
 }
 
 export interface DateRange {
-    start_date: Date
-    end_date: Date
+    start_date: Date;
+    end_date: Date;
 }
 
 export interface ProblemStatement extends ProblemStatementInfo {
-    tasks: IdMap<Task>
-    changed?: boolean
-    unsubscribe?: Function
+    tasks: IdMap<Task>;
+    changed?: boolean;
+    unsubscribe?: Function;
 }
 
 export interface ThreadInfo extends IdNameObject {
-    dates?: DateRange
-    task_id: string
-    driving_variables: string[]
-    response_variables: string[]
-    regionid?: string
-    events?: ThreadEvent[]
-    permissions?: MintPermission[]
+    dates?: DateRange;
+    task_id: string;
+    driving_variables: string[];
+    response_variables: string[];
+    regionid?: string;
+    events?: ThreadEvent[];
+    permissions?: MintPermission[];
 }
 
 export interface ThreadList {
-    thread_ids: string[]
-    threads: IdMap<ThreadInfo>
-    unsubscribe?: Function
+    thread_ids: string[];
+    threads: IdMap<ThreadInfo>;
+    unsubscribe?: Function;
 }
 
 export interface Thread extends ThreadInfo {
-    models?: ModelMap
-    data?: DataMap
-    model_ensembles?: ModelEnsembleMap
+    models?: ModelMap;
+    data?: DataMap;
+    model_ensembles?: ModelEnsembleMap;
     //data_transformations?: IdMap<DataTransformation>
-    model_dt_ensembles?: ModelEnsembleMap
-    execution_summary: IdMap<ExecutionSummary>
-    visualizations?: Visualization[]
-    events: ThreadEvent[]
-    changed?: boolean
-    refresh?: boolean
-    unsubscribe?: Function
+    model_dt_ensembles?: ModelEnsembleMap;
+    execution_summary: IdMap<ExecutionSummary>;
+    visualizations?: Visualization[];
+    events: ThreadEvent[];
+    changed?: boolean;
+    refresh?: boolean;
+    unsubscribe?: Function;
 }
 
 export interface Visualization {
-    type: string,
-    url: string
+    type: string;
+    url: string;
 }
 
 export interface ComparisonFeature {
-    name: string,
-    fn: Function
+    name: string;
+    fn: Function;
 }
 
-export type ModelMap = IdMap<Model>
+export type ModelMap = IdMap<Model>;
 
-export type DataMap = IdMap<Dataslice>
+export type DataMap = IdMap<Dataslice>;
 
 export interface TaskList {
-    task_ids: string[]
-    tasks: IdMap<Task>
-    unsubscribe?: Function
+    task_ids: string[];
+    tasks: IdMap<Task>;
+    unsubscribe?: Function;
 }
 
 export interface Task extends IdNameObject {
-    problem_statement_id: string,
-    dates?: DateRange,
-    response_variables: string[],
-    driving_variables: string[],
-    regionid?: string,
-    threads?: IdMap<ThreadInfo>
-    events?: TaskEvent[]
-    permissions?: MintPermission[]
-    unsubscribe?: Function
+    problem_statement_id: string;
+    dates?: DateRange;
+    response_variables: string[];
+    driving_variables: string[];
+    regionid?: string;
+    threads?: IdMap<ThreadInfo>;
+    events?: TaskEvent[];
+    permissions?: MintPermission[];
+    unsubscribe?: Function;
 }
 
 // Mapping of model id to data ensembles
 export interface ModelEnsembleMap {
-    [modelid: string]: ThreadModelMap
+    [modelid: string]: ThreadModelMap;
 }
 
 export interface ThreadModelMap {
-    id: string,
-    bindings: ModelIOBindings
+    id: string;
+    bindings: ModelIOBindings;
 }
 
 // Mapping of model input to list of values (data ids or parameter values)
 export interface ModelIOBindings {
-    [inputid: string]: string[]
+    [inputid: string]: string[];
 }
 
 export interface ExecutionSummary {
-    workflow_name?: string
-    changed?: boolean
-    unsubscribe?: Function
+    workflow_name?: string;
+    changed?: boolean;
+    unsubscribe?: Function;
 
-    submitted_for_execution: boolean
-    submission_time: Date
-    total_runs: number
-    submitted_runs: number
-    successful_runs: number
-    failed_runs: number
+    submitted_for_execution: boolean;
+    submission_time: Date;
+    total_runs: number;
+    submitted_runs: number;
+    successful_runs: number;
+    failed_runs: number;
 
-    submitted_for_ingestion: boolean
-    fetched_run_outputs: number // Run data fetched for ingestion
-    ingested_runs: number // Run data ingested in the Visualization database
+    submitted_for_ingestion: boolean;
+    fetched_run_outputs: number; // Run data fetched for ingestion
+    ingested_runs: number; // Run data ingested in the Visualization database
 
-    submitted_for_registration: boolean
-    registered_runs: number // Registered in the data catalog
+    submitted_for_registration: boolean;
+    registered_runs: number; // Registered in the data catalog
 
-    submitted_for_publishing: boolean
-    published_runs: number // Published in the provenance catalog
+    submitted_for_publishing: boolean;
+    published_runs: number; // Published in the provenance catalog
 }
 
 export interface Execution {
-    id?: string
-    modelid: string
-    bindings: InputBindings
-    runid?: string
-    start_time: Date
-    end_time?: Date
-    execution_engine?: "wings" | "localex"
-    status: "FAILURE" | "SUCCESS" | "RUNNING" | "WAITING",
-    run_progress?: number // 0 to 100 (percentage done)
-    results: any[] // Chosen results after completed run
-    selected: boolean
+    id?: string;
+    modelid: string;
+    bindings: InputBindings;
+    runid?: string;
+    start_time: Date;
+    end_time?: Date;
+    execution_engine?: "wings" | "localex";
+    status: "FAILURE" | "SUCCESS" | "RUNNING" | "WAITING";
+    run_progress?: number; // 0 to 100 (percentage done)
+    results: any[]; // Chosen results after completed run
+    selected: boolean;
 }
 
 export interface InputBindings {
-    [input: string]: string | DataResource
+    [input: string]: string | DataResource;
 }
 
 export type VariableMap = IdMap<Variable>;
 
 export interface Variable extends IdNameObject {
-    description: string,
-    is_adjustment_variable: boolean,
-    is_indicator: boolean,
-    categories: string[],
-    intervention: Intervention
+    description: string;
+    is_adjustment_variable: boolean;
+    is_indicator: boolean;
+    categories: string[];
+    intervention: Intervention;
 }
 
 export interface Intervention extends IdNameObject {
-    description: string
+    description: string;
 }
 
 export interface VariablesState {
-    variables?: VariableMap
+    variables?: VariableMap;
 }
 
 export interface Wcm {
-    wings: any ;
+    wings: any;
 }
 
 export interface WingsWcm {
-    inputs: ModelIO[],
-    outputs: ModelIO[],
-
+    inputs: ModelIO[];
+    outputs: ModelIO[];
 }

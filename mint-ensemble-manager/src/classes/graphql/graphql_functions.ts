@@ -1,52 +1,71 @@
 import {
-    ProblemStatement,  Thread, Task, Model, DataResource,
-    Execution, ExecutionSummary, MintPreferences, ModelIOBindings, ThreadModelMap, ProblemStatementInfo, ThreadInfo, DataMap, ModelEnsembleMap, IdMap, Region, BoundingBox } from '../mint/mint-types';
-import { ModelConfigurationSetup } from '@mintproject/modelcatalog_client';
+    ProblemStatement,
+    Thread,
+    Task,
+    Model,
+    DataResource,
+    Execution,
+    ExecutionSummary,
+    MintPreferences,
+    ModelIOBindings,
+    ThreadModelMap,
+    ProblemStatementInfo,
+    ThreadInfo,
+    DataMap,
+    ModelEnsembleMap,
+    IdMap,
+    Region,
+    BoundingBox
+} from "../mint/mint-types";
+import { ModelConfigurationSetup } from "@mintproject/modelcatalog_client";
 
-import { GraphQL } from '../../config/graphql';
+import { GraphQL } from "../../config/graphql";
 
-import getProblemStatementGQL from './queries/problem-statement/get.graphql';
-import getTaskGQL from './queries/task/get.graphql';
-import getThreadGQL from './queries/thread/get.graphql';
+import getProblemStatementGQL from "./queries/problem-statement/get.graphql";
+import getTaskGQL from "./queries/task/get.graphql";
+import getThreadGQL from "./queries/thread/get.graphql";
 
-import newProblemStatementGQL from './queries/problem-statement/new.graphql';
-import newTaskGQL from './queries/task/new.graphql';
-import newThreadGQL from './queries/thread/new.graphql';
+import newProblemStatementGQL from "./queries/problem-statement/new.graphql";
+import newTaskGQL from "./queries/task/new.graphql";
+import newThreadGQL from "./queries/thread/new.graphql";
 
-import updateProblemStatementGQL from './queries/problem-statement/update.graphql';
-import updateTaskGQL from './queries/task/update.graphql';
-import updateThreadModelGQL from './queries/thread/update-models.graphql';
-import updateThreadDataGQL from './queries/thread/update-datasets.graphql';
-import updateThreadParametersGQL from './queries/thread/update-parameters.graphql';
-import updateThreadInfoGQL from './queries/thread/update-info.graphql';
+import updateProblemStatementGQL from "./queries/problem-statement/update.graphql";
+import updateTaskGQL from "./queries/task/update.graphql";
+import updateThreadModelGQL from "./queries/thread/update-models.graphql";
+import updateThreadDataGQL from "./queries/thread/update-datasets.graphql";
+import updateThreadParametersGQL from "./queries/thread/update-parameters.graphql";
+import updateThreadInfoGQL from "./queries/thread/update-info.graphql";
 
-import getExecutionGQL from './queries/execution/get.graphql';
-import listSuccessfulIdsGQL from './queries/execution/list-successful-ids.graphql';
-import listExistingIdStatusGQL from './queries/execution/list-existing-ids.graphql';
-import getExecutionsGQL from './queries/execution/list.graphql';
-import setExecutionsGQL from './queries/execution/new.graphql';
-import updateExecutionStatusResultsGQL from './queries/execution/update-status-results.graphql';
-import updateExecutionStatusGQL from './queries/execution/update-status-results.graphql';
-import deleteExecutionsGQL from './queries/execution/delete.graphql';
+import getExecutionGQL from "./queries/execution/get.graphql";
+import listSuccessfulIdsGQL from "./queries/execution/list-successful-ids.graphql";
+import listExistingIdStatusGQL from "./queries/execution/list-existing-ids.graphql";
+import getExecutionsGQL from "./queries/execution/list.graphql";
+import setExecutionsGQL from "./queries/execution/new.graphql";
+import updateExecutionStatusResultsGQL from "./queries/execution/update-status-results.graphql";
+import updateExecutionStatusGQL from "./queries/execution/update-status-results.graphql";
+import deleteExecutionsGQL from "./queries/execution/delete.graphql";
 
-import getRegionDetailsGQL from './queries/region/get.graphql';
+import getRegionDetailsGQL from "./queries/region/get.graphql";
 
-import updateExecutionSummary from './queries/execution/update-execution-summary.graphql';
-import incFailedRunsGQL from './queries/execution/increment-failed-runs.graphql';
-import incSuccessfulRunsGQL from './queries/execution/increment-successful-runs.graphql';
-import incSubmittedRunsGQL from './queries/execution/increment-submitted-runs.graphql';
-import incRegisteredRunsGQL from './queries/execution/increment-registered-runs.graphql';
+import updateExecutionSummary from "./queries/execution/update-execution-summary.graphql";
+import incFailedRunsGQL from "./queries/execution/increment-failed-runs.graphql";
+import incSuccessfulRunsGQL from "./queries/execution/increment-successful-runs.graphql";
+import incSubmittedRunsGQL from "./queries/execution/increment-submitted-runs.graphql";
+import incRegisteredRunsGQL from "./queries/execution/increment-registered-runs.graphql";
 
-import listThreadModelExecutionIdsGQL from './queries/execution/list-thread-model-executions.graphql';
-import newThreadModelExecutionsGQL from './queries/execution/new-thread-model-executions.graphql';
-import deleteThreadModelExecutionsGQL from './queries/execution/delete-thread-model-executions.graphql';
+import listThreadModelExecutionIdsGQL from "./queries/execution/list-thread-model-executions.graphql";
+import newThreadModelExecutionsGQL from "./queries/execution/new-thread-model-executions.graphql";
+import deleteThreadModelExecutionsGQL from "./queries/execution/delete-thread-model-executions.graphql";
 
-import getModelGQL from './queries/model/get.graphql';
-import deleteModelGQL from './queries/model/delete.graphql';
+import getModelGQL from "./queries/model/get.graphql";
+import deleteModelGQL from "./queries/model/delete.graphql";
 
-import { problemStatementFromGQL, taskFromGQL, threadFromGQL, 
+import {
+    problemStatementFromGQL,
+    taskFromGQL,
+    threadFromGQL,
     executionFromGQL,
-    executionToGQL, 
+    executionToGQL,
     problemStatementToGQL,
     taskToGQL,
     threadInfoToGQL,
@@ -59,160 +78,168 @@ import { problemStatementFromGQL, taskFromGQL, threadFromGQL,
     executionResultsToGQL,
     regionFromGQL,
     eventToGQL,
-    modelFromGQL} from './graphql_adapter';
-import { Md5 } from 'ts-md5';
+    modelFromGQL
+} from "./graphql_adapter";
+import { Md5 } from "ts-md5";
 import { KeycloakAdapter } from "../../config/keycloak-adapter";
 
-
-export const getProblemStatement = async(problem_statement_id: string) : Promise<ProblemStatement> => {
-    let APOLLO_CLIENT = GraphQL.instance(KeycloakAdapter.getUser());
+export const getProblemStatement = async (
+    problem_statement_id: string
+): Promise<ProblemStatement> => {
+    const APOLLO_CLIENT = GraphQL.instance(KeycloakAdapter.getUser());
     return APOLLO_CLIENT.query({
         query: getProblemStatementGQL,
         variables: {
             id: problem_statement_id
         }
-    }).then(result => {
-        if(!result || (result.errors && result.errors.length > 0)) {
-            console.log("ERROR");
-            console.log(result);
-        }
-        else {
-            let problem = result.data.problem_statement_by_pk;
-            if(problem) {
-                return problemStatementFromGQL(problem);
+    })
+        .then((result) => {
+            if (!result || (result.errors && result.errors.length > 0)) {
+                console.log("ERROR");
+                console.log(result);
+            } else {
+                const problem = result.data.problem_statement_by_pk;
+                if (problem) {
+                    return problemStatementFromGQL(problem);
+                }
             }
-        }
-        return null;
-    }).catch((e) => {
-        console.log("ERROR");
-        console.log(e);
-        return null;
-    }).catch((e) => {
-        console.log("ERROR");
-        console.log(e);
-        return null;
-    });
-}
+            return null;
+        })
+        .catch((e) => {
+            console.log("ERROR");
+            console.log(e);
+            return null;
+        })
+        .catch((e) => {
+            console.log("ERROR");
+            console.log(e);
+            return null;
+        });
+};
 
-export const getTask = async(taskid: string) : Promise<Task> => {
-    let APOLLO_CLIENT = GraphQL.instance(KeycloakAdapter.getUser());
+export const getTask = async (taskid: string): Promise<Task> => {
+    const APOLLO_CLIENT = GraphQL.instance(KeycloakAdapter.getUser());
     return APOLLO_CLIENT.query({
         query: getTaskGQL,
         variables: {
             id: taskid
         }
-    }).then(result => {
-        if(!result || (result.errors && result.errors.length > 0)) {
-            console.log("ERROR");
-            console.log(result);
-        }
-        else {
-            let task = result.data.task_by_pk;
-            if(task) {
-                return taskFromGQL(task);
+    })
+        .then((result) => {
+            if (!result || (result.errors && result.errors.length > 0)) {
+                console.log("ERROR");
+                console.log(result);
+            } else {
+                const task = result.data.task_by_pk;
+                if (task) {
+                    return taskFromGQL(task);
+                }
             }
-        }
-        return null;
-    }).catch((e) => {
-        console.log("ERROR");
-        console.log(e);
-        return null;
-    });
-}
+            return null;
+        })
+        .catch((e) => {
+            console.log("ERROR");
+            console.log(e);
+            return null;
+        });
+};
 
-export const getThread = async(threadid: string) : Promise<Thread> => {
-    let APOLLO_CLIENT = GraphQL.instance(KeycloakAdapter.getUser());
+export const getThread = async (threadid: string): Promise<Thread> => {
+    const APOLLO_CLIENT = GraphQL.instance(KeycloakAdapter.getUser());
     return APOLLO_CLIENT.query({
         query: getThreadGQL,
-        fetchPolicy: 'no-cache',
+        fetchPolicy: "no-cache",
         variables: {
             id: threadid
         }
-    }).then(result => {
-        if(!result || (result.errors && result.errors.length > 0)) {
-            console.log("ERROR");
-            console.log(result);
-        }
-        else {
-            let thread = result.data.thread_by_pk;
-            if(thread) {
-                return threadFromGQL(thread);
+    })
+        .then((result) => {
+            if (!result || (result.errors && result.errors.length > 0)) {
+                console.log("ERROR");
+                console.log(result);
+            } else {
+                const thread = result.data.thread_by_pk;
+                if (thread) {
+                    return threadFromGQL(thread);
+                }
             }
-        }
-        return null;
-    }).catch((e) => {
-        console.log("ERROR");
-        console.log(e);
-        return null;
-    });
-}
+            return null;
+        })
+        .catch((e) => {
+            console.log("ERROR");
+            console.log(e);
+            return null;
+        });
+};
 
-export const getModel = async(modelid: string) : Promise<Model> => {
-    let APOLLO_CLIENT = GraphQL.instance(KeycloakAdapter.getUser());
+export const getModel = async (modelid: string): Promise<Model> => {
+    const APOLLO_CLIENT = GraphQL.instance(KeycloakAdapter.getUser());
     return APOLLO_CLIENT.query({
         query: getModelGQL,
-        fetchPolicy: 'no-cache',
+        fetchPolicy: "no-cache",
         variables: {
             id: modelid
         }
-    }).then(result => {
-        if(!result || (result.errors && result.errors.length > 0)) {
-            console.log("ERROR");
-            console.log(result);
-        }
-        else {
-            let model = result.data.model_by_pk;
-            if(model) {
-                return modelFromGQL(model);
+    })
+        .then((result) => {
+            if (!result || (result.errors && result.errors.length > 0)) {
+                console.log("ERROR");
+                console.log(result);
+            } else {
+                const model = result.data.model_by_pk;
+                if (model) {
+                    return modelFromGQL(model);
+                }
             }
-        }
-        return null;
-    }).catch((e) => {
-        console.log("ERROR");
-        console.log(e);
-        return null;
-    });
-}
+            return null;
+        })
+        .catch((e) => {
+            console.log("ERROR");
+            console.log(e);
+            return null;
+        });
+};
 
 const MAX_CONFIGURATIONS = 1000000;
-export const getTotalConfigurations = (model: ModelConfigurationSetup, bindings: ModelIOBindings, data: DataMap) => {
+export const getTotalConfigurations = (
+    model: ModelConfigurationSetup,
+    bindings: ModelIOBindings,
+    data: DataMap
+) => {
     let totalconfigs = 1;
     model.hasInput.map((io) => {
-        if(!io.hasFixedResource || io.hasFixedResource.length == 0) {
+        if (!io.hasFixedResource || io.hasFixedResource.length == 0) {
             // Expand a dataset to it's constituent resources
             // FIXME: Create a collection if the model input has dimensionality of 1
-            if(bindings[io.id]) {
-                let nexecution : any[] = [];
+            if (bindings[io.id]) {
+                let nexecution: any[] = [];
                 bindings[io.id].map((dsid) => {
-                    let ds = data[dsid];
+                    const ds = data[dsid];
                     let selected_resources = ds.resources.filter((res) => res.selected);
                     // Fix for older saved resources
-                    if(!selected_resources || selected_resources.length == 0) 
+                    if (!selected_resources || selected_resources.length == 0)
                         selected_resources = ds.resources;
                     nexecution = nexecution.concat(selected_resources);
                 });
                 totalconfigs *= nexecution.length;
             }
-        }
-        else {
+        } else {
             totalconfigs *= (io.hasFixedResource as any[]).length;
         }
-    })
-    
+    });
+
     // Add adjustable parameters to the input ids
     model.hasParameter.map((io) => {
-        if(!io.hasFixedValue || io.hasFixedValue.length == 0)
-            totalconfigs *= (bindings[io.id]?.length ?? 1);
+        if (!io.hasFixedValue || io.hasFixedValue.length == 0)
+            totalconfigs *= bindings[io.id]?.length ?? 1;
     });
 
     return totalconfigs;
-}
+};
 
-const cartProd = (lists : any[]) => {
-    let ps : any[] = [],
-        acc : any [][] = [
-            []
-        ],
+const cartProd = (lists: any[]) => {
+    let ps: any[] = [],
+        acc: any[][] = [[]],
         i = lists.length;
     while (i--) {
         let subList = lists[i],
@@ -220,222 +247,228 @@ const cartProd = (lists : any[]) => {
         while (j--) {
             let x = subList[j],
                 k = acc.length;
-            while (k--) ps.push([x].concat(acc[k]))
-        };
+            while (k--) ps.push([x].concat(acc[k]));
+        }
         acc = ps;
         ps = [];
-    };
+    }
     return acc.reverse();
 };
 
-export const getModelInputConfigurations = (
-        threadModel: ThreadModelMap,
-        inputIds: string[]) => {
-    let dataBindings = threadModel.bindings;
-    let inputBindings : any[] = [];
+export const getModelInputConfigurations = (threadModel: ThreadModelMap, inputIds: string[]) => {
+    const dataBindings = threadModel.bindings;
+    const inputBindings: any[] = [];
     let totalproducts = 1;
     inputIds.map((inputid) => {
         inputBindings.push(dataBindings[inputid]);
-        if(dataBindings[inputid])
-            totalproducts *= dataBindings[inputid].length;
+        if (dataBindings[inputid]) totalproducts *= dataBindings[inputid].length;
     });
-    if(totalproducts < MAX_CONFIGURATIONS) {
+    if (totalproducts < MAX_CONFIGURATIONS) {
         return cartProd(inputBindings);
-    }
-    else {
+    } else {
         return null;
     }
-}
+};
 
 export const getModelInputBindings = (model: Model, thread: Thread, region: Region) => {
-    let me = thread.model_ensembles[model.id];
-    let threadModel = {
+    const me = thread.model_ensembles[model.id];
+    const threadModel = {
         id: me.id,
         bindings: Object.assign({}, me.bindings)
     } as ThreadModelMap;
-    let inputIds : any[] = [];
+    const inputIds: any[] = [];
 
     model.input_files.map((io) => {
         inputIds.push(io.id);
-        if(!io.value) {
+        if (!io.value) {
             // Expand a dataset to it's constituent "selected" resources
             // FIXME: Create a collection if the model input has dimensionality of 1
-            if(threadModel.bindings[io.id]) {
-                let nexecution : any[] = [];
+            if (threadModel.bindings[io.id]) {
+                let nexecution: any[] = [];
                 threadModel.bindings[io.id].map((dsid) => {
-                    let ds = thread.data[dsid];
+                    const ds = thread.data[dsid];
                     let selected_resources = ds.resources.filter((res) => res.selected);
                     // Fix for older saved resources
-                    if(selected_resources.length == 0) 
-                        selected_resources = ds.resources;
+                    if (selected_resources.length == 0) selected_resources = ds.resources;
                     nexecution = nexecution.concat(selected_resources);
                 });
                 threadModel.bindings[io.id] = nexecution;
             }
-        }
-        else {
+        } else {
             threadModel.bindings[io.id] = io.value.resources as any[];
         }
-    })
-    
+    });
+
     // Add adjustable parameters to the input ids
     model.input_parameters.map((io) => {
         inputIds.push(io.id);
 
-        if(io.value) {
+        if (io.value) {
             // If this is a non-adjustable parameter, set the binding value to the fixed value
             threadModel.bindings[io.id] = [io.value];
         }
-        
+
         // HACK: Add region id to __region_geojson (Not replacing )
-        if(threadModel.bindings[io.id] && threadModel.bindings[io.id][0] == "__region_geojson") {
-            threadModel.bindings[io.id] = ["__region_geojson:"+region.id];
+        if (threadModel.bindings[io.id] && threadModel.bindings[io.id][0] == "__region_geojson") {
+            threadModel.bindings[io.id] = ["__region_geojson:" + region.id];
         }
-    })
+    });
 
     return [threadModel, inputIds];
 };
 
-
 export const deleteModel = async (model_id: string) => {
-    let APOLLO_CLIENT = GraphQL.instance(KeycloakAdapter.getUser());
+    const APOLLO_CLIENT = GraphQL.instance(KeycloakAdapter.getUser());
     return APOLLO_CLIENT.mutate({
         mutation: deleteModelGQL,
         variables: {
             id: model_id
         }
     });
-}
+};
 
-/* 
+/*
     Executions
 */
-export const getExecution = async(executionid: string) : Promise<Execution> => {
-    let APOLLO_CLIENT = GraphQL.instance(KeycloakAdapter.getUser());
+export const getExecution = async (executionid: string): Promise<Execution> => {
+    const APOLLO_CLIENT = GraphQL.instance(KeycloakAdapter.getUser());
     return APOLLO_CLIENT.query({
         query: getExecutionGQL,
         variables: {
             id: executionid
         }
-    }).then(result => {
-        if(!result || (result.errors && result.errors.length > 0)) {
-            console.log("ERROR");
-            console.log(result);
-        }
-        else {
-            let execution = result.data.execution_by_pk;
-            if(execution) {
-                return executionFromGQL(execution);
+    })
+        .then((result) => {
+            if (!result || (result.errors && result.errors.length > 0)) {
+                console.log("ERROR");
+                console.log(result);
+            } else {
+                const execution = result.data.execution_by_pk;
+                if (execution) {
+                    return executionFromGQL(execution);
+                }
             }
-        }
-        return null;
-    }).catch((e) => {
-        console.log("ERROR");
-        console.log(e);
-        return null;
-    });
-}
+            return null;
+        })
+        .catch((e) => {
+            console.log("ERROR");
+            console.log(e);
+            return null;
+        });
+};
 
 // Get Executions
-export const getExecutions = (executionids: string[]) : Promise<Execution[]> => {
-    let APOLLO_CLIENT = GraphQL.instance(KeycloakAdapter.getUser());
+export const getExecutions = (executionids: string[]): Promise<Execution[]> => {
+    const APOLLO_CLIENT = GraphQL.instance(KeycloakAdapter.getUser());
     return APOLLO_CLIENT.query({
         query: getExecutionsGQL,
         variables: {
             ids: executionids
         }
-    }).then((result) => {
-        if(!result || (result.errors && result.errors.length > 0)) {
+    })
+        .then((result) => {
+            if (!result || (result.errors && result.errors.length > 0)) {
+                console.log("ERROR");
+                console.log(result);
+            } else {
+                return result.data.execution.map((ex: any) => executionFromGQL(ex));
+            }
+            return null;
+        })
+        .catch((e) => {
             console.log("ERROR");
-            console.log(result);
-        }
-        else {
-            return result.data.execution.map((ex:any) => executionFromGQL(ex));
-        }
-        return null;        
-    }).catch((e) => {
-        console.log("ERROR");
-        console.log(e);
-        return null;
-    });
+            console.log(e);
+            return null;
+        });
 };
 
-export const getMatchingExecution = (executions: Execution[], execution: Execution, hashes: string[]) => {
-    let hash = getExecutionHash(execution);
-    let index = hashes.indexOf(hash);
-    if(index >= 0) {
+export const getMatchingExecution = (
+    executions: Execution[],
+    execution: Execution,
+    hashes: string[]
+) => {
+    const hash = getExecutionHash(execution);
+    const index = hashes.indexOf(hash);
+    if (index >= 0) {
         return executions[index];
     }
     return null;
-}
+};
 
-export const getExecutionHash = (execution: Execution) : string => {
+export const getExecutionHash = (execution: Execution): string => {
     let str = execution.modelid;
-    let varids = Object.keys(execution.bindings).sort();
+    const varids = Object.keys(execution.bindings).sort();
     varids.map((varid) => {
-        let binding = execution.bindings[varid];
-        let bindingid = (binding !== null && typeof binding === 'object') ? (binding as DataResource).id : binding;
+        const binding = execution.bindings[varid];
+        const bindingid =
+            binding !== null && typeof binding === "object"
+                ? (binding as DataResource).id
+                : binding;
         str += varid + "=" + bindingid + "&";
-    })
+    });
     return Md5.hashStr(str).toString();
-}
+};
 
 // List Existing Execution Ids
-export const listExistingExecutionIdStatus = (executionids: string[]) : Promise<Map<string,string>> => {
-    let APOLLO_CLIENT = GraphQL.instance(KeycloakAdapter.getUser());
+export const listExistingExecutionIdStatus = (
+    executionids: string[]
+): Promise<Map<string, string>> => {
+    const APOLLO_CLIENT = GraphQL.instance(KeycloakAdapter.getUser());
     return APOLLO_CLIENT.query({
         query: listExistingIdStatusGQL,
         variables: {
             ids: executionids
         }
-    }).then((result) => {
-        if(!result || (result.errors && result.errors.length > 0)) {
+    })
+        .then((result) => {
+            if (!result || (result.errors && result.errors.length > 0)) {
+                console.log("ERROR");
+                console.log(result);
+            } else {
+                const idstatus = {};
+                result.data.execution.forEach((ex: any) => {
+                    idstatus[ex["id"].replace(/-/g, "")] = ex["status"];
+                });
+            }
+            return null;
+        })
+        .catch((e) => {
             console.log("ERROR");
-            console.log(result);
-        }
-        else {
-            let idstatus = {}
-            result.data.execution.forEach((ex:any) => { 
-                idstatus[ex["id"].replace(/-/g, "")] = ex["status"];
-            });
-        }
-        return null;        
-    }).catch((e) => {
-        console.log("ERROR");
-        console.log(e);
-        return null;
-    });
+            console.log(e);
+            return null;
+        });
 };
 
 // List Successful Execution Ids
-export const listSuccessfulExecutionIds = (executionids: string[]) : Promise<string[]> => {
-    let APOLLO_CLIENT = GraphQL.instance(KeycloakAdapter.getUser());
+export const listSuccessfulExecutionIds = (executionids: string[]): Promise<string[]> => {
+    const APOLLO_CLIENT = GraphQL.instance(KeycloakAdapter.getUser());
     return APOLLO_CLIENT.query({
         query: listSuccessfulIdsGQL,
         variables: {
             ids: executionids
         }
-    }).then((result) => {
-        if(!result || (result.errors && result.errors.length > 0)) {
+    })
+        .then((result) => {
+            if (!result || (result.errors && result.errors.length > 0)) {
+                console.log("ERROR");
+                console.log(result);
+            } else {
+                return result.data.execution.map((ex: any) => ex["id"].replace(/-/g, ""));
+            }
+            return null;
+        })
+        .catch((e) => {
             console.log("ERROR");
-            console.log(result);
-        }
-        else {
-            return result.data.execution.map((ex:any) => ex["id"].replace(/-/g, ""));
-        }
-        return null;        
-    }).catch((e) => {
-        console.log("ERROR");
-        console.log(e);
-        return null;
-    });
+            console.log(e);
+            return null;
+        });
 };
 
 // Update Executions
 export const setExecutions = (executions: Execution[], thread_model_id: string) => {
-    let APOLLO_CLIENT = GraphQL.instance(KeycloakAdapter.getUser());
-    let exobjs = executions.map((ex) => executionToGQL(ex))
-    let exids = executions.map((ex) => ex.id)
+    const APOLLO_CLIENT = GraphQL.instance(KeycloakAdapter.getUser());
+    const exobjs = executions.map((ex) => executionToGQL(ex));
+    const exids = executions.map((ex) => ex.id);
     return APOLLO_CLIENT.mutate({
         mutation: setExecutionsGQL,
         variables: {
@@ -447,11 +480,11 @@ export const setExecutions = (executions: Execution[], thread_model_id: string) 
         console.log("ERROR");
         console.log(e);
     });
-}
+};
 
 // Update Execution status and results only
 export const updateExecutionStatusAndResults = (execution: Execution) => {
-    let APOLLO_CLIENT = GraphQL.instance(KeycloakAdapter.getUser());
+    const APOLLO_CLIENT = GraphQL.instance(KeycloakAdapter.getUser());
     return APOLLO_CLIENT.mutate({
         mutation: updateExecutionStatusResultsGQL,
         variables: {
@@ -460,17 +493,17 @@ export const updateExecutionStatusAndResults = (execution: Execution) => {
             end_time: execution.end_time,
             run_progress: execution.run_progress,
             status: execution.status,
-            results: executionResultsToGQL(execution.results).map((exres:any) => {
+            results: executionResultsToGQL(execution.results).map((exres: any) => {
                 exres["execution_id"] = execution.id;
                 return exres;
             })
         }
     });
-}
+};
 
 // Update Execution status only
 export const updateExecutionStatus = (execution: Execution) => {
-    let APOLLO_CLIENT = GraphQL.instance(KeycloakAdapter.getUser());
+    const APOLLO_CLIENT = GraphQL.instance(KeycloakAdapter.getUser());
     return APOLLO_CLIENT.mutate({
         mutation: updateExecutionStatusGQL,
         variables: {
@@ -480,53 +513,53 @@ export const updateExecutionStatus = (execution: Execution) => {
             status: execution.status
         }
     });
-}
+};
 
 // Delete Executions
 export const deleteExecutions = (executionids: string[]) => {
-    let APOLLO_CLIENT = GraphQL.instance(KeycloakAdapter.getUser());
+    const APOLLO_CLIENT = GraphQL.instance(KeycloakAdapter.getUser());
     return APOLLO_CLIENT.mutate({
         mutation: deleteExecutionsGQL,
         variables: {
             ids: executionids
         }
     });
-}
+};
 
-
-/* 
-    Thread Model Execution Mappings 
+/*
+    Thread Model Execution Mappings
 */
-export const getThreadModelExecutionIds = async (thread_model_id: string) : Promise<string[]> => {
-    let APOLLO_CLIENT = GraphQL.instance(KeycloakAdapter.getUser());
+export const getThreadModelExecutionIds = async (thread_model_id: string): Promise<string[]> => {
+    const APOLLO_CLIENT = GraphQL.instance(KeycloakAdapter.getUser());
     return APOLLO_CLIENT.query({
         query: listThreadModelExecutionIdsGQL,
         variables: {
             threadModelId: thread_model_id
         }
-    }).then((result) => {
-        if(!result || (result.errors && result.errors.length > 0)) {
+    })
+        .then((result) => {
+            if (!result || (result.errors && result.errors.length > 0)) {
+                console.log("ERROR");
+                console.log(result);
+            } else {
+                return result.data.thread_model_by_pk.executions.map((ex: any) => ex.execution_id);
+            }
+            return null;
+        })
+        .catch((e) => {
             console.log("ERROR");
-            console.log(result);
-        }
-        else {
-            return result.data.thread_model_by_pk.executions.map((ex:any) => ex.execution_id);
-        }
-        return null;        
-    }).catch((e) => {
-        console.log("ERROR");
-        console.log(e);
-        return null;
-    });
-}
+            console.log(e);
+            return null;
+        });
+};
 
 export const setThreadModelExecutionIds = (thread_model_id: string, executionids: string[]) => {
-    let APOLLO_CLIENT = GraphQL.instance(KeycloakAdapter.getUser());
-    let tmexids = executionids.map((exid) => {
+    const APOLLO_CLIENT = GraphQL.instance(KeycloakAdapter.getUser());
+    const tmexids = executionids.map((exid) => {
         return {
             thread_model_id: thread_model_id,
             execution_id: exid
-        }
+        };
     });
     return APOLLO_CLIENT.mutate({
         mutation: newThreadModelExecutionsGQL,
@@ -534,23 +567,26 @@ export const setThreadModelExecutionIds = (thread_model_id: string, executionids
             threadModelExecutions: tmexids
         }
     });
-}
+};
 
 export const deleteThreadModelExecutionIds = async (thread_model_id: string) => {
-    let APOLLO_CLIENT = GraphQL.instance(KeycloakAdapter.getUser());
+    const APOLLO_CLIENT = GraphQL.instance(KeycloakAdapter.getUser());
     return APOLLO_CLIENT.mutate({
         mutation: deleteThreadModelExecutionsGQL,
         variables: {
             threadModelId: thread_model_id
         }
     });
-}
+};
 
-/* 
-    Thread Model Execution Summaries 
+/*
+    Thread Model Execution Summaries
 */
-export const setThreadModelExecutionSummary = (thread_model_id: string, summary: ExecutionSummary) =>  {
-    let APOLLO_CLIENT = GraphQL.instance(KeycloakAdapter.getUser());
+export const setThreadModelExecutionSummary = (
+    thread_model_id: string,
+    summary: ExecutionSummary
+) => {
+    const APOLLO_CLIENT = GraphQL.instance(KeycloakAdapter.getUser());
     return APOLLO_CLIENT.mutate({
         mutation: updateExecutionSummary,
         variables: {
@@ -561,8 +597,8 @@ export const setThreadModelExecutionSummary = (thread_model_id: string, summary:
 };
 
 // Increment thread submitted runs
-export const incrementThreadModelSubmittedRuns = (thread_model_id: string, num: number = 1) =>  {
-    let APOLLO_CLIENT = GraphQL.instance(KeycloakAdapter.getUser());
+export const incrementThreadModelSubmittedRuns = (thread_model_id: string, num: number = 1) => {
+    const APOLLO_CLIENT = GraphQL.instance(KeycloakAdapter.getUser());
     return APOLLO_CLIENT.mutate({
         mutation: incSubmittedRunsGQL,
         variables: {
@@ -573,8 +609,8 @@ export const incrementThreadModelSubmittedRuns = (thread_model_id: string, num: 
 };
 
 // Increment thread successful runs
-export const incrementThreadModelSuccessfulRuns = (thread_model_id: string, num: number = 1) =>  {
-    let APOLLO_CLIENT = GraphQL.instance(KeycloakAdapter.getUser());
+export const incrementThreadModelSuccessfulRuns = (thread_model_id: string, num: number = 1) => {
+    const APOLLO_CLIENT = GraphQL.instance(KeycloakAdapter.getUser());
     return APOLLO_CLIENT.mutate({
         mutation: incSuccessfulRunsGQL,
         variables: {
@@ -585,8 +621,8 @@ export const incrementThreadModelSuccessfulRuns = (thread_model_id: string, num:
 };
 
 // Increment thread failed runs
-export const incrementThreadModelFailedRuns = (thread_model_id: string, num: number = 1) =>  {
-    let APOLLO_CLIENT = GraphQL.instance(KeycloakAdapter.getUser());
+export const incrementThreadModelFailedRuns = (thread_model_id: string, num: number = 1) => {
+    const APOLLO_CLIENT = GraphQL.instance(KeycloakAdapter.getUser());
     return APOLLO_CLIENT.mutate({
         mutation: incFailedRunsGQL,
         variables: {
@@ -597,8 +633,8 @@ export const incrementThreadModelFailedRuns = (thread_model_id: string, num: num
 };
 
 // Increment thread outputs registered runs
-export const incrementThreadModelRegisteredRuns = (thread_model_id: string, num: number = 1) =>  {
-    let APOLLO_CLIENT = GraphQL.instance(KeycloakAdapter.getUser());
+export const incrementThreadModelRegisteredRuns = (thread_model_id: string, num: number = 1) => {
+    const APOLLO_CLIENT = GraphQL.instance(KeycloakAdapter.getUser());
     return APOLLO_CLIENT.mutate({
         mutation: incRegisteredRunsGQL,
         variables: {
@@ -610,118 +646,125 @@ export const incrementThreadModelRegisteredRuns = (thread_model_id: string, num:
 
 /* Update Functions */
 // Add ProblemStatement
-export const addProblemStatement = (problem_statement:ProblemStatementInfo) : Promise<string> =>  {
-    let APOLLO_CLIENT = GraphQL.instance(KeycloakAdapter.getUser());
-    let problemobj = problemStatementToGQL(problem_statement);
+export const addProblemStatement = (problem_statement: ProblemStatementInfo): Promise<string> => {
+    const APOLLO_CLIENT = GraphQL.instance(KeycloakAdapter.getUser());
+    const problemobj = problemStatementToGQL(problem_statement);
     return APOLLO_CLIENT.mutate({
         mutation: newProblemStatementGQL,
         variables: {
             object: problemobj
         }
-    }).then((result) => {
-        if(!result || (result.errors && result.errors.length > 0)) {
+    })
+        .then((result) => {
+            if (!result || (result.errors && result.errors.length > 0)) {
+                console.log("ERROR");
+                console.log(result);
+            } else {
+                return result.data.insert_problem_statement.returning[0].id;
+            }
+            return null;
+        })
+        .catch((e) => {
             console.log("ERROR");
-            console.log(result);
-        }
-        else {
-            return result.data.insert_problem_statement.returning[0].id;
-        }
-        return null;        
-    }).catch((e) => {
-        console.log("ERROR");
-        console.log(e);
-        return null;
-    });
+            console.log(e);
+            return null;
+        });
 };
 
 // Add Task
-export const addTask = (problem_statement: ProblemStatementInfo, task: Task) : Promise<string> =>  {
-    let APOLLO_CLIENT = GraphQL.instance(KeycloakAdapter.getUser());
-    let taskobj = taskToGQL(task, problem_statement);
+export const addTask = (problem_statement: ProblemStatementInfo, task: Task): Promise<string> => {
+    const APOLLO_CLIENT = GraphQL.instance(KeycloakAdapter.getUser());
+    const taskobj = taskToGQL(task, problem_statement);
     return APOLLO_CLIENT.mutate({
         mutation: newTaskGQL,
         variables: {
             object: taskobj
         }
-    }).then((result) => {
-        if(!result || (result.errors && result.errors.length > 0)) {
+    })
+        .then((result) => {
+            if (!result || (result.errors && result.errors.length > 0)) {
+                console.log("ERROR");
+                console.log(result);
+            } else {
+                return result.data.insert_task.returning[0].id;
+            }
+            return null;
+        })
+        .catch((e) => {
             console.log("ERROR");
-            console.log(result);
-        }
-        else {
-            return result.data.insert_task.returning[0].id;
-        }
-        return null;        
-    }).catch((e) => {
-        console.log("ERROR");
-        console.log(e);
-        return null;
-    });
+            console.log(e);
+            return null;
+        });
 };
 
 // Add Task
-export const addTaskWithThread = (problem_statement: ProblemStatementInfo, task: Task, thread: ThreadInfo) : Promise<string[]> =>  {
-    let APOLLO_CLIENT = GraphQL.instance(KeycloakAdapter.getUser());
-    let taskobj = taskToGQL(task, problem_statement);
-    let threadobj = threadInfoToGQL(thread, task.id, task.regionid);
+export const addTaskWithThread = (
+    problem_statement: ProblemStatementInfo,
+    task: Task,
+    thread: ThreadInfo
+): Promise<string[]> => {
+    const APOLLO_CLIENT = GraphQL.instance(KeycloakAdapter.getUser());
+    const taskobj = taskToGQL(task, problem_statement);
+    const threadobj = threadInfoToGQL(thread, task.id, task.regionid);
     taskobj["threads"] = {
         data: [threadobj]
-    }
+    };
     return APOLLO_CLIENT.mutate({
         mutation: newTaskGQL,
         variables: {
             object: taskobj
         }
-    }).then((result) => {
-        if(!result || (result.errors && result.errors.length > 0)) {
+    })
+        .then((result) => {
+            if (!result || (result.errors && result.errors.length > 0)) {
+                console.log("ERROR");
+                console.log(result);
+            } else {
+                return [
+                    result.data.insert_task.returning[0].id,
+                    result.data.insert_task.returning[0].threads[0].id
+                ];
+            }
+            return null;
+        })
+        .catch((e) => {
             console.log("ERROR");
-            console.log(result);
-        }
-        else {
-            return [
-                result.data.insert_task.returning[0].id,
-                result.data.insert_task.returning[0].threads[0].id
-            ];
-        }
-        return null;        
-    }).catch((e) => {
-        console.log("ERROR");
-        console.log(e);
-        return null;
-    });
+            console.log(e);
+            return null;
+        });
 };
 
 // Add Thread
-export const addThread = (task:Task, thread: ThreadInfo) : Promise<string> =>  {
-    let APOLLO_CLIENT = GraphQL.instance(KeycloakAdapter.getUser());
-    let threadobj = threadInfoToGQL(thread, task.id, task.regionid);
+export const addThread = (task: Task, thread: ThreadInfo): Promise<string> => {
+    const APOLLO_CLIENT = GraphQL.instance(KeycloakAdapter.getUser());
+    const threadobj = threadInfoToGQL(thread, task.id, task.regionid);
     //console.log(threadobj);
     return APOLLO_CLIENT.mutate({
         mutation: newThreadGQL,
         variables: {
             object: threadobj
         }
-    }).then((result) => {
-        if(!result || (result.errors && result.errors.length > 0)) {
+    })
+        .then((result) => {
+            if (!result || (result.errors && result.errors.length > 0)) {
+                console.log("ERROR");
+                console.log(result);
+            } else {
+                return result.data.insert_thread.returning[0].id;
+            }
+            return null;
+        })
+        .catch((e) => {
             console.log("ERROR");
-            console.log(result);
-        }
-        else {
-            return result.data.insert_thread.returning[0].id;
-        }
-        return null;        
-    }).catch((e) => {
-        console.log("ERROR");
-        console.log(e);
-        return null;
-    });
+            console.log(e);
+            return null;
+        });
 };
 
-
 // Update ProblemStatement
-export const updateProblemStatement = (problem_statement: ProblemStatementInfo) =>  {
-    let APOLLO_CLIENT = GraphQL.instance(KeycloakAdapter.getUser());
-    let problemobj = problemStatementUpdateToGQL(problem_statement);
+export const updateProblemStatement = (problem_statement: ProblemStatementInfo) => {
+    const APOLLO_CLIENT = GraphQL.instance(KeycloakAdapter.getUser());
+    const problemobj = problemStatementUpdateToGQL(problem_statement);
     return APOLLO_CLIENT.mutate({
         mutation: updateProblemStatementGQL,
         variables: {
@@ -731,9 +774,9 @@ export const updateProblemStatement = (problem_statement: ProblemStatementInfo) 
 };
 
 // Update Task
-export const updateTask = (task: Task) =>  {
-    let APOLLO_CLIENT = GraphQL.instance(KeycloakAdapter.getUser());
-    let taskobj = taskUpdateToGQL(task);
+export const updateTask = (task: Task) => {
+    const APOLLO_CLIENT = GraphQL.instance(KeycloakAdapter.getUser());
+    const taskobj = taskUpdateToGQL(task);
     return APOLLO_CLIENT.mutate({
         mutation: updateTaskGQL,
         variables: {
@@ -743,26 +786,30 @@ export const updateTask = (task: Task) =>  {
 };
 
 export const updateThreadInformation = (threadinfo: ThreadInfo) => {
-    let APOLLO_CLIENT = GraphQL.instance(KeycloakAdapter.getUser());
-    let threadobj = threadInfoUpdateToGQL(threadinfo);
+    const APOLLO_CLIENT = GraphQL.instance(KeycloakAdapter.getUser());
+    const threadobj = threadInfoUpdateToGQL(threadinfo);
     return APOLLO_CLIENT.mutate({
         mutation: updateThreadInfoGQL,
         variables: {
             object: threadobj
         }
     });
-}
+};
 
-export const setThreadModels = (models: ModelConfigurationSetup[], notes: string, thread: Thread) =>  {
-    let APOLLO_CLIENT = GraphQL.instance(KeycloakAdapter.getUser());
-    let threadmodelsobj = models.map((model) => {
+export const setThreadModels = (
+    models: ModelConfigurationSetup[],
+    notes: string,
+    thread: Thread
+) => {
+    const APOLLO_CLIENT = GraphQL.instance(KeycloakAdapter.getUser());
+    const threadmodelsobj = models.map((model) => {
         return {
             model_id: model.id,
             thread_id: thread.id
         };
     });
-    let event = getCustomEvent("SELECT_MODELS", notes);
-    let eventobj = eventToGQL(event);
+    const event = getCustomEvent("SELECT_MODELS", notes);
+    const eventobj = eventToGQL(event);
     eventobj["thread_id"] = thread.id;
     return APOLLO_CLIENT.mutate({
         mutation: updateThreadModelGQL,
@@ -774,14 +821,18 @@ export const setThreadModels = (models: ModelConfigurationSetup[], notes: string
     });
 };
 
-export const setThreadData = (datasets: DataMap, model_ensembles: ModelEnsembleMap, 
-        notes: string, thread: Thread) =>  {
-    let APOLLO_CLIENT = GraphQL.instance(KeycloakAdapter.getUser());
-    let bindings = threadDataBindingsToGQL(datasets, model_ensembles, thread);
-    let event = getCustomEvent("SELECT_DATA", notes);
-    let eventobj = eventToGQL(event);
+export const setThreadData = (
+    datasets: DataMap,
+    model_ensembles: ModelEnsembleMap,
+    notes: string,
+    thread: Thread
+) => {
+    const APOLLO_CLIENT = GraphQL.instance(KeycloakAdapter.getUser());
+    const bindings = threadDataBindingsToGQL(datasets, model_ensembles, thread);
+    const event = getCustomEvent("SELECT_DATA", notes);
+    const eventobj = eventToGQL(event);
     eventobj["thread_id"] = thread.id;
-    
+
     return APOLLO_CLIENT.mutate({
         mutation: updateThreadDataGQL,
         variables: {
@@ -793,20 +844,23 @@ export const setThreadData = (datasets: DataMap, model_ensembles: ModelEnsembleM
     });
 };
 
-export const setThreadParameters = (model_ensembles: ModelEnsembleMap, 
-        execution_summary: IdMap<ExecutionSummary>,
-        notes: string, thread: Thread) =>  {
-    let bindings = threadParameterBindingsToGQL(model_ensembles, thread);
-    let event = getCustomEvent("SELECT_PARAMETERS", notes);
-    let eventobj = eventToGQL(event);
+export const setThreadParameters = (
+    model_ensembles: ModelEnsembleMap,
+    execution_summary: IdMap<ExecutionSummary>,
+    notes: string,
+    thread: Thread
+) => {
+    const bindings = threadParameterBindingsToGQL(model_ensembles, thread);
+    const event = getCustomEvent("SELECT_PARAMETERS", notes);
+    const eventobj = eventToGQL(event);
     eventobj["thread_id"] = thread.id;
-    let summaries = [];
+    const summaries = [];
     Object.keys(execution_summary).forEach((modelid) => {
-        let summary = execution_summary[modelid];
+        const summary = execution_summary[modelid];
         summary["thread_model_id"] = model_ensembles[modelid].id;
         summaries.push(summary);
-    })
-    let APOLLO_CLIENT = GraphQL.instance(KeycloakAdapter.getUser());
+    });
+    const APOLLO_CLIENT = GraphQL.instance(KeycloakAdapter.getUser());
     return APOLLO_CLIENT.mutate({
         mutation: updateThreadParametersGQL,
         variables: {
@@ -820,58 +874,58 @@ export const setThreadParameters = (model_ensembles: ModelEnsembleMap,
 
 // Get details about a particular region/subregion
 export const getRegionDetails = (regionid: string) => {
-    let APOLLO_CLIENT = GraphQL.instance(KeycloakAdapter.getUser());
+    const APOLLO_CLIENT = GraphQL.instance(KeycloakAdapter.getUser());
     return new Promise<Region>((resolve, reject) => {
         APOLLO_CLIENT.query({
             query: getRegionDetailsGQL,
             variables: {
                 id: regionid
             }
-        }).then(result => {
-            if(!result || (result.errors && result.errors.length > 0)) {
+        })
+            .then((result) => {
+                if (!result || (result.errors && result.errors.length > 0)) {
+                    console.log("ERROR");
+                    console.log(result);
+                    reject();
+                } else {
+                    const region = regionFromGQL(result.data.region_by_pk);
+                    region.bounding_box = _calculateBoundingBox(region.geometries);
+                    resolve(region);
+                }
+            })
+            .catch((e) => {
                 console.log("ERROR");
-                console.log(result);
-                reject();
-            }
-            else {
-                let region = regionFromGQL(result.data.region_by_pk);
-                region.bounding_box = _calculateBoundingBox(region.geometries)
-                resolve(region);
-            }
-        }).catch((e) => {
-            console.log("ERROR");
-            console.log(e);
-            return null;
-        });
+                console.log(e);
+                return null;
+            });
     });
 };
 
 const _calculateBoundingBox = (geometries: any[]) => {
-    var xmin=99999, ymin=99999, xmax=-99999, ymax=-99999;
+    let xmin = 99999,
+        ymin = 99999,
+        xmax = -99999,
+        ymax = -99999;
     geometries.forEach((geometry) => {
         let coords_list = geometry.coordinates;
-        if(geometry.type == "MultiPolygon") {
+        if (geometry.type == "MultiPolygon") {
             coords_list = coords_list.flat(1);
         }
 
         coords_list.map((coords: any) => {
             coords.map((c: any) => {
-                if(c[0] < xmin)
-                    xmin = c[0];
-                if(c[1] < ymin)
-                    ymin = c[1];
-                if(c[0] > xmax)
-                    xmax = c[0];
-                if(c[1] > ymax)
-                    ymax = c[1];
-            })
-        })
+                if (c[0] < xmin) xmin = c[0];
+                if (c[1] < ymin) ymin = c[1];
+                if (c[0] > xmax) xmax = c[0];
+                if (c[1] > ymax) ymax = c[1];
+            });
+        });
     });
 
     return {
-      xmin: xmin-0.01, 
-      ymin: ymin-0.01, 
-      xmax: xmax+0.01, 
-      ymax: ymax+0.01
+        xmin: xmin - 0.01,
+        ymin: ymin - 0.01,
+        xmax: xmax + 0.01,
+        ymax: ymax + 0.01
     } as BoundingBox;
-}
+};

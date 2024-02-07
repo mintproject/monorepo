@@ -1,7 +1,7 @@
 // ./api/api-v1/paths/threads.ts
 
 export default function (threadsService: any) {
-    let operations = {
+    const operations = {
         POST
     };
 
@@ -9,8 +9,7 @@ export default function (threadsService: any) {
         threadsService.createThread(req.body).then((result: any) => {
             if (result.result == "error") {
                 res.status(406).json(result);
-            }
-            else {
+            } else {
                 res.status(202).json(result);
             }
         });
@@ -18,15 +17,15 @@ export default function (threadsService: any) {
 
     // NOTE: We could also use a YAML string here.
     POST.apiDoc = {
-        summary: 'Create modeling thread in MINT.',
-        operationId: 'createThread',
+        summary: "Create modeling thread in MINT.",
+        operationId: "createThread",
         requestBody: {
-            description: 'New modeling thread details',
+            description: "New modeling thread details",
             required: true,
             content: {
-                'application/json': {
+                "application/json": {
                     schema: {
-                        $ref: '#/components/schemas/NewModelThread'
+                        $ref: "#/components/schemas/NewModelThread"
                     }
                 }
             }
@@ -36,7 +35,7 @@ export default function (threadsService: any) {
                 description: "Successful response"
             },
             default: {
-                description: 'An error occurred'
+                description: "An error occurred"
             }
         }
     };
