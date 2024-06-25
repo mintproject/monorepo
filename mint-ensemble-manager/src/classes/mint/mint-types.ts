@@ -50,6 +50,7 @@ interface TapisConfig {
     basePath: string;
     dataurl: string;
     datadir: string;
+    parallelism: number;
 }
 
 export interface MintPreferences {

@@ -15,7 +15,6 @@ import {
 } from "../graphql/graphql_functions";
 
 const prefs = getConfiguration();
-const basePath = prefs.tapis.basePath;
 
 // Create Jobs (Seeds) and Queue them
 export const queueModelExecutions = async (
@@ -69,6 +68,7 @@ const generateWebHookUrl = (jobUuid: string) => {
 };
 
 async function subscribeTapisJob(jobUuid: string, token) {
+    const basePath = prefs.tapis.basePath;
     const notifDeliveryTarget: Jobs.NotifDeliveryTarget = {
         deliveryMethod: Jobs.NotifDeliveryTargetDeliveryMethodEnum.Webhook,
         deliveryAddress: generateWebHookUrl(jobUuid)
@@ -85,6 +85,7 @@ async function subscribeTapisJob(jobUuid: string, token) {
 }
 
 async function submitTapisJob(request: Jobs.ReqSubmitJob, token) {
+    const basePath = prefs.tapis.basePath;
     const response = await submit(request, basePath, token.access_token);
     return response;
 }

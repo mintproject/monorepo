@@ -9,13 +9,6 @@
         "use_secret": true
     },
     "execution_engine": "localex",
-    "tapis": {
-        "username": "mosorio",
-        "basePath": "https://portals.tapis.io",
-        "datadir": "/tmp/mintproject/data/data",
-        "dataurl": "http://file:///tmp/mintproject/data",
-        "parallelism": 2
-    },
     "localex": {
         "codedir": "/tmp/mintproject/data/code",
         "datadir": "/tmp/mintproject/data/data",

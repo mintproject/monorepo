@@ -8,7 +8,7 @@ import { getConfiguration } from "../mint/mint-functions";
 
 const prefs = getConfiguration();
 const downloadQueue = new Queue(DOWNLOAD_TAPIS_OUTPUT_QUEUE_NAME, REDIS_URL);
-downloadQueue.process(prefs.localex.parallelism, __dirname + "/downloadTapisOutputQueue.js");
+downloadQueue.process(prefs.tapis.parallelism, __dirname + "/downloadTapisOutputQueue.js");
 
 const handleExecutionEvent = async (event: any, executionId: string) => {
     const execution = await getExecution(executionId);

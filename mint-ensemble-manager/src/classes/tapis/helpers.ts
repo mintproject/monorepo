@@ -126,7 +126,7 @@ export const _getRegionGeoJson = (region: Region) => {
 
 export async function downloadInputsFile(resources: RegisteredResource[], prefs: MintPreferences) {
     const downloadInputPromises = resources.map((resource) => {
-        const inputpath = prefs.localex.datadir + "/" + resource.name;
+        const inputpath = prefs.tapis.datadir + "/" + resource.name;
         if (!fs.existsSync(inputpath)) {
             console.log("Downloading input file: ", resource.url, " to ", inputpath);
             return downloadInputPromises.push(_downloadFile(resource.url, inputpath));
