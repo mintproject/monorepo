@@ -57,7 +57,7 @@ export interface MintPreferences {
     data_catalog_type: string;
     data_catalog_key: string;
     data_catalog_extra: any;
-    tapis: TapisConfig;
+    tapis?: TapisConfig;
     model_catalog_api?: string;
     ensemble_manager_api: string;
     ingestion_api: string;
