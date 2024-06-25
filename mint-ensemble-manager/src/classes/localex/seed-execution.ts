@@ -7,8 +7,7 @@ import {
     incrementThreadModelSubmittedRuns,
     incrementThreadModelSuccessfulRuns,
     incrementThreadModelFailedRuns,
-    updateExecutionStatusAndResults,
-    updateExecutionStatus
+    updateExecutionStatusAndResults
 } from "../graphql/graphql_functions";
 import { Component, ComponentSeed, ComponentArgument } from "./local-execution-types";
 import { runImage } from "./docker-functions";
@@ -203,7 +202,10 @@ module.exports = async (job: any) => {
             logstream = fs.createWriteStream(logstdout, { flags: "a" });
 
             // Run command in docker image
-            const folderBindings = [`${tempdir}:${tempdir}`, `${localex.datadir}:${localex.datadir}`];
+            const folderBindings = [
+                `${tempdir}:${tempdir}`,
+                `${localex.datadir}:${localex.datadir}`
+            ];
             const data = await runImage(args, softwareImage, logstream, tempdir, folderBindings);
             const output = data[0];
             const container: Container = data[1];

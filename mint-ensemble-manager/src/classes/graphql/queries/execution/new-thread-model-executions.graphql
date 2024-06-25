@@ -1,5 +1,7 @@
-mutation add_thread_model_execution_ids($threadModelExecutions: [thread_model_execution_insert_input!]!) {
-  insert_thread_model_execution(objects: $threadModelExecutions) {
-    affected_rows
-  }
+mutation add_thread_model_execution_ids(
+    $threadModelExecutions: [thread_model_execution_insert_input!]!
+) {
+    insert_thread_model_execution(objects: $threadModelExecutions) {
+        affected_rows
+    }
 }

@@ -6,6 +6,8 @@ export interface ComponentSeed {
     datasets: ComponentDataBindings;
     parameters: ComponentParameterBindings;
     paramtypes: ComponentParameterTypes;
+    tapisAppId?: string;
+    tapisAppVersion?: string;
 }
 
 export interface ComponentDataBindings {

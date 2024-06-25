@@ -1,23 +1,24 @@
-const path = require('path');
-const NodemonPlugin = require('nodemon-webpack-plugin');
-const CopyWebpackPlugin = require('copy-webpack-plugin');
-const NodeExternals = require('webpack-node-externals');
+const path = require("path");
+const NodemonPlugin = require("nodemon-webpack-plugin");
+const CopyWebpackPlugin = require("copy-webpack-plugin");
+const NodeExternals = require("webpack-node-externals");
 
 module.exports = {
-    mode: 'development',
-    target: 'node',
+    mode: "development",
+    target: "node",
     resolve: {
-        extensions: ['.js', '.json', '.ts', '.graphql']
+        extensions: [".js", ".json", ".ts", ".graphql"]
     },
     entry: {
-        execution: './src/classes/localex/seed-execution.ts',        
-        server: './src/server.ts'
+        execution: "./src/classes/localex/seed-execution.ts",
+        downloadTapisOutputQueue: "./src/classes/tapis/download-tapis-output.ts",
+        server: "./src/server.ts"
     },
     output: {
-        library: 'ensemble-manager', 
-        libraryTarget: 'umd',        
-        filename: '[name].js',
-        path: path.resolve(__dirname, 'dist')
+        library: "ensemble-manager",
+        libraryTarget: "umd",
+        filename: "[name].js",
+        path: path.resolve(__dirname, "dist")
     },
     externals: [NodeExternals()],
     module: {
@@ -25,28 +26,28 @@ module.exports = {
             {
                 test: /\.graphql$/,
                 exclude: /node_modules/,
-                loader: 'graphql-tag/loader'
+                loader: "graphql-tag/loader"
             },
-            { 
-                test: /\.ts$/, 
+            {
+                test: /\.ts$/,
                 exclude: /node_modules/,
-                loader: 'ts-loader' 
+                loader: "ts-loader"
             }
         ]
     },
     plugins: [
         new NodemonPlugin({
-            script: './dist/server.js',
+            script: "./dist/server.js"
         }),
         new CopyWebpackPlugin({
             patterns: [
-                { 
-                    from: './src/api',
-                    to: 'api' 
+                {
+                    from: "./src/api",
+                    to: "api"
                 },
-                { 
-                    from: './src/config',
-                    to: 'config' 
+                {
+                    from: "./src/config",
+                    to: "config"
                 }
             ]
         })
@@ -54,4 +55,4 @@ module.exports = {
     node: {
         __dirname: false
     }
-}
+};

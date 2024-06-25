@@ -18,7 +18,8 @@ import {
     ModelParameter,
     DataResource,
     Variable,
-    MintPermission
+    MintPermission,
+    Execution_Result
 } from "../mint/mint-types";
 
 import * as crypto from "crypto";
@@ -728,7 +729,7 @@ export const getAutoID = () => {
     return autoId;
 };
 
-const getMd5Hash = (str2hash) => {
+export const getMd5Hash = (str2hash) => {
     return crypto.createHash("md5").update(str2hash).digest("hex");
 };
 
@@ -990,6 +991,18 @@ export const threadParameterBindingsToGQL = (model_ensemble: ModelEnsembleMap, t
 };
 
 export const executionResultsToGQL = (results: any) => {
+    const data: any = [];
+    Object.keys(results).forEach((outid) => {
+        const result = results[outid];
+        data.push({
+            model_io_id: outid,
+            resource: getResourceData(result)
+        });
+    });
+    return data;
+};
+
+export const executionResultsToGQLv2 = (results: Execution_Result[]) => {
     const data: any = [];
     Object.keys(results).forEach((outid) => {
         const result = results[outid];

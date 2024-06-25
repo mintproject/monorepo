@@ -1,7 +1,13 @@
-mutation update_execution_status (
-    $id: uuid!, $start_time: timestamp!,
-  	$status: String!, $run_progress: float8!) {
-  update_execution_by_pk(pk_columns: {id: $id}, _set: {start_time: $start_time, status: $status, run_progress: $run_progress}) {
-    id
-  }
+mutation update_execution_status(
+    $id: uuid!
+    $start_time: timestamp!
+    $status: String!
+    $run_progress: float8!
+) {
+    update_execution_by_pk(
+        pk_columns: { id: $id }
+        _set: { start_time: $start_time, status: $status, run_progress: $run_progress }
+    ) {
+        id
+    }
 }

@@ -1,5 +1,23 @@
 import { env } from "process";
 
+export type Scalars = {
+    ID: { input: string; output: string };
+    String: { input: string; output: string };
+    Boolean: { input: boolean; output: boolean };
+    Int: { input: number; output: number };
+    Float: { input: number; output: number };
+    date: { input: any; output: any };
+    float8: { input: any; output: any };
+    geography: { input: any; output: any };
+    geometry: { input: any; output: any };
+    problem_statement_events: { input: any; output: any };
+    task_events: { input: any; output: any };
+    thread_events: { input: any; output: any };
+    timestamp: { input: any; output: any };
+    timestamptz: { input: any; output: any };
+    uuid: { input: any; output: any };
+};
+
 export interface IdMap<T> {
     [id: string]: T;
 }
@@ -27,12 +45,19 @@ export interface UserPreferences {
     mint: MintPreferences;
 }
 
+interface TapisConfig {
+    username: string;
+    basePath: string;
+    dataurl: string;
+    datadir: string;
+}
+
 export interface MintPreferences {
     data_catalog_api: string;
     data_catalog_type: string;
     data_catalog_key: string;
     data_catalog_extra: any;
-
+    tapis: TapisConfig;
     model_catalog_api?: string;
     ensemble_manager_api: string;
     ingestion_api: string;
@@ -148,12 +173,12 @@ export interface Dataset extends IdNameObject {
 }
 
 export interface Dataslice extends IdNameObject {
-    dataset: Dataset;
+    dataset?: Dataset;
     total_resources?: number;
     selected_resources?: number;
     resources: DataResource[];
     resources_loaded?: boolean;
-    time_period: DateRange;
+    time_period?: DateRange;
     spatial_coverage?: any;
 }
 
@@ -162,6 +187,7 @@ export interface DataResource extends IdNameObject {
     time_period?: DateRange;
     spatial_coverage?: any;
     selected?: boolean;
+    type?: string;
 }
 
 export interface DatasetDetail extends Dataset {
@@ -257,6 +283,11 @@ export interface ModelIO extends IdNameObject {
     value?: Dataslice;
     position?: number;
     format?: string;
+}
+
+export interface ModelOutput {
+    position: number;
+    model_io: ModelIO;
 }
 
 export interface ModelParameter extends IdNameObject {
@@ -489,6 +520,12 @@ export interface Execution {
     results: any[]; // Chosen results after completed run
     selected: boolean;
 }
+
+export type Execution_Result = {
+    execution?: Execution;
+    model_io: ModelIO;
+    resource: DataResource;
+};
 
 export interface InputBindings {
     [input: string]: string | DataResource;

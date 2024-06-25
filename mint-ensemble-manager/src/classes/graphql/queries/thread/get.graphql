@@ -3,7 +3,7 @@
 #import "../fragments/execution-summary-info.graphql"
 
 query query_thread($id: String!) {
-    thread_by_pk(id:$id) {
+    thread_by_pk(id: $id) {
         ...thread_info
         thread_data {
             dataslice {
@@ -32,7 +32,7 @@ query query_thread($id: String!) {
                 ...execution_summary_info
             }
             model {
-               ...model_info
+                ...model_info
             }
             data_bindings {
                 model_io {

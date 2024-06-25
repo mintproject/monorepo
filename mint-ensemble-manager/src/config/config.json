@@ -1,23 +1,29 @@
 {
-    "data_catalog_api": "http://localhost:30002",
-    "model_catalog_api": "http://localhost:30004/v1.8.0",
-    "ensemble_manager_api": "http://localhost:30008/v1",
+    "data_catalog_api": "http://datacatalog.mint.local",
+    "model_catalog_api": "http://api.models.mint.local/v1.8.0",
+    "ensemble_manager_api": "http://localhost:3000/v1",
     "graphql": {
-       "endpoint": "127.0.0.1:30003/v1/graphql",
-       "enable_ssl": false,
-       "use_secret": true
+        "endpoint": "graphql.mint.local/v1/graphql",
+        "enable_ssl": false,
+        "secret": "CHANGEME",
+        "use_secret": true
     },
     "execution_engine": "localex",
     "localex": {
-       "codedir":"/tmp/mintproject/data/code",
-       "datadir":"/tmp/mintproject/data/data",
-       "tempdir":"/tmp/mintproject/data/temp",
-       "logdir":"/tmp/mintproject/data/logs",
-       "dataurl":"http://file:///tmp/mintproject/data",
-       "logurl":"http://file:///tmp/mintproject/logs",
-       "parallelism": 2
+        "codedir": "/tmp/mintproject/data/code",
+        "datadir": "/tmp/mintproject/data/data",
+        "tempdir": "/tmp/mintproject/data/temp",
+        "logdir": "/tmp/mintproject/data/logs",
+        "dataurl": "http://file:///tmp/mintproject/data",
+        "logurl": "http://file:///tmp/mintproject/logs",
+        "parallelism": 2
     },
- 
+    "tapis": {
+        "username": "mosorio",
+        "basePath": "https://portals.tapis.io",
+        "datadir": "/tmp/mintproject/data/data",
+        "dataurl": "http://file:///tmp/mintproject/data"
+    },
     "auth_server": "https://auth.mint.isi.edu/",
     "auth_realm": "production",
     "auth_client_id": "mint-ui",

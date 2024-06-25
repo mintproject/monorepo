@@ -12,6 +12,7 @@ import v1MonitorsService from "./api/api-v1/services/monitorsService";
 import v1LogsService from "./api/api-v1/services/logsService";
 import v1ThreadsService from "./api/api-v1/services/threadsService";
 import v1ModelCacheService from "./api/api-v1/services/modelCacheService";
+import v1ExecutionTapisService from "./api/api-v1/services/executionsTapisService";
 
 import { initialize } from "express-openapi";
 import { getResource } from "./classes/wings/xhr-requests";
@@ -21,8 +22,9 @@ const { createBullBoard } = require("@bull-board/api");
 const { BullAdapter } = require("@bull-board/api/bullAdapter");
 const { ExpressAdapter } = require("@bull-board/express");
 
-import { EXECUTION_QUEUE_NAME, REDIS_URL } from "./config/redis";
+import { DOWNLOAD_TAPIS_OUTPUT_QUEUE_NAME, EXECUTION_QUEUE_NAME, REDIS_URL } from "./config/redis";
 import { PORT, VERSION } from "./config/app";
+import jobsService from "./api/api-v1/services/tapis/jobsService";
 
 // Main Express Server
 const app = express();
@@ -42,11 +44,13 @@ initialize({
         executionsService: v1ExecutionsService,
         executionsLocalService: v1ExecutionsLocalService,
         executionQueueService: v1ExecutionQueueService,
+        jobsService: jobsService,
         registrationService: v1RegistrationService,
         monitorsService: v1MonitorsService,
         threadsService: v1ThreadsService,
         logsService: v1LogsService,
-        modelCacheService: v1ModelCacheService
+        modelCacheService: v1ModelCacheService,
+        executionsTapisService: v1ExecutionTapisService
     },
     paths: path.resolve(__dirname, "./api/api-v1/paths"),
     routesGlob: "**/*.{ts,js}",
@@ -62,13 +66,14 @@ app.use(((err, req, res, next) => {
 
 // Setup Queue
 const executionQueue = new Queue(EXECUTION_QUEUE_NAME, REDIS_URL);
+const downloadTapisOutputQueue = new Queue(DOWNLOAD_TAPIS_OUTPUT_QUEUE_NAME, REDIS_URL);
 
 // Setup Bull Dashboard
 const serverAdapter = new ExpressAdapter();
 serverAdapter.setBasePath(dashboard_url);
 
 const { addQueue, removeQueue, setQueues, replaceQueues } = createBullBoard({
-    queues: [new BullAdapter(executionQueue)],
+    queues: [new BullAdapter(executionQueue), new BullAdapter(downloadTapisOutputQueue)],
     serverAdapter: serverAdapter
 });
 

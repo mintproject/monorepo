@@ -6,7 +6,6 @@ import {
     DataResource,
     Execution,
     ExecutionSummary,
-    MintPreferences,
     ModelIOBindings,
     ThreadModelMap,
     ProblemStatementInfo,
@@ -15,7 +14,8 @@ import {
     ModelEnsembleMap,
     IdMap,
     Region,
-    BoundingBox
+    BoundingBox,
+    ModelOutput
 } from "../mint/mint-types";
 import { ModelConfigurationSetup } from "@mintproject/modelcatalog_client";
 
@@ -42,7 +42,7 @@ import listExistingIdStatusGQL from "./queries/execution/list-existing-ids.graph
 import getExecutionsGQL from "./queries/execution/list.graphql";
 import setExecutionsGQL from "./queries/execution/new.graphql";
 import updateExecutionStatusResultsGQL from "./queries/execution/update-status-results.graphql";
-import updateExecutionStatusGQL from "./queries/execution/update-status-results.graphql";
+import updateExecutionStatusGQL from "./queries/execution/update-status.graphql";
 import deleteExecutionsGQL from "./queries/execution/delete.graphql";
 
 import getRegionDetailsGQL from "./queries/region/get.graphql";
@@ -59,6 +59,8 @@ import deleteThreadModelExecutionsGQL from "./queries/execution/delete-thread-mo
 
 import getModelGQL from "./queries/model/get.graphql";
 import deleteModelGQL from "./queries/model/delete.graphql";
+
+import getModelOutputGQL from "./queries/model_output/get.graphql";
 
 import {
     problemStatementFromGQL,
@@ -82,6 +84,7 @@ import {
 } from "./graphql_adapter";
 import { Md5 } from "ts-md5";
 import { KeycloakAdapter } from "../../config/keycloak-adapter";
+import { Execution_Result, Execution_Result_Insert_Input } from "./graph_typing";
 
 export const getProblemStatement = async (
     problem_statement_id: string
@@ -489,7 +492,6 @@ export const updateExecutionStatusAndResults = (execution: Execution) => {
         mutation: updateExecutionStatusResultsGQL,
         variables: {
             id: execution.id,
-            start_time: execution.start_time,
             end_time: execution.end_time,
             run_progress: execution.run_progress,
             status: execution.status,
@@ -501,6 +503,43 @@ export const updateExecutionStatusAndResults = (execution: Execution) => {
     });
 };
 
+// Update Execution status and results only
+export const updateExecutionStatusAndResultsv2 = (execution: Execution) => {
+    /*
+    The following code is a modified version of the updateExecutionStatusAndResults function.
+    The main difference is that it uses the typing from the `execution.results` (Execution_Result[])
+    */
+    const APOLLO_CLIENT = GraphQL.instance(KeycloakAdapter.getUser());
+    const resultsData: Execution_Result_Insert_Input[] = execution.results.map(
+        (result: Execution_Result) => {
+            const resource: Execution_Result_Insert_Input = {
+                execution_id: execution.id,
+                resource: {
+                    data: {
+                        id: result.resource.id,
+                        name: result.resource.name,
+                        url: result.resource.url
+                    }
+                },
+                model_io_id: result.model_io.id
+            };
+            return resource;
+        }
+    );
+
+    const variables = {
+        id: execution.id,
+        end_time: new Date(),
+        run_progress: execution.run_progress,
+        status: execution.status,
+        results: resultsData
+    };
+
+    return APOLLO_CLIENT.mutate({
+        mutation: updateExecutionStatusResultsGQL,
+        variables: variables
+    });
+};
 // Update Execution status only
 export const updateExecutionStatus = (execution: Execution) => {
     const APOLLO_CLIENT = GraphQL.instance(KeycloakAdapter.getUser());
@@ -899,6 +938,33 @@ export const getRegionDetails = (regionid: string) => {
                 return null;
             });
     });
+};
+
+export const getModelOutputsByModelId = async (modelId: string): Promise<ModelOutput[]> => {
+    const APOLLO_CLIENT = GraphQL.instance(KeycloakAdapter.getUser());
+    return APOLLO_CLIENT.query({
+        query: getModelOutputGQL,
+        variables: {
+            id: modelId
+        }
+    })
+        .then((result) => {
+            if (!result || (result.errors && result.errors.length > 0)) {
+                console.log("ERROR");
+                console.log(result);
+            } else {
+                const model = result.data.model_by_pk;
+                if (model) {
+                    return model.outputs;
+                }
+            }
+            return null;
+        })
+        .catch((e) => {
+            console.log("ERROR");
+            console.log(e);
+            return null;
+        });
 };
 
 const _calculateBoundingBox = (geometries: any[]) => {

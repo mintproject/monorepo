@@ -24,7 +24,6 @@ import {
     incrementThreadModelSuccessfulRuns,
     getRegionDetails,
     deleteModel,
-    updateExecutionStatus,
     incrementThreadModelRegisteredRuns
 } from "../graphql/graphql_functions";
 import {
