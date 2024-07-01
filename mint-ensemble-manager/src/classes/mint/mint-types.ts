@@ -63,7 +63,7 @@ export interface MintPreferences {
     ensemble_manager_api: string;
     ingestion_api: string;
     visualization_url: string;
-    execution_engine?: "wings" | "localex";
+    execution_engine?: "wings" | "localex" | "tapis";
     // Local Execution
     localex?: LocalExecutionPreferences;
     // Wings Execution

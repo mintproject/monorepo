@@ -7,8 +7,15 @@ import { DOWNLOAD_TAPIS_OUTPUT_QUEUE_NAME, REDIS_URL } from "../../config/redis"
 import { getConfiguration } from "../mint/mint-functions";
 
 const prefs = getConfiguration();
-const downloadQueue = new Queue(DOWNLOAD_TAPIS_OUTPUT_QUEUE_NAME, REDIS_URL);
-downloadQueue.process(prefs.tapis.parallelism, __dirname + "/downloadTapisOutputQueue.js");
+
+const downloadQueue =
+    prefs.execution_engine === "tapis"
+        ? new Queue(DOWNLOAD_TAPIS_OUTPUT_QUEUE_NAME, REDIS_URL)
+        : null;
+
+if (prefs.execution_engine === "tapis") {
+    downloadQueue.process(prefs.tapis.parallelism, __dirname + "/downloadTapisOutputQueue.js");
+}
 
 const handleExecutionEvent = async (event: any, executionId: string) => {
     const execution = await getExecution(executionId);
@@ -27,7 +34,7 @@ const updateExecutionResultsFromJob = async (
     status: Jobs.JobListDTOStatusEnum
 ) => {
     const execution = await getExecution(executionId);
-    if (status === Jobs.JobListDTOStatusEnum.Finished) {
+    if (downloadQueue && status === Jobs.JobListDTOStatusEnum.Finished) {
         execution.results = await getExecutionResultsFromJob(jobUuid, execution);
         downloadQueue.add({ jobUuid, executionId, execution: execution });
     }
