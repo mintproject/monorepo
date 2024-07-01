@@ -31,8 +31,12 @@ import { Region } from "../mint/mint-types";
 
 const prefs = getConfiguration();
 
-const executionQueue = new Queue(EXECUTION_QUEUE_NAME, REDIS_URL);
-executionQueue.process(prefs.localex.parallelism, __dirname + "/execution.js");
+const executionQueue =
+    prefs.execution_engine === "localex" ? new Queue(EXECUTION_QUEUE_NAME, REDIS_URL) : null;
+
+if (prefs.execution_engine === "localex") {
+    executionQueue.process(prefs.localex.parallelism, __dirname + "/execution.js");
+}
 
 // You can listen to global events to get notified when jobs are processed
 /*executionQueue.on('global:completed', (jobId, result) => {
