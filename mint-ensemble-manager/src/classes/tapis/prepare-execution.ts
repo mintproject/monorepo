@@ -135,12 +135,14 @@ const isValidTapisComponent = async (component: TapisComponent) => {
             return false;
         }
     } catch (e) {
+        console.error(e);
         return false;
     }
     return true;
 };
 
 async function handleInvalidComponent(thread_model_id: string, executions_to_be_run: Execution[]) {
+    console.error("Invalid component");
     await incrementThreadModelFailedRuns(thread_model_id, executions_to_be_run.length);
     executions_to_be_run.map((execution) => {
         execution.status = "FAILURE";

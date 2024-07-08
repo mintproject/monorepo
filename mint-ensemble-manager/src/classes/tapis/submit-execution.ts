@@ -45,6 +45,8 @@ export const queueModelExecutions = async (
             await subscribeTapisJob(jobSubmission.result.uuid, token);
             return jobSubmission;
         } catch (error) {
+            console.error(`Error submitting job for execution ${seed.execution.id}`);
+            console.error(error);
             markExecutionAsFailed(seed.execution, thread.id);
         }
     });
