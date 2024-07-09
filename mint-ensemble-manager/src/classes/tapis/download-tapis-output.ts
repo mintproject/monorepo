@@ -3,7 +3,10 @@ import { Execution, Execution_Result } from "../mint/mint-types";
 import { getJobOutputDownloadFile } from "./jobs";
 import { writeFile, existsSync, mkdirSync } from "fs";
 import { getConfiguration } from "../mint/mint-functions";
-import { updateExecutionStatusAndResultsv2 } from "../graphql/graphql_functions";
+import {
+    incrementThreadModelRegisteredRunsByExecutionId,
+    updateExecutionStatusAndResultsv2
+} from "../graphql/graphql_functions";
 const prefs = getConfiguration();
 
 interface JobDataProps {
@@ -16,12 +19,15 @@ module.exports = async (job: Job<JobDataProps>) => {
     const tapisJobUuid = job.data.jobUuid;
     const results = execution.results as Execution_Result[];
     const dataUrl = prefs.tapis.dataurl;
-    const executionDirectory = prefs.tapis.datadir + "/" + job.data.execution.id;
-    await downloadData(executionDirectory, results, tapisJobUuid);
+    const executionDirectoryName = job.data.execution.id;
+    const executionDirectoryPath = prefs.tapis.datadir + "/" + executionDirectoryName;
+    await downloadData(executionDirectoryPath, results, tapisJobUuid);
     execution.results.map((result) => {
-        result.resource.url = dataUrl + "/" + executionDirectory + "/" + result.resource.name;
+        result.resource.url = dataUrl + "/" + executionDirectoryName + "/" + result.resource.name;
     });
+    execution.status = "SUCCESS";
     updateExecutionStatusAndResultsv2(execution);
+    await incrementThreadModelRegisteredRunsByExecutionId(execution.modelid, execution.id, 1);
 };
 
 const saveBlobToFile = async (blob: Blob, filePath: string) => {

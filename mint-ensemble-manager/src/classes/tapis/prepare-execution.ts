@@ -116,6 +116,7 @@ async function createExecutions(
         // Check if the component is valid
         if ((await isValidTapisComponent(component)) === false) {
             await handleInvalidComponent(thread_model_id, executions_to_be_run);
+            console.error(`Invalid component: ${component}`);
         } else {
             await queueModelExecutions(
                 thread,
@@ -132,6 +133,9 @@ const isValidTapisComponent = async (component: TapisComponent) => {
     try {
         const { result: app } = await getTapisAppWithoutLogin(component.id, component.version);
         if (!app) {
+            console.error(`Invalid component: ${component.id}`);
+            console.error(`Invalid component: ${component.version}`);
+            console.error(`Component not found in Tapis: ${app}`);
             return false;
         }
     } catch (e) {
@@ -142,7 +146,6 @@ const isValidTapisComponent = async (component: TapisComponent) => {
 };
 
 async function handleInvalidComponent(thread_model_id: string, executions_to_be_run: Execution[]) {
-    console.error("Invalid component");
     await incrementThreadModelFailedRuns(thread_model_id, executions_to_be_run.length);
     executions_to_be_run.map((execution) => {
         execution.status = "FAILURE";
@@ -238,6 +241,7 @@ const loadComponent = async (component_url: string) => {
             if (component.id && component.version) {
                 return component;
             } else {
+                console.error(`Invalid component: ${component_url}`);
                 throw new Error("Invalid component");
             }
         }

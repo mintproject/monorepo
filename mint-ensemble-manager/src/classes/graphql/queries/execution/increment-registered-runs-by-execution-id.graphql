@@ -1,0 +1,23 @@
+mutation increment_registered_runs_by_execution_id(
+    $modelId: String
+    $executionId: uuid
+    $inc: Int!
+) {
+    update_thread_model_execution_summary(
+        where: {
+            thread_model: {
+                model_id: { _eq: $modelId }
+                executions: { execution_id: { _eq: $executionId } }
+            }
+        }
+        _inc: {
+            registered_runs: $inc
+            published_runs: $inc
+            fetched_run_outputs: $inc
+            ingested_runs: $inc
+            successful_runs: $inc
+        }
+    ) {
+        affected_rows
+    }
+}

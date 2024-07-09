@@ -1,183 +1,180 @@
-name: ensemble-manager
+name: build image amd64
 
 on:
-  push:
-    branches:
-      - "*"
-    tags:
-      - v*
-  pull_request:
+    push:
+        branches:
+            - "*"
+        tags:
+            - v*
+    pull_request:
 
 env:
-  IMAGE_NAME: ensemble-manager
-  #variables related with the repository
-  REPOSITORY_MAIN_BRANCH: "master"
-  #variables related with the docker imager registry
-  DOCKER_IMAGE_REPOSITORY: mintproject
-  DOCKER_IMAGE_NAME: ensemble-manager
-  DOCKER_FILE: "Dockerfile"
+    IMAGE_NAME: ensemble-manager
+    #variables related with the repository
+    REPOSITORY_MAIN_BRANCH: "master"
+    #variables related with the docker imager registry
+    DOCKER_IMAGE_REPOSITORY: mintproject
+    DOCKER_IMAGE_NAME: ensemble-manager
+    DOCKER_FILE: "Dockerfile"
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push'
-    steps:
-      - name: Get branch name
-        id: branch-name
-        uses: tj-actions/branch-names@v6
+    build:
+        runs-on: ubuntu-latest
+        if: github.event_name == 'push'
+        steps:
+            - name: Get branch name
+              id: branch-name
+              uses: tj-actions/branch-names@v6
 
-      - uses: actions/checkout@v2
+            - uses: actions/checkout@v2
 
-      - name: Create environment variable with the commit id
-        run: |
-          echo "DOCKER_TAG=${GITHUB_SHA}" >> $GITHUB_ENV
+            - name: Create environment variable with the commit id
+              run: |
+                  echo "DOCKER_TAG=${GITHUB_SHA}" >> $GITHUB_ENV
 
-      - name: Expose the commit id
-        id: exposeValue
-        run: |
-          echo "::set-output name=docker_tag::${{ env.DOCKER_TAG }}"
+            - name: Expose the commit id
+              id: exposeValue
+              run: |
+                  echo "::set-output name=docker_tag::${{ env.DOCKER_TAG }}"
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v2
+            - name: Set up QEMU
+              uses: docker/setup-qemu-action@v2
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
+            - name: Set up Docker Buildx
+              uses: docker/setup-buildx-action@v2
 
-      - name: Login to DockerHub
-        uses: docker/login-action@v1
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+            - name: Login to DockerHub
+              uses: docker/login-action@v1
+              with:
+                  username: ${{ secrets.DOCKERHUB_USERNAME }}
+                  password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v3.0.0
-        with:
-          push: true
-          context: .
-          tags: ${{ env.DOCKER_IMAGE_REPOSITORY }}/${{ env.DOCKER_IMAGE_NAME }}:${{ steps.branch-name.outputs.current_branch }}, ${{ env.DOCKER_IMAGE_REPOSITORY }}/${{ env.DOCKER_IMAGE_NAME }}:${{ env.DOCKER_TAG }}
-          file: ${{ env.DOCKER_FILE}}
-          platforms: linux/amd64,linux/arm64
+            - name: Build and push Docker image
+              uses: docker/build-push-action@v3.0.0
+              with:
+                  push: true
+                  context: .
+                  tags: ${{ env.DOCKER_IMAGE_REPOSITORY }}/${{ env.DOCKER_IMAGE_NAME }}:${{ steps.branch-name.outputs.current_branch }}, ${{ env.DOCKER_IMAGE_REPOSITORY }}/${{ env.DOCKER_IMAGE_NAME }}:${{ env.DOCKER_TAG }}
+                  file: ${{ env.DOCKER_FILE}}
+                  platforms: linux/amd64
 
-  security:
-    permissions:
-      contents: read
-      security-events: write
-      packages: write
-    name: "Scan vulnerabilities in the image"
-    needs: [build]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: ${{ env.DOCKER_IMAGE_REPOSITORY }}/${{ env.DOCKER_IMAGE_NAME }}:${{ needs.build.outputs.docker_tag }}
-          format: "template"
-          template: "@/contrib/sarif.tpl"
-          output: "trivy-results.sarif"
-          severity: ${{ env.VULNERABILITY_SCAN_LEVEL }}
-          exit-code: "0"
-          ignore-unfixed: "true"
+    security:
+        permissions:
+            contents: read
+            security-events: write
+            packages: write
+        name: "Scan vulnerabilities in the image"
+        needs: [build]
+        runs-on: ubuntu-latest
+        steps:
+            - name: Run Trivy vulnerability scanner
+              uses: aquasecurity/trivy-action@master
+              with:
+                  image-ref: ${{ env.DOCKER_IMAGE_REPOSITORY }}/${{ env.DOCKER_IMAGE_NAME }}:${{ needs.build.outputs.docker_tag }}
+                  format: "template"
+                  template: "@/contrib/sarif.tpl"
+                  output: "trivy-results.sarif"
+                  severity: ${{ env.VULNERABILITY_SCAN_LEVEL }}
+                  exit-code: "0"
+                  ignore-unfixed: "true"
 
-      - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v1
-        if: always()
-        with:
-          sarif_file: "trivy-results.sarif"
+            - name: Upload Trivy scan results to GitHub Security tab
+              uses: github/codeql-action/upload-sarif@v1
+              if: always()
+              with:
+                  sarif_file: "trivy-results.sarif"
 
-  update:
-    needs: build 
-    runs-on: ubuntu-latest
-    steps:
-      - name: Create environment variable with the commit id
-        run: |
-          echo "DOCKER_TAG=${GITHUB_SHA}" >> $GITHUB_ENV
+    update:
+        needs: build
+        runs-on: ubuntu-latest
+        steps:
+            - name: Create environment variable with the commit id
+              run: |
+                  echo "DOCKER_TAG=${GITHUB_SHA}" >> $GITHUB_ENV
 
-      - name: Expose the commit id
-        id: exposeValue
-        run: |
-          echo "::set-output name=docker_tag::${{ env.DOCKER_TAG }}"
+            - name: Expose the commit id
+              id: exposeValue
+              run: |
+                  echo "::set-output name=docker_tag::${{ env.DOCKER_TAG }}"
 
-      - name: Checkout MINT Instances Repository
-        uses: actions/checkout@v3
-        with:
-          repository: mintproject/mint-instances
-          path: infrastructure
-          token: ${{ secrets.MINT_INSTANCES }}
-          ref: master
+            - name: Checkout MINT Instances Repository
+              uses: actions/checkout@v3
+              with:
+                  repository: mintproject/mint-instances
+                  path: infrastructure
+                  token: ${{ secrets.MINT_INSTANCES }}
+                  ref: master
 
-      - name: Checkout MINT Chart Repository
-        uses: actions/checkout@v3
-        if: github.ref == 'refs/heads/master'
-        with:
-          repository: mintproject/mint
-          path: mint-chart 
-          token: ${{ secrets.MINT_INSTANCES }}
-          ref: main
+            - name: Checkout MINT Chart Repository
+              uses: actions/checkout@v3
+              if: github.ref == 'refs/heads/master'
+              with:
+                  repository: mintproject/mint
+                  path: mint-chart
+                  token: ${{ secrets.MINT_INSTANCES }}
+                  ref: main
 
-      - name: Update MINT ISI master 
-        uses: fjogeleit/yaml-update-action@main
-        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
-        with:
-          valueFile: isi/values.yaml
-          propertyPath: "MINT.components.ensemble_manager.image.tag"
-          value: ${{ env.DOCKER_TAG }}
-          message: "Update ensemble_manager"
-          repository: mintproject/mint-instances
-          workDir: infrastructure
-          branch: master 
-          token: ${{ secrets.MINT_INSTANCES }}
+            - name: Update MINT ISI master
+              uses: fjogeleit/yaml-update-action@main
+              if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+              with:
+                  valueFile: isi/values.yaml
+                  propertyPath: "MINT.components.ensemble_manager.image.tag"
+                  value: ${{ env.DOCKER_TAG }}
+                  message: "Update ensemble_manager"
+                  repository: mintproject/mint-instances
+                  workDir: infrastructure
+                  branch: master
+                  token: ${{ secrets.MINT_INSTANCES }}
 
-      - name: Update MINT ISI WIFIRE 
-        uses: fjogeleit/yaml-update-action@main
-        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
-        with:
-          valueFile: wifire/values.yaml
-          propertyPath: "MINT.components.ensemble_manager.image.tag"
-          value: ${{ env.DOCKER_TAG }}
-          message: "Update ensemble_manager"
-          repository: mintproject/mint-instances
-          workDir: infrastructure
-          branch: master 
-          token: ${{ secrets.MINT_INSTANCES }}
+            - name: Update MINT ISI WIFIRE
+              uses: fjogeleit/yaml-update-action@main
+              if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+              with:
+                  valueFile: wifire/values.yaml
+                  propertyPath: "MINT.components.ensemble_manager.image.tag"
+                  value: ${{ env.DOCKER_TAG }}
+                  message: "Update ensemble_manager"
+                  repository: mintproject/mint-instances
+                  workDir: infrastructure
+                  branch: master
+                  token: ${{ secrets.MINT_INSTANCES }}
 
+            - name: Update MINT TACC
+              uses: fjogeleit/yaml-update-action@main
+              if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+              with:
+                  valueFile: tacc/values.yaml
+                  propertyPath: "MINT.components.ensemble_manager.image.tag"
+                  value: ${{ env.DOCKER_TAG }}
+                  message: "Update ensemble_manager"
+                  repository: mintproject/mint-instances
+                  workDir: infrastructure
+                  branch: master
+                  token: ${{ secrets.MINT_INSTANCES }}
 
-      - name: Update MINT TACC 
-        uses: fjogeleit/yaml-update-action@main
-        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
-        with:
-          valueFile: tacc/values.yaml
-          propertyPath: "MINT.components.ensemble_manager.image.tag"
-          value: ${{ env.DOCKER_TAG }}
-          message: "Update ensemble_manager"
-          repository: mintproject/mint-instances
-          workDir: infrastructure
-          branch: master 
-          token: ${{ secrets.MINT_INSTANCES }}
+            - name: Update MINT ISI dev
+              uses: fjogeleit/yaml-update-action@main
+              if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
+              with:
+                  valueFile: isi-dev/values.yaml
+                  propertyPath: "MINT.components.ensemble_manager.image.tag"
+                  value: ${{ env.DOCKER_TAG }}
+                  message: "Update ensemble_manager"
+                  repository: mintproject/mint-instances
+                  workDir: infrastructure
+                  branch: master
+                  token: ${{ secrets.MINT_INSTANCES }}
 
-
-      - name: Update MINT ISI dev
-        uses: fjogeleit/yaml-update-action@main
-        if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
-        with:
-          valueFile: isi-dev/values.yaml
-          propertyPath: "MINT.components.ensemble_manager.image.tag"
-          value: ${{ env.DOCKER_TAG }}
-          message: "Update ensemble_manager"
-          repository: mintproject/mint-instances
-          workDir: infrastructure
-          branch: master 
-          token: ${{ secrets.MINT_INSTANCES }}
-
-
-      - name: Update helm charts
-        uses: fjogeleit/yaml-update-action@main
-        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
-        with:
-          valueFile: helm/values.yaml
-          propertyPath: "components.ensemble_manager.image.tag"
-          value: ${{ env.DOCKER_TAG }}
-          message: "Update ensemble_manager"
-          repository: mintproject/mint
-          workDir: mint-chart/
-          branch: main
-          token: ${{ secrets.MINT_INSTANCES }}
+            - name: Update helm charts
+              uses: fjogeleit/yaml-update-action@main
+              if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+              with:
+                  valueFile: helm/values.yaml
+                  propertyPath: "components.ensemble_manager.image.tag"
+                  value: ${{ env.DOCKER_TAG }}
+                  message: "Update ensemble_manager"
+                  repository: mintproject/mint
+                  workDir: mint-chart/
+                  branch: main
+                  token: ${{ secrets.MINT_INSTANCES }}

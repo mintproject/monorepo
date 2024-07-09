@@ -42,7 +42,7 @@ export const queueModelExecutions = async (
         try {
             const jobRequest = createJobRequest(app, seed, model);
             const jobSubmission = await submitTapisJob(jobRequest, token);
-            await subscribeTapisJob(jobSubmission.result.uuid, token);
+            await subscribeTapisJob(jobSubmission.result.uuid, seed.execution.id, token);
             return jobSubmission;
         } catch (error) {
             console.error(`Error submitting job for execution ${seed.execution.id}`);
@@ -65,15 +65,15 @@ const markExecutionAsFailed = async (execution: Execution, thread_id: string) =>
     incrementThreadModelFailedRuns(thread_id);
 };
 
-const generateWebHookUrl = (jobUuid: string) => {
-    return `${prefs.ensemble_manager_api}/tapis/jobs/${jobUuid}`;
+const generateWebHookUrl = (executionId: string) => {
+    return `${prefs.ensemble_manager_api}/tapis/jobs/${executionId}`;
 };
 
-async function subscribeTapisJob(jobUuid: string, token) {
+async function subscribeTapisJob(jobUuid: string, executionId: string, token) {
     const basePath = prefs.tapis.basePath;
     const notifDeliveryTarget: Jobs.NotifDeliveryTarget = {
         deliveryMethod: Jobs.NotifDeliveryTargetDeliveryMethodEnum.Webhook,
-        deliveryAddress: generateWebHookUrl(jobUuid)
+        deliveryAddress: generateWebHookUrl(executionId)
     };
 
     const request: Jobs.ReqSubscribe = {

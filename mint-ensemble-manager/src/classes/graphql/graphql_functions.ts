@@ -52,6 +52,7 @@ import incFailedRunsGQL from "./queries/execution/increment-failed-runs.graphql"
 import incSuccessfulRunsGQL from "./queries/execution/increment-successful-runs.graphql";
 import incSubmittedRunsGQL from "./queries/execution/increment-submitted-runs.graphql";
 import incRegisteredRunsGQL from "./queries/execution/increment-registered-runs.graphql";
+import incRegisteredRunsByExecutionIdGQL from "./queries/execution/increment-registered-runs-by-execution-id.graphql";
 
 import listThreadModelExecutionIdsGQL from "./queries/execution/list-thread-model-executions.graphql";
 import newThreadModelExecutionsGQL from "./queries/execution/new-thread-model-executions.graphql";
@@ -678,6 +679,22 @@ export const incrementThreadModelRegisteredRuns = (thread_model_id: string, num:
         mutation: incRegisteredRunsGQL,
         variables: {
             threadModelId: thread_model_id,
+            inc: num
+        }
+    });
+};
+
+export const incrementThreadModelRegisteredRunsByExecutionId = (
+    model_id: string,
+    execution_id: string,
+    num: number = 1
+) => {
+    const APOLLO_CLIENT = GraphQL.instance(KeycloakAdapter.getUser());
+    return APOLLO_CLIENT.mutate({
+        mutation: incRegisteredRunsByExecutionIdGQL,
+        variables: {
+            modelId: model_id,
+            executionId: execution_id,
             inc: num
         }
     });
