@@ -34,6 +34,7 @@
     "author": "",
     "license": "ISC",
     "dependencies": {
+        "@aws-sdk/client-s3": "^3.525.0",
         "@apollo/client": "^3.7.1",
         "@bull-board/api": "^4.6.4",
         "@bull-board/express": "^4.6.4",
@@ -45,6 +46,7 @@
         "@types/webpack": "^5.28.0",
         "@types/webpack-dev-middleware": "^3.7.2",
         "apollo-boost": "^0.4.9",
+        "axios": "^1.6.2",
         "bull": "^4.10.2",
         "cors": "^2.8.5",
         "cross-fetch": "^3.0.5",

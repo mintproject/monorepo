@@ -368,14 +368,17 @@ export const registerExecutionOutputsInCatalog = async (
         if (execution.status == "SUCCESS") {
             // Copy any input's spatial/temporal input (if any)
             let spatial = null;
-            let temporal = null;
-            for (const inputid in execution.bindings) {
-                const input = execution.bindings[inputid];
-                if (input["spatial_coverage"]) {
-                    spatial = JSON.stringify(input["spatial_coverage"]);
+            let temporal = {};
+            for(let inputid in execution.bindings) {
+                let input = execution.bindings[inputid];
+                if(input["spatial_coverage"]) {
+                    spatial = JSON.stringify(input["spatial_coverage"])
                 }
-                if (input["start_date"] && input["end_date"]) {
-                    temporal = input["start_date"] + " to " + input["end_date"];
+                if(input["start_date"] && input["end_date"]) {
+                    temporal = {
+                        start_date: input["start_date"],
+                        end_date: input["end_date"]
+                    }
                 }
             }
 
@@ -401,8 +404,18 @@ export const registerExecutionOutputsInCatalog = async (
                             }
                         ],
                         resource_count: 1,
-                        spatial_coverage: spatial
-                    } as Dataset;
+                        spatial_coverage: spatial,
+                        temporal_coverage: temporal,
+                        region: null,
+                        description: "",
+                        version: "",
+                        limitations: "",
+                        source: {
+                            name: "",
+                            url: "",
+                            type: ""
+                        }
+                    } as Dataset
 
                     promises.push(registerDataset(ds, prefs));
                 }

@@ -1,5 +1,5 @@
 import yaml from "js-yaml";
-import os, { type } from "os";
+import { basename } from "path";
 import fs from "fs-extra";
 import { Md5 } from "ts-md5";
 import child_process from "child_process";
@@ -13,10 +13,38 @@ import { Component, ComponentSeed, ComponentArgument } from "./local-execution-t
 import { runImage } from "./docker-functions";
 import { Container } from "dockerode";
 import { DEVMODE } from "../../config/app";
-import { LocalExecutionPreferences, DataResource, DateRange } from "../mint/mint-types";
+import { LocalExecutionPreferences, DataResource, DateRange, MintPreferences } from "../mint/mint-types";
+
+import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 
 import { KeycloakAdapter } from "../../config/keycloak-adapter";
 import { fetchMintConfig } from "../mint/mint-functions";
+
+const _uploadS3File = (filepath: string, filekey: string, prefs: MintPreferences): Promise<void>  => {
+    var bucket = prefs.data_server_extra["bucket"];
+    var access_key = prefs.data_server_extra["access_key"];
+    var secret_key = prefs.data_server_extra["secret_access_key"];
+    var region = prefs.data_server_extra["region"];
+    
+    const client = new S3Client({
+        region: region,
+        credentials: {
+            accessKeyId: access_key,
+            secretAccessKey: secret_key
+        }
+    });
+    const cmd = new PutObjectCommand({
+        Bucket: bucket,
+        Key: filekey,
+        Body: fs.createReadStream(filepath)
+    });
+    
+    return new Promise<void>(async(resolve, reject) => {
+        const data = await client.send(cmd);
+        console.log(data);
+        resolve();
+    });
+}
 
 module.exports = async (job: any) => {
     // Run the model seed (model config + bindings)
@@ -126,11 +154,6 @@ module.exports = async (job: any) => {
             } as DataResource;
         });
 
-        let logstream = fs.createWriteStream(logstdout);
-        logstream.write("current working directory: " + tempdir + "\n");
-        logstream.write(command + " " + args.join(" ") + "\n");
-        logstream.close();
-
         // Check if this component requires a docker image via the model definition
         // - or via the older pegasus job properties file
 
@@ -140,16 +163,21 @@ module.exports = async (job: any) => {
         const cwl_file = comp.rundir + "/run.cwl";
         let cwl_outputs: any = {};
         let is_cwl = false;
+        let relative_outputdir = null;
 
         if (!fs.existsSync(tempdir)) fs.mkdirsSync(tempdir);
+
+        let logstream = fs.createWriteStream(logstdout);
+        logstream.write("Logging... [" + tempdir + "]\n");
+        logstream.close();
 
         if (fs.existsSync(cwl_file)) {
             console.log("Running cwl:");
             is_cwl = true;
 
             // Create cwl output directory
-            const output_suffix_cwl = Md5.hashAsciiStr(seed.execution.modelid + plainargs.join());
-            outputdir = outputdir + "/" + output_suffix_cwl;
+            relative_outputdir = Md5.hashAsciiStr(seed.execution.modelid + plainargs.join());
+            outputdir = outputdir + '/' + relative_outputdir;
             if (!fs.existsSync(outputdir)) {
                 fs.mkdirsSync(outputdir);
             }
@@ -176,31 +204,38 @@ module.exports = async (job: any) => {
             console.log("temporary directory " + tempdir);
 
             console.log(cwl_command + " " + cwl_args.join(" ") + "\n");
-            const spawnResult = child_process.spawnSync(cwl_command, cwl_args, {
+
+            let logstream = fs.createWriteStream(logstdout, { 'flags': 'a' });
+            let spawnResult = child_process.spawn(cwl_command, cwl_args, {
                 cwd: tempdir,
-                shell: true,
-                maxBuffer: 1024 * 1024 * 50 // 50 MB of log cutoff
+                shell: true
             });
 
-            // Write log file
-            logstream = fs.createWriteStream(logstdout, { flags: "a" });
-            logstream.write("\n------- STDOUT ---------\n");
-            logstream.write(spawnResult.stdout);
-            if (spawnResult.error) logstream.write(spawnResult.error.message);
-            logstream.write("\n------- STDERR ---------\n");
-            logstream.write(spawnResult.stderr);
+            let stdout = ""
+            let promise = new Promise<void>(async(resolve, reject) => {
+                spawnResult.on("close", (code) => {
+                    statusCode = code
+                    resolve()
+                })
+                spawnResult.stdout.on("data", (message) => {
+                    logstream.write(message)
+                    stdout += message
+                })
+                spawnResult.stderr.on("data", (message) => {
+                    logstream.write(message)
+                })
+            });
+            await Promise.all([promise])
             logstream.close();
-            if (spawnResult.error) {
-                error = spawnResult.error.message;
-            }
-            statusCode = spawnResult.status;
-            if (statusCode == 0) {
-                cwl_outputs = JSON.parse(spawnResult.stdout.toString());
-            }
-        } else if (softwareImage != null) {
-            console.log("Running as a Docker Image:");
-            logstream = fs.createWriteStream(logstdout, { flags: "a" });
 
+            if (statusCode == 0){
+                cwl_outputs = JSON.parse(stdout)
+            }
+        }
+        else if (softwareImage != null) {
+            console.log("Running as a Docker Image:" )
+            let logstream = fs.createWriteStream(logstdout, { 'flags': 'a' });
+            
             // Run command in docker image
             const folderBindings = [
                 `${tempdir}:${tempdir}`,
@@ -237,7 +272,7 @@ module.exports = async (job: any) => {
             });
 
             // Write log file
-            logstream = fs.createWriteStream(logstdout, { flags: "a" });
+            let logstream = fs.createWriteStream(logstdout, { 'flags': 'a' });
             logstream.write("\n------- STDOUT ---------\n");
             logstream.write(spawnResult.stdout);
             if (spawnResult.error) logstream.write(spawnResult.error.message);
@@ -255,30 +290,45 @@ module.exports = async (job: any) => {
             error = "Execution returned with non-zero status code";
         } else {
             // Process Results
+            let uploadOutputPromises = [];
+
             Object.values(results).map((result: any) => {
                 // Rename temporary output files to desired output name
                 let desired_output_file = null;
                 let tmp_output_file = null;
-                if (is_cwl) {
-                    result.name = result.role;
+                let relative_output_file = null;
+                if(is_cwl) {
+                    result.name = result.role
                     if (result.role !== undefined && result.role in cwl_outputs) {
-                        const cwl_output = cwl_outputs[result.role];
-                        desired_output_file = outputdir + "/" + cwl_output["basename"];
-                        tmp_output_file = cwl_output["path"];
+                        let cwl_output = cwl_outputs[result.role];
+                        desired_output_file = outputdir + '/' + cwl_output['basename'];
+                        relative_output_file = (relative_outputdir ? (relative_outputdir + "/") : "") +  cwl_output['basename']
+                        tmp_output_file = cwl_output['path']
                     }
                 } else {
                     tmp_output_file = tempdir + "/" + result.name;
                     desired_output_file = outputdir + "/" + result.name;
+                    relative_output_file = (relative_outputdir ? (relative_outputdir + "/") : "") +  result.name;
                 }
                 // Copy over the tempfile to desired output file
                 if (tmp_output_file && desired_output_file) {
                     if (fs.existsSync(tmp_output_file)) {
-                        fs.copyFileSync(tmp_output_file, desired_output_file);
+                        if (prefs.data_server_type == "S3") {
+                            uploadOutputPromises.push(_uploadS3File(tmp_output_file, relative_output_file, prefs));
+                        }
+                        else {
+                            fs.copyFileSync(tmp_output_file, desired_output_file);
+                        }
                     }
                     const url = desired_output_file.replace(localex.datadir, localex.dataurl);
                     result.url = url;
                 }
             });
+            
+            // Upload all datasets
+            if (uploadOutputPromises.length > 0)
+                await Promise.all(uploadOutputPromises);
+            
             seed.execution.results = results;
         }
 
@@ -343,9 +393,9 @@ const write_cwl_values = (
             const datasets = seed.datasets[input.id] || [];
             datasets.map((ds: string) => {
                 // Copy input files to tempdir
-                data[input.role] = { class: "File", location: ds["url"] };
+                data[input.role] = {"class": "File", "location": ds["name"]}
             });
-            console.log(datasets);
+            // console.log(datasets)
         }
     });
 

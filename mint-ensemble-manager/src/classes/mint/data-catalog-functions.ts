@@ -1,5 +1,7 @@
+import { register } from "tsconfig-paths";
 import { DateRange, Region, MintPreferences, DatasetQueryParameters, Dataset } from "./mint-types";
 import * as rp from "request-promise-native";
+import { registerInternalDataset } from "./data-catalog-registration";
 
 const getDatasetsFromDCResponse = (obj: any, queryParameters: DatasetQueryParameters) => {
     const datasets = obj.datasets.map((ds: any) => {
@@ -128,6 +130,7 @@ export const registerDataset = async (
         return await registerCKANDataset(dataset, prefs);
     } else {
         // Register in internal data catalog
+        return await registerInternalDataset(dataset, prefs);
     }
 };
 

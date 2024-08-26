@@ -56,15 +56,20 @@ interface TapisConfig {
 
 export interface MintPreferences {
     data_catalog_api: string;
-    data_catalog_type: string;
-    data_catalog_key: string;
-    data_catalog_extra: any;
+    data_catalog_type?: string;
+    data_catalog_key?: string;
+    data_catalog_extra?: any;
     tapis?: TapisConfig;
-    model_catalog_api?: string;
-    ensemble_manager_api: string;
-    ingestion_api: string;
-    visualization_url: string;
-    execution_engine?: "wings" | "localex" | "tapis";
+  
+    data_server_type?: string,
+    data_server_extra?: any
+
+    model_catalog_api?: string,
+    ensemble_manager_api: string,
+    ingestion_api: string,
+    visualization_url: string,
+    execution_engine?: "wings" | "localex" | "tapis",
+    
     // Local Execution
     localex?: LocalExecutionPreferences;
     // Wings Execution

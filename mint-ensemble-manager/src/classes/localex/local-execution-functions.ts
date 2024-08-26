@@ -22,12 +22,15 @@ import request from "request";
 import yauzl from "yauzl";
 import yaml from "js-yaml";
 
+import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
+
 import Queue from "bull";
 import { EXECUTION_QUEUE_NAME, REDIS_URL } from "../../config/redis";
 import { pullImage } from "./docker-functions";
 import { Md5 } from "ts-md5";
 import { getConfiguration } from "../mint/mint-functions";
 import { Region } from "../mint/mint-types";
+import { Readable } from "stream";
 
 const prefs = getConfiguration();
 
@@ -43,15 +46,51 @@ if (prefs.execution_engine === "localex") {
     console.log(`Job completed with result ${result}`);
 });*/
 
+const _downloadS3File = (url: string, filepath: string, prefs: MintPreferences): Promise<void>  => {
+    var bucket = prefs.data_server_extra["bucket"];
+    var access_key = prefs.data_server_extra["access_key"];
+    var secret_key = prefs.data_server_extra["secret_access_key"];
+    var region = prefs.data_server_extra["region"];
+    
+    var fileKey = url.substring(5 + bucket.length + 1)
+    
+    const client = new S3Client({
+        region: region,
+        credentials: {
+            accessKeyId: access_key,
+            secretAccessKey: secret_key
+        }
+    });
+    const cmd = new GetObjectCommand({
+        Bucket: bucket,
+        Key: fileKey
+    });
+    
+    return new Promise<void>(async(resolve, reject) => {
+        const data = await client.send(cmd);
+        if (data.Body instanceof Readable) {
+            data.Body.pipe(fs.createWriteStream(filepath))
+                .on('error', err => reject(err))
+                .on('close', () => resolve())
+        }
+    });
+}
+
 const _downloadFile = (url: string, filepath: string): Promise<void> => {
     const file = fs.createWriteStream(filepath);
     return new Promise<void>((resolve, reject) => {
-        request.get(url).on("response", (res) => {
-            res.pipe(file);
-            res.on("end", function () {
-                resolve();
+        if (url.toLowerCase().startsWith("http")) {
+            request.get(url).on('response', (res) => {
+                res.pipe(file);
+                res.on('end', function () {
+                    resolve();
+                });
             });
-        });
+        }
+        else if (url.toLowerCase().startsWith("s3://")) {
+            // Make a call to store the data to filepath (or to the file stream)
+            
+        }
     });
 };
 
@@ -386,13 +425,19 @@ export const queueModelExecutionsLocally = async (
     });
 
     // Add Download Job to Queue (if it doesn't already exist)
-    for (const resid in registered_resources) {
-        const args = registered_resources[resid];
-        const inputpath = prefs.localex.datadir + "/" + args[0];
-        const inputurl = args[2];
-        if (!fs.existsSync(inputpath))
-            downloadInputPromises.push(_downloadFile(inputurl, inputpath));
-    }
+    for (let resid in registered_resources) {
+        let args = registered_resources[resid];
+        let inputpath = prefs.localex.datadir + "/" + args[0];
+        let inputurl = args[2];
+        if (!fs.existsSync(inputpath)) {
+            if (inputurl.toLowerCase().startsWith("http")) {
+                downloadInputPromises.push(_downloadFile(inputurl, inputpath));
+            }
+            else if (inputurl.toLowerCase().startsWith("s3://")) {
+                downloadInputPromises.push(_downloadS3File(inputurl, inputpath, prefs));
+            }
+        }
+    }    
 
     // Download all datasets
     if (downloadInputPromises.length > 0) await Promise.all(downloadInputPromises);
