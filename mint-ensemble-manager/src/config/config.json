@@ -10,8 +10,8 @@
    "data_server_extra": {
       "region": "ap-south-1",
       "bucket": "mintdata",
-      "access_key": "***REMOVED***",
-      "secret_access_key": "***REMOVED***"
+      "access_key": "[s3-access-key]",
+      "secret_access_key": "[s3-secret-key]"
    },
    "old_model_catalog_api": "http://localhost:30004/v1.8.0",
    "model_catalog_api": "https://api.models.dev.mint.isi.edu/v1.8.0",
