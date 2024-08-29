@@ -56,8 +56,7 @@ jobs:
                   context: .
                   tags: ${{ env.DOCKER_IMAGE_REPOSITORY }}/${{ env.DOCKER_IMAGE_NAME }}:${{ steps.branch-name.outputs.current_branch }}, ${{ env.DOCKER_IMAGE_REPOSITORY }}/${{ env.DOCKER_IMAGE_NAME }}:${{ env.DOCKER_TAG }}
                   file: ${{ env.DOCKER_FILE}}
-                  platforms: linux/amd64
-
+                  platforms: linux/amd64, linux/arm64
     security:
         permissions:
             contents: read
