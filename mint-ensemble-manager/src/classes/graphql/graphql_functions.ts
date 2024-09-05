@@ -176,6 +176,31 @@ export const getThread = async (threadid: string): Promise<Thread> => {
         });
 };
 
+export const getThreadV2 = async (threadId: string): Promise<Thread> => {
+    try {
+        const APOLLO_CLIENT = GraphQL.instance(KeycloakAdapter.getUser());
+        const response = await APOLLO_CLIENT.query({
+            query: getThreadGQL,
+            fetchPolicy: "no-cache",
+            variables: {
+                id: threadId
+            }
+        });
+
+        if (!response || (response.errors && response.errors.length > 0)) {
+            throw new Error(response.errors.join(", "));
+        } else {
+            const thread = response.data.thread_by_pk;
+            if (thread) {
+                return threadFromGQL(thread);
+            }
+        }
+    } catch (error) {
+        console.log(error);
+        throw error;
+    }
+};
+
 export const getModel = async (modelid: string): Promise<Model> => {
     const APOLLO_CLIENT = GraphQL.instance(KeycloakAdapter.getUser());
     return APOLLO_CLIENT.query({

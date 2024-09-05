@@ -1,46 +1,46 @@
 {
-   "data_catalog_api": "http://localhost:5000",
-   "data_catalog_type": "CKAN",
-   "data_catalog_key": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJaUGd3Snk1YUxRbW9keTBnd1R0SkNDMG5QeU5vMjg3QnRCd0J4WVVpWHFBIiwiaWF0IjoxNzAxNTMyNzE1fQ.yX8S6H1MD7eZYoDTX6Adybv3V5ezrgz-Y2zNOqjhEXo",
-   "data_catalog_extra": {
-      "owner_organization_id": "21033e7d-484d-4974-9340-8c5755242c1f",
-      "owner_provenance_id": "9ef60317-5da5-4050-8bbc-7d6826fee49f"
-   },
-   "data_server_type": "Local",
-   "data_server_extra": {
-      "region": "ap-south-1",
-      "bucket": "mintdata",
-      "access_key": "CHANGEME",
-      "secret_access_key": "CHANGEME"
-   },
-   "model_catalog_api": "https://api.models.dev.mint.isi.edu/v1.8.0",
+    "data_catalog_api": "http://localhost:5000",
+    "data_catalog_type": "CKAN",
+    "data_catalog_key": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJaUGd3Snk1YUxRbW9keTBnd1R0SkNDMG5QeU5vMjg3QnRCd0J4WVVpWHFBIiwiaWF0IjoxNzAxNTMyNzE1fQ.yX8S6H1MD7eZYoDTX6Adybv3V5ezrgz-Y2zNOqjhEXo",
+    "data_catalog_extra": {
+        "owner_organization_id": "21033e7d-484d-4974-9340-8c5755242c1f",
+        "owner_provenance_id": "9ef60317-5da5-4050-8bbc-7d6826fee49f"
+    },
+    "data_server_type": "Local",
+    "data_server_extra": {
+        "region": "ap-south-1",
+        "bucket": "mintdata",
+        "access_key": "CHANGEME",
+        "secret_access_key": "CHANGEME"
+    },
+    "model_catalog_api": "https://api.models.dev.mint.isi.edu/v1.8.0",
 
-   "ensemble_manager_api": "http://localhost:3000/v1",
-   "graphql": {
-      "endpoint": "localhost:30003/v1/graphql",
-      "enable_ssl": false,
-      "use_secret": true,
-      "secret": "CHANGEME"
-   },
-   "execution_engine": "localex",
-   "localex": {
-      "codedir": "/Users/varun/mintproject/data/code",
-      "datadir": "/Users/varun/mintproject/data/data",
-      "tempdir": "/Users/varun/mintproject/data/temp",
-      "logdir": "/Users/varun/mintproject/data/logs",
-      "dataurl": "file:///Users/varun/mintproject/data/data",
-      "logurl": "file:///Users/varun/mintproject/data/logs",
-      "parallelism": 2
-   },
-   "kubernetes": {
-      "use": true,
-      "namespace": "mint",
-      "cpu_limit": "800m",
-      "memory_limit": "2048Mi"
-   },
-   "auth_server": "https://auth.mint.isi.edu/",
-   "auth_realm": "production",
-   "auth_client_id": "mint-ui",
-   "visualization_url": "",
-   "ingestion_api": ""
+    "ensemble_manager_api": "http://localhost:3000/v1",
+    "graphql": {
+        "endpoint": "graphql.mint.local/v1/graphql",
+        "enable_ssl": false,
+        "use_secret": true,
+        "secret": "CHANGEME"
+    },
+    "execution_engine": "localex",
+    "localex": {
+        "codedir": "/Users/varun/mintproject/data/code",
+        "datadir": "/Users/varun/mintproject/data/data",
+        "tempdir": "/Users/varun/mintproject/data/temp",
+        "logdir": "/Users/varun/mintproject/data/logs",
+        "dataurl": "file:///Users/varun/mintproject/data/data",
+        "logurl": "file:///Users/varun/mintproject/data/logs",
+        "parallelism": 2
+    },
+    "kubernetes": {
+        "use": true,
+        "namespace": "mint",
+        "cpu_limit": "800m",
+        "memory_limit": "2048Mi"
+    },
+    "auth_server": "https://auth.mint.isi.edu/",
+    "auth_realm": "production",
+    "auth_client_id": "mint-ui",
+    "visualization_url": "",
+    "ingestion_api": ""
 }

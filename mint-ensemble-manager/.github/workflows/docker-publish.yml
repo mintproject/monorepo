@@ -83,97 +83,97 @@ jobs:
               with:
                   sarif_file: "trivy-results.sarif"
 
-    update:
-        needs: build
-        runs-on: ubuntu-latest
-        steps:
-            - name: Create environment variable with the commit id
-              run: |
-                  echo "DOCKER_TAG=${GITHUB_SHA}" >> $GITHUB_ENV
+    # update:
+    #     needs: build
+    #     runs-on: ubuntu-latest
+    #     steps:
+    #         - name: Create environment variable with the commit id
+    #           run: |
+    #               echo "DOCKER_TAG=${GITHUB_SHA}" >> $GITHUB_ENV
 
-            - name: Expose the commit id
-              id: exposeValue
-              run: |
-                  echo "::set-output name=docker_tag::${{ env.DOCKER_TAG }}"
+    #         - name: Expose the commit id
+    #           id: exposeValue
+    #           run: |
+    #               echo "::set-output name=docker_tag::${{ env.DOCKER_TAG }}"
 
-            - name: Checkout MINT Instances Repository
-              uses: actions/checkout@v3
-              with:
-                  repository: mintproject/mint-instances
-                  path: infrastructure
-                  token: ${{ secrets.MINT_INSTANCES }}
-                  ref: master
+    #         - name: Checkout MINT Instances Repository
+    #           uses: actions/checkout@v3
+    #           with:
+    #               repository: mintproject/mint-instances
+    #               path: infrastructure
+    #               token: ${{ secrets.MINT_INSTANCES }}
+    #               ref: master
 
-            - name: Checkout MINT Chart Repository
-              uses: actions/checkout@v3
-              if: github.ref == 'refs/heads/master'
-              with:
-                  repository: mintproject/mint
-                  path: mint-chart
-                  token: ${{ secrets.MINT_INSTANCES }}
-                  ref: main
+    #         - name: Checkout MINT Chart Repository
+    #           uses: actions/checkout@v3
+    #           if: github.ref == 'refs/heads/master'
+    #           with:
+    #               repository: mintproject/mint
+    #               path: mint-chart
+    #               token: ${{ secrets.MINT_INSTANCES }}
+    #               ref: main
 
-            - name: Update MINT ISI master
-              uses: fjogeleit/yaml-update-action@main
-              if: github.event_name == 'push' && github.ref == 'refs/heads/master'
-              with:
-                  valueFile: isi/values.yaml
-                  propertyPath: "MINT.components.ensemble_manager.image.tag"
-                  value: ${{ env.DOCKER_TAG }}
-                  message: "Update ensemble_manager"
-                  repository: mintproject/mint-instances
-                  workDir: infrastructure
-                  branch: master
-                  token: ${{ secrets.MINT_INSTANCES }}
+    #         - name: Update MINT ISI master
+    #           uses: fjogeleit/yaml-update-action@main
+    #           if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    #           with:
+    #               valueFile: isi/values.yaml
+    #               propertyPath: "MINT.components.ensemble_manager.image.tag"
+    #               value: ${{ env.DOCKER_TAG }}
+    #               message: "Update ensemble_manager"
+    #               repository: mintproject/mint-instances
+    #               workDir: infrastructure
+    #               branch: master
+    #               token: ${{ secrets.MINT_INSTANCES }}
 
-            - name: Update MINT ISI WIFIRE
-              uses: fjogeleit/yaml-update-action@main
-              if: github.event_name == 'push' && github.ref == 'refs/heads/master'
-              with:
-                  valueFile: wifire/values.yaml
-                  propertyPath: "MINT.components.ensemble_manager.image.tag"
-                  value: ${{ env.DOCKER_TAG }}
-                  message: "Update ensemble_manager"
-                  repository: mintproject/mint-instances
-                  workDir: infrastructure
-                  branch: master
-                  token: ${{ secrets.MINT_INSTANCES }}
+    #         - name: Update MINT ISI WIFIRE
+    #           uses: fjogeleit/yaml-update-action@main
+    #           if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    #           with:
+    #               valueFile: wifire/values.yaml
+    #               propertyPath: "MINT.components.ensemble_manager.image.tag"
+    #               value: ${{ env.DOCKER_TAG }}
+    #               message: "Update ensemble_manager"
+    #               repository: mintproject/mint-instances
+    #               workDir: infrastructure
+    #               branch: master
+    #               token: ${{ secrets.MINT_INSTANCES }}
 
-            - name: Update MINT TACC
-              uses: fjogeleit/yaml-update-action@main
-              if: github.event_name == 'push' && github.ref == 'refs/heads/master'
-              with:
-                  valueFile: tacc/values.yaml
-                  propertyPath: "MINT.components.ensemble_manager.image.tag"
-                  value: ${{ env.DOCKER_TAG }}
-                  message: "Update ensemble_manager"
-                  repository: mintproject/mint-instances
-                  workDir: infrastructure
-                  branch: master
-                  token: ${{ secrets.MINT_INSTANCES }}
+    #         - name: Update MINT TACC
+    #           uses: fjogeleit/yaml-update-action@main
+    #           if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    #           with:
+    #               valueFile: tacc/values.yaml
+    #               propertyPath: "MINT.components.ensemble_manager.image.tag"
+    #               value: ${{ env.DOCKER_TAG }}
+    #               message: "Update ensemble_manager"
+    #               repository: mintproject/mint-instances
+    #               workDir: infrastructure
+    #               branch: master
+    #               token: ${{ secrets.MINT_INSTANCES }}
 
-            - name: Update MINT ISI dev
-              uses: fjogeleit/yaml-update-action@main
-              if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
-              with:
-                  valueFile: isi-dev/values.yaml
-                  propertyPath: "MINT.components.ensemble_manager.image.tag"
-                  value: ${{ env.DOCKER_TAG }}
-                  message: "Update ensemble_manager"
-                  repository: mintproject/mint-instances
-                  workDir: infrastructure
-                  branch: master
-                  token: ${{ secrets.MINT_INSTANCES }}
+    #         - name: Update MINT ISI dev
+    #           uses: fjogeleit/yaml-update-action@main
+    #           if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
+    #           with:
+    #               valueFile: isi-dev/values.yaml
+    #               propertyPath: "MINT.components.ensemble_manager.image.tag"
+    #               value: ${{ env.DOCKER_TAG }}
+    #               message: "Update ensemble_manager"
+    #               repository: mintproject/mint-instances
+    #               workDir: infrastructure
+    #               branch: master
+    #               token: ${{ secrets.MINT_INSTANCES }}
 
-            - name: Update helm charts
-              uses: fjogeleit/yaml-update-action@main
-              if: github.event_name == 'push' && github.ref == 'refs/heads/master'
-              with:
-                  valueFile: helm/values.yaml
-                  propertyPath: "components.ensemble_manager.image.tag"
-                  value: ${{ env.DOCKER_TAG }}
-                  message: "Update ensemble_manager"
-                  repository: mintproject/mint
-                  workDir: mint-chart/
-                  branch: main
-                  token: ${{ secrets.MINT_INSTANCES }}
+    #         - name: Update helm charts
+    #           uses: fjogeleit/yaml-update-action@main
+    #           if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    #           with:
+    #               valueFile: helm/values.yaml
+    #               propertyPath: "components.ensemble_manager.image.tag"
+    #               value: ${{ env.DOCKER_TAG }}
+    #               message: "Update ensemble_manager"
+    #               repository: mintproject/mint
+    #               workDir: mint-chart/
+    #               branch: main
+    #               token: ${{ secrets.MINT_INSTANCES }}

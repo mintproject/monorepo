@@ -21,6 +21,7 @@ import {
     getRegionDetails,
     getTask,
     getThread,
+    getThreadV2,
     getTotalConfigurations,
     setThreadData,
     setThreadModels,
@@ -41,6 +42,12 @@ function flatten(array) {
 }
 
 const threadsService = {
+    async getThread(thread_id: string) {
+        const mint_prefs = await fetchMintConfig();
+        KeycloakAdapter.signIn(mint_prefs.graphql.username, mint_prefs.graphql.password);
+        return await getThreadV2(thread_id);
+    },
+
     async createThread(desc: any) {
         const mint_prefs = await fetchMintConfig();
         KeycloakAdapter.signIn(mint_prefs.graphql.username, mint_prefs.graphql.password);
@@ -191,7 +198,11 @@ const threadsService = {
             }
         }
         // Get total number of configs to run
-        const totalconfigs = getTotalConfigurations(model, model_ensembles[model.id].bindings, data);
+        const totalconfigs = getTotalConfigurations(
+            model,
+            model_ensembles[model.id].bindings,
+            data
+        );
         execution_summary[model.id] = {
             total_runs: totalconfigs,
             submitted_runs: 0,
