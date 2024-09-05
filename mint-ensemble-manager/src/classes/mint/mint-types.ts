@@ -72,6 +72,10 @@ export interface MintPreferences {
     
     // Local Execution
     localex?: LocalExecutionPreferences;
+
+    // Kubernetes Preferences
+    kubernetes?: KubernetesPreferences;
+
     // Wings Execution
     wings?: WingsPreferences;
     graphql?: GraphQLPreferences;
@@ -92,6 +96,13 @@ export interface MintPreferences {
     messagingSenderId: string;
     appId: string;
     cromo_api?: string;
+}
+
+export interface KubernetesPreferences {
+    use?: boolean,
+    namespace?: string,
+    cpu_limit?: string,
+    memory_limit?: string
 }
 
 export interface GraphQLPreferences {

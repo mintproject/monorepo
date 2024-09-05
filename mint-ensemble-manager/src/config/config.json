@@ -6,14 +6,13 @@
       "owner_organization_id": "21033e7d-484d-4974-9340-8c5755242c1f",
       "owner_provenance_id": "9ef60317-5da5-4050-8bbc-7d6826fee49f"
    },
-   "data_server_type": "S3",
+   "data_server_type": "Local",
    "data_server_extra": {
       "region": "ap-south-1",
       "bucket": "mintdata",
-      "access_key": "[s3-access-key]",
-      "secret_access_key": "[s3-secret-key]"
+      "access_key": "CHANGEME",
+      "secret_access_key": "CHANGEME"
    },
-   "old_model_catalog_api": "http://localhost:30004/v1.8.0",
    "model_catalog_api": "https://api.models.dev.mint.isi.edu/v1.8.0",
 
    "ensemble_manager_api": "http://localhost:3000/v1",
@@ -29,9 +28,15 @@
       "datadir": "/Users/varun/mintproject/data/data",
       "tempdir": "/Users/varun/mintproject/data/temp",
       "logdir": "/Users/varun/mintproject/data/logs",
-      "dataurl": "s3://mintdata",
-      "logurl": "s3://mintdata",
+      "dataurl": "file:///Users/varun/mintproject/data/data",
+      "logurl": "file:///Users/varun/mintproject/data/logs",
       "parallelism": 2
+   },
+   "kubernetes": {
+      "use": true,
+      "namespace": "mint",
+      "cpu_limit": "800m",
+      "memory_limit": "2048Mi"
    },
    "auth_server": "https://auth.mint.isi.edu/",
    "auth_realm": "production",

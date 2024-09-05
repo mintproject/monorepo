@@ -18,6 +18,11 @@ export const runImage = async (
     workingDirectory: string,
     folderBindings: string[]
 ) => {
+    // console.log(cmd)
+    // console.log(folderBindings)
+    // console.log(workingDirectory)
+    // console.log(image)
+    // console.log(cmd.join(" "))
     return dockerode.run(image, cmd, logstream, {
         WorkingDir: workingDirectory,
         Binds: folderBindings,

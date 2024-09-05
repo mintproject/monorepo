@@ -154,10 +154,12 @@ const _unzipFile = (zipfilename: string, dirname: string): Promise<string> => {
 
 const _downloadAndUnzipToDirectory = (url: string, modeldir: string, compname: string) => {
     const zipfile = modeldir + ".zip";
+    console.log("Downloading .." + zipfile)
     return new Promise<void>((resolve, reject) => {
         _downloadFile(url, zipfile).then(() => {
             // Unzip file
             if (fs.existsSync(zipfile)) {
+                console.log("Unzipping..")
                 _unzipFile(zipfile, modeldir)
                     .then(() => {
                         resolve();
@@ -197,6 +199,8 @@ const _downloadWCM = async (url: string, prefs: MintPreferences) => {
     const compname = path.basename(component_file, extension);
 
     const codedir = prefs.localex.codedir + "/" + hashdir;
+    console.log("Downloading .. "+url+" .. to .. "+codedir);
+
     if (!fs.existsSync(codedir)) fs.mkdirsSync(codedir);
 
     const modeldir = codedir + "/" + compname;
@@ -318,6 +322,7 @@ export const getModelCacheDirectory = (url: string, prefs: MintPreferences) => {
 
 export const loadModelWCM = async (url: string, model: Model, prefs: MintPreferences) => {
     const modeldir = await _downloadWCM(url, prefs);
+    console.log("Model dir.. " + modeldir)
     if (model.software_image != null) {
         // Pull docker image if needed
         await pullImage(model.software_image);

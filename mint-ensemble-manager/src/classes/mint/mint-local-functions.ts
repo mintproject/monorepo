@@ -108,6 +108,8 @@ export const saveAndRunExecutionsForModelLocally = async (
             if (!DEVMODE) await setThreadModelExecutionSummary(thread_model_id, summary);
 
             // Load the component model
+            console.log("Loading model.. "+model.code_url);
+            
             const component = await loadModelWCM(model.code_url, model, prefs);
 
             // Delete existing thread execution ids
