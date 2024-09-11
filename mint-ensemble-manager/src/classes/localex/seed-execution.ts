@@ -121,8 +121,8 @@ module.exports = async (job: any) => {
                     // Copy input files to tempdir
                     const ifile = inputdir + "/" + ds.name;
                     const newifile = tempdir + "/" + ds.name;
-                    fs.symlinkSync(ifile, newifile);
-                    //fs.copyFileSync(ifile, newifile);
+                    // fs.symlinkSync(ifile, newifile);
+                    fs.copyFileSync(ifile, newifile);
                     args.push(ds.name);
                     plainargs.push(ds.name);
 
