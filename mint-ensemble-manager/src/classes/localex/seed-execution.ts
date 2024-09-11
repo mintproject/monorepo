@@ -187,7 +187,7 @@ module.exports = async (job: any) => {
                 fs.mkdirsSync(outputdir);
             }
             
-            let use_kubernetes = true // FIXME: Hardcoding this for now prefs.kubernetes?.use || true;
+            let use_kubernetes = prefs.kubernetes?.use || true;
             if(use_kubernetes) {
                 // If Running as a Kubernetes Pod, then extract I/O from CWL file and run that way
                 console.log("Running as a Kubernetes Job:" )
@@ -267,8 +267,7 @@ module.exports = async (job: any) => {
         // If there is only a docker image, run the container
         // --------------------------------------------------
         else if (softwareImage != null) {
-            let use_kubernetes = true // FIXME: Hardcoding this for now prefs.kubernetes?.use || true;
-            //let use_kubernetes = prefs.kubernetes?.use || true;
+            let use_kubernetes = prefs.kubernetes?.use || true;
             if(use_kubernetes) {
                 console.log("Running as a Kubernetes Job:" )
                 let logstream = fs.createWriteStream(logstdout, { 'flags': 'a' });

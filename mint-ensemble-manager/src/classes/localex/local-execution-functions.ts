@@ -323,10 +323,10 @@ export const getModelCacheDirectory = (url: string, prefs: MintPreferences) => {
 export const loadModelWCM = async (url: string, model: Model, prefs: MintPreferences) => {
     const modeldir = await _downloadWCM(url, prefs);
     console.log("Model dir.. " + modeldir)
-    if (model.software_image != null) {
-        // Pull docker image if needed
-        await pullImage(model.software_image);
-    }
+    // if (model.software_image != null) {
+    //     // Pull docker image if needed
+    //     await pullImage(model.software_image);
+    // }
     let details = _getModelDetails(model, modeldir);
     // If we cannot get the details from just the model cache, then try to get it from the yaml
     if (!details) {
