@@ -435,6 +435,7 @@ export const queueModelExecutionsLocally = async (
         let inputpath = prefs.localex.datadir + "/" + args[0];
         let inputurl = args[2];
         if (!fs.existsSync(inputpath)) {
+            console.log("Downloading " + inputpath + " ...");
             if (inputurl.toLowerCase().startsWith("http")) {
                 downloadInputPromises.push(_downloadFile(inputurl, inputpath));
             }

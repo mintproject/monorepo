@@ -386,10 +386,10 @@ module.exports = async (job: any) => {
         }
 
         // Remove temporary directory
-        fs.removeSync(tempdir);
+        // fs.removeSync(tempdir);
     } catch (e) {
         error = "ERROR: " + e;
-        const logstream = fs.createWriteStream(logstdout);
+        const logstream = fs.createWriteStream(logstdout, { 'flags': 'a' });
         logstream.write("ERROR in Execution: \n");
         logstream.write(error + "\n");
         logstream.close();
