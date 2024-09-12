@@ -12,11 +12,19 @@ const k8sApi = kc.makeApiClient(k8s.CoreV1Api);
 const batchV1Api = kc.makeApiClient(k8s.BatchV1Api);
 const k8sLogApi = new k8s.Log(kc);
 
-async function get_volumes_and_mounts(dataDirectory, namespace, jobname): Promise<[Array<k8s.V1Volume>, Array<k8s.V1VolumeMount>]> {
+async function get_volumes_and_mounts(namespace, jobname, mountPath=null): Promise<[Array<k8s.V1Volume>, Array<k8s.V1VolumeMount>]> {
     let volumes = []
     let mounts = []
     
     let ensemble_manager_pvc_name = "mint-ensemble-manager"
+    let ensemble_manager_pvc_mount = "/home/node/app/data"
+    if(mountPath) {
+        ensemble_manager_pvc_mount = mountPath
+    }
+    else if(process.env.ENSEMBLE_MANAGER_PVC_MOUNT) {
+        ensemble_manager_pvc_mount = process.env.ENSEMBLE_MANAGER_PVC_MOUNT
+    }
+
     if(process.env.ENSEMBLE_MANAGER_PVC) {
         ensemble_manager_pvc_name = process.env.ENSEMBLE_MANAGER_PVC
     }
@@ -30,6 +38,7 @@ async function get_volumes_and_mounts(dataDirectory, namespace, jobname): Promis
             }
         }
     }
+
     let volume_name = jobname + "-volume"
     volumes.push({
         name: volume_name,
@@ -39,7 +48,7 @@ async function get_volumes_and_mounts(dataDirectory, namespace, jobname): Promis
     })        
     mounts.push({
         name: volume_name,
-        mountPath: dataDirectory
+        mountPath: ensemble_manager_pvc_mount
     })
     return [volumes, mounts]   
 }
@@ -53,12 +62,11 @@ export const runKubernetesPod = async(
     image: string,
     logstream: WriteStream,
     workingDirectory: string,
-    dataDirectory: string,
     cpu_limit:string = "200m",
     memory_limit:string = "2048Mi"
 ) => {
     let container_name = jobname + "-container";
-    let [volumes, mounts] = await get_volumes_and_mounts(dataDirectory, namespace, jobname)
+    let [volumes, mounts] = await get_volumes_and_mounts(namespace, jobname)
 
     // Create the Job
     const jobManifest = {
@@ -99,7 +107,7 @@ export const runKubernetesPod = async(
     
     let statusCode = 0
 
-    try {
+    try {        
         // Create Job
         await batchV1Api.createNamespacedJob(namespace, jobManifest);
         

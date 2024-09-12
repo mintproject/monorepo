@@ -121,8 +121,10 @@ module.exports = async (job: any) => {
                     // Copy input files to tempdir
                     const ifile = inputdir + "/" + ds.name;
                     const newifile = tempdir + "/" + ds.name;
-                    // fs.symlinkSync(ifile, newifile);
-                    fs.copyFileSync(ifile, newifile);
+                    if(!fs.existsSync(newifile)) {
+                        fs.symlinkSync(ifile, newifile);
+                        // fs.copyFileSync(ifile, newifile);
+                    }
                     args.push(ds.name);
                     plainargs.push(ds.name);
 
@@ -205,7 +207,7 @@ module.exports = async (job: any) => {
                 let cpu_limit = prefs.kubernetes?.cpu_limit || null;
                 let memory_limit = prefs.kubernetes?.memory_limit || null;
 
-                statusCode = await runKubernetesPod(namespace, jobname, cmd_args, image, logstream, tempdir, localex.datadir, cpu_limit, memory_limit);
+                statusCode = await runKubernetesPod(namespace, jobname, cmd_args, image, logstream, tempdir, cpu_limit, memory_limit);
 
                 // Clean up
                 logstream.close();
@@ -273,7 +275,7 @@ module.exports = async (job: any) => {
                 let cpu_limit = prefs.kubernetes?.cpu_limit || null;
                 let memory_limit = prefs.kubernetes?.memory_limit || null;
                 
-                statusCode = await runKubernetesPod(namespace, jobname, args, softwareImage, logstream, tempdir, localex.datadir, cpu_limit, memory_limit);                
+                statusCode = await runKubernetesPod(namespace, jobname, args, softwareImage, logstream, tempdir, cpu_limit, memory_limit);                
 
                 // Clean up
                 logstream.close();
