@@ -12,26 +12,35 @@ const k8sApi = kc.makeApiClient(k8s.CoreV1Api);
 const batchV1Api = kc.makeApiClient(k8s.BatchV1Api);
 const k8sLogApi = new k8s.Log(kc);
 
-function get_volumes_and_mounts(folderBindings, podname): [Array<k8s.V1Volume>, Array<k8s.V1VolumeMount>] {
+async function get_volumes_and_mounts(dataDirectory, namespace, jobname): Promise<[Array<k8s.V1Volume>, Array<k8s.V1VolumeMount>]> {
     let volumes = []
     let mounts = []
-    for(let i in folderBindings) {
-        let fbindings = folderBindings[i];
-        let fbinding_array = fbindings.split(":")
-        let host_path = fbinding_array[0]
-        let mount_path = fbinding_array[1]
-        let volume_name = podname + "-volume-" + i
-        volumes.push({
-            name: volume_name,
-            hostPath: {
-                path: host_path
-            }
-        })
-        mounts.push({
-            name: volume_name,
-            mountPath: mount_path
-        })
+    
+    let ensemble_manager_pvc_name = "mint-ensemble-manager"
+    if(process.env.ENSEMBLE_MANAGER_PVC) {
+        ensemble_manager_pvc_name = process.env.ENSEMBLE_MANAGER_PVC
     }
+    else {
+        let pvcs = await k8sApi.listNamespacedPersistentVolumeClaim(namespace)
+        for(let i in pvcs.body.items) {
+            let pvc = pvcs.body.items[i]
+            let pvcname = pvc.metadata.name
+            if(pvcname.match("ensemble-manager")) {
+                ensemble_manager_pvc_name = pvcname
+            }
+        }
+    }
+    let volume_name = jobname + "-volume"
+    volumes.push({
+        name: volume_name,
+        persistentVolumeClaim: {
+            claimName: ensemble_manager_pvc_name
+        }
+    })        
+    mounts.push({
+        name: volume_name,
+        mountPath: dataDirectory
+    })
     return [volumes, mounts]   
 }
 
@@ -44,12 +53,12 @@ export const runKubernetesPod = async(
     image: string,
     logstream: WriteStream,
     workingDirectory: string,
-    folderBindings: string[],
+    dataDirectory: string,
     cpu_limit:string = "200m",
     memory_limit:string = "2048Mi"
 ) => {
     let container_name = jobname + "-container";
-    let [volumes, mounts] = get_volumes_and_mounts(folderBindings, jobname)
+    let [volumes, mounts] = await get_volumes_and_mounts(dataDirectory, namespace, jobname)
 
     // Create the Job
     const jobManifest = {

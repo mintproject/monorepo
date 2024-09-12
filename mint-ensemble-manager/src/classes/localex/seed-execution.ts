@@ -194,10 +194,6 @@ module.exports = async (job: any) => {
                 let logstream = fs.createWriteStream(logstdout, { 'flags': 'a' });
                 
                 // Run command in docker image
-                const folderBindings = [
-                    `${tempdir}:${tempdir}`,
-                    `${localex.datadir}:${localex.datadir}`
-                ];
                 let details = get_details_from_cwl(comp, seed, results, cwl_file)
                 
                 let image = details["image"]
@@ -209,7 +205,7 @@ module.exports = async (job: any) => {
                 let cpu_limit = prefs.kubernetes?.cpu_limit || null;
                 let memory_limit = prefs.kubernetes?.memory_limit || null;
 
-                statusCode = await runKubernetesPod(namespace, jobname, cmd_args, image, logstream, tempdir, folderBindings, cpu_limit, memory_limit);
+                statusCode = await runKubernetesPod(namespace, jobname, cmd_args, image, logstream, tempdir, localex.datadir, cpu_limit, memory_limit);
 
                 // Clean up
                 logstream.close();
@@ -272,18 +268,12 @@ module.exports = async (job: any) => {
                 console.log("Running as a Kubernetes Job:" )
                 let logstream = fs.createWriteStream(logstdout, { 'flags': 'a' });
                 
-                // Run command in docker image
-                const folderBindings = [
-                    `${tempdir}:${tempdir}`,
-                    `${localex.datadir}:${localex.datadir}`
-                ];
-                
                 let jobname = "execution-" + uuidv4()
                 let namespace = prefs.kubernetes?.namespace || "default";
                 let cpu_limit = prefs.kubernetes?.cpu_limit || null;
                 let memory_limit = prefs.kubernetes?.memory_limit || null;
                 
-                statusCode = await runKubernetesPod(namespace, jobname, args, softwareImage, logstream, tempdir, folderBindings, cpu_limit, memory_limit);                
+                statusCode = await runKubernetesPod(namespace, jobname, args, softwareImage, logstream, tempdir, localex.datadir, cpu_limit, memory_limit);                
 
                 // Clean up
                 logstream.close();
