@@ -384,15 +384,19 @@ module.exports = async (job: any) => {
             
             seed.execution.results = results;
         }
-
-        // Remove temporary directory
-        // fs.removeSync(tempdir);
     } catch (e) {
         error = "ERROR: " + e;
         const logstream = fs.createWriteStream(logstdout, { 'flags': 'a' });
         logstream.write("ERROR in Execution: \n");
         logstream.write(error + "\n");
         logstream.close();
+    }
+
+    try {
+        // Remove temporary directory
+        fs.removeSync(tempdir);
+    } catch (e) {
+        console.log("Error removing temporary directory: " + tempdir)
     }
 
     // Set the execution status
