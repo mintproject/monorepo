@@ -100,6 +100,7 @@ export interface MintPreferences {
 
 export interface KubernetesPreferences {
     use?: boolean,
+    node_affinity?: boolean,
     namespace?: string,
     cpu_limit?: string,
     memory_limit?: string

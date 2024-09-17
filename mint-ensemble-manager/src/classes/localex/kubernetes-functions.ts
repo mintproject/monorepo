@@ -12,6 +12,55 @@ const k8sApi = kc.makeApiClient(k8s.CoreV1Api);
 const batchV1Api = kc.makeApiClient(k8s.BatchV1Api);
 const k8sLogApi = new k8s.Log(kc);
 
+async function get_ensemble_manager_node_name(namespace) {
+    try {
+        let em_podname = null;
+        if(process.env.POD_NAME) {
+            em_podname = process.env.POD_NAME
+        }
+        else {
+            let pods = await k8sApi.listNamespacedPod(namespace)
+            for(let i in pods.body.items) {
+                let pod = pods.body.items[i]
+                let podname = pod.metadata.name
+                if(podname.match("ensemble-manager")) {
+                    em_podname = podname
+                }
+            }
+        }
+        if(em_podname != null) {
+            const res = await k8sApi.readNamespacedPod(em_podname, namespace);
+            return res.body.spec.nodeName;
+        }
+        else {
+            console.error('Cannot get ensemble manager pod');
+            return null;
+        }
+    } catch (err) {
+        console.error('Error fetching pod info:', err);
+        return null;
+    }
+}
+
+function add_node_affinity(jobSpec, node_name) {
+    if (!jobSpec.spec.template.spec.affinity) {
+        jobSpec.spec.template.spec.affinity = {};
+    }
+
+    jobSpec.spec.template.spec.affinity.nodeAffinity = {
+        requiredDuringSchedulingIgnoredDuringExecution: {
+            nodeSelectorTerms: [{
+                matchExpressions: [{
+                    key: 'kubernetes.io/hostname',
+                    operator: 'In',
+                    values: [node_name]
+                }]
+            }]
+        }
+    };
+    return jobSpec;
+}
+
 async function get_volumes_and_mounts(namespace, jobname, mountPath=null): Promise<[Array<k8s.V1Volume>, Array<k8s.V1VolumeMount>]> {
     let volumes = []
     let mounts = []
@@ -62,6 +111,7 @@ export const runKubernetesPod = async(
     image: string,
     logstream: WriteStream,
     workingDirectory: string,
+    use_node_affinity: boolean = false,
     cpu_limit:string = "200m",
     memory_limit:string = "2048Mi"
 ) => {
@@ -69,7 +119,7 @@ export const runKubernetesPod = async(
     let [volumes, mounts] = await get_volumes_and_mounts(namespace, jobname)
 
     // Create the Job
-    const jobManifest = {
+    let jobManifest = {
         apiVersion: 'batch/v1',
         kind: 'Job',
         metadata: {
@@ -102,6 +152,13 @@ export const runKubernetesPod = async(
                 }
             },
             backoffLimit: 0
+        }
+    }
+
+    if(use_node_affinity) {
+        let em_node_name = await get_ensemble_manager_node_name(namespace)
+        if(em_node_name) {
+            jobManifest = add_node_affinity(jobManifest, em_node_name)
         }
     }
     

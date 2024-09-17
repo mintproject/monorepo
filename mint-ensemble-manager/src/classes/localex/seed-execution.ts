@@ -204,10 +204,11 @@ module.exports = async (job: any) => {
 
                 let jobname = "execution-" + uuidv4()
                 let namespace = prefs.kubernetes?.namespace || "default";
+                let use_node_affinity = prefs.kubernetes?.node_affinity || false;                
                 let cpu_limit = prefs.kubernetes?.cpu_limit || null;
                 let memory_limit = prefs.kubernetes?.memory_limit || null;
 
-                statusCode = await runKubernetesPod(namespace, jobname, cmd_args, image, logstream, tempdir, cpu_limit, memory_limit);
+                statusCode = await runKubernetesPod(namespace, jobname, cmd_args, image, logstream, tempdir, use_node_affinity, cpu_limit, memory_limit);
 
                 // Clean up
                 logstream.close();
@@ -274,8 +275,9 @@ module.exports = async (job: any) => {
                 let namespace = prefs.kubernetes?.namespace || "default";
                 let cpu_limit = prefs.kubernetes?.cpu_limit || null;
                 let memory_limit = prefs.kubernetes?.memory_limit || null;
+                let use_node_affinity = prefs.kubernetes?.node_affinity || false; 
                 
-                statusCode = await runKubernetesPod(namespace, jobname, args, softwareImage, logstream, tempdir, cpu_limit, memory_limit);                
+                statusCode = await runKubernetesPod(namespace, jobname, args, softwareImage, logstream, tempdir, use_node_affinity, cpu_limit, memory_limit);                
 
                 // Clean up
                 logstream.close();
