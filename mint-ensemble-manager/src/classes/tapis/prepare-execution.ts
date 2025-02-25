@@ -28,14 +28,10 @@ import { getTapisAppWithoutLogin } from "./apps";
 import { queueModelExecutions } from "./submit-execution";
 import { TapisComponent } from "./typing";
 
-export const saveAndRunExecutionsTapis = async (
-    thread: Thread,
-    modelid: string,
-    prefs: MintPreferences
-) => {
+export const saveAndRunExecutionsTapis = async (thread: Thread, modelid: string) => {
     for (const pmodelid in thread.model_ensembles) {
         if (!modelid || modelid == pmodelid) {
-            return await saveAndRunExecutionsModel(pmodelid, thread, prefs);
+            return await saveAndRunExecutionsModel(pmodelid, thread);
         }
     }
     console.log("Finished sending all executions for local execution");
@@ -43,11 +39,7 @@ export const saveAndRunExecutionsTapis = async (
 };
 
 const batchSize = 500; // Store executions in the database in batches
-export const saveAndRunExecutionsModel = async (
-    modelid: string,
-    thread: Thread,
-    prefs: MintPreferences
-) => {
+export const saveAndRunExecutionsModel = async (modelid: string, thread: Thread) => {
     if (!thread.execution_summary) thread.execution_summary = {};
 
     const model = thread.models[modelid];
@@ -67,7 +59,6 @@ export const saveAndRunExecutionsModel = async (
             configs,
             thread_model_id,
             model,
-            prefs,
             inputIds,
             modelid,
             thread,
@@ -80,7 +71,6 @@ async function createExecutions(
     configs: any[][],
     thread_model_id: string,
     model: Model,
-    prefs: MintPreferences,
     inputIds: string[],
     modelid: string,
     thread: Thread,

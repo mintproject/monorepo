@@ -1,5 +1,13 @@
 import jwt, { Algorithm } from "jsonwebtoken";
 
+export const getTokenFromRequest = (req: any) => {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+        return false;
+    }
+    return authHeader.split(" ")[1];
+};
+
 export const verifyToken = (token: string): boolean => {
     // Use the RSA public key from the environment variable
     // The key should be in PEM format as shown in the tenant response
@@ -26,13 +34,10 @@ export const verifyToken = (token: string): boolean => {
 export const securityHandlers = {
     BearerAuth: async (req, scopes) => {
         // Get the token from the Authorization header
-        const authHeader = req.headers.authorization;
-        if (!authHeader || !authHeader.startsWith("Bearer ")) {
+        const token = getTokenFromRequest(req);
+        if (!token) {
             return false;
         }
-
-        const token = authHeader.split(" ")[1];
-
         try {
             return verifyToken(token);
         } catch (error) {
@@ -42,13 +47,10 @@ export const securityHandlers = {
     },
     oauth2: async (req, scopes) => {
         // Get the token from the Authorization header
-        const authHeader = req.headers.authorization;
-        if (!authHeader || !authHeader.startsWith("Bearer ")) {
+        const token = getTokenFromRequest(req);
+        if (!token) {
             return false;
         }
-
-        const token = authHeader.split(" ")[1];
-
         try {
             return verifyToken(token);
         } catch (error) {

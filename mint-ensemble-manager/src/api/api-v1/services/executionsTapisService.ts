@@ -1,20 +1,20 @@
 import { getThread } from "../../../classes/graphql/graphql_functions";
 import { Thread } from "../../../classes/mint/mint-types";
 import { ModelThread } from "../../../classes/api";
-import { saveAndRunExecutionsTapis } from "../../../classes/tapis/prepare-execution";
-import { fetchMintConfig } from "../../../classes/mint/mint-functions";
 import { Response } from "express";
 
+import { ExecutionCreation } from "../../../classes/common/ExecutionCreation";
 export interface ExecutionsTapisService {
-    submitExecution(threadmodel: ModelThread): Promise<Response>;
+    submitExecution(threadmodel: ModelThread, token: string): Promise<Response>;
 }
 
 const executionsTapisService = {
-    async submitExecution(threadmodel: ModelThread) {
+    async submitExecution(threadmodel: ModelThread, token: string) {
         const thread: Thread = await getThread(threadmodel.thread_id);
         if (thread) {
-            const prefs = await fetchMintConfig();
-            await saveAndRunExecutionsTapis(thread, threadmodel.model_id, prefs);
+            const executionCreation = new ExecutionCreation(thread, threadmodel.model_id);
+            await executionCreation.prepareExecutions();
+            console.log("executionToBeRun", executionCreation.executionToBeRun.length);
             return thread;
         } else {
             return undefined;

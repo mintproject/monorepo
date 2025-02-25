@@ -18,17 +18,18 @@ export class TapisExecutionService implements IExecutionService {
     }
 
     async submitJob(code: string, params: Record<string, any>): Promise<string> {
-        const seed: TapisComponentSeed = this.createSeedFromParams(params);
-        const jobRequest = TapisExecutionService.createJobRequest(this.apps, seed, this.model);
-        try {
-            const response = await errorDecoder<Jobs.RespSubmitJob>(() =>
-                this.jobsClient.submitJob({ reqSubmitJob: jobRequest })
-            );
-            return response.result?.uuid;
-        } catch (error) {
-            console.error(`Failed to submit job:`, error);
-            throw error;
-        }
+        return "123";
+        // const seed: TapisComponentSeed = this.createSeedFromParams(params);
+        // const jobRequest = TapisExecutionService.createJobRequest(this.apps, seed, this.model);
+        // try {
+        //     const response = await errorDecoder<Jobs.RespSubmitJob>(() =>
+        //         this.jobsClient.submitJob({ reqSubmitJob: jobRequest })
+        //     );
+        //     return response.result?.uuid;
+        // } catch (error) {
+        //     console.error(`Failed to submit job:`, error);
+        //     throw error;
+        // }
     }
 
     async getJobStatus(jobId: string): Promise<ExecutionJob> {

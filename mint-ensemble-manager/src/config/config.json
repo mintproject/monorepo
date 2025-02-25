@@ -1,5 +1,5 @@
 {
-    "data_catalog_api": "http://localhost:5000",
+    "data_catalog_api": "https://mint.local",
     "data_catalog_type": "CKAN",
     "data_catalog_key": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJaUGd3Snk1YUxRbW9keTBnd1R0SkNDMG5QeU5vMjg3QnRCd0J4WVVpWHFBIiwiaWF0IjoxNzAxNTMyNzE1fQ.yX8S6H1MD7eZYoDTX6Adybv3V5ezrgz-Y2zNOqjhEXo",
     "data_catalog_extra": {
@@ -13,7 +13,7 @@
         "access_key": "CHANGEME",
         "secret_access_key": "CHANGEME"
     },
-    "model_catalog_api": "https://api.models.dev.mint.isi.edu/v1.8.0",
+    "model_catalog_api": "https://api.models.mint.local/v1.8.0",
 
     "ensemble_manager_api": "http://localhost:3000/v1",
     "graphql": {
@@ -22,7 +22,10 @@
         "use_secret": true,
         "secret": "CHANGEME"
     },
-    "execution_engine": "localex",
+    "execution_engine": "tapis",
+    "tapis": {
+        "parallelism": 2
+    },
     "localex": {
         "codedir": "/Users/varun/mintproject/data/code",
         "datadir": "/Users/varun/mintproject/data/data",

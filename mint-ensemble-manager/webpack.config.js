@@ -46,6 +46,10 @@ module.exports = {
                     to: "api"
                 },
                 {
+                    from: "./src/utils",
+                    to: "utils"
+                },
+                {
                     from: "./src/config",
                     to: "config"
                 }

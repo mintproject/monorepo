@@ -2,7 +2,7 @@
 
 import { ExecutionsTapisService } from "../../services/executionsTapisService";
 import { Response } from "express";
-
+import { getTokenFromRequest } from "../../../../utils/authUtils";
 export default function (executionsTapisService: ExecutionsTapisService) {
     const operations = {
         POST
@@ -10,9 +10,10 @@ export default function (executionsTapisService: ExecutionsTapisService) {
 
     async function POST(req: any, res: Response) {
         const threadmodel = req.body;
+        const token = getTokenFromRequest(req);
 
         try {
-            const response = await executionsTapisService.submitExecution(threadmodel);
+            const response = await executionsTapisService.submitExecution(threadmodel, token);
             if (response) {
                 res.status(202).json(response);
             } else {
