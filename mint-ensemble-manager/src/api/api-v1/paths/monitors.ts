@@ -32,6 +32,12 @@ export default function (monitorsService: any) {
     POST.apiDoc = {
         summary: "Submit modeling thread for monitoring.",
         operationId: "submitMonitor",
+        security: [
+            {
+                BearerAuth: [],
+                oauth2: []
+            }
+        ],
         requestBody: {
             description: "Modeling thread scenario/subgoal/id",
             required: true,

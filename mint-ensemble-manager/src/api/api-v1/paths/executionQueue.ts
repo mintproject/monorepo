@@ -32,6 +32,12 @@ export default function (executionsLocalService: any) {
     GET.apiDoc = {
         summary: "Get execution queue information",
         operationId: "getExecutionQueue",
+        security: [
+            {
+                BearerAuth: [],
+                oauth2: []
+            }
+        ],
         responses: {
             "202": {
                 description: "Successful response"
@@ -46,6 +52,12 @@ export default function (executionsLocalService: any) {
     DELETE.apiDoc = {
         summary: "Empty Local Execution Queue.",
         operationId: "emptyExecutionQueue",
+        security: [
+            {
+                BearerAuth: [],
+                oauth2: []
+            }
+        ],
         responses: {
             "202": {
                 description: "Successful response"

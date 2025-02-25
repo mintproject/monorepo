@@ -19,6 +19,12 @@ export default function (registrationService: any) {
     POST.apiDoc = {
         summary: "Register outputs of modeling thread in data catalog.",
         operationId: "registerExecutionOutputs",
+        security: [
+            {
+                BearerAuth: [],
+                oauth2: []
+            }
+        ],
         requestBody: {
             description: "Modeling thread scenario/subgoal/id",
             required: true,

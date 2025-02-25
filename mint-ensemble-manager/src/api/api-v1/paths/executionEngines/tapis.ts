@@ -40,6 +40,12 @@ export default function (executionsTapisService: ExecutionsTapisService) {
                 }
             }
         },
+        security: [
+            {
+                BearerAuth: [],
+                oauth2: []
+            }
+        ],
         responses: {
             "202": {
                 description: "Successful response"

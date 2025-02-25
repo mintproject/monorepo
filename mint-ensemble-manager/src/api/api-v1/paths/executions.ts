@@ -19,6 +19,12 @@ export default function (executionsService: any) {
     POST.apiDoc = {
         summary: "Submit modeling thread for execution.",
         operationId: "submitExecution",
+        security: [
+            {
+                BearerAuth: [],
+                oauth2: []
+            }
+        ],
         requestBody: {
             description: "Modeling thread scenario/subgoal/id",
             required: true,

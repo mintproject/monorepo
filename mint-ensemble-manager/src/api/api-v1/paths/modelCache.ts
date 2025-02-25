@@ -20,6 +20,12 @@ export default function (modelCacheService: any) {
         summary:
             "Delete cached models from graphQL. WARNING: This will also result in deletion of all executions for that model, even from other threads !",
         operationId: "deleteModel",
+        security: [
+            {
+                BearerAuth: [],
+                oauth2: []
+            }
+        ],
         parameters: [
             {
                 in: "query",

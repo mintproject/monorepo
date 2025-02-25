@@ -18,6 +18,7 @@ import { initialize } from "express-openapi";
 import { getResource } from "./classes/wings/xhr-requests";
 
 import Queue from "bull";
+import { securityHandlers } from "./utils/authUtils";
 const { createBullBoard } = require("@bull-board/api");
 const { BullAdapter } = require("@bull-board/api/bullAdapter");
 const { ExpressAdapter } = require("@bull-board/express");
@@ -32,6 +33,8 @@ const port = PORT;
 const version = VERSION;
 const dashboard_url = "/admin/queues";
 
+const CLIENT_ID = process.env.CLIENT_ID;
+
 // Setup API
 const v1ApiDoc = require("./api/api-doc");
 app.use(bodyParser.json());
@@ -40,6 +43,7 @@ app.use(cors());
 initialize({
     app,
     apiDoc: v1ApiDoc,
+    securityHandlers: securityHandlers,
     dependencies: {
         executionsService: v1ExecutionsService,
         executionsLocalService: v1ExecutionsLocalService,
@@ -87,7 +91,17 @@ app.listen(port, () => {
         onError: () => {},
         onLoad: (resp: any) => {
             const apidoc = JSON.parse(resp.target.responseText);
-            app.use("/" + version + "/ui", swaggerUi.serve, swaggerUi.setup(apidoc));
+            app.use(
+                "/" + version + "/ui",
+                swaggerUi.serve,
+                swaggerUi.setup(apidoc, {
+                    swaggerOptions: {
+                        oauth: {
+                            clientId: CLIENT_ID
+                        }
+                    }
+                })
+            );
         }
     });
 });
