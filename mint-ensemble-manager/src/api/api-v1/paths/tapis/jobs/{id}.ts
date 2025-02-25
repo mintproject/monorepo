@@ -6,14 +6,34 @@ import { JobsService } from "../../../services/tapis/jobsService";
 export default function (jobsService: JobsService) {
     const exports = {
         POST,
+        GET,
         parameters: [
             {
                 in: "path",
                 name: "id",
-                example: "bae0f0be-6dbe-e791-f184-1c20f9903afc"
+                example: "d0cd5bb7-922e-46b1-9f9b-331e2cf1e73b-007"
             }
         ]
     };
+
+    async function GET(req: any, res: Response) {
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith("Bearer ")) {
+            return false;
+        }
+
+        const access_token = authHeader.split(" ")[1];
+        try {
+            const job = await jobsService.get(req.params.id, access_token);
+            res.status(200).send({
+                message: "Job Status",
+                status: job
+            });
+        } catch (error) {
+            console.error(error);
+            return res.status(500).send({ message: error.message });
+        }
+    }
 
     async function POST(req: any, res: Response) {
         try {
@@ -28,11 +48,32 @@ export default function (jobsService: JobsService) {
             });
         } catch (error) {
             console.error(error);
-            return res.status(500).send({ message: "An error occurred. " + error });
+            return res.status(500).send({ message: "An error occurred. " + error.message });
         }
     }
 
     // NOTE: We could also use a YAML string here.
+    GET.apiDoc = {
+        summary: "Get Job Status",
+        description: "Get the status of a job.",
+        operationId: "tapisGetJobStatus",
+        tags: ["Tapis"],
+        security: [
+            {
+                BearerAuth: [],
+                oauth2: []
+            }
+        ],
+        responses: {
+            "200": {
+                description: "Job Status"
+            },
+            default: {
+                description: "An error occurred"
+            }
+        }
+    };
+
     POST.apiDoc = {
         summary: "Webhook for Job Status Change.",
         description:
