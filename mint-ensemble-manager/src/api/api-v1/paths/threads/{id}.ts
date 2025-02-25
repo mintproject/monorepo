@@ -19,6 +19,12 @@ export default function (threadsService: any) {
     GET.apiDoc = {
         summary: "Get modeling thread in MINT.",
         operationId: "getThread",
+        security: [
+            {
+                BearerAuth: [],
+                oauth2: []
+            }
+        ],
         parameters: [
             {
                 in: "path",

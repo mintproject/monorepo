@@ -15,6 +15,12 @@ export default function (logsService: any) {
     GET.apiDoc = {
         summary: "Fetch logs for an execution.",
         operationId: "fetchLog",
+        security: [
+            {
+                BearerAuth: [],
+                oauth2: []
+            }
+        ],
         parameters: [
             {
                 in: "query",

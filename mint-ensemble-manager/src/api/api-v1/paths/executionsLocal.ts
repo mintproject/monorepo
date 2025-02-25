@@ -41,6 +41,12 @@ export default function (executionsLocalService: any) {
     POST.apiDoc = {
         summary: "Submit modeling thread for local execution.",
         operationId: "submitLocalExecution",
+        security: [
+            {
+                BearerAuth: [],
+                oauth2: []
+            }
+        ],
         requestBody: {
             description: "Modeling thread",
             required: true,
@@ -66,6 +72,12 @@ export default function (executionsLocalService: any) {
     DELETE.apiDoc = {
         summary: "Delete cached results, cached models and cached data for local execution.",
         operationId: "deleteLocalExecutionCache",
+        security: [
+            {
+                BearerAuth: [],
+                oauth2: []
+            }
+        ],
         requestBody: {
             description: "Modeling thread",
             required: true,
@@ -91,6 +103,12 @@ export default function (executionsLocalService: any) {
     EMPTY.apiDoc = {
         summary: "Empty Local Execution Queue.",
         operationId: "emptyExecutionQueue",
+        security: [
+            {
+                BearerAuth: [],
+                oauth2: []
+            }
+        ],
         responses: {
             "202": {
                 description: "Successful response"

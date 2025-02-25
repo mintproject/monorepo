@@ -19,6 +19,12 @@ export default function (threadsService: any) {
     POST.apiDoc = {
         summary: "Create modeling thread in MINT.",
         operationId: "createThread",
+        security: [
+            {
+                BearerAuth: [],
+                oauth2: []
+            }
+        ],
         requestBody: {
             description: "New modeling thread details",
             required: true,

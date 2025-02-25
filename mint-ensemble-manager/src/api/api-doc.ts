@@ -1,3 +1,5 @@
+const AUTHORIZATION_URL = process.env.AUTHORIZATION_URL;
+
 module.exports = {
     openapi: "3.0.0",
     info: {
@@ -6,6 +8,21 @@ module.exports = {
     },
     servers: [{ url: "http://localhost:3000/v1" }, { url: "https://ensemble.mint.isi.edu/v1" }],
     components: {
+        securitySchemes: {
+            BearerAuth: {
+                type: "http",
+                scheme: "bearer",
+                bearerFormat: "JWT"
+            },
+            oauth2: {
+                type: "oauth2",
+                flows: {
+                    implicit: {
+                        authorizationUrl: AUTHORIZATION_URL
+                    }
+                }
+            }
+        },
         schemas: {
             WebHookEvent: {
                 type: "object",
