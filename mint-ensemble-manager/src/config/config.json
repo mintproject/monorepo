@@ -24,7 +24,8 @@
     },
     "execution_engine": "tapis",
     "tapis": {
-        "parallelism": 2
+        "parallelism": 2,
+        "basePath": "https://portals.tapis.io"
     },
     "localex": {
         "codedir": "/Users/varun/mintproject/data/code",
