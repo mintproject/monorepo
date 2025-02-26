@@ -23,8 +23,6 @@ import {
     Thread,
     ThreadModelMap
 } from "../mint/mint-types";
-import { getTapisAppWithoutLogin } from "../tapis/apps";
-import { queueModelExecutions } from "../tapis/submit-execution";
 import { TapisComponent } from "../tapis/typing";
 
 // Add interface for IO/Parameter details
@@ -40,8 +38,11 @@ interface ComponentIODetails {
 export class ExecutionCreation {
     private static readonly BATCH_SIZE = 500;
     public thread: Thread;
+    public threadRegion: Region;
     public modelid: string;
     public executionToBeRun: Execution[];
+    public model: Model;
+    public component: TapisComponent;
 
     constructor(thread: Thread, modelid: string) {
         this.thread = thread;
@@ -66,10 +67,10 @@ export class ExecutionCreation {
     private async prepareModelExecutions(modelid: string): Promise<boolean> {
         if (!this.thread.execution_summary) this.thread.execution_summary = {};
 
-        const model = this.thread.models[modelid];
+        this.model = this.thread.models[modelid];
         const thread_model_id = this.thread.model_ensembles[modelid].id;
-        const thread_region = await getRegionDetails(this.thread.regionid);
-        const execution_details = getModelInputBindings(model, this.thread, thread_region);
+        this.threadRegion = await getRegionDetails(this.thread.regionid);
+        const execution_details = getModelInputBindings(this.model, this.thread, this.threadRegion);
         const threadModel = execution_details[0] as ThreadModelMap;
         const inputIds = execution_details[1] as string[];
 
@@ -89,6 +90,8 @@ export class ExecutionCreation {
     ): Promise<void> {
         await this.createThreadModelExecutionSummary(configs, thread_model_id);
         await deleteThreadModelExecutionIds(thread_model_id);
+        this.model = this.thread.models[modelid];
+        this.component = await this.getModelDetails(this.model);
 
         for (let i = 0; i < configs.length; i += ExecutionCreation.BATCH_SIZE) {
             const bindings = configs.slice(i, i + ExecutionCreation.BATCH_SIZE);
@@ -203,13 +206,14 @@ export class ExecutionCreation {
             if (response.ok) {
                 const data = await response.text();
                 const component = JSON.parse(data) as TapisComponent;
+                console.log(component);
                 if (component.id && component.version) {
                     return component;
                 }
                 console.error(`Invalid component: ${component_url}`);
                 throw new Error("Invalid component");
             }
-            throw new Error(`Failed to fetch component: ${component_url}`);
+            throw new Error(`Response status not ok: ${component_url}`);
         } catch (e) {
             console.log(e);
             throw Error(`Error loading component ${component_url}`);

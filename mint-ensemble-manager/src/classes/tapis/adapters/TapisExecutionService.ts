@@ -1,35 +1,85 @@
 import { Apps, Jobs } from "@mfosorio/tapis-typescript";
-import { DataResource, Model } from "../../mint/mint-types";
-import { TapisComponentSeed } from "../typing";
+import { DataResource, Execution, Model, Region } from "../../mint/mint-types";
+import { TapisComponent, TapisComponentSeed } from "../typing";
 import { TapisNotification } from "./notification";
 import { IExecutionService, ExecutionJob } from "../../../interfaces/IExecutionService";
 import apiGenerator from "../utils/apiGenerator";
-import errorDecoder from "../utils/errorDecoder";
+import { getInputsParameters } from "../helpers";
+import { getInputDatasets } from "../helpers";
+import { TapisJobService } from "./TapisJobService";
 
 export class TapisExecutionService implements IExecutionService {
-    private apps: Apps.TapisApp;
+    private appsClient: Apps.ApplicationsApi;
     private jobsClient: Jobs.JobsApi;
+    private subscriptionsClient: Jobs.SubscriptionsApi;
+    public seeds: TapisComponentSeed[];
+    private jobService: TapisJobService;
 
     constructor(
         private token: string,
         private baseUrl: string
     ) {
+        console.log("initializing TapisExecutionService");
+        console.log("baseUrl", baseUrl);
         this.jobsClient = apiGenerator<Jobs.JobsApi>(Jobs, Jobs.JobsApi, baseUrl, token);
+        this.subscriptionsClient = apiGenerator<Jobs.SubscriptionsApi>(
+            Jobs,
+            Jobs.SubscriptionsApi,
+            baseUrl,
+            token
+        );
+        this.appsClient = apiGenerator<Apps.ApplicationsApi>(
+            Apps,
+            Apps.ApplicationsApi,
+            baseUrl,
+            token
+        );
+        this.jobService = new TapisJobService(this.jobsClient, this.subscriptionsClient);
     }
 
-    async submitJob(code: string, params: Record<string, any>): Promise<string> {
-        return "123";
-        // const seed: TapisComponentSeed = this.createSeedFromParams(params);
-        // const jobRequest = TapisExecutionService.createJobRequest(this.apps, seed, this.model);
-        // try {
-        //     const response = await errorDecoder<Jobs.RespSubmitJob>(() =>
-        //         this.jobsClient.submitJob({ reqSubmitJob: jobRequest })
-        //     );
-        //     return response.result?.uuid;
-        // } catch (error) {
-        //     console.error(`Failed to submit job:`, error);
-        //     throw error;
-        // }
+    async submitExecutions(
+        executions: Execution[],
+        model: Model,
+        region: Region,
+        component: TapisComponent
+    ) {
+        const app = await this.loadTapisApp(component);
+        this.seeds = this.seedExecutions(executions, model, region, component);
+        const promises = this.seeds.map(async (seed) => {
+            const jobRequest = this.jobService.createJobRequest(app, seed, model);
+            const jobId = await this.submitJob(jobRequest);
+            //subscribe job
+            return jobId;
+        });
+        return await Promise.all(promises);
+    }
+
+    /** Extra methods */
+
+    async loadTapisApp(component: TapisComponent): Promise<Apps.TapisApp> {
+        const app = await this.appsClient.getApp({
+            appId: component.id,
+            appVersion: component.version
+        });
+        return app;
+    }
+
+    async submitJob(jobRequest: Jobs.ReqSubmitJob): Promise<string> {
+        try {
+            const jobSubmission = await this.jobsClient.submitJob({ reqSubmitJob: jobRequest });
+            return jobSubmission.result.uuid;
+        } catch (error) {
+            if (error.status === 400) {
+                // Handle HTTP 400 Bad Request specifically
+                const errorDetails = error.response?.data?.message || error.message;
+                console.log("Invalid job request: ");
+                console.log(jobRequest);
+                console.log("error details", errorDetails);
+
+                throw new Error(`Invalid job request: ${errorDetails}`);
+            }
+            throw new Error(`Failed to submit job: ${error.message}`);
+        }
     }
 
     async getJobStatus(jobId: string): Promise<ExecutionJob> {
@@ -77,69 +127,24 @@ export class TapisExecutionService implements IExecutionService {
         }
     }
 
-    private createSeedFromParams(params: Record<string, any>): TapisComponentSeed {
-        // Implementation to convert generic params to TapisComponentSeed
-        // You'll need to implement this based on your specific needs
-        return {
-            component: { id: params.componentId },
-            datasets: params.datasets || {}
-        } as TapisComponentSeed;
-    }
-
-    // Existing static methods
-    private static readonly ALLOCATION = "PT2050-DataX";
-    private static readonly SYSTEM_LOGICAL_QUEUE = "development";
-    private static readonly SYSTEM_ID = "ls6";
-
-    private static createJobRequest(
-        app: Apps.TapisApp,
-        seed: TapisComponentSeed,
-        model: Model
-    ): Jobs.ReqSubmitJob {
-        const jobFileInputs = this.createJobFileInputsFromSeed(seed, app, model);
-
-        return {
-            name: seed.component.id,
-            appId: app.id,
-            appVersion: app.version,
-            archiveSystemId: TapisExecutionService.SYSTEM_ID,
-            memoryMB: app.jobAttributes?.memoryMB || 1000,
-            maxMinutes: app.jobAttributes?.maxMinutes || 10,
-            nodeCount: app.jobAttributes?.nodeCount || 1,
-            coresPerNode: app.jobAttributes?.coresPerNode || 1,
-            fileInputs: jobFileInputs,
-            parameterSet: { appArgs: [] },
-            execSystemId: TapisExecutionService.SYSTEM_ID,
-            execSystemLogicalQueue: TapisExecutionService.SYSTEM_LOGICAL_QUEUE,
-            execSystemExecDir: "HOST_EVAL($SCRATCH)",
-            archiveSystemDir: "HOST_EVAL($WORK)",
-            tags: [`allocation:${TapisExecutionService.ALLOCATION}`]
-        };
-    }
-
-    private static createJobFileInputsFromSeed(
-        seed: TapisComponentSeed,
-        app: Apps.TapisApp,
-        model: Model
-    ): Jobs.JobFileInput[] {
-        const jobInputs =
-            app.jobAttributes?.fileInputs?.flatMap((fileInput) => {
-                const modelInput = model.input_files.find((input) => input.name === fileInput.name);
-
-                if (!modelInput) {
-                    throw new Error(`Component input not found for ${fileInput.name}`);
-                }
-
-                const datasets = seed.datasets[modelInput.id] || [];
-                return datasets.map((dataset: DataResource) => {
-                    return {
-                        name: modelInput.name,
-                        sourceUrl: dataset.url
-                    } as Jobs.JobFileInput;
-                });
-            }) || [];
-
-        return jobInputs;
+    private seedExecutions(
+        executions: Execution[],
+        model: Model,
+        region: Region,
+        component: TapisComponent
+    ) {
+        return executions.map((execution) => {
+            const bindings = execution.bindings;
+            const datasets = getInputDatasets(model, bindings);
+            const { parameters, parameterTypes } = getInputsParameters(model, bindings, region);
+            return {
+                component: component,
+                execution: execution,
+                datasets: datasets,
+                parameters: parameters,
+                paramtypes: parameterTypes
+            } as TapisComponentSeed;
+        });
     }
 
     public static processNotification(notification: TapisNotification): {
