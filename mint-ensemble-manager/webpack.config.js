@@ -7,7 +7,10 @@ module.exports = {
     mode: "development",
     target: "node",
     resolve: {
-        extensions: [".js", ".json", ".ts", ".graphql"]
+        extensions: [".js", ".json", ".ts", ".graphql"],
+        alias: {
+            "@": path.resolve(__dirname, "src")
+        }
     },
     entry: {
         execution: "./src/classes/localex/seed-execution.ts",
