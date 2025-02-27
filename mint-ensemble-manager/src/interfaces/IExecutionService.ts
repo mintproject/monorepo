@@ -10,7 +10,7 @@ import { TapisComponent } from "@/classes/tapis/typing";
  */
 export interface ExecutionJob {
     id: string;
-    status: "pending" | "running" | "completed" | "failed";
+    status: "FAILURE" | "SUCCESS" | "RUNNING" | "WAITING";
     result?: any;
     error?: string;
 }
@@ -25,4 +25,12 @@ export interface IExecutionService {
         region: Region,
         component: TapisComponent
     ): Promise<string[]>;
+
+    updateExecution(
+        execution_id: string,
+        status: string,
+        external_run_id: string | undefined
+    ): Promise<Execution>;
+
+    mapStatus(adapterStatus: string): "FAILURE" | "SUCCESS" | "RUNNING" | "WAITING";
 }

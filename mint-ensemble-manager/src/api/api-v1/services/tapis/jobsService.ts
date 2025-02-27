@@ -28,6 +28,11 @@ const jobsService = {
         const access_token = this.getAccessToken(authorizationHeader);
         const prefs = getConfiguration();
         const executionService = new TapisExecutionService(access_token, prefs.tapis.basePath);
+        executionService.updateExecution(
+            executionId,
+            webHookEvent.event.type,
+            webHookEvent.event.subject
+        );
         return await handleExecutionEvent(webHookEvent.event, executionId);
     },
 

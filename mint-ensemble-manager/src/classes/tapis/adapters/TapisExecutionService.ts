@@ -1,7 +1,6 @@
 import { Apps, Jobs } from "@mfosorio/tapis-typescript";
-import { DataResource, Execution, Model, Region } from "../../mint/mint-types";
+import { Execution, Execution_Result, Model, Region } from "../../mint/mint-types";
 import { TapisComponent, TapisComponentSeed } from "../typing";
-import { TapisNotification } from "./notification";
 import { IExecutionService, ExecutionJob } from "../../../interfaces/IExecutionService";
 import apiGenerator from "../utils/apiGenerator";
 import { getInputsParameters } from "../helpers";
@@ -9,6 +8,12 @@ import { getInputDatasets } from "../helpers";
 import { TapisJobService } from "./TapisJobService";
 import errorDecoder from "../utils/errorDecoder";
 import { TapisJobSubscriptionService } from "./TapisJobSubscriptionService";
+import {
+    getExecution,
+    getModelOutputsByModelId,
+    updateExecutionStatus
+} from "@/classes/graphql/graphql_functions";
+import { matchTapisOutputsToMintOutputs } from "../jobs";
 
 export class TapisExecutionService implements IExecutionService {
     private appsClient: Apps.ApplicationsApi;
@@ -38,6 +43,51 @@ export class TapisExecutionService implements IExecutionService {
         );
         this.jobService = new TapisJobService(this.jobsClient, this.subscriptionsClient);
         this.jobSubscriptionService = new TapisJobSubscriptionService(this.subscriptionsClient);
+    }
+
+    async updateExecution(
+        execution_id: string,
+        status: string,
+        external_run_id: string | undefined
+    ): Promise<Execution> {
+        const execution = await getExecution(execution_id);
+        await this.updateExecutionStatusOnGraphQl(execution, status);
+        await this.updateExecutionResultsFromJob(external_run_id, execution.id, status);
+        return execution;
+    }
+
+    async getJobStatus(jobId: string): Promise<ExecutionJob> {
+        const job = await errorDecoder<Jobs.RespGetJob>(() =>
+            this.jobsClient.getJob({ jobUuid: jobId })
+        );
+
+        return {
+            id: job.result?.uuid,
+            status: this.mapStatus(job.status),
+            result: job.result?.lastMessage,
+            error: job.result?.lastMessage
+        };
+    }
+
+    public mapStatus(tapisStatus: string): "FAILURE" | "SUCCESS" | "RUNNING" | "WAITING" {
+        switch (tapisStatus) {
+            case "jobs.JOB_NEW_STATUS.PENDING":
+            case "jobs.JOB_NEW_STATUS.PROCESSING_INPUTS":
+            case "jobs.JOB_NEW_STATUS.STAGING_INPUTS":
+                return "WAITING";
+            case "jobs.JOB_NEW_STATUS.RUNNING":
+            case "jobs.JOB_NEW_STATUS.ARCHIVING":
+                return "RUNNING";
+            case "jobs.JOB_NEW_STATUS.FINISHED":
+            case "jobs.JOB_NEW_STATUS.ARCHIVED":
+            case "jobs.JOB_NEW_STATUS.SUCCESS":
+                return "SUCCESS";
+            case "jobs.JOB_NEW_STATUS.FAILED":
+            case "jobs.JOB_NEW_STATUS.CANCELLED":
+            case "jobs.JOB_NEW_STATUS.PAUSED":
+            default:
+                return "FAILURE";
+        }
     }
 
     async submitExecutions(
@@ -87,54 +137,6 @@ export class TapisExecutionService implements IExecutionService {
         }
     }
 
-    async getJobStatus(jobId: string): Promise<ExecutionJob> {
-        try {
-            const job = await errorDecoder<Jobs.RespGetJob>(() =>
-                this.jobsClient.getJob({ jobUuid: jobId })
-            );
-
-            return {
-                id: job.result?.uuid,
-                status: this.mapTapisStatus(job.status),
-                result: job.result?.lastMessage,
-                error: job.result?.lastMessage
-            };
-        } catch (error) {
-            throw error;
-        }
-    }
-
-    async cancelJob(jobId: string): Promise<boolean> {
-        try {
-            await this.jobsClient.cancelJob({ jobUuid: jobId });
-            return true;
-        } catch (error) {
-            return false;
-        }
-    }
-
-    private mapTapisStatus(tapisStatus: string): "pending" | "running" | "completed" | "failed" {
-        switch (tapisStatus.toLowerCase()) {
-            case "pending":
-            case "processing_inputs":
-            case "staging_inputs":
-                return "pending";
-            case "running":
-            case "archiving":
-                return "running";
-            case "finished":
-            case "archived":
-                return "completed";
-            case "success":
-                return "completed";
-            case "failed":
-            case "cancelled":
-            case "paused":
-            default:
-                return "failed";
-        }
-    }
-
     private seedExecutions(
         executions: Execution[],
         model: Model,
@@ -155,13 +157,46 @@ export class TapisExecutionService implements IExecutionService {
         });
     }
 
-    public static processNotification(notification: TapisNotification): {
-        status: string;
-        jobId: string;
-    } {
-        return {
-            status: notification.type.split(".")[2],
-            jobId: notification.subject
-        };
+    private async updateExecutionStatusOnGraphQl(execution: Execution, status: string) {
+        execution.status = this.mapStatus(status);
+        execution.run_progress = 1;
+        await updateExecutionStatus(execution);
     }
+
+    private async getExecutionResultsFromJob(
+        jobUuid: string,
+        executionId: string
+    ): Promise<Execution_Result[]> {
+        const execution = await getExecution(executionId);
+        const { result: files } = await this.getJobOutputList(jobUuid, "");
+        const mintOutputs = await getModelOutputsByModelId(execution.modelid);
+        return matchTapisOutputsToMintOutputs(files, mintOutputs);
+    }
+
+    private async updateExecutionResultsFromJob(
+        jobUuid: string,
+        executionId: string,
+        status: string
+    ) {
+        const execution = await getExecution(executionId);
+        if (status === `jobs.JOB_NEW_STATUS.FINISHED`) {
+            execution.results = await this.getExecutionResultsFromJob(jobUuid, executionId);
+            await updateExecutionStatus(execution);
+        }
+    }
+
+    getJobOutputList = async (
+        jobUuid: string,
+        outputPath: string
+    ): Promise<Jobs.RespGetJobOutputList> => {
+        return await errorDecoder<Jobs.RespGetJobOutputList>(() =>
+            this.jobsClient.getJobOutputList({ jobUuid: jobUuid, outputPath: outputPath })
+        );
+    };
+
+    getJobOutputDownloadFile = async (jobUuid: string, outputPath: string): Promise<Blob> => {
+        return await errorDecoder<Blob>(() =>
+            this.jobsClient.getJobOutputDownload({ jobUuid: jobUuid, outputPath: outputPath })
+        );
+    };
 }

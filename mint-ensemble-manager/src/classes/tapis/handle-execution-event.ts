@@ -20,8 +20,8 @@ if (prefs.execution_engine === "tapis") {
 const handleExecutionEvent = async (event: TapisNotification, executionId: string) => {
     const execution = await getExecution(executionId);
     const jobUuid = event.subject;
+    const statusType = event.type;
     if (execution !== undefined) {
-        const statusType = event.type;
         await updateJobStatusOnGraphQL(execution, statusType);
         await updateExecutionResultsFromJob(jobUuid, execution.id, statusType);
     }
