@@ -5,7 +5,7 @@ import { getConfiguration } from "@/classes/mint/mint-functions";
 import { ExecutionJob } from "@/interfaces/IExecutionService";
 import { Jobs } from "@mfosorio/tapis-typescript/dist";
 export interface JobsService {
-    webhookJobStatusChange(webHookEvent: any, executionId: string): Promise<Execution | undefined>;
+    webhookJobStatusChange(webHookEvent: any, executionId: string, authorizationHeader): Promise<Execution | undefined>;
     get(jobId: string, authorizationHeader: string): Promise<ExecutionJob>;
     submitJob(job: Jobs.ReqSubmitJob, authorizationHeader: string): Promise<string>;
 }
@@ -13,6 +13,7 @@ export interface JobsService {
 const jobsService = {
     getAccessToken(authorizationHeader: string): string {
         const access_token = getTokenFromAuthorizationHeader(authorizationHeader);
+        console.log("access_token", access_token);
         if (!access_token) {
             throw new Error("Invalid authorization header");
         }

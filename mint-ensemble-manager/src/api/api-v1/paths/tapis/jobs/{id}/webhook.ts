@@ -16,7 +16,11 @@ export default function (jobsService: JobsService) {
 
     async function POST(req: any, res: Response) {
         try {
-            const execution = await jobsService.webhookJobStatusChange(req.body, req.params.id);
+            const execution = await jobsService.webhookJobStatusChange(
+                req.body,
+                req.params.id,
+                req.headers.authorization
+            );
             if (execution == undefined) {
                 return res.status(404).send({ message: "Execution not found." });
             }

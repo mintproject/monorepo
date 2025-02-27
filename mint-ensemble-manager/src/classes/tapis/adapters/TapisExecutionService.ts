@@ -11,7 +11,8 @@ import { TapisJobSubscriptionService } from "@/classes/tapis/adapters/TapisJobSu
 import {
     getExecution,
     getModelOutputsByModelId,
-    updateExecutionStatus
+    updateExecutionStatus,
+    updateExecutionStatusAndResultsv2
 } from "@/classes/graphql/graphql_functions";
 import { matchTapisOutputsToMintOutputs } from "@/classes/tapis/jobs";
 
@@ -26,8 +27,6 @@ export class TapisExecutionService implements IExecutionService {
         private token: string,
         private baseUrl: string
     ) {
-        console.log("initializing TapisExecutionService");
-        console.log("baseUrl", baseUrl);
         this.jobsClient = apiGenerator<Jobs.JobsApi>(Jobs, Jobs.JobsApi, baseUrl, token);
         this.subscriptionsClient = apiGenerator<Jobs.SubscriptionsApi>(
             Jobs,
@@ -179,7 +178,7 @@ export class TapisExecutionService implements IExecutionService {
         const execution = await getExecution(executionId);
         if (status === `jobs.JOB_NEW_STATUS.FINISHED`) {
             execution.results = await this.getExecutionResultsFromJob(jobUuid, executionId);
-            await updateExecutionStatus(execution);
+            await updateExecutionStatusAndResultsv2(execution);
         }
     }
 
