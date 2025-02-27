@@ -5,7 +5,11 @@ import { getConfiguration } from "@/classes/mint/mint-functions";
 import { ExecutionJob } from "@/interfaces/IExecutionService";
 import { Jobs } from "@mfosorio/tapis-typescript/dist";
 export interface JobsService {
-    webhookJobStatusChange(webHookEvent: any, executionId: string, authorizationHeader): Promise<Execution | undefined>;
+    webhookJobStatusChange(
+        webHookEvent: any,
+        executionId: string,
+        authorizationHeader
+    ): Promise<Execution | undefined>;
     get(jobId: string, authorizationHeader: string): Promise<ExecutionJob>;
     submitJob(job: Jobs.ReqSubmitJob, authorizationHeader: string): Promise<string>;
 }

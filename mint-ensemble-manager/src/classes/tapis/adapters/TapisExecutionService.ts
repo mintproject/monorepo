@@ -23,6 +23,7 @@ export class TapisExecutionService implements IExecutionService {
     public seeds: TapisComponentSeed[];
     private jobService: TapisJobService;
     private jobSubscriptionService: TapisJobSubscriptionService;
+    private jobShareClient: Jobs.ShareApi;
     constructor(
         private token: string,
         private baseUrl: string
@@ -40,8 +41,30 @@ export class TapisExecutionService implements IExecutionService {
             baseUrl,
             token
         );
-        this.jobService = new TapisJobService(this.jobsClient, this.subscriptionsClient);
+        this.jobShareClient = apiGenerator<Jobs.ShareApi>(Jobs, Jobs.ShareApi, baseUrl, token);
+        this.jobService = new TapisJobService(
+            this.jobsClient,
+            this.subscriptionsClient,
+            this.jobShareClient
+        );
         this.jobSubscriptionService = new TapisJobSubscriptionService(this.subscriptionsClient);
+    }
+
+    async submitExecutions(
+        executions: Execution[],
+        model: Model,
+        region: Region,
+        component: TapisComponent
+    ) {
+        const app = await this.loadTapisApp(component);
+
+        this.seeds = this.seedExecutions(executions, model, region, component);
+        const promises = this.seeds.map(async (seed) => {
+            const jobRequest = this.jobService.createJobRequest(app, seed, model);
+            const jobId = await this.submitJob(jobRequest);
+            return jobId;
+        });
+        return await Promise.all(promises);
     }
 
     async updateExecution(
@@ -87,23 +110,6 @@ export class TapisExecutionService implements IExecutionService {
             default:
                 return "FAILURE";
         }
-    }
-
-    async submitExecutions(
-        executions: Execution[],
-        model: Model,
-        region: Region,
-        component: TapisComponent
-    ) {
-        const app = await this.loadTapisApp(component);
-
-        this.seeds = this.seedExecutions(executions, model, region, component);
-        const promises = this.seeds.map(async (seed) => {
-            const jobRequest = this.jobService.createJobRequest(app, seed, model);
-            const jobId = await this.submitJob(jobRequest);
-            return jobId;
-        });
-        return await Promise.all(promises);
     }
 
     /** Extra methods */

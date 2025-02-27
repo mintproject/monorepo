@@ -10,8 +10,19 @@ export class TapisJobService {
 
     constructor(
         private jobsClient: Jobs.JobsApi,
-        private subscriptionsClient: Jobs.SubscriptionsApi
+        private subscriptionsClient: Jobs.SubscriptionsApi,
+        private jobShareClient: Jobs.ShareApi
     ) {}
+
+    async shareJob(jobId: string) {
+        await this.jobShareClient.shareJob({
+            jobUuid: jobId,
+            reqShareJob: {
+                jobResource: [Jobs.ReqShareJobJobResourceEnum.Output],
+                jobPermission: Jobs.ReqShareJobJobPermissionEnum.Read
+            }
+        });
+    }
 
     createJobRequest = (
         app: Apps.TapisApp,
