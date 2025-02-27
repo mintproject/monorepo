@@ -8,6 +8,7 @@ import { getInputsParameters } from "../helpers";
 import { getInputDatasets } from "../helpers";
 import { TapisJobService } from "./TapisJobService";
 import errorDecoder from "../utils/errorDecoder";
+import { TapisJobSubscriptionService } from "./TapisJobSubscriptionService";
 
 export class TapisExecutionService implements IExecutionService {
     private appsClient: Apps.ApplicationsApi;
@@ -15,7 +16,7 @@ export class TapisExecutionService implements IExecutionService {
     private subscriptionsClient: Jobs.SubscriptionsApi;
     public seeds: TapisComponentSeed[];
     private jobService: TapisJobService;
-
+    private jobSubscriptionService: TapisJobSubscriptionService;
     constructor(
         private token: string,
         private baseUrl: string
@@ -36,6 +37,7 @@ export class TapisExecutionService implements IExecutionService {
             token
         );
         this.jobService = new TapisJobService(this.jobsClient, this.subscriptionsClient);
+        this.jobSubscriptionService = new TapisJobSubscriptionService(this.subscriptionsClient);
     }
 
     async submitExecutions(
@@ -49,6 +51,10 @@ export class TapisExecutionService implements IExecutionService {
         const promises = this.seeds.map(async (seed) => {
             const jobRequest = this.jobService.createJobRequest(app, seed, model);
             const jobId = await this.submitJob(jobRequest);
+            const subscription = await this.jobSubscriptionService.subscribeToJob(
+                jobId,
+                seed.execution.id
+            );
             return jobId;
         });
         return await Promise.all(promises);
