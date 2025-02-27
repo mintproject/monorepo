@@ -4,14 +4,16 @@ import { getConfiguration } from "../../mint/mint-functions";
 export class TapisJobSubscriptionService {
     constructor(private subscriptionsClient: Jobs.SubscriptionsApi) {}
 
-    createNotifDeliveryTarget(executionId: string) {
+    static createNotifDeliveryTarget(url: string) {
         return {
             deliveryMethod: Jobs.NotifDeliveryTargetDeliveryMethodEnum.Webhook,
-            deliveryAddress: this.generateWebHookUrl(executionId)
+            deliveryAddress: url
         };
     }
 
-    createRequest(notifDeliveryTarget: Jobs.NotifDeliveryTarget) {
+    static createRequest(executionId: string) {
+        const url = TapisJobSubscriptionService.generateWebHookUrl(executionId);
+        const notifDeliveryTarget = TapisJobSubscriptionService.createNotifDeliveryTarget(url);
         return {
             description: "Test subscription",
             enabled: true,
@@ -21,8 +23,7 @@ export class TapisJobSubscriptionService {
     }
 
     async subscribeToJob(jobUuid: string, executionId: string) {
-        const notifDeliveryTarget = this.createNotifDeliveryTarget(executionId);
-        const request = this.createRequest(notifDeliveryTarget);
+        const request = TapisJobSubscriptionService.createRequest(executionId);
         return await this.submit(jobUuid, request);
     }
 
@@ -33,7 +34,7 @@ export class TapisJobSubscriptionService {
         });
     }
 
-    private generateWebHookUrl(executionId: string) {
+    static generateWebHookUrl(executionId: string) {
         const prefs = getConfiguration();
         return `${prefs.ensemble_manager_api}/tapis/jobs/${executionId}/webhook`;
     }
