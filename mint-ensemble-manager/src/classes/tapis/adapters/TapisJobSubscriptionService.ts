@@ -1,5 +1,5 @@
 import { Jobs } from "@mfosorio/tapis-typescript";
-import { getConfiguration } from "../../mint/mint-functions";
+import { getConfiguration } from "@/classes/mint/mint-functions";
 
 export class TapisJobSubscriptionService {
     constructor(private subscriptionsClient: Jobs.SubscriptionsApi) {}

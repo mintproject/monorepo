@@ -1,19 +1,19 @@
 import { Apps, Jobs } from "@mfosorio/tapis-typescript";
-import { Execution, Execution_Result, Model, Region } from "../../mint/mint-types";
-import { TapisComponent, TapisComponentSeed } from "../typing";
-import { IExecutionService, ExecutionJob } from "../../../interfaces/IExecutionService";
-import apiGenerator from "../utils/apiGenerator";
-import { getInputsParameters } from "../helpers";
-import { getInputDatasets } from "../helpers";
-import { TapisJobService } from "./TapisJobService";
-import errorDecoder from "../utils/errorDecoder";
-import { TapisJobSubscriptionService } from "./TapisJobSubscriptionService";
+import { Execution, Execution_Result, Model, Region } from "@/classes/mint/mint-types";
+import { TapisComponent, TapisComponentSeed } from "@/classes/tapis/typing";
+import { IExecutionService, ExecutionJob } from "@/interfaces/IExecutionService";
+import apiGenerator from "@/classes/tapis/utils/apiGenerator";
+import { getInputsParameters } from "@/classes/tapis/helpers";
+import { getInputDatasets } from "@/classes/tapis/helpers";
+import { TapisJobService } from "@/classes/tapis/adapters/TapisJobService";
+import errorDecoder from "@/classes/tapis/utils/errorDecoder";
+import { TapisJobSubscriptionService } from "@/classes/tapis/adapters/TapisJobSubscriptionService";
 import {
     getExecution,
     getModelOutputsByModelId,
     updateExecutionStatus
 } from "@/classes/graphql/graphql_functions";
-import { matchTapisOutputsToMintOutputs } from "../jobs";
+import { matchTapisOutputsToMintOutputs } from "@/classes/tapis/jobs";
 
 export class TapisExecutionService implements IExecutionService {
     private appsClient: Apps.ApplicationsApi;
@@ -97,14 +97,11 @@ export class TapisExecutionService implements IExecutionService {
         component: TapisComponent
     ) {
         const app = await this.loadTapisApp(component);
+
         this.seeds = this.seedExecutions(executions, model, region, component);
         const promises = this.seeds.map(async (seed) => {
             const jobRequest = this.jobService.createJobRequest(app, seed, model);
             const jobId = await this.submitJob(jobRequest);
-            const subscription = await this.jobSubscriptionService.subscribeToJob(
-                jobId,
-                seed.execution.id
-            );
             return jobId;
         });
         return await Promise.all(promises);
@@ -121,8 +118,8 @@ export class TapisExecutionService implements IExecutionService {
     }
 
     async submitJob(jobRequest: Jobs.ReqSubmitJob): Promise<string> {
+        console.log("submitting job", jobRequest);
         try {
-            console.log(JSON.stringify(jobRequest, null, 2));
             const jobSubmission = await errorDecoder<Jobs.RespSubmitJob>(() =>
                 this.jobsClient.submitJob({ reqSubmitJob: jobRequest })
             );
@@ -143,6 +140,7 @@ export class TapisExecutionService implements IExecutionService {
         region: Region,
         component: TapisComponent
     ) {
+        console.log("seeding executions", executions);
         return executions.map((execution) => {
             const bindings = execution.bindings;
             const datasets = getInputDatasets(model, bindings);

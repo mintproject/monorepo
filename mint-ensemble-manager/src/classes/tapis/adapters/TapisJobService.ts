@@ -1,6 +1,6 @@
 import { Apps, Jobs } from "@mfosorio/tapis-typescript";
-import { DataResource, Model } from "../../mint/mint-types";
-import { TapisComponentSeed } from "../typing";
+import { DataResource, Model } from "@/classes/mint/mint-types";
+import { TapisComponentSeed } from "@/classes/tapis/typing";
 
 export class TapisJobService {
     private static readonly ALLOCATION = "PT2050-DataX";
@@ -17,6 +17,7 @@ export class TapisJobService {
         seed: TapisComponentSeed,
         model: Model
     ): Jobs.ReqSubmitJob => {
+        console.log("creating job request", seed);
         const jobFileInputs = this.createJobFileInputsFromSeed(seed, app, model);
         const request: Jobs.ReqSubmitJob = {
             name: seed.execution.id,

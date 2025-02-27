@@ -1,5 +1,4 @@
 import { Execution } from "../../../../classes/mint/mint-types";
-import handleExecutionEvent from "../../../../classes/tapis/handle-execution-event";
 import { TapisExecutionService } from "@/classes/tapis/adapters/TapisExecutionService";
 import { getTokenFromAuthorizationHeader } from "@/utils/authUtils";
 import { getConfiguration } from "@/classes/mint/mint-functions";
@@ -28,12 +27,11 @@ const jobsService = {
         const access_token = this.getAccessToken(authorizationHeader);
         const prefs = getConfiguration();
         const executionService = new TapisExecutionService(access_token, prefs.tapis.basePath);
-        executionService.updateExecution(
+        return await executionService.updateExecution(
             executionId,
             webHookEvent.event.type,
             webHookEvent.event.subject
         );
-        return await handleExecutionEvent(webHookEvent.event, executionId);
     },
 
     async get(jobId: string, authorizationHeader: string): Promise<ExecutionJob> {
