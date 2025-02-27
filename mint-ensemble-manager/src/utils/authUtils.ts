@@ -2,10 +2,14 @@ import jwt, { Algorithm } from "jsonwebtoken";
 
 export const getTokenFromRequest = (req: any) => {
     const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return getTokenFromAuthorizationHeader(authHeader);
+};
+
+export const getTokenFromAuthorizationHeader = (authorizationHeader: string) => {
+    if (!authorizationHeader || !authorizationHeader.startsWith("Bearer ")) {
         return false;
     }
-    return authHeader.split(" ")[1];
+    return authorizationHeader.split(" ")[1];
 };
 
 export const verifyToken = (token: string): boolean => {

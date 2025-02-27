@@ -1,7 +1,6 @@
 import { Apps, Jobs } from "@mfosorio/tapis-typescript";
 import { DataResource, Model } from "../../mint/mint-types";
 import { TapisComponentSeed } from "../typing";
-import { getConfiguration } from "@/classes/mint/mint-functions";
 
 export class TapisJobService {
     private static readonly ALLOCATION = "PT2050-DataX";
@@ -74,29 +73,5 @@ export class TapisJobService {
             }) || [];
 
         return jobInputs;
-    }
-
-    async subscribeToJob(jobUuid: string, executionId: string) {
-        const notifDeliveryTarget: Jobs.NotifDeliveryTarget = {
-            deliveryMethod: Jobs.NotifDeliveryTargetDeliveryMethodEnum.Webhook,
-            deliveryAddress: this.generateWebHookUrl(executionId)
-        };
-
-        const request: Jobs.ReqSubscribe = {
-            description: "Test subscription",
-            enabled: true,
-            eventCategoryFilter: Jobs.ReqSubscribeEventCategoryFilterEnum.JobNewStatus,
-            deliveryTargets: [notifDeliveryTarget]
-        };
-
-        return await this.subscriptionsClient.subscribe({
-            jobUuid: jobUuid,
-            reqSubscribe: request
-        });
-    }
-
-    private generateWebHookUrl(executionId: string) {
-        const prefs = getConfiguration();
-        return `${prefs.ensemble_manager_api}/tapis/jobs/${executionId}`;
     }
 }

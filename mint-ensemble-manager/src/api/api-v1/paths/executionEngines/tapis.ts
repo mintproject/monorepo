@@ -11,6 +11,10 @@ export default function (executionsTapisService: ExecutionsTapisService) {
     async function POST(req: any, res: Response) {
         const threadmodel = req.body;
         const token = getTokenFromRequest(req);
+        if (!token) {
+            res.status(401).json({ error: "Unauthorized" });
+            return;
+        }
 
         try {
             const response = await executionsTapisService.submitExecution(threadmodel, token);
@@ -37,6 +41,10 @@ export default function (executionsTapisService: ExecutionsTapisService) {
                 "application/json": {
                     schema: {
                         $ref: "#/components/schemas/ModelThread"
+                    },
+                    example: {
+                        thread_id: "108bguHTBBNLlZaPMLlM",
+                        model_id: "https://w3id.org/okn/i/mint/modflow_2005_BartonSprings_avg"
                     }
                 }
             }

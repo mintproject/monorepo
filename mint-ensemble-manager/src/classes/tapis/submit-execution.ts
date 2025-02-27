@@ -66,7 +66,7 @@ const markExecutionAsFailed = async (execution: Execution, thread_id: string) =>
 };
 
 const generateWebHookUrl = (executionId: string) => {
-    return `${prefs.ensemble_manager_api}/tapis/jobs/${executionId}`;
+    return `${prefs.ensemble_manager_api}/tapis/jobs/${executionId}/webhook`;
 };
 
 async function subscribeTapisJob(jobUuid: string, executionId: string, token) {
