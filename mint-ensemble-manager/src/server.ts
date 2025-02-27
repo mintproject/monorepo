@@ -26,14 +26,14 @@ const { ExpressAdapter } = require("@bull-board/express");
 import { DOWNLOAD_TAPIS_OUTPUT_QUEUE_NAME, EXECUTION_QUEUE_NAME, REDIS_URL } from "./config/redis";
 import { PORT, VERSION } from "./config/app";
 import jobsService from "./api/api-v1/services/tapis/jobsService";
-
+import { getConfiguration } from "./classes/mint/mint-functions";
 // Main Express Server
 const app = express();
 const port = PORT;
 const version = VERSION;
 const dashboard_url = "/admin/queues";
 
-const CLIENT_ID = process.env.CLIENT_ID;
+const CLIENT_ID = getConfiguration().auth.client_id;
 
 // Setup API
 const v1ApiDoc = require("./api/api-doc");

@@ -1,4 +1,6 @@
-const AUTHORIZATION_URL = process.env.AUTHORIZATION_URL;
+import { getConfiguration } from "@/classes/mint/mint-functions";
+
+const AUTHORIZATION_URL = getConfiguration().auth.authorization_url;
 
 module.exports = {
     openapi: "3.0.0",
@@ -183,6 +185,707 @@ module.exports = {
                     parameters: {
                         description:
                             "A map of parameter name and parameter values. Example: { start_planting_day: [100, 107, 114] }",
+                        type: "object"
+                    }
+                }
+            },
+            ReqSubmitTapisJob: {
+                required: ["appId", "appVersion", "name"],
+                type: "object",
+                example: {
+                    name: "bae0f0be6dbee791f1841c20f9903afc",
+                    appId: "modflow-2005",
+                    appVersion: "0.0.6",
+                    fileInputs: [
+                        {
+                            name: "bas6",
+                            sourceUrl:
+                                "https://data.mint.isi.edu/files/sample-inputs-outputs/modflowInputs/BARTON_SPRINGS_2001_2010AVERAGE.ba6"
+                        },
+                        {
+                            name: "dis",
+                            sourceUrl:
+                                "https://data.mint.isi.edu/files/sample-inputs-outputs/modflowInputs/BARTON_SPRINGS_2001_2010AVERAGE.dis"
+                        },
+                        {
+                            name: "bcf6",
+                            sourceUrl:
+                                "https://data.mint.isi.edu/files/sample-inputs-outputs/modflowInputs/BARTON_SPRINGS_2001_2010AVERAGE.bc6"
+                        },
+                        {
+                            name: "oc",
+                            sourceUrl:
+                                "https://data.mint.isi.edu/files/sample-inputs-outputs/modflowInputs/BARTON_SPRINGS_2001_2010AVERAGE.oc"
+                        },
+                        {
+                            name: "wel",
+                            sourceUrl:
+                                "https://data.mint.isi.edu/files/sample-inputs-outputs/modflowInputs/BARTON_SPRINGS_2001_2010AVERAGE.wel"
+                        },
+                        {
+                            name: "drn",
+                            sourceUrl:
+                                "https://data.mint.isi.edu/files/sample-inputs-outputs/modflowInputs/BARTON_SPRINGS_2001_2010AVERAGE.drn"
+                        },
+                        {
+                            name: "hfb6",
+                            sourceUrl:
+                                "https://data.mint.isi.edu/files/sample-inputs-outputs/modflowInputs/BARTON_SPRINGS_2001_2010AVERAGE.hf6"
+                        },
+                        {
+                            name: "sip",
+                            sourceUrl:
+                                "https://data.mint.isi.edu/files/sample-inputs-outputs/modflowInputs/BARTON_SPRINGS_2001_2010AVERAGE.sip"
+                        },
+                        {
+                            name: "rch",
+                            sourceUrl:
+                                "https://data.mint.isi.edu/files/sample-inputs-outputs/modflowInputs/BARTON_SPRINGS_2001_2010AVERAGE.rch"
+                        }
+                    ],
+                    nodeCount: 1,
+                    coresPerNode: 1,
+                    maxMinutes: 10,
+                    archiveSystemId: "cloud.data",
+                    archiveSystemDir:
+                        "HOST_EVAL($HOME)/tapis-jobs-archive/${JobCreateDate}/${JobName}-${JobUUID}",
+                    archiveOnAppError: true,
+                    execSystemId: "ls6",
+                    execSystemLogicalQueue: "development",
+                    parameterSet: {
+                        appArgs: [],
+                        containerArgs: [],
+                        schedulerOptions: [
+                            {
+                                name: "TACC Allocation",
+                                description:
+                                    "The TACC allocation associated with this job execution",
+                                include: true,
+                                arg: "-A PT2050-DataX"
+                            }
+                        ],
+                        envVariables: []
+                    },
+                    subscriptions: [
+                        {
+                            eventCategoryFilter: "JOB_NEW_STATUS",
+                            description: "Test subscription",
+                            enabled: true,
+                            deliveryTargets: [
+                                {
+                                    deliveryMethod: "WEBHOOK",
+                                    deliveryAddress:
+                                        "https://webhook.site/dbb05bdc-8f00-4315-8b5b-d16b723cb95d"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                properties: {
+                    name: {
+                        type: "string"
+                    },
+                    owner: {
+                        type: "string"
+                    },
+                    tenant: {
+                        type: "string"
+                    },
+                    description: {
+                        type: "string"
+                    },
+                    appId: {
+                        type: "string"
+                    },
+                    appVersion: {
+                        type: "string"
+                    },
+                    jobType: {
+                        type: "string"
+                    },
+                    archiveOnAppError: {
+                        type: "boolean"
+                    },
+                    dynamicExecSystem: {
+                        type: "boolean"
+                    },
+                    execSystemId: {
+                        type: "string"
+                    },
+                    execSystemExecDir: {
+                        type: "string"
+                    },
+                    execSystemInputDir: {
+                        type: "string"
+                    },
+                    execSystemOutputDir: {
+                        type: "string"
+                    },
+                    execSystemLogicalQueue: {
+                        type: "string"
+                    },
+                    archiveSystemId: {
+                        type: "string"
+                    },
+                    archiveSystemDir: {
+                        type: "string"
+                    },
+                    dtnSystemInputDir: {
+                        type: "string"
+                    },
+                    dtnSystemOutputDir: {
+                        type: "string"
+                    },
+                    nodeCount: {
+                        type: "integer",
+                        format: "int32"
+                    },
+                    coresPerNode: {
+                        type: "integer",
+                        format: "int32"
+                    },
+                    memoryMB: {
+                        type: "integer",
+                        format: "int32"
+                    },
+                    maxMinutes: {
+                        type: "integer",
+                        format: "int32"
+                    },
+                    fileInputs: {
+                        type: "array",
+                        items: {
+                            $ref: "#/components/schemas/TapisJobFileInput"
+                        }
+                    },
+                    fileInputArrays: {
+                        type: "array",
+                        items: {
+                            $ref: "#/components/schemas/TapisJobFileInputArray"
+                        }
+                    },
+                    parameterSet: {
+                        $ref: "#/components/schemas/TapisJobParameterSet"
+                    },
+                    execSystemConstraints: {
+                        type: "array",
+                        items: {
+                            type: "string"
+                        }
+                    },
+                    tags: {
+                        type: "array",
+                        items: {
+                            type: "string"
+                        }
+                    },
+                    subscriptions: {
+                        type: "array",
+                        items: {
+                            $ref: "#/components/schemas/ReqSubscribe"
+                        }
+                    },
+                    isMpi: {
+                        type: "boolean"
+                    },
+                    mpiCmd: {
+                        type: "string"
+                    },
+                    cmdPrefix: {
+                        type: "string"
+                    },
+                    notes: {
+                        type: "object"
+                    }
+                }
+            },
+            TapisJob: {
+                type: "object",
+                properties: {
+                    id: {
+                        type: "integer",
+                        format: "int32"
+                    },
+                    name: {
+                        type: "string"
+                    },
+                    owner: {
+                        type: "string"
+                    },
+                    tenant: {
+                        type: "string"
+                    },
+                    description: {
+                        type: "string"
+                    },
+                    status: {
+                        type: "string",
+                        enum: [
+                            "PENDING",
+                            "PROCESSING_INPUTS",
+                            "STAGING_INPUTS",
+                            "STAGING_JOB",
+                            "SUBMITTING_JOB",
+                            "QUEUED",
+                            "RUNNING",
+                            "ARCHIVING",
+                            "BLOCKED",
+                            "PAUSED",
+                            "FINISHED",
+                            "CANCELLED",
+                            "FAILED"
+                        ]
+                    },
+                    condition: {
+                        type: "string",
+                        enum: [
+                            "CANCELLED_BY_USER",
+                            "JOB_ARCHIVING_FAILED",
+                            "JOB_DATABASE_ERROR",
+                            "JOB_EXECUTION_MONITORING_ERROR",
+                            "JOB_EXECUTION_MONITORING_TIMEOUT",
+                            "JOB_FILES_SERVICE_ERROR",
+                            "JOB_INTERNAL_ERROR",
+                            "JOB_INVALID_DEFINITION",
+                            "JOB_LAUNCH_FAILURE",
+                            "JOB_QUEUE_MONITORING_ERROR",
+                            "JOB_RECOVERY_FAILURE",
+                            "JOB_RECOVERY_TIMEOUT",
+                            "JOB_REMOTE_ACCESS_ERROR",
+                            "JOB_REMOTE_OUTCOME_ERROR",
+                            "JOB_UNABLE_TO_STAGE_INPUTS",
+                            "JOB_UNABLE_TO_STAGE_JOB",
+                            "JOB_TRANSFER_FAILED_OR_CANCELLED",
+                            "JOB_TRANSFER_MONITORING_TIMEOUT",
+                            "NORMAL_COMPLETION",
+                            "SCHEDULER_CANCELLED",
+                            "SCHEDULER_DEADLINE",
+                            "SCHEDULER_OUT_OF_MEMORY",
+                            "SCHEDULER_STOPPED",
+                            "SCHEDULER_TIMEOUT",
+                            "SCHEDULER_TERMINATED"
+                        ]
+                    },
+                    lastMessage: {
+                        type: "string"
+                    },
+                    created: {
+                        type: "string"
+                    },
+                    ended: {
+                        type: "string"
+                    },
+                    lastUpdated: {
+                        type: "string"
+                    },
+                    uuid: {
+                        type: "string"
+                    },
+                    appId: {
+                        type: "string"
+                    },
+                    appVersion: {
+                        type: "string"
+                    },
+                    archiveOnAppError: {
+                        type: "boolean"
+                    },
+                    dynamicExecSystem: {
+                        type: "boolean"
+                    },
+                    execSystemId: {
+                        type: "string"
+                    },
+                    execSystemExecDir: {
+                        type: "string"
+                    },
+                    execSystemInputDir: {
+                        type: "string"
+                    },
+                    execSystemOutputDir: {
+                        type: "string"
+                    },
+                    execSystemLogicalQueue: {
+                        type: "string"
+                    },
+                    archiveSystemId: {
+                        type: "string"
+                    },
+                    archiveSystemDir: {
+                        type: "string"
+                    },
+                    dtnSystemId: {
+                        type: "string"
+                    },
+                    dtnSystemInputDir: {
+                        type: "string"
+                    },
+                    dtnSystemOutputDir: {
+                        type: "string"
+                    },
+                    nodeCount: {
+                        type: "integer",
+                        format: "int32"
+                    },
+                    coresPerNode: {
+                        type: "integer",
+                        format: "int32"
+                    },
+                    memoryMB: {
+                        type: "integer",
+                        format: "int32"
+                    },
+                    maxMinutes: {
+                        type: "integer",
+                        format: "int32"
+                    },
+                    fileInputs: {
+                        type: "string"
+                    },
+                    parameterSet: {
+                        type: "string"
+                    },
+                    execSystemConstraints: {
+                        type: "string"
+                    },
+                    subscriptions: {
+                        type: "string"
+                    },
+                    blockedCount: {
+                        type: "integer",
+                        format: "int32"
+                    },
+                    remoteTapisJobId: {
+                        type: "string"
+                    },
+                    remoteTapisJobId2: {
+                        type: "string"
+                    },
+                    remoteOutcome: {
+                        type: "string",
+                        enum: ["FINISHED", "FAILED", "FAILED_SKIP_ARCHIVE"]
+                    },
+                    remoteResultInfo: {
+                        type: "string"
+                    },
+                    remoteQueue: {
+                        type: "string"
+                    },
+                    remoteSubmitted: {
+                        type: "string"
+                    },
+                    remoteStarted: {
+                        type: "string"
+                    },
+                    remoteEnded: {
+                        type: "string"
+                    },
+                    remoteSubmitRetries: {
+                        type: "integer",
+                        format: "int32"
+                    },
+                    remoteChecksSuccess: {
+                        type: "integer",
+                        format: "int32"
+                    },
+                    remoteChecksFailed: {
+                        type: "integer",
+                        format: "int32"
+                    },
+                    remoteLastStatusCheck: {
+                        type: "string"
+                    },
+                    inputTransactionId: {
+                        type: "string"
+                    },
+                    inputCorrelationId: {
+                        type: "string"
+                    },
+                    archiveTransactionId: {
+                        type: "string"
+                    },
+                    archiveCorrelationId: {
+                        type: "string"
+                    },
+                    stageAppTransactionId: {
+                        type: "string"
+                    },
+                    stageAppCorrelationId: {
+                        type: "string"
+                    },
+                    dtnInputTransactionId: {
+                        type: "string"
+                    },
+                    dtnInputCorrelationId: {
+                        type: "string"
+                    },
+                    dtnOutputTransactionId: {
+                        type: "string"
+                    },
+                    dtnOutputCorrelationId: {
+                        type: "string"
+                    },
+                    tapisQueue: {
+                        type: "string"
+                    },
+                    visible: {
+                        type: "boolean"
+                    },
+                    createdby: {
+                        type: "string"
+                    },
+                    createdbyTenant: {
+                        type: "string"
+                    },
+                    tags: {
+                        type: "array",
+                        items: {
+                            type: "string"
+                        }
+                    },
+                    jobType: {
+                        type: "string",
+                        enum: ["FORK", "BATCH"]
+                    },
+                    mpiCmd: {
+                        type: "string"
+                    },
+                    cmdPrefix: {
+                        type: "string"
+                    },
+                    sharedAppCtx: {
+                        type: "string"
+                    },
+                    sharedAppCtxAttribs: {
+                        type: "array",
+                        items: {
+                            type: "string",
+                            enum: [
+                                "SAC_EXEC_SYSTEM_ID",
+                                "SAC_EXEC_SYSTEM_EXEC_DIR",
+                                "SAC_EXEC_SYSTEM_INPUT_DIR",
+                                "SAC_EXEC_SYSTEM_OUTPUT_DIR",
+                                "SAC_ARCHIVE_SYSTEM_ID",
+                                "SAC_ARCHIVE_SYSTEM_DIR",
+                                "SAC_DTN_SYSTEM_ID",
+                                "SAC_DTN_SYSTEM_INPUT_DIR",
+                                "SAC_DTN_SYSTEM_OUTPUT_DIR"
+                            ]
+                        }
+                    },
+                    trackingId: {
+                        type: "string"
+                    },
+                    notes: {
+                        type: "string"
+                    },
+                    mpi: {
+                        type: "boolean"
+                    }
+                }
+            },
+            TapisJobFileInput: {
+                type: "object",
+                properties: {
+                    name: {
+                        type: "string"
+                    },
+                    description: {
+                        type: "string"
+                    },
+                    envKey: {
+                        type: "string"
+                    },
+                    autoMountLocal: {
+                        type: "boolean"
+                    },
+                    sourceUrl: {
+                        type: "string"
+                    },
+                    targetPath: {
+                        type: "string"
+                    },
+                    notes: {
+                        type: "object"
+                    }
+                }
+            },
+            TapisJobFileInputArray: {
+                type: "object",
+                properties: {
+                    name: {
+                        type: "string"
+                    },
+                    description: {
+                        type: "string"
+                    },
+                    envKey: {
+                        type: "string"
+                    },
+                    sourceUrls: {
+                        type: "array",
+                        items: {
+                            type: "string"
+                        }
+                    },
+                    targetDir: {
+                        type: "string"
+                    },
+                    notes: {
+                        type: "object"
+                    }
+                }
+            },
+            TapisJobParameterSet: {
+                type: "object",
+                properties: {
+                    appArgs: {
+                        type: "array",
+                        items: {
+                            $ref: "#/components/schemas/TapisJobArgSpec"
+                        }
+                    },
+                    containerArgs: {
+                        type: "array",
+                        items: {
+                            $ref: "#/components/schemas/TapisJobArgSpec"
+                        }
+                    },
+                    schedulerOptions: {
+                        type: "array",
+                        items: {
+                            $ref: "#/components/schemas/TapisJobArgSpec"
+                        }
+                    },
+                    envVariables: {
+                        type: "array",
+                        items: {
+                            $ref: "#/components/schemas/KeyValuePair"
+                        }
+                    },
+                    archiveFilter: {
+                        $ref: "#/components/schemas/IncludeExcludeFilter"
+                    },
+                    logConfig: {
+                        $ref: "#/components/schemas/TapisLogConfig"
+                    }
+                }
+            },
+
+            TapisJobArgSpec: {
+                type: "object",
+                properties: {
+                    name: {
+                        type: "string"
+                    },
+                    description: {
+                        type: "string"
+                    },
+                    include: {
+                        type: "boolean"
+                    },
+                    arg: {
+                        type: "string"
+                    },
+                    notes: {
+                        type: "object"
+                    }
+                }
+            },
+            ReqSubscribe: {
+                type: "object",
+                properties: {
+                    description: {
+                        type: "string"
+                    },
+                    enabled: {
+                        type: "boolean"
+                    },
+                    eventCategoryFilter: {
+                        type: "string",
+                        enum: [
+                            "JOB_NEW_STATUS",
+                            "JOB_INPUT_TRANSACTION_ID",
+                            "JOB_ARCHIVE_TRANSACTION_ID",
+                            "JOB_SUBSCRIPTION",
+                            "JOB_SHARE_EVENT",
+                            "JOB_ERROR_MESSAGE",
+                            "JOB_USER_EVENT",
+                            "ALL"
+                        ]
+                    },
+                    deliveryTargets: {
+                        type: "array",
+                        items: {
+                            $ref: "#/components/schemas/TapisNotifDeliveryTarget"
+                        }
+                    },
+                    ttlminutes: {
+                        type: "integer",
+                        format: "int32"
+                    }
+                }
+            },
+
+            TapisNotifDeliveryTarget: {
+                type: "object",
+                properties: {
+                    deliveryMethod: {
+                        type: "string",
+                        enum: ["WEBHOOK", "EMAIL", "QUEUE", "ACTOR"]
+                    },
+                    deliveryAddress: {
+                        type: "string"
+                    }
+                }
+            },
+            TapisLogConfig: {
+                type: "object",
+                properties: {
+                    stdoutFilename: {
+                        type: "string"
+                    },
+                    stderrFilename: {
+                        type: "string"
+                    }
+                }
+            },
+            IncludeExcludeFilter: {
+                type: "object",
+                properties: {
+                    includes: {
+                        type: "array",
+                        items: {
+                            type: "string"
+                        }
+                    },
+                    excludes: {
+                        type: "array",
+                        items: {
+                            type: "string"
+                        }
+                    },
+                    includeLaunchFiles: {
+                        type: "boolean"
+                    }
+                }
+            },
+            KeyValuePair: {
+                type: "object",
+                properties: {
+                    key: {
+                        type: "string"
+                    },
+                    value: {
+                        type: "string"
+                    },
+                    description: {
+                        type: "string"
+                    },
+                    include: {
+                        type: "boolean"
+                    },
+                    notes: {
                         type: "object"
                     }
                 }

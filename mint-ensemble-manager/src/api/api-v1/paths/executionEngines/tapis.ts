@@ -2,7 +2,6 @@
 
 import { ExecutionsTapisService } from "../../services/executionsTapisService";
 import { Response } from "express";
-
 export default function (executionsTapisService: ExecutionsTapisService) {
     const operations = {
         POST
@@ -10,9 +9,11 @@ export default function (executionsTapisService: ExecutionsTapisService) {
 
     async function POST(req: any, res: Response) {
         const threadmodel = req.body;
-
         try {
-            const response = await executionsTapisService.submitExecution(threadmodel);
+            const response = await executionsTapisService.submitExecution(
+                threadmodel,
+                req.headers.authorization
+            );
             if (response) {
                 res.status(202).json(response);
             } else {
@@ -36,6 +37,10 @@ export default function (executionsTapisService: ExecutionsTapisService) {
                 "application/json": {
                     schema: {
                         $ref: "#/components/schemas/ModelThread"
+                    },
+                    example: {
+                        thread_id: "108bguHTBBNLlZaPMLlM",
+                        model_id: "https://w3id.org/okn/i/mint/modflow_2005_BartonSprings_avg"
                     }
                 }
             }

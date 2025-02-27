@@ -58,18 +58,25 @@ export interface MintPreferences {
     data_catalog_api: string;
     data_catalog_type?: string;
     data_catalog_key?: string;
-    data_catalog_extra?: any;
-    tapis?: TapisConfig;
-  
-    data_server_type?: string,
-    data_server_extra?: any
+    data_catalog_extra?: {
+        owner_organization_id?: string;
+        owner_provenance_id?: string;
+    };
 
-    model_catalog_api?: string,
-    ensemble_manager_api: string,
-    ingestion_api: string,
-    visualization_url: string,
-    execution_engine?: "wings" | "localex" | "tapis",
-    
+    data_server_type?: string;
+    data_server_extra?: {
+        region?: string;
+        bucket?: string;
+        access_key?: string;
+        secret_access_key?: string;
+    };
+
+    model_catalog_api?: string;
+    ensemble_manager_api: string;
+    ingestion_api: string;
+    visualization_url: string;
+    execution_engine?: "wings" | "localex" | "tapis";
+
     // Local Execution
     localex?: LocalExecutionPreferences;
 
@@ -79,31 +86,40 @@ export interface MintPreferences {
     // Wings Execution
     wings?: WingsPreferences;
     graphql?: GraphQLPreferences;
-    wings_api?: string;
-    //maps
-    google_maps_key: string;
+
     //auth
     auth_server: string;
     auth_realm: string;
     auth_client_id: string;
+    auth?: {
+        client_id: string;
+        authorization_url: string;
+        public_key: string;
+        algorithms: string[];
+    };
 
-    //old
-    apiKey: string;
-    authDomain: string;
-    databaseURL: string;
-    projectId: string;
-    storageBucket: string;
-    messagingSenderId: string;
-    appId: string;
+    // Tapis Preferences
+    tapis?: TapisConfig;
+
+    // Remove unused fields
+    wings_api?: string;
+    google_maps_key?: string;
+    apiKey?: string;
+    authDomain?: string;
+    databaseURL?: string;
+    projectId?: string;
+    storageBucket?: string;
+    messagingSenderId?: string;
+    appId?: string;
     cromo_api?: string;
 }
 
 export interface KubernetesPreferences {
-    use?: boolean,
-    node_affinity?: boolean,
-    namespace?: string,
-    cpu_limit?: string,
-    memory_limit?: string
+    use?: boolean;
+    node_affinity?: boolean;
+    namespace?: string;
+    cpu_limit?: string;
+    memory_limit?: string;
 }
 
 export interface GraphQLPreferences {

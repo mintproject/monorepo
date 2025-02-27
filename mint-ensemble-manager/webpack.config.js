@@ -7,11 +7,13 @@ module.exports = {
     mode: "development",
     target: "node",
     resolve: {
-        extensions: [".js", ".json", ".ts", ".graphql"]
+        extensions: [".js", ".json", ".ts", ".graphql"],
+        alias: {
+            "@": path.resolve(__dirname, "src")
+        }
     },
     entry: {
         execution: "./src/classes/localex/seed-execution.ts",
-        downloadTapisOutputQueue: "./src/classes/tapis/download-tapis-output.ts",
         server: "./src/server.ts"
     },
     output: {
@@ -44,6 +46,10 @@ module.exports = {
                 {
                     from: "./src/api",
                     to: "api"
+                },
+                {
+                    from: "./src/utils",
+                    to: "utils"
                 },
                 {
                     from: "./src/config",
