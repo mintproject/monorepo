@@ -41,6 +41,10 @@ export default function (executionsTapisService: ExecutionsTapisService) {
                 "application/json": {
                     schema: {
                         $ref: "#/components/schemas/ModelThread"
+                    },
+                    example: {
+                        thread_id: "108bguHTBBNLlZaPMLlM",
+                        model_id: "https://w3id.org/okn/i/mint/modflow_2005_BartonSprings_avg"
                     }
                 }
             }
