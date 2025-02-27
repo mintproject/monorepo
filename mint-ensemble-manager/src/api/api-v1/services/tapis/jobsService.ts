@@ -5,9 +5,11 @@ import { TapisExecutionService } from "@/classes/tapis/adapters/TapisExecutionSe
 import { getTokenFromAuthorizationHeader } from "@/utils/authUtils";
 import { getConfiguration } from "@/classes/mint/mint-functions";
 import { ExecutionJob } from "@/interfaces/IExecutionService";
+import { Jobs } from "@mfosorio/tapis-typescript/dist";
 export interface JobsService {
     webhookJobStatusChange(webHookEvent: any, executionId: string): Promise<Execution | undefined>;
     get(jobId: string, authorizationHeader: string): Promise<ExecutionJob>;
+    submit(job: Jobs.ReqSubmitJob, authorizationHeader: string): Promise<string>;
 }
 
 const jobsService = {
@@ -35,6 +37,13 @@ const jobsService = {
         const prefs = getConfiguration();
         const executionService = new TapisExecutionService(access_token, prefs.tapis.basePath);
         return await executionService.getJobStatus(jobId);
+    },
+
+    async submit(job: Jobs.ReqSubmitJob, authorizationHeader: string): Promise<string> {
+        const access_token = this.getAccessToken(authorizationHeader);
+        const prefs = getConfiguration();
+        const executionService = new TapisExecutionService(access_token, prefs.tapis.basePath);
+        return await executionService.submitJob(job);
     }
 };
 

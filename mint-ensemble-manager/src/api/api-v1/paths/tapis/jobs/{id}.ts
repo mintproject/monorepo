@@ -6,6 +6,7 @@ import { JobsService } from "../../../services/tapis/jobsService";
 export default function (jobsService: JobsService) {
     const exports = {
         GET,
+        POST,
         parameters: [
             {
                 in: "path",
@@ -28,6 +29,16 @@ export default function (jobsService: JobsService) {
         }
     }
 
+    /* submit a job to the queue */
+    async function POST(req: any, res: Response) {
+        try {
+            const job = await jobsService.submit(req.body, req.headers.authorization);
+        } catch (error) {
+            console.error(error);
+            return res.status(500).send({ message: error.message });
+        }
+    }
+
     // NOTE: We could also use a YAML string here.
     GET.apiDoc = {
         summary: "Get Job Status",
@@ -43,6 +54,38 @@ export default function (jobsService: JobsService) {
         responses: {
             "200": {
                 description: "Job Status"
+            },
+            default: {
+                description: "An error occurred"
+            }
+        }
+    };
+
+    POST.apiDoc = {
+        summary: "Submit Job",
+        description: "Submit a job to the queue.",
+        operationId: "tapisSubmitJob",
+        tags: ["Tapis"],
+        security: [
+            {
+                BearerAuth: [],
+                oauth2: []
+            }
+        ],
+        requestBody: {
+            description: "Job",
+            required: true,
+            content: {
+                "application/json": {
+                    schema: {
+                        $ref: "#/components/schemas/ReqSubmitTapisJob"
+                    }
+                }
+            }
+        },
+        responses: {
+            "200": {
+                description: "Job Submitted"
             },
             default: {
                 description: "An error occurred"
