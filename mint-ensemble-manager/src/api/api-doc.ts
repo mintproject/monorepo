@@ -190,6 +190,95 @@ module.exports = {
             ReqSubmitTapisJob: {
                 required: ["appId", "appVersion", "name"],
                 type: "object",
+                example: {
+                    name: "bae0f0be6dbee791f1841c20f9903afc",
+                    appId: "modflow-2005",
+                    appVersion: "0.0.6",
+                    fileInputs: [
+                        {
+                            name: "bas6",
+                            sourceUrl:
+                                "https://data.mint.isi.edu/files/sample-inputs-outputs/modflowInputs/BARTON_SPRINGS_2001_2010AVERAGE.ba6"
+                        },
+                        {
+                            name: "dis",
+                            sourceUrl:
+                                "https://data.mint.isi.edu/files/sample-inputs-outputs/modflowInputs/BARTON_SPRINGS_2001_2010AVERAGE.dis"
+                        },
+                        {
+                            name: "bcf6",
+                            sourceUrl:
+                                "https://data.mint.isi.edu/files/sample-inputs-outputs/modflowInputs/BARTON_SPRINGS_2001_2010AVERAGE.bc6"
+                        },
+                        {
+                            name: "oc",
+                            sourceUrl:
+                                "https://data.mint.isi.edu/files/sample-inputs-outputs/modflowInputs/BARTON_SPRINGS_2001_2010AVERAGE.oc"
+                        },
+                        {
+                            name: "wel",
+                            sourceUrl:
+                                "https://data.mint.isi.edu/files/sample-inputs-outputs/modflowInputs/BARTON_SPRINGS_2001_2010AVERAGE.wel"
+                        },
+                        {
+                            name: "drn",
+                            sourceUrl:
+                                "https://data.mint.isi.edu/files/sample-inputs-outputs/modflowInputs/BARTON_SPRINGS_2001_2010AVERAGE.drn"
+                        },
+                        {
+                            name: "hfb6",
+                            sourceUrl:
+                                "https://data.mint.isi.edu/files/sample-inputs-outputs/modflowInputs/BARTON_SPRINGS_2001_2010AVERAGE.hf6"
+                        },
+                        {
+                            name: "sip",
+                            sourceUrl:
+                                "https://data.mint.isi.edu/files/sample-inputs-outputs/modflowInputs/BARTON_SPRINGS_2001_2010AVERAGE.sip"
+                        },
+                        {
+                            name: "rch",
+                            sourceUrl:
+                                "https://data.mint.isi.edu/files/sample-inputs-outputs/modflowInputs/BARTON_SPRINGS_2001_2010AVERAGE.rch"
+                        }
+                    ],
+                    nodeCount: 1,
+                    coresPerNode: 1,
+                    maxMinutes: 10,
+                    archiveSystemId: "cloud.data",
+                    archiveSystemDir:
+                        "HOST_EVAL($HOME)/tapis-jobs-archive/${JobCreateDate}/${JobName}-${JobUUID}",
+                    archiveOnAppError: true,
+                    execSystemId: "ls6",
+                    execSystemLogicalQueue: "development",
+                    parameterSet: {
+                        appArgs: [],
+                        containerArgs: [],
+                        schedulerOptions: [
+                            {
+                                name: "TACC Allocation",
+                                description:
+                                    "The TACC allocation associated with this job execution",
+                                include: true,
+                                arg: "-A PT2050-DataX"
+                            }
+                        ],
+                        envVariables: []
+                    },
+                    subscriptions: [
+                        {
+                            eventCategoryFilter: "JOB_NEW_STATUS",
+                            description: "Test subscription",
+                            enabled: true,
+                            deliveryTargets: [
+                                {
+                                    deliveryMethod: "WEBHOOK",
+                                    deliveryAddress:
+                                        "https://webhook.site/dbb05bdc-8f00-4315-8b5b-d16b723cb95d"
+                                }
+                            ]
+                        }
+                    ]
+                },
                 properties: {
                     name: {
                         type: "string"
