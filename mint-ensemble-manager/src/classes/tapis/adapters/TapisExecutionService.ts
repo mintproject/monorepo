@@ -7,6 +7,7 @@ import apiGenerator from "../utils/apiGenerator";
 import { getInputsParameters } from "../helpers";
 import { getInputDatasets } from "../helpers";
 import { TapisJobService } from "./TapisJobService";
+import errorDecoder from "../utils/errorDecoder";
 
 export class TapisExecutionService implements IExecutionService {
     private appsClient: Apps.ApplicationsApi;
@@ -84,7 +85,10 @@ export class TapisExecutionService implements IExecutionService {
 
     async getJobStatus(jobId: string): Promise<ExecutionJob> {
         try {
-            const job = await this.jobsClient.getJob({ jobUuid: jobId });
+            const job = await errorDecoder<Jobs.RespGetJob>(() =>
+                this.jobsClient.getJob({ jobUuid: jobId })
+            );
+
             return {
                 id: job.result?.uuid,
                 status: this.mapTapisStatus(job.status),
@@ -118,6 +122,8 @@ export class TapisExecutionService implements IExecutionService {
                 return "running";
             case "finished":
             case "archived":
+                return "completed";
+            case "success":
                 return "completed";
             case "failed":
             case "cancelled":

@@ -11,6 +11,10 @@ export default function (executionsTapisService: ExecutionsTapisService) {
     async function POST(req: any, res: Response) {
         const threadmodel = req.body;
         const token = getTokenFromRequest(req);
+        if (!token) {
+            res.status(401).json({ error: "Unauthorized" });
+            return;
+        }
 
         try {
             const response = await executionsTapisService.submitExecution(threadmodel, token);

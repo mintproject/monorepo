@@ -97,6 +97,6 @@ export class TapisJobService {
 
     private generateWebHookUrl(executionId: string) {
         const prefs = getConfiguration();
-        return `${prefs.ensemble_manager_api}/tapis/jobs/${executionId}`;
+        return `${prefs.ensemble_manager_api}/tapis/jobs/${executionId}/webhook`;
     }
 }

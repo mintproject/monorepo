@@ -18,7 +18,6 @@ if (prefs.execution_engine === "tapis") {
 }
 
 const handleExecutionEvent = async (event: TapisNotification, executionId: string) => {
-    console.log(JSON.stringify(event));
     const execution = await getExecution(executionId);
     const jobUuid = event.subject;
     if (execution !== undefined) {
