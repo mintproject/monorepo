@@ -1,4 +1,6 @@
-const AUTHORIZATION_URL = process.env.AUTHORIZATION_URL;
+import { getConfiguration } from "@/classes/mint/mint-functions";
+
+const AUTHORIZATION_URL = getConfiguration().auth.authorization_url;
 
 module.exports = {
     openapi: "3.0.0",

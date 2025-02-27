@@ -1,5 +1,5 @@
 import jwt, { Algorithm } from "jsonwebtoken";
-
+import { getConfiguration } from "@/classes/mint/mint-functions";
 export const getTokenFromRequest = (req: any) => {
     const authHeader = req.headers.authorization;
     return getTokenFromAuthorizationHeader(authHeader);
@@ -13,13 +13,9 @@ export const getTokenFromAuthorizationHeader = (authorizationHeader: string) => 
 };
 
 export const verifyToken = (token: string): boolean => {
-    // Use the RSA public key from the environment variable
-    // The key should be in PEM format as shown in the tenant response
-    const PUBLIC_KEY = process.env.PUBLIC_KEY.replace(/\\n/g, "\n");
-    // Get algorithms from env or default to RS256
-    const algorithms: Algorithm[] = process.env.JWT_ALGORITHMS
-        ? process.env.JWT_ALGORITHMS.split(",").map((alg) => alg.trim() as Algorithm)
-        : ["RS256"];
+    const prefs = getConfiguration();
+    const PUBLIC_KEY = prefs.auth.public_key.replace(/\\n/g, "\n");
+    const algorithms: Algorithm[] = prefs.auth.algorithms as Algorithm[];
 
     if (!PUBLIC_KEY) {
         console.error("Public key not found in environment variables");

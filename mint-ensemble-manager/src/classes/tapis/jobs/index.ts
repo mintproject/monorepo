@@ -1,24 +1,6 @@
 import { Jobs } from "@mfosorio/tapis-typescript";
-import getJobOutputs from "../api/jobs/outputs";
-import { getModelOutputsByModelId } from "../../../classes/graphql/graphql_functions";
-import { Execution, Execution_Result, ModelOutput } from "../../../classes/mint/mint-types";
 import { getMd5Hash } from "../../../classes/graphql/graphql_adapter";
-import getJobOutputDownload from "../api/jobs/jobOutputDownload";
-import { getTapisToken } from "../authenticator";
-
-const getJobOutputList = async (
-    jobUuid: string,
-    outputPath: string | undefined
-): Promise<Jobs.RespGetJobOutputList> => {
-    const { token, basePath } = await getTapisToken();
-    const realOutputPath = outputPath || "";
-    return await getJobOutputs(jobUuid, realOutputPath, basePath, token.access_token);
-};
-
-const getJobOutputDownloadFile = async (jobUuid: string, outputPath: string): Promise<Blob> => {
-    const { token, basePath } = await getTapisToken();
-    return await getJobOutputDownload(jobUuid, outputPath, basePath, token.access_token);
-};
+import { Execution_Result, ModelOutput } from "../../../classes/mint/mint-types";
 
 const matchTapisOutputsToMintOutputs = (
     files: Jobs.FileInfo[],
@@ -49,11 +31,4 @@ const matchTapisOutputsToMintOutputs = (
         .filter((result) => result !== undefined) as Execution_Result[];
 };
 
-async function getExecutionResultsFromJob(jobUuid: string, execution: Execution) {
-    const { result: files } = await getJobOutputList(jobUuid, "");
-    const mintOutputs = await getModelOutputsByModelId(execution.modelid);
-    const executionResults: Execution_Result[] = matchTapisOutputsToMintOutputs(files, mintOutputs);
-    return executionResults;
-}
-
-export { matchTapisOutputsToMintOutputs, getExecutionResultsFromJob, getJobOutputDownloadFile };
+export { matchTapisOutputsToMintOutputs };
