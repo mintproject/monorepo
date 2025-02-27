@@ -49,7 +49,6 @@ export class TapisExecutionService implements IExecutionService {
         const promises = this.seeds.map(async (seed) => {
             const jobRequest = this.jobService.createJobRequest(app, seed, model);
             const jobId = await this.submitJob(jobRequest);
-            //subscribe job
             return jobId;
         });
         return await Promise.all(promises);
@@ -58,7 +57,7 @@ export class TapisExecutionService implements IExecutionService {
     /** Extra methods */
 
     async loadTapisApp(component: TapisComponent): Promise<Apps.TapisApp> {
-        const app = await this.appsClient.getApp({
+        const { result: app } = await this.appsClient.getApp({
             appId: component.id,
             appVersion: component.version
         });
@@ -67,16 +66,14 @@ export class TapisExecutionService implements IExecutionService {
 
     async submitJob(jobRequest: Jobs.ReqSubmitJob): Promise<string> {
         try {
-            const jobSubmission = await this.jobsClient.submitJob({ reqSubmitJob: jobRequest });
+            const jobSubmission = await errorDecoder<Jobs.RespSubmitJob>(() =>
+                this.jobsClient.submitJob({ reqSubmitJob: jobRequest })
+            );
             return jobSubmission.result.uuid;
         } catch (error) {
             if (error.status === 400) {
                 // Handle HTTP 400 Bad Request specifically
                 const errorDetails = error.response?.data?.message || error.message;
-                console.log("Invalid job request: ");
-                console.log(jobRequest);
-                console.log("error details", errorDetails);
-
                 throw new Error(`Invalid job request: ${errorDetails}`);
             }
             throw new Error(`Failed to submit job: ${error.message}`);
@@ -96,7 +93,6 @@ export class TapisExecutionService implements IExecutionService {
                 error: job.result?.lastMessage
             };
         } catch (error) {
-            console.error(`Failed to get job status:`, error);
             throw error;
         }
     }
@@ -106,7 +102,6 @@ export class TapisExecutionService implements IExecutionService {
             await this.jobsClient.cancelJob({ jobUuid: jobId });
             return true;
         } catch (error) {
-            console.error(`Failed to cancel job ${jobId}:`, error);
             return false;
         }
     }
