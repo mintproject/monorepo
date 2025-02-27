@@ -41,12 +41,6 @@ export default function (jobsService: JobsService) {
             "Webhook for Job Status Change. TAPIS will send a POST request to this endpoint when a job status changes.",
         operationId: "tapisChangeJobStatus",
         tags: ["Tapis"],
-        security: [
-            {
-                BearerAuth: [],
-                oauth2: []
-            }
-        ],
         requestBody: {
             description: "Job Status",
             required: true,
