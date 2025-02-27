@@ -72,6 +72,7 @@ export class TapisExecutionService implements IExecutionService {
 
     async submitJob(jobRequest: Jobs.ReqSubmitJob): Promise<string> {
         try {
+            console.log(JSON.stringify(jobRequest, null, 2));
             const jobSubmission = await errorDecoder<Jobs.RespSubmitJob>(() =>
                 this.jobsClient.submitJob({ reqSubmitJob: jobRequest })
             );
