@@ -47,7 +47,9 @@ jobs:
               with:
                   push: true
                   context: .
-                  tags: ${{ steps.meta.outputs.tags }}
+                  tags: |
+                      ${{ steps.meta.outputs.tags }}
+                      ${{ env.DOCKER_IMAGE_REPOSITORY }}/${{ env.DOCKER_IMAGE_NAME }}:${{ github.sha }}
                   labels: ${{ steps.meta.outputs.labels }}
                   file: ${{ env.DOCKER_FILE}}
                   platforms: linux/amd64
@@ -81,7 +83,9 @@ jobs:
               with:
                   push: true
                   context: .
-                  tags: ${{ steps.meta.outputs.tags }}
+                  tags: |
+                      ${{ steps.meta.outputs.tags }}
+                      ${{ env.DOCKER_IMAGE_REPOSITORY }}/${{ env.DOCKER_IMAGE_NAME }}-arm:${{ github.sha }}
                   labels: ${{ steps.meta.outputs.labels }}
                   file: ${{ env.DOCKER_FILE}}
                   platforms: linux/arm64
