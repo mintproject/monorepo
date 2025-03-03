@@ -21,23 +21,14 @@ jobs:
     build:
         runs-on: ubuntu-latest
         if: github.event_name == 'push'
-        outputs:
-            docker_tag: ${{ steps.exposeValue.outputs.docker_tag }}
         steps:
-            - name: Get branch name
-              id: branch-name
-              uses: tj-actions/branch-names@v6
-
             - uses: actions/checkout@v2
 
-            - name: Create environment variable with the commit id
-              run: |
-                  echo "DOCKER_TAG=${GITHUB_SHA}" >> $GITHUB_ENV
-
-            - name: Expose the commit id
-              id: exposeValue
-              run: |
-                  echo "::set-output name=docker_tag::${{ env.DOCKER_TAG }}"
+            - name: Extract metadata (tags, labels) for Docker
+              id: meta
+              uses: docker/metadata-action@v5
+              with:
+                  images: ${{ env.DOCKER_IMAGE_REPOSITORY }}/${{ env.DOCKER_IMAGE_NAME }}
 
             - name: Set up QEMU
               uses: docker/setup-qemu-action@v2
@@ -56,7 +47,8 @@ jobs:
               with:
                   push: true
                   context: .
-                  tags: ${{ env.DOCKER_IMAGE_REPOSITORY }}/${{ env.DOCKER_IMAGE_NAME }}:${{ steps.branch-name.outputs.current_branch }}, ${{ env.DOCKER_IMAGE_REPOSITORY }}/${{ env.DOCKER_IMAGE_NAME }}:${{ env.DOCKER_TAG }}
+                  tags: ${{ steps.meta.outputs.tags }}
+                  labels: ${{ steps.meta.outputs.labels }}
                   file: ${{ env.DOCKER_FILE}}
                   platforms: linux/amd64
 
@@ -66,9 +58,11 @@ jobs:
         steps:
             - uses: actions/checkout@v2
 
-            - name: Create environment variable with the commit id
-              run: |
-                  echo "DOCKER_TAG=${GITHUB_SHA}" >> $GITHUB_ENV
+            - name: Extract metadata (tags, labels) for Docker
+              id: meta
+              uses: docker/metadata-action@v5
+              with:
+                  images: ${{ env.DOCKER_IMAGE_REPOSITORY }}/${{ env.DOCKER_IMAGE_NAME }}-arm
 
             - name: Set up QEMU
               uses: docker/setup-qemu-action@v2
@@ -87,35 +81,36 @@ jobs:
               with:
                   push: true
                   context: .
-                  tags: ${{ env.DOCKER_IMAGE_REPOSITORY }}/${{ env.DOCKER_IMAGE_NAME }}-arm64:${{ steps.branch-name.outputs.current_branch }}, ${{ env.DOCKER_IMAGE_REPOSITORY }}/${{ env.DOCKER_IMAGE_NAME }}-arm64:${{ env.DOCKER_TAG }}
+                  tags: ${{ steps.meta.outputs.tags }}
+                  labels: ${{ steps.meta.outputs.labels }}
                   file: ${{ env.DOCKER_FILE}}
                   platforms: linux/arm64
 
-    security:
-        permissions:
-            contents: read
-            security-events: write
-            packages: write
-        name: "Scan vulnerabilities in the image"
-        needs: [build, build-arm]
-        runs-on: ubuntu-latest
-        steps:
-            - name: Run Trivy vulnerability scanner
-              uses: aquasecurity/trivy-action@master
-              with:
-                  image-ref: ${{ env.DOCKER_IMAGE_REPOSITORY }}/${{ env.DOCKER_IMAGE_NAME }}:${{ needs.build.outputs.docker_tag }}
-                  format: "template"
-                  template: "@/contrib/sarif.tpl"
-                  output: "trivy-results.sarif"
-                  severity: ${{ env.VULNERABILITY_SCAN_LEVEL }}
-                  exit-code: "0"
-                  ignore-unfixed: "true"
+    # security:
+    #     permissions:
+    #         contents: read
+    #         security-events: write
+    #         packages: write
+    #     name: "Scan vulnerabilities in the image"
+    #     needs: [build, build-arm]
+    #     runs-on: ubuntu-latest
+    #     steps:
+    #         - name: Run Trivy vulnerability scanner
+    #           uses: aquasecurity/trivy-action@master
+    #           with:
+    #               image-ref: ${{ env.DOCKER_IMAGE_REPOSITORY }}/${{ env.DOCKER_IMAGE_NAME }}:${{ needs.build.outputs.docker_tag }}
+    #               format: "template"
+    #               template: "@/contrib/sarif.tpl"
+    #               output: "trivy-results.sarif"
+    #               severity: ${{ env.VULNERABILITY_SCAN_LEVEL }}
+    #               exit-code: "0"
+    #               ignore-unfixed: "true"
 
-            - name: Upload Trivy scan results to GitHub Security tab
-              uses: github/codeql-action/upload-sarif@v1
-              if: always()
-              with:
-                  sarif_file: "trivy-results.sarif"
+    #         - name: Upload Trivy scan results to GitHub Security tab
+    #           uses: github/codeql-action/upload-sarif@v1
+    #           if: always()
+    #           with:
+    #               sarif_file: "trivy-results.sarif"
 
     # update:
     #     needs: build
