@@ -62,6 +62,8 @@ export class TapisExecutionService implements IExecutionService {
         const promises = this.seeds.map(async (seed) => {
             const jobRequest = this.jobService.createJobRequest(app, seed, model);
             const jobId = await this.submitJob(jobRequest);
+            const subscription = TapisJobSubscriptionService.createRequest(seed.execution.id);
+            await this.jobSubscriptionService.submit(jobId, subscription);
             return jobId;
         });
         return await Promise.all(promises);
@@ -123,7 +125,6 @@ export class TapisExecutionService implements IExecutionService {
     }
 
     async submitJob(jobRequest: Jobs.ReqSubmitJob): Promise<string> {
-        console.log("submitting job", jobRequest);
         try {
             const jobSubmission = await errorDecoder<Jobs.RespSubmitJob>(() =>
                 this.jobsClient.submitJob({ reqSubmitJob: jobRequest })

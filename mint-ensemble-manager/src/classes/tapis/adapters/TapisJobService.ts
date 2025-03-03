@@ -1,7 +1,6 @@
 import { Apps, Jobs } from "@mfosorio/tapis-typescript";
 import { DataResource, Model } from "@/classes/mint/mint-types";
 import { TapisComponentSeed } from "@/classes/tapis/typing";
-import { TapisJobSubscriptionService } from "./TapisJobSubscriptionService";
 
 export class TapisJobService {
     private static readonly ALLOCATION = "PT2050-DataX";
@@ -56,9 +55,9 @@ export class TapisJobService {
                     }
                 ],
                 envVariables: []
-            },
-            subscriptions: [TapisJobSubscriptionService.createRequest(seed.execution.id)]
+            }
         };
+
         return request;
     };
 

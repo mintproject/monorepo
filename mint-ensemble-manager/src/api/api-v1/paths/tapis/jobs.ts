@@ -12,6 +12,7 @@ export default function (jobsService: JobsService) {
     async function POST(req: any, res: Response) {
         try {
             const job = await jobsService.submitJob(req.body, req.headers.authorization);
+            return res.status(200).send({ message: "Job submitted", job });
         } catch (error) {
             console.error(error);
             return res.status(500).send({ message: error.message });
