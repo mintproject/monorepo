@@ -54,6 +54,11 @@ interface TapisConfig {
     password: string;
 }
 
+interface OpenAPIServer {
+    url: string;
+    description?: string;
+}
+
 export interface MintPreferences {
     data_catalog_api: string;
     data_catalog_type?: string;
@@ -112,6 +117,11 @@ export interface MintPreferences {
     messagingSenderId?: string;
     appId?: string;
     cromo_api?: string;
+
+    // OpenAPI Configuration
+    openapi?: {
+        servers?: OpenAPIServer[];
+    };
 }
 
 export interface KubernetesPreferences {
