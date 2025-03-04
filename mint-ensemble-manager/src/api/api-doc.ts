@@ -31,6 +31,12 @@ module.exports = {
             }
         },
         schemas: {
+            ReqUpdateExecutionStatus: {
+                type: "object",
+                properties: {
+                    status: { type: "string" }
+                }
+            },
             WebHookEvent: {
                 type: "object",
                 example: {

@@ -11,6 +11,8 @@ import { TapisJobSubscriptionService } from "@/classes/tapis/adapters/TapisJobSu
 import {
     getExecution,
     getModelOutputsByModelId,
+    incrementThreadModelSuccessfulRuns,
+    incrementThreadModelFailedRuns,
     updateExecutionStatus,
     updateExecutionStatusAndResultsv2
 } from "@/classes/graphql/graphql_functions";
@@ -160,8 +162,10 @@ export class TapisExecutionService implements IExecutionService {
         execution.status = TapisExecutionService.mapStatus(status);
         if (execution.status === Status.SUCCESS) {
             execution.run_progress = 1;
+            await incrementThreadModelSuccessfulRuns(execution.modelid);
         } else if (execution.status === Status.FAILURE) {
             execution.run_progress = 0;
+            await incrementThreadModelFailedRuns(execution.modelid);
         } else if (execution.status === Status.RUNNING) {
             execution.run_progress = 0.5;
         } else if (execution.status === Status.WAITING) {

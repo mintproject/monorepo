@@ -62,6 +62,7 @@ import getModelGQL from "./queries/model/get.graphql";
 import deleteModelGQL from "./queries/model/delete.graphql";
 
 import getModelOutputGQL from "./queries/model_output/get.graphql";
+import getThreadModelGQL from "./queries/thread_model/get.graphql";
 
 import {
     problemStatementFromGQL,
@@ -83,6 +84,7 @@ import {
     eventToGQL,
     modelFromGQL
 } from "./graphql_adapter";
+
 import { Md5 } from "ts-md5";
 import { KeycloakAdapter } from "../../config/keycloak-adapter";
 import { Execution_Result, Execution_Result_Insert_Input } from "./graph_typing";
@@ -1036,4 +1038,30 @@ const _calculateBoundingBox = (geometries: any[]) => {
         xmax: xmax + 0.01,
         ymax: ymax + 0.01
     } as BoundingBox;
+};
+
+export const getThreadModelByThreadIdExecutionId = async (
+    threadId: string,
+    executionId: string
+) => {
+    const APOLLO_CLIENT = GraphQL.instance(KeycloakAdapter.getUser());
+    try {
+        const response = await APOLLO_CLIENT.query({
+            query: getThreadModelGQL,
+            variables: {
+                threadId: threadId,
+                executionId: executionId
+            }
+        });
+
+        if (!response || (response.errors && response.errors.length > 0)) {
+            console.log(response);
+        } else {
+            return response.data.thread_model;
+        }
+    } catch (error) {
+        console.log("ERROR");
+        console.log(error);
+        return null;
+    }
 };
