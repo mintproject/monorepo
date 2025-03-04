@@ -15,7 +15,7 @@ import {
     updateExecutionStatusAndResultsv2
 } from "@/classes/graphql/graphql_functions";
 import { matchTapisOutputsToMintOutputs } from "@/classes/tapis/jobs";
-
+import { Status } from "@/interfaces/IExecutionService";
 export class TapisExecutionService implements IExecutionService {
     private appsClient: Apps.ApplicationsApi;
     private jobsClient: Jobs.JobsApi;
@@ -69,14 +69,9 @@ export class TapisExecutionService implements IExecutionService {
         return await Promise.all(promises);
     }
 
-    async updateExecution(
-        execution_id: string,
-        status: string,
-        external_run_id: string | undefined
-    ): Promise<Execution> {
+    static async updateExecution(execution_id: string, status: string): Promise<Execution> {
         const execution = await getExecution(execution_id);
-        await this.updateExecutionStatusOnGraphQl(execution, status);
-        await this.updateExecutionResultsFromJob(external_run_id, execution.id, status);
+        await TapisExecutionService.updateExecutionStatusOnGraphQl(execution, status);
         return execution;
     }
 
@@ -87,30 +82,30 @@ export class TapisExecutionService implements IExecutionService {
 
         return {
             id: job.result?.uuid,
-            status: this.mapStatus(job.status),
+            status: TapisExecutionService.mapStatus(job.status),
             result: job.result?.lastMessage,
             error: job.result?.lastMessage
         };
     }
 
-    public mapStatus(tapisStatus: string): "FAILURE" | "SUCCESS" | "RUNNING" | "WAITING" {
+    public static mapStatus(tapisStatus: string): Status {
         switch (tapisStatus) {
             case "jobs.JOB_NEW_STATUS.PENDING":
             case "jobs.JOB_NEW_STATUS.PROCESSING_INPUTS":
             case "jobs.JOB_NEW_STATUS.STAGING_INPUTS":
-                return "WAITING";
+                return Status.WAITING;
             case "jobs.JOB_NEW_STATUS.RUNNING":
             case "jobs.JOB_NEW_STATUS.ARCHIVING":
-                return "RUNNING";
+                return Status.RUNNING;
             case "jobs.JOB_NEW_STATUS.FINISHED":
             case "jobs.JOB_NEW_STATUS.ARCHIVED":
             case "jobs.JOB_NEW_STATUS.SUCCESS":
-                return "SUCCESS";
+                return Status.SUCCESS;
             case "jobs.JOB_NEW_STATUS.FAILED":
             case "jobs.JOB_NEW_STATUS.CANCELLED":
             case "jobs.JOB_NEW_STATUS.PAUSED":
             default:
-                return "FAILURE";
+                return Status.FAILURE;
         }
     }
 
@@ -161,9 +156,17 @@ export class TapisExecutionService implements IExecutionService {
         });
     }
 
-    private async updateExecutionStatusOnGraphQl(execution: Execution, status: string) {
-        execution.status = this.mapStatus(status);
-        execution.run_progress = 1;
+    private static async updateExecutionStatusOnGraphQl(execution: Execution, status: string) {
+        execution.status = TapisExecutionService.mapStatus(status);
+        if (execution.status === Status.SUCCESS) {
+            execution.run_progress = 1;
+        } else if (execution.status === Status.FAILURE) {
+            execution.run_progress = 0;
+        } else if (execution.status === Status.RUNNING) {
+            execution.run_progress = 0.5;
+        } else if (execution.status === Status.WAITING) {
+            execution.run_progress = 0.05;
+        }
         await updateExecutionStatus(execution);
     }
 

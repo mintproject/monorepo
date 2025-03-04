@@ -5,12 +5,15 @@ import { Model } from "@/classes/mint/mint-types";
 import { Execution } from "@/classes/mint/mint-types";
 import { TapisComponent } from "@/classes/tapis/typing";
 
-/**
- * Represents the status and details of an execution job
- */
+export enum Status {
+    FAILURE = "FAILURE",
+    SUCCESS = "SUCCESS",
+    RUNNING = "RUNNING",
+    WAITING = "WAITING"
+}
 export interface ExecutionJob {
     id: string;
-    status: "FAILURE" | "SUCCESS" | "RUNNING" | "WAITING";
+    status: Status;
     result?: any;
     error?: string;
 }
@@ -25,12 +28,4 @@ export interface IExecutionService {
         region: Region,
         component: TapisComponent
     ): Promise<string[]>;
-
-    updateExecution(
-        execution_id: string,
-        status: string,
-        external_run_id: string | undefined
-    ): Promise<Execution>;
-
-    mapStatus(adapterStatus: string): "FAILURE" | "SUCCESS" | "RUNNING" | "WAITING";
 }
