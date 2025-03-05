@@ -71,6 +71,10 @@ export class TapisExecutionService implements IExecutionService {
         return await Promise.all(promises);
     }
 
+    async registerExecutionOutputs(executionId: string): Promise<void> {
+        await this.updateExecutionResultsFromJob(executionId);
+    }
+
     static async updateExecution(execution_id: string, status: string): Promise<Execution> {
         const execution = await getExecution(execution_id);
         await TapisExecutionService.updateExecutionStatusOnGraphQl(execution, status);
@@ -176,24 +180,18 @@ export class TapisExecutionService implements IExecutionService {
 
     private async getExecutionResultsFromJob(
         jobUuid: string,
-        executionId: string
+        execution: Execution
     ): Promise<Execution_Result[]> {
-        const execution = await getExecution(executionId);
         const { result: files } = await this.getJobOutputList(jobUuid, "");
         const mintOutputs = await getModelOutputsByModelId(execution.modelid);
         return matchTapisOutputsToMintOutputs(files, mintOutputs);
     }
 
-    private async updateExecutionResultsFromJob(
-        jobUuid: string,
-        executionId: string,
-        status: string
-    ) {
+    private async updateExecutionResultsFromJob(executionId: string) {
         const execution = await getExecution(executionId);
-        if (status === `jobs.JOB_NEW_STATUS.FINISHED`) {
-            execution.results = await this.getExecutionResultsFromJob(jobUuid, executionId);
-            await updateExecutionStatusAndResultsv2(execution);
-        }
+        execution.results = await this.getExecutionResultsFromJob(execution.runid, execution);
+        console.log("Registering execution ", executionId, execution.results.length);
+        await updateExecutionStatusAndResultsv2(execution);
     }
 
     getJobOutputList = async (

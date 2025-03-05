@@ -51,6 +51,7 @@ import updateExecutionSummary from "./queries/execution/update-execution-summary
 import incFailedRunsGQL from "./queries/execution/increment-failed-runs.graphql";
 import incSuccessfulRunsGQL from "./queries/execution/increment-successful-runs.graphql";
 import incSubmittedRunsGQL from "./queries/execution/increment-submitted-runs.graphql";
+import toggleThreadModelExecutionSummaryPublishingGQL from "./queries/execution/toggle-summary-publishing.graphql";
 import incRegisteredRunsGQL from "./queries/execution/increment-registered-runs.graphql";
 import incRegisteredRunsByExecutionIdGQL from "./queries/execution/increment-registered-runs-by-execution-id.graphql";
 
@@ -63,7 +64,7 @@ import deleteModelGQL from "./queries/model/delete.graphql";
 
 import getModelOutputGQL from "./queries/model_output/get.graphql";
 import getThreadModelGQL from "./queries/thread_model/get.graphql";
-
+import incrementPublishedRunsGQL from "./queries/execution/increment-published-runs.graphql";
 import {
     problemStatementFromGQL,
     taskFromGQL,
@@ -663,6 +664,20 @@ export const setThreadModelExecutionSummary = (
     });
 };
 
+export const toggleThreadModelExecutionSummaryPublishing = (
+    thread_model_id: string,
+    submitted_for_publishing: boolean
+) => {
+    const APOLLO_CLIENT = GraphQL.instance(KeycloakAdapter.getUser());
+    return APOLLO_CLIENT.mutate({
+        mutation: toggleThreadModelExecutionSummaryPublishingGQL,
+        variables: {
+            threadModelId: thread_model_id,
+            submitted_for_publishing: submitted_for_publishing
+        }
+    });
+};
+
 // Increment thread submitted runs
 export const incrementThreadModelSubmittedRuns = (thread_model_id: string, num: number = 1) => {
     const APOLLO_CLIENT = GraphQL.instance(KeycloakAdapter.getUser());
@@ -1064,4 +1079,15 @@ export const getThreadModelByThreadIdExecutionId = async (
         console.log(error);
         return null;
     }
+};
+
+export const incrementPublishedRuns = (threadModelId: string, num: number = 1) => {
+    const APOLLO_CLIENT = GraphQL.instance(KeycloakAdapter.getUser());
+    return APOLLO_CLIENT.mutate({
+        mutation: incrementPublishedRunsGQL,
+        variables: {
+            threadModelId: threadModelId,
+            inc: num
+        }
+    });
 };

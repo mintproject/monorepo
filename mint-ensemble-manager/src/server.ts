@@ -27,6 +27,8 @@ import { DOWNLOAD_TAPIS_OUTPUT_QUEUE_NAME, EXECUTION_QUEUE_NAME, REDIS_URL } fro
 import { PORT, VERSION } from "./config/app";
 import jobsService from "./api/api-v1/services/tapis/jobsService";
 import { getConfiguration } from "./classes/mint/mint-functions";
+import executionOutputsService from "./api/api-v1/services/tapis/executionOutputsService";
+import modelEnsemblesOutputsService from "./api/api-v1/services/tapis/modelEnsembles/outputs/modelEnsemblesOutputsService";
 // Main Express Server
 const app = express();
 const port = PORT;
@@ -55,7 +57,9 @@ initialize({
         logsService: v1LogsService,
         modelCacheService: v1ModelCacheService,
         executionsTapisService: v1ExecutionTapisService,
-        threadsExecutionsService: v1ThreadsExecutionsService
+        threadsExecutionsService: v1ThreadsExecutionsService,
+        executionOutputsService: executionOutputsService,
+        modelEnsemblesOutputsService: modelEnsemblesOutputsService
     },
     paths: path.resolve(__dirname, "./api/api-v1/paths"),
     routesGlob: "**/*.{ts,js}",

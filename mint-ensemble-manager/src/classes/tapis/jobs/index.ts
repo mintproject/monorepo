@@ -6,6 +6,7 @@ const matchTapisOutputsToMintOutputs = (
     files: Jobs.FileInfo[],
     mintOutputs: ModelOutput[]
 ): Execution_Result[] => {
+    const PORTAL_URL = "https://ptdatax.tacc.utexas.edu/workbench/data/tapis/private/cloud.data";
     return files
         .flatMap((file) => {
             const modelOutput = mintOutputs.find((output: ModelOutput) => {
@@ -15,11 +16,14 @@ const matchTapisOutputsToMintOutputs = (
             });
             if (!modelOutput) return undefined;
             else {
+                // Transform the Tapis URL to the public portal URL
+                const publicUrl = file.url.replace("tapis://ls6", PORTAL_URL);
+
                 const executionResult: Execution_Result = {
                     resource: {
                         name: file.name,
-                        url: file.url,
-                        id: getMd5Hash(file.url)
+                        url: publicUrl,
+                        id: getMd5Hash(publicUrl)
                         // spatial_coverage: getSpatialCoverageGeometry(data["spatial_coverage"]),
                         // time_period: {}
                     },
