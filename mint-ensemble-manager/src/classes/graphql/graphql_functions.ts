@@ -43,6 +43,7 @@ import getExecutionsGQL from "./queries/execution/list.graphql";
 import setExecutionsGQL from "./queries/execution/new.graphql";
 import updateExecutionStatusResultsGQL from "./queries/execution/update-status-results.graphql";
 import updateExecutionStatusGQL from "./queries/execution/update-status.graphql";
+import updateExecutionRunIdGQL from "./queries/execution/update-run-id.graphql";
 import deleteExecutionsGQL from "./queries/execution/delete.graphql";
 
 import getRegionDetailsGQL from "./queries/region/get.graphql";
@@ -1089,5 +1090,13 @@ export const incrementPublishedRuns = (threadModelId: string, num: number = 1) =
             threadModelId: threadModelId,
             inc: num
         }
+    });
+};
+
+export const updateExecutionRunId = (executionId: string, runId: string) => {
+    const APOLLO_CLIENT = GraphQL.instance(KeycloakAdapter.getUser());
+    return APOLLO_CLIENT.mutate({
+        mutation: updateExecutionRunIdGQL,
+        variables: { id: executionId, run_id: runId }
     });
 };

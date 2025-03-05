@@ -26,6 +26,7 @@ export interface IExecutionService {
         executions: Execution[],
         model: Model,
         region: Region,
-        component: TapisComponent
+        component: TapisComponent,
+        threadId: string
     ): Promise<string[]>;
 }

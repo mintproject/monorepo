@@ -9,6 +9,7 @@ export default function (jobsService: JobsService) {
 
     async function POST(req: any, res: Response) {
         try {
+            console.log("Received webhook event", JSON.stringify(req.body));
             const execution = await jobsService.webhookJobStatusChange(
                 req.body,
                 req.params.executionId,

@@ -11,8 +11,8 @@ export class TapisJobSubscriptionService {
         };
     }
 
-    static createRequest(executionId: string) {
-        const url = TapisJobSubscriptionService.generateWebHookUrl(executionId);
+    static createRequest(executionId: string, threadId: string) {
+        const url = TapisJobSubscriptionService.generateWebHookUrl(threadId, executionId);
         const notifDeliveryTarget = TapisJobSubscriptionService.createNotifDeliveryTarget(url);
         return {
             description: "Test subscription",
@@ -22,11 +22,6 @@ export class TapisJobSubscriptionService {
         };
     }
 
-    async subscribeToJob(jobUuid: string, executionId: string) {
-        const request = TapisJobSubscriptionService.createRequest(executionId);
-        return await this.submit(jobUuid, request);
-    }
-
     async submit(jobUuid: string, request: Jobs.ReqSubscribe) {
         return await this.subscriptionsClient.subscribe({
             jobUuid: jobUuid,
@@ -34,8 +29,8 @@ export class TapisJobSubscriptionService {
         });
     }
 
-    static generateWebHookUrl(executionId: string) {
+    static generateWebHookUrl(threadId: string, executionId: string) {
         const prefs = getConfiguration();
-        return `${prefs.ensemble_manager_api}/tapis/jobs/${executionId}/webhook`;
+        return `${prefs.ensemble_manager_api}/tapis/threads/${threadId}/executions/${executionId}/webhook`;
     }
 }

@@ -26,7 +26,8 @@ const executionsTapisService = {
                 executionCreation.executionToBeRun,
                 executionCreation.model,
                 executionCreation.threadRegion,
-                executionCreation.component
+                executionCreation.component,
+                thread.id
             );
             console.log("jobIds", jobIds);
             return thread;
