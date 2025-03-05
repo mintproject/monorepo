@@ -14,7 +14,8 @@ import {
     incrementThreadModelSuccessfulRuns,
     incrementThreadModelFailedRuns,
     updateExecutionStatus,
-    updateExecutionStatusAndResultsv2
+    updateExecutionStatusAndResultsv2,
+    getThreadModelByThreadIdExecutionId
 } from "@/classes/graphql/graphql_functions";
 import { matchTapisOutputsToMintOutputs } from "@/classes/tapis/jobs";
 import { Status } from "@/interfaces/IExecutionService";
@@ -75,9 +76,22 @@ export class TapisExecutionService implements IExecutionService {
         await this.updateExecutionResultsFromJob(executionId);
     }
 
-    static async updateExecution(execution_id: string, status: string): Promise<Execution> {
+    static async updateExecution(
+        thread_id: string,
+        execution_id: string,
+        status: string
+    ): Promise<Execution> {
         const execution = await getExecution(execution_id);
-        await TapisExecutionService.updateExecutionStatusOnGraphQl(execution, status);
+        const model_ensembles = await getThreadModelByThreadIdExecutionId(thread_id, execution_id);
+        if (model_ensembles.length !== 1) {
+            throw new Error("Expected 1 model ensemble, got " + model_ensembles.length);
+        }
+        const model_ensemble_id = model_ensembles[0].id;
+        await TapisExecutionService.updateExecutionStatusOnGraphQl(
+            execution,
+            status,
+            model_ensemble_id
+        );
         return execution;
     }
 
@@ -162,14 +176,18 @@ export class TapisExecutionService implements IExecutionService {
         });
     }
 
-    private static async updateExecutionStatusOnGraphQl(execution: Execution, status: string) {
+    private static async updateExecutionStatusOnGraphQl(
+        execution: Execution,
+        status: string,
+        model_ensemble_id: string
+    ) {
         execution.status = TapisExecutionService.mapStatus(status);
         if (execution.status === Status.SUCCESS) {
             execution.run_progress = 1;
-            await incrementThreadModelSuccessfulRuns(execution.modelid);
+            await incrementThreadModelSuccessfulRuns(model_ensemble_id);
         } else if (execution.status === Status.FAILURE) {
             execution.run_progress = 0;
-            await incrementThreadModelFailedRuns(execution.modelid);
+            await incrementThreadModelFailedRuns(model_ensemble_id);
         } else if (execution.status === Status.RUNNING) {
             execution.run_progress = 0.5;
         } else if (execution.status === Status.WAITING) {

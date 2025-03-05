@@ -4,19 +4,16 @@ import { Response } from "express";
 import { JobsService } from "@/api/api-v1/services/tapis/jobsService";
 export default function (jobsService: JobsService) {
     const exports = {
-        POST,
-        parameters: [
-            {
-                in: "path",
-                name: "id",
-                example: "9bc5bbfb-d76c-4d0b-87cc-f89e945a062e-007"
-            }
-        ]
+        POST
     };
 
     async function POST(req: any, res: Response) {
         try {
-            const execution = await jobsService.webhookJobStatusChange(req.body, req.params.id);
+            const execution = await jobsService.webhookJobStatusChange(
+                req.body,
+                req.params.executionId,
+                req.params.threadId
+            );
             if (execution == undefined) {
                 return res.status(404).send({ message: "Execution not found." });
             }
@@ -37,6 +34,24 @@ export default function (jobsService: JobsService) {
             "Webhook for Job Status Change. TAPIS will send a POST request to this endpoint when a job status changes.",
         operationId: "tapisChangeJobStatus",
         tags: ["Tapis"],
+        parameters: [
+            {
+                name: "threadId",
+                in: "path",
+                required: true,
+                schema: {
+                    type: "string"
+                },
+                description: "Thread ID"
+            },
+            {
+                name: "executionId",
+                in: "path",
+                required: true,
+                schema: { type: "string" },
+                description: "Execution ID"
+            }
+        ],
         requestBody: {
             description: "Job Status",
             required: true,

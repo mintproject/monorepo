@@ -5,7 +5,11 @@ import { getConfiguration } from "@/classes/mint/mint-functions";
 import { ExecutionJob } from "@/interfaces/IExecutionService";
 import { Jobs } from "@mfosorio/tapis-typescript/dist";
 export interface JobsService {
-    webhookJobStatusChange(webHookEvent: any, executionId: string): Promise<Execution | undefined>;
+    webhookJobStatusChange(
+        webHookEvent: any,
+        executionId: string,
+        thread_id: string
+    ): Promise<Execution | undefined>;
     get(jobId: string, authorizationHeader: string): Promise<ExecutionJob>;
     submitJob(job: Jobs.ReqSubmitJob, authorizationHeader: string): Promise<string>;
 }
@@ -22,9 +26,14 @@ const jobsService = {
 
     async webhookJobStatusChange(
         webHookEvent: any,
-        executionId: string
+        executionId: string,
+        thread_id: string
     ): Promise<Execution | undefined> {
-        return await TapisExecutionService.updateExecution(executionId, webHookEvent.event.type);
+        return await TapisExecutionService.updateExecution(
+            thread_id,
+            executionId,
+            webHookEvent.event.type
+        );
     },
 
     async get(jobId: string, authorizationHeader: string): Promise<ExecutionJob> {

@@ -1,6 +1,5 @@
 import {
     getThreadModelByThreadIdExecutionId,
-    incrementThreadModelRegisteredRuns,
     incrementThreadModelSuccessfulRuns
 } from "@/classes/graphql/graphql_functions";
 import { Status } from "@/interfaces/IExecutionService";
@@ -24,7 +23,6 @@ const threadsExecutionsService: ThreadsExecutionsService = {
         if (!status || !Object.values(Status).includes(status)) {
             throw new Error("Invalid status provided");
         }
-
         try {
             incrementThreadModelSuccessfulRuns(threadModel[0].id, 1);
         } catch (error) {
