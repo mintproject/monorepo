@@ -37,9 +37,9 @@ export class TapisJobService {
             nodeCount: 1,
             coresPerNode: 1,
             maxMinutes: 10,
-            archiveSystemId: "cloud.data",
+            archiveSystemId: "ls6",
             archiveSystemDir:
-                "HOST_EVAL($HOME)/tapis-jobs-archive/${JobCreateDate}/${JobName}-${JobUUID}",
+                "HOST_EVAL($WORK)/tapis-jobs-archive/${JobCreateDate}/${JobName}-${JobUUID}",
             archiveOnAppError: true,
             execSystemId: TapisJobService.SYSTEM_ID,
             execSystemLogicalQueue: TapisJobService.SYSTEM_LOGICAL_QUEUE,

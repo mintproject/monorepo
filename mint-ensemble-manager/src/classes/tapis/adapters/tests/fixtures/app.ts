@@ -23,9 +23,9 @@ export default {
         execSystemInputDir: "${JobWorkingDir}",
         execSystemOutputDir: "${JobWorkingDir}/output",
         execSystemLogicalQueue: "development",
-        archiveSystemId: "cloud.data",
+        archiveSystemId: "ls6",
         archiveSystemDir:
-            "HOST_EVAL($HOME)/tapis-jobs-archive/${JobCreateDate}/${JobName}-${JobUUID}",
+            "HOST_EVAL($WORK)/tapis-jobs-archive/${JobCreateDate}/${JobName}-${JobUUID}",
         archiveOnAppError: true,
         isMpi: false,
         mpiCmd: null,
