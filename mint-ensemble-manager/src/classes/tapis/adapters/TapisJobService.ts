@@ -26,11 +26,14 @@ export class TapisJobService {
     createJobRequest = (
         app: Apps.TapisApp,
         seed: TapisComponentSeed,
-        model: Model
+        model: Model,
+        name: string,
+        description: string
     ): Jobs.ReqSubmitJob => {
         const jobFileInputs = this.createJobFileInputsFromSeed(seed, app, model);
         const request: Jobs.ReqSubmitJob = {
-            name: seed.execution.id,
+            name: name,
+            description: description,
             appId: app.id,
             appVersion: app.version,
             fileInputs: jobFileInputs,

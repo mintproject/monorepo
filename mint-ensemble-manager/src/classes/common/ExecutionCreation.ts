@@ -1,23 +1,21 @@
 import {
     deleteThreadModelExecutionIds,
     getExecutionHash,
-    getModelInputBindings,
     getModelInputConfigurations,
     getRegionDetails,
-    incrementThreadModelFailedRuns,
     incrementThreadModelSubmittedRuns,
     incrementThreadModelSuccessfulRuns,
     listSuccessfulExecutionIds,
     setExecutions,
     setThreadModelExecutionIds,
-    setThreadModelExecutionSummary,
-    updateExecutionStatus
+    setThreadModelExecutionSummary
 } from "../graphql/graphql_functions";
 import {
     Execution,
     ExecutionSummary,
     Model,
     ModelIO,
+    ModelIOBindings,
     ModelParameter,
     Region,
     Thread,
@@ -25,6 +23,7 @@ import {
 } from "../mint/mint-types";
 import { TapisComponent } from "../tapis/typing";
 
+const MAX_CONFIGURATIONS = 1000000;
 // Add interface for IO/Parameter details
 interface ComponentIODetails {
     id: string;
@@ -64,20 +63,27 @@ export class ExecutionCreation {
         }
     }
 
-    private async prepareModelExecutions(modelid: string): Promise<boolean> {
+    public async prepareModelExecutions(modelid: string): Promise<boolean> {
         if (!this.thread.execution_summary) this.thread.execution_summary = {};
-
+        console.log("Thread", JSON.stringify(this.thread));
         this.model = this.thread.models[modelid];
-        const thread_model_id = this.thread.model_ensembles[modelid].id;
+        const modelEnsembleId = this.thread.model_ensembles[modelid].id;
         this.threadRegion = await getRegionDetails(this.thread.regionid);
-        const execution_details = getModelInputBindings(this.model, this.thread, this.threadRegion);
-        const threadModel = execution_details[0] as ThreadModelMap;
-        const inputIds = execution_details[1] as string[];
-
-        const configs = getModelInputConfigurations(threadModel, inputIds);
-
+        const executionDetails = ExecutionCreation.getModelInputBindings(
+            this.thread.models[modelid],
+            this.thread,
+            this.threadRegion
+        );
+        const threadModel = executionDetails[0] as ThreadModelMap;
+        const inputIds = executionDetails[1] as string[];
+        const configs = ExecutionCreation.getModelInputConfigurations(
+            threadModel.bindings,
+            inputIds
+        );
         if (configs !== null) {
-            await this.createExecutions(configs, thread_model_id, inputIds, modelid);
+            await this.createThreadModelExecutionSummary(configs, modelEnsembleId);
+            await deleteThreadModelExecutionIds(modelEnsembleId);
+            await this.createExecutions(configs, modelEnsembleId, inputIds, modelid);
         }
         return true;
     }
@@ -88,8 +94,6 @@ export class ExecutionCreation {
         inputIds: string[],
         modelid: string
     ): Promise<void> {
-        await this.createThreadModelExecutionSummary(configs, thread_model_id);
-        await deleteThreadModelExecutionIds(thread_model_id);
         this.model = this.thread.models[modelid];
         this.component = await this.getModelDetails(this.model);
 
@@ -244,4 +248,142 @@ export class ExecutionCreation {
             type: param.type
         };
     }
+
+    public static processInputFiles(
+        modelInputFiles: ModelIO[],
+        threadModel: ThreadModelMap,
+        thread: Thread
+    ): string[] {
+        const inputIds = [];
+        modelInputFiles.forEach((io) => {
+            inputIds.push(io.id);
+
+            if (!io.value) {
+                // Expand a dataset to its constituent "selected" resources
+                // FIXME: Create a collection if the model input has dimensionality of 1
+                if (threadModel.bindings[io.id]) {
+                    let nexecution: any[] = [];
+                    threadModel.bindings[io.id].map((dsid) => {
+                        const ds = thread.data[dsid];
+                        let selected_resources = ds.resources.filter((res) => res.selected);
+                        // Fix for older saved resources
+                        if (selected_resources.length == 0) selected_resources = ds.resources;
+                        nexecution = nexecution.concat(selected_resources);
+                    });
+                    threadModel.bindings[io.id] = nexecution;
+                }
+            } else {
+                threadModel.bindings[io.id] = io.value.resources as any[];
+            }
+        });
+        return inputIds;
+    }
+
+    public static processInputParameters(
+        modelInputParameters: ModelParameter[],
+        threadModel: ThreadModelMap,
+        region: Region
+    ): string[] {
+        const inputIds = [];
+        modelInputParameters.forEach((io) => {
+            inputIds.push(io.id);
+
+            if (io.value) {
+                // If this is a non-adjustable parameter, set the binding value to the fixed value
+                threadModel.bindings[io.id] = [io.value];
+            }
+
+            // HACK: Add region id to __region_geojson (Not replacing )
+            if (
+                threadModel.bindings[io.id] &&
+                threadModel.bindings[io.id][0] == "__region_geojson"
+            ) {
+                threadModel.bindings[io.id] = ["__region_geojson:" + region.id];
+            }
+        });
+        return inputIds;
+    }
+
+    public static getModelInputBindings = (model: Model, thread: Thread, region: Region) => {
+        const modelEnsemble = thread.model_ensembles[model.id];
+        const threadModel = {
+            id: modelEnsemble.id,
+            bindings: Object.assign({}, modelEnsemble.bindings)
+        } as ThreadModelMap;
+        const inputFileIds = ExecutionCreation.processInputFiles(
+            model.input_files,
+            threadModel,
+            thread
+        );
+        const parameterIds = ExecutionCreation.processInputParameters(
+            model.input_parameters,
+            threadModel,
+            region
+        );
+
+        return [threadModel, [...inputFileIds, ...parameterIds]];
+    };
+
+    /**
+     * Generates all possible input configurations for a model execution by calculating
+     * the cartesian product of all input bindings.
+     *
+     * @param threadModel - Contains the model's input bindings (parameters and data)
+     * @param inputIds - List of input IDs to generate configurations for
+     * @returns Array of input configurations if total combinations is under MAX_CONFIGURATIONS,
+     *          otherwise returns null
+     *
+     * For example, if we have:
+     * - input1: ['a', 'b']
+     * - input2: ['x', 'y']
+     *
+     * It will generate configurations:
+     * [['a','x'], ['a','y'], ['b','x'], ['b','y']]
+     */
+    private static getModelInputConfigurations = (
+        dataBindings: ModelIOBindings,
+        inputIds: string[]
+    ) => {
+        const { inputBindings, totalproducts } = ExecutionCreation.getInputBindingsAndTotalProducts(
+            dataBindings,
+            inputIds
+        );
+        return totalproducts < MAX_CONFIGURATIONS
+            ? ExecutionCreation.cartProd(inputBindings)
+            : null;
+    };
+
+    public static getInputBindingsAndTotalProducts(
+        dataBindings: ModelIOBindings,
+        inputIds: string[]
+    ): { inputBindings: any[]; totalproducts: number } {
+        const inputBindings: any[] = [];
+        let totalproducts = 1;
+
+        // For each input, get its possible values and calculate total combinations
+        inputIds.map((inputid) => {
+            inputBindings.push(dataBindings[inputid]);
+            if (dataBindings[inputid]) totalproducts *= dataBindings[inputid].length;
+        });
+
+        return { inputBindings, totalproducts };
+    }
+
+    private static cartProd = (lists: any[]) => {
+        let ps: any[] = [],
+            acc: any[][] = [[]],
+            i = lists.length;
+        while (i--) {
+            let subList = lists[i],
+                j = subList.length;
+            while (j--) {
+                let x = subList[j],
+                    k = acc.length;
+                while (k--) ps.push([x].concat(acc[k]));
+            }
+            acc = ps;
+            ps = [];
+        }
+        return acc.reverse();
+    };
 }
