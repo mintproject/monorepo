@@ -121,13 +121,17 @@ export class TapisExecutionService implements IExecutionService {
         const job = await errorDecoder<Jobs.RespGetJob>(() =>
             this.jobsClient.getJob({ jobUuid: jobId })
         );
-
-        return {
-            id: job.result?.uuid,
-            status: TapisExecutionService.mapStatus(job.status),
-            result: job.result?.lastMessage,
-            error: job.result?.lastMessage
-        };
+        try {
+            return {
+                id: job.result?.uuid,
+                status: TapisExecutionService.mapStatus(job.status),
+                result: job.result?.lastMessage,
+                error: job.result?.lastMessage
+            };
+        } catch (error) {
+            console.error("Error getting job status", error);
+            throw error;
+        }
     }
 
     public static mapStatus(tapisStatus: string): Status {
@@ -135,6 +139,9 @@ export class TapisExecutionService implements IExecutionService {
             case "jobs.JOB_NEW_STATUS.PENDING":
             case "jobs.JOB_NEW_STATUS.PROCESSING_INPUTS":
             case "jobs.JOB_NEW_STATUS.STAGING_INPUTS":
+            case "jobs.JOB_NEW_STATUS.STAGING_JOB":
+            case "jobs.JOB_NEW_STATUS.SUBMITTING_JOB":
+            case "jobs.JOB_NEW_STATUS.QUEUED":
                 return Status.WAITING;
             case "jobs.JOB_NEW_STATUS.RUNNING":
             case "jobs.JOB_NEW_STATUS.ARCHIVING":
@@ -146,8 +153,9 @@ export class TapisExecutionService implements IExecutionService {
             case "jobs.JOB_NEW_STATUS.FAILED":
             case "jobs.JOB_NEW_STATUS.CANCELLED":
             case "jobs.JOB_NEW_STATUS.PAUSED":
-            default:
                 return Status.FAILURE;
+            default:
+                throw new Error("Unrecognized Tapis status: " + tapisStatus);
         }
     }
 
@@ -204,19 +212,24 @@ export class TapisExecutionService implements IExecutionService {
         status: string,
         model_ensemble_id: string
     ) {
-        execution.status = TapisExecutionService.mapStatus(status);
-        if (execution.status === Status.SUCCESS) {
-            execution.run_progress = 1;
-            await incrementThreadModelSuccessfulRuns(model_ensemble_id);
-        } else if (execution.status === Status.FAILURE) {
-            execution.run_progress = 0;
-            await incrementThreadModelFailedRuns(model_ensemble_id);
-        } else if (execution.status === Status.RUNNING) {
-            execution.run_progress = 0.5;
-        } else if (execution.status === Status.WAITING) {
-            execution.run_progress = 0.05;
+        try {
+            execution.status = TapisExecutionService.mapStatus(status);
+            if (execution.status === Status.SUCCESS) {
+                execution.run_progress = 1;
+                await incrementThreadModelSuccessfulRuns(model_ensemble_id);
+            } else if (execution.status === Status.FAILURE) {
+                execution.run_progress = 0;
+                await incrementThreadModelFailedRuns(model_ensemble_id);
+            } else if (execution.status === Status.RUNNING) {
+                execution.run_progress = 0.5;
+            } else if (execution.status === Status.WAITING) {
+                execution.run_progress = 0.05;
+            }
+            await updateExecutionStatus(execution);
+        } catch (error) {
+            console.error("Error updating execution status on GraphQL", error);
+            throw error;
         }
-        await updateExecutionStatus(execution);
     }
 
     private async getExecutionResultsFromJob(
