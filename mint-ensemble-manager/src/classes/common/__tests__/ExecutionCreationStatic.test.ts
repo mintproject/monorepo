@@ -287,4 +287,53 @@ describe("ExecutionCreation", () => {
             expect(modelEnsemble.bindings["file2"].length).toBe(1);
         });
     });
+
+    describe("processInputParameterCollection", () => {
+        let threadModel: ThreadModelMap;
+
+        beforeEach(() => {
+            // Reset test objects before each test
+            threadModel = {
+                id: "test-model",
+                bindings: {}
+            };
+        });
+
+        it("should not modify bindings for parameter without value or special case", () => {
+            const param = {
+                id: "param2",
+                name: "Parameter 2",
+                position: 2,
+                type: "string"
+            };
+            threadModel.bindings["param2"] = ["value1", "value2"];
+
+            const inputIds = ExecutionCreation.processInputParameters(
+                [param],
+                threadModel,
+                getRegionMockTexas
+            );
+
+            expect(inputIds).toContain("param2");
+            expect(threadModel.bindings["param2"]).toEqual(["value1", "value2"]);
+        });
+
+        it("should handle parameter with no existing bindings", () => {
+            const param = {
+                id: "param3",
+                name: "Parameter 3",
+                position: 3,
+                type: "string"
+            };
+
+            const inputIds = ExecutionCreation.processInputParameters(
+                [param],
+                threadModel,
+                getRegionMockTexas
+            );
+
+            expect(inputIds).toContain("param3");
+            expect(threadModel.bindings["param3"]).toBeUndefined();
+        });
+    });
 });
