@@ -20,7 +20,7 @@ const executionsTapisService = {
         const TapisExecution = new TapisExecutionService(token, prefs.tapis.basePath);
         const thread: Thread = await getThread(threadmodel.thread_id);
         if (thread) {
-            const executionCreation = new ExecutionCreation(thread, threadmodel.model_id);
+            const executionCreation = new ExecutionCreation(thread, threadmodel.model_id, token);
             await executionCreation.prepareExecutions();
             const jobIds = await TapisExecution.submitExecutions(
                 executionCreation.executionToBeRun,

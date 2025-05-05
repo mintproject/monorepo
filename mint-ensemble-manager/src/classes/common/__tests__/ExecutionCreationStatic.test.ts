@@ -336,4 +336,151 @@ describe("ExecutionCreation", () => {
             expect(threadModel.bindings["param3"]).toBeUndefined();
         });
     });
+
+    describe("processInputFileCollection", () => {
+        let modelEnsemble: ThreadModelMap;
+        let thread: Thread;
+        let modelInputs: ModelIO[];
+
+        beforeEach(() => {
+            // Reset test objects before each test
+            modelEnsemble = {
+                id: "test-model",
+                bindings: {}
+            };
+            thread = {
+                id: "test-thread",
+                data: {
+                    datasetType2: {
+                        id: "datasetType2",
+                        name: "Dataset Type 2",
+                        total_resources: 2,
+                        selected_resources: 2,
+                        dataset: {
+                            id: "datasetType2",
+                            name: "Dataset Type 2"
+                        },
+                        resources: [
+                            {
+                                id: "datasetType2-res1",
+                                name: "DataSetType2 Resource 1",
+                                selected: true,
+                                url: "https://example.com/datasetType2-res1",
+                                spatial_coverage: {
+                                    type: "Polygon",
+                                    coordinates: [
+                                        [
+                                            [1, 2],
+                                            [3, 4],
+                                            [5, 6],
+                                            [1, 2]
+                                        ]
+                                    ]
+                                },
+                                time_period: {
+                                    start_date: new Date("2021-01-01"),
+                                    end_date: new Date("2021-01-02")
+                                }
+                            },
+                            {
+                                id: "datasetType2-res2",
+                                name: "DataSetType2 Resource 2",
+                                selected: true,
+                                url: "https://example.com/datasetType2-res2",
+                                spatial_coverage: {
+                                    type: "Polygon",
+                                    coordinates: [
+                                        [
+                                            [1, 2],
+                                            [3, 4],
+                                            [5, 6],
+                                            [1, 2]
+                                        ]
+                                    ]
+                                },
+                                time_period: {
+                                    start_date: new Date("2021-01-01"),
+                                    end_date: new Date("2021-01-02")
+                                }
+                            }
+                        ]
+                    }
+                }
+            } as unknown as Thread;
+            modelInputs = [
+                {
+                    id: "file1",
+                    name: "File 1",
+                    value: {
+                        resources: [
+                            {
+                                id: "datasetType1-res1",
+                                selected: true,
+                                url: "https://example.com/datasetType1-res1"
+                            }
+                        ]
+                    },
+                    position: 1,
+                    type: "file",
+                    variables: []
+                }
+            ];
+        });
+
+        it("should handle input file with predefined value", () => {
+            const inputIds = ExecutionCreation.processInputFiles(
+                modelInputs,
+                modelEnsemble,
+                thread
+            );
+            expect(inputIds).toContain("file1");
+            expect(modelEnsemble.bindings["file1"]).toEqual([
+                {
+                    id: "datasetType1-res1",
+                    selected: true,
+                    url: "https://example.com/datasetType1-res1"
+                }
+            ]);
+        });
+
+        it("should handle input file with dataset bindings and selected resources", () => {
+            modelInputs.push({
+                id: "file2",
+                name: "File 2",
+                position: 2,
+                type: "file",
+                variables: []
+            });
+
+            modelEnsemble.bindings["file2"] = ["datasetType2"];
+            const inputIds = ExecutionCreation.processInputFiles(
+                modelInputs,
+                modelEnsemble,
+                thread
+            );
+            expect(inputIds).toContain("file2");
+            expect(modelEnsemble.bindings["file2"].length).toBe(2);
+        });
+
+        it("should handle input file with dataset bindings and selected one unselected resource", () => {
+            modelInputs.push({
+                id: "file2",
+                name: "File 2",
+                position: 2,
+                type: "file",
+                variables: []
+            });
+
+            thread.data["datasetType2"].resources[0].selected = false;
+
+            modelEnsemble.bindings["file2"] = ["datasetType2"];
+            const inputIds = ExecutionCreation.processInputFiles(
+                modelInputs,
+                modelEnsemble,
+                thread
+            );
+            expect(inputIds).toContain("file2");
+            expect(modelEnsemble.bindings["file2"].length).toBe(1);
+        });
+    });
 });

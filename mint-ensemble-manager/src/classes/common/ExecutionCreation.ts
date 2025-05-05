@@ -1,7 +1,6 @@
 import {
     deleteThreadModelExecutionIds,
     getExecutionHash,
-    getModelInputConfigurations,
     getRegionDetails,
     incrementThreadModelSubmittedRuns,
     incrementThreadModelSuccessfulRuns,
@@ -10,6 +9,7 @@ import {
     setThreadModelExecutionIds,
     setThreadModelExecutionSummary
 } from "../graphql/graphql_functions";
+import { getConfiguration } from "../mint/mint-functions";
 import {
     Execution,
     ExecutionSummary,
@@ -42,11 +42,13 @@ export class ExecutionCreation {
     public executionToBeRun: Execution[];
     public model: Model;
     public component: TapisComponent;
+    public token: string | undefined;
 
-    constructor(thread: Thread, modelid: string) {
+    constructor(thread: Thread, modelid: string, token?: string) {
         this.thread = thread;
         this.modelid = modelid;
         this.executionToBeRun = [];
+        this.token = token;
     }
 
     public async prepareExecutions(): Promise<boolean> {
@@ -179,7 +181,21 @@ export class ExecutionCreation {
     }
 
     private async getModelDetails(model: Model): Promise<TapisComponent> {
-        const comp = await this.loadComponent(model.code_url);
+        let comp: TapisComponent;
+        const configuration = getConfiguration();
+        if (configuration.execution_engine === "tapis") {
+            try {
+                comp = await this.loadComponentFromTapis(model.code_url);
+            } catch (e) {
+                throw new Error(`Error loading component ${model.code_url}`);
+            }
+        } else {
+            try {
+                comp = await this.loadComponent(model.code_url);
+            } catch (e) {
+                throw new Error(`Error loading component ${model.code_url}`);
+            }
+        }
         comp.inputs = [];
         comp.outputs = [];
 
@@ -204,9 +220,30 @@ export class ExecutionCreation {
         return comp;
     }
 
+    private async loadComponentFromTapis(component_url: string): Promise<TapisComponent> {
+        const response = await fetch(component_url, {
+            headers: {
+                "x-tapis-token": `${this.token}`
+            }
+        });
+        if (response.ok) {
+            const { result } = await response.json();
+            return result as TapisComponent;
+        } else if (response.status === 401) {
+            throw new Error("Unauthorized");
+        } else {
+            throw new Error(`Response status not ok: ${component_url}`);
+        }
+    }
+
     private async loadComponent(component_url: string): Promise<TapisComponent> {
         try {
-            const response = await fetch(component_url);
+            // If token is provided, use it to fetch the component
+            const response = await fetch(component_url, {
+                headers: {
+                    "X-Tapis-Token": `${this.token}`
+                }
+            });
             if (response.ok) {
                 const data = await response.text();
                 const component = JSON.parse(data) as TapisComponent;
