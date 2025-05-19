@@ -117,6 +117,12 @@ export class TapisExecutionService implements IExecutionService {
         return execution;
     }
 
+    async getJobHistory(jobId: string): Promise<Jobs.RespJobHistory> {
+        return await errorDecoder<Jobs.RespJobHistory>(() =>
+            this.jobsClient.getJobHistory({ jobUuid: jobId })
+        );
+    }
+
     async getJobStatus(jobId: string): Promise<ExecutionJob> {
         const job = await errorDecoder<Jobs.RespGetJob>(() =>
             this.jobsClient.getJob({ jobUuid: jobId })

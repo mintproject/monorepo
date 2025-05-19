@@ -6,9 +6,11 @@ export default function (logsService: any) {
     };
 
     function GET(req: any, res: any, next: any) {
-        logsService.fetchLog(req.query.ensemble_id).then((result: string) => {
-            res.status(200).json(result);
-        });
+        logsService
+            .fetchLog(req.query.ensemble_id, req.headers.authorization)
+            .then((result: string) => {
+                res.status(200).json(result);
+            });
     }
 
     // NOTE: We could also use a YAML string here.

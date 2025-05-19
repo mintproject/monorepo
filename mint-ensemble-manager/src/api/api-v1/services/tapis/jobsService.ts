@@ -17,7 +17,6 @@ export interface JobsService {
 const jobsService = {
     getAccessToken(authorizationHeader: string): string {
         const access_token = getTokenFromAuthorizationHeader(authorizationHeader);
-        console.log("access_token", access_token);
         if (!access_token) {
             throw new Error("Invalid authorization header");
         }
