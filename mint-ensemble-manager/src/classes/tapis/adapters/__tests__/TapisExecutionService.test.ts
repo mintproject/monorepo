@@ -1,9 +1,8 @@
-import { TapisExecutionService } from "../TapisExecutionService";
-import { Status } from "../../../../interfaces/IExecutionService";
-import { getConfiguration } from "../../../../classes/mint/mint-functions";
+import { TapisExecutionService } from "@/classes/tapis/adapters/TapisExecutionService";
+import { Status } from "@/interfaces/IExecutionService";
 
 // Mock the getConfiguration function
-jest.mock("../../../../classes/mint/mint-functions", () => ({
+jest.mock("@/classes/mint/mint-functions", () => ({
     getConfiguration: jest.fn().mockReturnValue({
         auth: {
             client_id: "test-client-id",

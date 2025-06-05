@@ -1,6 +1,6 @@
 import { Jobs } from "@mfosorio/tapis-typescript";
-import { getMd5Hash } from "../../../classes/graphql/graphql_adapter";
-import { Execution_Result, ModelOutput } from "../../../classes/mint/mint-types";
+import { getMd5Hash } from "@/classes/graphql/graphql_adapter";
+import { Execution_Result, ModelOutput } from "@/classes/mint/mint-types";
 
 const matchTapisOutputsToMintOutputs = (
     files: Jobs.FileInfo[],

@@ -19,12 +19,12 @@ import {
     DataResource,
     Variable,
     MintPermission,
-    Execution_Result
-} from "../mint/mint-types";
+    Execution_Result,
+    Region
+} from "@/classes/mint/mint-types";
 
 import * as crypto from "crypto";
-import { Region } from "../mint/mint-types";
-import { KeycloakAdapter } from "../../config/keycloak-adapter";
+import { KeycloakAdapter } from "@/config/keycloak-adapter";
 
 export const uuidv4 = () => {
     return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {

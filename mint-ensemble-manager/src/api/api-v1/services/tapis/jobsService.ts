@@ -1,4 +1,4 @@
-import { Execution } from "../../../../classes/mint/mint-types";
+import { Execution } from "@/classes/mint/mint-types";
 import { TapisExecutionService } from "@/classes/tapis/adapters/TapisExecutionService";
 import { getTokenFromAuthorizationHeader } from "@/utils/authUtils";
 import { getConfiguration } from "@/classes/mint/mint-functions";

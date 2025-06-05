@@ -1,7 +1,7 @@
 // ./api/api-v1/paths/executionsLocal.ts
 
+import { JobsService } from "@/api/api-v1/services/tapis/jobsService";
 import { Response } from "express";
-import { JobsService } from "../../../services/tapis/jobsService";
 
 export default function (jobsService: JobsService) {
     const exports = {

@@ -1,3 +1,5 @@
+/* eslint-env node */
+/* eslint-disable @typescript-eslint/no-var-requires */
 const path = require("path");
 const NodemonPlugin = require("nodemon-webpack-plugin");
 const CopyWebpackPlugin = require("copy-webpack-plugin");
@@ -9,7 +11,11 @@ module.exports = {
     resolve: {
         extensions: [".js", ".json", ".ts", ".graphql"],
         alias: {
-            "@": path.resolve(__dirname, "src")
+            "@/api": path.resolve(__dirname, "src/api"),
+            "@/classes": path.resolve(__dirname, "src/classes"),
+            "@/config": path.resolve(__dirname, "src/config"),
+            "@/utils": path.resolve(__dirname, "src/utils"),
+            "@/interfaces": path.resolve(__dirname, "src/interfaces")
         }
     },
     entry: {

@@ -1,6 +1,6 @@
-import model from "../fixtures/model";
-import bindings from "../fixtures/input-bindings";
-import { getInputDatasets } from "../helpers";
+import model from "@/classes/tapis/fixtures/model";
+import bindings from "@/classes/tapis/fixtures/input-bindings";
+import { getInputDatasets } from "@/classes/tapis/helpers";
 test("get inputs datasets", () => {
     const key = "https://w3id.org/okn/i/mint/modflow_2005_BartonSprings_avg_Bas";
     const datasets = getInputDatasets(model, bindings);

@@ -4,11 +4,15 @@ import {
     ComponentParameterBindings,
     ComponentParameterTypes,
     ComponentSeed
-} from "../localex/local-execution-types";
-import { DataResource, MintPreferences, Region } from "../mint/mint-types";
-import { ModelIO } from "../mint/mint-types";
-import { InputBindings } from "../mint/mint-types";
-import { Model } from "../mint/mint-types";
+} from "@/classes/localex/local-execution-types";
+import {
+    DataResource,
+    MintPreferences,
+    Region,
+    ModelIO,
+    InputBindings,
+    Model
+} from "@/classes/mint/mint-types";
 import fs from "fs-extra";
 
 export function getInputDatasets(model: Model, bindings: InputBindings) {

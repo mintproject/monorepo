@@ -1,9 +1,9 @@
-import { ExecutionCreation } from "../ExecutionCreation";
-import { ModelIOBindings } from "../../mint/mint-types";
-import { ThreadModelMap } from "../../mint/mint-types";
-import { Thread } from "../../mint/mint-types";
-import { ModelIO } from "../../mint/mint-types";
-import { getRegionMockTexas } from "./mocks/getRegionMockTexas";
+import { ExecutionCreation } from "@/classes/common/ExecutionCreation";
+import { ModelIOBindings } from "@/classes/mint/mint-types";
+import { ThreadModelMap } from "@/classes/mint/mint-types";
+import { Thread } from "@/classes/mint/mint-types";
+import { ModelIO } from "@/classes/mint/mint-types";
+import { getRegionMockTexas } from "@/classes/common/__tests__/mocks/getRegionMockTexas";
 describe("ExecutionCreation", () => {
     describe("getInputBindingsAndTotalProducts", () => {
         it("should return correct input bindings and total products", () => {

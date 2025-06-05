@@ -1,6 +1,6 @@
 // ./api/api-v1/paths/executionsLocal.ts
 
-import { ExecutionsTapisService } from "../../services/executionsTapisService";
+import { ExecutionsTapisService } from "@/api/api-v1/services/executionsTapisService";
 import { Response } from "express";
 export default function (executionsTapisService: ExecutionsTapisService) {
     const operations = {

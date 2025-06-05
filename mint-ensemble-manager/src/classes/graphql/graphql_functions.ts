@@ -1,12 +1,12 @@
 import {
-    ProblemStatement,
-    Thread,
-    Task,
-    Model,
-    DataResource,
     Execution,
-    ExecutionSummary,
+    Execution_Result,
+    Thread,
+    Model,
     ModelIOBindings,
+    DataResource,
+    ProblemStatement,
+    Task,
     ThreadModelMap,
     ProblemStatementInfo,
     ThreadInfo,
@@ -15,8 +15,9 @@ import {
     IdMap,
     Region,
     BoundingBox,
-    ModelOutput
-} from "../mint/mint-types";
+    ModelOutput,
+    ExecutionSummary
+} from "@/classes/mint/mint-types";
 import { ModelConfigurationSetup } from "@mintproject/modelcatalog_client";
 
 import { GraphQL } from "../../config/graphql";
@@ -88,8 +89,8 @@ import {
 } from "./graphql_adapter";
 
 import { Md5 } from "ts-md5";
-import { KeycloakAdapter } from "../../config/keycloak-adapter";
-import { Execution_Result, Execution_Result_Insert_Input } from "./graph_typing";
+import { Execution_Result_Insert_Input } from "./graph_typing";
+import { KeycloakAdapter } from "@/config/keycloak-adapter";
 
 export const getProblemStatement = async (
     problem_statement_id: string
