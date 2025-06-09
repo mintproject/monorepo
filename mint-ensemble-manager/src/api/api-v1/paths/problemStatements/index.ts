@@ -1,6 +1,7 @@
 import { Router } from "express";
 import problemStatementsService from "@/api/api-v1/services/problemStatementsService";
 import { ProblemStatementInfo } from "@/classes/mint/mint-types";
+import tasksRouter from "./tasks";
 
 /**
  * Interface for creating a new problem statement request
@@ -31,6 +32,9 @@ interface CreateProblemStatementRequest {
 
 const problemStatementsRouter = (): Router => {
     const router = Router();
+
+    // Mount the tasks router
+    router.use("/:problemStatementId/tasks", tasksRouter());
 
     /**
      * @openapi
