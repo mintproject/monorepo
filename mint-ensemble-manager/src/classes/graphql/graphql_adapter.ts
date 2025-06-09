@@ -183,18 +183,17 @@ export const problemStatementUpdateToGQL = (problem_statement: ProblemStatementI
 export const problemStatementFromGQL = (problem: any): ProblemStatement => {
     const details = {
         id: problem["id"],
-        regionid: problem["region_id"],
         name: problem["name"],
         dates: {
             start_date: new Date(problem["start_date"]),
             end_date: new Date(problem["end_date"])
         },
-        events: problem["events"].map(eventFromGQL),
-        permissions: problem["permissions"].map(permissionFromGQL),
+        events: "events" in problem ? problem["events"].map(eventFromGQL) : [],
+        permissions: "permissions" in problem ? problem["permissions"].map(permissionFromGQL) : [],
         tasks: {},
         preview: problem["preview"]
     } as ProblemStatement;
-    if (problem["tasks"]) {
+    if (problem["tasks"] && problem["tasks"].length > 0) {
         problem["tasks"].forEach((task: any) => {
             const fbtask = taskFromGQL(task);
             fbtask.problem_statement_id = problem["id"];
@@ -266,8 +265,8 @@ export const taskFromGQL = (task: any): Task => {
         threads: {},
         driving_variables: task.driving_variable_id != null ? [task.driving_variable_id] : [],
         response_variables: task.response_variable_id != null ? [task.response_variable_id] : [],
-        events: task["events"].map(eventFromGQL),
-        permissions: task["permissions"].map(permissionFromGQL)
+        events: "events" in task ? task["events"].map(eventFromGQL) : [],
+        permissions: "permissions" in task ? task["permissions"].map(permissionFromGQL) : []
     } as Task;
     if (task["threads"]) {
         task["threads"].forEach((thread: any) => {
@@ -340,8 +339,8 @@ export const threadInfoFromGQL = (thread: any) => {
         driving_variables: thread.driving_variable_id != null ? [thread.driving_variable_id] : [],
         response_variables:
             thread.response_variable_id != null ? [thread.response_variable_id] : [],
-        events: thread["events"].map(eventFromGQL),
-        permissions: thread["permissions"].map(permissionFromGQL)
+        events: "events" in thread ? thread["events"].map(eventFromGQL) : [],
+        permissions: "permissions" in thread ? thread["permissions"].map(permissionFromGQL) : []
     } as ThreadInfo;
 };
 

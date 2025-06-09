@@ -33,6 +33,7 @@ import threadsRoutes from "@/api/api-v1/paths/threads";
 import apiDocComponents from "@/api/api-doc";
 import tapisRouter from "@/api/api-v1/paths/tapis";
 import executionEnginesRouter from "@/api/api-v1/paths/executionEngines/tapis";
+import problemStatementsRouter from "@/api/api-v1/paths/problemStatements";
 
 // Main Express Server
 const app = express();
@@ -57,6 +58,7 @@ app.use(`/${version}/registration`, registrationRoutes(v1RegistrationService));
 app.use(`/${version}/threads`, threadsRoutes(v1ThreadsService));
 app.use(`/${version}/executionEngines`, executionEnginesRouter());
 app.use(`/${version}/tapis`, tapisRouter());
+app.use(`/${version}/problemStatements`, problemStatementsRouter());
 // Swagger-jsdoc setup
 const swaggerOptions = {
     definition: {

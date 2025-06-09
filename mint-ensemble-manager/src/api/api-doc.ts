@@ -110,6 +110,96 @@ const apiDocComponents = {
                     }
                 }
             },
+            CreateProblemStatementRequest: {
+                type: "object",
+                description: "A Problem Statement Info definition",
+                required: ["name", "regionid", "dates"],
+                properties: {
+                    name: {
+                        description: "The name of the problem statement",
+                        type: "string"
+                    },
+                    regionid: {
+                        description:
+                            "The top level region id of the problem statement (example south_sudan, ethiopia)",
+                        type: "string",
+                        example: "texas"
+                    },
+                    dates: {
+                        type: "object",
+                        description: "The date range for the problem statement",
+                        required: ["start_date", "end_date"],
+                        properties: {
+                            start_date: {
+                                description: "Start date in ISO format",
+                                type: "string",
+                                format: "date-time"
+                            },
+                            end_date: {
+                                description: "End date in ISO format",
+                                type: "string",
+                                format: "date-time"
+                            }
+                        }
+                    },
+                    events: {
+                        type: "array",
+                        description: "List of events associated with the problem statement",
+                        items: {
+                            type: "object",
+                            properties: {
+                                event: {
+                                    type: "string",
+                                    enum: ["CREATE", "UPDATE", "ADD_TASK", "DELETE_TASK"]
+                                },
+                                userid: {
+                                    type: "string",
+                                    example: "*"
+                                },
+                                timestamp: {
+                                    type: "string",
+                                    format: "date-time"
+                                },
+                                notes: {
+                                    type: "string"
+                                }
+                            }
+                        }
+                    },
+                    permissions: {
+                        type: "array",
+                        description: "List of permissions for the problem statement",
+                        items: {
+                            type: "object",
+                            properties: {
+                                userid: {
+                                    type: "string",
+                                    example: "*"
+                                },
+                                read: {
+                                    type: "boolean"
+                                },
+                                write: {
+                                    type: "boolean"
+                                },
+                                execute: {
+                                    type: "boolean"
+                                },
+                                owner: {
+                                    type: "boolean"
+                                }
+                            }
+                        }
+                    },
+                    preview: {
+                        type: "array",
+                        description: "Preview data for the problem statement",
+                        items: {
+                            type: "string"
+                        }
+                    }
+                }
+            },
             ProblemStatement: {
                 type: "object",
                 description: "A Problem Statement definition",
@@ -772,7 +862,6 @@ const apiDocComponents = {
                     }
                 }
             },
-
             TapisJobArgSpec: {
                 type: "object",
                 properties: {
@@ -827,7 +916,6 @@ const apiDocComponents = {
                     }
                 }
             },
-
             TapisNotifDeliveryTarget: {
                 type: "object",
                 properties: {

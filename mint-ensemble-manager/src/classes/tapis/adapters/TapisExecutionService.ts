@@ -143,7 +143,7 @@ export class TapisExecutionService implements IExecutionService {
                 result: job.result?.lastMessage
             };
         } catch (error) {
-            console.error("Error getting job status", error);
+            console.error("Error getting job status");
             throw error;
         }
     }

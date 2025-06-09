@@ -22,6 +22,19 @@ export class GraphQL {
         return GraphQL.client;
     };
 
+    static instanceUsingAccessToken = (access_token: string) => {
+        const prefs = getConfiguration();
+        const protocol = prefs.graphql.enable_ssl ? "https://" : "http://";
+        const uri = protocol + prefs.graphql.endpoint;
+        return new ApolloClient({
+            link: createHttpLink({
+                uri: uri,
+                headers: { Authorization: `Bearer ${access_token}` }
+            }),
+            cache: new InMemoryCache()
+        });
+    };
+
     static getHTTPSLink() {
         const prefs = getConfiguration();
 

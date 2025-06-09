@@ -100,6 +100,7 @@ describe("Tapis Jobs Router", () => {
         it("should return 500 when service throws an exception", async () => {
             // Arrange
             const errorMessage = "Failed to get job status";
+
             (jobsService.get as jest.Mock).mockRejectedValue(new Error(errorMessage));
 
             // Act
