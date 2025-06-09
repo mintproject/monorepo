@@ -1,47 +1,46 @@
 // ./api/api-v1/paths/logs.ts
 
-export default function (logsService: any) {
-    const operations = {
-        GET
-    };
+import { Router } from "express";
+import logsService from "@/api/api-v1/services/logsService";
 
-    function GET(req: any, res: any, next: any) {
-        logsService
-            .fetchLog(req.query.ensemble_id, req.headers.authorization)
-            .then((result: string) => {
-                res.status(200).json(result);
-            });
-    }
+export default function (service: typeof logsService) {
+    const router = Router();
 
-    // NOTE: We could also use a YAML string here.
-    GET.apiDoc = {
-        summary: "Fetch logs for an execution.",
-        operationId: "fetchLog",
-        security: [
-            {
-                BearerAuth: [],
-                oauth2: []
+    /**
+     * @swagger
+     * /logs:
+     *   get:
+     *     summary: Fetch logs for an execution.
+     *     operationId: fetchLog
+     *     security:
+     *       - BearerAuth: []
+     *       - oauth2: []
+     *     parameters:
+     *       - in: query
+     *         name: ensemble_id
+     *         required: true
+     *         schema:
+     *           type: string
+     *     responses:
+     *       200:
+     *         description: Log Details
+     *       default:
+     *         description: An error occurred
+     */
+    router.get("/", async (req, res) => {
+        try {
+            const ensembleId = req.query.ensemble_id as string;
+            if (!ensembleId) {
+                return res
+                    .status(400)
+                    .json({ result: "error", message: "ensemble_id is required" });
             }
-        ],
-        parameters: [
-            {
-                in: "query",
-                name: "ensemble_id",
-                required: true,
-                schema: {
-                    type: "string"
-                }
-            }
-        ],
-        responses: {
-            "200": {
-                description: "Log Details"
-            },
-            default: {
-                description: "An error occurred"
-            }
+            const result = await service.fetchLog(ensembleId, req.headers.authorization);
+            res.status(200).json(result);
+        } catch (error) {
+            res.status(500).json({ result: "error", message: error.message });
         }
-    };
+    });
 
-    return operations;
+    return router;
 }

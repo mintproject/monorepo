@@ -1,7 +1,10 @@
 import bodyParser from "body-parser";
-import express from "express";
-import path from "path";
+import express, { Request, Response, ErrorRequestHandler } from "express";
 import cors from "cors";
+import { createBullBoard } from "@bull-board/api";
+import { BullAdapter } from "@bull-board/api/bullAdapter";
+import { ExpressAdapter } from "@bull-board/express";
+import swaggerJSDoc from "swagger-jsdoc";
 import swaggerUi from "swagger-ui-express";
 
 import v1ExecutionsService from "@/api/api-v1/services/executionsService";
@@ -12,66 +15,75 @@ import v1MonitorsService from "@/api/api-v1/services/monitorsService";
 import v1LogsService from "@/api/api-v1/services/logsService";
 import v1ThreadsService from "@/api/api-v1/services/threadsService";
 import v1ModelCacheService from "@/api/api-v1/services/modelCacheService";
-import v1ExecutionTapisService from "@/api/api-v1/services/executionsTapisService";
-import v1ThreadsExecutionsService from "@/api/api-v1/services/tapis/threads/executions/threadsExecutionsService";
-import { initialize } from "express-openapi";
-import { getResource } from "@/classes/wings/xhr-requests";
 
 import Queue from "bull";
-import { securityHandlers } from "@/utils/authUtils";
-const { createBullBoard } = require("@bull-board/api");
-const { BullAdapter } = require("@bull-board/api/bullAdapter");
-const { ExpressAdapter } = require("@bull-board/express");
 
 import { DOWNLOAD_TAPIS_OUTPUT_QUEUE_NAME, EXECUTION_QUEUE_NAME, REDIS_URL } from "@/config/redis";
 import { PORT, VERSION } from "@/config/app";
-import jobsService from "@/api/api-v1/services/tapis/jobsService";
-import { getConfiguration } from "@/classes/mint/mint-functions";
-import executionOutputsService from "@/api/api-v1/services/tapis/executionOutputsService";
-import modelEnsemblesOutputsService from "@/api/api-v1/services/tapis/modelEnsembles/outputs/modelEnsemblesOutputsService";
+
+// Import route handlers
+import executionQueueRoutes from "@/api/api-v1/paths/executionQueue";
+import executionsRoutes from "@/api/api-v1/paths/executions";
+import executionsLocalRoutes from "@/api/api-v1/paths/executionsLocal";
+import logsRoutes from "@/api/api-v1/paths/logs";
+import modelCacheRoutes from "@/api/api-v1/paths/modelCache";
+import monitorsRoutes from "@/api/api-v1/paths/monitors";
+import registrationRoutes from "@/api/api-v1/paths/registration";
+import threadsRoutes from "@/api/api-v1/paths/threads";
+import apiDocComponents from "@/api/api-doc";
+import tapisRouter from "@/api/api-v1/paths/tapis";
+import executionEnginesRouter from "@/api/api-v1/paths/executionEngines/tapis";
+
 // Main Express Server
 const app = express();
 const port = PORT;
 const version = VERSION;
 const dashboard_url = "/admin/queues";
 
-const CLIENT_ID = getConfiguration().auth.client_id;
+// const CLIENT_ID = getConfiguration().auth.client_id;
 
 // Setup API
-const v1ApiDoc = require("./api/api-doc");
 app.use(bodyParser.json());
 app.use(cors());
 
-initialize({
-    app,
-    apiDoc: v1ApiDoc,
-    securityHandlers: securityHandlers,
-    dependencies: {
-        executionsService: v1ExecutionsService,
-        executionsLocalService: v1ExecutionsLocalService,
-        executionQueueService: v1ExecutionQueueService,
-        jobsService: jobsService,
-        registrationService: v1RegistrationService,
-        monitorsService: v1MonitorsService,
-        threadsService: v1ThreadsService,
-        logsService: v1LogsService,
-        modelCacheService: v1ModelCacheService,
-        executionsTapisService: v1ExecutionTapisService,
-        threadsExecutionsService: v1ThreadsExecutionsService,
-        executionOutputsService: executionOutputsService,
-        modelEnsemblesOutputsService: modelEnsemblesOutputsService
+// Register routes
+app.use(`/${version}/executionQueue`, executionQueueRoutes(v1ExecutionQueueService));
+app.use(`/${version}/executions`, executionsRoutes(v1ExecutionsService));
+app.use(`/${version}/executionsLocal`, executionsLocalRoutes(v1ExecutionsLocalService));
+app.use(`/${version}/logs`, logsRoutes(v1LogsService));
+app.use(`/${version}/modelCache`, modelCacheRoutes(v1ModelCacheService));
+app.use(`/${version}/monitors`, monitorsRoutes(v1MonitorsService));
+app.use(`/${version}/registration`, registrationRoutes(v1RegistrationService));
+app.use(`/${version}/threads`, threadsRoutes(v1ThreadsService));
+app.use(`/${version}/executionEngines`, executionEnginesRouter());
+app.use(`/${version}/tapis`, tapisRouter());
+// Swagger-jsdoc setup
+const swaggerOptions = {
+    definition: {
+        openapi: "3.0.0",
+        info: {
+            title: "Mint Ensemble Manager API",
+            version: "1.0.0"
+        },
+        servers: [{ url: "http://localhost:3000/v1" }, { url: "https://ensemble.mint.isi.edu/v1" }],
+        components: apiDocComponents.components
     },
-    paths: path.resolve(__dirname, "./api/api-v1/paths"),
-    routesGlob: "**/*.{ts,js}",
-    routesIndexFileRegExp: /(?:index)?\.[tj]s$/
-});
+    apis: ["./src/api/api-v1/paths/*.ts", "./src/api/api-v1/paths/**/*.ts", "./src/api/api-doc.ts"]
+};
+const swaggerSpec = swaggerJSDoc(swaggerOptions);
+app.use(`/${version}/ui`, swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Setup Error Handler
-app.use(((err, req, res, next) => {
-    console.log(err);
-    const status = err.status || 500;
-    res.status(status).json(err);
-}) as express.ErrorRequestHandler);
+const errorHandler: ErrorRequestHandler = (
+    err: Error,
+    req: Request,
+    res: Response,
+    next: Function
+) => {
+    console.error(err);
+    res.status(500).json({ message: err.message });
+};
+app.use(errorHandler);
 
 // Setup Queue
 const executionQueue = new Queue(EXECUTION_QUEUE_NAME, REDIS_URL);
@@ -81,7 +93,7 @@ const downloadTapisOutputQueue = new Queue(DOWNLOAD_TAPIS_OUTPUT_QUEUE_NAME, RED
 const serverAdapter = new ExpressAdapter();
 serverAdapter.setBasePath(dashboard_url);
 
-const { addQueue, removeQueue, setQueues, replaceQueues } = createBullBoard({
+createBullBoard({
     queues: [new BullAdapter(executionQueue), new BullAdapter(downloadTapisOutputQueue)],
     serverAdapter: serverAdapter
 });
@@ -90,23 +102,5 @@ app.use(dashboard_url, serverAdapter.getRouter());
 
 // Express start
 app.listen(port, () => {
-    // Serve Swagger UI
-    getResource({
-        url: "http://localhost:" + port + "/" + version + "/api-docs",
-        onError: () => {},
-        onLoad: (resp: any) => {
-            const apidoc = JSON.parse(resp.target.responseText);
-            app.use(
-                "/" + version + "/ui",
-                swaggerUi.serve,
-                swaggerUi.setup(apidoc, {
-                    swaggerOptions: {
-                        oauth: {
-                            clientId: CLIENT_ID
-                        }
-                    }
-                })
-            );
-        }
-    });
+    console.log(`Server is running on port ${port}`);
 });

@@ -43,7 +43,12 @@ function flatten(array) {
     else return [array[0]].concat(flatten(array.slice(1)));
 }
 
-const threadsService = {
+export interface ThreadsService {
+    getThread(thread_id: string): Promise<Thread>;
+    createThread(desc: any): Promise<any>;
+}
+
+const threadsService: ThreadsService = {
     async getThread(thread_id: string) {
         const mint_prefs = await fetchMintConfig();
         KeycloakAdapter.signIn(mint_prefs.graphql.username, mint_prefs.graphql.password);

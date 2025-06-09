@@ -3,17 +3,7 @@ import { getConfiguration } from "@/classes/mint/mint-functions";
 const AUTHORIZATION_URL = getConfiguration().auth.authorization_url;
 const CONFIG_SERVERS = getConfiguration().openapi?.servers || [];
 
-module.exports = {
-    openapi: "3.0.0",
-    info: {
-        title: "Ensemble Manager API",
-        version: "3.0.0"
-    },
-    servers: [
-        ...CONFIG_SERVERS,
-        { url: "http://localhost:3000/v1" },
-        { url: "https://ensemble.mint.isi.edu/v1" }
-    ],
+const apiDocComponents = {
     components: {
         securitySchemes: {
             BearerAuth: {
@@ -902,6 +892,7 @@ module.exports = {
                 }
             }
         }
-    },
-    paths: {}
+    }
 };
+
+export default apiDocComponents;

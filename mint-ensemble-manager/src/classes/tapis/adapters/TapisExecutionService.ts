@@ -1,4 +1,4 @@
-import { Apps, Jobs } from "@mfosorio/tapis-typescript";
+import { Apps, Jobs } from "@tapis/tapis-typescript";
 import { Execution, Execution_Result, Model, Region } from "@/classes/mint/mint-types";
 import { TapisComponent, TapisComponentSeed } from "@/classes/tapis/typing";
 import { IExecutionService, ExecutionJob } from "@/interfaces/IExecutionService";
@@ -8,6 +8,7 @@ import { getInputDatasets } from "@/classes/tapis/helpers";
 import { TapisJobService } from "@/classes/tapis/adapters/TapisJobService";
 import errorDecoder from "@/classes/tapis/utils/errorDecoder";
 import { TapisJobSubscriptionService } from "@/classes/tapis/adapters/TapisJobSubscriptionService";
+import { BadRequestError, NotFoundError } from "@/classes/common/errors";
 import {
     getExecution,
     getModelOutputsByModelId,
@@ -20,6 +21,7 @@ import {
 } from "@/classes/graphql/graphql_functions";
 import { matchTapisOutputsToMintOutputs } from "@/classes/tapis/jobs";
 import { Status } from "@/interfaces/IExecutionService";
+
 export class TapisExecutionService implements IExecutionService {
     private appsClient: Apps.ApplicationsApi;
     private jobsClient: Jobs.JobsApi;
@@ -94,8 +96,8 @@ export class TapisExecutionService implements IExecutionService {
         return await Promise.all(promises);
     }
 
-    async registerExecutionOutputs(executionId: string): Promise<void> {
-        await this.updateExecutionResultsFromJob(executionId);
+    async registerExecutionOutputs(executionId: string): Promise<Execution_Result[]> {
+        return await this.updateExecutionResultsFromJob(executionId);
     }
 
     static async updateExecution(
@@ -128,15 +130,54 @@ export class TapisExecutionService implements IExecutionService {
             this.jobsClient.getJob({ jobUuid: jobId })
         );
         try {
+            if (job.result?.status === Jobs.JobStatusEnum.Failed) {
+                return {
+                    id: job.result?.uuid,
+                    status: Status.FAILURE,
+                    error: job.result?.lastMessage
+                };
+            }
             return {
                 id: job.result?.uuid,
-                status: TapisExecutionService.mapStatus(job.status),
-                result: job.result?.lastMessage,
-                error: job.result?.lastMessage
+                status: TapisExecutionService.mapJobStatusEnum(job.result?.status),
+                result: job.result?.lastMessage
             };
         } catch (error) {
             console.error("Error getting job status", error);
             throw error;
+        }
+    }
+
+    public static mapJobStatusEnum(tapisStatus: Jobs.JobStatusEnum): Status {
+        switch (tapisStatus) {
+            case Jobs.JobStatusEnum.Pending:
+                return Status.WAITING;
+            case Jobs.JobStatusEnum.ProcessingInputs:
+                return Status.WAITING;
+            case Jobs.JobStatusEnum.StagingInputs:
+                return Status.WAITING;
+            case Jobs.JobStatusEnum.StagingJob:
+                return Status.WAITING;
+            case Jobs.JobStatusEnum.SubmittingJob:
+                return Status.WAITING;
+            case Jobs.JobStatusEnum.Queued:
+                return Status.WAITING;
+            case Jobs.JobStatusEnum.Running:
+                return Status.RUNNING;
+            case Jobs.JobStatusEnum.Archiving:
+                return Status.RUNNING;
+            case Jobs.JobStatusEnum.Blocked:
+                return Status.WAITING;
+            case Jobs.JobStatusEnum.Paused:
+                return Status.WAITING;
+            case Jobs.JobStatusEnum.Finished:
+                return Status.SUCCESS;
+            case Jobs.JobStatusEnum.Cancelled:
+                return Status.FAILURE;
+            case Jobs.JobStatusEnum.Failed:
+                return Status.FAILURE;
+            default:
+                throw new Error("Unrecognized Tapis status: " + tapisStatus);
         }
     }
 
@@ -168,6 +209,9 @@ export class TapisExecutionService implements IExecutionService {
     /** Extra methods */
 
     async loadTapisApp(component: TapisComponent): Promise<Apps.TapisApp> {
+        if (component === undefined) {
+            throw new Error("Component is undefined");
+        }
         const { result: app } = await this.appsClient.getApp({
             appId: component.id,
             appVersion: component.version
@@ -247,11 +291,18 @@ export class TapisExecutionService implements IExecutionService {
         return matchTapisOutputsToMintOutputs(files, mintOutputs);
     }
 
-    private async updateExecutionResultsFromJob(executionId: string) {
+    private async updateExecutionResultsFromJob(executionId: string): Promise<Execution_Result[]> {
         const execution = await getExecution(executionId);
+        if (execution === null) {
+            throw new NotFoundError("Execution not found");
+        }
+        if (execution.status !== Status.SUCCESS) {
+            throw new BadRequestError("Execution is not successful");
+        }
         execution.results = await this.getExecutionResultsFromJob(execution.runid, execution);
         console.log("Registering execution ", executionId, execution.results.length);
         await updateExecutionStatusAndResultsv2(execution);
+        return execution.results;
     }
 
     getJobOutputList = async (

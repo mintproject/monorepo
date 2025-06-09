@@ -1,123 +1,80 @@
 // ./api/api-v1/paths/executionsLocal.ts
 
-export default function (executionsLocalService: any) {
-    const operations = {
-        POST,
-        DELETE,
-        EMPTY
-    };
+import { Router } from "express";
+import executionsLocalService from "@/api/api-v1/services/executionsLocalService";
 
-    function POST(req: any, res: any, next: any) {
-        executionsLocalService.submitExecution(req.body).then((result: any) => {
-            if (result.result == "error") {
+export default function (service: typeof executionsLocalService) {
+    const router = Router();
+
+    /**
+     * @swagger
+     * /executionsLocal:
+     *   post:
+     *     summary: Submit modeling thread for local execution.
+     *     operationId: submitLocalExecution
+     *     security:
+     *       - BearerAuth: []
+     *       - oauth2: []
+     *     requestBody:
+     *       description: Modeling thread
+     *       required: true
+     *       content:
+     *         application/json:
+     *           schema:
+     *             $ref: '#/components/schemas/ModelThread'
+     *     responses:
+     *       202:
+     *         description: Successful response
+     *       default:
+     *         description: An error occurred
+     */
+    router.post("/", async (req, res) => {
+        try {
+            const result = await service.submitExecution(req.body);
+            if (result.result === "error") {
                 res.status(406).json(result);
             } else {
                 res.status(202).json(result);
             }
-        });
-    }
+        } catch (error) {
+            res.status(500).json({ result: "error", message: error.message });
+        }
+    });
 
-    function DELETE(req: any, res: any, next: any) {
-        executionsLocalService.deleteExecutionCache(req.body).then((result: any) => {
-            if (result.result == "error") {
+    /**
+     * @swagger
+     * /executionsLocal:
+     *   delete:
+     *     summary: Delete cached results, cached models and cached data for local execution.
+     *     operationId: deleteLocalExecutionCache
+     *     security:
+     *       - BearerAuth: []
+     *       - oauth2: []
+     *     requestBody:
+     *       description: Modeling thread
+     *       required: true
+     *       content:
+     *         application/json:
+     *           schema:
+     *             $ref: '#/components/schemas/ModelThread'
+     *     responses:
+     *       202:
+     *         description: Successful response
+     *       default:
+     *         description: An error occurred
+     */
+    router.delete("/", async (req, res) => {
+        try {
+            const result = await service.deleteExecutionCache(req.body);
+            if (result.result === "error") {
                 res.status(406).json(result);
             } else {
                 res.status(202).json(result);
             }
-        });
-    }
-
-    function EMPTY(req: any, res: any, next: any) {
-        executionsLocalService.emptyExecutionQueue().then((result: any) => {
-            if (result.result == "error") {
-                res.status(406).json(result);
-            } else {
-                res.status(202).json(result);
-            }
-        });
-    }
-
-    // NOTE: We could also use a YAML string here.
-    POST.apiDoc = {
-        summary: "Submit modeling thread for local execution.",
-        operationId: "submitLocalExecution",
-        security: [
-            {
-                BearerAuth: [],
-                oauth2: []
-            }
-        ],
-        requestBody: {
-            description: "Modeling thread",
-            required: true,
-            content: {
-                "application/json": {
-                    schema: {
-                        $ref: "#/components/schemas/ModelThread"
-                    }
-                }
-            }
-        },
-        responses: {
-            "202": {
-                description: "Successful response"
-            },
-            default: {
-                description: "An error occurred"
-            }
+        } catch (error) {
+            res.status(500).json({ result: "error", message: error.message });
         }
-    };
+    });
 
-    // NOTE: We could also use a YAML string here.
-    DELETE.apiDoc = {
-        summary: "Delete cached results, cached models and cached data for local execution.",
-        operationId: "deleteLocalExecutionCache",
-        security: [
-            {
-                BearerAuth: [],
-                oauth2: []
-            }
-        ],
-        requestBody: {
-            description: "Modeling thread",
-            required: true,
-            content: {
-                "application/json": {
-                    schema: {
-                        $ref: "#/components/schemas/ModelThread"
-                    }
-                }
-            }
-        },
-        responses: {
-            "202": {
-                description: "Successful response"
-            },
-            default: {
-                description: "An error occurred"
-            }
-        }
-    };
-
-    // NOTE: We could also use a YAML string here.
-    EMPTY.apiDoc = {
-        summary: "Empty Local Execution Queue.",
-        operationId: "emptyExecutionQueue",
-        security: [
-            {
-                BearerAuth: [],
-                oauth2: []
-            }
-        ],
-        responses: {
-            "202": {
-                description: "Successful response"
-            },
-            default: {
-                description: "An error occurred"
-            }
-        }
-    };
-
-    return operations;
+    return router;
 }
