@@ -1,6 +1,6 @@
-import { Router } from "express";
+import { Router, Request, Response } from "express";
 import problemStatementsService from "@/api/api-v1/services/problemStatementsService";
-import { ProblemStatementInfo } from "@/classes/mint/mint-types";
+import { ProblemStatementInfo, ProblemStatement } from "@/classes/mint/mint-types";
 import tasksRouter from "./tasks";
 
 /**
@@ -28,6 +28,10 @@ interface CreateProblemStatementRequest {
         owner: boolean;
     }>;
     preview?: string[];
+}
+
+interface ErrorResponse {
+    message: string;
 }
 
 const problemStatementsRouter = (): Router => {
@@ -63,7 +67,7 @@ const problemStatementsRouter = (): Router => {
      *       500:
      *         description: Internal server error
      */
-    router.get("/", async (req, res) => {
+    router.get("/", async (req: Request, res: Response<ProblemStatement[] | ErrorResponse>) => {
         try {
             const authorizationHeader = req.headers.authorization;
             if (!authorizationHeader) {
