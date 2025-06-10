@@ -3,8 +3,8 @@ import {
     ComponentDataBindings,
     ComponentParameterBindings,
     ComponentParameterTypes
-} from "@/classes/localex/local-execution-types";
-import { Execution } from "@/classes/mint/mint-types";
+} from "../localex/local-execution-types";
+import { Execution } from "../mint/mint-types";
 
 export type TapisComponent = {
     id: string;

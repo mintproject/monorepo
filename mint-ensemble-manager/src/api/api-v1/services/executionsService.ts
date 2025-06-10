@@ -1,6 +1,6 @@
-import { getThread } from "@/classes/graphql/graphql_functions";
-import { Thread } from "@/classes/mint/mint-types";
-import { fetchMintConfig, saveAndRunExecutions } from "@/classes/mint/mint-functions";
+import { getThread } from "../../../classes/graphql/graphql_functions";
+import { Thread } from "../../../classes/mint/mint-types";
+import { fetchMintConfig, saveAndRunExecutions } from "../../../classes/mint/mint-functions";
 import { createResponse } from "./util";
 
 // ./api-v1/services/executionsService.js

@@ -1,11 +1,6 @@
 import Queue from "bull";
-import { EXECUTION_QUEUE_NAME, REDIS_URL } from "@/config/redis";
+import { EXECUTION_QUEUE_NAME, REDIS_URL } from "../../../config/redis";
 import { createResponse } from "./util";
-
-export interface ExecutionQueueService {
-    emptyExecutionQueue(): Promise<any>;
-    getExecutionQueue(thread: any): Promise<any>;
-}
 
 // ./api-v1/services/executionsLocalService.js
 const cleanQueue = (queue: Queue.Queue) => {

@@ -1,4 +1,4 @@
-import { Apps } from "@tapis/tapis-typescript";
+import { Apps } from "@mfosorio/tapis-typescript";
 
 export default {
     id: "modflow-2005",

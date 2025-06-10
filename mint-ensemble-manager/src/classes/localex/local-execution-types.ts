@@ -1,4 +1,4 @@
-import { Execution, DataResource } from "@/classes/mint/mint-types";
+import { Execution, DataResource } from "../mint/mint-types";
 
 export interface ComponentSeed {
     component: Component;

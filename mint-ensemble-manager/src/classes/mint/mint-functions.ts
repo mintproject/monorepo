@@ -1,4 +1,10 @@
-import { Thread, MintPreferences, ExecutionSummary, Execution, ThreadModelMap } from "./mint-types";
+import {
+    Thread,
+    MintPreferences,
+    ExecutionSummary,
+    Execution,
+    ThreadModelMap
+} from "./mint-types";
 import {
     setupModelWorkflow,
     fetchWingsTemplate,
@@ -6,7 +12,7 @@ import {
     runModelExecutions,
     fetchWingsRunsStatuses,
     fetchWingsRunResults
-} from "@/classes/wings/wings-functions";
+} from "../wings/wings-functions";
 import {
     getModelInputBindings,
     getModelInputConfigurations,
@@ -20,11 +26,13 @@ import {
     getThread,
     setThreadModelExecutionSummary,
     getRegionDetails
-} from "@/classes/graphql/graphql_functions";
+} from "../graphql/graphql_functions";
 
 import fs from "fs-extra";
 
-import { DEVMODE, DEVHOMEDIR, PORT } from "@/config/app";
+import { DEVMODE } from "../../config/app";
+import { DEVHOMEDIR } from "../../config/app";
+import { PORT } from "../../config/app";
 
 export const getConfiguration = (): MintPreferences => {
     let config_file = process.env.ENSEMBLE_MANAGER_CONFIG_FILE;

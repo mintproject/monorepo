@@ -1,92 +1,94 @@
 // ./api/api-v1/paths/monitors.ts
 
-import { Router } from "express";
-import monitorsService from "@/api/api-v1/services/monitorsService";
+export default function (monitorsService: any) {
+    const operations = {
+        POST,
+        GET
+    };
 
-export default function (service: typeof monitorsService) {
-    const router = Router();
-
-    /**
-     * @swagger
-     * /monitors:
-     *   post:
-     *     summary: Submit modeling thread for monitoring
-     *     operationId: submitMonitor
-     *     tags: [Monitors]
-     *     security:
-     *       - BearerAuth: []
-     *       - oauth2: []
-     *     requestBody:
-     *       description: Modeling thread scenario/subgoal/id
-     *       required: true
-     *       content:
-     *         application/json:
-     *           schema:
-     *             $ref: '#/components/schemas/ModelThread'
-     *     responses:
-     *       201:
-     *         description: Successful response
-     *       default:
-     *         description: An error occurred
-     */
-    router.post("/", async (req, res) => {
-        try {
-            const result = await service.submitMonitor(req.body);
-            if (result.result === "error") {
+    function POST(req: any, res: any, next: any) {
+        monitorsService.submitMonitor(req.body).then((result: any) => {
+            if (result.result == "error") {
                 res.status(406).json(result);
             } else {
-                res.status(201).json(result);
+                res.status(202).json(result);
             }
-        } catch (error) {
-            res.status(500).json({ result: "error", message: error.message });
-        }
-    });
+        });
+    }
 
-    /**
-     * @swagger
-     * /monitors:
-     *   get:
-     *     summary: Fetch execution status of modeling thread
-     *     operationId: fetchRunStatus
-     *     tags: [Monitors]
-     *     parameters:
-     *       - in: query
-     *         name: scenario_id
-     *         required: true
-     *         schema:
-     *           type: string
-     *         description: The ID of the scenario
-     *       - in: query
-     *         name: thread_id
-     *         required: true
-     *         schema:
-     *           type: string
-     *         description: The ID of the thread to check status for
-     *     responses:
-     *       200:
-     *         description: Thread Details
-     *       default:
-     *         description: An error occurred
-     */
-    router.get("/", async (req, res) => {
-        try {
-            const { scenario_id, thread_id } = req.query;
-            if (!scenario_id || !thread_id) {
-                return res.status(400).json({
-                    result: "error",
-                    message: "scenario_id and thread_id are required"
-                });
-            }
-            const result = await service.fetchRunStatus(thread_id as string);
-            if (result.result === "error") {
-                res.status(406).json(result);
-            } else {
-                res.status(200).json(result);
-            }
-        } catch (error) {
-            res.status(500).json({ result: "error", message: error.message });
-        }
-    });
+    function GET(req: any, res: any, next: any) {
+        monitorsService
+            .fetchRunStatus(req.query.scenario_id, req.query.thread_id)
+            .then((result: any) => {
+                if (result.result == "error") {
+                    res.status(406).json(result);
+                } else {
+                    res.status(202).json(result);
+                }
+            });
+    }
 
-    return router;
+    // NOTE: We could also use a YAML string here.
+    POST.apiDoc = {
+        summary: "Submit modeling thread for monitoring.",
+        operationId: "submitMonitor",
+        security: [
+            {
+                BearerAuth: [],
+                oauth2: []
+            }
+        ],
+        requestBody: {
+            description: "Modeling thread scenario/subgoal/id",
+            required: true,
+            content: {
+                "application/json": {
+                    schema: {
+                        $ref: "#/components/schemas/ModelThread"
+                    }
+                }
+            }
+        },
+        responses: {
+            "201": {
+                description: "Successful response"
+            },
+            default: {
+                description: "An error occurred"
+            }
+        }
+    };
+
+    GET.apiDoc = {
+        summary: "Fetch execution status of modeling thread",
+        operationId: "fetchRunStatus",
+        parameters: [
+            {
+                in: "query",
+                name: "scenario_id",
+                required: true,
+                schema: {
+                    type: "string"
+                }
+            },
+            {
+                in: "query",
+                name: "thread_id",
+                required: true,
+                schema: {
+                    type: "string"
+                }
+            }
+        ],
+        responses: {
+            "200": {
+                description: "Thread Details"
+            },
+            default: {
+                description: "An error occurred"
+            }
+        }
+    };
+
+    return operations;
 }

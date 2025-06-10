@@ -1,12 +1,12 @@
-// ./api/api-v1/paths/registration.ts
+// ./api/api-v1/paths/threads.ts
 
-export default function (registrationService: any) {
+export default function (threadsService: any) {
     const operations = {
         POST
     };
 
     function POST(req: any, res: any, next: any) {
-        registrationService.registerExecutionOutputs(req.body).then((result: any) => {
+        threadsService.createThread(req.body).then((result: any) => {
             if (result.result == "error") {
                 res.status(406).json(result);
             } else {
@@ -17,8 +17,8 @@ export default function (registrationService: any) {
 
     // NOTE: We could also use a YAML string here.
     POST.apiDoc = {
-        summary: "Register outputs of modeling thread in data catalog.",
-        operationId: "registerExecutionOutputs",
+        summary: "Create modeling thread in MINT.",
+        operationId: "createThread",
         security: [
             {
                 BearerAuth: [],
@@ -26,12 +26,12 @@ export default function (registrationService: any) {
             }
         ],
         requestBody: {
-            description: "Modeling thread scenario/subgoal/id",
+            description: "New modeling thread details",
             required: true,
             content: {
                 "application/json": {
                     schema: {
-                        $ref: "#/components/schemas/ModelThread"
+                        $ref: "#/components/schemas/NewModelThread"
                     }
                 }
             }

@@ -8,8 +8,8 @@ import {
     setExecutions,
     setThreadModelExecutionIds,
     setThreadModelExecutionSummary
-} from "@/classes/graphql/graphql_functions";
-import { getConfiguration } from "@/classes/mint/mint-functions";
+} from "../graphql/graphql_functions";
+import { getConfiguration } from "../mint/mint-functions";
 import {
     Execution,
     ExecutionSummary,
@@ -20,8 +20,8 @@ import {
     Region,
     Thread,
     ThreadModelMap
-} from "@/classes/mint/mint-types";
-import { TapisComponent } from "@/classes/tapis/typing";
+} from "../mint/mint-types";
+import { TapisComponent } from "../tapis/typing";
 
 const MAX_CONFIGURATIONS = 1000000;
 // Add interface for IO/Parameter details

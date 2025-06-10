@@ -1,12 +1,5 @@
 import { getResource, postFormResource, postJSONResource } from "./xhr-requests";
-import {
-    IdMap,
-    MintPreferences,
-    Execution,
-    Thread,
-    Model,
-    DataResource
-} from "@/classes/mint/mint-types";
+import { IdMap, MintPreferences, Execution, Thread, Model, DataResource } from "../mint/mint-types";
 import {
     WingsComponent,
     WingsTemplatePackage,

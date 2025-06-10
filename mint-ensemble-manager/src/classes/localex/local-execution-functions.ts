@@ -1,14 +1,13 @@
 import {
-    Execution,
     Thread,
+    Execution,
+    MintPreferences,
+    DataResource,
     Model,
     ModelIO,
-    DataResource,
-    MintPreferences,
     ModelParameter,
-    Wcm,
-    Region
-} from "@/classes/mint/mint-types";
+    Wcm
+} from "../mint/mint-types";
 import {
     Component,
     ComponentSeed,
@@ -23,12 +22,14 @@ import request from "request";
 import yauzl from "yauzl";
 import yaml from "js-yaml";
 
-import { GetObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
 
 import Queue from "bull";
-import { EXECUTION_QUEUE_NAME, REDIS_URL } from "@/config/redis";
+import { EXECUTION_QUEUE_NAME, REDIS_URL } from "../../config/redis";
+import { pullImage } from "./docker-functions";
 import { Md5 } from "ts-md5";
-import { getConfiguration } from "@/classes/mint/mint-functions";
+import { getConfiguration } from "../mint/mint-functions";
+import { Region } from "../mint/mint-types";
 import { Readable } from "stream";
 
 const prefs = getConfiguration();
@@ -45,14 +46,14 @@ if (prefs.execution_engine === "localex") {
     console.log(`Job completed with result ${result}`);
 });*/
 
-const _downloadS3File = (url: string, filepath: string, prefs: MintPreferences): Promise<void> => {
+const _downloadS3File = (url: string, filepath: string, prefs: MintPreferences): Promise<void>  => {
     var bucket = prefs.data_server_extra["bucket"];
     var access_key = prefs.data_server_extra["access_key"];
     var secret_key = prefs.data_server_extra["secret_access_key"];
     var region = prefs.data_server_extra["region"];
-
-    var fileKey = url.substring(5 + bucket.length + 1);
-
+    
+    var fileKey = url.substring(5 + bucket.length + 1)
+    
     const client = new S3Client({
         region: region,
         credentials: {
@@ -64,29 +65,31 @@ const _downloadS3File = (url: string, filepath: string, prefs: MintPreferences):
         Bucket: bucket,
         Key: fileKey
     });
-
-    return new Promise<void>(async (resolve, reject) => {
+    
+    return new Promise<void>(async(resolve, reject) => {
         const data = await client.send(cmd);
         if (data.Body instanceof Readable) {
             data.Body.pipe(fs.createWriteStream(filepath))
-                .on("error", (err) => reject(err))
-                .on("close", () => resolve());
+                .on('error', err => reject(err))
+                .on('close', () => resolve())
         }
     });
-};
+}
 
 const _downloadFile = (url: string, filepath: string): Promise<void> => {
     const file = fs.createWriteStream(filepath);
     return new Promise<void>((resolve, reject) => {
         if (url.toLowerCase().startsWith("http")) {
-            request.get(url).on("response", (res) => {
+            request.get(url).on('response', (res) => {
                 res.pipe(file);
-                res.on("end", function () {
+                res.on('end', function () {
                     resolve();
                 });
             });
-        } else if (url.toLowerCase().startsWith("s3://")) {
+        }
+        else if (url.toLowerCase().startsWith("s3://")) {
             // Make a call to store the data to filepath (or to the file stream)
+            
         }
     });
 };
@@ -151,12 +154,12 @@ const _unzipFile = (zipfilename: string, dirname: string): Promise<string> => {
 
 const _downloadAndUnzipToDirectory = (url: string, modeldir: string, compname: string) => {
     const zipfile = modeldir + ".zip";
-    console.log("Downloading .." + zipfile);
+    console.log("Downloading .." + zipfile)
     return new Promise<void>((resolve, reject) => {
         _downloadFile(url, zipfile).then(() => {
             // Unzip file
             if (fs.existsSync(zipfile)) {
-                console.log("Unzipping..");
+                console.log("Unzipping..")
                 _unzipFile(zipfile, modeldir)
                     .then(() => {
                         resolve();
@@ -196,7 +199,7 @@ const _downloadWCM = async (url: string, prefs: MintPreferences) => {
     const compname = path.basename(component_file, extension);
 
     const codedir = prefs.localex.codedir + "/" + hashdir;
-    console.log("Downloading .. " + url + " .. to .. " + codedir);
+    console.log("Downloading .. "+url+" .. to .. "+codedir);
 
     if (!fs.existsSync(codedir)) fs.mkdirsSync(codedir);
 
@@ -319,7 +322,7 @@ export const getModelCacheDirectory = (url: string, prefs: MintPreferences) => {
 
 export const loadModelWCM = async (url: string, model: Model, prefs: MintPreferences) => {
     const modeldir = await _downloadWCM(url, prefs);
-    console.log("Model dir.. " + modeldir);
+    console.log("Model dir.. " + modeldir)
     // if (model.software_image != null) {
     //     // Pull docker image if needed
     //     await pullImage(model.software_image);
@@ -435,11 +438,12 @@ export const queueModelExecutionsLocally = async (
             console.log("Downloading " + inputpath + " ...");
             if (inputurl.toLowerCase().startsWith("http")) {
                 downloadInputPromises.push(_downloadFile(inputurl, inputpath));
-            } else if (inputurl.toLowerCase().startsWith("s3://")) {
+            }
+            else if (inputurl.toLowerCase().startsWith("s3://")) {
                 downloadInputPromises.push(_downloadS3File(inputurl, inputpath, prefs));
             }
         }
-    }
+    }    
 
     // Download all datasets
     if (downloadInputPromises.length > 0) await Promise.all(downloadInputPromises);

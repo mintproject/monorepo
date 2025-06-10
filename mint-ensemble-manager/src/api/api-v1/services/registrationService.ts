@@ -1,9 +1,9 @@
-import { getThread } from "@/classes/graphql/graphql_functions";
-import { Thread } from "@/classes/mint/mint-types";
-import { registerExecutionResults } from "@/classes/mint/mint-local-functions";
-import { fetchMintConfig } from "@/classes/mint/mint-functions";
+import { getThread } from "../../../classes/graphql/graphql_functions";
+import { Thread } from "../../../classes/mint/mint-types";
+import { registerExecutionResults } from "../../../classes/mint/mint-local-functions";
+import { fetchMintConfig } from "../../../classes/mint/mint-functions";
 import { createResponse } from "./util";
-import { KeycloakAdapter } from "@/config/keycloak-adapter";
+import { KeycloakAdapter } from "../../../config/keycloak-adapter";
 
 const registrationService = {
     async registerExecutionOutputs(threadmodel: any) {

@@ -6,7 +6,6 @@ import {
 } from "@/classes/graphql/graphql_functions";
 import { TapisExecutionService } from "@/classes/tapis/adapters/TapisExecutionService";
 import { getTokenFromAuthorizationHeader } from "@/utils/authUtils";
-import { NotFoundError } from "@/classes/common/errors";
 
 export interface ModelEnsemblesOutputsService {
     registerOutputs(modelEnsembleId: string, authorization: string): void;
@@ -24,10 +23,6 @@ const modelEnsemblesOutputsService: ModelEnsemblesOutputsService = {
 
         // Get all execution IDs for the model ensemble
         const executionIds = await getThreadModelExecutionIds(modelEnsembleId);
-
-        if (executionIds.length === 0) {
-            throw new NotFoundError("No executions found for model ensemble");
-        }
 
         toggleThreadModelExecutionSummaryPublishing(modelEnsembleId, true);
         // Process each execution asynchronously without waiting

@@ -15,11 +15,7 @@
 
         "paths": {
             "*": ["node_modules/*"],
-            "@/api/*": ["src/api/*"],
-            "@/classes/*": ["src/classes/*"],
-            "@/config/*": ["src/config/*"],
-            "@/utils/*": ["src/utils/*"],
-            "@/interfaces/*": ["src/interfaces/*"]
+            "@/*": ["src/*"]
         }
     },
     "include": ["src/typings/**/*.d.ts", "src/**/*.ts", "paths"],

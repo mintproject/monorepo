@@ -1,6 +1,6 @@
-import { Apps, Jobs } from "@tapis/tapis-typescript";
-import { DataResource, Model, ModelIO } from "@/classes/mint/mint-types";
-import { TapisComponentSeed } from "@/classes/tapis/typing";
+import { Apps, Jobs } from "@mfosorio/tapis-typescript";
+import { DataResource, Model, ModelIO } from "../../../classes/mint/mint-types";
+import { TapisComponentSeed } from "../typing";
 
 const ALLOCATION = "PT2050-DataX";
 const SYSTEM_LOGICAL_QUEUE = "development";

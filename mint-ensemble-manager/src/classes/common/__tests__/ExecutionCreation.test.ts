@@ -1,11 +1,11 @@
-import { ExecutionCreation } from "@/classes/common/ExecutionCreation";
-import { getRegionDetails, listSuccessfulExecutionIds } from "@/classes/graphql/graphql_functions";
-import { getThreadMock } from "@/classes/common/__tests__/mocks/getThreadMock";
-import { getRegionMockTexas } from "@/classes/common/__tests__/mocks/getRegionMockTexas";
-import { threadFromGQL } from "@/classes/graphql/graphql_adapter";
-import { Region } from "@/classes/mint/mint-types";
+import { ExecutionCreation } from "../ExecutionCreation";
+import { getRegionDetails, listSuccessfulExecutionIds } from "../../graphql/graphql_functions";
+import { getThreadMock } from "./mocks/getThreadMock";
+import { getRegionMockTexas } from "./mocks/getRegionMockTexas";
+import { threadFromGQL } from "../../graphql/graphql_adapter";
+import { Region } from "../../mint/mint-types";
 // Mock all the imported functions
-jest.mock("@/classes/graphql/graphql_functions");
+jest.mock("../../graphql/graphql_functions");
 
 describe("ExecutionCreation", () => {
     let executionCreation: ExecutionCreation;

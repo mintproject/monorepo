@@ -1,8 +1,8 @@
 import { Model, MintPreferences, ModelIO, Dataset, ModelParameter, Dataslice } from "./mint-types";
 import * as rp from "request-promise-native";
 import { ModelConfigurationSetup } from "@mintproject/modelcatalog_client";
-import { GraphQL } from "@/config/graphql";
-import { KeycloakAdapter } from "@/config/keycloak-adapter";
+import { GraphQL } from "../../config/graphql";
+import { KeycloakAdapter } from "../../config/keycloak-adapter";
 
 // Query Model Catalog By Variables,
 // - Filter by driving variables and model id/name (match with calibration)

@@ -1,46 +1,47 @@
 // ./api/api-v1/paths/logs.ts
 
-import { Router } from "express";
-import logsService from "@/api/api-v1/services/logsService";
+export default function (logsService: any) {
+    const operations = {
+        GET
+    };
 
-export default function (service: typeof logsService) {
-    const router = Router();
+    function GET(req: any, res: any, next: any) {
+        logsService
+            .fetchLog(req.query.ensemble_id, req.headers.authorization)
+            .then((result: string) => {
+                res.status(200).json(result);
+            });
+    }
 
-    /**
-     * @swagger
-     * /logs:
-     *   get:
-     *     summary: Fetch logs for an execution.
-     *     operationId: fetchLog
-     *     security:
-     *       - BearerAuth: []
-     *       - oauth2: []
-     *     parameters:
-     *       - in: query
-     *         name: ensemble_id
-     *         required: true
-     *         schema:
-     *           type: string
-     *     responses:
-     *       200:
-     *         description: Log Details
-     *       default:
-     *         description: An error occurred
-     */
-    router.get("/", async (req, res) => {
-        try {
-            const ensembleId = req.query.ensemble_id as string;
-            if (!ensembleId) {
-                return res
-                    .status(400)
-                    .json({ result: "error", message: "ensemble_id is required" });
+    // NOTE: We could also use a YAML string here.
+    GET.apiDoc = {
+        summary: "Fetch logs for an execution.",
+        operationId: "fetchLog",
+        security: [
+            {
+                BearerAuth: [],
+                oauth2: []
             }
-            const result = await service.fetchLog(ensembleId, req.headers.authorization);
-            res.status(200).json(result);
-        } catch (error) {
-            res.status(500).json({ result: "error", message: error.message });
+        ],
+        parameters: [
+            {
+                in: "query",
+                name: "ensemble_id",
+                required: true,
+                schema: {
+                    type: "string"
+                }
+            }
+        ],
+        responses: {
+            "200": {
+                description: "Log Details"
+            },
+            default: {
+                description: "An error occurred"
+            }
         }
-    });
+    };
 
-    return router;
+    return operations;
 }

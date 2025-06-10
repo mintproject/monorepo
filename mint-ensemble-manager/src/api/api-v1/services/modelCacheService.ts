@@ -1,7 +1,7 @@
-import { deleteModelCache } from "@/classes/mint/mint-local-functions";
-import { getModel } from "@/classes/graphql/graphql_functions";
-import { fetchMintConfig } from "@/classes/mint/mint-functions";
-import { KeycloakAdapter } from "@/config/keycloak-adapter";
+import { deleteModelCache } from "../../../classes/mint/mint-local-functions";
+import { getModel } from "../../../classes/graphql/graphql_functions";
+import { fetchMintConfig } from "../../../classes/mint/mint-functions";
+import { KeycloakAdapter } from "../../../config/keycloak-adapter";
 import { createResponse } from "./util";
 
 // ./api-v1/services/modelCacheService.js
