@@ -1,7 +1,6 @@
 import { getConfiguration } from "@/classes/mint/mint-functions";
 
 const AUTHORIZATION_URL = getConfiguration().auth.authorization_url;
-const CONFIG_SERVERS = getConfiguration().openapi?.servers || [];
 
 const MintSchema = {
     TimePeriod: {
@@ -71,12 +70,14 @@ const TaskSchema = {
             indicatorid: {
                 description:
                     "The SVO label for the indicator/response (link to list upcoming). Example: grain~dry__mass-per-area_yield",
-                type: "string"
+                type: "string",
+                example: "crop__potential_transpiration_volume_flux"
             },
             interventionid: {
                 description:
                     "The SVO label for the intervention (if any). Example: crop__planting_start_time",
-                type: "string"
+                type: "string",
+                example: "nitrogen__average_of_net_mass_mineralization_rate"
             },
             regionid: {
                 description:
@@ -128,6 +129,7 @@ const TaskSchema = {
                 }
             },
             response_variables: {
+                example: ["crop__potential_transpiration_volume_flux"],
                 type: "array",
                 description: "List of response variables",
                 items: {
@@ -135,6 +137,7 @@ const TaskSchema = {
                 }
             },
             driving_variables: {
+                example: ["nitrogen__average_of_net_mass_mineralization_rate"],
                 type: "array",
                 description: "List of driving variables",
                 items: {

@@ -100,6 +100,9 @@ export const variableFromGQL = (varobj: any) => {
 };
 
 export const eventToGQL = (event: MintEvent) => {
+    if (event.timestamp && typeof event.timestamp === "string") {
+        event.timestamp = new Date(event.timestamp);
+    }
     const eventobj = {
         event: event.event,
         userid: event.userid,
@@ -211,7 +214,8 @@ export const taskToGQL = (task: Task, problem_statement: ProblemStatementInfo) =
         start_date: toDateString(task.dates.start_date),
         end_date: toDateString(task.dates.end_date),
         region_id: task.regionid,
-        response_variable_id: task.response_variables[0],
+        response_variable_id:
+            task.response_variables.length > 0 ? task.response_variables[0] : null,
         driving_variable_id: task.driving_variables.length > 0 ? task.driving_variables[0] : null,
         events: {
             data: task.events.map(eventToGQL)
