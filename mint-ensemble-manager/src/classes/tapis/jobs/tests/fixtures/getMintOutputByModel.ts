@@ -1,4 +1,4 @@
-import { ModelOutput } from "../../../../../classes/mint/mint-types";
+import { ModelOutput } from "@/classes/mint/mint-types";
 
 export default [
     {

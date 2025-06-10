@@ -1,4 +1,4 @@
-import { Jobs } from "@mfosorio/tapis-typescript";
+import { Jobs } from "@tapis/tapis-typescript";
 import { getConfiguration } from "@/classes/mint/mint-functions";
 
 export class TapisJobSubscriptionService {

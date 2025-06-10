@@ -19,12 +19,12 @@ import {
     DataResource,
     Variable,
     MintPermission,
-    Execution_Result
-} from "../mint/mint-types";
+    Execution_Result,
+    Region
+} from "@/classes/mint/mint-types";
 
 import * as crypto from "crypto";
-import { Region } from "../mint/mint-types";
-import { KeycloakAdapter } from "../../config/keycloak-adapter";
+import { KeycloakAdapter } from "@/config/keycloak-adapter";
 
 export const uuidv4 = () => {
     return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
@@ -100,6 +100,9 @@ export const variableFromGQL = (varobj: any) => {
 };
 
 export const eventToGQL = (event: MintEvent) => {
+    if (event.timestamp && typeof event.timestamp === "string") {
+        event.timestamp = new Date(event.timestamp);
+    }
     const eventobj = {
         event: event.event,
         userid: event.userid,
@@ -183,18 +186,17 @@ export const problemStatementUpdateToGQL = (problem_statement: ProblemStatementI
 export const problemStatementFromGQL = (problem: any): ProblemStatement => {
     const details = {
         id: problem["id"],
-        regionid: problem["region_id"],
         name: problem["name"],
         dates: {
             start_date: new Date(problem["start_date"]),
             end_date: new Date(problem["end_date"])
         },
-        events: problem["events"].map(eventFromGQL),
-        permissions: problem["permissions"].map(permissionFromGQL),
+        events: "events" in problem ? problem["events"].map(eventFromGQL) : [],
+        permissions: "permissions" in problem ? problem["permissions"].map(permissionFromGQL) : [],
         tasks: {},
         preview: problem["preview"]
     } as ProblemStatement;
-    if (problem["tasks"]) {
+    if (problem["tasks"] && problem["tasks"].length > 0) {
         problem["tasks"].forEach((task: any) => {
             const fbtask = taskFromGQL(task);
             fbtask.problem_statement_id = problem["id"];
@@ -212,7 +214,8 @@ export const taskToGQL = (task: Task, problem_statement: ProblemStatementInfo) =
         start_date: toDateString(task.dates.start_date),
         end_date: toDateString(task.dates.end_date),
         region_id: task.regionid,
-        response_variable_id: task.response_variables[0],
+        response_variable_id:
+            task.response_variables.length > 0 ? task.response_variables[0] : null,
         driving_variable_id: task.driving_variables.length > 0 ? task.driving_variables[0] : null,
         events: {
             data: task.events.map(eventToGQL)
@@ -266,8 +269,8 @@ export const taskFromGQL = (task: any): Task => {
         threads: {},
         driving_variables: task.driving_variable_id != null ? [task.driving_variable_id] : [],
         response_variables: task.response_variable_id != null ? [task.response_variable_id] : [],
-        events: task["events"].map(eventFromGQL),
-        permissions: task["permissions"].map(permissionFromGQL)
+        events: "events" in task ? task["events"].map(eventFromGQL) : [],
+        permissions: "permissions" in task ? task["permissions"].map(permissionFromGQL) : []
     } as Task;
     if (task["threads"]) {
         task["threads"].forEach((thread: any) => {
@@ -340,8 +343,8 @@ export const threadInfoFromGQL = (thread: any) => {
         driving_variables: thread.driving_variable_id != null ? [thread.driving_variable_id] : [],
         response_variables:
             thread.response_variable_id != null ? [thread.response_variable_id] : [],
-        events: thread["events"].map(eventFromGQL),
-        permissions: thread["permissions"].map(permissionFromGQL)
+        events: "events" in thread ? thread["events"].map(eventFromGQL) : [],
+        permissions: "permissions" in thread ? thread["permissions"].map(permissionFromGQL) : []
     } as ThreadInfo;
 };
 

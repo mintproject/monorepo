@@ -34,7 +34,7 @@ import {
 
 import fs from "fs-extra";
 
-import { DEVMODE } from "../../config/app";
+import { DEVMODE } from "@/config/app";
 import { registerDataset } from "./data-catalog-functions";
 
 export const saveAndRunExecutionsLocally = async (
@@ -108,8 +108,8 @@ export const saveAndRunExecutionsForModelLocally = async (
             if (!DEVMODE) await setThreadModelExecutionSummary(thread_model_id, summary);
 
             // Load the component model
-            console.log("Loading model.. "+model.code_url);
-            
+            console.log("Loading model.. " + model.code_url);
+
             const component = await loadModelWCM(model.code_url, model, prefs);
 
             // Delete existing thread execution ids
@@ -371,16 +371,16 @@ export const registerExecutionOutputsInCatalog = async (
             // Copy any input's spatial/temporal input (if any)
             let spatial = null;
             let temporal = {};
-            for(let inputid in execution.bindings) {
+            for (let inputid in execution.bindings) {
                 let input = execution.bindings[inputid];
-                if(input["spatial_coverage"]) {
-                    spatial = JSON.stringify(input["spatial_coverage"])
+                if (input["spatial_coverage"]) {
+                    spatial = JSON.stringify(input["spatial_coverage"]);
                 }
-                if(input["start_date"] && input["end_date"]) {
+                if (input["start_date"] && input["end_date"]) {
                     temporal = {
                         start_date: input["start_date"],
                         end_date: input["end_date"]
-                    }
+                    };
                 }
             }
 
@@ -417,7 +417,7 @@ export const registerExecutionOutputsInCatalog = async (
                             url: "",
                             type: ""
                         }
-                    } as Dataset
+                    } as Dataset;
 
                     promises.push(registerDataset(ds, prefs));
                 }

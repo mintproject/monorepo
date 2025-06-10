@@ -1,12 +1,12 @@
-import { getThread } from "../../../classes/graphql/graphql_functions";
-import { Thread } from "../../../classes/mint/mint-types";
+import { getThread } from "@/classes/graphql/graphql_functions";
+import { Thread } from "@/classes/mint/mint-types";
+import { fetchMintConfig } from "@/classes/mint/mint-functions";
+import { KeycloakAdapter } from "@/config/keycloak-adapter";
+import { createResponse } from "./util";
 import {
     saveAndRunExecutionsLocally,
     deleteExecutableCacheLocally
-} from "../../../classes/mint/mint-local-functions";
-import { fetchMintConfig } from "../../../classes/mint/mint-functions";
-import { KeycloakAdapter } from "../../../config/keycloak-adapter";
-import { createResponse } from "./util";
+} from "@/classes/mint/mint-local-functions";
 
 const executionsLocalService = {
     async submitExecution(threadmodel: any) {

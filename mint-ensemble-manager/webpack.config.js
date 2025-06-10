@@ -1,3 +1,5 @@
+/* eslint-env node */
+/* eslint-disable @typescript-eslint/no-var-requires */
 const path = require("path");
 const NodemonPlugin = require("nodemon-webpack-plugin");
 const CopyWebpackPlugin = require("copy-webpack-plugin");
@@ -6,10 +8,15 @@ const NodeExternals = require("webpack-node-externals");
 module.exports = {
     mode: "development",
     target: "node",
+    devtool: "source-map",
     resolve: {
         extensions: [".js", ".json", ".ts", ".graphql"],
         alias: {
-            "@": path.resolve(__dirname, "src")
+            "@/api": path.resolve(__dirname, "src/api"),
+            "@/classes": path.resolve(__dirname, "src/classes"),
+            "@/config": path.resolve(__dirname, "src/config"),
+            "@/utils": path.resolve(__dirname, "src/utils"),
+            "@/interfaces": path.resolve(__dirname, "src/interfaces")
         }
     },
     entry: {
@@ -20,7 +27,8 @@ module.exports = {
         library: "ensemble-manager",
         libraryTarget: "umd",
         filename: "[name].js",
-        path: path.resolve(__dirname, "dist")
+        path: path.resolve(__dirname, "dist"),
+        devtoolModuleFilenameTemplate: "[absolute-resource-path]"
     },
     externals: [NodeExternals()],
     module: {
@@ -33,7 +41,15 @@ module.exports = {
             {
                 test: /\.ts$/,
                 exclude: /node_modules/,
-                loader: "ts-loader"
+                use: {
+                    loader: "ts-loader",
+                    options: {
+                        transpileOnly: false,
+                        compilerOptions: {
+                            sourceMap: true
+                        }
+                    }
+                }
             }
         ]
     },
@@ -44,16 +60,8 @@ module.exports = {
         new CopyWebpackPlugin({
             patterns: [
                 {
-                    from: "./src/api",
-                    to: "api"
-                },
-                {
-                    from: "./src/utils",
-                    to: "utils"
-                },
-                {
-                    from: "./src/config",
-                    to: "config"
+                    from: "./src/config/config.json",
+                    to: "config/config.json"
                 }
             ]
         })

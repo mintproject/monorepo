@@ -1,4 +1,4 @@
-import { Apps, Jobs } from "@mfosorio/tapis-typescript";
+import { Apps, Jobs } from "@tapis/tapis-typescript";
 import { DataResource, Model } from "@/classes/mint/mint-types";
 import { TapisComponentSeed } from "@/classes/tapis/typing";
 

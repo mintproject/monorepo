@@ -1,9 +1,9 @@
-import { Execution } from "../../../../classes/mint/mint-types";
+import { Execution } from "@/classes/mint/mint-types";
 import { TapisExecutionService } from "@/classes/tapis/adapters/TapisExecutionService";
 import { getTokenFromAuthorizationHeader } from "@/utils/authUtils";
 import { getConfiguration } from "@/classes/mint/mint-functions";
 import { ExecutionJob } from "@/interfaces/IExecutionService";
-import { Jobs } from "@mfosorio/tapis-typescript/dist";
+import { Jobs } from "@tapis/tapis-typescript/dist";
 export interface JobsService {
     webhookJobStatusChange(
         webHookEvent: any,

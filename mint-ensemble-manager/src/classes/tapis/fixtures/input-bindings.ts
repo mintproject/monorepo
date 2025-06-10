@@ -1,4 +1,4 @@
-import { InputBindings } from "../../mint/mint-types";
+import { InputBindings } from "@/classes/mint/mint-types";
 
 export default {
     "https://w3id.org/okn/i/mint/modflow_2005_BartonSprings_avg_Bas": {

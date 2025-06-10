@@ -1,7 +1,7 @@
-import MintOutputs from "./fixtures/getMintOutputByModel";
-import TapisOutputs from "./fixtures/getJobOutputsResult";
-import { matchTapisOutputsToMintOutputs } from "..";
-import { Jobs } from "@mfosorio/tapis-typescript";
+import MintOutputs from "@/classes/tapis/jobs/tests/fixtures/getMintOutputByModel";
+import TapisOutputs from "@/classes/tapis/jobs/tests/fixtures/getJobOutputsResult";
+import { matchTapisOutputsToMintOutputs } from "@/classes/tapis/jobs";
+import { Jobs } from "@tapis/tapis-typescript";
 
 it("Test matchTapisOutputsToMintOutputs", async () => {
     const files = TapisOutputs.result as Jobs.FileInfo[];

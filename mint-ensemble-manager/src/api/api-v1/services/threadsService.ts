@@ -1,5 +1,7 @@
 import {
     Thread,
+    Model,
+    DataResource,
     ProblemStatement,
     Task,
     Dataset,
@@ -10,9 +12,9 @@ import {
     IdMap,
     ProblemStatementEvent,
     TaskEvent
-} from "../../../classes/mint/mint-types";
-import { fetchModelFromCatalog } from "../../../classes/mint/model-catalog-functions";
-import { queryDatasetDetails } from "../../../classes/mint/data-catalog-functions";
+} from "@/classes/mint/mint-types";
+import { fetchModelFromCatalog } from "@/classes/mint/model-catalog-functions";
+import { queryDatasetDetails } from "@/classes/mint/data-catalog-functions";
 import {
     addProblemStatement,
     addTask,
@@ -26,11 +28,11 @@ import {
     setThreadData,
     setThreadModels,
     setThreadParameters
-} from "../../../classes/graphql/graphql_functions";
-import { getCreateEvent, uuidv4 } from "../../../classes/graphql/graphql_adapter";
-import { fetchMintConfig } from "../../../classes/mint/mint-functions";
+} from "@/classes/graphql/graphql_functions";
+import { getCreateEvent, uuidv4 } from "@/classes/graphql/graphql_adapter";
+import { fetchMintConfig } from "@/classes/mint/mint-functions";
 import { ModelConfigurationSetup } from "@mintproject/modelcatalog_client";
-import { KeycloakAdapter } from "../../../config/keycloak-adapter";
+import { KeycloakAdapter } from "@/config/keycloak-adapter";
 import { createResponse } from "./util";
 
 // ./api-v1/services/threadsService.js
@@ -41,7 +43,12 @@ function flatten(array) {
     else return [array[0]].concat(flatten(array.slice(1)));
 }
 
-const threadsService = {
+export interface ThreadsService {
+    getThread(thread_id: string): Promise<Thread>;
+    createThread(desc: any): Promise<any>;
+}
+
+const threadsService: ThreadsService = {
     async getThread(thread_id: string) {
         const mint_prefs = await fetchMintConfig();
         KeycloakAdapter.signIn(mint_prefs.graphql.username, mint_prefs.graphql.password);

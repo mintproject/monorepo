@@ -1,5 +1,5 @@
-import { getConfiguration } from "../classes/mint/mint-functions";
-import { User } from "../classes/mint/mint-types";
+import { getConfiguration } from "@/classes/mint/mint-functions";
+import { User } from "@/classes/mint/mint-types";
 
 const prefs = getConfiguration();
 

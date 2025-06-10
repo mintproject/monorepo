@@ -1,4 +1,4 @@
-import { createJobFileInputsFromSeed } from "../jobs";
+import { createJobFileInputsFromSeed } from "@/classes/tapis/adapters/jobs";
 import seeds from "./fixtures/seeds";
 import app from "./fixtures/app";
 import model from "./fixtures/model";

@@ -1,4 +1,4 @@
-import { IdNameObject, IdMap } from "../mint/mint-types";
+import { IdNameObject, IdMap } from "@/classes/mint/mint-types";
 
 /* Defining all Wings Types */
 export interface WingsTemplatePackage {
