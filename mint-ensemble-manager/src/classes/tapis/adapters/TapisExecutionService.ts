@@ -70,7 +70,7 @@ export class TapisExecutionService implements IExecutionService {
         console.log("Seeds", JSON.stringify(this.seeds));
         const promises = this.seeds.map(async (seed) => {
             console.log("Seed", JSON.stringify(seed));
-            const name = app.id + "-" + app.version + "-" + seed.execution.id;
+            const name = this.generateValidJobName(app, seed.execution.id);
             const description = "Job for " + model.name + " execution " + seed.execution.id;
             const jobRequest = this.jobService.createJobRequest(
                 app,
@@ -336,4 +336,31 @@ export class TapisExecutionService implements IExecutionService {
             this.jobsClient.getJobOutputDownload({ jobUuid: jobUuid, outputPath: outputPath })
         );
     };
+
+    private generateValidJobName(app: Apps.TapisApp, executionId: string): string {
+        const MAX_LENGTH = 64;
+        const SEPARATOR = "-";
+
+        // Start with the essential parts
+        const name = `${app.id}${SEPARATOR}${app.version}${SEPARATOR}${executionId}`;
+
+        // If we're under the limit, return as is
+        if (name.length <= MAX_LENGTH) {
+            return name;
+        }
+
+        // Calculate how much we need to trim
+        const excess = name.length - MAX_LENGTH;
+
+        // If executionId is long enough, trim it
+        if (executionId.length > excess) {
+            const trimmedExecutionId = executionId.slice(0, executionId.length - excess);
+            return `${app.id}${SEPARATOR}${app.version}${SEPARATOR}${trimmedExecutionId}`;
+        }
+
+        // If we still need to trim, start trimming from the app.id
+        const remainingExcess = excess - executionId.length;
+        const trimmedAppId = app.id.slice(0, app.id.length - remainingExcess);
+        return `${trimmedAppId}${SEPARATOR}${app.version}${SEPARATOR}${executionId}`;
+    }
 }
