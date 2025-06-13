@@ -1,7 +1,6 @@
 import { TapisExecutionService } from "@/classes/tapis/adapters/TapisExecutionService";
 import { getTokenFromAuthorizationHeader } from "@/utils/authUtils";
 import { getConfiguration } from "@/classes/mint/mint-functions";
-import { Execution_Result } from "@/classes/graphql/graph_typing";
 
 export interface ExecutionOutputsService {
     registerOutputs(executionId: string, authorization: string): Promise<any[]>;

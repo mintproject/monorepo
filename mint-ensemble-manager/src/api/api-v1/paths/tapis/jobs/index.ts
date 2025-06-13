@@ -36,7 +36,6 @@ export default function () {
             const job = await jobsService.submitJob(req.body, req.headers.authorization);
             return res.status(200).send({ message: "Job submitted", job });
         } catch (error) {
-            console.error(error);
             return res.status(500).send({ message: error.message });
         }
     });
@@ -70,7 +69,6 @@ export default function () {
                 status: job
             });
         } catch (error) {
-            console.error(error);
             return res.status(500).send({ message: error.message });
         }
     });

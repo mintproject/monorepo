@@ -34,6 +34,7 @@ import apiDocComponents from "@/api/api-doc";
 import tapisRouter from "@/api/api-v1/paths/tapis";
 import executionEnginesRouter from "@/api/api-v1/paths/executionEngines/tapis";
 import problemStatementsRouter from "@/api/api-v1/paths/problemStatements";
+import { getConfiguration } from "./classes/mint/mint-functions";
 
 // Main Express Server
 const app = express();
@@ -60,6 +61,10 @@ app.use(`/${version}/executionEngines`, executionEnginesRouter());
 app.use(`/${version}/tapis`, tapisRouter());
 app.use(`/${version}/problemStatements`, problemStatementsRouter());
 // Swagger-jsdoc setup
+//obtain server from the hosts headers
+
+const CONFIG_SERVERS = getConfiguration().openapi?.servers || [];
+
 const swaggerOptions = {
     definition: {
         openapi: "3.0.0",
@@ -67,7 +72,7 @@ const swaggerOptions = {
             title: "Mint Ensemble Manager API",
             version: "1.0.0"
         },
-        servers: [{ url: "http://localhost:3000/v1" }, { url: "https://ensemble.mint.isi.edu/v1" }],
+        servers: CONFIG_SERVERS,
         components: apiDocComponents.components
     },
     apis: ["./src/api/api-v1/paths/*.ts", "./src/api/api-v1/paths/**/*.ts", "./src/api/api-doc.ts"]

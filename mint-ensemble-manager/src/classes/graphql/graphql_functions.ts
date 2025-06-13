@@ -90,7 +90,11 @@ import {
 } from "./graphql_adapter";
 
 import { Md5 } from "ts-md5";
-import { Execution_Result_Insert_Input } from "./graph_typing";
+import {
+    Execution_Result_Insert_Input,
+    Resource_Constraint,
+    Resource_Update_Column
+} from "./graph_typing";
 import { KeycloakAdapter } from "@/config/keycloak-adapter";
 import { InternalServerError, UnauthorizedError } from "../common/errors";
 
@@ -562,9 +566,13 @@ export const updateExecutionStatusAndResultsv2 = (execution: Execution) => {
                         id: result.resource.id,
                         name: result.resource.name,
                         url: result.resource.url
+                    },
+                    on_conflict: {
+                        constraint: Resource_Constraint.ResourcePkey,
+                        update_columns: [Resource_Update_Column.Name, Resource_Update_Column.Url]
                     }
                 },
-                model_io_id: result.model_io.id
+                model_io_id: result.model_io?.id
             };
             return resource;
         }
@@ -577,6 +585,8 @@ export const updateExecutionStatusAndResultsv2 = (execution: Execution) => {
         status: execution.status,
         results: resultsData
     };
+    console.log(JSON.stringify(variables, null, 2));
+    console.log(updateExecutionStatusResultsGQL);
 
     return APOLLO_CLIENT.mutate({
         mutation: updateExecutionStatusResultsGQL,

@@ -241,7 +241,18 @@ export default [
                 }
             ]
         },
-        parameters: {},
-        paramtypes: {}
+        parameters: {
+            "https://w3id.org/okn/i/mint/modflow_2005_BartonSprings_avg_IgnitionLongitude": "-90",
+            "https://w3id.org/okn/i/mint/modflow_2005_BartonSprings_avg_IgnitionLatitude": "20",
+            "https://w3id.org/okn/i/mint/modflow_2005_BartonSprings_avg_SimulationStopTime": "10000"
+        },
+        paramtypes: {
+            "https://w3id.org/okn/i/mint/modflow_2005_BartonSprings_avg_IgnitionLongitude":
+                "https://w3id.org/wings/export/MINT#MODFLOWIgnitionLongitude",
+            "https://w3id.org/okn/i/mint/modflow_2005_BartonSprings_avg_IgnitionLatitude":
+                "https://w3id.org/wings/export/MINT#MODFLOWIgnitionLatitude",
+            "https://w3id.org/okn/i/mint/modflow_2005_BartonSprings_avg_SimulationStopTime":
+                "https://w3id.org/wings/export/MINT#MODFLOWSimulationStopTime"
+        }
     }
 ];

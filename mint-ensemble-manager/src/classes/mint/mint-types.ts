@@ -568,7 +568,7 @@ export interface Execution {
 
 export type Execution_Result = {
     execution?: Execution;
-    model_io: ModelIO;
+    model_io: ModelIO | null;
     resource: DataResource;
 };
 

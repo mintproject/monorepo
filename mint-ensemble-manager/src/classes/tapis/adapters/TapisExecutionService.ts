@@ -286,8 +286,20 @@ export class TapisExecutionService implements IExecutionService {
         jobUuid: string,
         execution: Execution
     ): Promise<Execution_Result[]> {
-        const { result: files } = await this.getJobOutputList(jobUuid, "");
+        const { result: files1 } = await this.getJobOutputList(jobUuid, "");
+        const { result: files2 } = await this.getJobOutputList(jobUuid, "outputs");
+        const files = [...files1, ...files2];
         const mintOutputs = await getModelOutputsByModelId(execution.modelid);
+
+        if (mintOutputs.length === 0 && files.length === 0) {
+            throw new NotFoundError(
+                "No outputs found and no mint outputs found for model " + execution.modelid
+            );
+        } else if (mintOutputs.length === 0) {
+            throw new NotFoundError("No mint outputs found for model " + execution.modelid);
+        } else if (files.length === 0) {
+            throw new NotFoundError("No files found for model " + execution.modelid);
+        }
         return matchTapisOutputsToMintOutputs(files, mintOutputs);
     }
 
@@ -309,9 +321,14 @@ export class TapisExecutionService implements IExecutionService {
         jobUuid: string,
         outputPath: string
     ): Promise<Jobs.RespGetJobOutputList> => {
-        return await errorDecoder<Jobs.RespGetJobOutputList>(() =>
-            this.jobsClient.getJobOutputList({ jobUuid: jobUuid, outputPath: outputPath })
-        );
+        try {
+            return await errorDecoder<Jobs.RespGetJobOutputList>(() =>
+                this.jobsClient.getJobOutputList({ jobUuid: jobUuid, outputPath: outputPath })
+            );
+        } catch (error) {
+            console.error("Error getting job output list", error);
+            return { result: [] };
+        }
     };
 
     getJobOutputDownloadFile = async (jobUuid: string, outputPath: string): Promise<Blob> => {

@@ -31,6 +31,20 @@ export class TapisJobService {
         description: string
     ): Jobs.ReqSubmitJob => {
         const jobFileInputs = this.createJobFileInputsFromSeed(seed, app, model);
+        const jobParameterSet: Jobs.JobParameterSet = {
+            appArgs: this.getAppArgs(seed, app, model),
+            containerArgs: [],
+            schedulerOptions: [
+                {
+                    name: "TACC Allocation",
+                    description: "The TACC allocation associated with this job execution",
+                    include: true,
+                    arg: `-A ${TapisJobService.ALLOCATION}`
+                }
+            ],
+            envVariables: []
+        };
+
         const request: Jobs.ReqSubmitJob = {
             name: name,
             description: description,
@@ -46,25 +60,43 @@ export class TapisJobService {
             archiveOnAppError: true,
             execSystemId: TapisJobService.SYSTEM_ID,
             execSystemLogicalQueue: TapisJobService.SYSTEM_LOGICAL_QUEUE,
-            parameterSet: {
-                appArgs: [],
-                containerArgs: [],
-                schedulerOptions: [
-                    {
-                        name: "TACC Allocation",
-                        description: "The TACC allocation associated with this job execution",
-                        include: true,
-                        arg: `-A ${TapisJobService.ALLOCATION}`
-                    }
-                ],
-                envVariables: []
-            }
+            parameterSet: jobParameterSet
         };
 
         return request;
     };
 
-    private createJobFileInputsFromSeed(
+    public createJobParameterSetFromSeed(
+        seed: TapisComponentSeed,
+        app: Apps.TapisApp,
+        model: Model
+    ): Jobs.JobParameterSet {
+        return {
+            appArgs: this.getAppArgs(seed, app, model)
+        };
+    }
+
+    public getAppArgs(
+        seed: TapisComponentSeed,
+        app: Apps.TapisApp,
+        model: Model
+    ): Jobs.JobArgSpec[] {
+        const jobArgs = app.jobAttributes;
+        return jobArgs.parameterSet.appArgs.flatMap((parameterSet) => {
+            const modelParameter = model.input_parameters.find(
+                (parameter) => parameter.name === parameterSet.name
+            );
+            if (!modelParameter) {
+                throw new Error(`Model parameter not found for ${parameterSet.name}`);
+            }
+            return {
+                name: parameterSet.name,
+                arg: seed.parameters[modelParameter.id]
+            } as Jobs.JobArgSpec;
+        });
+    }
+
+    public createJobFileInputsFromSeed(
         seed: TapisComponentSeed,
         app: Apps.TapisApp,
         model: Model

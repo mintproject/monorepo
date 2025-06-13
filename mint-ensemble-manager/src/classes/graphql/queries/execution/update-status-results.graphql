@@ -5,10 +5,13 @@ mutation update_execution_status_results(
     $run_progress: float8!
     $results: [execution_result_insert_input!]!
 ) {
-    delete_execution_result(where: { execution_id: { _eq: $id } }) {
-        affected_rows
-    }
-    insert_execution_result(objects: $results) {
+    insert_execution_result(
+        objects: $results
+        on_conflict: {
+            constraint: execution_result_pkey
+            update_columns: [execution_id, resource_id, model_io_id]
+        }
+    ) {
         affected_rows
     }
     update_execution_by_pk(

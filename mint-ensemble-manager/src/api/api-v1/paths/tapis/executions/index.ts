@@ -40,7 +40,7 @@ export default function () {
         } catch (error) {
             if (error instanceof NotFoundError) {
                 res.status(404).json({
-                    message: "Execution not found"
+                    message: error.message
                 });
             } else if (error instanceof BadRequestError) {
                 res.status(400).json({

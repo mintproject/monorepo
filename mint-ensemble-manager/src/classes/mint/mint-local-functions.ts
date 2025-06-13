@@ -242,11 +242,14 @@ export const deleteModelInputCacheLocally = (
 
 export const deleteModelCache = (model: Model, prefs: MintPreferences) => {
     // Delete cached model directory and zip file
-    const modeldir = getModelCacheDirectory(model.code_url, prefs);
-    if (modeldir != null) {
-        console.log("Deleting model directory: " + modeldir);
-        fs.remove(modeldir);
-        fs.remove(modeldir + ".zip");
+
+    if (prefs.execution_engine === "localex") {
+        const modeldir = getModelCacheDirectory(model.code_url, prefs);
+        if (modeldir != null) {
+            console.log("Deleting model directory: " + modeldir);
+            fs.remove(modeldir);
+            fs.remove(modeldir + ".zip");
+        }
     }
 
     deleteModel(model.id);

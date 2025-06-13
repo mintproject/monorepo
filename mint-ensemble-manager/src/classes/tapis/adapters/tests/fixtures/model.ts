@@ -19,6 +19,23 @@ export default {
         "https://github.com/mintproject/MINT-WorkflowDomain/raw/master/WINGSWorkflowComponents/MODFLOW2005/MODFLOW2005.zip",
     software_image: "mintproject/modflow-2005:latest",
     __typename: "model",
+    input_parameters: [
+        {
+            id: "https://w3id.org/okn/i/mint/modflow_2005_BartonSprings_avg_IgnitionLongitude",
+            type: "https://w3id.org/wings/export/MINT#MODFLOWIgnitionLongitude",
+            name: "Ignition Longitude"
+        },
+        {
+            id: "https://w3id.org/okn/i/mint/modflow_2005_BartonSprings_avg_IgnitionLatitude",
+            type: "https://w3id.org/wings/export/MINT#MODFLOWIgnitionLatitude",
+            name: "Ignition Latitude"
+        },
+        {
+            id: "https://w3id.org/okn/i/mint/modflow_2005_BartonSprings_avg_SimulationStopTime",
+            type: "https://w3id.org/wings/export/MINT#MODFLOWSimulationStopTime",
+            name: "Simulation Stop Time"
+        }
+    ],
     input_files: [
         {
             id: "https://w3id.org/okn/i/mint/modflow_2005_BartonSprings_avg_Bas",
@@ -251,6 +268,5 @@ export default {
             position: 4,
             variables: ["groundwater_surface__reduction_of_elevation"]
         }
-    ],
-    input_parameters: []
+    ]
 };

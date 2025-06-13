@@ -31,7 +31,29 @@ export default {
         mpiCmd: null,
         cmdPrefix: "mkdir $PWD/work $PWD/home $PWD/scratch;",
         parameterSet: {
-            appArgs: [],
+            appArgs: [
+                {
+                    arg: "-104.0034",
+                    name: "Ignition Longitude",
+                    description: "What is the Longitude of the ignition you want modelled?",
+                    inputMode: "REQUIRED",
+                    notes: {}
+                },
+                {
+                    arg: "30.633154",
+                    name: "Ignition Latitude",
+                    description: "What is the Latitude of the ignition you want modelled?",
+                    inputMode: "REQUIRED",
+                    notes: {}
+                },
+                {
+                    arg: "-104.0034",
+                    name: "Simulation Stop Time",
+                    description: "Simulation stop time (seconds)",
+                    inputMode: "REQUIRED",
+                    notes: {}
+                }
+            ],
             schedulerOptions: [
                 {
                     name: "TACC Scheduler Profile",
