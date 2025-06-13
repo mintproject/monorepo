@@ -30,6 +30,7 @@ import listProblemStatementsGQL from "./queries/problem-statement/list.graphql";
 import newProblemStatementGQL from "./queries/problem-statement/new.graphql";
 import newTaskGQL from "./queries/task/new.graphql";
 import newThreadGQL from "./queries/thread/new.graphql";
+import handleFailedConnectionEnsembleGQL from "./queries/execution/handle-failed-connection-ensemble.graphql";
 
 import updateProblemStatementGQL from "./queries/problem-statement/update.graphql";
 import updateTaskGQL from "./queries/task/update.graphql";
@@ -52,6 +53,7 @@ import getRegionDetailsGQL from "./queries/region/get.graphql";
 
 import updateExecutionSummary from "./queries/execution/update-execution-summary.graphql";
 import incFailedRunsGQL from "./queries/execution/increment-failed-runs.graphql";
+import subtractSubmittedRunsGQL from "./queries/execution/subtract-submitted-runs.graphql";
 import incSuccessfulRunsGQL from "./queries/execution/increment-successful-runs.graphql";
 import incSubmittedRunsGQL from "./queries/execution/increment-submitted-runs.graphql";
 import toggleThreadModelExecutionSummaryPublishingGQL from "./queries/execution/toggle-summary-publishing.graphql";
@@ -93,7 +95,9 @@ import { Md5 } from "ts-md5";
 import {
     Execution_Result_Insert_Input,
     Resource_Constraint,
-    Resource_Update_Column
+    Resource_Update_Column,
+    Thread_Model_Execution_Summary_Insert_Input,
+    Thread_Provenance_Insert_Input
 } from "./graph_typing";
 import { KeycloakAdapter } from "@/config/keycloak-adapter";
 import { InternalServerError, UnauthorizedError } from "../common/errors";
@@ -735,6 +739,34 @@ export const incrementThreadModelFailedRuns = (thread_model_id: string, num: num
             threadModelId: thread_model_id,
             inc: num
         }
+    });
+};
+
+export const decrementThreadModelSubmittedRuns = (thread_model_id: string) => {
+    const APOLLO_CLIENT = GraphQL.instance(KeycloakAdapter.getUser());
+    return APOLLO_CLIENT.mutate({
+        mutation: subtractSubmittedRunsGQL,
+        variables: {
+            threadModelId: thread_model_id
+        }
+    });
+};
+
+export const handleFailedConnectionEnsemble = (
+    thread_id: string,
+    event: Thread_Provenance_Insert_Input,
+    summaries: Thread_Model_Execution_Summary_Insert_Input[]
+) => {
+    const APOLLO_CLIENT = GraphQL.instance(KeycloakAdapter.getUser());
+    console.log("Handling failed connection ensemble", thread_id, event, summaries);
+
+    console.log(JSON.stringify(handleFailedConnectionEnsembleGQL, null, 2));
+    console.log(
+        JSON.stringify({ threadId: thread_id, event: event, summaries: summaries }, null, 2)
+    );
+    return APOLLO_CLIENT.mutate({
+        mutation: handleFailedConnectionEnsembleGQL,
+        variables: { threadId: thread_id, event: event, summaries: summaries }
     });
 };
 

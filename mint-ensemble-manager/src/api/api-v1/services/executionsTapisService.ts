@@ -32,7 +32,8 @@ const executionsTapisService = {
                 executionCreation.model,
                 executionCreation.threadRegion,
                 executionCreation.component,
-                thread.id
+                thread.id,
+                threadmodel.thread_id
             );
             console.log("jobIds", jobIds);
             return { status: 202, data: thread };
