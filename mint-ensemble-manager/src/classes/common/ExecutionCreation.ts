@@ -22,6 +22,8 @@ import {
     ThreadModelMap
 } from "@/classes/mint/mint-types";
 import { TapisComponent } from "@/classes/tapis/typing";
+import { IExecutionService } from "@/interfaces/IExecutionService";
+import { HttpError } from "./errors";
 
 const MAX_CONFIGURATIONS = 1000000;
 // Add interface for IO/Parameter details
@@ -43,26 +45,36 @@ export class ExecutionCreation {
     public model: Model;
     public component: TapisComponent;
     public token: string | undefined;
+    public executionService: IExecutionService;
 
-    constructor(thread: Thread, modelid: string, token?: string) {
+    constructor(
+        thread: Thread,
+        modelid: string,
+        executionService: IExecutionService,
+        token?: string
+    ) {
         this.thread = thread;
         this.modelid = modelid;
         this.executionToBeRun = [];
         this.token = token;
+        this.executionService = executionService;
+    }
+
+    private async verifyComponents(): Promise<void> {
+        for (const modelid in this.thread.model_ensembles) {
+            const component = await this.getModelDetails(this.thread.models[modelid]);
+            await this.executionService.verifyComponent(component);
+        }
     }
 
     public async prepareExecutions(): Promise<boolean> {
-        try {
-            for (const pmodelid in this.thread.model_ensembles) {
-                if (!this.modelid || this.modelid === pmodelid) {
-                    return await this.prepareModelExecutions(pmodelid);
-                }
+        await this.verifyComponents();
+        for (const pmodelid in this.thread.model_ensembles) {
+            if (!this.modelid || this.modelid === pmodelid) {
+                return await this.prepareModelExecutions(pmodelid);
             }
-            return true;
-        } catch (error) {
-            console.error("Error preparing executions:", error);
-            throw error;
         }
+        return true;
     }
 
     public async prepareModelExecutions(modelid: string): Promise<boolean> {
@@ -184,17 +196,9 @@ export class ExecutionCreation {
         let comp: TapisComponent;
         const configuration = getConfiguration();
         if (configuration.execution_engine === "tapis") {
-            try {
-                comp = await this.loadComponentFromTapis(model.code_url);
-            } catch (e) {
-                throw new Error(`Error loading component ${model.code_url}`);
-            }
+            comp = await this.loadComponentFromTapis(model.code_url);
         } else {
-            try {
-                comp = await this.loadComponent(model.code_url);
-            } catch (e) {
-                throw new Error(`Error loading component ${model.code_url}`);
-            }
+            comp = await this.loadComponent(model.code_url);
         }
         comp.inputs = [];
         comp.outputs = [];
@@ -229,35 +233,46 @@ export class ExecutionCreation {
         if (response.ok) {
             const { result } = await response.json();
             return result as TapisComponent;
-        } else if (response.status === 401) {
-            throw new Error("Unauthorized");
+        } else if (response.status === 404) {
+            throw new HttpError(
+                404,
+                `Component not found: ${component_url} error: ${response.statusText}`
+            );
+        } else if (response.status === 403) {
+            throw new HttpError(403, `Forbidden: ${component_url} error: ${response.statusText}`);
         } else {
-            throw new Error(`Response status not ok: ${component_url}`);
+            throw new HttpError(
+                response.status,
+                `Response status not ok: ${component_url} error: ${response.statusText}`
+            );
         }
     }
 
     private async loadComponent(component_url: string): Promise<TapisComponent> {
-        try {
-            // If token is provided, use it to fetch the component
-            const response = await fetch(component_url, {
-                headers: {
-                    "X-Tapis-Token": `${this.token}`
-                }
-            });
-            if (response.ok) {
-                const data = await response.text();
-                const component = JSON.parse(data) as TapisComponent;
-                console.log(component);
-                if (component.id && component.version) {
-                    return component;
-                }
-                console.error(`Invalid component: ${component_url}`);
-                throw new Error("Invalid component");
+        // If token is provided, use it to fetch the component
+        const response = await fetch(component_url, {
+            headers: {
+                "X-Tapis-Token": `${this.token}`
             }
-            throw new Error(`Response status not ok: ${component_url}`);
-        } catch (e) {
-            console.log(e);
-            throw Error(`Error loading component ${component_url}`);
+        });
+        if (response.ok) {
+            const data = await response.text();
+            const component = JSON.parse(data) as TapisComponent;
+            console.log(component);
+            if (component.id && component.version) {
+                return component;
+            }
+            console.error(`Invalid component: ${component_url}`);
+            throw new Error("Invalid component");
+        } else if (response.status === 404) {
+            throw new HttpError(404, `Component not found: ${component_url}`);
+        } else if (response.status === 403) {
+            throw new HttpError(403, `Forbidden: ${component_url}`);
+        } else {
+            throw new HttpError(
+                response.status,
+                `Response status not ok: ${component_url} error: ${response.statusText}`
+            );
         }
     }
 

@@ -2,6 +2,7 @@
 
 import { Router } from "express";
 import executionsTapisService from "@/api/api-v1/services/executionsTapisService";
+import { HttpError } from "@/classes/common/errors";
 
 export default function () {
     const router = Router();
@@ -41,8 +42,11 @@ export default function () {
             );
             res.status(response.status).json(response.data);
         } catch (error) {
-            console.log(error);
-            res.status(500).json({ error: error.message });
+            if (error instanceof HttpError) {
+                res.status(error.statusCode).json({ error: error.message });
+            } else {
+                res.status(500).json({ error: error.message });
+            }
         }
     });
 

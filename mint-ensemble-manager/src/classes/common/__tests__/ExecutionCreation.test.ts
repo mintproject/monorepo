@@ -4,6 +4,7 @@ import { getThreadMock } from "@/classes/common/__tests__/mocks/getThreadMock";
 import { getRegionMockTexas } from "@/classes/common/__tests__/mocks/getRegionMockTexas";
 import { threadFromGQL } from "@/classes/graphql/graphql_adapter";
 import { Region } from "@/classes/mint/mint-types";
+import { MockExecutionService } from "./mocks/MockExecutionService";
 // Mock all the imported functions
 jest.mock("@/classes/graphql/graphql_functions");
 
@@ -12,7 +13,7 @@ describe("ExecutionCreation", () => {
 
     beforeEach(() => {
         // Setup mock thread data
-
+        const mockExecutionService = new MockExecutionService(["mock-job-1", "mock-job-2"]);
         // Setup mock responses
         (getRegionDetails as jest.Mock).mockResolvedValue(getRegionMockTexas as unknown as Region);
         (listSuccessfulExecutionIds as jest.Mock).mockResolvedValue([]);
@@ -20,7 +21,8 @@ describe("ExecutionCreation", () => {
         const thread = threadFromGQL(getThreadMock.data.thread_by_pk);
         executionCreation = new ExecutionCreation(
             thread,
-            "https://w3id.org/okn/i/mint/d2792424-fb9d-461c-9470-4bc87ca2f05f"
+            "https://w3id.org/okn/i/mint/d2792424-fb9d-461c-9470-4bc87ca2f05f",
+            mockExecutionService
         );
     });
 

@@ -30,4 +30,5 @@ export interface IExecutionService {
         threadId: string,
         threadModelId: string
     ): Promise<string[]>;
+    verifyComponent(component: TapisComponent): void;
 }

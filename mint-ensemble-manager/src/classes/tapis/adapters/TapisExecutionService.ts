@@ -58,6 +58,10 @@ export class TapisExecutionService implements IExecutionService {
         this.jobSubscriptionService = new TapisJobSubscriptionService(this.subscriptionsClient);
     }
 
+    async verifyComponent(component: TapisComponent): Promise<void> {
+        await this.loadTapisApp(component);
+    }
+
     async submitExecutions(
         executions: Execution[],
         model: Model,
