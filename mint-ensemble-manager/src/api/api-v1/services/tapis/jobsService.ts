@@ -12,6 +12,7 @@ export interface JobsService {
     ): Promise<Execution | undefined>;
     get(jobId: string, authorizationHeader: string): Promise<ExecutionJob>;
     submitJob(job: Jobs.ReqSubmitJob, authorizationHeader: string): Promise<string>;
+    getLogs(jobId: string, authorizationHeader: string): Promise<string>;
 }
 
 const jobsService = {
@@ -48,6 +49,13 @@ const jobsService = {
 
         const executionService = new TapisExecutionService(access_token, prefs.tapis.basePath);
         return await executionService.submitJob(job);
+    },
+
+    async getLogs(jobId: string, authorizationHeader: string): Promise<string> {
+        const access_token = this.getAccessToken(authorizationHeader);
+        const prefs = getConfiguration();
+        const executionService = new TapisExecutionService(access_token, prefs.tapis.basePath);
+        return await executionService.getLog(jobId);
     }
 };
 

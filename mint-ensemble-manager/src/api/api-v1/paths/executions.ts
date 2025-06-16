@@ -2,6 +2,8 @@
 
 import { Router } from "express";
 import executionsService from "@/api/api-v1/services/executionsService";
+import logsService from "../services/logsService";
+import { HttpError } from "@/classes/common/errors";
 
 export default function (service: typeof executionsService) {
     const router = Router();
@@ -38,6 +40,46 @@ export default function (service: typeof executionsService) {
             }
         } catch (error) {
             res.status(500).json({ result: "error", message: error.message });
+        }
+    });
+
+    /**
+     * @swagger
+     * /executions/{executionId}/logs:
+     *   get:
+     *     summary: Get Execution Logs
+     *     description: Get the logs of an execution.
+     *     tags: [Executions]
+     *     security:
+     *       - BearerAuth: []
+     *       - oauth2: []
+     *     parameters:
+     *       - in: path
+     *         name: executionId
+     *         example: "9bc5bbfb-d76c-4d0b-87cc-f89e945a062e-007"
+     *     responses:
+     *       200:
+     *         description: Execution Logs
+     *         content:
+     *           text/plain:
+     *             schema:
+     *               type: string
+     *       default:
+     *         description: An error occurred
+     */
+    router.get("/:executionId/logs", async (req, res) => {
+        try {
+            const log = await logsService.fetchLog(
+                req.params.executionId,
+                req.headers.authorization
+            );
+            res.status(200).send(log);
+        } catch (error) {
+            if (error instanceof HttpError) {
+                res.status(error.statusCode).json({ result: "error", message: error.message });
+            } else {
+                res.status(500).json({ result: "error", message: error.message });
+            }
         }
     });
 

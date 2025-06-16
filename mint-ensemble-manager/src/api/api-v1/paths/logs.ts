@@ -2,6 +2,7 @@
 
 import { Router } from "express";
 import logsService from "@/api/api-v1/services/logsService";
+import { HttpError } from "@/classes/common/errors";
 
 export default function (service: typeof logsService) {
     const router = Router();
@@ -38,7 +39,11 @@ export default function (service: typeof logsService) {
             const result = await service.fetchLog(ensembleId, req.headers.authorization);
             res.status(200).json(result);
         } catch (error) {
-            res.status(500).json({ result: "error", message: error.message });
+            if (error instanceof HttpError) {
+                res.status(error.statusCode).json({ error: error.message });
+            } else {
+                res.status(500).json({ error: error.message });
+            }
         }
     });
 

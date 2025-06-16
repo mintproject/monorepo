@@ -2,6 +2,7 @@
 
 import { Router } from "express";
 import jobsService from "@/api/api-v1/services/tapis/jobsService";
+import { HttpError } from "@/classes/common/errors";
 
 export default function () {
     const router = Router();
@@ -70,6 +71,44 @@ export default function () {
             });
         } catch (error) {
             return res.status(500).send({ message: error.message });
+        }
+    });
+
+    /**
+     * @swagger
+     * /tapis/jobs/{id}/logs:
+     *   get:
+     *     summary: Get Job Logs
+     *     description: Get the logs of a job.
+     *     operationId: tapisGetJobLogs
+     *     tags: [Tapis]
+     *     security:
+     *       - BearerAuth: []
+     *       - oauth2: []
+     *     parameters:
+     *       - in: path
+     *         name: id
+     *         example: "9bc5bbfb-d76c-4d0b-87cc-f89e945a062e-007"
+     *     responses:
+     *       200:
+     *         description: Job Logs
+     *         content:
+     *           text/plain:
+     *             schema:
+     *               type: string
+     *       default:
+     *         description: An error occurred
+     */
+    router.get("/:id/logs", async (req, res) => {
+        try {
+            const log = await jobsService.getLogs(req.params.id, req.headers.authorization);
+            res.status(200).send(log);
+        } catch (error) {
+            if (error instanceof HttpError) {
+                return res.status(error.statusCode).send({ message: error.message });
+            } else {
+                return res.status(500).send({ message: error.message });
+            }
         }
     });
 

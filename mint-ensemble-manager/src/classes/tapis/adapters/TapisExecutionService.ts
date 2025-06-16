@@ -25,6 +25,7 @@ import { matchTapisOutputsToMintOutputs } from "@/classes/tapis/jobs";
 import { Status } from "@/interfaces/IExecutionService";
 
 export class TapisExecutionService implements IExecutionService {
+    private readonly LOG_PATH = "tapisjob.out";
     private appsClient: Apps.ApplicationsApi;
     private jobsClient: Jobs.JobsApi;
     private subscriptionsClient: Jobs.SubscriptionsApi;
@@ -171,6 +172,20 @@ export class TapisExecutionService implements IExecutionService {
             model_ensemble_id
         );
         return execution;
+    }
+
+    async getLog(jobId: string): Promise<string> {
+        const history = await this.getJobHistory(jobId);
+        try {
+            const file = await this.getJobOutputDownloadFile(jobId, this.LOG_PATH);
+            return await file.text();
+        } catch (error) {
+            let log = "";
+            for (const result of history.result) {
+                log += `[${result.created} - ${result.event}] ${result.eventDetail}\n`;
+            }
+            return log;
+        }
     }
 
     async getJobHistory(jobId: string): Promise<Jobs.RespJobHistory> {
@@ -375,14 +390,9 @@ export class TapisExecutionService implements IExecutionService {
         jobUuid: string,
         outputPath: string
     ): Promise<Jobs.RespGetJobOutputList> => {
-        try {
-            return await errorDecoder<Jobs.RespGetJobOutputList>(() =>
-                this.jobsClient.getJobOutputList({ jobUuid: jobUuid, outputPath: outputPath })
-            );
-        } catch (error) {
-            console.error("Error getting job output list", error);
-            return { result: [] };
-        }
+        return await errorDecoder<Jobs.RespGetJobOutputList>(() =>
+            this.jobsClient.getJobOutputList({ jobUuid: jobUuid, outputPath: outputPath })
+        );
     };
 
     getJobOutputDownloadFile = async (jobUuid: string, outputPath: string): Promise<Blob> => {
