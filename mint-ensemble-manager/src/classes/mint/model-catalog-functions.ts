@@ -48,3 +48,26 @@ export const fetchModelFromCatalog = (
         });
     });
 };
+
+/**
+ * Fetches a model configuration setup from the catalog based on response variables and model ID
+ * @param url - The URL of the model configuration setup
+ * @returns Promise resolving to the model configuration setup
+ * @throws Error if model is not found or API request fails
+ */
+export const fetchModelConfigurationSetup = async (
+    url: string
+): Promise<ModelConfigurationSetup> => {
+    try {
+        // Fetch detailed setup information
+        const detailedSetup = (await rp.get({
+            url: url,
+            json: true
+        })) as ModelConfigurationSetup;
+
+        return detailedSetup;
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+        throw new Error(`Failed to fetch model configuration: ${errorMessage}`);
+    }
+};

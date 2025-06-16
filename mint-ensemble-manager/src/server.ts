@@ -49,6 +49,7 @@ app.use(bodyParser.json());
 app.use(cors());
 
 // Register routes
+app.use(`/${version}/problemStatements`, problemStatementsRouter());
 app.use(`/${version}/executionQueue`, executionQueueRoutes(v1ExecutionQueueService));
 app.use(`/${version}/executions`, executionsRoutes(v1ExecutionsService));
 app.use(`/${version}/executionsLocal`, executionsLocalRoutes(v1ExecutionsLocalService));
@@ -59,7 +60,6 @@ app.use(`/${version}/registration`, registrationRoutes(v1RegistrationService));
 app.use(`/${version}/threads`, threadsRoutes(v1ThreadsService));
 app.use(`/${version}/executionEngines`, executionEnginesRouter());
 app.use(`/${version}/tapis`, tapisRouter());
-app.use(`/${version}/problemStatements`, problemStatementsRouter());
 // Swagger-jsdoc setup
 //obtain server from the hosts headers
 

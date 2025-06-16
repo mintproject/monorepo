@@ -44,7 +44,7 @@ function flatten(array) {
 }
 
 export interface ThreadsService {
-    getThread(thread_id: string): Promise<Thread>;
+    getThread(thread_id: string): Promise<any>;
     createThread(desc: any): Promise<any>;
 }
 

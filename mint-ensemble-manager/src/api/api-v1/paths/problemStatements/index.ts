@@ -118,41 +118,47 @@ const problemStatementsRouter = (): Router => {
      *       500:
      *         description: Internal server error
      */
-    router.post("/", async (req, res) => {
-        try {
-            const authorizationHeader = req.headers.authorization;
-            if (!authorizationHeader) {
-                return res.status(401).json({ message: "Authorization header is required" });
+    router.post(
+        "/",
+        async (
+            req: Request<{ id: string }, unknown, CreateProblemStatementRequest>,
+            res: Response<{ id: string } | ErrorResponse>
+        ) => {
+            try {
+                const authorizationHeader = req.headers.authorization;
+                if (!authorizationHeader) {
+                    return res.status(401).json({ message: "Authorization header is required" });
+                }
+
+                const problemStatement = req.body;
+
+                // Convert the request to ProblemStatementInfo
+                const problemStatementInfo: ProblemStatementInfo = {
+                    name: problemStatement.name,
+                    regionid: problemStatement.regionid,
+                    dates: {
+                        start_date: new Date(problemStatement.dates.start_date),
+                        end_date: new Date(problemStatement.dates.end_date)
+                    },
+                    events:
+                        problemStatement.events?.map((event) => ({
+                            ...event,
+                            timestamp: new Date(event.timestamp)
+                        })) || [],
+                    permissions: problemStatement.permissions || [],
+                    preview: problemStatement.preview
+                };
+
+                const id = await problemStatementsService.createProblemStatement(
+                    problemStatementInfo,
+                    authorizationHeader
+                );
+                res.status(201).json({ id });
+            } catch (error) {
+                res.status(500).json({ message: error.message });
             }
-
-            const problemStatement = req.body as CreateProblemStatementRequest;
-
-            // Convert the request to ProblemStatementInfo
-            const problemStatementInfo: ProblemStatementInfo = {
-                name: problemStatement.name,
-                regionid: problemStatement.regionid,
-                dates: {
-                    start_date: new Date(problemStatement.dates.start_date),
-                    end_date: new Date(problemStatement.dates.end_date)
-                },
-                events:
-                    problemStatement.events?.map((event) => ({
-                        ...event,
-                        timestamp: new Date(event.timestamp)
-                    })) || [],
-                permissions: problemStatement.permissions || [],
-                preview: problemStatement.preview
-            };
-
-            const id = await problemStatementsService.createProblemStatement(
-                problemStatementInfo,
-                authorizationHeader
-            );
-            res.status(201).json({ id });
-        } catch (error) {
-            res.status(500).json({ message: error.message });
         }
-    });
+    );
 
     /**
      * @openapi

@@ -166,6 +166,110 @@ const TaskSchema = {
     }
 };
 
+const SubtaskSchema = {
+    CreateSubtaskRequest: {
+        type: "object",
+        description: "A Subtask creation request definition",
+        required: ["name", "dates", "task_id", "driving_variables", "response_variables"],
+        properties: {
+            name: {
+                description: "The name of the subtask",
+                type: "string"
+            },
+            dates: {
+                type: "object",
+                description: "The date range for the subtask",
+                properties: {
+                    start_date: {
+                        description: "Start date in ISO format",
+                        type: "string",
+                        format: "date-time"
+                    },
+                    end_date: {
+                        description: "End date in ISO format",
+                        type: "string",
+                        format: "date-time"
+                    }
+                }
+            },
+            task_id: {
+                description: "The ID of the parent task",
+                type: "string"
+            },
+            driving_variables: {
+                type: "array",
+                description: "List of driving variables",
+                items: {
+                    type: "string"
+                }
+            },
+            response_variables: {
+                type: "array",
+                description: "List of response variables",
+                items: {
+                    type: "string"
+                }
+            },
+            regionid: {
+                description: "The specific region id for the subtask",
+                type: "string"
+            },
+            events: {
+                type: "array",
+                description: "List of events associated with the subtask",
+                items: {
+                    $ref: "#/components/schemas/MintEvent"
+                }
+            },
+            permissions: {
+                type: "array",
+                description: "List of permissions for the subtask",
+                items: {
+                    $ref: "#/components/schemas/MintPermission"
+                }
+            }
+        }
+    },
+    Subtask: {
+        type: "object",
+        description: "A Subtask definition",
+        properties: {
+            name: {
+                description: "The name of the thread (optional)",
+                type: "string"
+            },
+            modelid: {
+                description:
+                    "The model id to use (browse here: https://dev.mint.isi.edu/ethiopia/models/explore. Example: cycles-0.10.2-alpha-collection-oromia)",
+                type: "string"
+            },
+            datasets: {
+                description:
+                    "A map of input name and dataset ids. Example { cycles_weather_soil: ac34f01b-1484-4403-98ea-3a380838cab1 }. To browse the datasets, go here: http://localhost:8080/ethiopia/datasets/browse",
+                type: "object"
+            },
+            parameters: {
+                description:
+                    "A map of parameter name and parameter values. Example: { start_planting_day: [100, 107, 114] }",
+                type: "object"
+            }
+        }
+    },
+    AddModelsRequest: {
+        type: "object",
+        description: "A request to add models to a subtask",
+        properties: {
+            modelIds: {
+                type: "array",
+                items: { type: "string" },
+                description: "List of model ids to add to the subtask",
+                example: [
+                    "http://api.models.mint.local/v1.8.0/modelconfigurations/modflow_2005_BartonSprings_avg?username=mint@isi.edu"
+                ]
+            }
+        }
+    }
+};
 const ProblemStatementSchema = {
     CreateProblemStatementRequest: {
         type: "object",
@@ -1049,6 +1153,7 @@ const apiDocComponents = {
         schemas: {
             ...MintSchema,
             ...TaskSchema,
+            ...SubtaskSchema,
             ...ProblemStatementSchema,
             ...TapisSchema,
             ModelThread: {

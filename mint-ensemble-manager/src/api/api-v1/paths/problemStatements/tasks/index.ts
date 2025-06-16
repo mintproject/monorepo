@@ -1,5 +1,6 @@
 import { Router, Request, Response } from "express";
 import tasksService from "@/api/api-v1/services/tasksService";
+import subtasksRouter from "./subtasks";
 
 interface TaskRequest extends Request {
     params: {
@@ -157,6 +158,9 @@ const tasksRouter = (): Router => {
             res.status(500).json({ message: error.message });
         }
     });
+
+    // Mount subtasks router
+    router.use("/:taskId/subtasks", subtasksRouter());
 
     return router;
 };

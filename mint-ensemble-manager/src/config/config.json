@@ -13,7 +13,7 @@
         "access_key": "CHANGEME",
         "secret_access_key": "CHANGEME"
     },
-    "model_catalog_api": "https://api.models.mint.local/v1.8.0",
+    "model_catalog_api": "http://api.models.mint.local/v1.8.0",
 
     "ensemble_manager_api": "http://localhost:3000/v1",
     "graphql": {
