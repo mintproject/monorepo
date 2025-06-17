@@ -1,6 +1,8 @@
 import { Thread, ThreadInfo } from "@/classes/mint/mint-types";
 import {
     addThread,
+    insertModel,
+    getModel,
     getTask,
     getThread,
     setThreadModels
@@ -13,8 +15,16 @@ import {
     BadRequestError
 } from "@/classes/common/errors";
 import problemStatementsService from "./problemStatementsService";
-import { fetchModelConfigurationSetup } from "@/classes/mint/model-catalog-functions";
-import { ModelConfigurationSetup } from "@mintproject/modelcatalog_client/dist";
+import {
+    convertApiUrlToW3Id,
+    fetchModelConfiguration,
+    fetchModelConfigurationSetup
+} from "@/classes/mint/model-catalog-functions";
+import {
+    modelConfigurationSetupToGraphQL,
+    modelConfigurationToGraphQL
+} from "@/classes/mint/model-catalog-graphql-adapter";
+import { Model_Insert_Input } from "@/classes/graphql/graph_typing";
 
 export interface SubTasksService {
     getSubtasksByTaskId(
@@ -155,13 +165,24 @@ const subTasksService: SubTasksService = {
             throw new NotFoundError("Subtask not found");
         }
         for (const modelId of modelIds) {
-            const model: ModelConfigurationSetup = await fetchModelConfigurationSetup(modelId);
-            await setThreadModels([model], "Added models", subtask);
+            const w3Id = convertApiUrlToW3Id(modelId);
+            if (!(await getModel(w3Id))) {
+                let modelConfigurationGraphQL: Model_Insert_Input;
+                try {
+                    const modelConfiguration = await fetchModelConfiguration(w3Id);
+                    modelConfigurationGraphQL = modelConfigurationToGraphQL(modelConfiguration);
+                } catch (error) {
+                    const modelConfigurationSetup = await fetchModelConfigurationSetup(modelId);
+                    modelConfigurationGraphQL =
+                        modelConfigurationSetupToGraphQL(modelConfigurationSetup);
+                }
+                await insertModel([modelConfigurationGraphQL]);
+            }
+            await setThreadModels([{ id: w3Id }], "Added models", subtask);
         }
         return await getThread(subtaskId);
     }
 
-    //     // Get the resources required for each model in the subtask
     //     async findRequiredResources(subtaskId: string, authorizationHeader: string) {
     //         const access_token = getTokenFromAuthorizationHeader(authorizationHeader);
     //         if (!access_token) {

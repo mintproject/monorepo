@@ -66,6 +66,7 @@ import deleteThreadModelExecutionsGQL from "./queries/execution/delete-thread-mo
 
 import getModelGQL from "./queries/model/get.graphql";
 import deleteModelGQL from "./queries/model/delete.graphql";
+import insertModelGQL from "./queries/model/new.graphql";
 
 import getModelOutputGQL from "./queries/model_output/get.graphql";
 import getThreadModelGQL from "./queries/thread_model/get.graphql";
@@ -94,6 +95,7 @@ import {
 import { Md5 } from "ts-md5";
 import {
     Execution_Result_Insert_Input,
+    Model_Insert_Input,
     Resource_Constraint,
     Resource_Update_Column,
     Thread_Model_Execution_Summary_Insert_Input,
@@ -1191,4 +1193,14 @@ export const getProblemStatements = async (
         console.log(e);
         throw new InternalServerError("Error getting problem statements " + e.message);
     }
+};
+
+export const insertModel = (models: Model_Insert_Input[]) => {
+    const APOLLO_CLIENT = GraphQL.instance(KeycloakAdapter.getUser());
+    return APOLLO_CLIENT.mutate({
+        mutation: insertModelGQL,
+        variables: {
+            objects: models
+        }
+    });
 };

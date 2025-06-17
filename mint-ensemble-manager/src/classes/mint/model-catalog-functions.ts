@@ -1,8 +1,9 @@
-import { Model, MintPreferences, ModelIO, Dataset, ModelParameter, Dataslice } from "./mint-types";
+import { MintPreferences } from "./mint-types";
 import * as rp from "request-promise-native";
-import { ModelConfigurationSetup } from "@mintproject/modelcatalog_client";
-import { GraphQL } from "@/config/graphql";
+import { ModelConfiguration, ModelConfigurationSetup } from "@mintproject/modelcatalog_client";
 import { KeycloakAdapter } from "@/config/keycloak-adapter";
+
+const W3_ID_URI_PREFIX = "https://w3id.org/okn/i/mint/";
 
 // Query Model Catalog By Variables,
 // - Filter by driving variables and model id/name (match with calibration)
@@ -49,6 +50,25 @@ export const fetchModelFromCatalog = (
     });
 };
 
+export enum ModelConfigurationType {
+    ModelConfiguration = "modelconfiguration",
+    ModelConfigurationSetup = "modelconfigurationsetup"
+}
+
+export const convertToUrlToCustomUrl = (url: string, type: ModelConfigurationType) => {
+    //input: https://api.models.mint.local/v1.8.0/modelconfigurations/26603296-1530-4f95-9655-ef51e44a5d7c?username=mint%40isi.edu
+    //output: https://api.models.mint.local/v1.8.0/custom/modelconfigurationsetups/26603296-1530-4f95-9655-ef51e44a5d7c?username=mint%40isi.edu
+    const [baseUrl, queryParams] = url.split("?");
+    const urlParts = baseUrl.split("/");
+    const id = urlParts.pop();
+    const hostname = urlParts.slice(0, -1).join("/") + "/";
+    const typeString =
+        type === ModelConfigurationType.ModelConfiguration
+            ? "modelconfigurations"
+            : "modelconfigurationsetups";
+    return hostname + "custom/" + typeString + "/" + id + (queryParams ? `?${queryParams}` : "");
+};
+
 /**
  * Fetches a model configuration setup from the catalog based on response variables and model ID
  * @param url - The URL of the model configuration setup
@@ -58,16 +78,23 @@ export const fetchModelFromCatalog = (
 export const fetchModelConfigurationSetup = async (
     url: string
 ): Promise<ModelConfigurationSetup> => {
-    try {
-        // Fetch detailed setup information
-        const detailedSetup = (await rp.get({
-            url: url,
-            json: true
-        })) as ModelConfigurationSetup;
+    // Fetch detailed setup information
+    return (await rp.get({
+        url: convertToUrlToCustomUrl(url, ModelConfigurationType.ModelConfigurationSetup),
+        json: true
+    })) as ModelConfigurationSetup;
+};
 
-        return detailedSetup;
-    } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
-        throw new Error(`Failed to fetch model configuration: ${errorMessage}`);
-    }
+export const fetchModelConfiguration = async (url: string): Promise<ModelConfiguration> => {
+    return (await rp.get({
+        url: convertToUrlToCustomUrl(url, ModelConfigurationType.ModelConfiguration),
+        json: true
+    })) as ModelConfiguration;
+};
+
+export const convertApiUrlToW3Id = (url: string) => {
+    const baseUrl = url.split("?")[0];
+    const urlParts = baseUrl.split("/");
+    const id = urlParts.pop();
+    return W3_ID_URI_PREFIX + id;
 };
