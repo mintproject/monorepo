@@ -1,9 +1,21 @@
 import { MintPreferences } from "./mint-types";
 import * as rp from "request-promise-native";
-import { ModelConfiguration, ModelConfigurationSetup } from "@mintproject/modelcatalog_client";
+import {
+    ModelConfiguration,
+    ModelConfigurationSetup,
+    DatasetSpecification
+} from "@mintproject/modelcatalog_client";
 import { KeycloakAdapter } from "@/config/keycloak-adapter";
 
 const W3_ID_URI_PREFIX = "https://w3id.org/okn/i/mint/";
+
+export interface CustomModelConfigurationSetup extends ModelConfigurationSetup {
+    hasInput: DatasetSpecification[];
+}
+
+export interface CustomModelConfiguration extends ModelConfiguration {
+    hasInput: DatasetSpecification[];
+}
 
 // Query Model Catalog By Variables,
 // - Filter by driving variables and model id/name (match with calibration)
@@ -77,19 +89,52 @@ export const convertToUrlToCustomUrl = (url: string, type: ModelConfigurationTyp
  */
 export const fetchModelConfigurationSetup = async (
     url: string
-): Promise<ModelConfigurationSetup> => {
+): Promise<CustomModelConfigurationSetup> => {
     // Fetch detailed setup information
     return (await rp.get({
         url: convertToUrlToCustomUrl(url, ModelConfigurationType.ModelConfigurationSetup),
         json: true
-    })) as ModelConfigurationSetup;
+    })) as CustomModelConfigurationSetup;
 };
 
-export const fetchModelConfiguration = async (url: string): Promise<ModelConfiguration> => {
+export const fetchModelConfiguration = async (url: string): Promise<CustomModelConfiguration> => {
     return (await rp.get({
         url: convertToUrlToCustomUrl(url, ModelConfigurationType.ModelConfiguration),
         json: true
-    })) as ModelConfiguration;
+    })) as CustomModelConfiguration;
+};
+
+export const fetchCustomModelConfigurationSetup = async (
+    url: string
+): Promise<CustomModelConfigurationSetup> => {
+    return (await rp.get({
+        url: url,
+        json: true
+    })) as CustomModelConfigurationSetup;
+};
+
+export const fetchCustomModelConfiguration = async (
+    url: string
+): Promise<CustomModelConfiguration> => {
+    return (await rp.get({
+        url: url,
+        json: true
+    })) as CustomModelConfiguration;
+};
+
+export const fetchCustomModelConfigurationOrSetup = async (
+    url: string
+): Promise<CustomModelConfiguration | CustomModelConfigurationSetup> => {
+    try {
+        const customUrl = convertToUrlToCustomUrl(url, ModelConfigurationType.ModelConfiguration);
+        return await fetchCustomModelConfiguration(customUrl);
+    } catch (error) {
+        const customUrl = convertToUrlToCustomUrl(
+            url,
+            ModelConfigurationType.ModelConfigurationSetup
+        );
+        return await fetchCustomModelConfigurationSetup(customUrl);
+    }
 };
 
 export const convertApiUrlToW3Id = (url: string) => {

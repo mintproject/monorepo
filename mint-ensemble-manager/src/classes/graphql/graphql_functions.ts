@@ -982,7 +982,7 @@ export const setThreadModels = (
     });
 };
 
-export const setThreadData = (
+export const setThreadData = async (
     datasets: DataMap,
     model_ensembles: ModelEnsembleMap,
     notes: string,
@@ -994,15 +994,25 @@ export const setThreadData = (
     const eventobj = eventToGQL(event);
     eventobj["thread_id"] = thread.id;
 
-    return APOLLO_CLIENT.mutate({
-        mutation: updateThreadDataGQL,
-        variables: {
-            threadId: thread.id,
-            data: bindings.data,
-            modelIO: bindings.model_io,
-            event: eventobj
+    const variables = {
+        threadId: thread.id,
+        data: bindings.data,
+        modelIO: bindings.model_io,
+        event: eventobj
+    };
+    try {
+        const response = await APOLLO_CLIENT.mutate({
+            mutation: updateThreadDataGQL,
+            variables: variables
+        });
+        if (response.errors) {
+            throw new Error(response.errors[0].message);
         }
-    });
+        return response;
+    } catch (error) {
+        console.log(error);
+        throw error;
+    }
 };
 
 export const setThreadParameters = (

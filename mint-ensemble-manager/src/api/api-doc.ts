@@ -19,6 +19,119 @@ const MintSchema = {
             }
         }
     },
+    AddDataRequest: {
+        type: "object",
+        properties: {
+            model_id: {
+                type: "string",
+                description:
+                    "The model id to use (browse here: https://dev.mint.isi.edu/ethiopia/models/explore. This is the model id of the model configuration setup or model configuration)",
+                example:
+                    "http://api.models.mint.local/v1.8.0/modelconfigurationsetups/c07a6f98-6339-4033-84b0-6cd7daca6284?username=mint%40isi.edu",
+                required: true
+            },
+            data: {
+                type: "array",
+                items: {
+                    type: "object",
+                    properties: {
+                        id: {
+                            type: "string",
+                            description: "Input ID of the model",
+                            example: "https://w3id.org/okn/i/mint/modflow_2005_Well",
+                            required: true
+                        },
+                        dataset: {
+                            type: "object",
+                            properties: {
+                                id: {
+                                    type: "string",
+                                    description: "Dataset ID from the Data Catalog configured",
+                                    example: "18400624-423c-42b5-ad56-6c73322584bd",
+                                    required: true
+                                },
+                                resources: {
+                                    type: "array",
+                                    items: {
+                                        type: "object",
+                                        properties: {
+                                            id: {
+                                                type: "string",
+                                                description: "Resource ID",
+                                                example: "9c7b25c4-8cea-4965-a07a-d9b3867f18a9",
+                                                required: true
+                                            },
+                                            url: {
+                                                type: "string",
+                                                description: "Resource URL",
+                                                example:
+                                                    "https://ckan.tacc.utexas.edu/dataset/18400624-423c-42b5-ad56-6c73322584bd/resource/9c7b25c4-8cea-4965-a07a-d9b3867f18a9/download/barton_springs_2001_2010average.wel",
+                                                required: true
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        example: {
+            model_id:
+                "http://api.models.mint.local/v1.8.0/modelconfigurationsetups/c07a6f98-6339-4033-84b0-6cd7daca6284?username=mint%40isi.edu",
+            data: [
+                {
+                    id: "https://w3id.org/okn/i/mint/ce32097e-641d-42af-b3f1-477a24cf015a",
+                    dataset: {
+                        id: "18400624-423c-42b5-ad56-6c73322584bd",
+                        resources: [
+                            {
+                                id: "9c7b25c4-8cea-4965-a07a-d9b3867f18a9",
+                                url: "https://ckan.tacc.utexas.edu/dataset/18400624-423c-42b5-ad56-6c73322584bd/resource/9c7b25c4-8cea-4965-a07a-d9b3867f18a9/download/barton_springs_2001_2010average.wel"
+                            }
+                        ]
+                    }
+                },
+                {
+                    id: "https://w3id.org/okn/i/mint/0882e428-5745-45fd-854e-8d8ce1ea4a2e",
+                    dataset: {
+                        id: "18400624-423c-42b5-ad56-6c73322584bd",
+                        resources: [
+                            {
+                                id: "a36147f9-d141-46a9-a87c-633854c646f0",
+                                url: "https://ckan.tacc.utexas.edu/dataset/18400624-423c-42b5-ad56-6c73322584bd/resource/a36147f9-d141-46a9-a87c-633854c646f0/download/barton_springs_2001_2010average.bas"
+                            }
+                        ]
+                    }
+                },
+                {
+                    id: "https://w3id.org/okn/i/mint/a8c5aeda-8e96-4816-907f-1c7384d8e684",
+                    dataset: {
+                        id: "18400624-423c-42b5-ad56-6c73322584bd",
+                        resources: [
+                            {
+                                id: "685e34e6-f47c-4475-b918-7121108c63e1",
+                                url: "https://ckan.tacc.utexas.edu/dataset/18400624-423c-42b5-ad56-6c73322584bd/resource/685e34e6-f47c-4475-b918-7121108c63e1/download/barton_springs_2001_2010average.dis"
+                            }
+                        ]
+                    }
+                },
+                {
+                    id: "https://w3id.org/okn/i/mint/efafa9d4-6817-4b1e-b9b0-09f7ac16cf60",
+                    dataset: {
+                        id: "18400624-423c-42b5-ad56-6c73322584bd",
+                        resources: [
+                            {
+                                id: "6ea387f5-c5f6-43a6-b3cd-f4aa2235f81a",
+                                url: "https://ckan.tacc.utexas.edu/dataset/18400624-423c-42b5-ad56-6c73322584bd/resource/6ea387f5-c5f6-43a6-b3cd-f4aa2235f81a/download/barton_springs_2001_2010average.bc6"
+                            }
+                        ]
+                    }
+                }
+            ]
+        }
+    },
     MintPermission: {
         type: "object",
         properties: {

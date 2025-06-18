@@ -17,6 +17,7 @@ import {
 import problemStatementsService from "./problemStatementsService";
 import {
     convertApiUrlToW3Id,
+    fetchCustomModelConfigurationOrSetup,
     fetchModelConfiguration,
     fetchModelConfigurationSetup
 } from "@/classes/mint/model-catalog-functions";
@@ -25,6 +26,8 @@ import {
     modelConfigurationToGraphQL
 } from "@/classes/mint/model-catalog-graphql-adapter";
 import { Model_Insert_Input } from "@/classes/graphql/graph_typing";
+import { AddDataRequest } from "../paths/problemStatements/tasks/subtasks";
+import useModelsService from "./useModelsService";
 
 export interface SubTasksService {
     getSubtasksByTaskId(
@@ -45,6 +48,7 @@ export interface SubTasksService {
         authorizationHeader: string
     ): Promise<string>;
     addModels(subtaskId: string, modelIds: string[], authorizationHeader: string): Promise<Thread>;
+    addData(subtaskId: string, data: AddDataRequest, authorizationHeader: string): Promise<Thread>;
     // addDataSets(
     //     subtaskId: string,
     //     dataSetIds: string[],
@@ -181,6 +185,19 @@ const subTasksService: SubTasksService = {
             await setThreadModels([{ id: w3Id }], "Added models", subtask);
         }
         return await getThread(subtaskId);
+    },
+
+    async addData(subtaskId: string, data: AddDataRequest, authorizationHeader: string) {
+        const access_token = getTokenFromAuthorizationHeader(authorizationHeader);
+        if (!access_token) {
+            throw new UnauthorizedError("Invalid authorization header");
+        }
+        const subtask = await getThread(subtaskId);
+        if (!subtask) {
+            throw new NotFoundError("Subtask not found");
+        }
+        await useModelsService.matchModel(data, subtask);
+        return subtask;
     }
 
     //     async findRequiredResources(subtaskId: string, authorizationHeader: string) {
