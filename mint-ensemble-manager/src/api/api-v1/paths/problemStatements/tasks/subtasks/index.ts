@@ -472,6 +472,82 @@ const subtasksRouter = (): Router => {
         }
     );
 
+    /**
+     * @openapi
+     * /problemStatements/{problemStatementId}/tasks/{taskId}/subtasks/{subtaskId}/data-bindings:
+     *   get:
+     *     summary: Get data bindings for a subtask
+     *     description: Returns the data bindings for a subtask
+     *     security:
+     *       - BearerAuth: []
+     *         oauth2: []
+     *     tags:
+     *       - Subtasks
+     *     parameters:
+     *       - in: path
+     *         name: problemStatementId
+     *         required: true
+     *         schema:
+     *           type: string
+     *         description: The problem statement ID
+     *       - in: path
+     *         name: taskId
+     *         required: true
+     *         schema:
+     *           type: string
+     *         description: The task ID
+     *       - in: path
+     *         name: subtaskId
+     *         required: true
+     *         schema:
+     *           type: string
+     *         description: The subtask ID
+     *       - in: query
+     *         name: model_id
+     *         required: true
+     *         schema:
+     *           type: string
+     *         description: The model id to use format https://w3id.org/okn/i/mint/c07a6f98-6339-4033-84b0-6cd7daca6284
+     *         example: https://w3id.org/okn/i/mint/c07a6f98-6339-4033-84b0-6cd7daca6284
+     *     responses:
+     *       200:
+     *         description: Data bindings
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: array
+     *               items:
+     *                 $ref: '#/components/schemas/DatasetSpecification'
+     *       401:
+     *         description: Unauthorized
+     *       403:
+     *         description: Forbidden
+     *       404:
+     *         description: Subtask not found
+     *       500:
+     *         description: Internal server error
+     */
+    router.get(
+        "/:subtaskId/data-bindings",
+        async (
+            req: Request<{ subtaskId: string }, unknown, unknown, { model_id: string }>,
+            res: Response
+        ) => {
+            const authorizationHeader = req.headers.authorization;
+            if (!authorizationHeader) {
+                return res.status(401).json({ message: "Authorization header is required" });
+            }
+            const { model_id } = req.query;
+            if (!model_id) {
+                return res.status(400).json({ message: "model_id is required" });
+            }
+            const dataBindings = await subTasksService.getModelDataBindings(
+                model_id,
+                authorizationHeader
+            );
+            res.status(200).json(dataBindings);
+        }
+    );
     return router;
 };
 

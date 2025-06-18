@@ -4,7 +4,8 @@ import { uuidv4 } from "@/classes/graphql/graphql_adapter";
 import {
     DatasetSpecification,
     ModelConfiguration,
-    ModelConfigurationSetup
+    ModelConfigurationSetup,
+    Parameter
 } from "@mintproject/modelcatalog_client/dist";
 import { BadRequestError, NotFoundError } from "@/classes/common/errors";
 import {
@@ -43,6 +44,10 @@ const hasInputHasFixedResource = (input: DatasetSpecification) => {
     return input.hasFixedResource && input.hasFixedResource.length > 0;
 };
 
+const hasParameterHasFixedValue = (parameter: Parameter) => {
+    return parameter.hasFixedValue && parameter.hasFixedValue.length > 0;
+};
+
 const matchInput = (input: DatasetSpecification, data: AddDataRequest) => {
     const dataInput = data.data.find((d) => d.id === input.id);
     if (!dataInput) {
@@ -74,6 +79,30 @@ const validateThatAllInputsAreBound = (
             throw new BadRequestError(`Input ${input.id} is not bound`);
         }
     }
+};
+
+const getModelParameters = async (model: ModelConfiguration | ModelConfigurationSetup) => {
+    const parameters: Parameter[] = [];
+    const modelParameters = model.hasParameter;
+    for (const parameter of modelParameters) {
+        if (!hasParameterHasFixedValue(parameter)) {
+            parameters.push(parameter);
+        }
+    }
+    return parameters;
+};
+
+const getDataBindings = async (
+    model: ModelConfiguration | ModelConfigurationSetup
+): Promise<DatasetSpecification[]> => {
+    const inputs: DatasetSpecification[] = [];
+    const modelInputs = model.hasInput;
+    for (const input of modelInputs) {
+        if (!hasInputHasFixedResource(input)) {
+            inputs.push(input);
+        }
+    }
+    return inputs;
 };
 
 const matchInputs = async (
@@ -121,9 +150,27 @@ const matchModel = async (data: AddDataRequest, subtask: Thread) => {
         throw new NotFoundError("Model not found");
     }
 };
+
+const getDataBindingsByModelId = async (model_id: string) => {
+    const model = await fetchCustomModelConfigurationOrSetup(model_id);
+    if (!model) {
+        throw new NotFoundError("Model not found");
+    }
+    return await getDataBindings(model);
+};
+
+const getModelParametersByModelId = async (model_id: string) => {
+    const model = await fetchCustomModelConfigurationOrSetup(model_id);
+    if (!model) {
+        throw new NotFoundError("Model not found");
+    }
+    return await getModelParameters(model);
+};
 const useModelsService = {
     matchInputs,
-    matchModel
+    matchModel,
+    getDataBindingsByModelId,
+    getModelParametersByModelId
 };
 
 export default useModelsService;

@@ -32,6 +32,7 @@ import { TapisExecutionService } from "@/classes/tapis/adapters/TapisExecutionSe
 import { getConfiguration } from "@/classes/mint/mint-functions";
 import { MockExecutionService } from "@/classes/common/__tests__/mocks/MockExecutionService";
 import { ExecutionCreation } from "@/classes/common/ExecutionCreation";
+import { DatasetSpecification } from "@mintproject/modelcatalog_client/dist";
 
 function getExecutionEngineService(
     executionEngine: string,
@@ -59,6 +60,7 @@ function getExecutionEngineService(
 }
 
 export interface SubTasksService {
+    getModelParameters(model_id: string, authorizationHeader: string): unknown;
     submitSubtask(
         subtaskId: string,
         model_id: string,
@@ -83,6 +85,10 @@ export interface SubTasksService {
     ): Promise<string>;
     addModels(subtaskId: string, modelIds: string[], authorizationHeader: string): Promise<Thread>;
     addData(subtaskId: string, data: AddDataRequest, authorizationHeader: string): Promise<Thread>;
+    getModelDataBindings(
+        model_id: string,
+        authorizationHeader: string
+    ): Promise<DatasetSpecification[]>;
     // addDataSets(
     //     subtaskId: string,
     //     dataSetIds: string[],
@@ -232,6 +238,22 @@ const subTasksService: SubTasksService = {
         }
         await useModelsService.matchModel(data, subtask);
         return subtask;
+    },
+
+    async getModelDataBindings(model_id: string, authorizationHeader: string) {
+        const access_token = getTokenFromAuthorizationHeader(authorizationHeader);
+        if (!access_token) {
+            throw new UnauthorizedError("Invalid authorization header");
+        }
+        return await useModelsService.getDataBindingsByModelId(model_id);
+    },
+
+    async getModelParameters(model_id: string, authorizationHeader: string) {
+        const access_token = getTokenFromAuthorizationHeader(authorizationHeader);
+        if (!access_token) {
+            throw new UnauthorizedError("Invalid authorization header");
+        }
+        return await useModelsService.getModelParametersByModelId(model_id);
     },
 
     async submitSubtask(subtaskId: string, model_id: string, authorizationHeader: string) {

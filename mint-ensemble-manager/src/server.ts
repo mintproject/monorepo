@@ -35,6 +35,7 @@ import tapisRouter from "@/api/api-v1/paths/tapis";
 import executionEnginesRouter from "@/api/api-v1/paths/executionEngines/tapis";
 import problemStatementsRouter from "@/api/api-v1/paths/problemStatements";
 import { getConfiguration } from "./classes/mint/mint-functions";
+import { modelBindingsRouter } from "./api/api-v1/paths/modelBindings";
 
 // Main Express Server
 const app = express();
@@ -59,6 +60,7 @@ app.use(`/${version}/monitors`, monitorsRoutes(v1MonitorsService));
 app.use(`/${version}/registration`, registrationRoutes(v1RegistrationService));
 app.use(`/${version}/threads`, threadsRoutes(v1ThreadsService));
 app.use(`/${version}/executionEngines`, executionEnginesRouter());
+app.use(`/${version}/modelBindings`, modelBindingsRouter());
 app.use(`/${version}/tapis`, tapisRouter());
 // Swagger-jsdoc setup
 //obtain server from the hosts headers
