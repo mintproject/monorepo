@@ -17,7 +17,6 @@ import {
 import problemStatementsService from "./problemStatementsService";
 import {
     convertApiUrlToW3Id,
-    fetchCustomModelConfigurationOrSetup,
     fetchModelConfiguration,
     fetchModelConfigurationSetup
 } from "@/classes/mint/model-catalog-functions";
@@ -28,8 +27,43 @@ import {
 import { Model_Insert_Input } from "@/classes/graphql/graph_typing";
 import { AddDataRequest } from "../paths/problemStatements/tasks/subtasks";
 import useModelsService from "./useModelsService";
+import { IExecutionService } from "@/interfaces/IExecutionService";
+import { TapisExecutionService } from "@/classes/tapis/adapters/TapisExecutionService";
+import { getConfiguration } from "@/classes/mint/mint-functions";
+import { MockExecutionService } from "@/classes/common/__tests__/mocks/MockExecutionService";
+import { ExecutionCreation } from "@/classes/common/ExecutionCreation";
+
+function getExecutionEngineService(
+    executionEngine: string,
+    authorizationHeader: string
+): IExecutionService {
+    const config = getConfiguration();
+    const token = getTokenFromAuthorizationHeader(authorizationHeader);
+    if (!token) {
+        throw new UnauthorizedError("Invalid authorization header");
+    }
+
+    switch (executionEngine.toLowerCase()) {
+        case "tapis":
+            return new TapisExecutionService(token, config.tapis.basePath);
+        case "localex":
+            // For local execution, we can use a mock service for now
+            // TODO: Implement proper local execution service
+            return new MockExecutionService();
+        case "wings":
+            // TODO: Implement Wings execution service
+            throw new Error("Wings execution engine not implemented yet");
+        default:
+            throw new Error(`Unsupported execution engine: ${executionEngine}`);
+    }
+}
 
 export interface SubTasksService {
+    submitSubtask(
+        subtaskId: string,
+        model_id: string,
+        authorizationHeader: string
+    ): Promise<string[]>;
     getSubtasksByTaskId(
         problemStatementId: string,
         taskId: string,
@@ -198,6 +232,34 @@ const subTasksService: SubTasksService = {
         }
         await useModelsService.matchModel(data, subtask);
         return subtask;
+    },
+
+    async submitSubtask(subtaskId: string, model_id: string, authorizationHeader: string) {
+        const executionEngine = getConfiguration().execution_engine;
+        const access_token = getTokenFromAuthorizationHeader(authorizationHeader);
+        if (!access_token) {
+            throw new UnauthorizedError("Invalid authorization header");
+        }
+        const subtask = await getThread(subtaskId);
+        if (!subtask) {
+            throw new NotFoundError("Subtask not found");
+        }
+        const executionService = getExecutionEngineService(executionEngine, authorizationHeader);
+        const executionCreation = new ExecutionCreation(
+            subtask,
+            model_id,
+            executionService,
+            access_token
+        );
+        await executionCreation.prepareExecutions();
+        return await executionService.submitExecutions(
+            executionCreation.executionToBeRun,
+            executionCreation.model,
+            executionCreation.threadRegion,
+            executionCreation.component,
+            subtask.id,
+            subtaskId
+        );
     }
 
     //     async findRequiredResources(subtaskId: string, authorizationHeader: string) {

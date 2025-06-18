@@ -19,6 +19,18 @@ const MintSchema = {
             }
         }
     },
+    SubmitSubtaskRequest: {
+        type: "object",
+        properties: {
+            model_id: {
+                type: "string",
+                description:
+                    "The model id to use format https://w3id.org/okn/i/mint/c07a6f98-6339-4033-84b0-6cd7daca6284",
+                example: "https://w3id.org/okn/i/mint/c07a6f98-6339-4033-84b0-6cd7daca6284",
+                required: true
+            }
+        }
+    },
     AddDataRequest: {
         type: "object",
         properties: {

@@ -1,6 +1,7 @@
 import { Router, Request, Response } from "express";
 import subTasksService from "@/api/api-v1/services/subTasksService";
 import { HttpError } from "@/classes/common/errors";
+import { getConfiguration } from "@/classes/mint/mint-functions";
 
 interface SubtaskRequest extends Request {
     params: {
@@ -390,6 +391,87 @@ const subtasksRouter = (): Router => {
             }
         }
     );
+    /**
+     * @openapi
+     * /problemStatements/{problemStatementId}/tasks/{taskId}/subtasks/{subtaskId}/submit:
+     *   post:
+     *     summary: Submit a subtask
+     *     description: Submits a subtask for execution
+     *     security:
+     *       - BearerAuth: []
+     *         oauth2: []
+     *     tags:
+     *       - Subtasks
+     *     parameters:
+     *       - in: path
+     *         name: problemStatementId
+     *         required: true
+     *         schema:
+     *           type: string
+     *         description: The problem statement ID
+     *       - in: path
+     *         name: taskId
+     *         required: true
+     *         schema:
+     *           type: string
+     *         description: The task ID
+     *       - in: path
+     *         name: subtaskId
+     *         required: true
+     *         schema:
+     *           type: string
+     *         description: The subtask ID
+     *     requestBody:
+     *       required: true
+     *       content:
+     *         application/json:
+     *           schema:
+     *             $ref: '#/components/schemas/SubmitSubtaskRequest'
+     *     responses:
+     *       200:
+     *         description: Subtask submitted successfully
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/Thread'
+     *       401:
+     *         description: Unauthorized
+     *       403:
+     *         description: Forbidden
+     *       404:
+     *         description: Subtask not found
+     *       500:
+     *         description: Internal server error
+     */
+    router.post(
+        "/:subtaskId/submit",
+        async (
+            req: Request<
+                { subtaskId: string },
+                unknown,
+                {
+                    model_id: string;
+                }
+            >,
+            res: Response
+        ) => {
+            const prefs = getConfiguration();
+            const executionEngine = prefs.execution_engine;
+            const authorizationHeader = req.headers.authorization;
+            if (!authorizationHeader) {
+                return res.status(401).json({ message: "Authorization header is required" });
+            }
+            const { subtaskId } = req.params;
+            const { model_id } = req.body;
+            const jobIds = await subTasksService.submitSubtask(
+                subtaskId,
+                model_id,
+                authorizationHeader
+            );
+            res.status(200).json(jobIds);
+        }
+    );
+
     return router;
 };
 
