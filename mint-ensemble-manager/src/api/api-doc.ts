@@ -2,7 +2,7 @@ import { getConfiguration } from "@/classes/mint/mint-functions";
 
 const AUTHORIZATION_URL = getConfiguration().auth.authorization_url;
 
-const MintSchema = {
+const ModelCatalogSchema = {
     DatasetSpecification: {
         description: "A dataset specification",
         properties: {
@@ -131,6 +131,163 @@ const MintSchema = {
         title: "DatasetSpecification",
         type: "object"
     },
+    Parameter: {
+        description: "Description not available",
+        example: {
+            value: {
+                id: "some_id"
+            }
+        },
+        properties: {
+            hasDefaultValue: {
+                description: "Default accepted value of a variable presentation (or a parameter)",
+                items: {
+                    type: "object"
+                },
+                nullable: true,
+                type: "array"
+            },
+            hasMaximumAcceptedValue: {
+                description: "Maximum accepted value of a variable presentation (or a parameter)",
+                items: {
+                    type: "object"
+                },
+                nullable: true,
+                type: "array"
+            },
+            description: {
+                description: "small description",
+                items: {
+                    type: "string"
+                },
+                nullable: true,
+                type: "array"
+            },
+            hasDataType: {
+                description: "Property that indicates the data type of a parameter",
+                items: {
+                    type: "string"
+                },
+                nullable: true,
+                type: "array"
+            },
+            hasFixedValue: {
+                description: "Value of a parameter in a software setup.",
+                items: {
+                    type: "object"
+                },
+                nullable: true,
+                type: "array"
+            },
+            hasPresentation: {
+                description:
+                    "Property that links an instance of a dataset (or a dataset specification) to the presentation of a variable contained (or expected to be contained) on it.",
+                items: {
+                    type: "object"
+                },
+                nullable: true,
+                type: "array"
+            },
+            label: {
+                description: "short description of the resource",
+                items: {
+                    type: "string"
+                },
+                nullable: true,
+                type: "array"
+            },
+            recommendedIncrement: {
+                description:
+                    'Value that represents how a parameter should be incremented on each iteration of a software component execution. This value is important when preparing execution ensembles automatically, e.g., simulating crop production varying the parameter "fertilizer amount" in increments of 10%.',
+                items: {
+                    type: "number"
+                },
+                nullable: true,
+                type: "array"
+            },
+            type: {
+                description: "type of the resource",
+                items: {
+                    type: "string"
+                },
+                nullable: true,
+                type: "array"
+            },
+            hasMinimumAcceptedValue: {
+                description: "Minimum accepted value of a variable presentation (or a parameter)",
+                items: {
+                    type: "object"
+                },
+                nullable: true,
+                type: "array"
+            },
+            hasAcceptedValues: {
+                description:
+                    'Property that constraints which values are accepted for a parameter. For example, the name of a crop can only be "Maize" or "Sorghum"',
+                items: {
+                    type: "string"
+                },
+                nullable: true,
+                type: "array"
+            },
+            adjustsVariable: {
+                description:
+                    'Property that links parameter with the variable they adjust. This property can be used when parameters quantify variables without directly representing them. For example, a "fertilizer percentage adjustment" parameter can quantify a "fertilizer price" variable',
+                items: {
+                    type: "object"
+                },
+                maxItems: 1,
+                nullable: true,
+                type: "array"
+            },
+            relevantForIntervention: {
+                description: "Description not available",
+                items: {
+                    type: "object"
+                },
+                nullable: true,
+                type: "array"
+            },
+            position: {
+                description:
+                    "Position of the parameter or input/output in the model configuration. This property is needed to know how to organize the I/O of the component on execution",
+                items: {
+                    format: "int32",
+                    type: "integer"
+                },
+                nullable: true,
+                type: "array"
+            },
+            id: {
+                description: "identifier",
+                nullable: false,
+                type: "string"
+            },
+            usesUnit: {
+                description:
+                    "Property used to link a variable presentation or time interval to the unit they are represented in",
+                items: {
+                    type: "object"
+                },
+                maxItems: 1,
+                nullable: true,
+                type: "array"
+            },
+            hasStepSize: {
+                description:
+                    "Property that determines what are the increments (step size) that are commonly used to vary a parameter. This is commonly used for automatically setting up software tests. For example, if I want to set up a model and try 30 reasonable values on a parameter, I may use the default value and the step size to create the appropriate increments. If the step size is 0.1 and the default value is 0, then I will will be able to create setups: 0, 0.1, 0.2...2.9,3",
+                items: {
+                    type: "number"
+                },
+                nullable: true,
+                type: "array"
+            }
+        },
+        title: "Parameter",
+        type: "object"
+    }
+};
+const MintSchema = {
     TimePeriod: {
         type: "object",
         description: "A time period",
@@ -155,7 +312,7 @@ const MintSchema = {
                 description:
                     "The model id to use format https://w3id.org/okn/i/mint/c07a6f98-6339-4033-84b0-6cd7daca6284",
                 example: "https://w3id.org/okn/i/mint/c07a6f98-6339-4033-84b0-6cd7daca6284",
-                required: true
+                required: ["model_id"]
             }
         }
     },
@@ -168,45 +325,44 @@ const MintSchema = {
                     "The model id to use (browse here: https://dev.mint.isi.edu/ethiopia/models/explore. This is the model id of the model configuration setup or model configuration)",
                 example:
                     "http://api.models.mint.local/v1.8.0/modelconfigurationsetups/c07a6f98-6339-4033-84b0-6cd7daca6284?username=mint%40isi.edu",
-                required: true
+                required: ["model_id"]
             },
             data: {
                 type: "array",
                 items: {
                     type: "object",
+                    required: ["id", "dataset"],
                     properties: {
                         id: {
                             type: "string",
                             description: "Input ID of the model",
-                            example: "https://w3id.org/okn/i/mint/modflow_2005_Well",
-                            required: true
+                            example: "https://w3id.org/okn/i/mint/modflow_2005_Well"
                         },
                         dataset: {
                             type: "object",
+                            required: ["id", "resources"],
                             properties: {
                                 id: {
                                     type: "string",
                                     description: "Dataset ID from the Data Catalog configured",
-                                    example: "18400624-423c-42b5-ad56-6c73322584bd",
-                                    required: true
+                                    example: "18400624-423c-42b5-ad56-6c73322584bd"
                                 },
                                 resources: {
                                     type: "array",
                                     items: {
                                         type: "object",
+                                        required: ["id", "url"],
                                         properties: {
                                             id: {
                                                 type: "string",
                                                 description: "Resource ID",
-                                                example: "9c7b25c4-8cea-4965-a07a-d9b3867f18a9",
-                                                required: true
+                                                example: "9c7b25c4-8cea-4965-a07a-d9b3867f18a9"
                                             },
                                             url: {
                                                 type: "string",
                                                 description: "Resource URL",
                                                 example:
-                                                    "https://ckan.tacc.utexas.edu/dataset/18400624-423c-42b5-ad56-6c73322584bd/resource/9c7b25c4-8cea-4965-a07a-d9b3867f18a9/download/barton_springs_2001_2010average.wel",
-                                                required: true
+                                                    "https://ckan.tacc.utexas.edu/dataset/18400624-423c-42b5-ad56-6c73322584bd/resource/9c7b25c4-8cea-4965-a07a-d9b3867f18a9/download/barton_springs_2001_2010average.wel"
                                             }
                                         }
                                     }
@@ -306,7 +462,6 @@ const MintSchema = {
         }
     }
 };
-
 const TaskSchema = {
     Task: {
         type: "object",
@@ -543,7 +698,6 @@ const TaskSchema = {
         }
     }
 };
-
 const SubtaskSchema = {
     CreateSubtaskRequest: {
         type: "object",
@@ -657,18 +811,18 @@ const SubtaskSchema = {
                     "The model id to use (browse here: https://dev.mint.isi.edu/ethiopia/models/explore. This is the model id of the model configuration setup or model configuration)",
                 example:
                     "http://api.models.mint.local/v1.8.0/modelconfigurationsetups/c07a6f98-6339-4033-84b0-6cd7daca6284?username=mint%40isi.edu",
-                required: true
+                required: ["model_id"]
             },
             parameters: {
                 type: "array",
                 items: {
                     type: "object",
+                    required: ["id", "value"],
                     properties: {
                         id: {
                             type: "string",
                             description: "Parameter ID of the model",
-                            example: "https://w3id.org/okn/i/mint/start_planting_day",
-                            required: true
+                            example: "https://w3id.org/okn/i/mint/start_planting_day"
                         },
                         value: {
                             oneOf: [
@@ -685,8 +839,7 @@ const SubtaskSchema = {
                                 }
                             ],
                             description: "Parameter value(s)",
-                            example: [100, 107, 114],
-                            required: true
+                            example: [100, 107, 114]
                         }
                     }
                 },
@@ -712,16 +865,17 @@ const SubtaskSchema = {
         type: "object",
         description:
             "A request to setup a complete model configuration including the model (if not present), parameters, and data inputs in a single call.",
+        required: ["model_id"],
         properties: {
             model_id: {
                 type: "string",
                 description:
                     "The model id to use (browse here: https://dev.mint.isi.edu/ethiopia/models/explore. This is the model id of the model configuration setup or model configuration)",
                 example:
-                    "http://api.models.mint.local/v1.8.0/modelconfigurationsetups/c07a6f98-6339-4033-84b0-6cd7daca6284?username=mint%40isi.edu",
-                required: true
+                    "http://api.models.mint.local/v1.8.0/modelconfigurationsetups/c07a6f98-6339-4033-84b0-6cd7daca6284?username=mint%40isi.edu"
             },
             parameters: {
+                required: ["id", "value"],
                 type: "array",
                 items: {
                     type: "object",
@@ -729,8 +883,7 @@ const SubtaskSchema = {
                         id: {
                             type: "string",
                             description: "Parameter ID of the model",
-                            example: "https://w3id.org/okn/i/mint/start_planting_day",
-                            required: true
+                            example: "https://w3id.org/okn/i/mint/start_planting_day"
                         },
                         value: {
                             oneOf: [
@@ -747,8 +900,7 @@ const SubtaskSchema = {
                                 }
                             ],
                             description: "Parameter value(s)",
-                            example: [100, 107, 114],
-                            required: true
+                            example: [100, 107, 114]
                         }
                     }
                 },
@@ -758,12 +910,12 @@ const SubtaskSchema = {
                 type: "array",
                 items: {
                     type: "object",
+                    required: ["id", "dataset"],
                     properties: {
                         id: {
                             type: "string",
                             description: "Input ID of the model",
-                            example: "https://w3id.org/okn/i/mint/modflow_2005_Well",
-                            required: true
+                            example: "https://w3id.org/okn/i/mint/modflow_2005_Well"
                         },
                         dataset: {
                             type: "object",
@@ -771,8 +923,7 @@ const SubtaskSchema = {
                                 id: {
                                     type: "string",
                                     description: "Dataset ID from the Data Catalog configured",
-                                    example: "18400624-423c-42b5-ad56-6c73322584bd",
-                                    required: true
+                                    example: "18400624-423c-42b5-ad56-6c73322584bd"
                                 },
                                 resources: {
                                     type: "array",
@@ -782,15 +933,13 @@ const SubtaskSchema = {
                                             id: {
                                                 type: "string",
                                                 description: "Resource ID",
-                                                example: "9c7b25c4-8cea-4965-a07a-d9b3867f18a9",
-                                                required: true
+                                                example: "9c7b25c4-8cea-4965-a07a-d9b3867f18a9"
                                             },
                                             url: {
                                                 type: "string",
                                                 description: "Resource URL",
                                                 example:
-                                                    "https://ckan.tacc.utexas.edu/dataset/18400624-423c-42b5-ad56-6c73322584bd/resource/9c7b25c4-8cea-4965-a07a-d9b3867f18a9/download/barton_springs_2001_2010average.wel",
-                                                required: true
+                                                    "https://ckan.tacc.utexas.edu/dataset/18400624-423c-42b5-ad56-6c73322584bd/resource/9c7b25c4-8cea-4965-a07a-d9b3867f18a9/download/barton_springs_2001_2010average.wel"
                                             }
                                         }
                                     }
@@ -951,7 +1100,6 @@ const ProblemStatementSchema = {
         }
     }
 };
-
 const TapisSchema = {
     ReqUpdateExecutionStatus: {
         type: "object",
@@ -1707,13 +1855,15 @@ const apiDocComponents = {
                 type: "oauth2",
                 flows: {
                     implicit: {
-                        authorizationUrl: AUTHORIZATION_URL
+                        authorizationUrl: AUTHORIZATION_URL,
+                        scopes: {}
                     }
                 }
             }
         },
         schemas: {
             ...MintSchema,
+            ...ModelCatalogSchema,
             ...TaskSchema,
             ...SubtaskSchema,
             ...ProblemStatementSchema,

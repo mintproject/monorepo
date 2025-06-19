@@ -56,6 +56,9 @@ export default function (service: typeof executionsService) {
      *     parameters:
      *       - in: path
      *         name: executionId
+     *         required: true
+     *         schema:
+     *           type: string
      *         example: "9bc5bbfb-d76c-4d0b-87cc-f89e945a062e-007"
      *     responses:
      *       200:

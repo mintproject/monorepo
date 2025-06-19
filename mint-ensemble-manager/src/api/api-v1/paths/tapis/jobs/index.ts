@@ -55,7 +55,11 @@ export default function () {
      *     parameters:
      *       - in: path
      *         name: id
+     *         required: true
+     *         schema:
+     *           type: string
      *         example: "9bc5bbfb-d76c-4d0b-87cc-f89e945a062e-007"
+     *
      *     responses:
      *       200:
      *         description: Job Status
@@ -88,6 +92,9 @@ export default function () {
      *     parameters:
      *       - in: path
      *         name: id
+     *         required: true
+     *         schema:
+     *           type: string
      *         example: "9bc5bbfb-d76c-4d0b-87cc-f89e945a062e-007"
      *     responses:
      *       200:

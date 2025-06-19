@@ -50,13 +50,6 @@ export default function (service: typeof executionsLocalService) {
      *     security:
      *       - BearerAuth: []
      *       - oauth2: []
-     *     requestBody:
-     *       description: Modeling thread
-     *       required: true
-     *       content:
-     *         application/json:
-     *           schema:
-     *             $ref: '#/components/schemas/ModelThread'
      *     responses:
      *       202:
      *         description: Successful response

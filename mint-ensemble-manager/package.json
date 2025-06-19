@@ -54,6 +54,7 @@
         "dockerode": "^3.2.1",
         "dockerode-utils": "0.0.7",
         "express": "^4.17.1",
+        "express-openapi-validator": "^5.5.7",
         "fetch": "^1.1.0",
         "form-data": "^2.3.3",
         "fs-extra": "^8.1.0",

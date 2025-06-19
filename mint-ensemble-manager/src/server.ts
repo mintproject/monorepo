@@ -36,18 +36,49 @@ import executionEnginesRouter from "@/api/api-v1/paths/executionEngines/tapis";
 import problemStatementsRouter from "@/api/api-v1/paths/problemStatements";
 import { getConfiguration } from "./classes/mint/mint-functions";
 import { modelBindingsRouter } from "./api/api-v1/paths/modelBindings";
+import * as OpenApiValidator from "express-openapi-validator";
+import fs from "fs";
 
 // Main Express Server
 const app = express();
 const port = PORT;
 const version = VERSION;
 const dashboard_url = "/admin/queues";
+const CONFIG_SERVERS = getConfiguration().openapi?.servers || [];
 
-// const CLIENT_ID = getConfiguration().auth.client_id;
+// Swagger-jsdoc setup
+const swaggerOptions = {
+    definition: {
+        openapi: "3.0.0",
+        info: {
+            title: "Mint Ensemble Manager API",
+            version: "1.0.0"
+        },
+        servers: CONFIG_SERVERS,
+        components: apiDocComponents.components
+    },
+    apis: ["./src/api/api-v1/paths/*.ts", "./src/api/api-v1/paths/**/*.ts", "./src/api/api-doc.ts"]
+};
+const swaggerSpec = swaggerJSDoc(swaggerOptions);
+fs.writeFileSync("./swagger.json", JSON.stringify(swaggerSpec, null, 2));
+app.use(`/${version}/ui`, swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
+try {
+    const validator = OpenApiValidator.middleware({
+        apiSpec: "./swagger.json",
+        validateRequests: true, // (default)
+        validateResponses: true // false by default
+    });
+    app.use(validator);
+} catch (error) {
+    console.error(error);
+}
 
 // Setup API
 app.use(bodyParser.json());
 app.use(cors());
+
+// Apply OpenAPI validator middleware to all routes
 
 // Register routes
 app.use(`/${version}/problemStatements`, problemStatementsRouter());
@@ -62,37 +93,15 @@ app.use(`/${version}/threads`, threadsRoutes(v1ThreadsService));
 app.use(`/${version}/executionEngines`, executionEnginesRouter());
 app.use(`/${version}/modelBindings`, modelBindingsRouter());
 app.use(`/${version}/tapis`, tapisRouter());
-// Swagger-jsdoc setup
-//obtain server from the hosts headers
-
-const CONFIG_SERVERS = getConfiguration().openapi?.servers || [];
-
-const swaggerOptions = {
-    definition: {
-        openapi: "3.0.0",
-        info: {
-            title: "Mint Ensemble Manager API",
-            version: "1.0.0"
-        },
-        servers: CONFIG_SERVERS,
-        components: apiDocComponents.components
-    },
-    apis: ["./src/api/api-v1/paths/*.ts", "./src/api/api-v1/paths/**/*.ts", "./src/api/api-doc.ts"]
-};
-const swaggerSpec = swaggerJSDoc(swaggerOptions);
-app.use(`/${version}/ui`, swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Setup Error Handler
-const errorHandler: ErrorRequestHandler = (
-    err: Error,
-    req: Request,
-    res: Response,
-    next: Function
-) => {
-    console.error(err);
-    res.status(500).json({ message: err.message });
-};
-app.use(errorHandler);
+app.use((err, req, res, next) => {
+    // format error
+    res.status(err.status || 500).json({
+        message: err.message,
+        errors: err.errors
+    });
+});
 
 // Setup Queue
 const executionQueue = new Queue(EXECUTION_QUEUE_NAME, REDIS_URL);
