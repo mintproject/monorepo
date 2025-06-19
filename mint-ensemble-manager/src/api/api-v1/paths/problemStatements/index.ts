@@ -1,6 +1,12 @@
 import { Router, Request, Response } from "express";
 import problemStatementsService from "@/api/api-v1/services/problemStatementsService";
-import { ProblemStatementInfo, ProblemStatement } from "@/classes/mint/mint-types";
+import tasksService from "@/api/api-v1/services/tasksService";
+import {
+    ProblemStatementInfo,
+    ProblemStatement,
+    Task,
+    ThreadInfo
+} from "@/classes/mint/mint-types";
 import tasksRouter from "./tasks";
 
 /**
@@ -32,6 +38,31 @@ interface CreateProblemStatementRequest {
 
 interface ErrorResponse {
     message: string;
+}
+
+/**
+ * Interface for creating a task and subtask request
+ */
+interface CreateTaskAndSubtaskRequest {
+    task: {
+        name: string;
+        response_variables: string[];
+        driving_variables: string[];
+        regionid?: string;
+        dates?: {
+            start_date: string; // ISO format date-time
+            end_date: string; // ISO format date-time
+        };
+    };
+    subtask: {
+        name: string;
+        driving_variables: string[];
+        response_variables: string[];
+        dates?: {
+            start_date: string; // ISO format date-time
+            end_date: string; // ISO format date-time
+        };
+    };
 }
 
 const problemStatementsRouter = (): Router => {
@@ -213,6 +244,133 @@ const problemStatementsRouter = (): Router => {
             res.status(500).json({ message: error.message });
         }
     });
+
+    /**
+     * @openapi
+     * /problemStatements/{id}/taskAndSubtask:
+     *   post:
+     *     summary: Create a task and subtask together
+     *     description: Creates both a task and its associated subtask in a single operation
+     *     security:
+     *       - BearerAuth: []
+     *         oauth2: []
+     *     tags:
+     *       - Problem Statements
+     *     parameters:
+     *       - in: path
+     *         name: id
+     *         required: true
+     *         schema:
+     *           type: string
+     *         description: The problem statement ID
+     *     requestBody:
+     *       required: true
+     *       content:
+     *         application/json:
+     *           schema:
+     *             $ref: '#/components/schemas/CreateTaskAndSubtaskRequest'
+     *     responses:
+     *       200:
+     *         description: Task and subtask created successfully
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 taskId:
+     *                   type: string
+     *                   description: The ID of the created task
+     *                 subtaskId:
+     *                   type: string
+     *                   description: The ID of the created subtask
+     *       400:
+     *         description: Invalid request body
+     *       401:
+     *         description: Unauthorized
+     *       403:
+     *         description: Forbidden
+     *       404:
+     *         description: Problem statement not found
+     *       500:
+     *         description: Internal server error
+     */
+    router.post(
+        "/:id/taskAndSubtask",
+        async (
+            req: Request<{ id: string }, unknown, CreateTaskAndSubtaskRequest>,
+            res: Response<{ taskId: string; subtaskId: string } | ErrorResponse>
+        ) => {
+            try {
+                const authorizationHeader = req.headers.authorization;
+                if (!authorizationHeader) {
+                    return res.status(401).json({ message: "Authorization header is required" });
+                }
+
+                const { id: problemStatementId } = req.params;
+                const { task: taskData, subtask: subtaskData } = req.body;
+
+                // Validate that problem statement exists
+                const problemStatement = await problemStatementsService.getProblemStatementById(
+                    problemStatementId,
+                    authorizationHeader
+                );
+
+                if (!problemStatement) {
+                    return res.status(404).json({ message: "Problem statement not found" });
+                }
+
+                // Create Task object
+                const task: Task = {
+                    id: "", // Will be generated
+                    name: taskData.name,
+                    problem_statement_id: problemStatementId,
+                    response_variables: taskData.response_variables,
+                    driving_variables: taskData.driving_variables,
+                    regionid: taskData.regionid,
+                    dates: taskData.dates
+                        ? {
+                              start_date: new Date(taskData.dates.start_date),
+                              end_date: new Date(taskData.dates.end_date)
+                          }
+                        : undefined,
+                    events: [],
+                    permissions: []
+                };
+
+                // Create ThreadInfo object
+                const subtask: ThreadInfo = {
+                    id: "", // Will be generated
+                    name: subtaskData.name,
+                    task_id: "", // Will be set by the service
+                    driving_variables: subtaskData.driving_variables,
+                    response_variables: subtaskData.response_variables,
+                    dates: subtaskData.dates
+                        ? {
+                              start_date: new Date(subtaskData.dates.start_date),
+                              end_date: new Date(subtaskData.dates.end_date)
+                          }
+                        : undefined,
+                    events: [],
+                    permissions: []
+                };
+
+                // Create task and subtask together
+                const [taskId, subtaskId] = await tasksService.createTaskWithThread(
+                    problemStatementId,
+                    task,
+                    subtask,
+                    authorizationHeader
+                );
+
+                res.status(200).json({ taskId: taskId, subtaskId: subtaskId });
+            } catch (error) {
+                if (error.message.includes("not found")) {
+                    return res.status(404).json({ message: error.message });
+                }
+                res.status(500).json({ message: error.message });
+            }
+        }
+    );
 
     return router;
 };

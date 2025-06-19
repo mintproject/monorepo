@@ -416,6 +416,131 @@ const TaskSchema = {
                 }
             }
         }
+    },
+    CreateTaskAndSubtaskRequest: {
+        type: "object",
+        description: "A request to create both a task and subtask in a single operation",
+        required: ["task", "subtask"],
+        properties: {
+            task: {
+                type: "object",
+                description: "The task configuration",
+                required: ["name", "response_variables", "driving_variables"],
+                properties: {
+                    name: {
+                        description: "The name of the task",
+                        type: "string",
+                        example: "Crop Yield Analysis Task"
+                    },
+                    response_variables: {
+                        type: "array",
+                        description: "List of response variables",
+                        items: {
+                            type: "string"
+                        },
+                        example: ["crop__potential_transpiration_volume_flux"]
+                    },
+                    driving_variables: {
+                        type: "array",
+                        description: "List of driving variables",
+                        items: {
+                            type: "string"
+                        },
+                        example: ["nitrogen__average_of_net_mass_mineralization_rate"]
+                    },
+                    regionid: {
+                        description: "The specific region id for the task",
+                        type: "string",
+                        example: "ethiopia"
+                    },
+                    dates: {
+                        type: "object",
+                        description: "The date range for the task",
+                        properties: {
+                            start_date: {
+                                description: "Start date in ISO format",
+                                type: "string",
+                                format: "date-time",
+                                example: "2024-01-01T00:00:00Z"
+                            },
+                            end_date: {
+                                description: "End date in ISO format",
+                                type: "string",
+                                format: "date-time",
+                                example: "2024-12-31T23:59:59Z"
+                            }
+                        }
+                    }
+                }
+            },
+            subtask: {
+                type: "object",
+                description: "The subtask configuration",
+                required: ["name", "driving_variables", "response_variables"],
+                properties: {
+                    name: {
+                        description: "The name of the subtask",
+                        type: "string",
+                        example: "Crop Yield Analysis Subtask"
+                    },
+                    driving_variables: {
+                        type: "array",
+                        description: "List of driving variables",
+                        items: {
+                            type: "string"
+                        },
+                        example: ["nitrogen__average_of_net_mass_mineralization_rate"]
+                    },
+                    response_variables: {
+                        type: "array",
+                        description: "List of response variables",
+                        items: {
+                            type: "string"
+                        },
+                        example: ["crop__potential_transpiration_volume_flux"]
+                    },
+                    dates: {
+                        type: "object",
+                        description: "The date range for the subtask",
+                        properties: {
+                            start_date: {
+                                description: "Start date in ISO format",
+                                type: "string",
+                                format: "date-time",
+                                example: "2024-01-01T00:00:00Z"
+                            },
+                            end_date: {
+                                description: "End date in ISO format",
+                                type: "string",
+                                format: "date-time",
+                                example: "2024-12-31T23:59:59Z"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        example: {
+            task: {
+                name: "Crop Yield Analysis Task",
+                response_variables: ["crop__potential_transpiration_volume_flux"],
+                driving_variables: ["nitrogen__average_of_net_mass_mineralization_rate"],
+                regionid: "ethiopia",
+                dates: {
+                    start_date: "2024-01-01T00:00:00Z",
+                    end_date: "2024-12-31T23:59:59Z"
+                }
+            },
+            subtask: {
+                name: "Crop Yield Analysis Subtask",
+                driving_variables: ["nitrogen__average_of_net_mass_mineralization_rate"],
+                response_variables: ["crop__potential_transpiration_volume_flux"],
+                dates: {
+                    start_date: "2024-01-01T00:00:00Z",
+                    end_date: "2024-12-31T23:59:59Z"
+                }
+            }
+        }
     }
 };
 
