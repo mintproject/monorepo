@@ -5,7 +5,9 @@ import {
     getModel,
     getTask,
     getThread,
-    setThreadModels
+    setThreadModels,
+    setThreadData,
+    setThreadParameters
 } from "@/classes/graphql/graphql_functions";
 import { getTokenFromAuthorizationHeader } from "@/utils/authUtils";
 import {
@@ -25,7 +27,7 @@ import {
     modelConfigurationToGraphQL
 } from "@/classes/mint/model-catalog-graphql-adapter";
 import { Model_Insert_Input } from "@/classes/graphql/graph_typing";
-import { AddDataRequest } from "../paths/problemStatements/tasks/subtasks";
+import { AddDataRequest, AddParametersRequest } from "../paths/problemStatements/tasks/subtasks";
 import useModelsService from "./useModelsService";
 import { IExecutionService } from "@/interfaces/IExecutionService";
 import { TapisExecutionService } from "@/classes/tapis/adapters/TapisExecutionService";
@@ -85,15 +87,15 @@ export interface SubTasksService {
     ): Promise<string>;
     addModels(subtaskId: string, modelIds: string[], authorizationHeader: string): Promise<Thread>;
     addData(subtaskId: string, data: AddDataRequest, authorizationHeader: string): Promise<Thread>;
+    addParameters(
+        subtaskId: string,
+        parameters: AddParametersRequest,
+        authorizationHeader: string
+    ): Promise<Thread>;
     getModelDataBindings(
         model_id: string,
         authorizationHeader: string
     ): Promise<DatasetSpecification[]>;
-    // addDataSets(
-    //     subtaskId: string,
-    //     dataSetIds: string[],
-    //     authorizationHeader: string
-    // ): Promise<Thread>;
 }
 
 const subTasksService: SubTasksService = {
@@ -198,6 +200,7 @@ const subTasksService: SubTasksService = {
             throw new InternalServerError("Error creating subtask: " + error.message);
         }
     },
+
     async addModels(subtaskId: string, modelIds: string[], authorizationHeader: string) {
         const access_token = getTokenFromAuthorizationHeader(authorizationHeader);
         if (!access_token) {
@@ -236,7 +239,36 @@ const subTasksService: SubTasksService = {
         if (!subtask) {
             throw new NotFoundError("Subtask not found");
         }
-        await useModelsService.matchModel(data, subtask);
+        const dataMap = await useModelsService.setInputBindings(data, subtask);
+        await setThreadData(
+            dataMap,
+            subtask.model_ensembles,
+            "Setting thread data via API",
+            subtask
+        );
+        return subtask;
+    },
+
+    async addParameters(
+        subtaskId: string,
+        parameters: AddParametersRequest,
+        authorizationHeader: string
+    ) {
+        const access_token = getTokenFromAuthorizationHeader(authorizationHeader);
+        if (!access_token) {
+            throw new UnauthorizedError("Invalid authorization header");
+        }
+        const subtask = await getThread(subtaskId);
+        if (!subtask) {
+            throw new NotFoundError("Subtask not found");
+        }
+        await useModelsService.setParameterBindings(parameters, subtask);
+        await setThreadParameters(
+            subtask.model_ensembles,
+            subtask.execution_summary,
+            "Setting thread parameters via API",
+            subtask
+        );
         return subtask;
     },
 
@@ -283,28 +315,6 @@ const subTasksService: SubTasksService = {
             subtaskId
         );
     }
-
-    //     async findRequiredResources(subtaskId: string, authorizationHeader: string) {
-    //         const access_token = getTokenFromAuthorizationHeader(authorizationHeader);
-    //         if (!access_token) {
-    //             throw new UnauthorizedError("Invalid authorization header");
-    //         }
-    //         const subtask = await getThread(subtaskId);
-    //         if (!subtask) {
-    //             throw new NotFoundError("Subtask not found");
-    //         }
-    //         const requiredResources = [];
-    //         for (const model of Object.values(subtask.models)) {
-    //             const model_ensemble = subtask.model_ensembles[model.id];
-    //             for (const input of model.hasInput) {
-    //                 if (input.hasResource) {
-    //                     requiredResources.push(input.hasResource.id);
-    //                 }
-    //             }
-    //             for (const parameter of model.hasParameter) {
-    //         }
-    //         return requiredResources;
-    //     }
 };
 
 export default subTasksService;

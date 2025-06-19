@@ -3,6 +3,134 @@ import { getConfiguration } from "@/classes/mint/mint-functions";
 const AUTHORIZATION_URL = getConfiguration().auth.authorization_url;
 
 const MintSchema = {
+    DatasetSpecification: {
+        description: "A dataset specification",
+        properties: {
+            hasDimensionality: {
+                description:
+                    "Property to indicate dimensionality of the input or output of a dataset specification",
+                items: {
+                    format: "int32",
+                    type: "integer"
+                },
+                nullable: true,
+                type: "array"
+            },
+            hasFormat: {
+                description: "Format followed by a file. For example, txt, nc, etc.",
+                items: {
+                    type: "string"
+                },
+                nullable: true,
+                type: "array"
+            },
+            pathLocation: {
+                description:
+                    'Property that indicates the relative path of an input or output with respect to the folder structure of the executable. \n\nFor example, let\'s assume we have an input that has to exist in the folder `/datasets` or the executable will not work. This property ensures that this knowledge is captured for a given software component execution.\n\nIn this case the property would capture this as follows:\n\n```\n:input_prep a sd:DatasetSpecification .\n:input_prep rdfs:label "precipitation file" .\n:input_precip sd:pathLocation "/datasets/".\n```',
+                items: {
+                    type: "string"
+                },
+                nullable: true,
+                type: "array"
+            },
+            hasFileStructure: {
+                description: "Relates a dataset specification to the data structure definition",
+                items: {
+                    description: "Relates a dataset specification to the data structure definition",
+                    type: "object"
+                },
+                maxItems: 1,
+                nullable: true,
+                type: "array"
+            },
+            description: {
+                description: "small description",
+                items: {
+                    type: "string"
+                },
+                nullable: true,
+                type: "array"
+            },
+            hasDataTransformation: {
+                description:
+                    "Property that associates an input/output with their corresponding data transformation.",
+                items: {
+                    type: "object"
+                },
+                nullable: true,
+                type: "array"
+            },
+            hasPresentation: {
+                description:
+                    "Property that links an instance of a dataset (or a dataset specification) to the presentation of a variable contained (or expected to be contained) on it.",
+                items: {
+                    type: "object"
+                },
+                nullable: true,
+                type: "array"
+            },
+            label: {
+                description: "short description of the resource",
+                items: {
+                    type: "string"
+                },
+                nullable: true,
+                type: "array"
+            },
+            type: {
+                description: "type of the resource",
+                items: {
+                    type: "string"
+                },
+                nullable: true,
+                type: "array"
+            },
+            hasFixedResource: {
+                description:
+                    "Property that links a parameter or an input to a fixed value. For example, in a given configuration a parameter with the planting date for a model could be fixed to avoid the user changing it for that region.",
+                items: {
+                    type: "object"
+                },
+                nullable: true,
+                type: "array"
+            },
+            isTransformedFrom: {
+                description:
+                    "Property that links a dataset specification from a model configuration or setup to the output from a target data transformation. This occurs when a data transformation produces several outputs, but only one of them is the one needed for a model",
+                items: {
+                    type: "object"
+                },
+                nullable: true,
+                type: "array"
+            },
+            hasDataTransformationSetup: {
+                description:
+                    "Property to link an input/output dataset to the specific data transformation (with URLs",
+                items: {
+                    type: "object"
+                },
+                nullable: true,
+                type: "array"
+            },
+            position: {
+                description:
+                    "Position of the parameter or input/output in the model configuration. This property is needed to know how to organize the I/O of the component on execution",
+                items: {
+                    format: "int32",
+                    type: "integer"
+                },
+                nullable: true,
+                type: "array"
+            },
+            id: {
+                description: "identifier",
+                nullable: false,
+                type: "string"
+            }
+        },
+        title: "DatasetSpecification",
+        type: "object"
+    },
     TimePeriod: {
         type: "object",
         description: "A time period",
@@ -392,6 +520,67 @@ const SubtaskSchema = {
                     "http://api.models.mint.local/v1.8.0/modelconfigurations/modflow_2005_BartonSprings_avg?username=mint@isi.edu"
                 ]
             }
+        }
+    },
+    AddParametersRequest: {
+        type: "object",
+        description: "A request to add parameters to a subtask",
+        properties: {
+            model_id: {
+                type: "string",
+                description:
+                    "The model id to use (browse here: https://dev.mint.isi.edu/ethiopia/models/explore. This is the model id of the model configuration setup or model configuration)",
+                example:
+                    "http://api.models.mint.local/v1.8.0/modelconfigurationsetups/c07a6f98-6339-4033-84b0-6cd7daca6284?username=mint%40isi.edu",
+                required: true
+            },
+            parameters: {
+                type: "array",
+                items: {
+                    type: "object",
+                    properties: {
+                        id: {
+                            type: "string",
+                            description: "Parameter ID of the model",
+                            example: "https://w3id.org/okn/i/mint/start_planting_day",
+                            required: true
+                        },
+                        value: {
+                            oneOf: [
+                                {
+                                    type: "string",
+                                    description: "Single parameter value"
+                                },
+                                {
+                                    type: "array",
+                                    items: {
+                                        type: "string"
+                                    },
+                                    description: "Multiple parameter values"
+                                }
+                            ],
+                            description: "Parameter value(s)",
+                            example: [100, 107, 114],
+                            required: true
+                        }
+                    }
+                },
+                description: "List of parameters to add to the subtask"
+            }
+        },
+        example: {
+            model_id:
+                "http://api.models.mint.local/v1.8.0/modelconfigurationsetups/c07a6f98-6339-4033-84b0-6cd7daca6284?username=mint%40isi.edu",
+            parameters: [
+                {
+                    id: "https://w3id.org/okn/i/mint/start_planting_day",
+                    value: [100, 107, 114]
+                },
+                {
+                    id: "https://w3id.org/okn/i/mint/nitrogen_application_rate",
+                    value: "150"
+                }
+            ]
         }
     }
 };

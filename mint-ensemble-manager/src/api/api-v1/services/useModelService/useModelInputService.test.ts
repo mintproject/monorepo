@@ -1,6 +1,6 @@
-import useModelsService from "./useModelsService";
+import useModelInputService from "./useModelInputService";
 import { BadRequestError, NotFoundError } from "@/classes/common/errors";
-import { AddDataRequest } from "../paths/problemStatements/tasks/subtasks";
+import { AddDataRequest } from "../../paths/problemStatements/tasks/subtasks";
 import { Thread } from "@/classes/mint/mint-types";
 import {
     fetchCustomModelConfigurationOrSetup,
@@ -144,7 +144,7 @@ const modelConfigSetup = {
     hasInput: inputSpecs
 };
 
-describe("useModelsService", () => {
+describe("useModelInputService", () => {
     beforeEach(() => {
         jest.clearAllMocks();
         (fetchCustomModelConfigurationOrSetup as jest.Mock).mockResolvedValue(modelConfigSetup);
@@ -153,32 +153,30 @@ describe("useModelsService", () => {
         (uuidv4 as jest.Mock).mockImplementation(() => `uuid-mock-${++uuidCount}`);
     });
 
-    it("should bind dataslices to model inputs for matchModel", async () => {
+    it("should bind dataslices to model inputs for matchInputs", async () => {
         // Prepare a deep copy of subtask to avoid mutation between tests
         const subtaskCopy = JSON.parse(JSON.stringify(subtask));
         // Add empty arrays for bindings
         for (const input of inputSpecs) {
             subtaskCopy.model_ensembles[modelW3Id].bindings[input.id] = [];
         }
-        await useModelsService.matchModel(data, subtaskCopy);
+        const dataMap = await useModelInputService.matchInputs(modelConfigSetup, data, subtaskCopy);
         for (const input of inputSpecs) {
             expect(subtaskCopy.model_ensembles[modelW3Id].bindings[input.id]).toHaveLength(1);
             expect(subtaskCopy.model_ensembles[modelW3Id].bindings[input.id][0]).toMatch(
                 /^uuid-mock-/
             );
         }
+        expect(Object.keys(dataMap)).toHaveLength(4);
     });
 
-    it("should throw NotFoundError if model is not found in thread", async () => {
-        const subtaskCopy = JSON.parse(JSON.stringify(subtask));
-        subtaskCopy.model_ensembles = {};
-        await expect(useModelsService.matchModel(data, subtaskCopy)).rejects.toThrow(NotFoundError);
-    });
-
-    it("should throw BadRequestError if data input is missing", () => {
+    it("should throw BadRequestError if data input is missing", async () => {
         const model = { id: data.model_id, hasInput: [{ id: "missing", hasFixedResource: [] }] };
         const subtaskCopy = JSON.parse(JSON.stringify(subtask));
-        expect(() => useModelsService.matchInputs(model, data, subtaskCopy)).toThrow(
+        // Add empty bindings array for the missing input
+        subtaskCopy.model_ensembles[modelW3Id].bindings["missing"] = [];
+
+        await expect(useModelInputService.matchInputs(model, data, subtaskCopy)).rejects.toThrow(
             BadRequestError
         );
     });
@@ -193,8 +191,63 @@ describe("useModelsService", () => {
         for (const input of inputSpecs) {
             subtaskCopy.model_ensembles[modelW3Id].bindings[input.id] = [];
         }
-        await expect(useModelsService.matchModel(incompleteData, subtaskCopy)).rejects.toThrow(
+        await expect(
+            useModelInputService.matchInputs(modelConfigSetup, incompleteData, subtaskCopy)
+        ).rejects.toThrow(BadRequestError);
+    });
+
+    it("should create data slice with correct structure", () => {
+        const dataInput = data.data[0];
+        const dataslice = useModelInputService.createDataSlice(dataInput, subtask);
+
+        expect(dataslice.id).toMatch(/^uuid-mock-/);
+        expect(dataslice.total_resources).toBe(1);
+        expect(dataslice.selected_resources).toBe(1);
+        expect(dataslice.resources).toHaveLength(1);
+        expect(dataslice.resources[0].time_period).toEqual(subtask.dates);
+        expect(dataslice.time_period).toEqual(subtask.dates);
+        expect(dataslice.name).toBe(dataInput.dataset.id);
+        expect(dataslice.resources_loaded).toBe(true);
+        expect(dataslice.dataset.resource_count).toBe(1);
+    });
+
+    it("should check if input has fixed resource", () => {
+        const inputWithFixed = { id: "test", hasFixedResource: [{ id: "resource1" }] };
+        const inputWithoutFixed = { id: "test", hasFixedResource: [] };
+
+        expect(useModelInputService.hasInputHasFixedResource(inputWithFixed)).toBe(true);
+        expect(useModelInputService.hasInputHasFixedResource(inputWithoutFixed)).toBe(false);
+    });
+
+    it("should match input correctly", () => {
+        const input = inputSpecs[0];
+        const matchedInput = useModelInputService.findDataSpecificationByRequest(input, data);
+        expect(matchedInput).toEqual(data.data[0]);
+    });
+
+    it("should throw BadRequestError when input is not found", () => {
+        const input = { id: "non-existent", hasFixedResource: [] };
+        expect(() => useModelInputService.findDataSpecificationByRequest(input, data)).toThrow(
             BadRequestError
+        );
+    });
+
+    it("should get data bindings for model", async () => {
+        const bindings = await useModelInputService.getDataBindings(modelConfigSetup);
+        expect(bindings).toHaveLength(4);
+        expect(bindings).toEqual(inputSpecs);
+    });
+
+    it("should get data bindings by model id", async () => {
+        const bindings = await useModelInputService.getDataBindingsByModelId(data.model_id);
+        expect(bindings).toHaveLength(4);
+        expect(bindings).toEqual(inputSpecs);
+    });
+
+    it("should throw NotFoundError when model is not found", async () => {
+        (fetchCustomModelConfigurationOrSetup as jest.Mock).mockResolvedValue(null);
+        await expect(useModelInputService.getDataBindingsByModelId("invalid-id")).rejects.toThrow(
+            NotFoundError
         );
     });
 });

@@ -27,6 +27,16 @@ export interface AddDataRequest {
     data: DataInput[];
 }
 
+export interface ParameterInput {
+    id: string;
+    value: string | string[];
+}
+
+export interface AddParametersRequest {
+    model_id: string;
+    parameters: ParameterInput[];
+}
+
 const subtasksRouter = (): Router => {
     const router = Router({ mergeParams: true });
 
@@ -391,6 +401,87 @@ const subtasksRouter = (): Router => {
             }
         }
     );
+
+    /**
+     * @openapi
+     * /problemStatements/{problemStatementId}/tasks/{taskId}/subtasks/{subtaskId}/parameters:
+     *   post:
+     *     summary: Add parameters to a subtask
+     *     description: Adds parameters to a subtask
+     *     security:
+     *       - BearerAuth: []
+     *         oauth2: []
+     *     tags:
+     *       - Subtasks
+     *     parameters:
+     *       - in: path
+     *         name: problemStatementId
+     *         required: true
+     *         schema:
+     *           type: string
+     *         description: The problem statement ID
+     *       - in: path
+     *         name: taskId
+     *         required: true
+     *         schema:
+     *           type: string
+     *         description: The task ID
+     *       - in: path
+     *         name: subtaskId
+     *         required: true
+     *         schema:
+     *           type: string
+     *         description: The subtask ID
+     *     requestBody:
+     *       required: true
+     *       content:
+     *         application/json:
+     *           schema:
+     *             $ref: '#/components/schemas/AddParametersRequest'
+     *     responses:
+     *       200:
+     *         description: Parameters added successfully
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/Thread'
+     *       401:
+     *         description: Unauthorized
+     *       403:
+     *         description: Forbidden
+     *       404:
+     *         description: Subtask not found
+     *       500:
+     *         description: Internal server error
+     */
+
+    router.post(
+        "/:subtaskId/parameters",
+        async (
+            req: Request<{ subtaskId: string }, unknown, AddParametersRequest>,
+            res: Response
+        ) => {
+            const authorizationHeader = req.headers.authorization;
+            if (!authorizationHeader) {
+                return res.status(401).json({ message: "Authorization header is required" });
+            }
+            const { subtaskId } = req.params;
+            try {
+                const subtask = await subTasksService.addParameters(
+                    subtaskId,
+                    req.body,
+                    authorizationHeader
+                );
+                res.status(200).json(subtask);
+            } catch (error) {
+                if (error instanceof HttpError) {
+                    return res.status(error.statusCode).json({ message: error.message });
+                }
+                res.status(500).json({ message: error.message });
+            }
+        }
+    );
+
     /**
      * @openapi
      * /problemStatements/{problemStatementId}/tasks/{taskId}/subtasks/{subtaskId}/submit:
