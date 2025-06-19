@@ -582,6 +582,128 @@ const SubtaskSchema = {
                 }
             ]
         }
+    },
+    AddParametersAndDataRequest: {
+        type: "object",
+        description: "A request to add both parameters and data to a subtask in a single call",
+        properties: {
+            model_id: {
+                type: "string",
+                description:
+                    "The model id to use (browse here: https://dev.mint.isi.edu/ethiopia/models/explore. This is the model id of the model configuration setup or model configuration)",
+                example:
+                    "http://api.models.mint.local/v1.8.0/modelconfigurationsetups/c07a6f98-6339-4033-84b0-6cd7daca6284?username=mint%40isi.edu",
+                required: true
+            },
+            parameters: {
+                type: "array",
+                items: {
+                    type: "object",
+                    properties: {
+                        id: {
+                            type: "string",
+                            description: "Parameter ID of the model",
+                            example: "https://w3id.org/okn/i/mint/start_planting_day",
+                            required: true
+                        },
+                        value: {
+                            oneOf: [
+                                {
+                                    type: "string",
+                                    description: "Single parameter value"
+                                },
+                                {
+                                    type: "array",
+                                    items: {
+                                        type: "string"
+                                    },
+                                    description: "Multiple parameter values"
+                                }
+                            ],
+                            description: "Parameter value(s)",
+                            example: [100, 107, 114],
+                            required: true
+                        }
+                    }
+                },
+                description: "List of parameters to add to the subtask (optional)"
+            },
+            data: {
+                type: "array",
+                items: {
+                    type: "object",
+                    properties: {
+                        id: {
+                            type: "string",
+                            description: "Input ID of the model",
+                            example: "https://w3id.org/okn/i/mint/modflow_2005_Well",
+                            required: true
+                        },
+                        dataset: {
+                            type: "object",
+                            properties: {
+                                id: {
+                                    type: "string",
+                                    description: "Dataset ID from the Data Catalog configured",
+                                    example: "18400624-423c-42b5-ad56-6c73322584bd",
+                                    required: true
+                                },
+                                resources: {
+                                    type: "array",
+                                    items: {
+                                        type: "object",
+                                        properties: {
+                                            id: {
+                                                type: "string",
+                                                description: "Resource ID",
+                                                example: "9c7b25c4-8cea-4965-a07a-d9b3867f18a9",
+                                                required: true
+                                            },
+                                            url: {
+                                                type: "string",
+                                                description: "Resource URL",
+                                                example:
+                                                    "https://ckan.tacc.utexas.edu/dataset/18400624-423c-42b5-ad56-6c73322584bd/resource/9c7b25c4-8cea-4965-a07a-d9b3867f18a9/download/barton_springs_2001_2010average.wel",
+                                                required: true
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                description: "List of data inputs to add to the subtask (optional)"
+            }
+        },
+        example: {
+            model_id:
+                "http://api.models.mint.local/v1.8.0/modelconfigurationsetups/c07a6f98-6339-4033-84b0-6cd7daca6284?username=mint%40isi.edu",
+            parameters: [
+                {
+                    id: "https://w3id.org/okn/i/mint/start_planting_day",
+                    value: [100, 107, 114]
+                },
+                {
+                    id: "https://w3id.org/okn/i/mint/nitrogen_application_rate",
+                    value: "150"
+                }
+            ],
+            data: [
+                {
+                    id: "https://w3id.org/okn/i/mint/ce32097e-641d-42af-b3f1-477a24cf015a",
+                    dataset: {
+                        id: "18400624-423c-42b5-ad56-6c73322584bd",
+                        resources: [
+                            {
+                                id: "9c7b25c4-8cea-4965-a07a-d9b3867f18a9",
+                                url: "https://ckan.tacc.utexas.edu/dataset/18400624-423c-42b5-ad56-6c73322584bd/resource/9c7b25c4-8cea-4965-a07a-d9b3867f18a9/download/barton_springs_2001_2010average.wel"
+                            }
+                        ]
+                    }
+                }
+            ]
+        }
     }
 };
 const ProblemStatementSchema = {

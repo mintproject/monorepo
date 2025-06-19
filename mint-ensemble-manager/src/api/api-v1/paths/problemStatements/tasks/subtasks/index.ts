@@ -1,7 +1,6 @@
 import { Router, Request, Response } from "express";
 import subTasksService from "@/api/api-v1/services/subTasksService";
 import { HttpError } from "@/classes/common/errors";
-import { getConfiguration } from "@/classes/mint/mint-functions";
 
 interface SubtaskRequest extends Request {
     params: {
@@ -35,6 +34,12 @@ export interface ParameterInput {
 export interface AddParametersRequest {
     model_id: string;
     parameters: ParameterInput[];
+}
+
+export interface AddParametersAndDataRequest {
+    model_id: string;
+    parameters?: ParameterInput[];
+    data?: DataInput[];
 }
 
 const subtasksRouter = (): Router => {
@@ -484,6 +489,85 @@ const subtasksRouter = (): Router => {
 
     /**
      * @openapi
+     * /problemStatements/{problemStatementId}/tasks/{taskId}/subtasks/{subtaskId}/setup:
+     *   post:
+     *     summary: Setup parameters and data for a subtask
+     *     description: Sets up both parameters and data for a subtask in a single call
+     *     security:
+     *       - BearerAuth: []
+     *         oauth2: []
+     *     tags:
+     *       - Subtasks
+     *     parameters:
+     *       - in: path
+     *         name: problemStatementId
+     *         required: true
+     *         schema:
+     *           type: string
+     *         description: The problem statement ID
+     *       - in: path
+     *         name: taskId
+     *         required: true
+     *         schema:
+     *           type: string
+     *         description: The task ID
+     *       - in: path
+     *         name: subtaskId
+     *         required: true
+     *         schema:
+     *           type: string
+     *         description: The subtask ID
+     *     requestBody:
+     *       required: true
+     *       content:
+     *         application/json:
+     *           schema:
+     *             $ref: '#/components/schemas/AddParametersAndDataRequest'
+     *     responses:
+     *       200:
+     *         description: Parameters and data setup successfully
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/Thread'
+     *       401:
+     *         description: Unauthorized
+     *       403:
+     *         description: Forbidden
+     *       404:
+     *         description: Subtask not found
+     *       500:
+     *         description: Internal server error
+     */
+    router.post(
+        "/:subtaskId/setup",
+        async (
+            req: Request<{ subtaskId: string }, unknown, AddParametersAndDataRequest>,
+            res: Response
+        ) => {
+            const authorizationHeader = req.headers.authorization;
+            if (!authorizationHeader) {
+                return res.status(401).json({ message: "Authorization header is required" });
+            }
+            const { subtaskId } = req.params;
+            try {
+                const subtask = await subTasksService.addParametersAndData(
+                    subtaskId,
+                    req.body,
+                    authorizationHeader
+                );
+                res.status(200).json(subtask);
+            } catch (error) {
+                if (error instanceof HttpError) {
+                    return res.status(error.statusCode).json({ message: error.message });
+                }
+                res.status(500).json({ message: error.message });
+            }
+        }
+    );
+
+    /**
+     * @openapi
      * /problemStatements/{problemStatementId}/tasks/{taskId}/subtasks/{subtaskId}/submit:
      *   post:
      *     summary: Submit a subtask
@@ -546,8 +630,6 @@ const subtasksRouter = (): Router => {
             >,
             res: Response
         ) => {
-            const prefs = getConfiguration();
-            const executionEngine = prefs.execution_engine;
             const authorizationHeader = req.headers.authorization;
             if (!authorizationHeader) {
                 return res.status(401).json({ message: "Authorization header is required" });

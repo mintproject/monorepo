@@ -27,7 +27,11 @@ import {
     modelConfigurationToGraphQL
 } from "@/classes/mint/model-catalog-graphql-adapter";
 import { Model_Insert_Input } from "@/classes/graphql/graph_typing";
-import { AddDataRequest, AddParametersRequest } from "../paths/problemStatements/tasks/subtasks";
+import {
+    AddDataRequest,
+    AddParametersRequest,
+    AddParametersAndDataRequest
+} from "../paths/problemStatements/tasks/subtasks";
 import useModelsService from "./useModelsService";
 import { IExecutionService } from "@/interfaces/IExecutionService";
 import { TapisExecutionService } from "@/classes/tapis/adapters/TapisExecutionService";
@@ -90,6 +94,11 @@ export interface SubTasksService {
     addParameters(
         subtaskId: string,
         parameters: AddParametersRequest,
+        authorizationHeader: string
+    ): Promise<Thread>;
+    addParametersAndData(
+        subtaskId: string,
+        request: AddParametersAndDataRequest,
         authorizationHeader: string
     ): Promise<Thread>;
     getModelDataBindings(
@@ -269,6 +278,53 @@ const subTasksService: SubTasksService = {
             "Setting thread parameters via API",
             subtask
         );
+        return subtask;
+    },
+
+    async addParametersAndData(
+        subtaskId: string,
+        request: AddParametersAndDataRequest,
+        authorizationHeader: string
+    ) {
+        const access_token = getTokenFromAuthorizationHeader(authorizationHeader);
+        if (!access_token) {
+            throw new UnauthorizedError("Invalid authorization header");
+        }
+        const subtask = await getThread(subtaskId);
+        if (!subtask) {
+            throw new NotFoundError("Subtask not found");
+        }
+
+        // Handle parameters if provided
+        if (request.parameters && request.parameters.length > 0) {
+            const parametersRequest: AddParametersRequest = {
+                model_id: request.model_id,
+                parameters: request.parameters
+            };
+            await useModelsService.setParameterBindings(parametersRequest, subtask);
+            await setThreadParameters(
+                subtask.model_ensembles,
+                subtask.execution_summary,
+                "Setting thread parameters via API",
+                subtask
+            );
+        }
+
+        // Handle data if provided
+        if (request.data && request.data.length > 0) {
+            const dataRequest: AddDataRequest = {
+                model_id: request.model_id,
+                data: request.data
+            };
+            const dataMap = await useModelsService.setInputBindings(dataRequest, subtask);
+            await setThreadData(
+                dataMap,
+                subtask.model_ensembles,
+                "Setting thread data via API",
+                subtask
+            );
+        }
+
         return subtask;
     },
 
