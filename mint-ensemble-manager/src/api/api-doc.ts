@@ -583,9 +583,10 @@ const SubtaskSchema = {
             ]
         }
     },
-    AddParametersAndDataRequest: {
+    SetupModelConfigurationAndBindingsRequest: {
         type: "object",
-        description: "A request to add both parameters and data to a subtask in a single call",
+        description:
+            "A request to setup a complete model configuration including the model (if not present), parameters, and data inputs in a single call.",
         properties: {
             model_id: {
                 type: "string",

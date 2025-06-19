@@ -30,7 +30,7 @@ import { Model_Insert_Input } from "@/classes/graphql/graph_typing";
 import {
     AddDataRequest,
     AddParametersRequest,
-    AddParametersAndDataRequest
+    SetupModelConfigurationAndBindingsRequest
 } from "../paths/problemStatements/tasks/subtasks";
 import useModelsService from "./useModelsService";
 import { IExecutionService } from "@/interfaces/IExecutionService";
@@ -96,9 +96,9 @@ export interface SubTasksService {
         parameters: AddParametersRequest,
         authorizationHeader: string
     ): Promise<Thread>;
-    addParametersAndData(
+    setupModelConfigurationAndBindings(
         subtaskId: string,
-        request: AddParametersAndDataRequest,
+        request: SetupModelConfigurationAndBindingsRequest,
         authorizationHeader: string
     ): Promise<Thread>;
     getModelDataBindings(
@@ -281,9 +281,9 @@ const subTasksService: SubTasksService = {
         return subtask;
     },
 
-    async addParametersAndData(
+    async setupModelConfigurationAndBindings(
         subtaskId: string,
-        request: AddParametersAndDataRequest,
+        request: SetupModelConfigurationAndBindingsRequest,
         authorizationHeader: string
     ) {
         const access_token = getTokenFromAuthorizationHeader(authorizationHeader);
@@ -293,6 +293,22 @@ const subTasksService: SubTasksService = {
         const subtask = await getThread(subtaskId);
         if (!subtask) {
             throw new NotFoundError("Subtask not found");
+        }
+
+        // Check if the model exists in the subtask, if not add it
+        const modelW3Id = convertApiUrlToW3Id(request.model_id);
+        const modelExists = subtask.model_ensembles && subtask.model_ensembles[modelW3Id];
+
+        if (!modelExists) {
+            // Add the model first
+            await this.addModels(subtaskId, [request.model_id], authorizationHeader);
+            // Refresh the subtask after adding the model
+            const updatedSubtask = await getThread(subtaskId);
+            if (!updatedSubtask) {
+                throw new NotFoundError("Subtask not found after adding model");
+            }
+            // Update the subtask reference for the rest of the method
+            Object.assign(subtask, updatedSubtask);
         }
 
         // Handle parameters if provided
@@ -325,7 +341,7 @@ const subTasksService: SubTasksService = {
             );
         }
 
-        return subtask;
+        return await getThread(subtaskId);
     },
 
     async getModelDataBindings(model_id: string, authorizationHeader: string) {

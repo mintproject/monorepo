@@ -36,7 +36,7 @@ export interface AddParametersRequest {
     parameters: ParameterInput[];
 }
 
-export interface AddParametersAndDataRequest {
+export interface SetupModelConfigurationAndBindingsRequest {
     model_id: string;
     parameters?: ParameterInput[];
     data?: DataInput[];
@@ -491,8 +491,8 @@ const subtasksRouter = (): Router => {
      * @openapi
      * /problemStatements/{problemStatementId}/tasks/{taskId}/subtasks/{subtaskId}/setup:
      *   post:
-     *     summary: Setup parameters and data for a subtask
-     *     description: Sets up both parameters and data for a subtask in a single call
+     *     summary: Setup complete model configuration for a subtask
+     *     description: Sets up a complete model configuration including the model (if not present), parameters, and data inputs in a single call.
      *     security:
      *       - BearerAuth: []
      *         oauth2: []
@@ -522,10 +522,10 @@ const subtasksRouter = (): Router => {
      *       content:
      *         application/json:
      *           schema:
-     *             $ref: '#/components/schemas/AddParametersAndDataRequest'
+     *             $ref: '#/components/schemas/SetupModelConfigurationAndBindingsRequest'
      *     responses:
      *       200:
-     *         description: Parameters and data setup successfully
+     *         description: Complete model configuration setup successfully
      *         content:
      *           application/json:
      *             schema:
@@ -542,7 +542,7 @@ const subtasksRouter = (): Router => {
     router.post(
         "/:subtaskId/setup",
         async (
-            req: Request<{ subtaskId: string }, unknown, AddParametersAndDataRequest>,
+            req: Request<{ subtaskId: string }, unknown, SetupModelConfigurationAndBindingsRequest>,
             res: Response
         ) => {
             const authorizationHeader = req.headers.authorization;
@@ -551,7 +551,7 @@ const subtasksRouter = (): Router => {
             }
             const { subtaskId } = req.params;
             try {
-                const subtask = await subTasksService.addParametersAndData(
+                const subtask = await subTasksService.setupModelConfigurationAndBindings(
                     subtaskId,
                     req.body,
                     authorizationHeader
