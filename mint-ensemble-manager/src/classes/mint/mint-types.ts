@@ -447,7 +447,7 @@ export interface DateRange {
 }
 
 export interface ProblemStatement extends ProblemStatementInfo {
-    tasks: IdMap<Task>;
+    tasks: Task[];
     changed?: boolean;
     unsubscribe?: Function;
 }

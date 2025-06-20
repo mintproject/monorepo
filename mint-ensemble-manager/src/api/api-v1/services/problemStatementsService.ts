@@ -1,11 +1,9 @@
 import { ProblemStatement, ProblemStatementInfo } from "@/classes/mint/mint-types";
-import {
-    getProblemStatements,
-    getProblemStatement,
-    addProblemStatement
-} from "@/classes/graphql/graphql_functions";
+import { addProblemStatement } from "@/classes/graphql/graphql_functions";
 import { getTokenFromAuthorizationHeader } from "@/utils/authUtils";
 import { UnauthorizedError, InternalServerError, NotFoundError } from "@/classes/common/errors";
+import { getProblemStatements, getProblemStatement } from "@/classes/graphql/graphql_functions_v2";
+import { problemStatementFromGQL } from "@/classes/graphql/adapters/problem_statement_adapter";
 
 export interface ProblemStatementsService {
     getProblemStatements(authorizationHeader: string): Promise<ProblemStatement[]>;
@@ -18,7 +16,14 @@ export interface ProblemStatementsService {
 
 const problemStatementsService: ProblemStatementsService = {
     async getProblemStatements(authorizationHeader: string) {
-        return await getProblemStatements(authorizationHeader);
+        const access_token = getTokenFromAuthorizationHeader(authorizationHeader);
+        if (!access_token) {
+            throw new UnauthorizedError("Invalid authorization header");
+        }
+        const problemStatements = await getProblemStatements(access_token);
+        return problemStatements.map((problemStatement) =>
+            problemStatementFromGQL(problemStatement)
+        );
     },
 
     async getProblemStatementById(id: string, authorizationHeader: string) {
@@ -31,7 +36,7 @@ const problemStatementsService: ProblemStatementsService = {
         if (!problemStatement) {
             throw new NotFoundError("Problem statement not found");
         }
-        return problemStatement;
+        return problemStatementFromGQL(problemStatement);
     },
 
     async createProblemStatement(

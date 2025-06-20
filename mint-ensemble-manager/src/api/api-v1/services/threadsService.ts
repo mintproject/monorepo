@@ -72,7 +72,7 @@ const threadsService: ThreadsService = {
                     start_date: new Date(prob_desc.time_period.from),
                     end_date: new Date(prob_desc.time_period.to)
                 },
-                tasks: {},
+                tasks: [],
                 events: [getCreateEvent("Problem Statement from API") as ProblemStatementEvent],
                 permissions: [{ read: true, write: true, execute: true, owner: false, userid: "*" }]
             };

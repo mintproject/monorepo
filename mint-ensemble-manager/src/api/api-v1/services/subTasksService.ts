@@ -26,7 +26,7 @@ import {
     modelConfigurationSetupToGraphQL,
     modelConfigurationToGraphQL
 } from "@/classes/mint/model-catalog-graphql-adapter";
-import { Model_Insert_Input } from "@/classes/graphql/graph_typing";
+import { Model_Insert_Input } from "@/classes/graphql/types";
 import {
     AddDataRequest,
     AddParametersRequest,

@@ -1,23 +1,11 @@
+#import "../fragments/problem-statement-info.graphql"
+
 query ListProblemStatements {
     problem_statement {
-        id
-        name
-        start_date
-        end_date
+        ...problem_statement_info
         tasks {
             id
             name
-        }
-        events {
-            timestamp
-            userid
-            event
-            notes
-        }
-        permissions {
-            read
-            write
-            user_id
         }
     }
 }

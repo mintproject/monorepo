@@ -1,5 +1,5 @@
 import { ModelConfiguration, ModelConfigurationSetup } from "@mintproject/modelcatalog_client/dist";
-import { Model_Insert_Input } from "../graphql/graph_typing";
+import { Model_Insert_Input } from "../graphql/types";
 
 export const modelConfigurationToGraphQL = (
     modelConfiguration: ModelConfiguration

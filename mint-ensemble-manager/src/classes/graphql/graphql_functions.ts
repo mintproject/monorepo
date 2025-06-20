@@ -100,7 +100,7 @@ import {
     Resource_Update_Column,
     Thread_Model_Execution_Summary_Insert_Input,
     Thread_Provenance_Insert_Input
-} from "./graph_typing";
+} from "./types";
 import { KeycloakAdapter } from "@/config/keycloak-adapter";
 import { InternalServerError, UnauthorizedError } from "../common/errors";
 
