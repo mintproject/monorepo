@@ -63,6 +63,10 @@ const swaggerSpec = swaggerJSDoc(swaggerOptions);
 fs.writeFileSync("./swagger.json", JSON.stringify(swaggerSpec, null, 2));
 app.use(`/${version}/ui`, swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
+// Setup API
+app.use(bodyParser.json());
+app.use(cors());
+
 try {
     const validator = OpenApiValidator.middleware({
         apiSpec: "./swagger.json",
@@ -73,10 +77,6 @@ try {
 } catch (error) {
     console.error(error);
 }
-
-// Setup API
-app.use(bodyParser.json());
-app.use(cors());
 
 // Apply OpenAPI validator middleware to all routes
 
@@ -95,6 +95,7 @@ app.use(`/${version}/modelBindings`, modelBindingsRouter());
 app.use(`/${version}/tapis`, tapisRouter());
 
 // Setup Error Handler
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 app.use((err, req, res, next) => {
     // format error
     res.status(err.status || 500).json({

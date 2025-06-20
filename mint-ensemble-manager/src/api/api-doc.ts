@@ -518,7 +518,8 @@ const TaskSchema = {
         properties: {
             name: {
                 description: "The name of the task",
-                type: "string"
+                type: "string",
+                example: "Texas Water Management Analysis 2024"
             },
             dates: {
                 type: "object",
@@ -527,12 +528,14 @@ const TaskSchema = {
                     start_date: {
                         description: "Start date in ISO format",
                         type: "string",
-                        format: "date-time"
+                        format: "date-time",
+                        example: "2024-01-01T00:00:00Z"
                     },
                     end_date: {
                         description: "End date in ISO format",
                         type: "string",
-                        format: "date-time"
+                        format: "date-time",
+                        example: "2024-12-31T23:59:59Z"
                     }
                 }
             },
@@ -554,7 +557,8 @@ const TaskSchema = {
             },
             regionid: {
                 description: "The specific region id for the task",
-                type: "string"
+                type: "string",
+                example: "texas"
             },
             events: {
                 type: "array",

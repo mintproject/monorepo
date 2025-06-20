@@ -545,7 +545,8 @@
         "properties": {
           "name": {
             "description": "The name of the task",
-            "type": "string"
+            "type": "string",
+            "example": "Texas Water Management Analysis 2024"
           },
           "dates": {
             "type": "object",
@@ -554,12 +555,14 @@
               "start_date": {
                 "description": "Start date in ISO format",
                 "type": "string",
-                "format": "date-time"
+                "format": "date-time",
+                "example": "2024-01-01T00:00:00Z"
               },
               "end_date": {
                 "description": "End date in ISO format",
                 "type": "string",
-                "format": "date-time"
+                "format": "date-time",
+                "example": "2024-12-31T23:59:59Z"
               }
             }
           },
@@ -585,7 +588,8 @@
           },
           "regionid": {
             "description": "The specific region id for the task",
-            "type": "string"
+            "type": "string",
+            "example": "texas"
           },
           "events": {
             "type": "array",
@@ -1139,6 +1143,36 @@
               "type": "string"
             }
           }
+        },
+        "example": {
+          "name": "Texas Water Management Analysis 2024",
+          "regionid": "texas",
+          "dates": {
+            "start_date": "2024-01-01T00:00:00Z",
+            "end_date": "2024-12-31T23:59:59Z"
+          },
+          "events": [
+            {
+              "event": "CREATE",
+              "userid": "mint@isi.edu",
+              "timestamp": "2024-01-15T10:30:00Z",
+              "notes": "Initial problem statement creation for Texas water management analysis"
+            }
+          ],
+          "permissions": [
+            {
+              "userid": "*",
+              "read": true,
+              "write": false,
+              "execute": false,
+              "owner": false
+            }
+          ],
+          "preview": [
+            "Water availability assessment for major Texas regions",
+            "Climate impact analysis on water resources",
+            "Agricultural water demand projections"
+          ]
         }
       },
       "ProblemStatement": {
@@ -2119,15 +2153,89 @@
           "200": {
             "description": "Execution Logs",
             "content": {
-              "text/plain": {
+              "application/json": {
                 "schema": {
-                  "type": "string"
+                  "type": "object",
+                  "properties": {
+                    "result": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "The log content or success message",
+                      "example": "Execution logs fetched successfully"
+                    }
+                  }
                 }
               }
             }
           },
-          "default": {
-            "description": "An error occurred"
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "result": {
+                      "type": "string",
+                      "example": "error"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Unauthorized access"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Execution not found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string",
+                  "example": "Running..."
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "result": {
+                      "type": "string",
+                      "example": "error"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Execution not found"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "result": {
+                      "type": "string",
+                      "example": "error"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Internal server error"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -2808,6 +2916,7 @@
             "content": {
               "application/json": {
                 "schema": {
+                  "type": "object",
                   "$ref": "#/components/schemas/Task"
                 }
               }

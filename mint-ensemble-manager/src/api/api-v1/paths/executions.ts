@@ -64,11 +64,60 @@ export default function (service: typeof executionsService) {
      *       200:
      *         description: Execution Logs
      *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 result:
+     *                   type: string
+     *                   example: "success"
+     *                 message:
+     *                   type: string
+     *                   description: "The log content or success message"
+     *                   example: "Execution logs fetched successfully"
+     *       401:
+     *         description: Unauthorized
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 result:
+     *                   type: string
+     *                   example: "error"
+     *                 message:
+     *                   type: string
+     *                   example: "Unauthorized access"
+     *       404:
+     *         description: Execution not found
+     *         content:
      *           text/plain:
      *             schema:
      *               type: string
-     *       default:
-     *         description: An error occurred
+     *               example: "Running..."
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 result:
+     *                   type: string
+     *                   example: "error"
+     *                 message:
+     *                   type: string
+     *                   example: "Execution not found"
+     *       500:
+     *         description: Internal server error
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 result:
+     *                   type: string
+     *                   example: "error"
+     *                 message:
+     *                   type: string
+     *                   example: "Internal server error"
      */
     router.get("/:executionId/logs", async (req, res) => {
         try {

@@ -98,6 +98,7 @@ const tasksRouter = (): Router => {
      *         content:
      *           application/json:
      *             schema:
+     *               type: object
      *               $ref: '#/components/schemas/Task'
      *       401:
      *         description: Unauthorized
@@ -116,12 +117,13 @@ const tasksRouter = (): Router => {
             }
             const { problemStatementId } = req.params;
 
-            const task = await tasksService.createTask(
+            const task_id = await tasksService.createTask(
                 problemStatementId,
                 req.body,
                 authorizationHeader
             );
-            res.status(200).json(task);
+
+            res.status(200).json({ id: task_id });
         } catch (error) {
             if (error.message.includes("not found")) {
                 return res.status(404).json({ message: error.message });
