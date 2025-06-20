@@ -279,7 +279,7 @@
           "hasPresentation": {
             "description": "Property that links an instance of a dataset (or a dataset specification) to the presentation of a variable contained (or expected to be contained) on it.",
             "items": {
-              "type": "object"
+              "type": "string"
             },
             "nullable": true,
             "type": "array"
@@ -353,7 +353,7 @@
           "hasDefaultValue": {
             "description": "Default accepted value of a variable presentation (or a parameter)",
             "items": {
-              "type": "object"
+              "type": "string"
             },
             "nullable": true,
             "type": "array"
@@ -361,7 +361,7 @@
           "hasMaximumAcceptedValue": {
             "description": "Maximum accepted value of a variable presentation (or a parameter)",
             "items": {
-              "type": "object"
+              "type": "string"
             },
             "nullable": true,
             "type": "array"
@@ -385,7 +385,7 @@
           "hasFixedValue": {
             "description": "Value of a parameter in a software setup.",
             "items": {
-              "type": "object"
+              "type": "string"
             },
             "nullable": true,
             "type": "array"
@@ -393,7 +393,7 @@
           "hasPresentation": {
             "description": "Property that links an instance of a dataset (or a dataset specification) to the presentation of a variable contained (or expected to be contained) on it.",
             "items": {
-              "type": "object"
+              "type": "string"
             },
             "nullable": true,
             "type": "array"
@@ -409,7 +409,7 @@
           "recommendedIncrement": {
             "description": "Value that represents how a parameter should be incremented on each iteration of a software component execution. This value is important when preparing execution ensembles automatically, e.g., simulating crop production varying the parameter \"fertilizer amount\" in increments of 10%.",
             "items": {
-              "type": "number"
+              "type": "string"
             },
             "nullable": true,
             "type": "array"
@@ -425,7 +425,7 @@
           "hasMinimumAcceptedValue": {
             "description": "Minimum accepted value of a variable presentation (or a parameter)",
             "items": {
-              "type": "object"
+              "type": "string"
             },
             "nullable": true,
             "type": "array"
@@ -441,7 +441,7 @@
           "adjustsVariable": {
             "description": "Property that links parameter with the variable they adjust. This property can be used when parameters quantify variables without directly representing them. For example, a \"fertilizer percentage adjustment\" parameter can quantify a \"fertilizer price\" variable",
             "items": {
-              "type": "object"
+              "type": "string"
             },
             "maxItems": 1,
             "nullable": true,
@@ -450,7 +450,7 @@
           "relevantForIntervention": {
             "description": "Description not available",
             "items": {
-              "type": "object"
+              "type": "string"
             },
             "nullable": true,
             "type": "array"
@@ -472,7 +472,7 @@
           "usesUnit": {
             "description": "Property used to link a variable presentation or time interval to the unit they are represented in",
             "items": {
-              "type": "object"
+              "type": "string"
             },
             "maxItems": 1,
             "nullable": true,
