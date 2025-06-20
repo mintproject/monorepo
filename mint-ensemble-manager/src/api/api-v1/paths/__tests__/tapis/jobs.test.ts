@@ -35,7 +35,7 @@ describe("Tapis Jobs Router", () => {
     describe("POST /tapis/jobs", () => {
         it("should return 200 with success message when job is submitted successfully", async () => {
             // Arrange
-            const mockJob = { id: "test-job-id", status: "PENDING" };
+            const mockJob = ["test-job-id"];
             const mockAuth = "Bearer test-token";
             const mockJobData = { name: "test-job" };
 
@@ -51,7 +51,7 @@ describe("Tapis Jobs Router", () => {
             // Assert
             expect(response.body).toEqual({
                 message: "Job submitted",
-                job: mockJob
+                job_id: mockJob
             });
             expect(jobsService.submitJob).toHaveBeenCalledTimes(1);
             expect(jobsService.submitJob).toHaveBeenCalledWith(mockJobData, mockAuth);
@@ -76,7 +76,7 @@ describe("Tapis Jobs Router", () => {
     describe("GET /tapis/jobs/:id", () => {
         it("should return 200 with job status when job is found", async () => {
             // Arrange
-            const mockJobStatus = { status: "RUNNING", progress: 50 };
+            const mockJobStatus = ["test-job-id"];
             const mockAuth = "Bearer test-token";
             const jobId = "test-job-id";
 
@@ -90,8 +90,7 @@ describe("Tapis Jobs Router", () => {
 
             // Assert
             expect(response.body).toEqual({
-                message: "Job Status",
-                status: mockJobStatus
+                message: "Job Status"
             });
             expect(jobsService.get).toHaveBeenCalledTimes(1);
             expect(jobsService.get).toHaveBeenCalledWith(jobId, mockAuth);
