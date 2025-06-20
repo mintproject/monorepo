@@ -75,38 +75,8 @@ export default function (service: typeof executionsService) {
      *                   type: string
      *                   description: "The log content or success message"
      *                   example: "Execution logs fetched successfully"
-     *       401:
-     *         description: Unauthorized
-     *         content:
-     *           application/json:
-     *             schema:
-     *               type: object
-     *               properties:
-     *                 result:
-     *                   type: string
-     *                   example: "error"
-     *                 message:
-     *                   type: string
-     *                   example: "Unauthorized access"
-     *       404:
-     *         description: Execution not found
-     *         content:
-     *           text/plain:
-     *             schema:
-     *               type: string
-     *               example: "Running..."
-     *           application/json:
-     *             schema:
-     *               type: object
-     *               properties:
-     *                 result:
-     *                   type: string
-     *                   example: "error"
-     *                 message:
-     *                   type: string
-     *                   example: "Execution not found"
-     *       500:
-     *         description: Internal server error
+     *       default:
+     *         description: Default error response
      *         content:
      *           application/json:
      *             schema:

@@ -5,18 +5,14 @@ import { TapisExecutionService } from "@/classes/tapis/adapters/TapisExecutionSe
 import { ExecutionCreation } from "@/classes/common/ExecutionCreation";
 import { getConfiguration } from "@/classes/mint/mint-functions";
 import { getTokenFromAuthorizationHeader } from "@/utils/authUtils";
-
-interface TapisResponse {
-    status: number;
-    data: Thread | { error: string };
-}
+import { NotFoundError } from "@/classes/common/errors";
 
 export interface ExecutionsTapisService {
-    submitExecution(threadmodel: ModelThread, token: string): Promise<TapisResponse>;
+    submitExecution(threadmodel: ModelThread, token: string): Promise<string[]>;
 }
 
 const executionsTapisService = {
-    async submitExecution(threadmodel: ModelThread, authorization: string): Promise<TapisResponse> {
+    async submitExecution(threadmodel: ModelThread, authorization: string): Promise<string[]> {
         const token = getTokenFromAuthorizationHeader(authorization);
         if (!token) {
             throw new Error("Unauthorized");
@@ -40,10 +36,9 @@ const executionsTapisService = {
                 thread.id,
                 threadmodel.thread_id
             );
-            console.log("jobIds", jobIds);
-            return { status: 202, data: thread };
+            return jobIds;
         } else {
-            return { status: 404, data: { error: "Thread not found" } };
+            throw new NotFoundError("Thread not found");
         }
     }
 };

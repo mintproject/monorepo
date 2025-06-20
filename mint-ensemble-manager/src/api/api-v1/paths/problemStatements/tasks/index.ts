@@ -38,14 +38,15 @@ const tasksRouter = (): Router => {
      *               type: array
      *               items:
      *                 $ref: '#/components/schemas/Task'
-     *       401:
-     *         description: Unauthorized
-     *       403:
-     *         description: Forbidden
-     *       404:
-     *         description: Problem statement not found
-     *       500:
-     *         description: Internal server error
+     *       default:
+     *         description: Default error response
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 message:
+     *                   type: string
      */
     router.get("/", async (req: TaskRequest, res: Response) => {
         try {
@@ -100,14 +101,15 @@ const tasksRouter = (): Router => {
      *             schema:
      *               type: object
      *               $ref: '#/components/schemas/Task'
-     *       401:
-     *         description: Unauthorized
-     *       403:
-     *         description: Forbidden
-     *       404:
-     *         description: Problem statement not found
-     *       500:
-     *         description: Internal server error
+     *       default:
+     *         description: Default error response
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 message:
+     *                   type: string
      */
     router.post("/", async (req: TaskRequest, res) => {
         try {

@@ -33,14 +33,19 @@ export const modelBindingsRouter = (): Router => {
      *               type: array
      *               items:
      *                 $ref: '#/components/schemas/DatasetSpecification'
-     *       401:
-     *         description: Unauthorized
-     *       403:
-     *         description: Forbidden
-     *       404:
-     *         description: Model not found
-     *       500:
-     *         description: Internal server error
+     *       default:
+     *         description: Default error response
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 result:
+     *                   type: string
+     *                   example: "success"
+     *                 message:
+     *                   type: string
+     *                   example: "Model bindings fetched successfully"
      */
     router.get(
         "/data",
@@ -93,14 +98,19 @@ export const modelBindingsRouter = (): Router => {
      *               type: array
      *               items:
      *                 $ref: '#/components/schemas/Parameter'
-     *       401:
-     *         description: Unauthorized
-     *       403:
-     *         description: Forbidden
-     *       404:
-     *         description: Model not found
-     *       500:
-     *         description: Internal server error
+     *       default:
+     *         description: Default error response
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 result:
+     *                   type: string
+     *                   example: "error"
+     *                 message:
+     *                   type: string
+     *                   example: "Internal server error"
      */
     router.get(
         "/parameters",

@@ -25,18 +25,39 @@ export default function () {
      *     responses:
      *       200:
      *         description: Outputs registered successfully
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 message:
+     *                   type: string
      *       400:
      *         description: Invalid request or registration failed
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 message:
+     *                   type: string
      *       500:
      *         description: Server error
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 message:
+     *                   type: string
      */
     router.post("/:executionId/outputs", async (req, res) => {
         try {
-            const results = await executionOutputsService.registerOutputs(
+            await executionOutputsService.registerOutputs(
                 req.params.executionId,
                 req.headers.authorization
             );
-            res.status(200).json(results);
+            res.status(200).json({ message: "Outputs registered successfully" });
         } catch (error) {
             if (error instanceof NotFoundError) {
                 res.status(404).json({

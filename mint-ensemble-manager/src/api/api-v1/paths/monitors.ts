@@ -26,8 +26,30 @@ export default function (service: typeof monitorsService) {
      *     responses:
      *       201:
      *         description: Successful response
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 result:
+     *                   type: string
+     *                   example: "success"
+     *                 message:
+     *                   type: string
+     *                   example: "Monitoring thread submitted successfully"
      *       default:
-     *         description: An error occurred
+     *         description: Default error response
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 result:
+     *                   type: string
+     *                   example: "error"
+     *                 message:
+     *                   type: string
+     *                   example: "Internal server error"
      */
     router.post("/", async (req, res) => {
         try {
@@ -65,8 +87,30 @@ export default function (service: typeof monitorsService) {
      *     responses:
      *       200:
      *         description: Thread Details
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 result:
+     *                   type: string
+     *                   example: "success"
+     *                 message:
+     *                   type: string
+     *                   example: "Thread details fetched successfully"
      *       default:
-     *         description: An error occurred
+     *         description: Default error response
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 result:
+     *                   type: string
+     *                   example: "error"
+     *                 message:
+     *                   type: string
+     *                   example: "Internal server error"
      */
     router.get("/", async (req, res) => {
         try {

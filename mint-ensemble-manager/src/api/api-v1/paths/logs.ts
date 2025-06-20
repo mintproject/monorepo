@@ -25,8 +25,24 @@ export default function (service: typeof logsService) {
      *     responses:
      *       200:
      *         description: Log Details
+     *         content:
+     *           text/plain:
+     *             schema:
+     *               type: string
+     *               example: "Log fetched successfully"
      *       default:
-     *         description: An error occurred
+     *         description: Default error response
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 result:
+     *                   type: string
+     *                   example: "error"
+     *                 message:
+     *                   type: string
+     *                   example: "Internal server error"
      */
     router.get("/", async (req, res) => {
         try {
@@ -40,9 +56,9 @@ export default function (service: typeof logsService) {
             res.status(200).json(result);
         } catch (error) {
             if (error instanceof HttpError) {
-                res.status(error.statusCode).json({ error: error.message });
+                res.status(error.statusCode).json({ result: "error", message: error.message });
             } else {
-                res.status(500).json({ error: error.message });
+                res.status(500).json({ result: "error", message: error.message });
             }
         }
     });

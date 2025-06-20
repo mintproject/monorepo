@@ -28,6 +28,16 @@ export default function () {
      *     responses:
      *       200:
      *         description: Job Submitted
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 job_id:
+     *                   type: string
+     *                   example: "9bc5bbfb-d76c-4d0b-87cc-f89e945a062e-007"
+     *                 message:
+     *                   type: string
      *       default:
      *         description: An error occurred
      */
@@ -35,7 +45,7 @@ export default function () {
     router.post("/", async (req, res) => {
         try {
             const job = await jobsService.submitJob(req.body, req.headers.authorization);
-            return res.status(200).send({ message: "Job submitted", job });
+            return res.status(200).send({ message: "Job submitted", job_id: job });
         } catch (error) {
             return res.status(500).send({ message: error.message });
         }
@@ -59,10 +69,19 @@ export default function () {
      *         schema:
      *           type: string
      *         example: "9bc5bbfb-d76c-4d0b-87cc-f89e945a062e-007"
-     *
      *     responses:
      *       200:
      *         description: Job Status
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 message:
+     *                   type: string
+     *                 status:
+     *                   type: string
+     *                   example: "RUNNING"
      *       default:
      *         description: An error occurred
      */
@@ -71,7 +90,7 @@ export default function () {
             const job = await jobsService.get(req.params.id, req.headers.authorization);
             res.status(200).send({
                 message: "Job Status",
-                status: job
+                status: job.status
             });
         } catch (error) {
             return res.status(500).send({ message: error.message });
@@ -103,8 +122,21 @@ export default function () {
      *           text/plain:
      *             schema:
      *               type: string
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 message:
+     *                   type: string
      *       default:
      *         description: An error occurred
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 message:
+     *                   type: string
      */
     router.get("/:id/logs", async (req, res) => {
         try {

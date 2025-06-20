@@ -81,14 +81,15 @@ const subtasksRouter = (): Router => {
      *                   type: array
      *                   items:
      *                     $ref: '#/components/schemas/Subtask'
-     *       401:
-     *         description: Unauthorized
-     *       403:
-     *         description: Forbidden
-     *       404:
-     *         description: Task not found
-     *       500:
-     *         description: Internal server error
+     *       default:
+     *         description: Default error response
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 message:
+     *                   type: string
      */
     router.get("/", async (req: SubtaskRequest, res: Response) => {
         try {
@@ -149,14 +150,15 @@ const subtasksRouter = (): Router => {
      *           application/json:
      *             schema:
      *               $ref: '#/components/schemas/Subtask'
-     *       401:
-     *         description: Unauthorized
-     *       403:
-     *         description: Forbidden
-     *       404:
-     *         description: Subtask not found
-     *       500:
-     *         description: Internal server error
+     *       default:
+     *         description: Default error response
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 message:
+     *                   type: string
      */
     router.get("/:subtaskId", async (req: SubtaskRequest, res: Response) => {
         try {
@@ -218,14 +220,15 @@ const subtasksRouter = (): Router => {
      *           application/json:
      *             schema:
      *               $ref: '#/components/schemas/Subtask'
-     *       401:
-     *         description: Unauthorized
-     *       403:
-     *         description: Forbidden
-     *       404:
-     *         description: Task not found
-     *       500:
-     *         description: Internal server error
+     *       default:
+     *         description: Default error response
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 message:
+     *                   type: string
      */
     router.post("/", async (req: SubtaskRequest, res: Response) => {
         try {
@@ -293,14 +296,15 @@ const subtasksRouter = (): Router => {
      *           application/json:
      *             schema:
      *               $ref: '#/components/schemas/Thread'
-     *       401:
-     *         description: Unauthorized
-     *       403:
-     *         description: Forbidden
-     *       404:
-     *         description: Subtask not found
-     *       500:
-     *         description: Internal server error
+     *       default:
+     *         description: Default error response
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 message:
+     *                   type: string
      */
     router.post(
         "/:subtaskId/models",
@@ -374,14 +378,15 @@ const subtasksRouter = (): Router => {
      *           application/json:
      *             schema:
      *               $ref: '#/components/schemas/Thread'
-     *       401:
-     *         description: Unauthorized
-     *       403:
-     *         description: Forbidden
-     *       404:
-     *         description: Subtask not found
-     *       500:
-     *         description: Internal server error
+     *       default:
+     *         description: Default error response
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 message:
+     *                   type: string
      */
     router.post(
         "/:subtaskId/data",
@@ -450,14 +455,15 @@ const subtasksRouter = (): Router => {
      *           application/json:
      *             schema:
      *               $ref: '#/components/schemas/Thread'
-     *       401:
-     *         description: Unauthorized
-     *       403:
-     *         description: Forbidden
-     *       404:
-     *         description: Subtask not found
-     *       500:
-     *         description: Internal server error
+     *       default:
+     *         description: Default error response
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 message:
+     *                   type: string
      */
 
     router.post(
@@ -530,14 +536,15 @@ const subtasksRouter = (): Router => {
      *           application/json:
      *             schema:
      *               $ref: '#/components/schemas/Thread'
-     *       401:
-     *         description: Unauthorized
-     *       403:
-     *         description: Forbidden
-     *       404:
-     *         description: Subtask not found
-     *       500:
-     *         description: Internal server error
+     *       default:
+     *         description: Default error response
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 message:
+     *                   type: string
      */
     router.post(
         "/:subtaskId/setup",
@@ -609,14 +616,15 @@ const subtasksRouter = (): Router => {
      *           application/json:
      *             schema:
      *               $ref: '#/components/schemas/Thread'
-     *       401:
-     *         description: Unauthorized
-     *       403:
-     *         description: Forbidden
-     *       404:
-     *         description: Subtask not found
-     *       500:
-     *         description: Internal server error
+     *       default:
+     *         description: Default error response
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 message:
+     *                   type: string
      */
     router.post(
         "/:subtaskId/submit",
@@ -636,12 +644,19 @@ const subtasksRouter = (): Router => {
             }
             const { subtaskId } = req.params;
             const { model_id } = req.body;
-            const jobIds = await subTasksService.submitSubtask(
-                subtaskId,
-                model_id,
-                authorizationHeader
-            );
-            res.status(200).json(jobIds);
+            try {
+                const jobIds = await subTasksService.submitSubtask(
+                    subtaskId,
+                    model_id,
+                    authorizationHeader
+                );
+                res.status(200).json(jobIds);
+            } catch (error) {
+                if (error instanceof HttpError) {
+                    return res.status(error.statusCode).json({ message: error.message });
+                }
+                res.status(500).json({ message: error.message });
+            }
         }
     );
 
@@ -691,14 +706,15 @@ const subtasksRouter = (): Router => {
      *               type: array
      *               items:
      *                 $ref: '#/components/schemas/DatasetSpecification'
-     *       401:
-     *         description: Unauthorized
-     *       403:
-     *         description: Forbidden
-     *       404:
-     *         description: Subtask not found
-     *       500:
-     *         description: Internal server error
+     *       default:
+     *         description: Default error response
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 message:
+     *                   type: string
      */
     router.get(
         "/:subtaskId/data-bindings",
@@ -714,11 +730,18 @@ const subtasksRouter = (): Router => {
             if (!model_id) {
                 return res.status(400).json({ message: "model_id is required" });
             }
-            const dataBindings = await subTasksService.getModelDataBindings(
-                model_id,
-                authorizationHeader
-            );
-            res.status(200).json(dataBindings);
+            try {
+                const dataBindings = await subTasksService.getModelDataBindings(
+                    model_id,
+                    authorizationHeader
+                );
+                res.status(200).json(dataBindings);
+            } catch (error) {
+                if (error instanceof HttpError) {
+                    return res.status(error.statusCode).json({ message: error.message });
+                }
+                res.status(500).json({ message: error.message });
+            }
         }
     );
     return router;

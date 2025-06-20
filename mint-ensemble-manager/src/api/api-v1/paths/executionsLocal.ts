@@ -25,8 +25,30 @@ export default function (service: typeof executionsLocalService) {
      *     responses:
      *       202:
      *         description: Successful response
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 result:
+     *                   type: string
+     *                   example: "success"
+     *                 message:
+     *                   type: string
+     *                   example: "Execution submitted successfully"
      *       default:
-     *         description: An error occurred
+     *         description: Default error response
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 result:
+     *                   type: string
+     *                   example: "error"
+     *                 message:
+     *                   type: string
+     *                   example: "Internal server error"
      */
     router.post("/", async (req, res) => {
         try {
@@ -53,8 +75,26 @@ export default function (service: typeof executionsLocalService) {
      *     responses:
      *       202:
      *         description: Successful response
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 result:
+     *                   type: string
+     *                   example: "success"
+     *                 message:
+     *                   type: string
+     *                   example: "Execution cache deleted successfully"
      *       default:
-     *         description: An error occurred
+     *         description: Default error response
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 result:
+     *                   type: string
      */
     router.delete("/", async (req, res) => {
         try {

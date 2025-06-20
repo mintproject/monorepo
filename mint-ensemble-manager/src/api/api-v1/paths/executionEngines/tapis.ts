@@ -31,8 +31,35 @@ export default function () {
      *     responses:
      *       202:
      *         description: Successful response
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 result:
+     *                   type: string
+     *                   example: "success"
+     *                 message:
+     *                   type: string
+     *                   example: "Execution submitted successfully"
+     *                 job_ids:
+     *                   type: array
+     *                   items:
+     *                     type: string
+     *                     example: "1234567890"
      *       default:
-     *         description: An error occurred
+     *         description: Default error response
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 result:
+     *                   type: string
+     *                   example: "error"
+     *                 message:
+     *                   type: string
+     *                   example: "Internal server error"
      */
     router.post("/tapis", async (req, res) => {
         try {
@@ -40,7 +67,10 @@ export default function () {
                 req.body,
                 req.headers.authorization
             );
-            res.status(response.status).json(response.data);
+            res.status(202).json({
+                message: "Execution submitted successfully",
+                job_ids: response
+            });
         } catch (error) {
             if (error instanceof HttpError) {
                 res.status(error.statusCode).json({ error: error.message });

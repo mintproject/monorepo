@@ -24,10 +24,15 @@ export default function (executionQueueService: ExecutionQueueService) {
      *                 result:
      *                   type: string
      *                   example: success
-     *       406:
-     *         description: Error retrieving execution queue
-     *       500:
-     *         description: Server error
+     *       default:
+     *         description: Default error response
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 message:
+     *                   type: string
      */
     router.get("/", async (req, res) => {
         try {

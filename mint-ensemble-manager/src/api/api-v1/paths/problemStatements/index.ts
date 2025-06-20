@@ -8,6 +8,7 @@ import {
     ThreadInfo
 } from "@/classes/mint/mint-types";
 import tasksRouter from "./tasks";
+import { HttpError } from "@/classes/common/errors";
 
 /**
  * Interface for creating a new problem statement request
@@ -91,12 +92,15 @@ const problemStatementsRouter = (): Router => {
      *               type: array
      *               items:
      *                 $ref: '#/components/schemas/ProblemStatement'
-     *       401:
-     *         description: Unauthorized
-     *       403:
-     *         description: Forbidden
-     *       500:
-     *         description: Internal server error
+     *       default:
+     *         description: Default error response
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 message:
+     *                   type: string
      */
     router.get("/", async (req: Request, res: Response<ProblemStatement[] | ErrorResponse>) => {
         try {
@@ -108,6 +112,9 @@ const problemStatementsRouter = (): Router => {
                 await problemStatementsService.getProblemStatements(authorizationHeader);
             res.status(200).json(problemStatements);
         } catch (error) {
+            if (error instanceof HttpError) {
+                return res.status(error.statusCode).json({ message: error.message });
+            }
             res.status(500).json({ message: error.message });
         }
     });
@@ -140,14 +147,15 @@ const problemStatementsRouter = (): Router => {
      *                 id:
      *                   type: string
      *                   description: The ID of the created problem statement
-     *       400:
-     *         description: Invalid request body
-     *       401:
-     *         description: Unauthorized
-     *       403:
-     *         description: Forbidden
-     *       500:
-     *         description: Internal server error
+     *       default:
+     *         description: Default error response
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 message:
+     *                   type: string
      */
     router.post(
         "/",
@@ -186,6 +194,9 @@ const problemStatementsRouter = (): Router => {
                 );
                 res.status(201).json({ id });
             } catch (error) {
+                if (error instanceof HttpError) {
+                    return res.status(error.statusCode).json({ message: error.message });
+                }
                 res.status(500).json({ message: error.message });
             }
         }
@@ -216,14 +227,15 @@ const problemStatementsRouter = (): Router => {
      *           application/json:
      *             schema:
      *               $ref: '#/components/schemas/ProblemStatement'
-     *       401:
-     *         description: Unauthorized
-     *       403:
-     *         description: Forbidden
-     *       404:
-     *         description: Problem statement not found
-     *       500:
-     *         description: Internal server error
+     *       default:
+     *         description: Default error response
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 message:
+     *                   type: string
      */
     router.get("/:id", async (req, res) => {
         try {
@@ -238,6 +250,9 @@ const problemStatementsRouter = (): Router => {
             );
             res.status(200).json(problemStatement);
         } catch (error) {
+            if (error instanceof HttpError) {
+                return res.status(error.statusCode).json({ message: error.message });
+            }
             if (error.message.includes("not found")) {
                 return res.status(404).json({ message: error.message });
             }
@@ -283,16 +298,15 @@ const problemStatementsRouter = (): Router => {
      *                 subtaskId:
      *                   type: string
      *                   description: The ID of the created subtask
-     *       400:
-     *         description: Invalid request body
-     *       401:
-     *         description: Unauthorized
-     *       403:
-     *         description: Forbidden
-     *       404:
-     *         description: Problem statement not found
-     *       500:
-     *         description: Internal server error
+     *       default:
+     *         description: Default error response
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 message:
+     *                   type: string
      */
     router.post(
         "/:id/taskAndSubtask",
@@ -364,8 +378,8 @@ const problemStatementsRouter = (): Router => {
 
                 res.status(200).json({ taskId: taskId, subtaskId: subtaskId });
             } catch (error) {
-                if (error.message.includes("not found")) {
-                    return res.status(404).json({ message: error.message });
+                if (error instanceof HttpError) {
+                    return res.status(error.statusCode).json({ message: error.message });
                 }
                 res.status(500).json({ message: error.message });
             }

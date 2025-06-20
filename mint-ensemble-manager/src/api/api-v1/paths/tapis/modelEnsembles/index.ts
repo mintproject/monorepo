@@ -25,6 +25,13 @@ export default function () {
      *     responses:
      *       202:
      *         description: Registration process started
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 message:
+     *                   type: string
      *       500:
      *         description: Server error
      */

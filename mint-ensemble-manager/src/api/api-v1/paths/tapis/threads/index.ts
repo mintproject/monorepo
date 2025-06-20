@@ -41,6 +41,13 @@ export default function () {
      *     responses:
      *       200:
      *         description: Status Updated Successfully
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 message:
+     *                   type: string
      *       default:
      *         description: An error occurred
      */
@@ -94,6 +101,19 @@ export default function () {
      *     responses:
      *       200:
      *         description: Log Details
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 message:
+     *                   type: string
+     *                 newStatus:
+     *                   type: string
+     *                   example: "RUNNING"
+     *                 id:
+     *                   type: string
+     *                   example: "9bc5bbfb-d76c-4d0b-87cc-f89e945a062e-007"
      *       default:
      *         description: An error occurred
      */
