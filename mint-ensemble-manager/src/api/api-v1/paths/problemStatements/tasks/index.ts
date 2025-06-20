@@ -35,38 +35,9 @@ const tasksRouter = (): Router => {
      *         content:
      *           application/json:
      *             schema:
-     *               type: object
-     *               properties:
-     *                 tasks:
-     *                   type: array
-     *                   items:
-     *                     type: object
-     *                     properties:
-     *                       id:
-     *                         type: string
-     *                       name:
-     *                         type: string
-     *                       problem_statement_id:
-     *                         type: string
-     *                       dates:
-     *                         type: object
-     *                         properties:
-     *                           start_date:
-     *                             type: string
-     *                             format: date-time
-     *                           end_date:
-     *                             type: string
-     *                             format: date-time
-     *                       response_variables:
-     *                         type: array
-     *                         items:
-     *                           type: string
-     *                       driving_variables:
-     *                         type: array
-     *                         items:
-     *                           type: string
-     *                       regionid:
-     *                         type: string
+     *               type: array
+     *               items:
+     *                 $ref: '#/components/schemas/Task'
      *       401:
      *         description: Unauthorized
      *       403:
@@ -88,7 +59,7 @@ const tasksRouter = (): Router => {
                 problemStatementId,
                 authorizationHeader
             );
-            res.status(200).json(tasks);
+            return res.status(200).json(tasks);
         } catch (error) {
             if (error.message.includes("not found")) {
                 return res.status(404).json({ message: error.message });

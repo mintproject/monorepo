@@ -1,12 +1,10 @@
 import { Task, ThreadInfo } from "@/classes/mint/mint-types";
-import {
-    addTask,
-    addTaskWithThread,
-    getProblemStatement
-} from "@/classes/graphql/graphql_functions";
+import { addTask, addTaskWithThread } from "@/classes/graphql/graphql_functions";
 import { getTokenFromAuthorizationHeader } from "@/utils/authUtils";
 import { UnauthorizedError, InternalServerError, NotFoundError } from "@/classes/common/errors";
 import problemStatementsService from "./problemStatementsService";
+import { getProblemStatement } from "@/classes/graphql/graphql_functions_v2";
+import { problemStatementFromGQL } from "@/classes/graphql/adapters/problem_statement_adapter";
 
 export interface TasksService {
     getTasksByProblemStatementId(
@@ -32,14 +30,16 @@ const tasksService: TasksService = {
         if (!access_token) {
             throw new UnauthorizedError("Invalid authorization header");
         }
+        const problemStatementResponse = await getProblemStatement(
+            problemStatementId,
+            access_token
+        );
 
-        const problemStatement = await getProblemStatement(problemStatementId, access_token);
-
-        if (!problemStatement) {
+        if (!problemStatementResponse) {
             throw new NotFoundError("Problem statement not found");
         }
-
-        return Object.values(problemStatement.tasks || {});
+        const problemStatement = problemStatementFromGQL(problemStatementResponse);
+        return problemStatement.tasks;
     },
 
     async createTask(problemStatementId: string, task: Task, authorizationHeader: string) {
