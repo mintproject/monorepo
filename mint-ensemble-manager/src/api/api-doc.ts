@@ -1053,6 +1053,36 @@ const ProblemStatementSchema = {
                     type: "string"
                 }
             }
+        },
+        example: {
+            name: "Texas Water Management Analysis 2024",
+            regionid: "texas",
+            dates: {
+                start_date: "2024-01-01T00:00:00Z",
+                end_date: "2024-12-31T23:59:59Z"
+            },
+            events: [
+                {
+                    event: "CREATE",
+                    userid: "mint@isi.edu",
+                    timestamp: "2024-01-15T10:30:00Z",
+                    notes: "Initial problem statement creation for Texas water management analysis"
+                }
+            ],
+            permissions: [
+                {
+                    userid: "*",
+                    read: true,
+                    write: false,
+                    execute: false,
+                    owner: false
+                }
+            ],
+            preview: [
+                "Water availability assessment for major Texas regions",
+                "Climate impact analysis on water resources",
+                "Agricultural water demand projections"
+            ]
         }
     },
     ProblemStatement: {
