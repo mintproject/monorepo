@@ -33,19 +33,21 @@ const matchParameters = async (
     thread: Thread
 ) => {
     const w3id = convertApiUrlToW3Id(model.id);
-    for (const parameter of model.hasParameter) {
-        if (!hasParameterHasFixedValue(parameter)) {
-            const parameterInput = data.parameters.find((p) => p.id === parameter.id);
-            if (!parameterInput) {
-                throw new BadRequestError(`Parameter ${parameter.id} is not provided`);
-            }
-            if (parameterInput.value instanceof Array) {
-                thread.model_ensembles[w3id].bindings[parameter.id] =
-                    parameterInput.value as string[];
-            } else {
-                thread.model_ensembles[w3id].bindings[parameter.id] = [
-                    parameterInput.value
-                ] as string[];
+    if (model.hasParameter && model.hasParameter.length > 0) {
+        for (const parameter of model.hasParameter) {
+            if (!hasParameterHasFixedValue(parameter)) {
+                const parameterInput = data.parameters.find((p) => p.id === parameter.id);
+                if (!parameterInput) {
+                    throw new BadRequestError(`Parameter ${parameter.id} is not provided`);
+                }
+                if (parameterInput.value instanceof Array) {
+                    thread.model_ensembles[w3id].bindings[parameter.id] =
+                        parameterInput.value as string[];
+                } else {
+                    thread.model_ensembles[w3id].bindings[parameter.id] = [
+                        parameterInput.value
+                    ] as string[];
+                }
             }
         }
     }

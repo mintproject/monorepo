@@ -96,14 +96,16 @@ const matchInputs = async (
     const dataMap: DataMap = {};
     const modelInputs = model.hasInput;
     const w3id = convertApiUrlToW3Id(model.id);
-    for (const input of modelInputs) {
-        if (!hasInputHasFixedResource(input)) {
-            const dataslice = createBinding(input, data, thread);
-            dataMap[dataslice.id] = dataslice;
-            if (thread.model_ensembles[w3id].bindings[input.id]) {
-                thread.model_ensembles[w3id].bindings[input.id].push(dataslice.id);
-            } else {
-                thread.model_ensembles[w3id].bindings[input.id] = [dataslice.id];
+    if (modelInputs && modelInputs.length > 0) {
+        for (const input of modelInputs) {
+            if (!hasInputHasFixedResource(input)) {
+                const dataslice = createBinding(input, data, thread);
+                dataMap[dataslice.id] = dataslice;
+                if (thread.model_ensembles[w3id].bindings[input.id]) {
+                    thread.model_ensembles[w3id].bindings[input.id].push(dataslice.id);
+                } else {
+                    thread.model_ensembles[w3id].bindings[input.id] = [dataslice.id];
+                }
             }
         }
     }
