@@ -200,7 +200,7 @@ const ModelCatalogSchema = {
                 description:
                     'Value that represents how a parameter should be incremented on each iteration of a software component execution. This value is important when preparing execution ensembles automatically, e.g., simulating crop production varying the parameter "fertilizer amount" in increments of 10%.',
                 items: {
-                    type: "string"
+                    type: "number"
                 },
                 nullable: true,
                 type: "array"
@@ -306,26 +306,27 @@ const MintSchema = {
     },
     SubmitSubtaskRequest: {
         type: "object",
-        properties: {
-            model_id: {
-                type: "string",
-                description:
-                    "The model id to use format https://w3id.org/okn/i/mint/c07a6f98-6339-4033-84b0-6cd7daca6284",
-                example: "https://w3id.org/okn/i/mint/c07a6f98-6339-4033-84b0-6cd7daca6284",
-                required: ["model_id"]
-            }
-        }
-    },
-    AddDataRequest: {
-        type: "object",
+        required: ["model_id"],
         properties: {
             model_id: {
                 type: "string",
                 description:
                     "The model id to use (browse here: https://dev.mint.isi.edu/ethiopia/models/explore. This is the model id of the model configuration setup or model configuration)",
                 example:
-                    "http://api.models.mint.local/v1.8.0/modelconfigurationsetups/c07a6f98-6339-4033-84b0-6cd7daca6284?username=mint%40isi.edu",
-                required: ["model_id"]
+                    "http://api.models.mint.local/v1.8.0/modelconfigurationsetups/c07a6f98-6339-4033-84b0-6cd7daca6284?username=mint%40isi.edu"
+            }
+        }
+    },
+    AddDataRequest: {
+        type: "object",
+        required: ["model_id", "data"],
+        properties: {
+            model_id: {
+                type: "string",
+                description:
+                    "The model id to use (browse here: https://dev.mint.isi.edu/ethiopia/models/explore. This is the model id of the model configuration setup or model configuration)",
+                example:
+                    "http://api.models.mint.local/v1.8.0/modelconfigurationsetups/c07a6f98-6339-4033-84b0-6cd7daca6284?username=mint%40isi.edu"
             },
             data: {
                 type: "array",
