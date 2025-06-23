@@ -71,7 +71,7 @@ export interface SubTasksService {
         subtaskId: string,
         model_id: string,
         authorizationHeader: string
-    ): Promise<string[]>;
+    ): Promise<Thread>;
     getSubtasksByTaskId(
         problemStatementId: string,
         taskId: string,
@@ -322,6 +322,20 @@ const subTasksService: SubTasksService = {
             Object.assign(subtask, updatedSubtask);
         }
 
+        // Handle data if provided
+        if (request.data && request.data.length > 0) {
+            const dataRequest: AddDataRequest = {
+                model_id: request.model_id,
+                data: request.data
+            };
+            const dataMap = await useModelsService.setInputBindings(dataRequest, subtask);
+            await setThreadData(
+                dataMap,
+                subtask.model_ensembles,
+                "Setting thread data via API",
+                subtask
+            );
+        }
         // Handle parameters if provided
         if (request.parameters && request.parameters.length > 0) {
             const parametersRequest: AddParametersRequest = {
@@ -341,21 +355,6 @@ const subTasksService: SubTasksService = {
                 console.error("Error setting thread parameters:", error);
                 throw new InternalServerError("Error setting thread parameters: " + error.message);
             }
-        }
-
-        // Handle data if provided
-        if (request.data && request.data.length > 0) {
-            const dataRequest: AddDataRequest = {
-                model_id: request.model_id,
-                data: request.data
-            };
-            const dataMap = await useModelsService.setInputBindings(dataRequest, subtask);
-            await setThreadData(
-                dataMap,
-                subtask.model_ensembles,
-                "Setting thread data via API",
-                subtask
-            );
         }
 
         return await getThread(subtaskId);
@@ -398,7 +397,7 @@ const subTasksService: SubTasksService = {
             access_token
         );
         await executionCreation.prepareExecutions();
-        return await executionService.submitExecutions(
+        await executionService.submitExecutions(
             executionCreation.executionToBeRun,
             executionCreation.model,
             executionCreation.threadRegion,
@@ -406,6 +405,7 @@ const subTasksService: SubTasksService = {
             subtask.id,
             subtask.model_ensembles[w3id].id
         );
+        return await getThread(subtaskId);
     }
 };
 

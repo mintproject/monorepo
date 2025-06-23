@@ -645,12 +645,12 @@ const subtasksRouter = (): Router => {
             const { subtaskId } = req.params;
             const { model_id } = req.body;
             try {
-                const jobIds = await subTasksService.submitSubtask(
+                const thread = await subTasksService.submitSubtask(
                     subtaskId,
                     model_id,
                     authorizationHeader
                 );
-                res.status(200).json(jobIds);
+                res.status(200).json(thread);
             } catch (error) {
                 if (error instanceof HttpError) {
                     return res.status(error.statusCode).json({ message: error.message });

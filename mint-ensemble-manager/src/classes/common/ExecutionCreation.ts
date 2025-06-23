@@ -5,9 +5,9 @@ import {
     incrementThreadModelSubmittedRuns,
     incrementThreadModelSuccessfulRuns,
     listSuccessfulExecutionIds,
+    insertThreadModelExecutionSummary,
     setExecutions,
-    setThreadModelExecutionIds,
-    setThreadModelExecutionSummary
+    setThreadModelExecutionIds
 } from "@/classes/graphql/graphql_functions";
 import { getConfiguration } from "@/classes/mint/mint-functions";
 import {
@@ -160,7 +160,11 @@ export class ExecutionCreation {
             submitted_for_publishing: false,
             published_runs: 0
         };
-        await setThreadModelExecutionSummary(thread_model_id, summary);
+        const result = await insertThreadModelExecutionSummary(thread_model_id, summary);
+        if (result.errors) {
+            console.error("Error setting thread model execution summary:", result.errors);
+            throw new Error("Error setting thread model execution summary");
+        }
     }
 
     private createExecutionsBatch(

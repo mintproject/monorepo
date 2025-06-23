@@ -1,0 +1,9 @@
+mutation insert_thread_model_execution_summary(
+    $summaries: [thread_model_execution_summary_insert_input!]!
+) {
+    insert_thread_model_execution_summary(objects: $summaries) {
+        returning {
+            thread_model_id
+        }
+    }
+}

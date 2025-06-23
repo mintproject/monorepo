@@ -51,6 +51,7 @@ import deleteExecutionsGQL from "./queries/execution/delete.graphql";
 
 import getRegionDetailsGQL from "./queries/region/get.graphql";
 
+import insertThreadModelExecutionSummaryGQL from "./queries/executionSummary/new.graphql";
 import updateExecutionSummary from "./queries/execution/update-execution-summary.graphql";
 import incFailedRunsGQL from "./queries/execution/increment-failed-runs.graphql";
 import subtractSubmittedRunsGQL from "./queries/execution/subtract-submitted-runs.graphql";
@@ -690,6 +691,39 @@ export const setThreadModelExecutionSummary = (
         variables: {
             threadModelId: thread_model_id,
             summary: summary
+        }
+    });
+};
+
+export const insertThreadModelExecutionSummary = (
+    thread_model_id: string,
+    summary: ExecutionSummary
+) => {
+    const APOLLO_CLIENT = GraphQL.instance(KeycloakAdapter.getUser());
+
+    const summaryData: Thread_Model_Execution_Summary_Insert_Input[] = [
+        {
+            thread_model_id: thread_model_id,
+            total_runs: summary.total_runs,
+            submitted_runs: summary.submitted_runs,
+            failed_runs: summary.failed_runs,
+            successful_runs: summary.successful_runs,
+            workflow_name: summary.workflow_name,
+            submitted_for_execution: summary.submitted_for_execution,
+            submission_time: summary.submission_time,
+            submitted_for_ingestion: summary.submitted_for_ingestion,
+            fetched_run_outputs: summary.fetched_run_outputs,
+            ingested_runs: summary.ingested_runs,
+            submitted_for_registration: summary.submitted_for_registration,
+            registered_runs: summary.registered_runs,
+            submitted_for_publishing: summary.submitted_for_publishing,
+            published_runs: summary.published_runs
+        }
+    ];
+    return APOLLO_CLIENT.mutate({
+        mutation: insertThreadModelExecutionSummaryGQL,
+        variables: {
+            summaries: summaryData
         }
     });
 };
