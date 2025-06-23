@@ -236,7 +236,7 @@ const subTasksService: SubTasksService = {
             if (!(await getModel(w3Id))) {
                 let modelConfigurationGraphQL: Model_Insert_Input;
                 try {
-                    const modelConfiguration = await fetchModelConfiguration(w3Id);
+                    const modelConfiguration = await fetchModelConfiguration(modelId);
                     modelConfigurationGraphQL = modelConfigurationToGraphQL(modelConfiguration);
                 } catch (error) {
                     const modelConfigurationSetup = await fetchModelConfigurationSetup(modelId);
@@ -329,12 +329,18 @@ const subTasksService: SubTasksService = {
                 parameters: request.parameters
             };
             await useModelsService.setParameterBindings(parametersRequest, subtask);
-            await setThreadParameters(
-                subtask.model_ensembles,
-                subtask.execution_summary,
-                "Setting thread parameters via API",
-                subtask
-            );
+            try {
+                const result = await setThreadParameters(
+                    subtask.model_ensembles,
+                    subtask.execution_summary,
+                    "Setting thread parameters via API",
+                    subtask
+                );
+                console.log("Result of setting thread parameters:", result);
+            } catch (error) {
+                console.error("Error setting thread parameters:", error);
+                throw new InternalServerError("Error setting thread parameters: " + error.message);
+            }
         }
 
         // Handle data if provided
@@ -372,7 +378,7 @@ const subTasksService: SubTasksService = {
     },
 
     async submitSubtask(subtaskId: string, model_id: string, authorizationHeader: string) {
-        const executionEngine = getConfiguration().execution_engine;
+        const w3id = convertApiUrlToW3Id(model_id);
         const access_token = getTokenFromAuthorizationHeader(authorizationHeader);
         if (!access_token) {
             throw new UnauthorizedError("Invalid authorization header");
@@ -381,10 +387,13 @@ const subTasksService: SubTasksService = {
         if (!subtask) {
             throw new NotFoundError("Subtask not found");
         }
-        const executionService = getExecutionEngineService(executionEngine, authorizationHeader);
+        const executionService = new TapisExecutionService(
+            access_token,
+            getConfiguration().tapis.basePath
+        );
         const executionCreation = new ExecutionCreation(
             subtask,
-            model_id,
+            w3id,
             executionService,
             access_token
         );
@@ -395,7 +404,7 @@ const subTasksService: SubTasksService = {
             executionCreation.threadRegion,
             executionCreation.component,
             subtask.id,
-            subtaskId
+            subtask.model_ensembles[w3id].id
         );
     }
 };

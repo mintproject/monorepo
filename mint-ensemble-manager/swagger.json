@@ -52,8 +52,8 @@
         "properties": {
           "model_id": {
             "type": "string",
-            "description": "The model id to use format https://w3id.org/okn/i/mint/c07a6f98-6339-4033-84b0-6cd7daca6284",
-            "example": "https://w3id.org/okn/i/mint/c07a6f98-6339-4033-84b0-6cd7daca6284"
+            "description": "The model id to use (browse here: https://dev.mint.isi.edu/ethiopia/models/explore. This is the model id of the model configuration setup or model configuration)",
+            "example": "http://api.models.mint.local/v1.8.0/modelconfigurationsetups/c07a6f98-6339-4033-84b0-6cd7daca6284?username=mint%40isi.edu"
           }
         }
       },

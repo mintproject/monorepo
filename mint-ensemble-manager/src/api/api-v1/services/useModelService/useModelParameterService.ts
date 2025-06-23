@@ -53,6 +53,21 @@ const matchParameters = async (
     }
 };
 
+const validateThatAllParametersAreBound = (
+    model: ModelConfiguration | ModelConfigurationSetup,
+    thread: Thread
+) => {
+    const modelParameters = model.hasParameter;
+    const w3id = convertApiUrlToW3Id(model.id);
+    for (const parameter of modelParameters) {
+        if (!hasParameterHasFixedValue(parameter)) {
+            if (thread.model_ensembles[w3id].bindings[parameter.id].length === 0) {
+                throw new BadRequestError(`Parameter ${parameter.id} is not bound`);
+            }
+        }
+    }
+};
+
 const setParameterBindings = async (data: AddParametersRequest, subtask: Thread) => {
     let match = false;
     for (const [modelW3Id] of Object.entries(subtask.model_ensembles)) {
@@ -63,6 +78,7 @@ const setParameterBindings = async (data: AddParametersRequest, subtask: Thread)
                 throw new NotFoundError("Model not found");
             }
             await matchParameters(model, data, subtask);
+            validateThatAllParametersAreBound(model, subtask);
         }
     }
     if (!match) {

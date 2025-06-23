@@ -94,16 +94,12 @@ export class TapisExecutionService implements IExecutionService {
                     );
                     console.log("Job request", JSON.stringify(jobRequest));
                     const jobId = await this.submitJob(jobRequest);
-                    console.log("Job id", jobId);
                     await updateExecutionRunId(seed.execution.id, jobId);
-                    console.log("Updated execution run id", seed.execution.id, jobId);
                     const subscription = TapisJobSubscriptionService.createRequest(
                         seed.execution.id,
                         threadId
                     );
-                    console.log("Subscription", JSON.stringify(subscription));
                     await this.jobSubscriptionService.submit(jobId, subscription);
-                    console.log("Submitted subscription", jobId, subscription);
                     results.push(jobId);
                 } catch (error) {
                     console.error(
@@ -131,7 +127,8 @@ export class TapisExecutionService implements IExecutionService {
                         event: "UPDATE",
                         userid: "SYSTEM",
                         timestamp: new Date(),
-                        notes: "All jobs failed to submit"
+                        notes: "All jobs failed to submit",
+                        thread_id: threadId
                     },
                     [
                         {
