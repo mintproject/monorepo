@@ -1,12 +1,11 @@
 import { Task, ThreadInfo } from "@/classes/mint/mint-types";
-import {
-    addTask,
-    addTaskWithThread,
-    getProblemStatement
-} from "@/classes/graphql/graphql_functions";
+import { addTask } from "@/classes/graphql/graphql_functions";
 import { getTokenFromAuthorizationHeader } from "@/utils/authUtils";
 import { UnauthorizedError, InternalServerError, NotFoundError } from "@/classes/common/errors";
 import problemStatementsService from "./problemStatementsService";
+import subTasksService from "./subTasksService";
+import { getTasksByProblemStatementId } from "@/classes/graphql/graphql_functions_v2";
+import { taskFromGQL } from "@/classes/graphql/adapters/problem_statement_adapter";
 
 export interface TasksService {
     getTasksByProblemStatementId(
@@ -33,13 +32,9 @@ const tasksService: TasksService = {
             throw new UnauthorizedError("Invalid authorization header");
         }
 
-        const problemStatement = await getProblemStatement(problemStatementId, access_token);
+        const tasks = await getTasksByProblemStatementId(problemStatementId, access_token);
 
-        if (!problemStatement) {
-            throw new NotFoundError("Problem statement not found");
-        }
-
-        return Object.values(problemStatement.tasks || {});
+        return tasks.map((task) => taskFromGQL(task));
     },
 
     async createTask(problemStatementId: string, task: Task, authorizationHeader: string) {
@@ -58,7 +53,7 @@ const tasksService: TasksService = {
         }
 
         try {
-            const id = await addTask(problemStatement, task);
+            const id = await addTask(problemStatement, task, access_token);
             if (!id) {
                 throw new InternalServerError("Failed to create task");
             }
@@ -89,12 +84,27 @@ const tasksService: TasksService = {
             throw new NotFoundError("Problem statement not found");
         }
 
-        try {
-            const ids = await addTaskWithThread(problemStatement, task, thread);
-            if (!ids) {
-                throw new InternalServerError("Failed to create task with thread");
+        task.events = [
+            {
+                event: "CREATE",
+                timestamp: new Date(),
+                userid: "system",
+                notes: "Added task from API"
             }
-            return ids;
+        ];
+        task.permissions = [{ read: true, write: true, execute: true, owner: false, userid: "*" }];
+        try {
+            const id = await addTask(problemStatement, task);
+            if (!id) {
+                throw new InternalServerError("Failed to create task");
+            }
+            const subtaskId = await subTasksService.createSubtask(
+                problemStatementId,
+                id,
+                thread,
+                authorizationHeader
+            );
+            return [id, subtaskId];
         } catch (error) {
             console.error("Error creating task with thread:", error);
             throw new InternalServerError("Error creating task with thread: " + error.message);

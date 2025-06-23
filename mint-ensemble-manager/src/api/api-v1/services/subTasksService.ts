@@ -199,6 +199,17 @@ const subTasksService: SubTasksService = {
         }
 
         try {
+            subtask.events = [
+                {
+                    event: "CREATE",
+                    timestamp: new Date(),
+                    userid: "system",
+                    notes: "Added subtask from API"
+                }
+            ];
+            subtask.permissions = [
+                { read: true, write: true, execute: true, owner: false, userid: "*" }
+            ];
             const taskid = await addThread(task, subtask);
             if (!taskid) {
                 throw new InternalServerError("Failed to create subtask");

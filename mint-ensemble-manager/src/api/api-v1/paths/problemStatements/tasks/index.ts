@@ -54,7 +54,6 @@ const tasksRouter = (): Router => {
             if (!authorizationHeader) {
                 return res.status(401).json({ message: "Authorization header is required" });
             }
-
             const { problemStatementId } = req.params;
             const tasks = await tasksService.getTasksByProblemStatementId(
                 problemStatementId,

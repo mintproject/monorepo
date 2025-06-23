@@ -833,8 +833,14 @@ export const addProblemStatement = (
 };
 
 // Add Task
-export const addTask = (problem_statement: ProblemStatementInfo, task: Task): Promise<string> => {
-    const APOLLO_CLIENT = GraphQL.instance(KeycloakAdapter.getUser());
+export const addTask = (
+    problem_statement: ProblemStatementInfo,
+    task: Task,
+    access_token?: string
+): Promise<string> => {
+    const APOLLO_CLIENT = access_token
+        ? GraphQL.instanceUsingAccessToken(access_token)
+        : GraphQL.instance(KeycloakAdapter.getUser());
     const taskobj = taskToGQL(task, problem_statement);
     return APOLLO_CLIENT.mutate({
         mutation: newTaskGQL,
@@ -896,8 +902,14 @@ export const addTaskWithThread = (
 };
 
 // Add Thread
-export const addThread = (task: Task, thread: ThreadInfo): Promise<string> => {
-    const APOLLO_CLIENT = GraphQL.instance(KeycloakAdapter.getUser());
+export const addThread = (
+    task: Task,
+    thread: ThreadInfo,
+    access_token?: string
+): Promise<string> => {
+    const APOLLO_CLIENT = access_token
+        ? GraphQL.instanceUsingAccessToken(access_token)
+        : GraphQL.instance(KeycloakAdapter.getUser());
     const threadobj = threadInfoToGQL(thread, task.id, task.regionid);
     //console.log(threadobj);
     return APOLLO_CLIENT.mutate({

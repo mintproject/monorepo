@@ -3,8 +3,9 @@ import listProblemStatementsGQL from "./queries/problem-statement/list.graphql";
 import getProblemStatementGQL from "./queries/problem-statement/get.graphql";
 import { InternalServerError } from "@/classes/common/errors";
 import { ApolloQueryResult } from "@apollo/client";
-import { Problem_Statement } from "./types";
+import { Problem_Statement, Task } from "./types";
 import { KeycloakAdapter } from "@/config/keycloak-adapter";
+import listTasksByProblemStatementGQL from "./queries/task/listTasksByProblemStatement.graphql";
 
 export const getProblemStatements = async (access_token: string): Promise<Problem_Statement[]> => {
     const APOLLO_CLIENT = GraphQL.instanceUsingAccessToken(access_token);
@@ -42,4 +43,26 @@ export const getProblemStatement = async (
         );
     }
     return result.data.problem_statement_by_pk;
+};
+
+export const getTasksByProblemStatementId = async (
+    problem_statement_id: string,
+    access_token?: string
+): Promise<Task[]> => {
+    const APOLLO_CLIENT = access_token
+        ? GraphQL.instanceUsingAccessToken(access_token)
+        : GraphQL.instance(KeycloakAdapter.getUser());
+    console.log("APOLLO_CLIENT", APOLLO_CLIENT);
+    const result: ApolloQueryResult<{ task: Task[] }> = await APOLLO_CLIENT.query({
+        query: listTasksByProblemStatementGQL,
+        variables: {
+            problem_statement_id: problem_statement_id
+        }
+    });
+    if (!result || (result.errors && result.errors.length > 0)) {
+        throw new InternalServerError(
+            "Error getting tasks by problem statement id " + result.errors[0].message
+        );
+    }
+    return result.data.task;
 };
