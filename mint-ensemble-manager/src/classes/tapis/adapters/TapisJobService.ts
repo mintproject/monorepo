@@ -58,8 +58,9 @@ export class TapisJobService {
             archiveSystemDir:
                 "HOST_EVAL($WORK)/tapis-jobs-archive/${JobCreateDate}/${JobName}-${JobUUID}",
             archiveOnAppError: true,
-            execSystemId: TapisJobService.SYSTEM_ID,
-            execSystemLogicalQueue: TapisJobService.SYSTEM_LOGICAL_QUEUE,
+            execSystemId: app.jobAttributes?.execSystemId || TapisJobService.SYSTEM_ID,
+            execSystemLogicalQueue:
+                app.jobAttributes?.execSystemLogicalQueue || TapisJobService.SYSTEM_LOGICAL_QUEUE,
             parameterSet: jobParameterSet
         };
 
