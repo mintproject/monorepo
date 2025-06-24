@@ -393,7 +393,8 @@ export const getExecution = async (executionid: string): Promise<Execution> => {
         query: getExecutionGQL,
         variables: {
             id: executionid
-        }
+        },
+        fetchPolicy: "no-cache"
     })
         .then((result) => {
             if (!result || (result.errors && result.errors.length > 0)) {
