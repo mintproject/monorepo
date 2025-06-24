@@ -39,6 +39,7 @@ import { getConfiguration } from "@/classes/mint/mint-functions";
 import { MockExecutionService } from "@/classes/common/__tests__/mocks/MockExecutionService";
 import { ExecutionCreation } from "@/classes/common/ExecutionCreation";
 import { DatasetSpecification } from "@mintproject/modelcatalog_client/dist";
+import { getThread as getThreadV2 } from "@/classes/graphql/graphql_functions_v2";
 
 function getExecutionEngineService(
     executionEngine: string,
@@ -135,27 +136,28 @@ const subTasksService: SubTasksService = {
         taskId: string,
         subtaskId: string,
         authorizationHeader: string
-    ) {
+    ): Promise<ThreadInfo> {
         const access_token = getTokenFromAuthorizationHeader(authorizationHeader);
         if (!access_token) {
             throw new UnauthorizedError("Invalid authorization header");
         }
 
-        const task = await getTask(taskId);
-        if (!task) {
-            throw new NotFoundError("Task not found");
-        }
-
-        if (task.problem_statement_id !== problemStatementId) {
-            throw new NotFoundError("Task not found in the specified problem statement");
-        }
-
-        const subtask = task.threads?.[subtaskId];
+        const subtask = await getThreadV2(subtaskId, access_token);
         if (!subtask) {
             throw new NotFoundError("Subtask not found");
         }
 
-        return subtask;
+        return {
+            id: subtask.id,
+            name: subtask.name,
+            dates: {
+                start_date: new Date(subtask.start_date),
+                end_date: new Date(subtask.end_date)
+            },
+            task_id: subtask.task_id,
+            driving_variables: subtask.driving_variable ? [subtask.driving_variable.id] : [],
+            response_variables: subtask.response_variable ? [subtask.response_variable.id] : []
+        };
     },
 
     async createSubtask(
@@ -182,43 +184,27 @@ const subTasksService: SubTasksService = {
         if (!task) {
             throw new NotFoundError("Task not found");
         }
-        if (task.driving_variables) {
-            subtask.driving_variables = task.driving_variables;
-        }
-        if (task.response_variables) {
-            subtask.response_variables = task.response_variables;
-        }
-        if (!subtask.driving_variables || !subtask.response_variables) {
-            throw new BadRequestError(
-                "Driving variables and response variables must be set in subtask"
-            );
-        }
 
         if (task.problem_statement_id !== problemStatementId) {
             throw new NotFoundError("Task not found in the specified problem statement");
         }
 
-        try {
-            subtask.events = [
-                {
-                    event: "CREATE",
-                    timestamp: new Date(),
-                    userid: "system",
-                    notes: "Added subtask from API"
-                }
-            ];
-            subtask.permissions = [
-                { read: true, write: true, execute: true, owner: false, userid: "*" }
-            ];
-            const taskid = await addThread(task, subtask);
-            if (!taskid) {
-                throw new InternalServerError("Failed to create subtask");
+        subtask.events = [
+            {
+                event: "CREATE",
+                timestamp: new Date(),
+                userid: "system",
+                notes: "Added subtask from API"
             }
-            return taskid; // Return the thread ID
-        } catch (error) {
-            console.error("Error creating subtask:", error);
-            throw new InternalServerError("Error creating subtask: " + error.message);
+        ];
+        subtask.permissions = [
+            { read: true, write: true, execute: true, owner: false, userid: "*" }
+        ];
+        const subtaskId = await addThread(task, subtask);
+        if (!subtaskId) {
+            throw new InternalServerError("Failed to create subtask");
         }
+        return subtaskId; // Return the thread ID
     },
 
     async addModels(subtaskId: string, modelIds: string[], authorizationHeader: string) {

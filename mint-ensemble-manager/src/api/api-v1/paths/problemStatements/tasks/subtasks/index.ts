@@ -238,10 +238,16 @@ const subtasksRouter = (): Router => {
             }
 
             const { problemStatementId, taskId } = req.params;
-            const subtask = await subTasksService.createSubtask(
+            const subtaskId = await subTasksService.createSubtask(
                 problemStatementId,
                 taskId,
                 req.body,
+                authorizationHeader
+            );
+            const subtask = await subTasksService.getSubtaskById(
+                problemStatementId,
+                taskId,
+                subtaskId,
                 authorizationHeader
             );
             res.status(200).json(subtask);
