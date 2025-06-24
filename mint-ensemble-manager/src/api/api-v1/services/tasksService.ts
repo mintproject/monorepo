@@ -47,13 +47,27 @@ const tasksService: TasksService = {
             problemStatementId,
             authorizationHeader
         );
+        const region_id = task.regionid ? task.regionid : problemStatement.regionid;
 
         if (!problemStatement) {
             throw new NotFoundError("Problem statement not found");
         }
 
+        task.events = [
+            {
+                event: "CREATE",
+                timestamp: new Date(),
+                userid: "system",
+                notes: "Added task from API"
+            }
+        ];
+        task.permissions = [{ read: true, write: true, execute: true, owner: false, userid: "*" }];
         try {
-            const id = await addTask(problemStatement, task, access_token);
+            const id = await addTask(
+                problemStatement,
+                { ...task, regionid: region_id },
+                access_token
+            );
             if (!id) {
                 throw new InternalServerError("Failed to create task");
             }
@@ -80,6 +94,8 @@ const tasksService: TasksService = {
             authorizationHeader
         );
 
+        const region_id = thread.regionid ? thread.regionid : problemStatement.regionid;
+
         if (!problemStatement) {
             throw new NotFoundError("Problem statement not found");
         }
@@ -101,7 +117,7 @@ const tasksService: TasksService = {
             const subtaskId = await subTasksService.createSubtask(
                 problemStatementId,
                 id,
-                thread,
+                { ...thread, regionid: region_id },
                 authorizationHeader
             );
             return [id, subtaskId];

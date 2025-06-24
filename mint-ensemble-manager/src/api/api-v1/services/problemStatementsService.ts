@@ -48,6 +48,23 @@ const problemStatementsService: ProblemStatementsService = {
             throw new UnauthorizedError("Invalid authorization header");
         }
 
+        problemStatement.permissions = [
+            {
+                read: true,
+                write: true,
+                execute: true,
+                owner: false,
+                userid: "*"
+            }
+        ];
+        problemStatement.events = [
+            {
+                event: "CREATE",
+                timestamp: new Date(),
+                userid: "system",
+                notes: "Added problem statement from API"
+            }
+        ];
         try {
             const id = await addProblemStatement(problemStatement, access_token);
             if (!id) {
