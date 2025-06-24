@@ -3,9 +3,10 @@ import listProblemStatementsGQL from "./queries/problem-statement/list.graphql";
 import getProblemStatementGQL from "./queries/problem-statement/get.graphql";
 import { InternalServerError } from "@/classes/common/errors";
 import { ApolloQueryResult } from "@apollo/client";
-import { Problem_Statement, Task } from "./types";
+import { Problem_Statement, Task, Thread } from "./types";
 import { KeycloakAdapter } from "@/config/keycloak-adapter";
 import listTasksByProblemStatementGQL from "./queries/task/listTasksByProblemStatement.graphql";
+import getThreadGQL from "./queries/thread/get.graphql";
 
 export const getProblemStatements = async (access_token: string): Promise<Problem_Statement[]> => {
     const APOLLO_CLIENT = GraphQL.instanceUsingAccessToken(access_token);
@@ -65,4 +66,18 @@ export const getTasksByProblemStatementId = async (
         );
     }
     return result.data.task;
+};
+
+export const getThread = async (thread_id: string, access_token?: string): Promise<Thread> => {
+    const APOLLO_CLIENT = access_token
+        ? GraphQL.instanceUsingAccessToken(access_token)
+        : GraphQL.instance(KeycloakAdapter.getUser());
+    const result: ApolloQueryResult<{ thread_by_pk: Thread }> = await APOLLO_CLIENT.query({
+        query: getThreadGQL,
+        variables: { id: thread_id }
+    });
+    if (!result || (result.errors && result.errors.length > 0)) {
+        throw new InternalServerError("Error getting thread " + result.errors[0].message);
+    }
+    return result.data.thread_by_pk;
 };

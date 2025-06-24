@@ -215,8 +215,13 @@ export const taskToGQL = (task: Task, problem_statement: ProblemStatementInfo) =
         end_date: toDateString(task.dates.end_date),
         region_id: task.regionid,
         response_variable_id:
-            task.response_variables.length > 0 ? task.response_variables[0] : null,
-        driving_variable_id: task.driving_variables.length > 0 ? task.driving_variables[0] : null,
+            task.response_variables && task.response_variables.length > 0
+                ? task.response_variables[0]
+                : null,
+        driving_variable_id:
+            task.driving_variables && task.driving_variables.length > 0
+                ? task.driving_variables[0]
+                : null,
         events: {
             data: task.events.map(eventToGQL)
         },
@@ -239,8 +244,14 @@ export const taskUpdateToGQL = (task: Task) => {
         start_date: toDateString(task.dates.start_date),
         end_date: toDateString(task.dates.end_date),
         region_id: task.regionid,
-        response_variable_id: task.response_variables[0],
-        driving_variable_id: task.driving_variables.length > 0 ? task.driving_variables[0] : null,
+        response_variable_id:
+            task.response_variables && task.response_variables.length > 0
+                ? task.response_variables[0]
+                : null,
+        driving_variable_id:
+            task.driving_variables && task.driving_variables.length > 0
+                ? task.driving_variables[0]
+                : null,
         events: {
             data: task.events.map(eventToGQL)
         },
