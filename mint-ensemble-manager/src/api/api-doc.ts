@@ -707,7 +707,7 @@ const SubtaskSchema = {
     CreateSubtaskRequest: {
         type: "object",
         description: "A Subtask creation request definition",
-        required: ["name", "dates", "task_id", "driving_variables", "response_variables"],
+        required: ["name", "dates"],
         properties: {
             name: {
                 description: "The name of the subtask",
@@ -729,10 +729,6 @@ const SubtaskSchema = {
                     }
                 }
             },
-            task_id: {
-                description: "The ID of the parent task",
-                type: "string"
-            },
             driving_variables: {
                 type: "array",
                 description: "List of driving variables",
@@ -750,20 +746,6 @@ const SubtaskSchema = {
             regionid: {
                 description: "The specific region id for the subtask",
                 type: "string"
-            },
-            events: {
-                type: "array",
-                description: "List of events associated with the subtask",
-                items: {
-                    $ref: "#/components/schemas/MintEvent"
-                }
-            },
-            permissions: {
-                type: "array",
-                description: "List of permissions for the subtask",
-                items: {
-                    $ref: "#/components/schemas/MintPermission"
-                }
             }
         }
     },
