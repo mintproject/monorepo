@@ -585,7 +585,7 @@ const TaskSchema = {
             task: {
                 type: "object",
                 description: "The task configuration",
-                required: ["name", "response_variables", "driving_variables"],
+                required: ["name"],
                 properties: {
                     name: {
                         description: "The name of the task",
@@ -636,7 +636,7 @@ const TaskSchema = {
             subtask: {
                 type: "object",
                 description: "The subtask configuration",
-                required: ["name", "driving_variables", "response_variables"],
+                required: ["name"],
                 properties: {
                     name: {
                         description: "The name of the subtask",
