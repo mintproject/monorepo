@@ -295,6 +295,8 @@ GET /problemStatements/{problemStatementId}/tasks/{taskId}/subtasks/{subtaskId}
 
 **Submit Modeling Thread for Execution**
 
+Deprecated - soon to be removed: Use the `POST /problemStatements/{problemStatementId}/tasks/{taskId}/subtasks/{subtaskId}/submit` endpoint instead.
+
 ```http
 POST /executions
 ```
@@ -307,11 +309,15 @@ GET /executions/{executionId}/logs
 
 **Submit Modeling Thread for Local Execution**
 
+**Deprecated - soon to be removed: Use the `POST /problemStatements/{problemStatementId}/tasks/{taskId}/subtasks/{subtaskId}/submit` endpoint instead.**
+
 ```http
 POST /executionsLocal
 ```
 
 **Delete Local Execution Cache**
+
+**Deprecated - soon to be removed: Use the `POST /problemStatements/{problemStatementId}/tasks/{taskId}/subtasks/{subtaskId}/submit` endpoint instead.**
 
 ```http
 DELETE /executionsLocal
@@ -340,6 +346,8 @@ DELETE /executionQueue
 #### Monitoring and Logs
 
 **Fetch Logs for an Execution**
+
+**Deprecated - soon to be removed: Use the `GET /problemStatements/{problemStatementId}/tasks/{taskId}/subtasks/{subtaskId}/logs` endpoint instead.**
 
 ```http
 GET /logs?ensemble_id={ensemble_id}
