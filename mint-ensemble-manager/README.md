@@ -8,6 +8,14 @@ The MINT Ensemble Manager provides a comprehensive REST API for managing ensembl
 
 ### Base URL
 
+**Production Server:**
+
+```
+https://ensemble-manager.mint.tacc.utexas.edu/v1
+```
+
+**Local Development:**
+
 ```
 http://localhost:3000/v1
 ```
@@ -20,9 +28,19 @@ http://localhost:3000/v1
 Authorization: Bearer <your-jwt-token>
 ```
 
+**Production Access**: The production server requires a TACC account for authentication. Use the client ID `mint-ensemble-manager` when authenticating.
+
 ### Interactive Documentation
 
-Access the interactive Swagger UI documentation at:
+Access the interactive Swagger UI documentation:
+
+**Production:**
+
+```
+https://ensemble-manager.mint.tacc.utexas.edu/v1/ui
+```
+
+**Local Development:**
 
 ```
 http://localhost:3000/v1/ui
@@ -449,9 +467,11 @@ The API supports webhook notifications for job status changes. Configure webhook
 
 For API support and questions:
 
--   Interactive documentation: `http://localhost:3000/v1/ui`
+-   **Production**: Interactive documentation: [https://ensemble-manager.mint.tacc.utexas.edu/v1/ui](https://ensemble-manager.mint.tacc.utexas.edu/v1/ui)
+-   **Local Development**: Interactive documentation: `http://localhost:3000/v1/ui`
 -   Check the logs for detailed error information
 -   Ensure your JWT token is valid and not expired
+-   **Production Access**: Requires a TACC account with client ID `mint-ensemble-manager`
 
 ## Environment Variables
 
