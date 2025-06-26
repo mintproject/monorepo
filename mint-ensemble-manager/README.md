@@ -71,7 +71,7 @@ Subtasks contain the actual model configurations, parameters, and data inputs fo
 **Create a Problem Statement**
 
 ```http
-POST /problem-statement
+POST /problemStatements
 ```
 
 **Example Request:**
@@ -107,42 +107,19 @@ POST /problem-statement
 **List Problem Statements**
 
 ```http
-GET /problem-statement
+GET /problemStatements
 ```
 
 **Get Problem Statement by ID**
 
 ```http
-GET /problem-statement/{id}
-```
-
-#### Tasks
-
-**Create a Task**
-
-```http
-POST /task
-```
-
-**Example Request:**
-
-```json
-{
-    "name": "Crop Yield Analysis Task",
-    "dates": {
-        "start_date": "2024-01-01T00:00:00Z",
-        "end_date": "2024-12-31T23:59:59Z"
-    },
-    "response_variables": ["crop__potential_transpiration_volume_flux"],
-    "driving_variables": ["nitrogen__average_of_net_mass_mineralization_rate"],
-    "regionid": "ethiopia"
-}
+GET /problemStatements/{id}
 ```
 
 **Create Task and Subtask Together**
 
 ```http
-POST /task-and-subtask
+POST /problemStatements/{id}/taskAndSubtask
 ```
 
 **Example Request:**
@@ -171,16 +148,39 @@ POST /task-and-subtask
 }
 ```
 
-**List Tasks**
+#### Tasks
+
+**Create a Task**
 
 ```http
-GET /task
+POST /problemStatements/{problemStatementId}/tasks
+```
+
+**Example Request:**
+
+```json
+{
+    "name": "Crop Yield Analysis Task",
+    "dates": {
+        "start_date": "2024-01-01T00:00:00Z",
+        "end_date": "2024-12-31T23:59:59Z"
+    },
+    "response_variables": ["crop__potential_transpiration_volume_flux"],
+    "driving_variables": ["nitrogen__average_of_net_mass_mineralization_rate"],
+    "regionid": "ethiopia"
+}
+```
+
+**List Tasks for a Problem Statement**
+
+```http
+GET /problemStatements/{problemStatementId}/tasks
 ```
 
 **Get Task by ID**
 
 ```http
-GET /task/{id}
+GET /problemStatements/{problemStatementId}/tasks/{taskId}
 ```
 
 #### Subtasks
@@ -188,13 +188,13 @@ GET /task/{id}
 **Create a Subtask**
 
 ```http
-POST /subtask
+POST /problemStatements/{problemStatementId}/tasks/{taskId}/subtasks
 ```
 
 **Add Models to Subtask**
 
 ```http
-POST /subtask/{id}/models
+POST /problemStatements/{problemStatementId}/tasks/{taskId}/subtasks/{subtaskId}/models
 ```
 
 **Example Request:**
@@ -210,7 +210,7 @@ POST /subtask/{id}/models
 **Add Parameters to Subtask**
 
 ```http
-POST /subtask/{id}/parameters
+POST /problemStatements/{problemStatementId}/tasks/{taskId}/subtasks/{subtaskId}/parameters
 ```
 
 **Example Request:**
@@ -234,7 +234,7 @@ POST /subtask/{id}/parameters
 **Add Data to Subtask**
 
 ```http
-POST /subtask/{id}/data
+POST /problemStatements/{problemStatementId}/tasks/{taskId}/subtasks/{subtaskId}/data
 ```
 
 **Example Request:**
@@ -262,72 +262,135 @@ POST /subtask/{id}/data
 **Setup Complete Model Configuration**
 
 ```http
-POST /subtask/{id}/setup
+POST /problemStatements/{problemStatementId}/tasks/{taskId}/subtasks/{subtaskId}/setup
 ```
 
 This endpoint allows you to configure a model, parameters, and data inputs in a single call.
 
-**List Subtasks**
+**Submit a Subtask**
 
 ```http
-GET /subtask
+POST /problemStatements/{problemStatementId}/tasks/{taskId}/subtasks/{subtaskId}/submit
+```
+
+**Get Data Bindings for a Subtask**
+
+```http
+GET /problemStatements/{problemStatementId}/tasks/{taskId}/subtasks/{subtaskId}/data-bindings?model_id={model_id}
+```
+
+**List Subtasks for a Task**
+
+```http
+GET /problemStatements/{problemStatementId}/tasks/{taskId}/subtasks
 ```
 
 **Get Subtask by ID**
 
 ```http
-GET /subtask/{id}
+GET /problemStatements/{problemStatementId}/tasks/{taskId}/subtasks/{subtaskId}
 ```
 
-#### Threads
+#### Execution Management
 
-**⚠️ DEPRECATED**: All thread endpoints are deprecated and will be removed soon. Use the Subtask endpoints instead.
-
-**Create a Thread**
+**Submit Modeling Thread for Execution**
 
 ```http
-POST /thread
+POST /executions
 ```
 
-**⚠️ DEPRECATED**: Use `POST /subtask` instead.
-
-**Example Request:**
-
-```json
-{
-    "name": "Model Run Thread",
-    "modelid": "cycles-0.10.2-alpha-collection-oromia",
-    "datasets": {
-        "cycles_weather_soil": "ac34f01b-1484-4403-98ea-3a380838cab1"
-    },
-    "parameters": {
-        "start_planting_day": [100, 107, 114]
-    }
-}
-```
-
-**List Threads**
+**Get Execution Logs**
 
 ```http
-GET /thread
+GET /executions/{executionId}/logs
 ```
 
-**⚠️ DEPRECATED**: Use `GET /subtask` instead.
-
-**Get Thread by ID**
+**Submit Modeling Thread for Local Execution**
 
 ```http
-GET /thread/{id}
+POST /executionsLocal
 ```
 
-**⚠️ DEPRECATED**: Use `GET /subtask/{id}` instead.
-
-#### Job Execution
-
-**Submit a Job**
+**Delete Local Execution Cache**
 
 ```http
-POST /job
+DELETE /executionsLocal
+```
+
+**Submit Modeling Thread for Execution using Tapis**
+
+```http
+POST /executionEngines/tapis
+```
+
+#### Execution Queue Management
+
+**Get Current Execution Queue**
+
+```http
+GET /executionQueue
+```
+
+**Empty Execution Queue**
+
+```http
+DELETE /executionQueue
+```
+
+#### Monitoring and Logs
+
+**Fetch Logs for an Execution**
+
+```http
+GET /logs?ensemble_id={ensemble_id}
+```
+
+**Submit Modeling Thread for Monitoring**
+
+```http
+POST /monitors
+```
+
+**Fetch Execution Status of Modeling Thread**
+
+```http
+GET /monitors?scenario_id={scenario_id}&thread_id={thread_id}
+```
+
+#### Model Bindings and Cache
+
+**Get Model Bindings**
+
+```http
+GET /modelBindings/data?model_id={model_id}
+```
+
+**Get Model Parameters**
+
+```http
+GET /modelBindings/parameters?model_id={model_id}
+```
+
+**Delete Cached Models**
+
+```http
+DELETE /modelCache?model_id={model_id}
+```
+
+#### Registration
+
+**Register Execution Outputs**
+
+```http
+POST /registration
+```
+
+#### Tapis Job Management
+
+**Submit Job**
+
+```http
+POST /tapis/jobs
 ```
 
 **Example Request:**
@@ -355,20 +418,81 @@ POST /job
 **Get Job Status**
 
 ```http
-GET /job/{id}
+GET /tapis/jobs/{id}
 ```
 
-**Update Job Status**
+**Get Job Logs**
 
 ```http
-PUT /job/{id}/status
+GET /tapis/jobs/{id}/logs
 ```
 
-**List Jobs**
+**Register Tapis Execution Outputs**
 
 ```http
-GET /job
+POST /tapis/executions/{executionId}/outputs
 ```
+
+**Register Model Ensemble Execution Outputs**
+
+```http
+POST /tapis/modelEnsembles/{id}/outputs
+```
+
+**Update Execution Status**
+
+```http
+PUT /tapis/threads/{threadId}/executions/{executionId}/status
+```
+
+**Webhook for Job Status Change**
+
+```http
+POST /tapis/threads/{threadId}/executions/{executionId}/webhook
+```
+
+#### Threads (Deprecated)
+
+**⚠️ DEPRECATED**: All thread endpoints are deprecated and will be removed soon. Use the Subtask endpoints instead.
+
+**Create a Thread**
+
+```http
+POST /threads
+```
+
+**⚠️ DEPRECATED**: Use `POST /problemStatements/{problemStatementId}/tasks/{taskId}/subtasks` instead.
+
+**Example Request:**
+
+```json
+{
+    "name": "Model Run Thread",
+    "modelid": "cycles-0.10.2-alpha-collection-oromia",
+    "datasets": {
+        "cycles_weather_soil": "ac34f01b-1484-4403-98ea-3a380838cab1"
+    },
+    "parameters": {
+        "start_planting_day": [100, 107, 114]
+    }
+}
+```
+
+**List Threads**
+
+```http
+GET /threads
+```
+
+**⚠️ DEPRECATED**: Use `GET /problemStatements/{problemStatementId}/tasks/{taskId}/subtasks` instead.
+
+**Get Thread by ID**
+
+```http
+GET /threads/{id}
+```
+
+**⚠️ DEPRECATED**: Use `GET /problemStatements/{problemStatementId}/tasks/{taskId}/subtasks/{subtaskId}` instead.
 
 ### Data Types
 
@@ -457,11 +581,12 @@ The API supports webhook notifications for job status changes. Configure webhook
 ### Getting Started
 
 1. **Obtain Authentication Token**: Get your JWT token from the authentication service.
-2. **Create a Problem Statement**: Define your research scope
-3. **Create Tasks**: Break down your problem into specific objectives
-4. **Create Subtasks**: Configure models, parameters, and data (formerly called "threads")
-5. **Submit Jobs**: Execute your modeling workflows
-6. **Monitor Progress**: Track job status and results
+2. **Create a Problem Statement**: Define your research scope using `POST /problemStatements`
+3. **Create Tasks**: Break down your problem into specific objectives using `POST /problemStatements/{problemStatementId}/tasks`
+4. **Create Subtasks**: Configure models, parameters, and data using `POST /problemStatements/{problemStatementId}/tasks/{taskId}/subtasks`
+5. **Add Models, Parameters, and Data**: Configure your subtask with the necessary components
+6. **Submit for Execution**: Execute your modeling workflows using `POST /executions` or `POST /executionEngines/tapis`
+7. **Monitor Progress**: Track job status and results using the monitoring endpoints
 
 ### Support
 
