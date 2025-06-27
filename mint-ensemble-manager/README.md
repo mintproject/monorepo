@@ -441,12 +441,6 @@ GET /tapis/jobs/{id}/logs
 POST /tapis/executions/{executionId}/outputs
 ```
 
-**Register Model Ensemble Execution Outputs**
-
-```http
-POST /tapis/modelEnsembles/{id}/outputs
-```
-
 **Update Execution Status**
 
 ```http
