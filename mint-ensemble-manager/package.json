@@ -40,6 +40,7 @@
         "@bull-board/api": "^4.6.4",
         "@bull-board/express": "^4.6.4",
         "@kubernetes/client-node": "^0.21.0",
+        "@pkyeck/ckan-ts": "^1.0.3-commonjs",
         "@mintproject/modelcatalog_client": "^8.0.0",
         "@tapis/tapis-typescript": "^0.0.55",
         "@types/fs-extra": "^8.0.1",

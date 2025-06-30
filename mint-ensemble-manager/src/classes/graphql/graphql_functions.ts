@@ -593,9 +593,6 @@ export const updateExecutionStatusAndResultsv2 = (execution: Execution) => {
         status: execution.status,
         results: resultsData
     };
-    console.log(JSON.stringify(variables, null, 2));
-    console.log(updateExecutionStatusResultsGQL);
-
     return APOLLO_CLIENT.mutate({
         mutation: updateExecutionStatusResultsGQL,
         variables: variables

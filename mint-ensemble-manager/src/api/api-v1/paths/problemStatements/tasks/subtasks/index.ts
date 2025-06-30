@@ -1,6 +1,13 @@
 import { Router, Request, Response } from "express";
 import subTasksService from "@/api/api-v1/services/subTasksService";
 import { HttpError } from "@/classes/common/errors";
+import { executionsRouter } from "./executions";
+import { getTokenFromAuthorizationHeader } from "@/utils/authUtils";
+import { ThreadInfo } from "@/classes/mint/mint-types";
+import { getThread } from "@/classes/graphql/graphql_functions_v2";
+import { Thread } from "@/classes/graphql/types";
+import executionOutputsService from "@/api/api-v1/services/tapis/executionOutputsService";
+import { threadFromGQL } from "@/classes/graphql/graphql_adapter";
 
 interface SubtaskRequest extends Request {
     params: {
@@ -750,6 +757,108 @@ const subtasksRouter = (): Router => {
             }
         }
     );
+    router.use("/:subtaskId/executions", executionsRouter());
+
+    /**
+     * @swagger
+     * /problemStatements/{problemStatementId}/tasks/{taskId}/subtasks/{subtaskId}/outputs:
+     *   post:
+     *     summary: Register Tapis Execution Outputs
+     *     description: Register the outputs of a successful Tapis execution in the data catalog
+     *     operationId: registerTapisExecutionOutputs
+     *     tags:
+     *       - Tapis
+     *     security:
+     *       - BearerAuth: []
+     *       - oauth2: []
+     *     parameters:
+     *       - name: problemStatementId
+     *         in: path
+     *         required: true
+     *         schema:
+     *           type: string
+     *       - name: taskId
+     *         in: path
+     *         required: true
+     *         schema:
+     *           type: string
+     *       - name: subtaskId
+     *         in: path
+     *         required: true
+     *         schema:
+     *           type: string
+     *     requestBody:
+     *       required: true
+     *       content:
+     *         application/json:
+     *           schema:
+     *             type: object
+     *             properties:
+     *               datasetId:
+     *                 type: string
+     *     responses:
+     *       200:
+     *         description: Outputs registered successfully
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 message:
+     *                   type: string
+     *       400:
+     *         description: Invalid request or registration failed
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 message:
+     *                   type: string
+     *       500:
+     *         description: Server error
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 message:
+     *                   type: string
+     */
+    router.post("/:subtaskId/outputs", async (req: Request, res: Response) => {
+        const authorizationHeader = req.headers.authorization;
+        if (!authorizationHeader) {
+            return res.status(401).json({ message: "Authorization header is required" });
+        }
+        const access_token = getTokenFromAuthorizationHeader(authorizationHeader);
+        const { subtaskId } = req.params;
+        const datasetId = req.body.datasetId;
+
+        const subtaskGraphql: Thread = await getThread(subtaskId, access_token);
+        if (!subtaskGraphql) {
+            return res.status(404).json({ message: "Subtask not found" });
+        }
+
+        if (subtaskGraphql.thread_models.length === 0) {
+            return res.status(404).json({ message: "Thread models not found" });
+        }
+        const subtask = threadFromGQL(subtaskGraphql);
+
+        const thread_models = subtaskGraphql.thread_models;
+        for (const thread_model of thread_models) {
+            for (const execution of thread_model.executions) {
+                if (execution.execution.status === "SUCCESS") {
+                    await executionOutputsService.registerOutputs(
+                        execution.execution.id,
+                        access_token,
+                        subtask,
+                        datasetId
+                    );
+                }
+            }
+        }
+        return res.status(200).json({ message: "Outputs registered successfully" });
+    });
     return router;
 };
 

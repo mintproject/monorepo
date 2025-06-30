@@ -44,15 +44,12 @@ const matchTapisOutputsToMintOutputs = (
     for (const mintOutput of mintOutputs) {
         const results = fuse.search(mintOutput.model_io.name);
         if (results.length > 0) {
-            const publicUrl = results[0].item.url.replace(
-                "tapis://ls6",
-                "https://ptdatax.tacc.utexas.edu/workbench/data/tapis/private/cloud.data"
-            );
+            const tapisUrl = results[0].item.url;
             const executionResult: Execution_Result = {
                 resource: {
                     name: results[0].item.name,
-                    url: publicUrl,
-                    id: getMd5Hash(publicUrl)
+                    url: tapisUrl,
+                    id: getMd5Hash(tapisUrl)
                 },
                 model_io: mintOutput.model_io
             };

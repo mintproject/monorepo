@@ -3175,6 +3175,120 @@
         }
       }
     },
+    "/problemStatements/{problemStatementId}/tasks/{taskId}/subtasks/{subtaskId}/executions/{executionId}/outputs": {
+      "post": {
+        "summary": "Register Tapis Execution Outputs",
+        "description": "Register the outputs of a successful Tapis execution in the data catalog",
+        "operationId": "registerTapisExecutionOutputs",
+        "tags": [
+          "Tapis"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          },
+          {
+            "oauth2": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "problemStatementId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "taskId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "subtaskId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "executionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "datasetId": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Outputs registered successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request or registration failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/problemStatements/{problemStatementId}/tasks/{taskId}/subtasks": {
       "get": {
         "summary": "Get all subtasks for a task",
@@ -3875,6 +3989,112 @@
         }
       }
     },
+    "/problemStatements/{problemStatementId}/tasks/{taskId}/subtasks/{subtaskId}/outputs": {
+      "post": {
+        "summary": "Register Tapis Execution Outputs",
+        "description": "Register the outputs of a successful Tapis execution in the data catalog",
+        "operationId": "registerTapisExecutionOutputs",
+        "tags": [
+          "Tapis"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          },
+          {
+            "oauth2": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "problemStatementId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "taskId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "subtaskId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "datasetId": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Outputs registered successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request or registration failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/tapis/executions/{executionId}/outputs": {
       "post": {
         "summary": "Register Tapis Execution Outputs",
@@ -3901,6 +4121,21 @@
             }
           }
         ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "datasetId": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Outputs registered successfully",
@@ -4118,52 +4353,6 @@
                 }
               }
             }
-          }
-        }
-      }
-    },
-    "/tapis/modelEnsembles/{id}/outputs": {
-      "post": {
-        "summary": "Register Model Ensemble Execution Outputs",
-        "description": "Register all execution outputs for a model ensemble in the data catalog asynchronously",
-        "operationId": "registerModelEnsembleExecutionOutputs",
-        "tags": [
-          "Tapis"
-        ],
-        "security": [
-          {
-            "BearerAuth": [],
-            "oauth2": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "202": {
-            "description": "Registration process started",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Server error"
           }
         }
       }

@@ -23,6 +23,8 @@ import {
 } from "@/classes/graphql/graphql_functions";
 import { matchTapisOutputsToMintOutputs } from "@/classes/tapis/jobs";
 import { Status } from "@/interfaces/IExecutionService";
+import { getConfiguration } from "@/classes/mint/mint-functions";
+import { TACC_CKAN_DataCatalog } from "@/classes/mint/data-catalog/TACC_CKAN_Datacatalog";
 
 export class TapisExecutionService implements IExecutionService {
     private readonly LOG_PATH = "tapisjob.out";
@@ -148,8 +150,42 @@ export class TapisExecutionService implements IExecutionService {
         }
     }
 
-    async registerExecutionOutputs(executionId: string): Promise<Execution_Result[]> {
-        return await this.updateExecutionResultsFromJob(executionId);
+    async findExecution(executionId: string): Promise<Execution> {
+        const execution = await getExecution(executionId);
+        if (execution === null) {
+            throw new NotFoundError("Execution not found");
+        }
+        if (execution.status !== Status.SUCCESS) {
+            throw new BadRequestError("Execution is not successful");
+        }
+        return execution;
+    }
+    async registerExecutionOutputs(
+        executionId: string,
+        isPublic: boolean,
+        datasetId: string
+    ): Promise<Execution_Result[]> {
+        const execution = await this.findExecution(executionId);
+        const results = await this.findExecutionResults(execution, isPublic);
+        if (results.length > 0) {
+            const prefs = getConfiguration();
+            const ckan = new TACC_CKAN_DataCatalog(prefs);
+            for (let i = 0; i < results.length; i++) {
+                results[i].resource.name = results[i].resource.name + "-" + executionId;
+                const idUrl = await ckan.registerResource(datasetId, results[i].resource);
+                results[i].resource.id = idUrl.id;
+                results[i].resource.url = idUrl.url;
+            }
+        }
+        execution.results = results;
+        return await this.updateExecutionResultsFromJob(execution);
+    }
+
+    async findExecutionResults(
+        execution: Execution,
+        isPublic: boolean
+    ): Promise<Execution_Result[]> {
+        return await this.getExecutionResultsFromJob(execution.runid, execution, isPublic);
     }
 
     static async updateExecution(
@@ -350,7 +386,8 @@ export class TapisExecutionService implements IExecutionService {
 
     private async getExecutionResultsFromJob(
         jobUuid: string,
-        execution: Execution
+        execution: Execution,
+        isPublic: boolean
     ): Promise<Execution_Result[]> {
         const files = [];
         try {
@@ -380,16 +417,7 @@ export class TapisExecutionService implements IExecutionService {
         return matchTapisOutputsToMintOutputs(files, mintOutputs);
     }
 
-    private async updateExecutionResultsFromJob(executionId: string): Promise<Execution_Result[]> {
-        const execution = await getExecution(executionId);
-        if (execution === null) {
-            throw new NotFoundError("Execution not found");
-        }
-        if (execution.status !== Status.SUCCESS) {
-            throw new BadRequestError("Execution is not successful");
-        }
-        execution.results = await this.getExecutionResultsFromJob(execution.runid, execution);
-        console.log("Registering execution ", executionId, execution.results.length);
+    private async updateExecutionResultsFromJob(execution: Execution): Promise<Execution_Result[]> {
         await updateExecutionStatusAndResultsv2(execution);
         return execution.results;
     }

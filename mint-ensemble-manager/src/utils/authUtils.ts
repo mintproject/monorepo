@@ -1,5 +1,6 @@
 import jwt, { Algorithm } from "jsonwebtoken";
 import { getConfiguration } from "@/classes/mint/mint-functions";
+import { UnauthorizedError } from "@/classes/common/errors";
 export const getTokenFromRequest = (req: any) => {
     const authHeader = req.headers.authorization;
     return getTokenFromAuthorizationHeader(authHeader);
@@ -7,7 +8,7 @@ export const getTokenFromRequest = (req: any) => {
 
 export const getTokenFromAuthorizationHeader = (authorizationHeader: string) => {
     if (!authorizationHeader || !authorizationHeader.startsWith("Bearer ")) {
-        return false;
+        throw new UnauthorizedError("Invalid authorization header");
     }
     return authorizationHeader.split(" ")[1];
 };

@@ -68,10 +68,15 @@ export const getTasksByProblemStatementId = async (
     return result.data.task;
 };
 
+export const getSubtask = async (subtask_id: string, access_token?: string): Promise<Thread> => {
+    return await getThread(subtask_id, access_token);
+};
+
 export const getThread = async (thread_id: string, access_token?: string): Promise<Thread> => {
     const APOLLO_CLIENT = access_token
         ? GraphQL.instanceUsingAccessToken(access_token)
         : GraphQL.instance(KeycloakAdapter.getUser());
+
     const result: ApolloQueryResult<{ thread_by_pk: Thread }> = await APOLLO_CLIENT.query({
         query: getThreadGQL,
         variables: { id: thread_id }

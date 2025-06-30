@@ -200,7 +200,7 @@ export interface Point {
 
 export interface Dataset extends IdNameObject {
     region: string;
-    variables: string[];
+    variables?: string[];
     datatype: string;
     time_period: DateRange;
     description: string;
@@ -211,7 +211,7 @@ export interface Dataset extends IdNameObject {
     is_cached?: boolean;
     resource_repr?: any;
     dataset_repr?: any;
-    resources: DataResource[];
+    resources?: DataResource[];
     resources_loaded?: boolean;
     resource_count?: number;
     spatial_coverage?: any;
@@ -601,4 +601,16 @@ export interface Wcm {
 export interface WingsWcm {
     inputs: ModelIO[];
     outputs: ModelIO[];
+}
+
+export interface DatasetSearchCriteria {
+    modelId?: string;
+    inputId?: string;
+    variables?: string[];
+    dateRange?: DateRange;
+    region?: Region;
+    datasetIds?: string[];
+    categories?: string[];
+    limit?: number;
+    offset?: number;
 }
