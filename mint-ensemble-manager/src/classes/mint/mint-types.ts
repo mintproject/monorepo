@@ -461,6 +461,7 @@ export interface ThreadInfo extends IdNameObject {
     regionid?: string;
     events?: ThreadEvent[];
     permissions?: MintPermission[];
+    dataset_id?: string;
 }
 
 export interface ThreadList {

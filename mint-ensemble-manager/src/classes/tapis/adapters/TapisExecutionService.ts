@@ -113,10 +113,11 @@ export class TapisExecutionService implements IExecutionService {
                 }
             }
             if (errors.length > 0) {
-                console.warn("Some jobs failed to submit:", errors);
-            }
-            if (errors.length === this.seeds.length) {
-                throw new Error("All jobs failed to submit");
+                if (errors.length === this.seeds.length) {
+                    throw new Error("All jobs failed to submit");
+                } else {
+                    console.warn("Some jobs failed to submit:", errors);
+                }
             }
 
             return results;

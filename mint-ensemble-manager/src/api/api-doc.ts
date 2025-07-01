@@ -713,6 +713,10 @@ const SubtaskSchema = {
                 description: "The name of the subtask",
                 type: "string"
             },
+            dataset_id: {
+                description: "The dataset id for the subtask (optional)",
+                type: "string"
+            },
             dates: {
                 type: "object",
                 description: "The date range for the subtask",

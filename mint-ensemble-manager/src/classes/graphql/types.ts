@@ -12010,6 +12010,7 @@ export type Task_Updates = {
 /** columns and relationships of "thread" */
 export type Thread = {
   __typename?: 'thread';
+  dataset_id?: Maybe<Scalars['String']['output']>;
   /** An object relationship */
   driving_variable?: Maybe<Variable>;
   driving_variable_id?: Maybe<Scalars['String']['output']>;
@@ -12165,6 +12166,7 @@ export type Thread_Bool_Exp = {
   _and?: InputMaybe<Array<Thread_Bool_Exp>>;
   _not?: InputMaybe<Thread_Bool_Exp>;
   _or?: InputMaybe<Array<Thread_Bool_Exp>>;
+  dataset_id?: InputMaybe<String_Comparison_Exp>;
   driving_variable?: InputMaybe<Variable_Bool_Exp>;
   driving_variable_id?: InputMaybe<String_Comparison_Exp>;
   end_date?: InputMaybe<Date_Comparison_Exp>;
@@ -12360,6 +12362,7 @@ export type Thread_Events_Comparison_Exp = {
 
 /** input type for inserting data into table "thread" */
 export type Thread_Insert_Input = {
+  dataset_id?: InputMaybe<Scalars['String']['input']>;
   driving_variable?: InputMaybe<Variable_Obj_Rel_Insert_Input>;
   driving_variable_id?: InputMaybe<Scalars['String']['input']>;
   end_date?: InputMaybe<Scalars['date']['input']>;
@@ -12381,6 +12384,7 @@ export type Thread_Insert_Input = {
 /** aggregate max on columns */
 export type Thread_Max_Fields = {
   __typename?: 'thread_max_fields';
+  dataset_id?: Maybe<Scalars['String']['output']>;
   driving_variable_id?: Maybe<Scalars['String']['output']>;
   end_date?: Maybe<Scalars['date']['output']>;
   id?: Maybe<Scalars['String']['output']>;
@@ -12393,6 +12397,7 @@ export type Thread_Max_Fields = {
 
 /** order by max() on columns of table "thread" */
 export type Thread_Max_Order_By = {
+  dataset_id?: InputMaybe<Order_By>;
   driving_variable_id?: InputMaybe<Order_By>;
   end_date?: InputMaybe<Order_By>;
   id?: InputMaybe<Order_By>;
@@ -12406,6 +12411,7 @@ export type Thread_Max_Order_By = {
 /** aggregate min on columns */
 export type Thread_Min_Fields = {
   __typename?: 'thread_min_fields';
+  dataset_id?: Maybe<Scalars['String']['output']>;
   driving_variable_id?: Maybe<Scalars['String']['output']>;
   end_date?: Maybe<Scalars['date']['output']>;
   id?: Maybe<Scalars['String']['output']>;
@@ -12418,6 +12424,7 @@ export type Thread_Min_Fields = {
 
 /** order by min() on columns of table "thread" */
 export type Thread_Min_Order_By = {
+  dataset_id?: InputMaybe<Order_By>;
   driving_variable_id?: InputMaybe<Order_By>;
   end_date?: InputMaybe<Order_By>;
   id?: InputMaybe<Order_By>;
@@ -13811,6 +13818,7 @@ export type Thread_On_Conflict = {
 
 /** Ordering options when selecting data from "thread". */
 export type Thread_Order_By = {
+  dataset_id?: InputMaybe<Order_By>;
   driving_variable?: InputMaybe<Variable_Order_By>;
   driving_variable_id?: InputMaybe<Order_By>;
   end_date?: InputMaybe<Order_By>;
@@ -14206,6 +14214,8 @@ export type Thread_Provenance_Updates = {
 /** select columns of table "thread" */
 export enum Thread_Select_Column {
   /** column name */
+  DatasetId = 'dataset_id',
+  /** column name */
   DrivingVariableId = 'driving_variable_id',
   /** column name */
   EndDate = 'end_date',
@@ -14225,6 +14235,7 @@ export enum Thread_Select_Column {
 
 /** input type for updating data in table "thread" */
 export type Thread_Set_Input = {
+  dataset_id?: InputMaybe<Scalars['String']['input']>;
   driving_variable_id?: InputMaybe<Scalars['String']['input']>;
   end_date?: InputMaybe<Scalars['date']['input']>;
   id?: InputMaybe<Scalars['String']['input']>;
@@ -14237,6 +14248,8 @@ export type Thread_Set_Input = {
 
 /** update columns of table "thread" */
 export enum Thread_Update_Column {
+  /** column name */
+  DatasetId = 'dataset_id',
   /** column name */
   DrivingVariableId = 'driving_variable_id',
   /** column name */
