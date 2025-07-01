@@ -42,6 +42,7 @@ export class ExecutionCreation {
     public threadRegion: Region;
     public modelid: string;
     public executionToBeRun: Execution[];
+    public executionAlreadyRun: Execution[];
     public model: Model;
     public component: TapisComponent;
     public token: string | undefined;
@@ -56,6 +57,7 @@ export class ExecutionCreation {
         this.thread = thread;
         this.modelid = modelid;
         this.executionToBeRun = [];
+        this.executionAlreadyRun = [];
         this.token = token;
         this.executionService = executionService;
     }
@@ -120,7 +122,10 @@ export class ExecutionCreation {
             const executions_to_be_run = executionsBatch.filter(
                 (e) => successful_execution_ids.indexOf(e.id) < 0
             );
-
+            this.executionAlreadyRun = [
+                ...this.executionAlreadyRun,
+                ...executionsBatch.filter((e) => successful_execution_ids.indexOf(e.id) >= 0)
+            ];
             await setExecutions(executions_to_be_run, thread_model_id);
             await setThreadModelExecutionIds(thread_model_id, executionIdsBatch);
             await this.updateSuccessfulExecutionOnThread(successful_execution_ids, thread_model_id);

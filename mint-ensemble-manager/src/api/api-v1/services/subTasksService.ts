@@ -383,14 +383,20 @@ const subTasksService: SubTasksService = {
             access_token
         );
         await executionCreation.prepareExecutions();
-        await executionService.submitExecutions(
-            executionCreation.executionToBeRun,
-            executionCreation.model,
-            executionCreation.threadRegion,
-            executionCreation.component,
-            subtask.id,
-            subtask.model_ensembles[w3id].id
-        );
+        if (executionCreation.executionToBeRun.length > 0) {
+            await executionService.submitExecutions(
+                executionCreation.executionToBeRun,
+                executionCreation.model,
+                executionCreation.threadRegion,
+                executionCreation.component,
+                subtask.id,
+                subtask.model_ensembles[w3id].id
+            );
+        } else if (executionCreation.executionAlreadyRun.length > 0) {
+            console.log("Execution already run", executionCreation.executionAlreadyRun.length);
+        } else {
+            console.log("No executions to run");
+        }
         return await getThread(subtaskId);
     }
 };

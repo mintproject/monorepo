@@ -9,14 +9,10 @@ export interface ExecutionOutputsService {
         executionId: string,
         access_token: string,
         subtask: Thread,
+        origin?: string,
         datasetId?: string
     ): Promise<Execution_Result[]>;
     createDataset(
-        executionId: string,
-        subtask: Thread,
-        ckan: TACC_CKAN_DataCatalog
-    ): Promise<string>;
-    getOrCreateDataset(
         executionId: string,
         subtask: Thread,
         ckan: TACC_CKAN_DataCatalog
@@ -58,31 +54,18 @@ const executionOutputsService: ExecutionOutputsService = {
         }
     },
 
-    async getOrCreateDataset(
-        executionId: string,
-        subtask: Thread,
-        ckan: TACC_CKAN_DataCatalog
-    ): Promise<string> {
-        const dataset = await ckan.getDataset(subtask.id);
-        if (dataset) {
-            return dataset.id;
-        } else {
-            return await this.createDataset(executionId, subtask, ckan);
-        }
-    },
-
     async registerOutputs(
         executionId: string,
         access_token: string,
         subtask: Thread,
+        origin?: string,
         datasetId?: string
     ): Promise<Execution_Result[]> {
         const isPublic = this.isPublic(subtask);
         const prefs = getConfiguration();
         const tapisExecution = new TapisExecutionService(access_token, prefs.tapis.basePath);
-        const ckan = new TACC_CKAN_DataCatalog(prefs);
         if (!datasetId) {
-            datasetId = await this.getOrCreateDataset(executionId, subtask, ckan);
+            datasetId = prefs.data_catalog_extra.default_dataset_id;
         }
         return await tapisExecution.registerExecutionOutputs(executionId, isPublic, datasetId);
     }

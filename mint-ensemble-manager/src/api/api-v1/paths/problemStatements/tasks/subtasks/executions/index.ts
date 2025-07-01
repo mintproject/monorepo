@@ -53,15 +53,6 @@ export const executionsRouter = (): Router => {
      *         required: true
      *         schema:
      *           type: string
-     *     requestBody:
-     *       required: true
-     *       content:
-     *         application/json:
-     *           schema:
-     *             type: object
-     *             properties:
-     *               datasetId:
-     *                 type: string
      *     responses:
      *       200:
      *         description: Outputs registered successfully
@@ -104,13 +95,12 @@ export const executionsRouter = (): Router => {
                 return res.status(404).json({ message: "Subtask not found" });
             }
             const subtask: Thread = threadFromGQL(subtaskRespose);
-            const datasetId = req.body.datasetId;
 
             await executionOutputsService.registerOutputs(
                 executionId,
                 access_token,
                 subtask,
-                datasetId
+                req.headers.origin
             );
             res.status(200).json({ message: "Outputs registered successfully" });
         } catch (error) {

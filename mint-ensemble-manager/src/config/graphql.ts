@@ -17,7 +17,12 @@ export class GraphQL {
         // Create the Apollo GraphQL Client
         GraphQL.client = new ApolloClient({
             link: GraphQL.getHTTPSLink(),
-            cache: new InMemoryCache()
+            cache: new InMemoryCache(),
+            defaultOptions: {
+                query: {
+                    fetchPolicy: "no-cache"
+                }
+            }
         });
         return GraphQL.client;
     };
@@ -31,7 +36,12 @@ export class GraphQL {
                 uri: uri,
                 headers: { Authorization: `Bearer ${access_token}` }
             }),
-            cache: new InMemoryCache()
+            cache: new InMemoryCache(),
+            defaultOptions: {
+                query: {
+                    fetchPolicy: "no-cache"
+                }
+            }
         });
     };
 

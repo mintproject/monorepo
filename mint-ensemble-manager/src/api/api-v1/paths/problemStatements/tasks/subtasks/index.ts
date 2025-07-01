@@ -787,15 +787,6 @@ const subtasksRouter = (): Router => {
      *         required: true
      *         schema:
      *           type: string
-     *     requestBody:
-     *       required: true
-     *       content:
-     *         application/json:
-     *           schema:
-     *             type: object
-     *             properties:
-     *               datasetId:
-     *                 type: string
      *     responses:
      *       200:
      *         description: Outputs registered successfully
@@ -832,7 +823,6 @@ const subtasksRouter = (): Router => {
         }
         const access_token = getTokenFromAuthorizationHeader(authorizationHeader);
         const { subtaskId } = req.params;
-        const datasetId = req.body.datasetId;
 
         const subtaskGraphql: Thread = await getThread(subtaskId, access_token);
         if (!subtaskGraphql) {
@@ -848,12 +838,19 @@ const subtasksRouter = (): Router => {
         for (const thread_model of thread_models) {
             for (const execution of thread_model.executions) {
                 if (execution.execution.status === "SUCCESS") {
-                    await executionOutputsService.registerOutputs(
-                        execution.execution.id,
-                        access_token,
-                        subtask,
-                        datasetId
-                    );
+                    try {
+                        await executionOutputsService.registerOutputs(
+                            execution.execution.id,
+                            access_token,
+                            subtask,
+                            req.headers.origin
+                        );
+                    } catch (error) {
+                        if (error instanceof HttpError) {
+                            return res.status(error.statusCode).json({ message: error.message });
+                        }
+                        res.status(500).json({ message: error.message });
+                    }
                 }
             }
         }

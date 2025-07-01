@@ -3,8 +3,9 @@
     "data_catalog_type": "CKAN",
     "data_catalog_key": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJqdGkiOiJQRzdKWlJQZUFpZERtMVVlOVgzdXZPVVdab3BrV0xjQ01xY0ppak9RWElRZ1pzRGpwSDY2Ym1pMm9UaUZwUG80YU1yNHBqaHgtTmk3aFJ0ZCIsImlhdCI6MTc1MTA0MDg1OX0.1mfb-BuigSihMGALNuXJR8jEB1Y3L9AKRhajtWtpcAY",
     "data_catalog_extra": {
-        "owner_organization_id": "test",
-        "owner_provenance_id": "9ef60317-5da5-4050-8bbc-7d6826fee49f"
+        "owner_organization_id": "org",
+        "owner_provenance_id": "9ef60317-5da5-4050-8bbc-7d6826fee49f",
+        "default_dataset_id": "results-from-dynamo"
     },
     "data_server_type": "Local",
     "data_server_extra": {

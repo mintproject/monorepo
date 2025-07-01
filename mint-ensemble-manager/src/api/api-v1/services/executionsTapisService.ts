@@ -28,15 +28,24 @@ const executionsTapisService = {
                 token
             );
             await executionCreation.prepareExecutions();
-            const jobIds = await TapisExecution.submitExecutions(
-                executionCreation.executionToBeRun,
-                executionCreation.model,
-                executionCreation.threadRegion,
-                executionCreation.component,
-                thread.id,
-                threadmodel.thread_id
-            );
-            return jobIds;
+            if (executionCreation.executionToBeRun.length > 0) {
+                console.log("Execution to be run", executionCreation.executionToBeRun.length);
+                const jobIds = await TapisExecution.submitExecutions(
+                    executionCreation.executionToBeRun,
+                    executionCreation.model,
+                    executionCreation.threadRegion,
+                    executionCreation.component,
+                    thread.id,
+                    threadmodel.thread_id
+                );
+                return jobIds;
+            } else if (executionCreation.executionAlreadyRun.length > 0) {
+                console.log("Execution already run", executionCreation.executionAlreadyRun.length);
+                return executionCreation.executionAlreadyRun.map((e) => e.runid);
+            } else {
+                console.log("No executions to run");
+                return [];
+            }
         } else {
             throw new NotFoundError("Thread not found");
         }

@@ -55,6 +55,10 @@ export class TACC_CKAN_DataCatalog implements IDataCatalog {
         this.url = prefs.data_catalog_api || "";
     }
 
+    private sanitizeDatasetName(name: string): string {
+        return name.replace(/[^a-zA-Z0-9]/g, "_").toLowerCase();
+    }
+
     private async getParser(): Promise<CKAN> {
         return new CKAN(this.url, {
             requestOptions: {
@@ -106,25 +110,13 @@ export class TACC_CKAN_DataCatalog implements IDataCatalog {
             );
         }
         const ckan_dataset: CreateDataset = {
-            name: dataset.name,
+            name: this.sanitizeDatasetName(dataset.name),
             title: dataset.name,
             notes: dataset.description,
             owner_org: owner_org || "",
             private: false,
             version: dataset.version,
-            // extras: [
-            //     {
-            //         key: "spatial",
-            //         value: dataset.spatial_coverage || ""
-            //     }
-            // ],
             tags: tags
-            // resources: dataset.resources.map((res) => {
-            //     return {
-            //         name: res.name,
-            //         url: res.url
-            //     } as CKANResource;
-            // })
         };
         const response = await parser.action<CreateDataset, CKANDataset>(
             "package_create",

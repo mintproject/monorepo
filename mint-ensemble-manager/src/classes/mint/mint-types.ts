@@ -66,6 +66,7 @@ export interface MintPreferences {
     data_catalog_extra?: {
         owner_organization_id?: string;
         owner_provenance_id?: string;
+        default_dataset_id?: string;
     };
 
     data_server_type?: string;
