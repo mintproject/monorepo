@@ -24,6 +24,7 @@ import {
 import { TapisComponent } from "@/classes/tapis/typing";
 import { IExecutionService } from "@/interfaces/IExecutionService";
 import { HttpError } from "./errors";
+import { uuidv4 } from "../graphql/graphql_adapter";
 
 const MAX_CONFIGURATIONS = 1000000;
 // Add interface for IO/Parameter details
@@ -42,7 +43,6 @@ export class ExecutionCreation {
     public threadRegion: Region;
     public modelid: string;
     public executionToBeRun: Execution[];
-    public executionAlreadyRun: Execution[];
     public model: Model;
     public component: TapisComponent;
     public token: string | undefined;
@@ -57,7 +57,6 @@ export class ExecutionCreation {
         this.thread = thread;
         this.modelid = modelid;
         this.executionToBeRun = [];
-        this.executionAlreadyRun = [];
         this.token = token;
         this.executionService = executionService;
     }
@@ -115,22 +114,32 @@ export class ExecutionCreation {
 
         for (let i = 0; i < configs.length; i += ExecutionCreation.BATCH_SIZE) {
             const bindings = configs.slice(i, i + ExecutionCreation.BATCH_SIZE);
-            const executionsBatch = this.createExecutionsBatch(bindings, inputIds, modelid);
-            const executionIdsBatch = executionsBatch.map((e) => e.id);
+            const executions: Execution[] = this.createExecutionsBatch(bindings, inputIds, modelid);
 
-            const successful_execution_ids = await listSuccessfulExecutionIds(executionIdsBatch);
-            const executions_to_be_run = executionsBatch.filter(
-                (e) => successful_execution_ids.indexOf(e.id) < 0
+            // const successful_execution_ids = await listSuccessfulExecutionIds(
+            //     executionsBatch.map((e) => e.id)
+            // );
+            // const executions_to_be_run = executionsBatch.filter(
+            //     (e) => successful_execution_ids.indexOf(e.id) < 0
+            // );
+            // const executionsAlreadyRun = executionsBatch.filter(
+            //     (e) => successful_execution_ids.indexOf(e.id) >= 0
+            // );
+            // for (const execution of executionsAlreadyRun) {
+            //     execution.run_progress = 1;
+            //     this.executionAlreadyRun.push(execution);
+            // }
+            // this.executionAlreadyRun = [
+            //     ...this.executionAlreadyRun,
+            //     ...executionsBatch.filter((e) => successful_execution_ids.indexOf(e.id) >= 0)
+            // ];
+            await setExecutions(executions, thread_model_id);
+            await setThreadModelExecutionIds(
+                thread_model_id,
+                executions.map((e) => e.id)
             );
-            this.executionAlreadyRun = [
-                ...this.executionAlreadyRun,
-                ...executionsBatch.filter((e) => successful_execution_ids.indexOf(e.id) >= 0)
-            ];
-            await setExecutions(executions_to_be_run, thread_model_id);
-            await setThreadModelExecutionIds(thread_model_id, executionIdsBatch);
-            await this.updateSuccessfulExecutionOnThread(successful_execution_ids, thread_model_id);
-            await incrementThreadModelSubmittedRuns(thread_model_id, executions_to_be_run.length);
-            this.executionToBeRun = [...this.executionToBeRun, ...executions_to_be_run];
+            await incrementThreadModelSubmittedRuns(thread_model_id, executions.length);
+            this.executionToBeRun = executions;
         }
     }
 
@@ -186,18 +195,26 @@ export class ExecutionCreation {
         });
     }
 
-    private createExecutionMetadata(modelid: string, inputBindings: any): Execution {
+    private createExecutionMetadata(
+        modelid: string,
+        inputBindings: any,
+        reuseExistingExecutions = false
+    ): Execution {
         const execution: Execution = {
             modelid: modelid,
             bindings: inputBindings,
             execution_engine: "localex",
             runid: null,
-            status: null,
+            status: "WAITING",
             results: [],
             start_time: new Date(),
             selected: true
         };
-        execution.id = getExecutionHash(execution);
+        if (reuseExistingExecutions) {
+            execution.id = getExecutionHash(execution);
+        } else {
+            execution.id = uuidv4();
+        }
         return execution;
     }
 

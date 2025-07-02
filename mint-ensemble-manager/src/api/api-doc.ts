@@ -1896,23 +1896,27 @@ const ExecutionSchema = {
             end_time: {
                 type: "string",
                 format: "date-time",
-                description: "When the execution ended"
+                nullable: true,
+                description: "When the execution ended (null if still running or not started)"
             },
             execution_engine: {
                 type: "string",
                 enum: ["wings", "localex", "tapis"],
-                description: "The execution engine used"
+                nullable: true,
+                description: "The execution engine used (may be null if not yet assigned)"
             },
             status: {
                 type: "string",
                 enum: ["FAILURE", "SUCCESS", "RUNNING", "WAITING"],
-                description: "Current status of the execution"
+                nullable: true,
+                description: "Current status of the execution (may be null if not yet started)"
             },
             run_progress: {
                 type: "number",
                 minimum: 0,
                 maximum: 100,
-                description: "Execution progress percentage (0-100)"
+                nullable: true,
+                description: "Execution progress percentage (0-100, null if not available)"
             },
             results: {
                 type: "array",

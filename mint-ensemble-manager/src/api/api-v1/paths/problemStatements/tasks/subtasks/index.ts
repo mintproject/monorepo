@@ -805,6 +805,15 @@ const subtasksRouter = (): Router => {
      *               properties:
      *                 message:
      *                   type: string
+     *       404:
+     *        description: Subtask not found or thread models not found
+     * *         content:
+     *           application/json:
+     *             schema:
+     *              type: object
+     *              properties:
+     *                message:
+     *                  type: string
      *       500:
      *         description: Server error
      *         content:

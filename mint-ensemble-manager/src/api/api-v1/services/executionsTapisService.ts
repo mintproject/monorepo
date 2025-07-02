@@ -39,9 +39,6 @@ const executionsTapisService = {
                     threadmodel.thread_id
                 );
                 return jobIds;
-            } else if (executionCreation.executionAlreadyRun.length > 0) {
-                console.log("Execution already run", executionCreation.executionAlreadyRun.length);
-                return executionCreation.executionAlreadyRun.map((e) => e.runid);
             } else {
                 console.log("No executions to run");
                 return [];

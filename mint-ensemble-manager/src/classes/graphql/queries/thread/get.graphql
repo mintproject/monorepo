@@ -32,6 +32,10 @@ query query_thread($id: String!) {
                 execution {
                     id
                     status
+                    run_id
+                    start_time
+                    end_time
+                    run_progress
                 }
             }
             execution_summary {

@@ -385,10 +385,6 @@ const subTasksService: SubTasksService = {
         await executionCreation.prepareExecutions();
 
         // Collect all executions
-        const allExecutions: Execution[] = [
-            ...executionCreation.executionToBeRun,
-            ...executionCreation.executionAlreadyRun
-        ];
 
         if (executionCreation.executionToBeRun.length > 0) {
             await executionService.submitExecutions(
@@ -399,8 +395,6 @@ const subTasksService: SubTasksService = {
                 subtask.id,
                 subtask.model_ensembles[w3id].id
             );
-        } else if (executionCreation.executionAlreadyRun.length > 0) {
-            console.log("Execution already run", executionCreation.executionAlreadyRun.length);
         } else {
             console.log("No executions to run");
         }
@@ -408,7 +402,7 @@ const subTasksService: SubTasksService = {
         const updatedThread = await getThread(subtaskId);
         return {
             thread: updatedThread,
-            executions: allExecutions
+            executions: executionCreation.executionToBeRun
         };
     }
 };
