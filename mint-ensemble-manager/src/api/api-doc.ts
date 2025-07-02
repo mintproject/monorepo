@@ -1864,6 +1864,88 @@ const TapisSchema = {
         }
     }
 };
+
+const ExecutionSchema = {
+    Execution: {
+        type: "object",
+        description: "An execution instance representing a model run",
+        properties: {
+            id: {
+                type: "string",
+                description: "Unique identifier for the execution"
+            },
+            modelid: {
+                type: "string",
+                description: "The model identifier for this execution"
+            },
+            bindings: {
+                type: "object",
+                description: "Input bindings for the execution",
+                additionalProperties: true
+            },
+            runid: {
+                type: "string",
+                description: "The run identifier"
+            },
+            start_time: {
+                type: "string",
+                format: "date-time",
+                description: "When the execution started"
+            },
+            end_time: {
+                type: "string",
+                format: "date-time",
+                description: "When the execution ended"
+            },
+            execution_engine: {
+                type: "string",
+                enum: ["wings", "localex", "tapis"],
+                description: "The execution engine used"
+            },
+            status: {
+                type: "string",
+                enum: ["FAILURE", "SUCCESS", "RUNNING", "WAITING"],
+                description: "Current status of the execution"
+            },
+            run_progress: {
+                type: "number",
+                minimum: 0,
+                maximum: 100,
+                description: "Execution progress percentage (0-100)"
+            },
+            results: {
+                type: "array",
+                items: {
+                    type: "object"
+                },
+                description: "Results from the completed execution"
+            },
+            selected: {
+                type: "boolean",
+                description: "Whether this execution is selected"
+            }
+        }
+    },
+    SubmitSubtaskResponse: {
+        type: "object",
+        description: "Response from submitting a subtask for execution",
+        properties: {
+            thread: {
+                $ref: "#/components/schemas/Thread",
+                description: "The updated thread/subtask information"
+            },
+            executions: {
+                type: "array",
+                items: {
+                    $ref: "#/components/schemas/Execution"
+                },
+                description: "List of executions created for this subtask submission"
+            }
+        },
+        required: ["thread", "executions"]
+    }
+};
+
 const apiDocComponents = {
     components: {
         securitySchemes: {
@@ -1889,6 +1971,7 @@ const apiDocComponents = {
             ...SubtaskSchema,
             ...ProblemStatementSchema,
             ...TapisSchema,
+            ...ExecutionSchema,
             ModelThread: {
                 description: "",
                 required: ["thread_id"],

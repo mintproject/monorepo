@@ -1,4 +1,4 @@
-import { Thread, ThreadInfo } from "@/classes/mint/mint-types";
+import { Thread, ThreadInfo, Execution } from "@/classes/mint/mint-types";
 import {
     addThread,
     insertModel,
@@ -72,7 +72,7 @@ export interface SubTasksService {
         subtaskId: string,
         model_id: string,
         authorizationHeader: string
-    ): Promise<Thread>;
+    ): Promise<{ thread: Thread; executions: Execution[] }>;
     getSubtasksByTaskId(
         problemStatementId: string,
         taskId: string,
@@ -383,6 +383,13 @@ const subTasksService: SubTasksService = {
             access_token
         );
         await executionCreation.prepareExecutions();
+        
+        // Collect all executions
+        const allExecutions: Execution[] = [
+            ...executionCreation.executionToBeRun,
+            ...executionCreation.executionAlreadyRun
+        ];
+        
         if (executionCreation.executionToBeRun.length > 0) {
             await executionService.submitExecutions(
                 executionCreation.executionToBeRun,
@@ -397,7 +404,12 @@ const subTasksService: SubTasksService = {
         } else {
             console.log("No executions to run");
         }
-        return await getThread(subtaskId);
+        
+        const updatedThread = await getThread(subtaskId);
+        return {
+            thread: updatedThread,
+            executions: allExecutions
+        };
     }
 };
 

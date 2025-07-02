@@ -3,7 +3,6 @@ import subTasksService from "@/api/api-v1/services/subTasksService";
 import { HttpError } from "@/classes/common/errors";
 import { executionsRouter } from "./executions";
 import { getTokenFromAuthorizationHeader } from "@/utils/authUtils";
-import { ThreadInfo } from "@/classes/mint/mint-types";
 import { getThread } from "@/classes/graphql/graphql_functions_v2";
 import { Thread } from "@/classes/graphql/types";
 import executionOutputsService from "@/api/api-v1/services/tapis/executionOutputsService";
@@ -628,7 +627,7 @@ const subtasksRouter = (): Router => {
      *         content:
      *           application/json:
      *             schema:
-     *               $ref: '#/components/schemas/Thread'
+     *               $ref: '#/components/schemas/SubmitSubtaskResponse'
      *       default:
      *         description: Default error response
      *         content:
@@ -658,12 +657,12 @@ const subtasksRouter = (): Router => {
             const { subtaskId } = req.params;
             const { model_id } = req.body;
             try {
-                const thread = await subTasksService.submitSubtask(
+                const result = await subTasksService.submitSubtask(
                     subtaskId,
                     model_id,
                     authorizationHeader
                 );
-                res.status(200).json(thread);
+                res.status(200).json(result);
             } catch (error) {
                 if (error instanceof HttpError) {
                     return res.status(error.statusCode).json({ message: error.message });
