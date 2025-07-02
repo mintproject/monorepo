@@ -1885,7 +1885,8 @@ const ExecutionSchema = {
             },
             runid: {
                 type: "string",
-                description: "The run identifier"
+                nullable: true,
+                description: "The run identifier (may be null if not yet assigned)"
             },
             start_time: {
                 type: "string",

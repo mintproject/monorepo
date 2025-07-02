@@ -383,13 +383,13 @@ const subTasksService: SubTasksService = {
             access_token
         );
         await executionCreation.prepareExecutions();
-        
+
         // Collect all executions
         const allExecutions: Execution[] = [
             ...executionCreation.executionToBeRun,
             ...executionCreation.executionAlreadyRun
         ];
-        
+
         if (executionCreation.executionToBeRun.length > 0) {
             await executionService.submitExecutions(
                 executionCreation.executionToBeRun,
@@ -404,7 +404,7 @@ const subTasksService: SubTasksService = {
         } else {
             console.log("No executions to run");
         }
-        
+
         const updatedThread = await getThread(subtaskId);
         return {
             thread: updatedThread,
