@@ -1795,6 +1795,7 @@
           - end_date
           - region_id
           - task_id
+          - dataset_id
   select_permissions:
     - role: anonymous
       permission:
@@ -1807,6 +1808,7 @@
           - end_date
           - region_id
           - task_id
+          - dataset_id
         filter: {}
         allow_aggregations: true
     - role: user
@@ -1820,6 +1822,7 @@
           - region_id
           - response_variable_id
           - task_id
+          - dataset_id
         filter:
           _or:
             - permissions:
@@ -1847,6 +1850,7 @@
           - region_id
           - response_variable_id
           - start_date
+          - dataset_id
         filter:
           _or:
             - permissions:
