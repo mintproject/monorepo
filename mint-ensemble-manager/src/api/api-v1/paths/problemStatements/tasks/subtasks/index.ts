@@ -797,7 +797,7 @@ const subtasksRouter = (): Router => {
      *                 message:
      *                   type: string
      *       400:
-     *         description: Invalid request or registration failed
+     *        description: Invalid request or registration failed
      *         content:
      *           application/json:
      *             schema:
@@ -806,14 +806,14 @@ const subtasksRouter = (): Router => {
      *                 message:
      *                   type: string
      *       404:
-     *        description: Subtask not found or thread models not found
-     * *         content:
+     *        description: Not found
+     *         content:
      *           application/json:
      *             schema:
-     *              type: object
-     *              properties:
-     *                message:
-     *                  type: string
+     *               type: object
+     *               properties:
+     *                 message:
+     *                   type: string
      *       500:
      *         description: Server error
      *         content:
@@ -842,6 +842,7 @@ const subtasksRouter = (): Router => {
         }
         const subtask = threadFromGQL(subtaskGraphql);
 
+        let executionsSubmitted = 0;
         const thread_models = subtaskGraphql.thread_models;
         for (const thread_model of thread_models) {
             for (const execution of thread_model.executions) {
@@ -853,6 +854,7 @@ const subtasksRouter = (): Router => {
                             subtask,
                             req.headers.origin
                         );
+                        executionsSubmitted += 1;
                     } catch (error) {
                         if (error instanceof HttpError) {
                             return res.status(error.statusCode).json({ message: error.message });
@@ -861,6 +863,11 @@ const subtasksRouter = (): Router => {
                     }
                 }
             }
+        }
+        if (executionsSubmitted === 0) {
+            return res
+                .status(400)
+                .json({ message: "No successful executions found to register outputs" });
         }
         return res.status(200).json({ message: "Outputs registered successfully" });
     });

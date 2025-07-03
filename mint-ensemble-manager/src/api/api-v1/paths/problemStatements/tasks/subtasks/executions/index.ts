@@ -20,7 +20,7 @@ interface ExecutionRequest extends Request {
 }
 export const executionsRouter = (): Router => {
     const router = Router({ mergeParams: true });
-    
+
     /**
      * @openapi
      * /problemStatements/{problemStatementId}/tasks/{taskId}/subtasks/{subtaskId}/executions:
@@ -87,10 +87,10 @@ export const executionsRouter = (): Router => {
         if (!authorizationHeader) {
             return res.status(401).json({ message: "Authorization header is required" });
         }
-        
+
         const access_token = getTokenFromAuthorizationHeader(authorizationHeader);
         const { subtaskId } = req.params;
-        
+
         try {
             const subtaskResponse: GraphQLThread = await getSubtask(subtaskId, access_token);
             if (!subtaskResponse) {
@@ -99,14 +99,14 @@ export const executionsRouter = (): Router => {
 
             // Extract executions from thread models
             const executions: Execution[] = [];
-            
+
             if (subtaskResponse.thread_models) {
                 for (const threadModel of subtaskResponse.thread_models) {
                     if (threadModel.executions) {
                         for (const executionWrapper of threadModel.executions) {
                             if (executionWrapper.execution) {
                                 const graphqlExecution = executionWrapper.execution;
-                                
+
                                 // Map data bindings to execution bindings format
                                 const bindings: { [input: string]: string } = {};
                                 if (threadModel.data_bindings) {
@@ -116,25 +116,42 @@ export const executionsRouter = (): Router => {
                                         }
                                     }
                                 }
-                                
+
                                 // Add parameter bindings
                                 if (threadModel.parameter_bindings) {
                                     for (const binding of threadModel.parameter_bindings) {
-                                        if (binding.model_parameter?.name && binding.parameter_value) {
-                                            bindings[binding.model_parameter.name] = binding.parameter_value;
+                                        if (
+                                            binding.model_parameter?.name &&
+                                            binding.parameter_value
+                                        ) {
+                                            bindings[binding.model_parameter.name] =
+                                                binding.parameter_value;
                                         }
                                     }
                                 }
-                                
+
                                 const execution: Execution = {
                                     id: graphqlExecution.id,
-                                    modelid: threadModel.model?.id || graphqlExecution.model_id || "",
+                                    modelid:
+                                        threadModel.model?.id || graphqlExecution.model_id || "",
                                     bindings: bindings,
                                     runid: graphqlExecution.run_id || graphqlExecution.id,
-                                    start_time: graphqlExecution.start_time ? new Date(graphqlExecution.start_time) : new Date(),
-                                    end_time: graphqlExecution.end_time ? new Date(graphqlExecution.end_time) : undefined,
-                                    execution_engine: graphqlExecution.execution_engine as "wings" | "localex" | "tapis" | undefined,
-                                    status: (graphqlExecution.status || "WAITING") as "FAILURE" | "SUCCESS" | "RUNNING" | "WAITING",
+                                    start_time: graphqlExecution.start_time
+                                        ? new Date(graphqlExecution.start_time)
+                                        : new Date(),
+                                    end_time: graphqlExecution.end_time
+                                        ? new Date(graphqlExecution.end_time)
+                                        : undefined,
+                                    execution_engine: graphqlExecution.execution_engine as
+                                        | "wings"
+                                        | "localex"
+                                        | "tapis"
+                                        | undefined,
+                                    status: (graphqlExecution.status || "WAITING") as
+                                        | "FAILURE"
+                                        | "SUCCESS"
+                                        | "RUNNING"
+                                        | "WAITING",
                                     run_progress: Number(graphqlExecution.run_progress) || 0,
                                     results: graphqlExecution.results || [],
                                     selected: false
@@ -195,10 +212,9 @@ export const executionsRouter = (): Router => {
      *         content:
      *           application/json:
      *             schema:
-     *               type: object
-     *               properties:
-     *                 message:
-     *                   type: string
+     *               type: array
+     *               items:
+     *                 $ref: '#/components/schemas/Execution_Result'
      *       400:
      *         description: Invalid request or registration failed
      *         content:
@@ -232,13 +248,19 @@ export const executionsRouter = (): Router => {
             }
             const subtask: Thread = threadFromGQL(subtaskRespose);
 
-            await executionOutputsService.registerOutputs(
+            const executionResults = await executionOutputsService.registerOutputs(
                 executionId,
                 access_token,
                 subtask,
                 req.headers.origin
             );
-            res.status(200).json({ message: "Outputs registered successfully" });
+            if (!executionResults || executionResults.length === 0) {
+                return res
+                    .status(400)
+                    .json({ message: "No successful executions found to register outputs" });
+            }
+
+            res.status(200).json(executionResults);
         } catch (error) {
             if (error instanceof NotFoundError) {
                 res.status(404).json({
