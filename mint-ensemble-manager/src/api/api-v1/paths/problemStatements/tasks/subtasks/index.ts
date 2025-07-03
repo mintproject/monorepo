@@ -852,7 +852,8 @@ const subtasksRouter = (): Router => {
                             execution.execution.id,
                             access_token,
                             subtask,
-                            req.headers.origin
+                            req.headers.origin,
+                            subtask.dataset_id
                         );
                         executionsSubmitted += 1;
                     } catch (error) {

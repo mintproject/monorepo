@@ -66,7 +66,9 @@ const executionOutputsService: ExecutionOutputsService = {
         const tapisExecution = new TapisExecutionService(access_token, prefs.tapis.basePath);
         if (!datasetId) {
             datasetId = prefs.data_catalog_extra.default_dataset_id;
+            console.log("No dataset ID provided, using default dataset ID", datasetId);
         }
+        console.log("Registering outputs for execution", executionId, "with dataset", datasetId);
         return await tapisExecution.registerExecutionOutputs(executionId, isPublic, datasetId);
     }
 };

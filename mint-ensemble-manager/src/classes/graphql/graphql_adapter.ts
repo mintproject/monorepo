@@ -366,6 +366,7 @@ export const threadFromGQL = (thread: any) => {
         task_id: thread["task_id"],
         regionid: thread["region_id"],
         name: thread["name"],
+        dataset_id: thread["dataset_id"],
         dates: {
             start_date: new Date(thread["start_date"]),
             end_date: new Date(thread["end_date"])

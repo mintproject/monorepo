@@ -252,7 +252,8 @@ export const executionsRouter = (): Router => {
                 executionId,
                 access_token,
                 subtask,
-                req.headers.origin
+                req.headers.origin,
+                subtask.dataset_id
             );
             if (!executionResults || executionResults.length === 0) {
                 return res

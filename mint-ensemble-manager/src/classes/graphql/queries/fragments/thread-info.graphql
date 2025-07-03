@@ -9,5 +9,6 @@ fragment thread_info on thread {
     region_id
     driving_variable_id
     response_variable_id
+    dataset_id
     ...thread_events
 }
