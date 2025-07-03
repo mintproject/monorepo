@@ -53,7 +53,6 @@ export const getTasksByProblemStatementId = async (
     const APOLLO_CLIENT = access_token
         ? GraphQL.instanceUsingAccessToken(access_token)
         : GraphQL.instance(KeycloakAdapter.getUser());
-    console.log("APOLLO_CLIENT", APOLLO_CLIENT);
     const result: ApolloQueryResult<{ task: Task[] }> = await APOLLO_CLIENT.query({
         query: listTasksByProblemStatementGQL,
         variables: {
