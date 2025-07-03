@@ -313,7 +313,8 @@ export const threadInfoToGQL = (thread: ThreadInfo, taskid: string, regionid: st
                 constraint: "thread_permission_pkey",
                 update_columns: ["read", "write"]
             }
-        }
+        },
+        dataset_id: thread.dataset_id
     };
     return threadobj;
 };
