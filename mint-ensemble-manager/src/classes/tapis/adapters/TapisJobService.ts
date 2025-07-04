@@ -51,9 +51,9 @@ export class TapisJobService {
             appId: app.id,
             appVersion: app.version,
             fileInputs: jobFileInputs,
-            nodeCount: 1,
-            coresPerNode: 1,
-            maxMinutes: 10,
+            nodeCount: app.jobAttributes?.nodeCount || 1,
+            coresPerNode: app.jobAttributes?.coresPerNode || 1,
+            maxMinutes: 60,
             archiveSystemId: "ls6",
             archiveSystemDir:
                 "HOST_EVAL($WORK)/tapis-jobs-archive/${JobCreateDate}/${JobName}-${JobUUID}",
