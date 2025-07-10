@@ -28,6 +28,8 @@ query query_thread($id: String!) {
         }
         thread_models {
             id
+            thread_id
+            model_id
             executions {
                 execution {
                     id
