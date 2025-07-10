@@ -81,12 +81,9 @@ const subtasksRouter = (): Router => {
      *         content:
      *           application/json:
      *             schema:
-     *               type: object
-     *               properties:
-     *                 subtasks:
-     *                   type: array
-     *                   items:
-     *                     $ref: '#/components/schemas/Subtask'
+     *               type: array
+     *               items:
+     *                 $ref: '#/components/schemas/Subtask'
      *       default:
      *         description: Default error response
      *         content:
