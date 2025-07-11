@@ -79,7 +79,7 @@ export class TapisExecutionService implements IExecutionService {
             this.seeds = this.seedExecutions(executions, model, region, component);
             console.log("Seeds", JSON.stringify(this.seeds));
 
-            const { results, errors } = await this.processExecutionSeeds(
+            const { jobResponses, errors } = await this.processExecutionSeeds(
                 app,
                 model,
                 threadId,
@@ -87,7 +87,7 @@ export class TapisExecutionService implements IExecutionService {
             );
 
             this.handleSubmissionResults(errors);
-            return results;
+            return jobResponses;
         } catch (error) {
             await this.handleSubmissionFailure(threadId, threadModelId, error);
             throw error;
@@ -99,22 +99,22 @@ export class TapisExecutionService implements IExecutionService {
         model: Model,
         threadId: string,
         threadModelId: string
-    ): Promise<{ results: string[]; errors: { executionId: string; error: Error }[] }> {
-        const results: string[] = [];
+    ): Promise<{ jobResponses: string[]; errors: { executionId: string; error: Error }[] }> {
+        const jobResponses: string[] = [];
         const errors: { executionId: string; error: Error }[] = [];
 
         for (const seed of this.seeds) {
             console.log("Processing seed", JSON.stringify(seed));
             try {
                 const jobId = await this.submitSingleExecution(app, seed, model, threadId);
-                results.push(jobId);
+                jobResponses.push(jobId);
             } catch (error) {
                 await this.handleSingleExecutionFailure(seed, error, threadModelId);
                 errors.push({ executionId: seed.execution.id, error });
             }
         }
 
-        return { results, errors };
+        return { jobResponses, errors };
     }
 
     private async submitSingleExecution(
