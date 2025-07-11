@@ -390,18 +390,34 @@ export class TapisExecutionService implements IExecutionService {
         execution: Execution,
         isPublic: boolean
     ): Promise<Execution_Result[]> {
+        const outputFolders = [
+            "",
+            "outputs",
+            "results",
+            "result",
+            "data",
+            "output",
+            "out",
+            "simulation",
+            "model_output",
+            "generated",
+            "processed",
+            "final",
+            "export",
+            "analysis",
+            "computed"
+        ];
         const files = [];
-        try {
-            const { result: files1 } = await this.getJobOutputList(jobUuid, "");
-            files.push(...files1);
-        } catch (error) {
-            console.log("No files found for model in default path" + execution.modelid);
-        }
-        try {
-            const { result: files2 } = await this.getJobOutputList(jobUuid, "outputs");
-            files.push(...files2);
-        } catch (error) {
-            console.log("No files found for model in outputs path" + execution.modelid);
+
+        for (const folder of outputFolders) {
+            try {
+                const { result: folderFiles } = await this.getJobOutputList(jobUuid, folder);
+                files.push(...folderFiles);
+            } catch (error) {
+                console.log(
+                    `No files found for model in ${folder || "default"} path: ${execution.modelid}`
+                );
+            }
         }
 
         console.log("The TAPIS files available to match to mint outputs", files);
