@@ -79,89 +79,129 @@ export class TapisExecutionService implements IExecutionService {
             this.seeds = this.seedExecutions(executions, model, region, component);
             console.log("Seeds", JSON.stringify(this.seeds));
 
-            const results: string[] = [];
-            const errors: { executionId: string; error: Error }[] = [];
+            const { results, errors } = await this.processExecutionSeeds(
+                app,
+                model,
+                threadId,
+                threadModelId
+            );
 
-            for (const seed of this.seeds) {
-                console.log("Processing seed", JSON.stringify(seed));
-                try {
-                    const name = this.generateValidJobName(app, seed.execution.id);
-                    const description = "Job for " + model.name + " execution " + seed.execution.id;
-                    const jobRequest = this.jobService.createJobRequest(
-                        app,
-                        seed,
-                        model,
-                        name,
-                        description
-                    );
-                    console.log("Job request", JSON.stringify(jobRequest));
-                    const jobId = await this.submitJob(jobRequest);
-                    await updateExecutionRunId(seed.execution.id, jobId);
-                    const subscription = TapisJobSubscriptionService.createRequest(
-                        seed.execution.id,
-                        threadId
-                    );
-                    await this.jobSubscriptionService.submit(jobId, subscription);
-                    results.push(jobId);
-                } catch (error) {
-                    console.error(
-                        `Failed to submit job for execution ${seed.execution.id}:`,
-                        error
-                    );
-                    // Mark the individual execution as failed
-                    try {
-                        await TapisExecutionService.updateExecutionStatusOnGraphQl(
-                            seed.execution,
-                            Status.FAILURE.toString(),
-                            threadModelId
-                        );
-                    } catch (statusUpdateError) {
-                        console.error(
-                            `Failed to update execution status for ${seed.execution.id}:`,
-                            statusUpdateError
-                        );
-                    }
-                    await decrementThreadModelSubmittedRuns(threadModelId);
-                    errors.push({ executionId: seed.execution.id, error });
-                }
-            }
-            if (errors.length > 0) {
-                if (errors.length === this.seeds.length) {
-                    throw new Error("All jobs failed to submit");
-                } else {
-                    console.warn("Some jobs failed to submit:", errors);
-                }
-            }
-
+            this.handleSubmissionResults(errors);
             return results;
         } catch (error) {
-            try {
-                console.log("Handling failed connection ensemble");
-                await handleFailedConnectionEnsemble(
-                    threadId,
-                    {
-                        event: "UPDATE",
-                        userid: "SYSTEM",
-                        timestamp: new Date(),
-                        notes: "All jobs failed to submit",
-                        thread_id: threadId
-                    },
-                    [
-                        {
-                            total_runs: this.seeds.length,
-                            submitted_runs: 0,
-                            failed_runs: this.seeds.length,
-                            successful_runs: 0,
-                            thread_model_id: threadModelId
-                        }
-                    ]
-                );
-            } catch (error) {
-                console.error("Error handling failed connection ensemble", error);
-            }
-            console.error("Error submitting executions", error);
+            await this.handleSubmissionFailure(threadId, threadModelId, error);
             throw error;
         }
+    }
+
+    private async processExecutionSeeds(
+        app: Apps.TapisApp,
+        model: Model,
+        threadId: string,
+        threadModelId: string
+    ): Promise<{ results: string[]; errors: { executionId: string; error: Error }[] }> {
+        const results: string[] = [];
+        const errors: { executionId: string; error: Error }[] = [];
+
+        for (const seed of this.seeds) {
+            console.log("Processing seed", JSON.stringify(seed));
+            try {
+                const jobId = await this.submitSingleExecution(app, seed, model, threadId);
+                results.push(jobId);
+            } catch (error) {
+                await this.handleSingleExecutionFailure(seed, error, threadModelId);
+                errors.push({ executionId: seed.execution.id, error });
+            }
+        }
+
+        return { results, errors };
+    }
+
+    private async submitSingleExecution(
+        app: Apps.TapisApp,
+        seed: TapisComponentSeed,
+        model: Model,
+        threadId: string
+    ): Promise<string> {
+        const name = this.generateValidJobName(app, seed.execution.id);
+        const description = "Job for " + model.name + " execution " + seed.execution.id;
+        const jobRequest = this.jobService.createJobRequest(app, seed, model, name, description);
+        
+        console.log("Job request", JSON.stringify(jobRequest));
+        const jobId = await this.submitJob(jobRequest);
+        
+        await updateExecutionRunId(seed.execution.id, jobId);
+        
+        const subscription = TapisJobSubscriptionService.createRequest(seed.execution.id, threadId);
+        await this.jobSubscriptionService.submit(jobId, subscription);
+        
+        return jobId;
+    }
+
+    private async handleSingleExecutionFailure(
+        seed: TapisComponentSeed,
+        error: Error,
+        threadModelId: string
+    ): Promise<void> {
+        console.error(`Failed to submit job for execution ${seed.execution.id}:`, error);
+        
+        // Mark the individual execution as failed
+        try {
+            await TapisExecutionService.updateExecutionStatusOnGraphQl(
+                seed.execution,
+                "jobs.JOB_NEW_STATUS.FAILED",
+                threadModelId
+            );
+        } catch (statusUpdateError) {
+            console.error(
+                `Failed to update execution status for ${seed.execution.id}:`,
+                statusUpdateError
+            );
+        }
+        
+        await decrementThreadModelSubmittedRuns(threadModelId);
+    }
+
+    private handleSubmissionResults(errors: { executionId: string; error: Error }[]): void {
+        if (errors.length > 0) {
+            if (errors.length === this.seeds.length) {
+                throw new Error("All jobs failed to submit");
+            } else {
+                console.warn("Some jobs failed to submit:", errors);
+            }
+        }
+    }
+
+    private async handleSubmissionFailure(
+        threadId: string,
+        threadModelId: string,
+        error: Error
+    ): Promise<void> {
+        try {
+            console.log("Handling failed connection ensemble");
+            await handleFailedConnectionEnsemble(
+                threadId,
+                {
+                    event: "UPDATE",
+                    userid: "SYSTEM",
+                    timestamp: new Date(),
+                    notes: "All jobs failed to submit",
+                    thread_id: threadId
+                },
+                [
+                    {
+                        total_runs: this.seeds.length,
+                        submitted_runs: 0,
+                        failed_runs: this.seeds.length,
+                        successful_runs: 0,
+                        thread_model_id: threadModelId
+                    }
+                ]
+            );
+        } catch (cleanupError) {
+            console.error("Error handling failed connection ensemble", cleanupError);
+        }
+        console.error("Error submitting executions", error);
     }
 
     async findExecution(executionId: string): Promise<Execution> {
