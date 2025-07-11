@@ -793,8 +793,8 @@ const subtasksRouter = (): Router => {
      *               properties:
      *                 message:
      *                   type: string
-     *       400:
-     *        description: No executions found to publish
+     *       404:
+     *         description: Subtask not found
      *         content:
      *           application/json:
      *             schema:
@@ -802,8 +802,8 @@ const subtasksRouter = (): Router => {
      *               properties:
      *                 message:
      *                   type: string
-     *       404:
-     *        description: Subtask not found
+     *       400:
+     *         description: No executions found to publish
      *         content:
      *           application/json:
      *             schema:
@@ -813,6 +813,15 @@ const subtasksRouter = (): Router => {
      *                   type: string
      *       500:
      *         description: Server error
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 message:
+     *                   type: string
+     *       default:
+     *         description: Default error response
      *         content:
      *           application/json:
      *             schema:
@@ -859,13 +868,10 @@ const subtasksRouter = (): Router => {
             }
         }
         if (executionsSubmitted === 0) {
-            return res
-                .status(400)
-                .json({ message: "No executions found to publish" });
+            return res.status(400).json({ message: "No executions found to publish" });
         }
         return res.status(200).json({ message: "Outputs registered successfully" });
     });
-
 
     return router;
 };
