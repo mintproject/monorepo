@@ -404,8 +404,9 @@ export class TapisExecutionService implements IExecutionService {
             console.log("No files found for model in outputs path" + execution.modelid);
         }
 
+        console.log("The TAPIS files available to match to mint outputs", files);
         const mintOutputs = await getModelOutputsByModelId(execution.modelid);
-
+        console.log("The MINT outputs available to match to TAPIS files", mintOutputs);
         if (mintOutputs.length === 0 && files.length === 0) {
             throw new NotFoundError(
                 "No outputs found and no mint outputs found for model " + execution.modelid
