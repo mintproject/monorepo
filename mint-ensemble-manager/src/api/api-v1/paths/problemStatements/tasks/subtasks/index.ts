@@ -759,11 +759,11 @@ const subtasksRouter = (): Router => {
      * @swagger
      * /problemStatements/{problemStatementId}/tasks/{taskId}/subtasks/{subtaskId}/outputs:
      *   post:
-     *     summary: Register Tapis Execution Outputs
-     *     description: Register the outputs of a successful Tapis execution in the data catalog
-     *     operationId: registerTapisExecutionOutputs
+     *     summary: Publish all executions for a subtask
+     *     description: Publishes all executions for a subtask by looping through all thread models and their executions
+     *     operationId: publishAllExecutions
      *     tags:
-     *       - Tapis
+     *       - Subtasks
      *     security:
      *       - BearerAuth: []
      *       - oauth2: []
@@ -785,7 +785,7 @@ const subtasksRouter = (): Router => {
      *           type: string
      *     responses:
      *       200:
-     *         description: Outputs registered successfully
+     *         description: All executions published successfully
      *         content:
      *           application/json:
      *             schema:
@@ -794,7 +794,7 @@ const subtasksRouter = (): Router => {
      *                 message:
      *                   type: string
      *       400:
-     *        description: Invalid request or registration failed
+     *        description: No executions found to publish
      *         content:
      *           application/json:
      *             schema:
@@ -803,7 +803,7 @@ const subtasksRouter = (): Router => {
      *                 message:
      *                   type: string
      *       404:
-     *        description: Not found
+     *        description: Subtask not found
      *         content:
      *           application/json:
      *             schema:
@@ -843,32 +843,30 @@ const subtasksRouter = (): Router => {
         const thread_models = subtaskGraphql.thread_models;
         for (const thread_model of thread_models) {
             for (const execution of thread_model.executions) {
-                if (execution.execution.status === "SUCCESS") {
-                    try {
-                        await executionOutputsService.registerOutputs(
-                            execution.execution.id,
-                            access_token,
-                            subtask,
-                            req.headers.origin,
-                            subtask.dataset_id
-                        );
-                        executionsSubmitted += 1;
-                    } catch (error) {
-                        if (error instanceof HttpError) {
-                            return res.status(error.statusCode).json({ message: error.message });
-                        }
-                        res.status(500).json({ message: error.message });
-                    }
+                try {
+                    await executionOutputsService.registerOutputs(
+                        execution.execution.id,
+                        access_token,
+                        subtask,
+                        req.headers.origin,
+                        subtask.dataset_id
+                    );
+                    executionsSubmitted += 1;
+                } catch (error) {
+                    console.error(`Error publishing execution ${execution.execution.id}:`, error);
+                    // Continue with other executions even if one fails
                 }
             }
         }
         if (executionsSubmitted === 0) {
             return res
                 .status(400)
-                .json({ message: "No successful executions found to register outputs" });
+                .json({ message: "No executions found to publish" });
         }
         return res.status(200).json({ message: "Outputs registered successfully" });
     });
+
+
     return router;
 };
 
