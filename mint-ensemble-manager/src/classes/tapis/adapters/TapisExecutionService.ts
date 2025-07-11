@@ -108,6 +108,19 @@ export class TapisExecutionService implements IExecutionService {
                         `Failed to submit job for execution ${seed.execution.id}:`,
                         error
                     );
+                    // Mark the individual execution as failed
+                    try {
+                        await TapisExecutionService.updateExecutionStatusOnGraphQl(
+                            seed.execution,
+                            Status.FAILURE.toString(),
+                            threadModelId
+                        );
+                    } catch (statusUpdateError) {
+                        console.error(
+                            `Failed to update execution status for ${seed.execution.id}:`,
+                            statusUpdateError
+                        );
+                    }
                     await decrementThreadModelSubmittedRuns(threadModelId);
                     errors.push({ executionId: seed.execution.id, error });
                 }
