@@ -6,25 +6,17 @@ import { getTokenFromAuthorizationHeader } from "@/utils/authUtils";
 import { NotFoundError } from "@/classes/common/errors";
 import { threadFromGQL } from "@/classes/graphql/graphql_adapter";
 import { getThread } from "@/classes/graphql/graphql_functions_v2";
-import { Execution } from "@/classes/mint/mint-types";
-
-export interface ExecutionSubmissionResult {
-    jobIds: string[];
-    totalExecutions: number;
-    successfulSubmissions: number;
-    failedSubmissions: number;
-    submissionDetails: {
-        submittedExecutions: { execution: Execution; jobId: string }[];
-        failedExecutions: { execution: Execution; error: Error }[];
-    };
-}
+import { SubmissionResult } from "@/interfaces/IExecutionService";
 
 export interface ExecutionsTapisService {
-    submitExecution(threadmodel: ModelThread, token: string): Promise<ExecutionSubmissionResult>;
+    submitExecution(threadmodel: ModelThread, token: string): Promise<SubmissionResult>;
 }
 
 const executionsTapisService = {
-    async submitExecution(threadmodel: ModelThread, authorization: string): Promise<ExecutionSubmissionResult> {
+    async submitExecution(
+        threadmodel: ModelThread,
+        authorization: string
+    ): Promise<SubmissionResult> {
         const token = getTokenFromAuthorizationHeader(authorization);
         if (!token) {
             throw new Error("Unauthorized");
@@ -50,7 +42,7 @@ const executionsTapisService = {
             }
             if (executionCreation.executionToBeRun.length > 0) {
                 console.log("Execution to be run", executionCreation.executionToBeRun.length);
-                const { submittedExecutions, failedExecutions } = await TapisExecution.submitExecutions(
+                const submissionResult = await TapisExecution.submitExecutions(
                     executionCreation.executionToBeRun,
                     executionCreation.model,
                     executionCreation.threadRegion,
@@ -58,31 +50,19 @@ const executionsTapisService = {
                     thread.id,
                     threadModelId
                 );
-                if (failedExecutions.length > 0) {
-                    console.warn("Some executions failed to submit:", failedExecutions);
+                if (submissionResult.failedExecutions.length > 0) {
+                    console.warn(
+                        "Some executions failed to submit:",
+                        submissionResult.failedExecutions
+                    );
                 }
-                
-                return {
-                    jobIds: submittedExecutions.map(se => se.jobId),
-                    totalExecutions: executionCreation.executionToBeRun.length,
-                    successfulSubmissions: submittedExecutions.length,
-                    failedSubmissions: failedExecutions.length,
-                    submissionDetails: {
-                        submittedExecutions,
-                        failedExecutions
-                    }
-                };
+
+                return submissionResult;
             } else {
                 console.log("No executions to run");
                 return {
-                    jobIds: [],
-                    totalExecutions: 0,
-                    successfulSubmissions: 0,
-                    failedSubmissions: 0,
-                    submissionDetails: {
-                        submittedExecutions: [],
-                        failedExecutions: []
-                    }
+                    submittedExecutions: [],
+                    failedExecutions: []
                 };
             }
         } else {

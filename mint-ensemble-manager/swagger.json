@@ -3210,26 +3210,7 @@
             "description": "Successful response",
             "content": {
               "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "result": {
-                      "type": "string",
-                      "example": "success"
-                    },
-                    "message": {
-                      "type": "string",
-                      "example": "Execution submitted successfully"
-                    },
-                    "job_ids": {
-                      "type": "array",
-                      "items": {
-                        "type": "string",
-                        "example": "1234567890"
-                      }
-                    }
-                  }
-                }
+                "$ref": "#/components/schemas/SubmissionResult"
               }
             }
           },

@@ -2235,7 +2235,8 @@ const ExecutionSchema = {
             },
             submissionResult: {
                 $ref: "#/components/schemas/SubmissionResult",
-                description: "Detailed results of the submission process including successful and failed executions"
+                description:
+                    "Detailed results of the submission process including successful and failed executions"
             }
         },
         required: ["thread", "executions"]

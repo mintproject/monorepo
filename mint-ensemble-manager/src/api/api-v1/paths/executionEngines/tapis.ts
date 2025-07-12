@@ -33,29 +33,7 @@ export default function () {
      *         description: Successful response
      *         content:
      *           application/json:
-     *             schema:
-     *               type: object
-     *               properties:
-     *                 message:
-     *                   type: string
-     *                   example: "Execution submitted successfully"
-     *                 job_ids:
-     *                   type: array
-     *                   items:
-     *                     type: string
-     *                     example: "1234567890"
-     *                 total_executions:
-     *                   type: number
-     *                   description: "Total number of executions attempted"
-     *                   example: 5
-     *                 successful_submissions:
-     *                   type: number
-     *                   description: "Number of executions successfully submitted"
-     *                   example: 4
-     *                 failed_submissions:
-     *                   type: number
-     *                   description: "Number of executions that failed to submit"
-     *                   example: 1
+     *             $ref: '#/components/schemas/SubmissionResult'
      *       default:
      *         description: Default error response
      *         content:
@@ -76,22 +54,7 @@ export default function () {
                 req.body,
                 req.headers.authorization
             );
-            
-            // Determine the appropriate message based on submission results
-            let message = "Execution submitted successfully";
-            if (response.failedSubmissions > 0 && response.successfulSubmissions > 0) {
-                message = `Partial success: ${response.successfulSubmissions} of ${response.totalExecutions} executions submitted successfully`;
-            } else if (response.failedSubmissions > 0) {
-                message = `All ${response.totalExecutions} executions failed to submit`;
-            }
-            
-            res.status(202).json({
-                message,
-                job_ids: response.jobIds,
-                total_executions: response.totalExecutions,
-                successful_submissions: response.successfulSubmissions,
-                failed_submissions: response.failedSubmissions
-            });
+            return res.status(202).json(response);
         } catch (error) {
             if (error instanceof HttpError) {
                 res.status(error.statusCode).json({ error: error.message });
