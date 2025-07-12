@@ -2165,6 +2165,59 @@ const ExecutionSchema = {
             }
         }
     },
+    SubmissionResult: {
+        type: "object",
+        description: "Result of submitting executions to an execution service",
+        properties: {
+            submittedExecutions: {
+                type: "array",
+                items: {
+                    type: "object",
+                    properties: {
+                        execution: {
+                            $ref: "#/components/schemas/Execution",
+                            description: "The execution that was successfully submitted"
+                        },
+                        jobId: {
+                            type: "string",
+                            description: "The job ID assigned by the execution service"
+                        }
+                    },
+                    required: ["execution", "jobId"]
+                },
+                description: "List of executions that were successfully submitted"
+            },
+            failedExecutions: {
+                type: "array",
+                items: {
+                    type: "object",
+                    properties: {
+                        execution: {
+                            $ref: "#/components/schemas/Execution",
+                            description: "The execution that failed to submit"
+                        },
+                        error: {
+                            type: "object",
+                            properties: {
+                                message: {
+                                    type: "string",
+                                    description: "Error message describing why submission failed"
+                                },
+                                code: {
+                                    type: "string",
+                                    description: "Error code (if available)"
+                                }
+                            },
+                            description: "Error details for the failed submission"
+                        }
+                    },
+                    required: ["execution", "error"]
+                },
+                description: "List of executions that failed to submit"
+            }
+        },
+        required: ["submittedExecutions", "failedExecutions"]
+    },
     SubmitSubtaskResponse: {
         type: "object",
         description: "Response from submitting a subtask for execution",
@@ -2179,6 +2232,10 @@ const ExecutionSchema = {
                     $ref: "#/components/schemas/Execution"
                 },
                 description: "List of executions created for this subtask submission"
+            },
+            submissionResult: {
+                $ref: "#/components/schemas/SubmissionResult",
+                description: "Detailed results of the submission process including successful and failed executions"
             }
         },
         required: ["thread", "executions"]

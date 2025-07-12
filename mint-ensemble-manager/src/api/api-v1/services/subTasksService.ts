@@ -33,7 +33,7 @@ import {
     SetupModelConfigurationAndBindingsRequest
 } from "../paths/problemStatements/tasks/subtasks";
 import useModelsService from "./useModelsService";
-import { IExecutionService } from "@/interfaces/IExecutionService";
+import { IExecutionService, SubmissionResult } from "@/interfaces/IExecutionService";
 import { TapisExecutionService } from "@/classes/tapis/adapters/TapisExecutionService";
 import { getConfiguration } from "@/classes/mint/mint-functions";
 import { MockExecutionService } from "@/classes/common/__tests__/mocks/MockExecutionService";
@@ -72,7 +72,7 @@ export interface SubTasksService {
         subtaskId: string,
         model_id: string,
         authorizationHeader: string
-    ): Promise<{ thread: Thread; executions: Execution[] }>;
+    ): Promise<{ thread: Thread; executions: Execution[]; submissionResult: SubmissionResult }>;
     getSubtasksByTaskId(
         problemStatementId: string,
         taskId: string,
@@ -386,8 +386,10 @@ const subTasksService: SubTasksService = {
 
         // Collect all executions
 
+        let submissionResult: SubmissionResult = { submittedExecutions: [], failedExecutions: [] };
+        
         if (executionCreation.executionToBeRun.length > 0) {
-            const { submittedExecutions, failedExecutions } = await executionService.submitExecutions(
+            submissionResult = await executionService.submitExecutions(
                 executionCreation.executionToBeRun,
                 executionCreation.model,
                 executionCreation.threadRegion,
@@ -395,10 +397,10 @@ const subTasksService: SubTasksService = {
                 subtask.id,
                 subtask.model_ensembles[w3id].id
             );
-            if (failedExecutions.length > 0) {
-                console.warn("Some executions failed to submit:", failedExecutions);
+            if (submissionResult.failedExecutions.length > 0) {
+                console.warn("Some executions failed to submit:", submissionResult.failedExecutions);
             }
-            console.log("Successfully submitted executions:", submittedExecutions.length);
+            console.log("Successfully submitted executions:", submissionResult.submittedExecutions.length);
         } else {
             console.log("No executions to run");
         }
@@ -406,7 +408,8 @@ const subTasksService: SubTasksService = {
         const updatedThread = await getThread(subtaskId);
         return {
             thread: updatedThread,
-            executions: executionCreation.executionToBeRun
+            executions: executionCreation.executionToBeRun,
+            submissionResult
         };
     }
 };
