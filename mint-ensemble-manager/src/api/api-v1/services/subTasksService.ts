@@ -387,7 +387,7 @@ const subTasksService: SubTasksService = {
         // Collect all executions
 
         if (executionCreation.executionToBeRun.length > 0) {
-            await executionService.submitExecutions(
+            const { submittedExecutions, failedExecutions } = await executionService.submitExecutions(
                 executionCreation.executionToBeRun,
                 executionCreation.model,
                 executionCreation.threadRegion,
@@ -395,6 +395,10 @@ const subTasksService: SubTasksService = {
                 subtask.id,
                 subtask.model_ensembles[w3id].id
             );
+            if (failedExecutions.length > 0) {
+                console.warn("Some executions failed to submit:", failedExecutions);
+            }
+            console.log("Successfully submitted executions:", submittedExecutions.length);
         } else {
             console.log("No executions to run");
         }

@@ -38,7 +38,7 @@ const executionsTapisService = {
             }
             if (executionCreation.executionToBeRun.length > 0) {
                 console.log("Execution to be run", executionCreation.executionToBeRun.length);
-                const jobIds = await TapisExecution.submitExecutions(
+                const { submittedExecutions, failedExecutions } = await TapisExecution.submitExecutions(
                     executionCreation.executionToBeRun,
                     executionCreation.model,
                     executionCreation.threadRegion,
@@ -46,7 +46,10 @@ const executionsTapisService = {
                     thread.id,
                     threadModelId
                 );
-                return jobIds;
+                if (failedExecutions.length > 0) {
+                    console.warn("Some executions failed to submit:", failedExecutions);
+                }
+                return submittedExecutions.map(se => se.jobId);
             } else {
                 console.log("No executions to run");
                 return [];

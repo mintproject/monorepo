@@ -1,7 +1,7 @@
 import { Apps, Jobs } from "@tapis/tapis-typescript";
 import { Execution, Execution_Result, Model, Region } from "@/classes/mint/mint-types";
 import { TapisComponent, TapisComponentSeed } from "@/classes/tapis/typing";
-import { IExecutionService, ExecutionJob } from "@/interfaces/IExecutionService";
+import { IExecutionService, ExecutionJob, SubmissionResult } from "@/interfaces/IExecutionService";
 import apiGenerator from "@/classes/tapis/utils/apiGenerator";
 import { getInputsParameters } from "@/classes/tapis/helpers";
 import { getInputDatasets } from "@/classes/tapis/helpers";
@@ -72,22 +72,22 @@ export class TapisExecutionService implements IExecutionService {
         component: TapisComponent,
         threadId: string,
         threadModelId: string
-    ) {
+    ): Promise<SubmissionResult> {
         try {
             const app = await this.loadTapisApp(component);
             console.log("Submitting executions", executions);
             this.seeds = this.seedExecutions(executions, model, region, component);
             console.log("Seeds", JSON.stringify(this.seeds));
 
-            const { jobIds, errors } = await this.processExecutionSeeds(
+            const { submittedExecutions, failedExecutions } = await this.processExecutionSeeds(
                 app,
                 model,
                 threadId,
                 threadModelId
             );
 
-            this.handleSubmissionResults(errors);
-            return jobIds;
+            this.handleSubmissionResults(failedExecutions);
+            return { submittedExecutions, failedExecutions };
         } catch (error) {
             await this.handleSubmissionFailure(threadId, threadModelId, error);
             throw error;
@@ -99,22 +99,22 @@ export class TapisExecutionService implements IExecutionService {
         model: Model,
         threadId: string,
         threadModelId: string
-    ): Promise<{ jobIds: string[]; errors: { executionId: string; error: Error }[] }> {
-        const jobIds: string[] = [];
-        const errors: { executionId: string; error: Error }[] = [];
+    ): Promise<{ submittedExecutions: { execution: Execution; jobId: string }[]; failedExecutions: { execution: Execution; error: Error }[] }> {
+        const submittedExecutions: { execution: Execution; jobId: string }[] = [];
+        const failedExecutions: { execution: Execution; error: Error }[] = [];
 
         for (const seed of this.seeds) {
             console.log("Processing seed", JSON.stringify(seed));
             try {
                 const jobId = await this.submitSingleExecution(app, seed, model, threadId);
-                jobIds.push(jobId);
+                submittedExecutions.push({ execution: seed.execution, jobId });
             } catch (error) {
                 await this.handleSingleExecutionFailure(seed, error, threadModelId);
-                errors.push({ executionId: seed.execution.id, error });
+                failedExecutions.push({ execution: seed.execution, error });
             }
         }
 
-        return { jobIds, errors };
+        return { submittedExecutions, failedExecutions };
     }
 
     private async submitSingleExecution(
@@ -162,12 +162,12 @@ export class TapisExecutionService implements IExecutionService {
         await decrementThreadModelSubmittedRuns(threadModelId);
     }
 
-    private handleSubmissionResults(errors: { executionId: string; error: Error }[]): void {
-        if (errors.length > 0) {
-            if (errors.length === this.seeds.length) {
+    private handleSubmissionResults(failedExecutions: { execution: Execution; error: Error }[]): void {
+        if (failedExecutions.length > 0) {
+            if (failedExecutions.length === this.seeds.length) {
                 throw new Error("All jobs failed to submit");
             } else {
-                console.warn("Some jobs failed to submit:", errors);
+                console.warn("Some jobs failed to submit:", failedExecutions);
             }
         }
     }

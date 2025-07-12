@@ -18,6 +18,11 @@ export interface ExecutionJob {
     error?: string;
 }
 
+export interface SubmissionResult {
+    submittedExecutions: { execution: Execution; jobId: string }[];
+    failedExecutions: { execution: Execution; error: Error }[];
+}
+
 /**
  * Interface defining the contract for execution service adapters
  */
@@ -29,6 +34,6 @@ export interface IExecutionService {
         component: TapisComponent,
         threadId: string,
         threadModelId: string
-    ): Promise<string[]>;
+    ): Promise<SubmissionResult>;
     verifyComponent(component: TapisComponent): void;
 }

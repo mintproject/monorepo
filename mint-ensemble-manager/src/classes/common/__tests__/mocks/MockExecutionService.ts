@@ -1,6 +1,6 @@
 import { Execution, Model, Region } from "@/classes/mint/mint-types";
 import { TapisComponent } from "@/classes/tapis/typing";
-import { IExecutionService } from "@/interfaces/IExecutionService";
+import { IExecutionService, SubmissionResult } from "@/interfaces/IExecutionService";
 
 export class MockExecutionService implements IExecutionService {
     private mockJobIds: string[] = [];
@@ -17,9 +17,13 @@ export class MockExecutionService implements IExecutionService {
         component: TapisComponent,
         _threadId: string,
         _threadModelId: string
-    ): Promise<string[]> {
+    ): Promise<SubmissionResult> {
         this.mockComponent = component;
-        return this.mockJobIds;
+        const submittedExecutions = executions.map((execution, index) => ({
+            execution,
+            jobId: this.mockJobIds[index] || `mock-job-${execution.id}`
+        }));
+        return { submittedExecutions, failedExecutions: [] };
     }
 
     verifyComponent(component: TapisComponent): void {
