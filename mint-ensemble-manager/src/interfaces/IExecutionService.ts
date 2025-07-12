@@ -20,7 +20,7 @@ export interface ExecutionJob {
 
 export interface SubmissionResult {
     submittedExecutions: { execution: Execution; jobId: string }[];
-    failedExecutions: { execution: Execution; error: string }[];
+    failedExecutions: { execution: Execution; error: Error }[];
 }
 
 /**
