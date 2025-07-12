@@ -33,7 +33,8 @@ export default function () {
      *         description: Successful response
      *         content:
      *           application/json:
-     *             $ref: '#/components/schemas/SubmissionResult'
+     *             schema:
+     *               $ref: '#/components/schemas/SubmissionResult'
      *       default:
      *         description: Default error response
      *         content:
