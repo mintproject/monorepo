@@ -108,7 +108,7 @@ export class TapisExecutionService implements IExecutionService {
         threadModelId: string
     ): Promise<{
         submittedExecutions: { execution: Execution; jobId: string }[];
-        failedExecutions: { execution: Execution; error: SerializableError }[];
+        failedExecutions: { execution: Execution; error: Error }[];
     }> {
         const submittedExecutions: { execution: Execution; jobId: string }[] = [];
         const failedExecutions: { execution: Execution; error: SerializableError }[] = [];
@@ -121,15 +121,16 @@ export class TapisExecutionService implements IExecutionService {
             } catch (error) {
                 console.error("Error submitting single execution", JSON.stringify(error));
                 await this.handleSingleExecutionFailure(seed, error, threadModelId);
-                
+
                 // Create a serializable error object
                 const serializableError: SerializableError = {
                     message: error instanceof Error ? error.message : String(error),
                     stack: error instanceof Error ? error.stack : undefined,
-                    name: error instanceof Error ? error.name : 'Error',
-                    ...(error instanceof Error && (error as any).cause && { cause: (error as any).cause })
+                    name: error instanceof Error ? error.name : "Error",
+                    ...(error instanceof Error &&
+                        (error as any).cause && { cause: (error as any).cause })
                 };
-                
+
                 failedExecutions.push({ execution: seed.execution, error: serializableError });
             }
         }
@@ -163,13 +164,7 @@ export class TapisExecutionService implements IExecutionService {
         error: Error,
         threadModelId: string
     ): Promise<void> {
-        console.error(`Failed to submit job for execution ${seed.execution.id}:`, {
-            message: error.message,
-            stack: error.stack,
-            name: error.name,
-            executionId: seed.execution.id,
-            modelId: seed.execution.modelid
-        });
+        console.error(`Failed to submit job for execution ${seed.execution.id}:`, error);
 
         // Mark the individual execution as failed
         try {
@@ -189,7 +184,7 @@ export class TapisExecutionService implements IExecutionService {
     }
 
     private handleSubmissionResults(
-        failedExecutions: { execution: Execution; error: SerializableError }[]
+        failedExecutions: { execution: Execution; error: Error }[]
     ): void {
         if (failedExecutions.length > 0) {
             if (failedExecutions.length === this.seeds.length) {
