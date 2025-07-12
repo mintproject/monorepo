@@ -36,9 +36,6 @@ export default function () {
      *             schema:
      *               type: object
      *               properties:
-     *                 result:
-     *                   type: string
-     *                   example: "success"
      *                 message:
      *                   type: string
      *                   example: "Execution submitted successfully"
@@ -47,6 +44,18 @@ export default function () {
      *                   items:
      *                     type: string
      *                     example: "1234567890"
+     *                 total_executions:
+     *                   type: number
+     *                   description: "Total number of executions attempted"
+     *                   example: 5
+     *                 successful_submissions:
+     *                   type: number
+     *                   description: "Number of executions successfully submitted"
+     *                   example: 4
+     *                 failed_submissions:
+     *                   type: number
+     *                   description: "Number of executions that failed to submit"
+     *                   example: 1
      *       default:
      *         description: Default error response
      *         content:
@@ -67,9 +76,21 @@ export default function () {
                 req.body,
                 req.headers.authorization
             );
+            
+            // Determine the appropriate message based on submission results
+            let message = "Execution submitted successfully";
+            if (response.failedSubmissions > 0 && response.successfulSubmissions > 0) {
+                message = `Partial success: ${response.successfulSubmissions} of ${response.totalExecutions} executions submitted successfully`;
+            } else if (response.failedSubmissions > 0) {
+                message = `All ${response.totalExecutions} executions failed to submit`;
+            }
+            
             res.status(202).json({
-                message: "Execution submitted successfully",
-                job_ids: response
+                message,
+                job_ids: response.jobIds,
+                total_executions: response.totalExecutions,
+                successful_submissions: response.successfulSubmissions,
+                failed_submissions: response.failedSubmissions
             });
         } catch (error) {
             if (error instanceof HttpError) {
