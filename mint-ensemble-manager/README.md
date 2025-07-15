@@ -191,6 +191,27 @@ GET /problemStatements/{problemStatementId}/tasks/{taskId}
 POST /problemStatements/{problemStatementId}/tasks/{taskId}/subtasks
 ```
 
+**Example Request:**
+
+```json
+{
+    "name": "Crop Yield Analysis Subtask",
+    "dates": {
+        "start_date": "2024-01-01T00:00:00Z",
+        "end_date": "2024-12-31T23:59:59Z"
+    },
+    "driving_variables": ["nitrogen__average_of_net_mass_mineralization_rate"],
+    "response_variables": ["crop__potential_transpiration_volume_flux"],
+    "regionid": "texas",
+    "dataset_id": "18400624-423c-42b5-ad56-6c73322584bd"
+}
+```
+
+**Dataset ID Support:**
+- The `dataset_id` field is optional and allows you to associate a dataset with the subtask at creation time
+- Dataset IDs are fully supported throughout the subtask lifecycle
+- You can also configure datasets later using the `/data` endpoint for more detailed dataset specifications
+
 **Add Models to Subtask**
 
 ```http
