@@ -6,6 +6,7 @@ import {
     DatasetSpecification
 } from "@mintproject/modelcatalog_client";
 import { KeycloakAdapter } from "@/config/keycloak-adapter";
+import { getConfiguration } from "./mint-functions";
 
 const W3_ID_URI_PREFIX = "https://w3id.org/okn/i/mint/";
 
@@ -142,4 +143,52 @@ export const convertApiUrlToW3Id = (url: string) => {
     const urlParts = baseUrl.split("/");
     const id = urlParts.pop();
     return W3_ID_URI_PREFIX + id;
+};
+
+export enum ModelCatalogType {
+    ModelConfiguration = "modelconfiguration",
+    ModelConfigurationSetup = "modelconfigurationsetup"
+}
+
+//TODO: This is a temporary function to convert a W3 ID to an API URL.
+export const convertModelConfigurationW3IdToApiUrl = async (w3Id: string) => {
+    const config = getConfiguration();
+    const modelCatalogApi = config.model_catalog_api;
+    const modelConfigurationUrl =
+        modelCatalogApi +
+        "/" +
+        ModelCatalogType.ModelConfiguration +
+        "s/" +
+        w3Id.replace(W3_ID_URI_PREFIX, "") +
+        "?username=" +
+        "mint@isi.edu";
+    const modelConfigurationSetupUrl =
+        modelCatalogApi +
+        "/" +
+        ModelCatalogType.ModelConfigurationSetup +
+        "s/" +
+        w3Id.replace(W3_ID_URI_PREFIX, "") +
+        "?username=" +
+        "mint@isi.edu";
+    try {
+        const modelConfiguration = await await rp.get({
+            url: modelConfigurationUrl,
+            json: true
+        });
+        if (modelConfiguration) {
+            return modelConfigurationUrl;
+        }
+    } catch (error) {
+        try {
+            const modelConfigurationSetup = await await rp.get({
+                url: modelConfigurationSetupUrl,
+                json: true
+            });
+            if (modelConfigurationSetup) {
+                return modelConfigurationSetupUrl;
+            }
+        } catch (error) {
+            throw new Error("Model not found");
+        }
+    }
 };

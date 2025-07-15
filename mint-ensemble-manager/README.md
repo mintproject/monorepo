@@ -291,6 +291,541 @@ GET /problemStatements/{problemStatementId}/tasks/{taskId}/subtasks
 GET /problemStatements/{problemStatementId}/tasks/{taskId}/subtasks/{subtaskId}
 ```
 
+**Get Blueprint for a Subtask**
+
+```http
+GET /problemStatements/{problemStatementId}/tasks/{taskId}/subtasks/{subtaskId}/blueprint?detailed={boolean}
+```
+
+This endpoint returns the complete model configuration blueprint for all models in a subtask, showing available parameters and data inputs.
+
+**Query Parameters:**
+
+-   `detailed` (optional, boolean, default: false): Controls the level of parameter detail returned
+    -   `false` or omitted: Returns basic parameter info (id, value) only
+    -   `true`: Returns full ModelParameter details including type, description, min, max, etc.
+
+## Programmatic Workflow Guide
+
+This section describes how to programmatically use the Ensemble Manager to select models, configure parameters, and bind data for scientific modeling workflows.
+
+### Overview
+
+The typical workflow follows these steps:
+
+1. Create Problem Statement
+2. Create Task
+3. Create Subtask
+4. Select Model Configurations
+5. Get Blueprint (to see available parameters and inputs)
+6. Configure Parameters
+7. Bind Data
+8. Submit for Execution
+
+### Step-by-Step Workflow
+
+#### 1. Create Problem Statement
+
+First, establish the research context:
+
+```bash
+curl -X POST "https://ensemble-manager.mint.tacc.utexas.edu/v1/problemStatements" \
+  -H "Authorization: Bearer $JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Ethiopia Agricultural Productivity Analysis 2024",
+    "regionid": "ethiopia",
+    "dates": {
+      "start_date": "2000-01-01T00:00:00Z",
+      "end_date": "2017-12-31T23:59:59Z"
+    }
+  }'
+```
+
+**Copy-paste ready request body:**
+
+```json
+{
+    "name": "Ethiopia Agricultural Productivity Analysis 2024",
+    "regionid": "ethiopia",
+    "dates": {
+        "start_date": "2000-01-01T00:00:00Z",
+        "end_date": "2017-12-31T23:59:59Z"
+    }
+}
+```
+
+#### 2. Create Task
+
+Create a task within the problem statement:
+
+```bash
+curl -X POST "https://ensemble-manager.mint.tacc.utexas.edu/v1/problemStatements/{problemStatementId}/tasks" \
+  -H "Authorization: Bearer $JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Crop Yield Analysis",
+    "dates": {
+      "start_date": "2000-01-01T00:00:00Z",
+      "end_date": "2017-12-31T23:59:59Z"
+    },
+    "regionid": "ethiopia"
+  }'
+```
+
+**Copy-paste ready request body:**
+
+```json
+{
+    "name": "Crop Yield Analysis",
+    "dates": {
+        "start_date": "2000-01-01T00:00:00Z",
+        "end_date": "2017-12-31T23:59:59Z"
+    },
+    "regionid": "ethiopia"
+}
+```
+
+#### 3. Create Subtask
+
+Create a subtask to contain your model configuration:
+
+```bash
+curl -X POST "https://ensemble-manager.mint.tacc.utexas.edu/v1/problemStatements/{problemStatementId}/tasks/{taskId}/subtasks" \
+  -H "Authorization: Bearer $JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Cycles Agricultural Analysis",
+    "dates": {
+      "start_date": "2000-01-01T00:00:00Z",
+      "end_date": "2017-12-31T23:59:59Z"
+    }
+  }'
+```
+
+**Copy-paste ready request body:**
+
+```json
+{
+    "name": "Cycles Agricultural Analysis",
+    "dates": {
+        "start_date": "2000-01-01T00:00:00Z",
+        "end_date": "2017-12-31T23:59:59Z"
+    }
+}
+```
+
+#### 4. Select Model Configurations
+
+Add ModelConfiguration or ModelConfigurationSetup instances to your subtask:
+
+```bash
+curl -X POST "https://ensemble-manager.mint.tacc.utexas.edu/v1/problemStatements/{problemStatementId}/tasks/{taskId}/subtasks/{subtaskId}/models" \
+  -H "Authorization: Bearer $JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "modelIds": [
+      "http://api.models.mint.local/v1.8.0/modelconfigurations/f87802e0-b60f-4c9e-97fd-75fad348b7ee?username=mint@isi.edu"
+    ]
+  }'
+```
+
+**Copy-paste ready request body:**
+
+```json
+{
+    "modelIds": [
+        "http://api.models.mint.local/v1.8.0/modelconfigurations/f87802e0-b60f-4c9e-97fd-75fad348b7ee?username=mint@isi.edu"
+    ]
+}
+```
+
+#### 5. Get Blueprint
+
+Retrieve the complete configuration blueprint to understand available parameters and data inputs:
+
+```bash
+curl -X GET "https://ensemble-manager.mint.tacc.utexas.edu/v1/problemStatements/{problemStatementId}/tasks/{taskId}/subtasks/{subtaskId}/blueprint" \
+  -H "Authorization: Bearer $JWT_TOKEN"
+```
+
+**For detailed parameter information (including type, description, min/max values):**
+
+```bash
+curl -X GET "https://ensemble-manager.mint.tacc.utexas.edu/v1/problemStatements/{problemStatementId}/tasks/{taskId}/subtasks/{subtaskId}/blueprint?detailed=true" \
+  -H "Authorization: Bearer $JWT_TOKEN"
+```
+
+**Example Blueprint Response:**
+
+```json
+[
+    {
+        "model_id": "http://api.models.mint.local/v1.8.0/modelconfigurations/f87802e0-b60f-4c9e-97fd-75fad348b7ee?username=mint@isi.edu",
+        "parameters": [
+            {
+                "id": "https://w3id.org/okn/i/mint/886ebf8c-6f0b-453d-a36c-fc8678c74109",
+                "value": "2000"
+            },
+            {
+                "id": "https://w3id.org/okn/i/mint/a7607d91-a832-4f05-85f0-4b9e481ac8e1",
+                "value": "2017"
+            },
+            {
+                "id": "https://w3id.org/okn/i/mint/a46a3d56-207e-4f47-a157-00b299b3536b",
+                "value": "Maize"
+            },
+            {
+                "id": "https://w3id.org/okn/i/mint/d4b84b70-01ee-4f14-a1fc-357f45af5c1d",
+                "value": "100"
+            },
+            {
+                "id": "https://w3id.org/okn/i/mint/6dff2c27-b5b6-4e07-836e-c0075d41d333",
+                "value": "149"
+            },
+            {
+                "id": "https://w3id.org/okn/i/mint/e2cd6662-06f2-4d51-a2ab-111e9b84f7df",
+                "value": "0"
+            },
+            {
+                "id": "https://w3id.org/okn/i/mint/02cbd74e-40d4-49b9-9ea2-033dd0f461e0",
+                "value": "0.05"
+            },
+            {
+                "id": "https://w3id.org/okn/i/mint/768babb7-2685-4a16-b1ee-23623b225c47",
+                "value": "FALSE"
+            }
+        ],
+        "inputs": [
+            {
+                "id": "https://w3id.org/okn/i/mint/13f1ba62-7b1e-45df-bb5c-4cbffc62872a",
+                "dataset": {
+                    "id": "",
+                    "resources": []
+                }
+            },
+            {
+                "id": "https://w3id.org/okn/i/mint/493f44ac-8d70-4c41-bfbc-4b6207d72674",
+                "dataset": {
+                    "id": "",
+                    "resources": []
+                }
+            }
+        ]
+    }
+]
+```
+
+#### 6. Configure Parameters
+
+Use the blueprint information to set parameter values:
+
+```bash
+curl -X POST "https://ensemble-manager.mint.tacc.utexas.edu/v1/problemStatements/{problemStatementId}/tasks/{taskId}/subtasks/{subtaskId}/parameters" \
+  -H "Authorization: Bearer $JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model_id": "http://api.models.mint.local/v1.8.0/modelconfigurations/f87802e0-b60f-4c9e-97fd-75fad348b7ee?username=mint@isi.edu",
+    "parameters": [
+        {
+            "id": "https://w3id.org/okn/i/mint/768babb7-2685-4a16-b1ee-23623b225c47",
+            "value": "FALSE"
+        },
+        {
+            "id": "https://w3id.org/okn/i/mint/e2cd6662-06f2-4d51-a2ab-111e9b84f7df",
+            "value": "0"
+        },
+        {
+            "id": "https://w3id.org/okn/i/mint/02cbd74e-40d4-49b9-9ea2-033dd0f461e0",
+            "value": "0.05"
+        },
+        {
+            "id": "https://w3id.org/okn/i/mint/a46a3d56-207e-4f47-a157-00b299b3536b",
+            "value": "Maize"
+        },
+        {
+            "id": "https://w3id.org/okn/i/mint/a7607d91-a832-4f05-85f0-4b9e481ac8e1",
+            "value": "2017"
+        },
+        {
+            "id": "https://w3id.org/okn/i/mint/886ebf8c-6f0b-453d-a36c-fc8678c74109",
+            "value": "2000"
+        },
+        {
+            "id": "https://w3id.org/okn/i/mint/6dff2c27-b5b6-4e07-836e-c0075d41d333",
+            "value": "149"
+        },
+        {
+            "id": "https://w3id.org/okn/i/mint/d4b84b70-01ee-4f14-a1fc-357f45af5c1d",
+            "value": "100"
+        }
+    ]
+  }'
+```
+
+**Copy-paste ready request body:**
+
+```json
+{
+    "model_id": "http://api.models.mint.local/v1.8.0/modelconfigurations/f87802e0-b60f-4c9e-97fd-75fad348b7ee?username=mint@isi.edu",
+    "parameters": [
+        {
+            "id": "https://w3id.org/okn/i/mint/768babb7-2685-4a16-b1ee-23623b225c47",
+            "value": "FALSE"
+        },
+        {
+            "id": "https://w3id.org/okn/i/mint/e2cd6662-06f2-4d51-a2ab-111e9b84f7df",
+            "value": "0"
+        },
+        {
+            "id": "https://w3id.org/okn/i/mint/02cbd74e-40d4-49b9-9ea2-033dd0f461e0",
+            "value": "0.05"
+        },
+        {
+            "id": "https://w3id.org/okn/i/mint/a46a3d56-207e-4f47-a157-00b299b3536b",
+            "value": "Maize"
+        },
+        {
+            "id": "https://w3id.org/okn/i/mint/a7607d91-a832-4f05-85f0-4b9e481ac8e1",
+            "value": "2017"
+        },
+        {
+            "id": "https://w3id.org/okn/i/mint/886ebf8c-6f0b-453d-a36c-fc8678c74109",
+            "value": "2000"
+        },
+        {
+            "id": "https://w3id.org/okn/i/mint/6dff2c27-b5b6-4e07-836e-c0075d41d333",
+            "value": "149"
+        },
+        {
+            "id": "https://w3id.org/okn/i/mint/d4b84b70-01ee-4f14-a1fc-357f45af5c1d",
+            "value": "100"
+        }
+    ]
+}
+```
+
+#### 7. Bind Data
+
+Select and bind datasets to model inputs:
+
+```bash
+curl -X POST "https://ensemble-manager.mint.tacc.utexas.edu/v1/problemStatements/{problemStatementId}/tasks/{taskId}/subtasks/{subtaskId}/data" \
+  -H "Authorization: Bearer $JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model_id": "http://api.models.mint.local/v1.8.0/modelconfigurations/f87802e0-b60f-4c9e-97fd-75fad348b7ee?username=mint@isi.edu",
+    "data": [
+      {
+        "id": "https://w3id.org/okn/i/mint/13f1ba62-7b1e-45df-bb5c-4cbffc62872a",
+        "dataset": {
+          "id": "oromia-weather-soil-2000-2017",
+          "resources": [
+            {
+              "id": "weather-soil-resource-id",
+              "url": "https://data.mint.isi.edu/files/cycles-input-data/oromia/weather-soil/Arsi_Amigna_7.884865046N_40.19527054E.zip"
+            }
+          ]
+        }
+      },
+      {
+        "id": "https://w3id.org/okn/i/mint/493f44ac-8d70-4c41-bfbc-4b6207d72674",
+        "dataset": {
+          "id": "cycles-crops-configuration",
+          "resources": [
+            {
+              "id": "crops-config-resource-id",
+              "url": "https://raw.githubusercontent.com/mintproject/MINT-WorkflowDomain/master/WINGSWorkflowComponents/cycles-0.10.2-beta-collection/data/crops-horn-of-africa.crop"
+            }
+          ]
+        }
+      }
+    ]
+  }'
+```
+
+**Copy-paste ready request body:**
+
+```json
+{
+    "model_id": "http://api.models.mint.local/v1.8.0/modelconfigurations/f87802e0-b60f-4c9e-97fd-75fad348b7ee?username=mint@isi.edu",
+    "data": [
+        {
+            "id": "https://w3id.org/okn/i/mint/13f1ba62-7b1e-45df-bb5c-4cbffc62872a",
+            "dataset": {
+                "id": "oromia-weather-soil-2000-2017",
+                "resources": [
+                    {
+                        "id": "weather-soil-resource-id",
+                        "url": "https://data.mint.isi.edu/files/cycles-input-data/oromia/weather-soil/Arsi_Amigna_7.884865046N_40.19527054E.zip"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "https://w3id.org/okn/i/mint/493f44ac-8d70-4c41-bfbc-4b6207d72674",
+            "dataset": {
+                "id": "cycles-crops-configuration",
+                "resources": [
+                    {
+                        "id": "crops-config-resource-id",
+                        "url": "https://raw.githubusercontent.com/mintproject/MINT-WorkflowDomain/master/WINGSWorkflowComponents/cycles-0.10.2-beta-collection/data/crops-horn-of-africa.crop"
+                    }
+                ]
+            }
+        }
+    ]
+}
+```
+
+#### 8. Verify Configuration
+
+Get the updated blueprint to verify your configuration:
+
+```bash
+curl -X GET "https://ensemble-manager.mint.tacc.utexas.edu/v1/problemStatements/{problemStatementId}/tasks/{taskId}/subtasks/{subtaskId}/blueprint" \
+  -H "Authorization: Bearer $JWT_TOKEN"
+```
+
+**For detailed verification with full parameter information:**
+
+```bash
+curl -X GET "https://ensemble-manager.mint.tacc.utexas.edu/v1/problemStatements/{problemStatementId}/tasks/{taskId}/subtasks/{subtaskId}/blueprint?detailed=true" \
+  -H "Authorization: Bearer $JWT_TOKEN"
+```
+
+**Copy-paste ready:**
+
+```
+// 8. Verify Configuration - No request body needed (GET request)
+// Add ?detailed=true for full parameter details
+```
+
+#### 9. Submit for Execution
+
+Submit the configured subtask for execution:
+
+```bash
+curl -X POST "https://ensemble-manager.mint.tacc.utexas.edu/v1/problemStatements/{problemStatementId}/tasks/{taskId}/subtasks/{subtaskId}/submit" \
+  -H "Authorization: Bearer $JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model_id": "http://api.models.mint.local/v1.8.0/modelconfigurations/f87802e0-b60f-4c9e-97fd-75fad348b7ee?username=mint@isi.edu"
+  }'
+```
+
+**Copy-paste ready request body:**
+
+```json
+{
+    "model_id": "http://api.models.mint.local/v1.8.0/modelconfigurations/f87802e0-b60f-4c9e-97fd-75fad348b7ee?username=mint@isi.edu"
+}
+```
+
+### Alternative: One-Step Setup
+
+For convenience, you can configure models, parameters, and data in a single call:
+
+```bash
+curl -X POST "https://ensemble-manager.mint.tacc.utexas.edu/v1/problemStatements/{problemStatementId}/tasks/{taskId}/subtasks/{subtaskId}/setup" \
+  -H "Authorization: Bearer $JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model_id": "http://api.models.mint.local/v1.8.0/modelconfigurations/f87802e0-b60f-4c9e-97fd-75fad348b7ee?username=mint@isi.edu",
+    "parameters": [
+      {
+        "id": "https://w3id.org/okn/i/mint/a46a3d56-207e-4f47-a157-00b299b3536b",
+        "value": "Teff"
+      },
+      {
+        "id": "https://w3id.org/okn/i/mint/e2cd6662-06f2-4d51-a2ab-111e9b84f7df",
+        "value": "150"
+      }
+    ],
+    "data": [
+      {
+        "id": "https://w3id.org/okn/i/mint/13f1ba62-7b1e-45df-bb5c-4cbffc62872a",
+        "dataset": {
+          "id": "oromia-weather-soil-2000-2017",
+          "resources": [
+            {
+              "id": "weather-soil-resource-id",
+              "url": "https://data.mint.isi.edu/files/cycles-weather-soil/oromia_2000_2017.tar.gz"
+            }
+          ]
+        }
+      }
+    ]
+  }'
+```
+
+**Copy-paste ready request body:**
+
+```json
+{
+    "model_id": "http://api.models.mint.local/v1.8.0/modelconfigurations/f87802e0-b60f-4c9e-97fd-75fad348b7ee?username=mint@isi.edu",
+    "parameters": [
+        {
+            "id": "https://w3id.org/okn/i/mint/a46a3d56-207e-4f47-a157-00b299b3536b",
+            "value": "Teff"
+        },
+        {
+            "id": "https://w3id.org/okn/i/mint/e2cd6662-06f2-4d51-a2ab-111e9b84f7df",
+            "value": "150"
+        }
+    ],
+    "data": [
+        {
+            "id": "https://w3id.org/okn/i/mint/13f1ba62-7b1e-45df-bb5c-4cbffc62872a",
+            "dataset": {
+                "id": "oromia-weather-soil-2000-2017",
+                "resources": [
+                    {
+                        "id": "weather-soil-resource-id",
+                        "url": "https://data.mint.isi.edu/files/cycles-weather-soil/oromia_2000_2017.tar.gz"
+                    }
+                ]
+            }
+        }
+    ]
+}
+```
+
+### Key Concepts for Programmatic Use
+
+#### Model Selection
+
+-   **ModelConfiguration**: Specific model instances with pre-defined parameters
+-   **ModelConfigurationSetup**: Model templates that allow parameter customization
+-   Use the `/models` endpoint to add these to your subtask
+
+#### Blueprint-Driven Configuration
+
+-   Always call the `/blueprint` endpoint after adding models
+-   The blueprint shows you exactly what parameters and inputs are available
+-   Use blueprint information to guide your parameter and data configuration
+-   Use `?detailed=true` to get comprehensive parameter metadata (type, description, min/max values, etc.)
+-   Default blueprint returns basic parameter info (id, value) for faster responses
+
+#### Parameter Values
+
+-   Parameters can have single values: `"150"`
+-   Parameters can have multiple values for ensemble runs: `["100", "150", "200"]`
+-   The system will create execution combinations based on parameter arrays
+
+#### Data Binding
+
+-   Each data input requires a dataset with resources
+-   Resources specify the actual data files to use
+-   Dataset IDs typically come from CKAN or other data catalogs
+
+#### Error Handling
+
+-   Always check HTTP status codes
+-   400 errors typically indicate missing required parameters
+-   404 errors indicate resources not found
+-   Use the blueprint endpoint to verify available options
+
 #### Execution Management
 
 **Submit Modeling Thread for Execution**

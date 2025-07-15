@@ -1,0 +1,6 @@
+query CheckRegionById($id: String!) {
+    region_by_pk(id: $id) {
+        id
+        name
+    }
+}

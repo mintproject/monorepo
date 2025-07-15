@@ -7,6 +7,8 @@ import { Problem_Statement, Task, Thread } from "./types";
 import { KeycloakAdapter } from "@/config/keycloak-adapter";
 import listTasksByProblemStatementGQL from "./queries/task/listTasksByProblemStatement.graphql";
 import getThreadGQL from "./queries/thread/get.graphql";
+import checkVariableByIdGQL from "./queries/variable/check-by-id.graphql";
+import checkRegionByIdGQL from "./queries/region/check-by-id.graphql";
 
 export const getProblemStatements = async (access_token: string): Promise<Problem_Statement[]> => {
     const APOLLO_CLIENT = GraphQL.instanceUsingAccessToken(access_token);
@@ -84,4 +86,46 @@ export const getThread = async (thread_id: string, access_token?: string): Promi
         throw new InternalServerError("Error getting thread " + result.errors[0].message);
     }
     return result.data.thread_by_pk;
+};
+
+export const checkVariableExistsById = async (
+    variableId: string,
+    access_token: string
+): Promise<boolean> => {
+    const APOLLO_CLIENT = GraphQL.instanceUsingAccessToken(access_token);
+
+    const result: ApolloQueryResult<{ variable: { id: string; name: string }[] }> =
+        await APOLLO_CLIENT.query({
+            query: checkVariableByIdGQL,
+            variables: {
+                id: variableId
+            }
+        });
+
+    if (!result || (result.errors && result.errors.length > 0)) {
+        throw new InternalServerError("Error checking variable " + result.errors[0].message);
+    }
+
+    return result.data.variable.length > 0;
+};
+
+export const checkRegionExistsById = async (
+    regionId: string,
+    access_token: string
+): Promise<boolean> => {
+    const APOLLO_CLIENT = GraphQL.instanceUsingAccessToken(access_token);
+
+    const result: ApolloQueryResult<{ region_by_pk: { id: string; name: string } | null }> =
+        await APOLLO_CLIENT.query({
+            query: checkRegionByIdGQL,
+            variables: {
+                id: regionId
+            }
+        });
+
+    if (!result || (result.errors && result.errors.length > 0)) {
+        throw new InternalServerError("Error checking region " + result.errors[0].message);
+    }
+
+    return result.data.region_by_pk !== null;
 };

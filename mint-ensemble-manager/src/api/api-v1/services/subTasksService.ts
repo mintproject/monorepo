@@ -1,4 +1,4 @@
-import { Thread, ThreadInfo, Execution } from "@/classes/mint/mint-types";
+import { Thread, ThreadInfo, Execution, ModelParameter } from "@/classes/mint/mint-types";
 import {
     addThread,
     insertModel,
@@ -19,6 +19,7 @@ import {
 import problemStatementsService from "./problemStatementsService";
 import {
     convertApiUrlToW3Id,
+    convertModelConfigurationW3IdToApiUrl,
     fetchModelConfiguration,
     fetchModelConfigurationSetup
 } from "@/classes/mint/model-catalog-functions";
@@ -39,7 +40,11 @@ import { getConfiguration } from "@/classes/mint/mint-functions";
 import { MockExecutionService } from "@/classes/common/__tests__/mocks/MockExecutionService";
 import { ExecutionCreation } from "@/classes/common/ExecutionCreation";
 import { DatasetSpecification } from "@mintproject/modelcatalog_client/dist";
-import { getThread as getThreadV2 } from "@/classes/graphql/graphql_functions_v2";
+import {
+    getThread as getThreadV2,
+    checkVariableExistsById as checkVariableExistsByIdV2,
+    checkRegionExistsById as checkRegionExistsByIdV2
+} from "@/classes/graphql/graphql_functions_v2";
 
 function getExecutionEngineService(
     executionEngine: string,
@@ -106,6 +111,25 @@ export interface SubTasksService {
         model_id: string,
         authorizationHeader: string
     ): Promise<DatasetSpecification[]>;
+    getBlueprint(
+        subtaskId: string,
+        authorizationHeader: string,
+        detailed?: boolean
+    ): Promise<
+        Array<{
+            model_id: string;
+            parameters: Array<{ id: string; value: string } | ModelParameter>;
+            inputs: Array<{
+                id: string;
+                dataset: {
+                    id: string;
+                    resources: Array<{ id: string; url: string }>;
+                };
+            }>;
+        }>
+    >;
+    checkVariableExistsByName(variableName: string, authorizationHeader: string): Promise<boolean>;
+    checkRegionExistsById(regionId: string, authorizationHeader: string): Promise<boolean>;
 }
 
 const subTasksService: SubTasksService = {
@@ -187,6 +211,34 @@ const subTasksService: SubTasksService = {
 
         if (task.problem_statement_id !== problemStatementId) {
             throw new NotFoundError("Task not found in the specified problem statement");
+        }
+
+        // Validate driving variables exist
+        if (subtask.driving_variables && subtask.driving_variables.length > 0) {
+            for (const variableName of subtask.driving_variables) {
+                const exists = await checkVariableExistsByIdV2(variableName, access_token);
+                if (!exists) {
+                    throw new BadRequestError(`Driving variable '${variableName}' does not exist`);
+                }
+            }
+        }
+
+        // Validate response variables exist
+        if (subtask.response_variables && subtask.response_variables.length > 0) {
+            for (const variableName of subtask.response_variables) {
+                const exists = await checkVariableExistsByIdV2(variableName, access_token);
+                if (!exists) {
+                    throw new BadRequestError(`Response variable '${variableName}' does not exist`);
+                }
+            }
+        }
+
+        // Validate region exists
+        if (subtask.regionid) {
+            const regionExists = await checkRegionExistsByIdV2(subtask.regionid, access_token);
+            if (!regionExists) {
+                throw new BadRequestError(`Region '${subtask.regionid}' does not exist`);
+            }
         }
 
         subtask.events = [
@@ -362,6 +414,99 @@ const subTasksService: SubTasksService = {
         return await useModelsService.getModelParametersByModelId(model_id);
     },
 
+    async getBlueprint(subtaskId: string, authorizationHeader: string, detailed: boolean = false) {
+        const access_token = getTokenFromAuthorizationHeader(authorizationHeader);
+        if (!access_token) {
+            throw new UnauthorizedError("Invalid authorization header");
+        }
+
+        const subtask = await getThread(subtaskId);
+        if (!subtask) {
+            throw new NotFoundError("Subtask not found");
+        }
+
+        const bindings: Array<{
+            model_id: string;
+            parameters: Array<{ id: string; value: string } | ModelParameter>;
+            inputs: Array<{
+                id: string;
+                dataset: {
+                    id: string;
+                    resources: Array<{ id: string; url: string }>;
+                };
+            }>;
+        }> = [];
+
+        if (subtask.model_ensembles) {
+            for (const modelId of Object.keys(subtask.model_ensembles)) {
+                const model = await getModel(modelId);
+                if (!model) {
+                    throw new NotFoundError("Model not found");
+                }
+
+                try {
+                    const formattedParameters: Array<
+                        { id: string; value: string } | ModelParameter
+                    > = [];
+
+                    if (model.input_parameters && Array.isArray(model.input_parameters)) {
+                        for (const param of model.input_parameters) {
+                            if (param && param.id) {
+                                if (detailed) {
+                                    formattedParameters.push(param);
+                                } else {
+                                    const basicParam = {
+                                        id: param.id,
+                                        value: param.value || param.default || ""
+                                    };
+                                    formattedParameters.push(basicParam);
+                                }
+                            }
+                        }
+                    }
+
+                    const formattedInputs: Array<{
+                        id: string;
+                        dataset: {
+                            id: string;
+                            resources: Array<{ id: string; url: string }>;
+                        };
+                    }> = [];
+
+                    if (model.input_files && Array.isArray(model.input_files)) {
+                        for (const input of model.input_files) {
+                            if (input && input.id) {
+                                formattedInputs.push({
+                                    id: input.id,
+                                    dataset: {
+                                        id: "YOUR_DATASET_ID",
+                                        resources: []
+                                    }
+                                });
+                            }
+                        }
+                    }
+
+                    const binding = {
+                        model_id: await convertModelConfigurationW3IdToApiUrl(modelId),
+                        parameters: formattedParameters,
+                        inputs: formattedInputs
+                    };
+                    bindings.push(binding);
+                } catch (error) {
+                    console.warn(`Failed to get bindings for model ${modelId}:`, error);
+                    bindings.push({
+                        model_id: modelId,
+                        parameters: [],
+                        inputs: []
+                    });
+                }
+            }
+        }
+
+        return bindings;
+    },
+
     async submitSubtask(subtaskId: string, model_id: string, authorizationHeader: string) {
         const w3id = convertApiUrlToW3Id(model_id);
         const access_token = getTokenFromAuthorizationHeader(authorizationHeader);
@@ -387,7 +532,7 @@ const subTasksService: SubTasksService = {
         // Collect all executions
 
         let submissionResult: SubmissionResult = { submittedExecutions: [], failedExecutions: [] };
-        
+
         if (executionCreation.executionToBeRun.length > 0) {
             submissionResult = await executionService.submitExecutions(
                 executionCreation.executionToBeRun,
@@ -398,9 +543,15 @@ const subTasksService: SubTasksService = {
                 subtask.model_ensembles[w3id].id
             );
             if (submissionResult.failedExecutions.length > 0) {
-                console.warn("Some executions failed to submit:", submissionResult.failedExecutions);
+                console.warn(
+                    "Some executions failed to submit:",
+                    submissionResult.failedExecutions
+                );
             }
-            console.log("Successfully submitted executions:", submissionResult.submittedExecutions.length);
+            console.log(
+                "Successfully submitted executions:",
+                submissionResult.submittedExecutions.length
+            );
         } else {
             console.log("No executions to run");
         }
@@ -411,6 +562,27 @@ const subTasksService: SubTasksService = {
             executions: executionCreation.executionToBeRun,
             submissionResult
         };
+    },
+
+    async checkVariableExistsByName(
+        variableName: string,
+        authorizationHeader: string
+    ): Promise<boolean> {
+        const access_token = getTokenFromAuthorizationHeader(authorizationHeader);
+        if (!access_token) {
+            throw new UnauthorizedError("Invalid authorization header");
+        }
+
+        return await checkVariableExistsByIdV2(variableName, access_token);
+    },
+
+    async checkRegionExistsById(regionId: string, authorizationHeader: string): Promise<boolean> {
+        const access_token = getTokenFromAuthorizationHeader(authorizationHeader);
+        if (!access_token) {
+            throw new UnauthorizedError("Invalid authorization header");
+        }
+
+        return await checkRegionExistsByIdV2(regionId, access_token);
     }
 };
 

@@ -285,6 +285,85 @@ const ModelCatalogSchema = {
         },
         title: "Parameter",
         type: "object"
+    },
+    ModelParameter: {
+        description: "A model parameter with comprehensive metadata",
+        type: "object",
+        properties: {
+            id: {
+                type: "string",
+                description: "Unique identifier for the parameter"
+            },
+            name: {
+                type: "string",
+                description: "Name of the parameter"
+            },
+            type: {
+                type: "string",
+                description: "Data type of the parameter"
+            },
+            description: {
+                type: "string",
+                nullable: true,
+                description: "Description of what this parameter controls"
+            },
+            min: {
+                type: "string",
+                nullable: true,
+                description: "Minimum acceptable value"
+            },
+            max: {
+                type: "string",
+                nullable: true,
+                description: "Maximum acceptable value"
+            },
+            unit: {
+                type: "string",
+                nullable: true,
+                description: "Unit of measurement for the parameter"
+            },
+            default: {
+                type: "string",
+                nullable: true,
+                description: "Default value for the parameter"
+            },
+            value: {
+                type: "string",
+                nullable: true,
+                description: "Current or assigned value"
+            },
+            adjustment_variable: {
+                type: "array",
+                nullable: true,
+                description: "Variable that this parameter adjusts"
+            },
+            accepted_values: {
+                type: "string",
+                nullable: true,
+                description: "Accepted values for the parameter (comma-separated string)"
+            },
+            position: {
+                type: "number",
+                nullable: true,
+                description: "Position of the parameter in the model configuration"
+            }
+        },
+        required: ["id", "type"]
+    },
+    BasicModelParameter: {
+        description: "Basic model parameter information with just id and value",
+        type: "object",
+        properties: {
+            id: {
+                type: "string",
+                description: "Unique identifier for the parameter"
+            },
+            value: {
+                type: "string",
+                description: "Current or assigned value"
+            }
+        },
+        required: ["id", "value"]
     }
 };
 const MintSchema = {
@@ -941,7 +1020,7 @@ const SubtaskSchema = {
     CreateSubtaskRequest: {
         type: "object",
         description: "A Subtask creation request definition",
-        required: ["name", "dates"],
+        required: ["name", "dates", "driving_variables", "response_variables", "regionid"],
         properties: {
             name: {
                 description: "The name of the subtask",

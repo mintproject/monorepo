@@ -266,8 +266,8 @@ const subtasksRouter = (): Router => {
      * @openapi
      * /problemStatements/{problemStatementId}/tasks/{taskId}/subtasks/{subtaskId}/models:
      *   post:
-     *     summary: Add models to a subtask
-     *     description: Adds models to a subtask
+     *     summary: Select model configurations for a subtask
+     *     description: Select and add ModelConfiguration or ModelConfigurationSetup instances to use in this subtask for execution
      *     security:
      *       - BearerAuth: []
      *         oauth2: []
@@ -300,7 +300,7 @@ const subtasksRouter = (): Router => {
      *             $ref: '#/components/schemas/AddModelsRequest'
      *     responses:
      *       200:
-     *         description: Models added successfully
+     *         description: Model configurations selected and added to subtask successfully
      *         content:
      *           application/json:
      *             schema:
@@ -348,8 +348,8 @@ const subtasksRouter = (): Router => {
      * @openapi
      * /problemStatements/{problemStatementId}/tasks/{taskId}/subtasks/{subtaskId}/data:
      *   post:
-     *     summary: Add data to a subtask
-     *     description: Adds data to a subtask
+     *     summary: Select data for a subtask
+     *     description: Select the data to use in the subtask per ModelConfiguration/ModelConfigurationSetup. You can obtain a blueprint from the blueprint endpoint to see available data inputs
      *     security:
      *       - BearerAuth: []
      *         oauth2: []
@@ -382,7 +382,7 @@ const subtasksRouter = (): Router => {
      *             $ref: '#/components/schemas/AddDataRequest'
      *     responses:
      *       200:
-     *         description: Data added successfully
+     *         description: Data selected and configured for subtask successfully
      *         content:
      *           application/json:
      *             schema:
@@ -753,6 +753,133 @@ const subtasksRouter = (): Router => {
             }
         }
     );
+
+    /**
+     * @openapi
+     * /problemStatements/{problemStatementId}/tasks/{taskId}/subtasks/{subtaskId}/blueprint:
+     *   get:
+     *     summary: Get blueprint (parameters and inputs) for a subtask
+     *     description: Returns the complete model configuration blueprint for all models in a subtask
+     *     security:
+     *       - BearerAuth: []
+     *         oauth2: []
+     *     tags:
+     *       - Subtasks
+     *     parameters:
+     *       - in: path
+     *         name: problemStatementId
+     *         required: true
+     *         schema:
+     *           type: string
+     *         description: The problem statement ID
+     *       - in: path
+     *         name: taskId
+     *         required: true
+     *         schema:
+     *           type: string
+     *         description: The task ID
+     *       - in: path
+     *         name: subtaskId
+     *         required: true
+     *         schema:
+     *           type: string
+     *         description: The subtask ID
+     *       - in: query
+     *         name: detailed
+     *         required: false
+     *         schema:
+     *           type: boolean
+     *           default: false
+     *         description: If true, returns full ModelParameter details. If false, returns basic info (id, value) only.
+     *     responses:
+     *       200:
+     *         description: Complete blueprint for the subtask
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: array
+     *               items:
+     *                 type: object
+     *                 properties:
+     *                   model_id:
+     *                     type: string
+     *                     description: The model identifier
+     *                     example: "https://w3id.org/okn/i/mint/c07a6f98-6339-4033-84b0-6cd7daca6284"
+     *                   parameters:
+     *                     type: array
+     *                     description: Returns BasicModelParameter (id, value) by default, or full ModelParameter when detailed=true
+     *                     items:
+     *                       anyOf:
+     *                         - $ref: '#/components/schemas/BasicModelParameter'
+     *                         - $ref: '#/components/schemas/ModelParameter'
+     *                   inputs:
+     *                     type: array
+     *                     items:
+     *                       type: object
+     *                       properties:
+     *                         id:
+     *                           type: string
+     *                           description: Input identifier
+     *                           example: "https://w3id.org/okn/i/mint/ce32097e-641d-42af-b3f1-477a24cf015a"
+     *                         dataset:
+     *                           type: object
+     *                           properties:
+     *                             id:
+     *                               type: string
+     *                               description: Dataset identifier
+     *                               example: "18400624-423c-42b5-ad56-6c73322584bd"
+     *                             resources:
+     *                               type: array
+     *                               items:
+     *                                 type: object
+     *                                 properties:
+     *                                   id:
+     *                                     type: string
+     *                                     description: Resource identifier
+     *                                     example: "9c7b25c4-8cea-4965-a07a-d9b3867f18a9"
+     *                                   url:
+     *                                     type: string
+     *                                     description: Resource URL
+     *                                     example: "https://ckan.tacc.utexas.edu/dataset/18400624-423c-42b5-ad56-6c73322584bd/resource/9c7b25c4-8cea-4965-a07a-d9b3867f18a9/download/barton_springs_2001_2010average.wel"
+     *       default:
+     *         description: Default error response
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 message:
+     *                   type: string
+     */
+    router.get(
+        "/:subtaskId/blueprint",
+        async (
+            req: Request<{ subtaskId: string }, unknown, unknown, { detailed?: string | boolean }>,
+            res: Response
+        ) => {
+            const authorizationHeader = req.headers.authorization;
+            if (!authorizationHeader) {
+                return res.status(401).json({ message: "Authorization header is required" });
+            }
+            const { subtaskId } = req.params;
+            const { detailed } = req.query;
+            const isDetailed = detailed === true || detailed === "true";
+            try {
+                const blueprint = await subTasksService.getBlueprint(
+                    subtaskId,
+                    authorizationHeader,
+                    isDetailed
+                );
+                res.status(200).json(blueprint);
+            } catch (error) {
+                if (error instanceof HttpError) {
+                    return res.status(error.statusCode).json({ message: error.message });
+                }
+                res.status(500).json({ message: error.message });
+            }
+        }
+    );
+
     router.use("/:subtaskId/executions", executionsRouter());
 
     /**
