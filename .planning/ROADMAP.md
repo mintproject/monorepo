@@ -28,11 +28,11 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. Every Software, SoftwareVersion, ModelConfiguration, and ModelConfigurationSetup entity from the TriG dump exists in the corresponding PostgreSQL table
   4. Entity counts match between source (TriG/JSON) and target (PostgreSQL) for every entity type
   5. Sample entities spot-checked for correct field values, FK relationships, and multi-valued properties
-**Plans**: TBD
+**Plans:** 2 plans
 
 Plans:
-- [ ] 01-01: Schema design and Hasura migration
-- [ ] 01-02: ETL pipeline and data validation
+- [ ] 01-01-PLAN.md -- Schema design: create modelcatalog_* tables (12 tables) and Hasura metadata with relationships
+- [ ] 01-02-PLAN.md -- ETL pipeline: extract from TriG, transform with FK inversion, load into PostgreSQL, validate counts
 
 ### Phase 2: API Integration
 **Goal**: FastAPI REST endpoints and Ensemble Manager read model catalog data from Hasura/PostgreSQL instead of Fuseki, with zero breaking changes to API consumers
