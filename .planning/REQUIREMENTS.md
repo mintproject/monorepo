@@ -1,0 +1,124 @@
+# Requirements: DYNAMO Model Catalog GraphQL Migration
+
+**Defined:** 2026-02-14
+**Core Value:** All model catalog data accessible through a single GraphQL endpoint, eliminating the Fuseki dependency while maintaining REST API compatibility.
+
+## v1 Requirements
+
+### Schema Design
+
+- [ ] **SCHM-01**: PostgreSQL schema defines `modelcatalog_software` table with proper columns for software metadata
+- [ ] **SCHM-02**: PostgreSQL schema defines `modelcatalog_software_version` table with FK to software
+- [ ] **SCHM-03**: PostgreSQL schema defines `modelcatalog_model_configuration` table with FK to software_version
+- [ ] **SCHM-04**: PostgreSQL schema defines `modelcatalog_model_configuration_setup` table with FK to model_configuration
+- [ ] **SCHM-05**: PostgreSQL schema defines I/O tables (`modelcatalog_input`, `modelcatalog_output`) with proper relationships
+- [ ] **SCHM-06**: PostgreSQL schema defines `modelcatalog_parameter` table with proper relationships
+- [ ] **SCHM-07**: Hasura migration files created and tracked in `graphql_engine/migrations/`
+- [ ] **SCHM-08**: Hasura metadata configured with relationships between all `modelcatalog_*` tables
+
+### Data Migration
+
+- [ ] **DATA-01**: ETL script extracts all model catalog data from TriG dump or JSON API
+- [ ] **DATA-02**: All Software entities migrated to `modelcatalog_software`
+- [ ] **DATA-03**: All SoftwareVersion entities migrated to `modelcatalog_software_version`
+- [ ] **DATA-04**: All ModelConfiguration entities migrated to `modelcatalog_model_configuration`
+- [ ] **DATA-05**: All ModelConfigurationSetup entities migrated to `modelcatalog_model_configuration_setup`
+- [ ] **DATA-06**: All I/O definitions migrated to corresponding input/output tables
+- [ ] **DATA-07**: All parameters migrated to `modelcatalog_parameter`
+- [ ] **DATA-08**: Validation confirms entity counts match between source and target
+- [ ] **DATA-09**: Validation confirms sample entities have correct data in all fields
+
+### API Integration
+
+- [ ] **API-01**: FastAPI queries Hasura/PostgreSQL instead of Fuseki for model catalog data
+- [ ] **API-02**: REST endpoint responses match existing API contract (same JSON structure)
+- [ ] **API-03**: All existing REST endpoints remain functional
+- [ ] **API-04**: Ensemble Manager queries model catalog via GraphQL instead of REST client
+
+### FK Migration
+
+- [ ] **FKMG-01**: Each existing `model` table row classified as ModelConfiguration or ModelConfigurationSetup
+- [ ] **FKMG-02**: `execution.model_id` migrated to reference appropriate `modelcatalog_*` table
+- [ ] **FKMG-03**: `thread_model.model_id` migrated to reference appropriate `modelcatalog_*` table
+- [ ] **FKMG-04**: `execution_data_binding.model_io_id` migrated to new I/O table references
+- [ ] **FKMG-05**: `execution_parameter_binding.model_parameter_id` migrated to new parameter table references
+- [ ] **FKMG-06**: `thread_model_io.model_io_id` migrated to new I/O table references
+- [ ] **FKMG-07**: `thread_model_parameter.model_parameter_id` migrated to new parameter table references
+- [ ] **FKMG-08**: All FK migrations validated -- no orphaned records, no broken references
+
+### Cleanup
+
+- [ ] **CLNP-01**: Fuseki dependency removed from the deployment stack
+- [ ] **CLNP-02**: `@mintproject/modelcatalog_client` SDK dependency removed from Ensemble Manager
+
+## v2 Requirements
+
+### Enhanced Capabilities
+
+- **ENHC-01**: Full-text search across model catalog metadata via PostgreSQL FTS
+- **ENHC-02**: GraphQL subscriptions for real-time model catalog updates
+- **ENHC-03**: Fine-grained permissions on model catalog data via Hasura
+- **ENHC-04**: Audit trail tracking changes to model catalog entries
+
+### UI Migration
+
+- **UIMIG-01**: UI queries model catalog via GraphQL instead of REST client
+- **UIMIG-02**: Remove `@mintproject/modelcatalog_client` SDK from UI
+- **UIMIG-03**: Remove `graphql_adapter.ts` model catalog transformation code
+
+## Out of Scope
+
+| Feature | Reason |
+|---------|--------|
+| UI migration to GraphQL | Separate effort; UI keeps using REST client for now |
+| SPARQL compatibility endpoint | Defeats migration purpose |
+| Changes to execution backends (Tapis, LocalEx) | Not affected by model catalog migration |
+| Data Catalog (CKAN) migration | Separate system |
+| New feature development | Focus on migration only |
+| GraphQL mutations for model catalog | Keep REST for writes initially |
+| RDF export capability | Not needed post-migration |
+
+## Traceability
+
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| SCHM-01 | Phase 1 | Pending |
+| SCHM-02 | Phase 1 | Pending |
+| SCHM-03 | Phase 1 | Pending |
+| SCHM-04 | Phase 1 | Pending |
+| SCHM-05 | Phase 1 | Pending |
+| SCHM-06 | Phase 1 | Pending |
+| SCHM-07 | Phase 1 | Pending |
+| SCHM-08 | Phase 1 | Pending |
+| DATA-01 | Phase 1 | Pending |
+| DATA-02 | Phase 1 | Pending |
+| DATA-03 | Phase 1 | Pending |
+| DATA-04 | Phase 1 | Pending |
+| DATA-05 | Phase 1 | Pending |
+| DATA-06 | Phase 1 | Pending |
+| DATA-07 | Phase 1 | Pending |
+| DATA-08 | Phase 1 | Pending |
+| DATA-09 | Phase 1 | Pending |
+| API-01 | Phase 2 | Pending |
+| API-02 | Phase 2 | Pending |
+| API-03 | Phase 2 | Pending |
+| API-04 | Phase 2 | Pending |
+| FKMG-01 | Phase 3 | Pending |
+| FKMG-02 | Phase 3 | Pending |
+| FKMG-03 | Phase 3 | Pending |
+| FKMG-04 | Phase 3 | Pending |
+| FKMG-05 | Phase 3 | Pending |
+| FKMG-06 | Phase 3 | Pending |
+| FKMG-07 | Phase 3 | Pending |
+| FKMG-08 | Phase 3 | Pending |
+| CLNP-01 | Phase 3 | Pending |
+| CLNP-02 | Phase 3 | Pending |
+
+**Coverage:**
+- v1 requirements: 31 total
+- Mapped to phases: 31
+- Unmapped: 0
+
+---
+*Requirements defined: 2026-02-14*
+*Last updated: 2026-02-14 after roadmap creation (3-phase structure)*
