@@ -2874,3 +2874,442 @@
           - variable_id
           - category
         filter: {}
+- table:
+    name: modelcatalog_software
+    schema: public
+  array_relationships:
+    - name: versions
+      using:
+        foreign_key_constraint_on:
+          column: software_id
+          table:
+            name: modelcatalog_software_version
+            schema: public
+  select_permissions:
+    - role: anonymous
+      permission:
+        columns:
+          - id
+          - label
+          - description
+          - keywords
+          - license
+          - website
+          - date_created
+          - date_published
+          - has_documentation
+          - has_download_url
+          - has_purpose
+        filter: {}
+    - role: user
+      permission:
+        columns:
+          - id
+          - label
+          - description
+          - keywords
+          - license
+          - website
+          - date_created
+          - date_published
+          - has_documentation
+          - has_download_url
+          - has_purpose
+        filter: {}
+- table:
+    name: modelcatalog_software_version
+    schema: public
+  object_relationships:
+    - name: software
+      using:
+        foreign_key_constraint_on: software_id
+  array_relationships:
+    - name: configurations
+      using:
+        foreign_key_constraint_on:
+          column: software_version_id
+          table:
+            name: modelcatalog_model_configuration
+            schema: public
+  select_permissions:
+    - role: anonymous
+      permission:
+        columns:
+          - id
+          - software_id
+          - version_id
+          - label
+          - description
+          - keywords
+          - has_usage_notes
+          - date_created
+          - has_source_code
+        filter: {}
+    - role: user
+      permission:
+        columns:
+          - id
+          - software_id
+          - version_id
+          - label
+          - description
+          - keywords
+          - has_usage_notes
+          - date_created
+          - has_source_code
+        filter: {}
+- table:
+    name: modelcatalog_model_configuration
+    schema: public
+  object_relationships:
+    - name: software_version
+      using:
+        foreign_key_constraint_on: software_version_id
+  array_relationships:
+    - name: setups
+      using:
+        foreign_key_constraint_on:
+          column: model_configuration_id
+          table:
+            name: modelcatalog_model_configuration_setup
+            schema: public
+    - name: inputs
+      using:
+        foreign_key_constraint_on:
+          column: configuration_id
+          table:
+            name: modelcatalog_configuration_input
+            schema: public
+    - name: outputs
+      using:
+        foreign_key_constraint_on:
+          column: configuration_id
+          table:
+            name: modelcatalog_configuration_output
+            schema: public
+    - name: parameters
+      using:
+        foreign_key_constraint_on:
+          column: configuration_id
+          table:
+            name: modelcatalog_configuration_parameter
+            schema: public
+  select_permissions:
+    - role: anonymous
+      permission:
+        columns:
+          - id
+          - software_version_id
+          - label
+          - description
+          - keywords
+          - usage_notes
+          - has_component_location
+          - has_implementation_script_location
+          - has_software_image
+        filter: {}
+    - role: user
+      permission:
+        columns:
+          - id
+          - software_version_id
+          - label
+          - description
+          - keywords
+          - usage_notes
+          - has_component_location
+          - has_implementation_script_location
+          - has_software_image
+        filter: {}
+- table:
+    name: modelcatalog_model_configuration_setup
+    schema: public
+  object_relationships:
+    - name: model_configuration
+      using:
+        foreign_key_constraint_on: model_configuration_id
+  array_relationships:
+    - name: inputs
+      using:
+        foreign_key_constraint_on:
+          column: setup_id
+          table:
+            name: modelcatalog_setup_input
+            schema: public
+    - name: outputs
+      using:
+        foreign_key_constraint_on:
+          column: setup_id
+          table:
+            name: modelcatalog_setup_output
+            schema: public
+    - name: parameters
+      using:
+        foreign_key_constraint_on:
+          column: setup_id
+          table:
+            name: modelcatalog_setup_parameter
+            schema: public
+  select_permissions:
+    - role: anonymous
+      permission:
+        columns:
+          - id
+          - model_configuration_id
+          - label
+          - description
+          - has_component_location
+          - has_implementation_script_location
+          - has_software_image
+          - has_region
+        filter: {}
+    - role: user
+      permission:
+        columns:
+          - id
+          - model_configuration_id
+          - label
+          - description
+          - has_component_location
+          - has_implementation_script_location
+          - has_software_image
+          - has_region
+        filter: {}
+- table:
+    name: modelcatalog_dataset_specification
+    schema: public
+  array_relationships:
+    - name: configuration_inputs
+      using:
+        foreign_key_constraint_on:
+          column: input_id
+          table:
+            name: modelcatalog_configuration_input
+            schema: public
+    - name: configuration_outputs
+      using:
+        foreign_key_constraint_on:
+          column: output_id
+          table:
+            name: modelcatalog_configuration_output
+            schema: public
+    - name: setup_inputs
+      using:
+        foreign_key_constraint_on:
+          column: input_id
+          table:
+            name: modelcatalog_setup_input
+            schema: public
+    - name: setup_outputs
+      using:
+        foreign_key_constraint_on:
+          column: output_id
+          table:
+            name: modelcatalog_setup_output
+            schema: public
+  select_permissions:
+    - role: anonymous
+      permission:
+        columns:
+          - id
+          - label
+          - description
+          - has_format
+          - has_dimensionality
+          - position
+        filter: {}
+    - role: user
+      permission:
+        columns:
+          - id
+          - label
+          - description
+          - has_format
+          - has_dimensionality
+          - position
+        filter: {}
+- table:
+    name: modelcatalog_parameter
+    schema: public
+  array_relationships:
+    - name: configuration_parameters
+      using:
+        foreign_key_constraint_on:
+          column: parameter_id
+          table:
+            name: modelcatalog_configuration_parameter
+            schema: public
+    - name: setup_parameters
+      using:
+        foreign_key_constraint_on:
+          column: parameter_id
+          table:
+            name: modelcatalog_setup_parameter
+            schema: public
+  select_permissions:
+    - role: anonymous
+      permission:
+        columns:
+          - id
+          - label
+          - description
+          - has_data_type
+          - has_default_value
+          - has_minimum_accepted_value
+          - has_maximum_accepted_value
+          - has_fixed_value
+          - position
+          - parameter_type
+        filter: {}
+    - role: user
+      permission:
+        columns:
+          - id
+          - label
+          - description
+          - has_data_type
+          - has_default_value
+          - has_minimum_accepted_value
+          - has_maximum_accepted_value
+          - has_fixed_value
+          - position
+          - parameter_type
+        filter: {}
+- table:
+    name: modelcatalog_configuration_input
+    schema: public
+  object_relationships:
+    - name: configuration
+      using:
+        foreign_key_constraint_on: configuration_id
+    - name: input
+      using:
+        foreign_key_constraint_on: input_id
+  select_permissions:
+    - role: anonymous
+      permission:
+        columns:
+          - configuration_id
+          - input_id
+        filter: {}
+    - role: user
+      permission:
+        columns:
+          - configuration_id
+          - input_id
+        filter: {}
+- table:
+    name: modelcatalog_configuration_output
+    schema: public
+  object_relationships:
+    - name: configuration
+      using:
+        foreign_key_constraint_on: configuration_id
+    - name: output
+      using:
+        foreign_key_constraint_on: output_id
+  select_permissions:
+    - role: anonymous
+      permission:
+        columns:
+          - configuration_id
+          - output_id
+        filter: {}
+    - role: user
+      permission:
+        columns:
+          - configuration_id
+          - output_id
+        filter: {}
+- table:
+    name: modelcatalog_configuration_parameter
+    schema: public
+  object_relationships:
+    - name: configuration
+      using:
+        foreign_key_constraint_on: configuration_id
+    - name: parameter
+      using:
+        foreign_key_constraint_on: parameter_id
+  select_permissions:
+    - role: anonymous
+      permission:
+        columns:
+          - configuration_id
+          - parameter_id
+        filter: {}
+    - role: user
+      permission:
+        columns:
+          - configuration_id
+          - parameter_id
+        filter: {}
+- table:
+    name: modelcatalog_setup_input
+    schema: public
+  object_relationships:
+    - name: setup
+      using:
+        foreign_key_constraint_on: setup_id
+    - name: input
+      using:
+        foreign_key_constraint_on: input_id
+  select_permissions:
+    - role: anonymous
+      permission:
+        columns:
+          - setup_id
+          - input_id
+        filter: {}
+    - role: user
+      permission:
+        columns:
+          - setup_id
+          - input_id
+        filter: {}
+- table:
+    name: modelcatalog_setup_output
+    schema: public
+  object_relationships:
+    - name: setup
+      using:
+        foreign_key_constraint_on: setup_id
+    - name: output
+      using:
+        foreign_key_constraint_on: output_id
+  select_permissions:
+    - role: anonymous
+      permission:
+        columns:
+          - setup_id
+          - output_id
+        filter: {}
+    - role: user
+      permission:
+        columns:
+          - setup_id
+          - output_id
+        filter: {}
+- table:
+    name: modelcatalog_setup_parameter
+    schema: public
+  object_relationships:
+    - name: setup
+      using:
+        foreign_key_constraint_on: setup_id
+    - name: parameter
+      using:
+        foreign_key_constraint_on: parameter_id
+  select_permissions:
+    - role: anonymous
+      permission:
+        columns:
+          - setup_id
+          - parameter_id
+        filter: {}
+    - role: user
+      permission:
+        columns:
+          - setup_id
+          - parameter_id
+        filter: {}
