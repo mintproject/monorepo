@@ -1,7 +1,7 @@
 """
 Extract entities from the TriG RDF dump using SPARQL queries.
 """
-from rdflib import Dataset, Namespace, RDF, RDFS
+from rdflib import Dataset, Graph, Namespace, RDF, RDFS
 from typing import List, Dict, Any
 import config
 
@@ -10,16 +10,30 @@ SD = Namespace(config.SD)
 SDM = Namespace(config.SDM)
 
 
-def load_dataset(trig_path: str) -> Dataset:
-    """Load the TriG file into an RDFLib Dataset."""
+def load_dataset(trig_path: str) -> Graph:
+    """
+    Load the TriG file into an RDFLib Dataset and return a union Graph.
+
+    TriG files contain named graphs (quads). To query across all graphs,
+    we create a union of all contexts.
+    """
     print(f"Loading TriG file: {trig_path}")
     ds = Dataset()
     ds.parse(trig_path, format='trig')
-    print(f"Loaded {len(ds)} quads")
-    return ds
+    print(f"Loaded {len(ds)} quads from dataset")
+
+    # Create a union graph from all contexts
+    # This allows SPARQL queries to work across all named graphs
+    union_graph = Graph()
+    for context in ds.contexts():
+        for triple in context:
+            union_graph.add(triple)
+
+    print(f"Created union graph with {len(union_graph)} triples")
+    return union_graph
 
 
-def extract_software(ds: Dataset) -> List[Dict[str, Any]]:
+def extract_software(ds: Graph) -> List[Dict[str, Any]]:
     """Extract Software entities (sdm#Model)."""
     query = f"""
     PREFIX sd: <{config.SD}>
@@ -86,7 +100,7 @@ def extract_software(ds: Dataset) -> List[Dict[str, Any]]:
     return results, version_links
 
 
-def extract_software_versions(ds: Dataset) -> List[Dict[str, Any]]:
+def extract_software_versions(ds: Graph) -> List[Dict[str, Any]]:
     """Extract SoftwareVersion entities."""
     query = f"""
     PREFIX sd: <{config.SD}>
@@ -144,7 +158,7 @@ def extract_software_versions(ds: Dataset) -> List[Dict[str, Any]]:
     return results, configuration_links
 
 
-def extract_model_configurations(ds: Dataset) -> List[Dict[str, Any]]:
+def extract_model_configurations(ds: Graph) -> List[Dict[str, Any]]:
     """Extract ModelConfiguration entities."""
     query = f"""
     PREFIX sd: <{config.SD}>
@@ -270,7 +284,7 @@ def extract_model_configurations(ds: Dataset) -> List[Dict[str, Any]]:
     }
 
 
-def extract_model_configuration_setups(ds: Dataset) -> List[Dict[str, Any]]:
+def extract_model_configuration_setups(ds: Graph) -> List[Dict[str, Any]]:
     """Extract ModelConfigurationSetup entities."""
     query = f"""
     PREFIX sd: <{config.SD}>
@@ -373,7 +387,7 @@ def extract_model_configuration_setups(ds: Dataset) -> List[Dict[str, Any]]:
     }
 
 
-def extract_dataset_specifications(ds: Dataset) -> List[Dict[str, Any]]:
+def extract_dataset_specifications(ds: Graph) -> List[Dict[str, Any]]:
     """Extract DatasetSpecification entities."""
     query = f"""
     PREFIX sd: <{config.SD}>
@@ -406,7 +420,7 @@ def extract_dataset_specifications(ds: Dataset) -> List[Dict[str, Any]]:
     return results
 
 
-def extract_parameters(ds: Dataset) -> List[Dict[str, Any]]:
+def extract_parameters(ds: Graph) -> List[Dict[str, Any]]:
     """Extract Parameter entities."""
     query = f"""
     PREFIX sd: <{config.SD}>

@@ -16,6 +16,31 @@ def deduplicate_by_id(entities: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     return result
 
 
+def ensure_labels(entities: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """
+    Ensure all entities have a label value.
+    If label is None or empty, derive it from the URI.
+    """
+    for entity in entities:
+        if not entity.get('label'):
+            # Extract last segment of URI as label
+            uri = entity['id']
+            if '/' in uri:
+                label = uri.rsplit('/', 1)[-1]
+            elif '#' in uri:
+                label = uri.rsplit('#', 1)[-1]
+            else:
+                label = uri
+
+            # Decode URL encoding if present
+            import urllib.parse
+            label = urllib.parse.unquote(label)
+
+            entity['label'] = label
+
+    return entities
+
+
 def invert_fk_relationships(extracted_data: Dict[str, Any]) -> Dict[str, Any]:
     """
     Invert parent-child relationships into FK columns.
@@ -105,60 +130,91 @@ def invert_fk_relationships(extracted_data: Dict[str, Any]) -> Dict[str, Any]:
 def build_junction_tables(extracted_data: Dict[str, Any]) -> Dict[str, List[Dict[str, str]]]:
     """
     Build junction table rows from hasInput/hasOutput/hasParameter links.
+    Only include references to entities that exist in our extracted data.
     """
     links = extracted_data['links']
+
+    # Build sets of valid IDs for FK validation
+    valid_dataset_ids = {e['id'] for e in extracted_data['dataset_specifications']}
+    valid_parameter_ids = {e['id'] for e in extracted_data['parameters']}
 
     # Configuration junction tables
     config_input_rows = []
     config_output_rows = []
     config_parameter_rows = []
 
+    skipped_config_inputs = 0
+    skipped_config_outputs = 0
+    skipped_config_params = 0
+
     for config_id, input_ids in links['configuration']['input'].items():
         for input_id in input_ids:
-            config_input_rows.append({
-                'configuration_id': config_id,
-                'input_id': input_id,
-            })
+            if input_id in valid_dataset_ids:
+                config_input_rows.append({
+                    'configuration_id': config_id,
+                    'input_id': input_id,
+                })
+            else:
+                skipped_config_inputs += 1
 
     for config_id, output_ids in links['configuration']['output'].items():
         for output_id in output_ids:
-            config_output_rows.append({
-                'configuration_id': config_id,
-                'output_id': output_id,
-            })
+            if output_id in valid_dataset_ids:
+                config_output_rows.append({
+                    'configuration_id': config_id,
+                    'output_id': output_id,
+                })
+            else:
+                skipped_config_outputs += 1
 
     for config_id, param_ids in links['configuration']['parameter'].items():
         for param_id in param_ids:
-            config_parameter_rows.append({
-                'configuration_id': config_id,
-                'parameter_id': param_id,
-            })
+            if param_id in valid_parameter_ids:
+                config_parameter_rows.append({
+                    'configuration_id': config_id,
+                    'parameter_id': param_id,
+                })
+            else:
+                skipped_config_params += 1
 
     # Setup junction tables
     setup_input_rows = []
     setup_output_rows = []
     setup_parameter_rows = []
 
+    skipped_setup_inputs = 0
+    skipped_setup_outputs = 0
+    skipped_setup_params = 0
+
     for setup_id, input_ids in links['setup']['input'].items():
         for input_id in input_ids:
-            setup_input_rows.append({
-                'setup_id': setup_id,
-                'input_id': input_id,
-            })
+            if input_id in valid_dataset_ids:
+                setup_input_rows.append({
+                    'setup_id': setup_id,
+                    'input_id': input_id,
+                })
+            else:
+                skipped_setup_inputs += 1
 
     for setup_id, output_ids in links['setup']['output'].items():
         for output_id in output_ids:
-            setup_output_rows.append({
-                'setup_id': setup_id,
-                'output_id': output_id,
-            })
+            if output_id in valid_dataset_ids:
+                setup_output_rows.append({
+                    'setup_id': setup_id,
+                    'output_id': output_id,
+                })
+            else:
+                skipped_setup_outputs += 1
 
     for setup_id, param_ids in links['setup']['parameter'].items():
         for param_id in param_ids:
-            setup_parameter_rows.append({
-                'setup_id': setup_id,
-                'parameter_id': param_id,
-            })
+            if param_id in valid_parameter_ids:
+                setup_parameter_rows.append({
+                    'setup_id': setup_id,
+                    'parameter_id': param_id,
+                })
+            else:
+                skipped_setup_params += 1
 
     print(f"Built junction tables:")
     print(f"  - configuration_input: {len(config_input_rows)} rows")
@@ -167,6 +223,11 @@ def build_junction_tables(extracted_data: Dict[str, Any]) -> Dict[str, List[Dict
     print(f"  - setup_input: {len(setup_input_rows)} rows")
     print(f"  - setup_output: {len(setup_output_rows)} rows")
     print(f"  - setup_parameter: {len(setup_parameter_rows)} rows")
+
+    total_skipped = (skipped_config_inputs + skipped_config_outputs + skipped_config_params +
+                     skipped_setup_inputs + skipped_setup_outputs + skipped_setup_params)
+    if total_skipped > 0:
+        print(f"  - Skipped {total_skipped} junction rows referencing missing entities")
 
     return {
         'modelcatalog_configuration_input': config_input_rows,
@@ -191,6 +252,14 @@ def transform_all(extracted_data: Dict[str, Any]) -> Dict[str, List[Dict[str, An
     extracted_data['model_configuration_setups'] = deduplicate_by_id(extracted_data['model_configuration_setups'])
     extracted_data['dataset_specifications'] = deduplicate_by_id(extracted_data['dataset_specifications'])
     extracted_data['parameters'] = deduplicate_by_id(extracted_data['parameters'])
+
+    # Ensure all entities have labels (required by schema NOT NULL constraint)
+    extracted_data['software'] = ensure_labels(extracted_data['software'])
+    extracted_data['software_versions'] = ensure_labels(extracted_data['software_versions'])
+    extracted_data['model_configurations'] = ensure_labels(extracted_data['model_configurations'])
+    extracted_data['model_configuration_setups'] = ensure_labels(extracted_data['model_configuration_setups'])
+    extracted_data['dataset_specifications'] = ensure_labels(extracted_data['dataset_specifications'])
+    extracted_data['parameters'] = ensure_labels(extracted_data['parameters'])
 
     # Invert FK relationships
     transformed = invert_fk_relationships(extracted_data)

@@ -1,12 +1,12 @@
 """
 Validate the ETL pipeline by comparing counts and checking data integrity.
 """
-from rdflib import Dataset
+from rdflib import Dataset, Graph
 from typing import Dict, Any
 import config
 
 
-def count_entities_in_trig(ds: Dataset, entity_type: str) -> int:
+def count_entities_in_trig(ds: Graph, entity_type: str) -> int:
     """Count entities of a given type in the TriG dataset."""
     query = f"""
     SELECT (COUNT(DISTINCT ?uri) as ?count)
@@ -27,10 +27,16 @@ def validate_counts(trig_path: str, conn) -> bool:
     """
     print("\n=== Count Validation ===\n")
 
-    # Load TriG dataset for comparison
+    # Load TriG dataset for comparison and create union graph
     print(f"Loading TriG file for validation: {trig_path}")
-    ds = Dataset()
-    ds.parse(trig_path, format='trig')
+    dataset = Dataset()
+    dataset.parse(trig_path, format='trig')
+
+    # Create union graph from all contexts
+    ds = Graph()
+    for context in dataset.contexts():
+        for triple in context:
+            ds.add(triple)
 
     # Define entity types to validate
     entity_types = [
@@ -112,7 +118,7 @@ def validate_junction_tables(conn) -> bool:
     return all_passed
 
 
-def validate_sample_entities(conn, ds: Dataset) -> bool:
+def validate_sample_entities(conn, ds: Graph) -> bool:
     """
     Spot-check a few well-known entities for correctness.
     """
@@ -222,9 +228,14 @@ def validate(trig_path: str, conn) -> bool:
     print("VALIDATION REPORT")
     print("=" * 70)
 
-    # Load dataset for validation
-    ds = Dataset()
-    ds.parse(trig_path, format='trig')
+    # Load dataset for validation and create union graph
+    dataset = Dataset()
+    dataset.parse(trig_path, format='trig')
+
+    ds = Graph()
+    for context in dataset.contexts():
+        for triple in context:
+            ds.add(triple)
 
     # Run all validation checks
     counts_passed = validate_counts(trig_path, conn)
