@@ -26,7 +26,7 @@ All model catalog data accessible through a single GraphQL endpoint, eliminating
 
 - [ ] Design `modelcatalog_*` PostgreSQL schema reflecting 4-level hierarchy (Software > SoftwareVersion > ModelConfiguration > ModelConfigurationSetup) plus I/O, parameters, variables
 - [ ] Create Hasura migration for new `modelcatalog_*` tables with proper relationships and metadata
-- [ ] Export model catalog data from existing REST API (JSON) and load into new PostgreSQL tables
+- [ ] Export model catalog data from dump /Users/mosorio/repos/mint/model-catalog-endpoint/data/model-catalog-tacc.trig
 - [ ] Update FastAPI to query Hasura/PostgreSQL instead of Fuseki, maintaining same REST endpoints
 - [ ] Classify existing `model` table rows as configurations vs setups and map to new `modelcatalog_*` entries
 - [ ] Migrate foreign keys in `execution`, `thread_model`, and related tables to point to new `modelcatalog_*` tables
@@ -59,13 +59,14 @@ All model catalog data accessible through a single GraphQL endpoint, eliminating
 
 ## Key Decisions
 
-| Decision | Rationale | Outcome |
-|----------|-----------|---------|
-| Fresh `modelcatalog_*` tables over fixing existing | Current model tables are poorly structured (flat, mixed types) | -- Pending |
-| 4-level hierarchy: Software > Version > Config > Setup | Mirrors the RDF Model Catalog ontology | -- Pending |
-| FastAPI as thin REST layer over Hasura | External consumers need REST, but data should live in one place | -- Pending |
-| Keep old model tables during migration | Execution/thread FKs need gradual migration, not a big bang | -- Pending |
-| UI migration out of scope | Reduces blast radius; UI can switch to GraphQL independently | -- Pending |
+| Decision                                               | Rationale                                                       | Outcome    |
+| ------------------------------------------------------ | --------------------------------------------------------------- | ---------- |
+| Fresh `modelcatalog_*` tables over fixing existing     | Current model tables are poorly structured (flat, mixed types)  | -- Pending |
+| 4-level hierarchy: Software > Version > Config > Setup | Mirrors the RDF Model Catalog ontology                          | -- Pending |
+| FastAPI as thin REST layer over Hasura                 | External consumers need REST, but data should live in one place | -- Pending |
+| Keep old model tables during migration                 | Execution/thread FKs need gradual migration, not a big bang     | -- Pending |
+| UI migration out of scope                              | Reduces blast radius; UI can switch to GraphQL independently    | -- Pending |
 
 ---
-*Last updated: 2026-02-14 after initialization*
+
+_Last updated: 2026-02-14 after initialization_
