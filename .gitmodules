@@ -1,3 +1,30 @@
 [submodule "graphql_engine"]
 	path = graphql_engine
 	url = https://github.com/mintproject/graphql_engine.git
+[submodule "MINT_USERGUIDE"]
+	path = MINT_USERGUIDE
+	url = https://github.com/mintproject/MINT_USERGUIDE.git
+[submodule "mint-ensemble-manager"]
+	path = mint-ensemble-manager
+	url = https://github.com/mintproject/mint-ensemble-manager.git
+[submodule "mint-instances"]
+	path = mint-instances
+	url = https://github.com/mintproject/mint-instances.git
+[submodule "model-catalog-endpoint"]
+	path = model-catalog-endpoint
+	url = https://github.com/mintproject/model-catalog-endpoint.git
+[submodule "model-catalog-fastapi"]
+	path = model-catalog-fastapi
+	url = https://github.com/mintproject/model-catalog-fastapi.git
+[submodule "model-catalog-fetch-api-client"]
+	path = model-catalog-fetch-api-client
+	url = https://github.com/mintproject/model-catalog-fetch-api-client.git
+[submodule "ui"]
+	path = ui
+	url = https://github.com/mintproject/mint-ui-lit.git
+[submodule "wifire-k8s"]
+	path = wifire-k8s
+	url = https://github.com/mintproject/wifire-k8s.git
+[submodule "helm-charts"]
+	path = helm-charts
+	url = https://github.com/mintproject/mint.git
