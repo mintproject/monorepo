@@ -11,7 +11,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Testing
 - `npm test` - Run tests using Jest
+- Jest configuration includes support for GraphQL file imports and TypeScript transforms
 - Set `ENSEMBLE_MANAGER_CONFIG_FILE=src/config/config.json` for test configuration
+- Test files follow pattern `*.test.ts` and use babel-jest transformer
 
 ### Code Quality
 - `npm run eslint:fix` - Run ESLint and fix issues
@@ -20,6 +22,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### GraphQL Code Generation
 - `npm run codegen` - Generate TypeScript types from GraphQL schema and operations
+- Uses `@graphql-codegen/cli` with client preset for type-safe document nodes
+- Generates types in `src/classes/graphql/types.ts` from schema at `http://graphql.mint.local/v1/graphql`
 
 ## Architecture Overview
 

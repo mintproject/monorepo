@@ -87,12 +87,15 @@ export class TapisJobService {
             const modelParameter = model.input_parameters.find(
                 (parameter) => parameter.name === parameterSet.name
             );
-            if (!modelParameter) {
-                throw new Error(`Model parameter not found for ${parameterSet.name}`);
+            const arg = modelParameter ? seed.parameters[modelParameter.id] : parameterSet.arg;
+            if (arg === undefined) {
+                throw new Error(
+                    `Tapis Job Input Parameter value ${parameterSet.name} could not be found. Tapis Job (app ${app.id}/${app.version}) requires this parameter. The model ${model.id} (${model.name}) has the following parameters: ${model.input_parameters.map((p) => p.name).join(", ")}`
+                );
             }
             return {
                 name: parameterSet.name,
-                arg: seed.parameters[modelParameter.id]
+                arg: arg
             } as Jobs.JobArgSpec;
         });
     }

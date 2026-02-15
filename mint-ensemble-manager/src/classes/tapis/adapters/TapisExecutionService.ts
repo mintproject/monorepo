@@ -119,10 +119,10 @@ export class TapisExecutionService implements IExecutionService {
                 const jobId = await this.submitSingleExecution(app, seed, model, threadId);
                 submittedExecutions.push({ execution: seed.execution, jobId });
             } catch (error) {
-                console.error("Error submitting single execution", JSON.stringify(error));
+                console.error("Error submitting single execution:", error instanceof Error ? error.message : String(error));
+                console.error("Full error details:", error);
                 await this.handleSingleExecutionFailure(seed, error, threadModelId);
 
-                // Create a serializable error object
                 const serializableError: SerializableError = {
                     message: error instanceof Error ? error.message : String(error),
                     stack: error instanceof Error ? error.stack : undefined,
@@ -178,6 +178,7 @@ export class TapisExecutionService implements IExecutionService {
                 `Failed to update execution status for ${seed.execution.id}:`,
                 statusUpdateError
             );
+            throw statusUpdateError;
         }
 
         await decrementThreadModelSubmittedRuns(threadModelId);
@@ -188,9 +189,20 @@ export class TapisExecutionService implements IExecutionService {
     ): void {
         if (failedExecutions.length > 0) {
             if (failedExecutions.length === this.seeds.length) {
-                throw new Error("All jobs failed to submit");
+                const errorMessages: string[] = [];
+                failedExecutions.forEach((fe) => {
+                    const errorMsg = `Execution ${fe.execution.id} failed: ${fe.error.message}`;
+                    console.error(errorMsg);
+                    console.error("Full error details for execution", fe.execution.id, ":", fe.error);
+                    errorMessages.push(fe.error.message);
+                });
+                throw new Error("All jobs failed to submit - " + errorMessages.join("; "));
             } else {
-                console.warn("Some jobs failed to submit:", failedExecutions);
+                console.warn("Some jobs failed to submit:");
+                failedExecutions.forEach((fe) => {
+                    console.warn(`Execution ${fe.execution.id} failed: ${fe.error.message}`);
+                    console.warn("Full error details for execution", fe.execution.id, ":", fe.error);
+                });
             }
         }
     }

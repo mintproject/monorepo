@@ -534,24 +534,35 @@ const subTasksService: SubTasksService = {
         let submissionResult: SubmissionResult = { submittedExecutions: [], failedExecutions: [] };
 
         if (executionCreation.executionToBeRun.length > 0) {
-            submissionResult = await executionService.submitExecutions(
-                executionCreation.executionToBeRun,
-                executionCreation.model,
-                executionCreation.threadRegion,
-                executionCreation.component,
-                subtask.id,
-                subtask.model_ensembles[w3id].id
-            );
-            if (submissionResult.failedExecutions.length > 0) {
-                console.warn(
-                    "Some executions failed to submit:",
-                    submissionResult.failedExecutions
+            try {
+                submissionResult = await executionService.submitExecutions(
+                    executionCreation.executionToBeRun,
+                    executionCreation.model,
+                    executionCreation.threadRegion,
+                    executionCreation.component,
+                    subtask.id,
+                    subtask.model_ensembles[w3id].id
                 );
+                if (submissionResult.failedExecutions.length > 0) {
+                    console.warn(
+                        "Some executions failed to submit:",
+                        submissionResult.failedExecutions
+                    );
+                    // Log detailed error information for each failed execution
+                    submissionResult.failedExecutions.forEach((failedExecution) => {
+                        console.error(`Execution ${failedExecution.execution.id} failed:`, failedExecution.error.message);
+                        console.error("Full error details:", failedExecution.error);
+                    });
+                }
+                console.log(
+                    "Successfully submitted executions:",
+                    submissionResult.submittedExecutions.length
+                );
+            } catch (error) {
+                console.error("Error during execution submission:", error instanceof Error ? error.message : String(error));
+                console.error("Full error details:", error);
+                throw new InternalServerError(`Failed to submit executions: ${error instanceof Error ? error.message : String(error)}`);
             }
-            console.log(
-                "Successfully submitted executions:",
-                submissionResult.submittedExecutions.length
-            );
         } else {
             console.log("No executions to run");
         }
