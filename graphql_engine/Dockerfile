@@ -1,5 +1,6 @@
 FROM hasura/graphql-engine:v2.10.2
-RUN apt-get update && apt-get install -y \
+RUN rm -f /etc/apt/sources.list.d/pgdg.list \
+    && apt-get update && apt-get install -y \
     curl \
     postgresql-client-common \
     && rm -rf /var/lib/apt/lists/*
