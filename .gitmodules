@@ -1,0 +1,3 @@
+[submodule "graphql_engine"]
+	path = graphql_engine
+	url = https://github.com/mintproject/graphql_engine.git

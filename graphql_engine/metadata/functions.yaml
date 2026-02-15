@@ -1,6 +1,0 @@
-- function:
-    name: find_regions_containing_point
-    schema: public
-- function:
-    name: find_regions_containing_point_fuzzy
-    schema: public
