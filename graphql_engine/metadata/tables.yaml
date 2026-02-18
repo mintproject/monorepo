@@ -2931,6 +2931,48 @@
           table:
             name: modelcatalog_model_configuration
             schema: public
+    - name: categories
+      using:
+        foreign_key_constraint_on:
+          column: software_version_id
+          table:
+            name: modelcatalog_software_version_category
+            schema: public
+    - name: processes
+      using:
+        foreign_key_constraint_on:
+          column: software_version_id
+          table:
+            name: modelcatalog_software_version_process
+            schema: public
+    - name: grids
+      using:
+        foreign_key_constraint_on:
+          column: software_version_id
+          table:
+            name: modelcatalog_software_version_grid
+            schema: public
+    - name: explanation_diagrams
+      using:
+        foreign_key_constraint_on:
+          column: software_version_id
+          table:
+            name: modelcatalog_software_version_image
+            schema: public
+    - name: input_variables
+      using:
+        foreign_key_constraint_on:
+          column: software_version_id
+          table:
+            name: modelcatalog_software_version_input_variable
+            schema: public
+    - name: output_variables
+      using:
+        foreign_key_constraint_on:
+          column: software_version_id
+          table:
+            name: modelcatalog_software_version_output_variable
+            schema: public
   select_permissions:
     - role: anonymous
       permission:
@@ -2944,6 +2986,11 @@
           - has_usage_notes
           - date_created
           - has_source_code
+          - short_description
+          - limitations
+          - parameterization
+          - runtime_estimation
+          - theoretical_basis
         filter: {}
     - role: user
       permission:
@@ -2957,6 +3004,11 @@
           - has_usage_notes
           - date_created
           - has_source_code
+          - short_description
+          - limitations
+          - parameterization
+          - runtime_estimation
+          - theoretical_basis
         filter: {}
 - table:
     name: modelcatalog_model_configuration
@@ -2994,6 +3046,27 @@
           table:
             name: modelcatalog_configuration_parameter
             schema: public
+    - name: causal_diagrams
+      using:
+        foreign_key_constraint_on:
+          column: configuration_id
+          table:
+            name: modelcatalog_configuration_causal_diagram
+            schema: public
+    - name: time_intervals
+      using:
+        foreign_key_constraint_on:
+          column: configuration_id
+          table:
+            name: modelcatalog_configuration_time_interval
+            schema: public
+    - name: regions
+      using:
+        foreign_key_constraint_on:
+          column: configuration_id
+          table:
+            name: modelcatalog_configuration_region
+            schema: public
   select_permissions:
     - role: anonymous
       permission:
@@ -3007,6 +3080,7 @@
           - has_component_location
           - has_implementation_script_location
           - has_software_image
+          - has_model_result_table
         filter: {}
     - role: user
       permission:
@@ -3020,6 +3094,7 @@
           - has_component_location
           - has_implementation_script_location
           - has_software_image
+          - has_model_result_table
         filter: {}
 - table:
     name: modelcatalog_model_configuration_setup
@@ -3028,6 +3103,9 @@
     - name: model_configuration
       using:
         foreign_key_constraint_on: model_configuration_id
+    - name: author
+      using:
+        foreign_key_constraint_on: author_id
   array_relationships:
     - name: inputs
       using:
@@ -3050,6 +3128,27 @@
           table:
             name: modelcatalog_setup_parameter
             schema: public
+    - name: authors
+      using:
+        foreign_key_constraint_on:
+          column: setup_id
+          table:
+            name: modelcatalog_setup_author
+            schema: public
+    - name: calibrated_variables
+      using:
+        foreign_key_constraint_on:
+          column: setup_id
+          table:
+            name: modelcatalog_setup_calibrated_variable
+            schema: public
+    - name: calibration_targets
+      using:
+        foreign_key_constraint_on:
+          column: setup_id
+          table:
+            name: modelcatalog_setup_calibration_target
+            schema: public
   select_permissions:
     - role: anonymous
       permission:
@@ -3062,6 +3161,11 @@
           - has_implementation_script_location
           - has_software_image
           - has_region
+          - author_id
+          - calibration_interval
+          - calibration_method
+          - parameter_assignment_method
+          - valid_until
         filter: {}
     - role: user
       permission:
@@ -3074,6 +3178,11 @@
           - has_implementation_script_location
           - has_software_image
           - has_region
+          - author_id
+          - calibration_interval
+          - calibration_method
+          - parameter_assignment_method
+          - valid_until
         filter: {}
 - table:
     name: modelcatalog_dataset_specification
@@ -3145,6 +3254,13 @@
           column: parameter_id
           table:
             name: modelcatalog_setup_parameter
+            schema: public
+    - name: interventions
+      using:
+        foreign_key_constraint_on:
+          column: parameter_id
+          table:
+            name: modelcatalog_parameter_intervention
             schema: public
   select_permissions:
     - role: anonymous
