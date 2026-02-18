@@ -28,11 +28,13 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. Every Software, SoftwareVersion, ModelConfiguration, and ModelConfigurationSetup entity from the TriG dump exists in the corresponding PostgreSQL table
   4. Entity counts match between source (TriG/JSON) and target (PostgreSQL) for every entity type
   5. Sample entities spot-checked for correct field values, FK relationships, and multi-valued properties
-**Plans:** 2 plans
+**Plans:** 4 plans
 
 Plans:
-- [ ] 01-01-PLAN.md -- Schema design: create modelcatalog_* tables (12 tables) and Hasura metadata with relationships
-- [ ] 01-02-PLAN.md -- ETL pipeline: extract from TriG, transform with FK inversion, load into PostgreSQL, validate counts
+- [x] 01-01-PLAN.md -- Schema design: create modelcatalog_* tables (12 tables) and Hasura metadata with relationships
+- [x] 01-02-PLAN.md -- ETL pipeline: extract from TriG, transform with FK inversion, load into PostgreSQL, validate counts
+- [ ] 01-03-PLAN.md -- Gap closure: extended schema migration adding 10 entity tables, 14 junction tables, and columns for missing ontology properties
+- [ ] 01-04-PLAN.md -- Gap closure: Hasura metadata for all new tables and updated relationships/permissions
 
 ### Phase 2: API Integration
 **Goal**: FastAPI REST endpoints and Ensemble Manager read model catalog data from Hasura/PostgreSQL instead of Fuseki, with zero breaking changes to API consumers
@@ -72,6 +74,6 @@ Phases execute in numeric order: 1 -> 2 -> 3
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Schema and Data Migration | 0/2 | Not started | - |
+| 1. Schema and Data Migration | 2/4 | In progress | - |
 | 2. API Integration | 0/2 | Not started | - |
 | 3. FK Migration and Cleanup | 0/2 | Not started | - |
