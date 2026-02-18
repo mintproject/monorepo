@@ -3429,3 +3429,654 @@
           - setup_id
           - parameter_id
         filter: {}
+- table:
+    name: modelcatalog_person
+    schema: public
+  array_relationships:
+    - name: setup_authors
+      using:
+        foreign_key_constraint_on:
+          column: person_id
+          table:
+            name: modelcatalog_setup_author
+            schema: public
+  select_permissions:
+    - role: anonymous
+      permission:
+        columns:
+          - id
+          - label
+          - name
+        filter: {}
+    - role: user
+      permission:
+        columns:
+          - id
+          - label
+          - name
+        filter: {}
+- table:
+    name: modelcatalog_model_category
+    schema: public
+  object_relationships:
+    - name: parent_category
+      using:
+        foreign_key_constraint_on: parent_category_id
+  array_relationships:
+    - name: subcategories
+      using:
+        foreign_key_constraint_on:
+          column: parent_category_id
+          table:
+            name: modelcatalog_model_category
+            schema: public
+    - name: software_versions
+      using:
+        foreign_key_constraint_on:
+          column: category_id
+          table:
+            name: modelcatalog_software_version_category
+            schema: public
+  select_permissions:
+    - role: anonymous
+      permission:
+        columns:
+          - id
+          - label
+          - parent_category_id
+        filter: {}
+    - role: user
+      permission:
+        columns:
+          - id
+          - label
+          - parent_category_id
+        filter: {}
+- table:
+    name: modelcatalog_region
+    schema: public
+  object_relationships:
+    - name: part_of
+      using:
+        foreign_key_constraint_on: part_of_id
+  array_relationships:
+    - name: subregions
+      using:
+        foreign_key_constraint_on:
+          column: part_of_id
+          table:
+            name: modelcatalog_region
+            schema: public
+    - name: configurations
+      using:
+        foreign_key_constraint_on:
+          column: region_id
+          table:
+            name: modelcatalog_configuration_region
+            schema: public
+  select_permissions:
+    - role: anonymous
+      permission:
+        columns:
+          - id
+          - label
+          - description
+          - part_of_id
+        filter: {}
+    - role: user
+      permission:
+        columns:
+          - id
+          - label
+          - description
+          - part_of_id
+        filter: {}
+- table:
+    name: modelcatalog_process
+    schema: public
+  array_relationships:
+    - name: software_versions
+      using:
+        foreign_key_constraint_on:
+          column: process_id
+          table:
+            name: modelcatalog_software_version_process
+            schema: public
+  select_permissions:
+    - role: anonymous
+      permission:
+        columns:
+          - id
+          - label
+        filter: {}
+    - role: user
+      permission:
+        columns:
+          - id
+          - label
+        filter: {}
+- table:
+    name: modelcatalog_time_interval
+    schema: public
+  array_relationships:
+    - name: configurations
+      using:
+        foreign_key_constraint_on:
+          column: time_interval_id
+          table:
+            name: modelcatalog_configuration_time_interval
+            schema: public
+  select_permissions:
+    - role: anonymous
+      permission:
+        columns:
+          - id
+          - label
+          - description
+          - interval_value
+          - interval_unit
+        filter: {}
+    - role: user
+      permission:
+        columns:
+          - id
+          - label
+          - description
+          - interval_value
+          - interval_unit
+        filter: {}
+- table:
+    name: modelcatalog_causal_diagram
+    schema: public
+  array_relationships:
+    - name: configurations
+      using:
+        foreign_key_constraint_on:
+          column: causal_diagram_id
+          table:
+            name: modelcatalog_configuration_causal_diagram
+            schema: public
+    - name: diagram_parts
+      using:
+        foreign_key_constraint_on:
+          column: causal_diagram_id
+          table:
+            name: modelcatalog_diagram_part
+            schema: public
+  select_permissions:
+    - role: anonymous
+      permission:
+        columns:
+          - id
+          - label
+        filter: {}
+    - role: user
+      permission:
+        columns:
+          - id
+          - label
+        filter: {}
+- table:
+    name: modelcatalog_image
+    schema: public
+  array_relationships:
+    - name: software_versions
+      using:
+        foreign_key_constraint_on:
+          column: image_id
+          table:
+            name: modelcatalog_software_version_image
+            schema: public
+  select_permissions:
+    - role: anonymous
+      permission:
+        columns:
+          - id
+          - label
+          - description
+        filter: {}
+    - role: user
+      permission:
+        columns:
+          - id
+          - label
+          - description
+        filter: {}
+- table:
+    name: modelcatalog_variable_presentation
+    schema: public
+  array_relationships:
+    - name: input_variable_of
+      using:
+        foreign_key_constraint_on:
+          column: variable_id
+          table:
+            name: modelcatalog_software_version_input_variable
+            schema: public
+    - name: output_variable_of
+      using:
+        foreign_key_constraint_on:
+          column: variable_id
+          table:
+            name: modelcatalog_software_version_output_variable
+            schema: public
+    - name: calibrated_in
+      using:
+        foreign_key_constraint_on:
+          column: variable_id
+          table:
+            name: modelcatalog_setup_calibrated_variable
+            schema: public
+    - name: calibration_target_in
+      using:
+        foreign_key_constraint_on:
+          column: variable_id
+          table:
+            name: modelcatalog_setup_calibration_target
+            schema: public
+  select_permissions:
+    - role: anonymous
+      permission:
+        columns:
+          - id
+          - label
+          - description
+          - has_long_name
+          - has_short_name
+          - has_standard_variable
+          - uses_unit
+        filter: {}
+    - role: user
+      permission:
+        columns:
+          - id
+          - label
+          - description
+          - has_long_name
+          - has_short_name
+          - has_standard_variable
+          - uses_unit
+        filter: {}
+- table:
+    name: modelcatalog_intervention
+    schema: public
+  array_relationships:
+    - name: parameters
+      using:
+        foreign_key_constraint_on:
+          column: intervention_id
+          table:
+            name: modelcatalog_parameter_intervention
+            schema: public
+  select_permissions:
+    - role: anonymous
+      permission:
+        columns:
+          - id
+          - label
+          - description
+        filter: {}
+    - role: user
+      permission:
+        columns:
+          - id
+          - label
+          - description
+        filter: {}
+- table:
+    name: modelcatalog_grid
+    schema: public
+  array_relationships:
+    - name: software_versions
+      using:
+        foreign_key_constraint_on:
+          column: grid_id
+          table:
+            name: modelcatalog_software_version_grid
+            schema: public
+  select_permissions:
+    - role: anonymous
+      permission:
+        columns:
+          - id
+          - label
+          - description
+          - has_dimension
+          - has_shape
+          - has_spatial_resolution
+          - has_coordinate_system
+          - grid_type
+        filter: {}
+    - role: user
+      permission:
+        columns:
+          - id
+          - label
+          - description
+          - has_dimension
+          - has_shape
+          - has_spatial_resolution
+          - has_coordinate_system
+          - grid_type
+        filter: {}
+- table:
+    name: modelcatalog_software_version_category
+    schema: public
+  object_relationships:
+    - name: software_version
+      using:
+        foreign_key_constraint_on: software_version_id
+    - name: category
+      using:
+        foreign_key_constraint_on: category_id
+  select_permissions:
+    - role: anonymous
+      permission:
+        columns:
+          - software_version_id
+          - category_id
+        filter: {}
+    - role: user
+      permission:
+        columns:
+          - software_version_id
+          - category_id
+        filter: {}
+- table:
+    name: modelcatalog_software_version_process
+    schema: public
+  object_relationships:
+    - name: software_version
+      using:
+        foreign_key_constraint_on: software_version_id
+    - name: process
+      using:
+        foreign_key_constraint_on: process_id
+  select_permissions:
+    - role: anonymous
+      permission:
+        columns:
+          - software_version_id
+          - process_id
+        filter: {}
+    - role: user
+      permission:
+        columns:
+          - software_version_id
+          - process_id
+        filter: {}
+- table:
+    name: modelcatalog_software_version_grid
+    schema: public
+  object_relationships:
+    - name: software_version
+      using:
+        foreign_key_constraint_on: software_version_id
+    - name: grid
+      using:
+        foreign_key_constraint_on: grid_id
+  select_permissions:
+    - role: anonymous
+      permission:
+        columns:
+          - software_version_id
+          - grid_id
+        filter: {}
+    - role: user
+      permission:
+        columns:
+          - software_version_id
+          - grid_id
+        filter: {}
+- table:
+    name: modelcatalog_software_version_image
+    schema: public
+  object_relationships:
+    - name: software_version
+      using:
+        foreign_key_constraint_on: software_version_id
+    - name: image
+      using:
+        foreign_key_constraint_on: image_id
+  select_permissions:
+    - role: anonymous
+      permission:
+        columns:
+          - software_version_id
+          - image_id
+        filter: {}
+    - role: user
+      permission:
+        columns:
+          - software_version_id
+          - image_id
+        filter: {}
+- table:
+    name: modelcatalog_software_version_input_variable
+    schema: public
+  object_relationships:
+    - name: software_version
+      using:
+        foreign_key_constraint_on: software_version_id
+    - name: variable
+      using:
+        foreign_key_constraint_on: variable_id
+  select_permissions:
+    - role: anonymous
+      permission:
+        columns:
+          - software_version_id
+          - variable_id
+        filter: {}
+    - role: user
+      permission:
+        columns:
+          - software_version_id
+          - variable_id
+        filter: {}
+- table:
+    name: modelcatalog_software_version_output_variable
+    schema: public
+  object_relationships:
+    - name: software_version
+      using:
+        foreign_key_constraint_on: software_version_id
+    - name: variable
+      using:
+        foreign_key_constraint_on: variable_id
+  select_permissions:
+    - role: anonymous
+      permission:
+        columns:
+          - software_version_id
+          - variable_id
+        filter: {}
+    - role: user
+      permission:
+        columns:
+          - software_version_id
+          - variable_id
+        filter: {}
+- table:
+    name: modelcatalog_configuration_causal_diagram
+    schema: public
+  object_relationships:
+    - name: configuration
+      using:
+        foreign_key_constraint_on: configuration_id
+    - name: causal_diagram
+      using:
+        foreign_key_constraint_on: causal_diagram_id
+  select_permissions:
+    - role: anonymous
+      permission:
+        columns:
+          - configuration_id
+          - causal_diagram_id
+        filter: {}
+    - role: user
+      permission:
+        columns:
+          - configuration_id
+          - causal_diagram_id
+        filter: {}
+- table:
+    name: modelcatalog_configuration_time_interval
+    schema: public
+  object_relationships:
+    - name: configuration
+      using:
+        foreign_key_constraint_on: configuration_id
+    - name: time_interval
+      using:
+        foreign_key_constraint_on: time_interval_id
+  select_permissions:
+    - role: anonymous
+      permission:
+        columns:
+          - configuration_id
+          - time_interval_id
+        filter: {}
+    - role: user
+      permission:
+        columns:
+          - configuration_id
+          - time_interval_id
+        filter: {}
+- table:
+    name: modelcatalog_configuration_region
+    schema: public
+  object_relationships:
+    - name: configuration
+      using:
+        foreign_key_constraint_on: configuration_id
+    - name: region
+      using:
+        foreign_key_constraint_on: region_id
+  select_permissions:
+    - role: anonymous
+      permission:
+        columns:
+          - configuration_id
+          - region_id
+        filter: {}
+    - role: user
+      permission:
+        columns:
+          - configuration_id
+          - region_id
+        filter: {}
+- table:
+    name: modelcatalog_setup_author
+    schema: public
+  object_relationships:
+    - name: setup
+      using:
+        foreign_key_constraint_on: setup_id
+    - name: person
+      using:
+        foreign_key_constraint_on: person_id
+  select_permissions:
+    - role: anonymous
+      permission:
+        columns:
+          - setup_id
+          - person_id
+        filter: {}
+    - role: user
+      permission:
+        columns:
+          - setup_id
+          - person_id
+        filter: {}
+- table:
+    name: modelcatalog_setup_calibrated_variable
+    schema: public
+  object_relationships:
+    - name: setup
+      using:
+        foreign_key_constraint_on: setup_id
+    - name: variable
+      using:
+        foreign_key_constraint_on: variable_id
+  select_permissions:
+    - role: anonymous
+      permission:
+        columns:
+          - setup_id
+          - variable_id
+        filter: {}
+    - role: user
+      permission:
+        columns:
+          - setup_id
+          - variable_id
+        filter: {}
+- table:
+    name: modelcatalog_setup_calibration_target
+    schema: public
+  object_relationships:
+    - name: setup
+      using:
+        foreign_key_constraint_on: setup_id
+    - name: variable
+      using:
+        foreign_key_constraint_on: variable_id
+  select_permissions:
+    - role: anonymous
+      permission:
+        columns:
+          - setup_id
+          - variable_id
+        filter: {}
+    - role: user
+      permission:
+        columns:
+          - setup_id
+          - variable_id
+        filter: {}
+- table:
+    name: modelcatalog_parameter_intervention
+    schema: public
+  object_relationships:
+    - name: parameter
+      using:
+        foreign_key_constraint_on: parameter_id
+    - name: intervention
+      using:
+        foreign_key_constraint_on: intervention_id
+  select_permissions:
+    - role: anonymous
+      permission:
+        columns:
+          - parameter_id
+          - intervention_id
+        filter: {}
+    - role: user
+      permission:
+        columns:
+          - parameter_id
+          - intervention_id
+        filter: {}
+- table:
+    name: modelcatalog_diagram_part
+    schema: public
+  object_relationships:
+    - name: causal_diagram
+      using:
+        foreign_key_constraint_on: causal_diagram_id
+  select_permissions:
+    - role: anonymous
+      permission:
+        columns:
+          - causal_diagram_id
+          - part_id
+          - part_type
+        filter: {}
+    - role: user
+      permission:
+        columns:
+          - causal_diagram_id
+          - part_id
+          - part_type
+        filter: {}
