@@ -28,15 +28,16 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. Every Software, SoftwareVersion, ModelConfiguration, and ModelConfigurationSetup entity from the TriG dump exists in the corresponding PostgreSQL table
   4. Entity counts match between source (TriG/JSON) and target (PostgreSQL) for every entity type
   5. Sample entities spot-checked for correct field values, FK relationships, and multi-valued properties
-**Plans:** 6 plans
+**Plans:** 7 plans
 
 Plans:
 - [x] 01-01-PLAN.md -- Schema design: create modelcatalog_* tables (12 tables) and Hasura metadata with relationships
 - [x] 01-02-PLAN.md -- ETL pipeline: extract from TriG, transform with FK inversion, load into PostgreSQL, validate counts
 - [x] 01-03-PLAN.md -- Gap closure: extended schema migration adding 10 entity tables, 14 junction tables, and columns for missing ontology properties
 - [x] 01-04-PLAN.md -- Gap closure: Hasura metadata for all new tables and updated relationships/permissions
-- [ ] 01-05-PLAN.md -- Gap closure: extend ETL extraction and transformation for 10 new entity types, 14 junction tables, and 11 new columns
-- [ ] 01-06-PLAN.md -- Gap closure: extend ETL loading and validation for all 36 tables, execute pipeline, verify data population
+- [ ] 01-05-PLAN.md -- Gap closure: extend ETL extraction for 10 new entity types, 14 link sets, and new columns on existing types
+- [ ] 01-06-PLAN.md -- Gap closure: extend ETL transformation with dedup, label derivation, FK resolution, and 14 new junction table builders
+- [ ] 01-07-PLAN.md -- Gap closure: extend ETL loading and validation for all 36 tables, execute pipeline, verify data population
 
 ### Phase 2: API Integration
 **Goal**: FastAPI REST endpoints and Ensemble Manager read model catalog data from Hasura/PostgreSQL instead of Fuseki, with zero breaking changes to API consumers
@@ -76,6 +77,6 @@ Phases execute in numeric order: 1 -> 2 -> 3
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Schema and Data Migration | 4/6 | In progress | - |
+| 1. Schema and Data Migration | 4/7 | In progress | - |
 | 2. API Integration | 0/2 | Not started | - |
 | 3. FK Migration and Cleanup | 0/2 | Not started | - |
