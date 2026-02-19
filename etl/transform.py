@@ -147,10 +147,47 @@ def build_extended_junction_tables(extracted_data: Dict[str, Any]) -> Dict[str, 
     valid_grid_ids = {e['id'] for e in extracted_data['grids']}
 
     # Also need valid IDs for existing entity types (for FK validation)
+    valid_software_ids = {e['id'] for e in extracted_data['software']}
     valid_software_version_ids = {e['id'] for e in extracted_data['software_versions']}
     valid_configuration_ids = {e['id'] for e in extracted_data['model_configurations']}
     valid_setup_ids = {e['id'] for e in extracted_data['model_configuration_setups']}
     valid_parameter_ids = {e['id'] for e in extracted_data['parameters']}
+
+    # Software author junction table
+    software_author_rows = []
+    for sw_id, author_ids in links.get('software_to_author', {}).items():
+        if sw_id not in valid_software_ids:
+            continue
+        for author_id in author_ids:
+            if author_id in valid_person_ids:
+                software_author_rows.append({
+                    'software_id': sw_id,
+                    'person_id': author_id,
+                })
+
+    # SoftwareVersion author junction table
+    version_author_rows = []
+    for ver_id, author_ids in links.get('version_to_author', {}).items():
+        if ver_id not in valid_software_version_ids:
+            continue
+        for author_id in author_ids:
+            if author_id in valid_person_ids:
+                version_author_rows.append({
+                    'software_version_id': ver_id,
+                    'person_id': author_id,
+                })
+
+    # ModelConfiguration author junction table
+    configuration_author_rows = []
+    for cfg_id, author_ids in links.get('config_to_author', {}).items():
+        if cfg_id not in valid_configuration_ids:
+            continue
+        for author_id in author_ids:
+            if author_id in valid_person_ids:
+                configuration_author_rows.append({
+                    'configuration_id': cfg_id,
+                    'person_id': author_id,
+                })
 
     # SoftwareVersion junction tables (6)
     version_category_rows = []
@@ -385,6 +422,9 @@ def build_extended_junction_tables(extracted_data: Dict[str, Any]) -> Dict[str, 
                 skipped_diagram_part += 1
 
     print(f"Built extended junction tables:")
+    print(f"  - software_author: {len(software_author_rows)} rows")
+    print(f"  - version_author: {len(version_author_rows)} rows")
+    print(f"  - configuration_author: {len(configuration_author_rows)} rows")
     print(f"  - software_version_category: {len(version_category_rows)} rows")
     print(f"  - software_version_process: {len(version_process_rows)} rows")
     print(f"  - software_version_grid: {len(version_grid_rows)} rows")
@@ -409,6 +449,9 @@ def build_extended_junction_tables(extracted_data: Dict[str, Any]) -> Dict[str, 
         print(f"  - Skipped {total_skipped} junction rows referencing missing entities")
 
     return {
+        'modelcatalog_software_author': software_author_rows,
+        'modelcatalog_version_author': version_author_rows,
+        'modelcatalog_configuration_author': configuration_author_rows,
         'modelcatalog_software_version_category': version_category_rows,
         'modelcatalog_software_version_process': version_process_rows,
         'modelcatalog_software_version_grid': version_grid_rows,
@@ -621,6 +664,22 @@ def transform_all(extracted_data: Dict[str, Any]) -> Dict[str, List[Dict[str, An
                 region['part_of_id'] = None
         else:
             region['part_of_id'] = None
+
+    # Validate author_id FK on Software, SoftwareVersion, ModelConfiguration
+    # Some sd:author values reference URIs that aren't sd:Person typed
+    valid_person_ids = {e['id'] for e in extracted_data['persons']}
+    for entity in transformed['software']:
+        if entity.get('author_id') and entity['author_id'] not in valid_person_ids:
+            entity['author_id'] = None
+    for entity in transformed['software_versions']:
+        if entity.get('author_id') and entity['author_id'] not in valid_person_ids:
+            entity['author_id'] = None
+    for entity in transformed['model_configurations']:
+        if entity.get('author_id') and entity['author_id'] not in valid_person_ids:
+            entity['author_id'] = None
+    for entity in transformed['model_configuration_setups']:
+        if entity.get('author_id') and entity['author_id'] not in valid_person_ids:
+            entity['author_id'] = None
 
     # Build junction table rows (original 6)
     junction_tables = build_junction_tables(extracted_data)

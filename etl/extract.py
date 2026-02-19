@@ -96,8 +96,36 @@ def extract_software(ds: Graph) -> List[Dict[str, Any]]:
             version_links[software_id] = []
         version_links[software_id].append(version_id)
 
+    # Extract author links
+    author_links = {}
+    author_query = f"""
+    PREFIX sd: <{config.SD}>
+    PREFIX sdm: <{config.SDM}>
+
+    SELECT DISTINCT ?software ?author
+    WHERE {{
+        ?software a <{config.TYPE_SOFTWARE}> .
+        ?software sd:author ?author .
+    }}
+    """
+
+    for row in ds.query(author_query):
+        software_id = str(row.software)
+        author_id = str(row.author)
+        if software_id not in author_links:
+            author_links[software_id] = []
+        author_links[software_id].append(author_id)
+
+    # Set single-valued author_id on entities (first author)
+    author_first = {}
+    for sw_id, authors in author_links.items():
+        if authors:
+            author_first[sw_id] = authors[0]
+    for entity in results:
+        entity['author_id'] = author_first.get(entity['id'])
+
     print(f"Extracted {len(results)} Software entities")
-    return results, version_links
+    return results, version_links, author_links
 
 
 def extract_software_versions(ds: Graph) -> List[Dict[str, Any]]:
@@ -281,6 +309,33 @@ def extract_software_versions(ds: Graph) -> List[Dict[str, Any]]:
             output_variable_links[version_id] = []
         output_variable_links[version_id].append(variable_id)
 
+    # Extract author links
+    author_links = {}
+    author_query = f"""
+    PREFIX sd: <{config.SD}>
+
+    SELECT DISTINCT ?version ?author
+    WHERE {{
+        ?version a <{config.TYPE_SOFTWARE_VERSION}> .
+        ?version sd:author ?author .
+    }}
+    """
+
+    for row in ds.query(author_query):
+        version_id = str(row.version)
+        author_id = str(row.author)
+        if version_id not in author_links:
+            author_links[version_id] = []
+        author_links[version_id].append(author_id)
+
+    # Set single-valued author_id on entities (first author)
+    author_first = {}
+    for ver_id, authors in author_links.items():
+        if authors:
+            author_first[ver_id] = authors[0]
+    for entity in results:
+        entity['author_id'] = author_first.get(entity['id'])
+
     print(f"Extracted {len(results)} SoftwareVersion entities")
     return results, {
         'configuration': configuration_links,
@@ -290,6 +345,7 @@ def extract_software_versions(ds: Graph) -> List[Dict[str, Any]]:
         'image': image_links,
         'input_variable': input_variable_links,
         'output_variable': output_variable_links,
+        'author': author_links,
     }
 
 
@@ -469,6 +525,34 @@ def extract_model_configurations(ds: Graph) -> List[Dict[str, Any]]:
             region_links[config_id] = []
         region_links[config_id].append(region_id)
 
+    # Extract author links
+    author_links = {}
+    author_query = f"""
+    PREFIX sd: <{config.SD}>
+    PREFIX sdm: <{config.SDM}>
+
+    SELECT DISTINCT ?configuration ?author
+    WHERE {{
+        ?configuration a <{config.TYPE_MODEL_CONFIGURATION}> .
+        ?configuration sd:author ?author .
+    }}
+    """
+
+    for row in ds.query(author_query):
+        config_id = str(row.configuration)
+        author_id = str(row.author)
+        if config_id not in author_links:
+            author_links[config_id] = []
+        author_links[config_id].append(author_id)
+
+    # Set single-valued author_id on entities (first author)
+    author_first = {}
+    for cfg_id, authors in author_links.items():
+        if authors:
+            author_first[cfg_id] = authors[0]
+    for entity in results:
+        entity['author_id'] = author_first.get(entity['id'])
+
     print(f"Extracted {len(results)} ModelConfiguration entities")
     return results, {
         'setup': setup_links,
@@ -478,6 +562,7 @@ def extract_model_configurations(ds: Graph) -> List[Dict[str, Any]]:
         'causal_diagram': causal_diagram_links,
         'time_interval': time_interval_links,
         'region': region_links,
+        'author': author_links,
     }
 
 
@@ -1093,7 +1178,7 @@ def extract_all(trig_path: str) -> Dict[str, Any]:
     ds = load_dataset(trig_path)
 
     # Extract original entities
-    software, version_links = extract_software(ds)
+    software, version_links, software_author_links = extract_software(ds)
     software_versions, version_link_dicts = extract_software_versions(ds)
     model_configurations, config_link_dicts = extract_model_configurations(ds)
     model_configuration_setups, setup_link_dicts = extract_model_configuration_setups(ds)
@@ -1135,6 +1220,9 @@ def extract_all(trig_path: str) -> Dict[str, Any]:
         'links': {
             # Original links
             'software_to_version': version_links,
+            'software_to_author': software_author_links,
+            'version_to_author': version_link_dicts.get('author', {}),
+            'config_to_author': config_link_dicts.get('author', {}),
             'version_to_configuration': version_link_dicts.get('configuration', {}),
             'configuration': config_link_dicts,
             'setup': setup_link_dicts,

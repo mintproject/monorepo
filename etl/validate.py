@@ -114,6 +114,9 @@ def validate_junction_tables(conn) -> bool:
 
     # New junction tables - may have 0 rows (WARN on 0)
     new_junction_tables = [
+        'modelcatalog_software_author',
+        'modelcatalog_version_author',
+        'modelcatalog_configuration_author',
         'modelcatalog_software_version_category',
         'modelcatalog_software_version_process',
         'modelcatalog_software_version_grid',
