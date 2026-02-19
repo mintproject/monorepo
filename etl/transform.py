@@ -127,6 +127,305 @@ def invert_fk_relationships(extracted_data: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
+def build_extended_junction_tables(extracted_data: Dict[str, Any]) -> Dict[str, List[Dict[str, str]]]:
+    """
+    Build 14 new junction table rows with FK validation.
+    Only include references to entities that exist in our extracted data.
+    """
+    links = extracted_data['links']
+
+    # Build sets of valid IDs for FK validation (new entity types)
+    valid_person_ids = {e['id'] for e in extracted_data['persons']}
+    valid_category_ids = {e['id'] for e in extracted_data['model_categories']}
+    valid_region_ids = {e['id'] for e in extracted_data['regions']}
+    valid_process_ids = {e['id'] for e in extracted_data['processes']}
+    valid_time_interval_ids = {e['id'] for e in extracted_data['time_intervals']}
+    valid_causal_diagram_ids = {e['id'] for e in extracted_data['causal_diagrams']}
+    valid_image_ids = {e['id'] for e in extracted_data['images']}
+    valid_variable_ids = {e['id'] for e in extracted_data['variable_presentations']}
+    valid_intervention_ids = {e['id'] for e in extracted_data['interventions']}
+    valid_grid_ids = {e['id'] for e in extracted_data['grids']}
+
+    # Also need valid IDs for existing entity types (for FK validation)
+    valid_software_version_ids = {e['id'] for e in extracted_data['software_versions']}
+    valid_configuration_ids = {e['id'] for e in extracted_data['model_configurations']}
+    valid_setup_ids = {e['id'] for e in extracted_data['model_configuration_setups']}
+    valid_parameter_ids = {e['id'] for e in extracted_data['parameters']}
+
+    # SoftwareVersion junction tables (6)
+    version_category_rows = []
+    version_process_rows = []
+    version_grid_rows = []
+    version_image_rows = []
+    version_input_variable_rows = []
+    version_output_variable_rows = []
+
+    skipped_version_category = 0
+    skipped_version_process = 0
+    skipped_version_grid = 0
+    skipped_version_image = 0
+    skipped_version_input_variable = 0
+    skipped_version_output_variable = 0
+
+    # Build software_version_category junction
+    for version_id, category_ids in links.get('version_to_category', {}).items():
+        if version_id not in valid_software_version_ids:
+            continue
+        for category_id in category_ids:
+            if category_id in valid_category_ids:
+                version_category_rows.append({
+                    'software_version_id': version_id,
+                    'category_id': category_id,
+                })
+            else:
+                skipped_version_category += 1
+
+    # Build software_version_process junction
+    for version_id, process_ids in links.get('version_to_process', {}).items():
+        if version_id not in valid_software_version_ids:
+            continue
+        for process_id in process_ids:
+            if process_id in valid_process_ids:
+                version_process_rows.append({
+                    'software_version_id': version_id,
+                    'process_id': process_id,
+                })
+            else:
+                skipped_version_process += 1
+
+    # Build software_version_grid junction
+    for version_id, grid_ids in links.get('version_to_grid', {}).items():
+        if version_id not in valid_software_version_ids:
+            continue
+        for grid_id in grid_ids:
+            if grid_id in valid_grid_ids:
+                version_grid_rows.append({
+                    'software_version_id': version_id,
+                    'grid_id': grid_id,
+                })
+            else:
+                skipped_version_grid += 1
+
+    # Build software_version_image junction
+    for version_id, image_ids in links.get('version_to_image', {}).items():
+        if version_id not in valid_software_version_ids:
+            continue
+        for image_id in image_ids:
+            if image_id in valid_image_ids:
+                version_image_rows.append({
+                    'software_version_id': version_id,
+                    'image_id': image_id,
+                })
+            else:
+                skipped_version_image += 1
+
+    # Build software_version_input_variable junction
+    for version_id, variable_ids in links.get('version_to_input_variable', {}).items():
+        if version_id not in valid_software_version_ids:
+            continue
+        for variable_id in variable_ids:
+            if variable_id in valid_variable_ids:
+                version_input_variable_rows.append({
+                    'software_version_id': version_id,
+                    'variable_id': variable_id,
+                })
+            else:
+                skipped_version_input_variable += 1
+
+    # Build software_version_output_variable junction
+    for version_id, variable_ids in links.get('version_to_output_variable', {}).items():
+        if version_id not in valid_software_version_ids:
+            continue
+        for variable_id in variable_ids:
+            if variable_id in valid_variable_ids:
+                version_output_variable_rows.append({
+                    'software_version_id': version_id,
+                    'variable_id': variable_id,
+                })
+            else:
+                skipped_version_output_variable += 1
+
+    # Configuration junction tables (3)
+    config_causal_diagram_rows = []
+    config_time_interval_rows = []
+    config_region_rows = []
+
+    skipped_config_causal = 0
+    skipped_config_time = 0
+    skipped_config_region = 0
+
+    # Build configuration_causal_diagram junction
+    for config_id, diagram_ids in links.get('config_to_causal_diagram', {}).items():
+        if config_id not in valid_configuration_ids:
+            continue
+        for diagram_id in diagram_ids:
+            if diagram_id in valid_causal_diagram_ids:
+                config_causal_diagram_rows.append({
+                    'configuration_id': config_id,
+                    'causal_diagram_id': diagram_id,
+                })
+            else:
+                skipped_config_causal += 1
+
+    # Build configuration_time_interval junction
+    for config_id, time_ids in links.get('config_to_time_interval', {}).items():
+        if config_id not in valid_configuration_ids:
+            continue
+        for time_id in time_ids:
+            if time_id in valid_time_interval_ids:
+                config_time_interval_rows.append({
+                    'configuration_id': config_id,
+                    'time_interval_id': time_id,
+                })
+            else:
+                skipped_config_time += 1
+
+    # Build configuration_region junction
+    for config_id, region_ids in links.get('config_to_region', {}).items():
+        if config_id not in valid_configuration_ids:
+            continue
+        for region_id in region_ids:
+            if region_id in valid_region_ids:
+                config_region_rows.append({
+                    'configuration_id': config_id,
+                    'region_id': region_id,
+                })
+            else:
+                skipped_config_region += 1
+
+    # Setup junction tables (3)
+    setup_author_rows = []
+    setup_calibrated_variable_rows = []
+    setup_calibration_target_rows = []
+
+    skipped_setup_author = 0
+    skipped_setup_calibrated = 0
+    skipped_setup_target = 0
+
+    # Build setup_author junction
+    for setup_id, author_ids in links.get('setup_to_author', {}).items():
+        if setup_id not in valid_setup_ids:
+            continue
+        for author_id in author_ids:
+            if author_id in valid_person_ids:
+                setup_author_rows.append({
+                    'setup_id': setup_id,
+                    'person_id': author_id,
+                })
+            else:
+                skipped_setup_author += 1
+
+    # Build setup_calibrated_variable junction
+    for setup_id, variable_ids in links.get('setup_to_calibrated_variable', {}).items():
+        if setup_id not in valid_setup_ids:
+            continue
+        for variable_id in variable_ids:
+            if variable_id in valid_variable_ids:
+                setup_calibrated_variable_rows.append({
+                    'setup_id': setup_id,
+                    'variable_id': variable_id,
+                })
+            else:
+                skipped_setup_calibrated += 1
+
+    # Build setup_calibration_target junction
+    for setup_id, variable_ids in links.get('setup_to_calibration_target', {}).items():
+        if setup_id not in valid_setup_ids:
+            continue
+        for variable_id in variable_ids:
+            if variable_id in valid_variable_ids:
+                setup_calibration_target_rows.append({
+                    'setup_id': setup_id,
+                    'variable_id': variable_id,
+                })
+            else:
+                skipped_setup_target += 1
+
+    # Parameter junction table (1)
+    parameter_intervention_rows = []
+    skipped_param_intervention = 0
+
+    # Build parameter_intervention junction
+    for param_id, intervention_ids in links.get('param_to_intervention', {}).items():
+        if param_id not in valid_parameter_ids:
+            continue
+        for intervention_id in intervention_ids:
+            if intervention_id in valid_intervention_ids:
+                parameter_intervention_rows.append({
+                    'parameter_id': param_id,
+                    'intervention_id': intervention_id,
+                })
+            else:
+                skipped_param_intervention += 1
+
+    # CausalDiagram polymorphic junction table (1)
+    diagram_part_rows = []
+    skipped_diagram_part = 0
+
+    # Build diagram_part junction (polymorphic)
+    for diagram_id, part_ids in links.get('diagram_to_part', {}).items():
+        if diagram_id not in valid_causal_diagram_ids:
+            continue
+        for part_id in part_ids:
+            # Determine part_type based on which valid ID set it's in
+            if part_id in valid_variable_ids:
+                diagram_part_rows.append({
+                    'causal_diagram_id': diagram_id,
+                    'part_id': part_id,
+                    'part_type': 'variable',
+                })
+            elif part_id in valid_process_ids:
+                diagram_part_rows.append({
+                    'causal_diagram_id': diagram_id,
+                    'part_id': part_id,
+                    'part_type': 'process',
+                })
+            else:
+                # Skip if part is neither variable nor process
+                skipped_diagram_part += 1
+
+    print(f"Built extended junction tables:")
+    print(f"  - software_version_category: {len(version_category_rows)} rows")
+    print(f"  - software_version_process: {len(version_process_rows)} rows")
+    print(f"  - software_version_grid: {len(version_grid_rows)} rows")
+    print(f"  - software_version_image: {len(version_image_rows)} rows")
+    print(f"  - software_version_input_variable: {len(version_input_variable_rows)} rows")
+    print(f"  - software_version_output_variable: {len(version_output_variable_rows)} rows")
+    print(f"  - configuration_causal_diagram: {len(config_causal_diagram_rows)} rows")
+    print(f"  - configuration_time_interval: {len(config_time_interval_rows)} rows")
+    print(f"  - configuration_region: {len(config_region_rows)} rows")
+    print(f"  - setup_author: {len(setup_author_rows)} rows")
+    print(f"  - setup_calibrated_variable: {len(setup_calibrated_variable_rows)} rows")
+    print(f"  - setup_calibration_target: {len(setup_calibration_target_rows)} rows")
+    print(f"  - parameter_intervention: {len(parameter_intervention_rows)} rows")
+    print(f"  - diagram_part: {len(diagram_part_rows)} rows")
+
+    total_skipped = (skipped_version_category + skipped_version_process + skipped_version_grid +
+                     skipped_version_image + skipped_version_input_variable + skipped_version_output_variable +
+                     skipped_config_causal + skipped_config_time + skipped_config_region +
+                     skipped_setup_author + skipped_setup_calibrated + skipped_setup_target +
+                     skipped_param_intervention + skipped_diagram_part)
+    if total_skipped > 0:
+        print(f"  - Skipped {total_skipped} junction rows referencing missing entities")
+
+    return {
+        'modelcatalog_software_version_category': version_category_rows,
+        'modelcatalog_software_version_process': version_process_rows,
+        'modelcatalog_software_version_grid': version_grid_rows,
+        'modelcatalog_software_version_image': version_image_rows,
+        'modelcatalog_software_version_input_variable': version_input_variable_rows,
+        'modelcatalog_software_version_output_variable': version_output_variable_rows,
+        'modelcatalog_configuration_causal_diagram': config_causal_diagram_rows,
+        'modelcatalog_configuration_time_interval': config_time_interval_rows,
+        'modelcatalog_configuration_region': config_region_rows,
+        'modelcatalog_setup_author': setup_author_rows,
+        'modelcatalog_setup_calibrated_variable': setup_calibrated_variable_rows,
+        'modelcatalog_setup_calibration_target': setup_calibration_target_rows,
+        'modelcatalog_parameter_intervention': parameter_intervention_rows,
+        'modelcatalog_diagram_part': diagram_part_rows,
+    }
+
+
 def build_junction_tables(extracted_data: Dict[str, Any]) -> Dict[str, List[Dict[str, str]]]:
     """
     Build junction table rows from hasInput/hasOutput/hasParameter links.
@@ -326,6 +625,9 @@ def transform_all(extracted_data: Dict[str, Any]) -> Dict[str, List[Dict[str, An
     # Build junction table rows (original 6)
     junction_tables = build_junction_tables(extracted_data)
 
+    # Build extended junction table rows (14 new)
+    extended_junction_tables = build_extended_junction_tables(extracted_data)
+
     # Combine entity tables and junction tables
     result = {
         # Original 6 entity types
@@ -349,6 +651,7 @@ def transform_all(extracted_data: Dict[str, Any]) -> Dict[str, List[Dict[str, An
     }
 
     result.update(junction_tables)
+    result.update(extended_junction_tables)
 
     print(f"Transformation complete:")
     print(f"  - software: {len(result['modelcatalog_software'])} rows")
