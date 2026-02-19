@@ -12,7 +12,7 @@ This migration moves the MINT Model Catalog from Apache Fuseki (RDF triplestore)
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Schema and Data Migration** - Design modelcatalog_* tables, create Hasura migrations, ETL data from TriG/JSON, validate
+- [x] **Phase 1: Schema and Data Migration** - Design modelcatalog_* tables, create Hasura migrations, ETL data from TriG/JSON, validate
 - [ ] **Phase 2: API Integration** - Rewire FastAPI and Ensemble Manager to query Hasura/PostgreSQL instead of Fuseki
 - [ ] **Phase 3: FK Migration and Cleanup** - Migrate execution/thread FKs to new tables, remove Fuseki from the stack
 
@@ -35,9 +35,9 @@ Plans:
 - [x] 01-02-PLAN.md -- ETL pipeline: extract from TriG, transform with FK inversion, load into PostgreSQL, validate counts
 - [x] 01-03-PLAN.md -- Gap closure: extended schema migration adding 10 entity tables, 14 junction tables, and columns for missing ontology properties
 - [x] 01-04-PLAN.md -- Gap closure: Hasura metadata for all new tables and updated relationships/permissions
-- [ ] 01-05-PLAN.md -- Gap closure: extend ETL extraction for 10 new entity types, 14 link sets, and new columns on existing types
-- [ ] 01-06-PLAN.md -- Gap closure: extend ETL transformation with dedup, label derivation, FK resolution, and 14 new junction table builders
-- [ ] 01-07-PLAN.md -- Gap closure: extend ETL loading and validation for all 36 tables, execute pipeline, verify data population
+- [x] 01-05-PLAN.md -- Gap closure: extend ETL extraction for 10 new entity types, 14 link sets, and new columns on existing types
+- [x] 01-06-PLAN.md -- Gap closure: extend ETL transformation with dedup, label derivation, FK resolution, and 14 new junction table builders
+- [x] 01-07-PLAN.md -- Gap closure: extend ETL loading and validation for all 36 tables, execute pipeline, verify data population
 
 ### Phase 2: API Integration
 **Goal**: FastAPI REST endpoints and Ensemble Manager read model catalog data from Hasura/PostgreSQL instead of Fuseki, with zero breaking changes to API consumers
@@ -77,6 +77,6 @@ Phases execute in numeric order: 1 -> 2 -> 3
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Schema and Data Migration | 4/7 | In progress | - |
+| 1. Schema and Data Migration | 7/7 | Complete | 2026-02-19 |
 | 2. API Integration | 0/2 | Not started | - |
 | 3. FK Migration and Cleanup | 0/2 | Not started | - |
