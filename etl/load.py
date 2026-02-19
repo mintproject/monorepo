@@ -24,18 +24,46 @@ def clear_all(conn):
         # Truncate all tables with CASCADE to handle FKs
         cur.execute("""
             TRUNCATE TABLE
+                -- New junction tables (14)
+                modelcatalog_diagram_part,
+                modelcatalog_parameter_intervention,
+                modelcatalog_setup_calibration_target,
+                modelcatalog_setup_calibrated_variable,
+                modelcatalog_setup_author,
+                modelcatalog_configuration_region,
+                modelcatalog_configuration_time_interval,
+                modelcatalog_configuration_causal_diagram,
+                modelcatalog_software_version_output_variable,
+                modelcatalog_software_version_input_variable,
+                modelcatalog_software_version_image,
+                modelcatalog_software_version_grid,
+                modelcatalog_software_version_process,
+                modelcatalog_software_version_category,
+                -- Original junction tables (6)
                 modelcatalog_setup_parameter,
                 modelcatalog_setup_output,
                 modelcatalog_setup_input,
                 modelcatalog_configuration_parameter,
                 modelcatalog_configuration_output,
                 modelcatalog_configuration_input,
+                -- Original entity tables (6)
                 modelcatalog_model_configuration_setup,
                 modelcatalog_model_configuration,
                 modelcatalog_software_version,
                 modelcatalog_software,
                 modelcatalog_dataset_specification,
-                modelcatalog_parameter
+                modelcatalog_parameter,
+                -- New entity tables (10)
+                modelcatalog_person,
+                modelcatalog_model_category,
+                modelcatalog_region,
+                modelcatalog_process,
+                modelcatalog_time_interval,
+                modelcatalog_causal_diagram,
+                modelcatalog_image,
+                modelcatalog_variable_presentation,
+                modelcatalog_intervention,
+                modelcatalog_grid
             CASCADE
         """)
     conn.commit()
@@ -56,19 +84,19 @@ def load_table(conn, table_name: str, rows: List[Dict[str, Any]], page_size: int
     column_names = ', '.join(columns)
 
     # Build INSERT statement with ON CONFLICT handling
-    if table_name.startswith('modelcatalog_configuration_') or table_name.startswith('modelcatalog_setup_'):
-        # Junction tables - no primary key, use ON CONFLICT DO NOTHING
-        insert_sql = f"""
-            INSERT INTO {table_name} ({column_names})
-            VALUES ({placeholders})
-            ON CONFLICT DO NOTHING
-        """
-    else:
-        # Entity tables - use id as conflict target
+    if 'id' in rows[0]:
+        # Entity table with id primary key
         insert_sql = f"""
             INSERT INTO {table_name} ({column_names})
             VALUES ({placeholders})
             ON CONFLICT (id) DO NOTHING
+        """
+    else:
+        # Junction table - use generic ON CONFLICT
+        insert_sql = f"""
+            INSERT INTO {table_name} ({column_names})
+            VALUES ({placeholders})
+            ON CONFLICT DO NOTHING
         """
 
     # Convert rows to tuples
@@ -89,21 +117,52 @@ def load_all(transformed_data: Dict[str, List[Dict[str, Any]]], conn):
 
     # Loading order matters due to FK constraints
     load_order = [
-        # Entity tables with no FK dependencies first
+        # New entity tables with no FK dependencies
+        'modelcatalog_person',
+        'modelcatalog_process',
+        'modelcatalog_time_interval',
+        'modelcatalog_causal_diagram',
+        'modelcatalog_image',
+        'modelcatalog_variable_presentation',
+        'modelcatalog_intervention',
+        'modelcatalog_grid',
+        # Self-referential entity tables (load entities first, parent refs resolved by ON CONFLICT)
+        'modelcatalog_model_category',
+        'modelcatalog_region',
+        # Original entity tables with no FK dependencies
         'modelcatalog_software',
         'modelcatalog_dataset_specification',
         'modelcatalog_parameter',
-        # Then tables with FK dependencies in hierarchical order
+        # Original hierarchy tables
         'modelcatalog_software_version',
         'modelcatalog_model_configuration',
         'modelcatalog_model_configuration_setup',
-        # Finally junction tables
+        # Original junction tables (6)
         'modelcatalog_configuration_input',
         'modelcatalog_configuration_output',
         'modelcatalog_configuration_parameter',
         'modelcatalog_setup_input',
         'modelcatalog_setup_output',
         'modelcatalog_setup_parameter',
+        # New SoftwareVersion junction tables (6)
+        'modelcatalog_software_version_category',
+        'modelcatalog_software_version_process',
+        'modelcatalog_software_version_grid',
+        'modelcatalog_software_version_image',
+        'modelcatalog_software_version_input_variable',
+        'modelcatalog_software_version_output_variable',
+        # New Configuration junction tables (3)
+        'modelcatalog_configuration_causal_diagram',
+        'modelcatalog_configuration_time_interval',
+        'modelcatalog_configuration_region',
+        # New Setup junction tables (3)
+        'modelcatalog_setup_author',
+        'modelcatalog_setup_calibrated_variable',
+        'modelcatalog_setup_calibration_target',
+        # New Parameter junction table (1)
+        'modelcatalog_parameter_intervention',
+        # New CausalDiagram parts (1)
+        'modelcatalog_diagram_part',
     ]
 
     for table_name in load_order:
