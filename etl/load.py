@@ -24,10 +24,6 @@ def clear_all(conn):
         # Truncate all tables with CASCADE to handle FKs
         cur.execute("""
             TRUNCATE TABLE
-                -- New author junction tables (3)
-                modelcatalog_configuration_author,
-                modelcatalog_version_author,
-                modelcatalog_software_author,
                 -- New junction tables (14)
                 modelcatalog_diagram_part,
                 modelcatalog_parameter_intervention,
@@ -210,10 +206,6 @@ def load_all(transformed_data: Dict[str, List[Dict[str, Any]]], conn):
         'modelcatalog_setup_input',
         'modelcatalog_setup_output',
         'modelcatalog_setup_parameter',
-        # New author junction tables (3)
-        'modelcatalog_software_author',
-        'modelcatalog_version_author',
-        'modelcatalog_configuration_author',
         # New SoftwareVersion junction tables (6)
         'modelcatalog_software_version_category',
         'modelcatalog_software_version_process',
