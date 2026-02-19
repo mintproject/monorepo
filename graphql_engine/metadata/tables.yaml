@@ -2877,6 +2877,10 @@
 - table:
     name: modelcatalog_software
     schema: public
+  object_relationships:
+    - name: author
+      using:
+        foreign_key_constraint_on: author_id
   array_relationships:
     - name: versions
       using:
@@ -2884,6 +2888,13 @@
           column: software_id
           table:
             name: modelcatalog_software_version
+            schema: public
+    - name: authors
+      using:
+        foreign_key_constraint_on:
+          column: software_id
+          table:
+            name: modelcatalog_software_author
             schema: public
   select_permissions:
     - role: anonymous
@@ -2900,6 +2911,7 @@
           - has_documentation
           - has_download_url
           - has_purpose
+          - author_id
         filter: {}
     - role: user
       permission:
@@ -2915,6 +2927,7 @@
           - has_documentation
           - has_download_url
           - has_purpose
+          - author_id
         filter: {}
 - table:
     name: modelcatalog_software_version
@@ -2923,6 +2936,9 @@
     - name: software
       using:
         foreign_key_constraint_on: software_id
+    - name: author
+      using:
+        foreign_key_constraint_on: author_id
   array_relationships:
     - name: configurations
       using:
@@ -2973,6 +2989,13 @@
           table:
             name: modelcatalog_software_version_output_variable
             schema: public
+    - name: authors
+      using:
+        foreign_key_constraint_on:
+          column: software_version_id
+          table:
+            name: modelcatalog_version_author
+            schema: public
   select_permissions:
     - role: anonymous
       permission:
@@ -2991,6 +3014,7 @@
           - parameterization
           - runtime_estimation
           - theoretical_basis
+          - author_id
         filter: {}
     - role: user
       permission:
@@ -3009,6 +3033,7 @@
           - parameterization
           - runtime_estimation
           - theoretical_basis
+          - author_id
         filter: {}
 - table:
     name: modelcatalog_model_configuration
@@ -3017,6 +3042,9 @@
     - name: software_version
       using:
         foreign_key_constraint_on: software_version_id
+    - name: author
+      using:
+        foreign_key_constraint_on: author_id
   array_relationships:
     - name: setups
       using:
@@ -3067,6 +3095,13 @@
           table:
             name: modelcatalog_configuration_region
             schema: public
+    - name: authors
+      using:
+        foreign_key_constraint_on:
+          column: configuration_id
+          table:
+            name: modelcatalog_configuration_author
+            schema: public
   select_permissions:
     - role: anonymous
       permission:
@@ -3081,6 +3116,7 @@
           - has_implementation_script_location
           - has_software_image
           - has_model_result_table
+          - author_id
         filter: {}
     - role: user
       permission:
@@ -3095,6 +3131,7 @@
           - has_implementation_script_location
           - has_software_image
           - has_model_result_table
+          - author_id
         filter: {}
 - table:
     name: modelcatalog_model_configuration_setup
@@ -3433,12 +3470,54 @@
     name: modelcatalog_person
     schema: public
   array_relationships:
+    - name: authored_software
+      using:
+        foreign_key_constraint_on:
+          column: author_id
+          table:
+            name: modelcatalog_software
+            schema: public
+    - name: authored_versions
+      using:
+        foreign_key_constraint_on:
+          column: author_id
+          table:
+            name: modelcatalog_software_version
+            schema: public
+    - name: authored_configurations
+      using:
+        foreign_key_constraint_on:
+          column: author_id
+          table:
+            name: modelcatalog_model_configuration
+            schema: public
     - name: authored_setups
       using:
         foreign_key_constraint_on:
           column: author_id
           table:
             name: modelcatalog_model_configuration_setup
+            schema: public
+    - name: software_authors
+      using:
+        foreign_key_constraint_on:
+          column: person_id
+          table:
+            name: modelcatalog_software_author
+            schema: public
+    - name: version_authors
+      using:
+        foreign_key_constraint_on:
+          column: person_id
+          table:
+            name: modelcatalog_version_author
+            schema: public
+    - name: configuration_authors
+      using:
+        foreign_key_constraint_on:
+          column: person_id
+          table:
+            name: modelcatalog_configuration_author
             schema: public
     - name: setup_authors
       using:
@@ -4086,4 +4165,73 @@
           - causal_diagram_id
           - part_id
           - part_type
+        filter: {}
+- table:
+    name: modelcatalog_software_author
+    schema: public
+  object_relationships:
+    - name: software
+      using:
+        foreign_key_constraint_on: software_id
+    - name: person
+      using:
+        foreign_key_constraint_on: person_id
+  select_permissions:
+    - role: anonymous
+      permission:
+        columns:
+          - software_id
+          - person_id
+        filter: {}
+    - role: user
+      permission:
+        columns:
+          - software_id
+          - person_id
+        filter: {}
+- table:
+    name: modelcatalog_version_author
+    schema: public
+  object_relationships:
+    - name: software_version
+      using:
+        foreign_key_constraint_on: software_version_id
+    - name: person
+      using:
+        foreign_key_constraint_on: person_id
+  select_permissions:
+    - role: anonymous
+      permission:
+        columns:
+          - software_version_id
+          - person_id
+        filter: {}
+    - role: user
+      permission:
+        columns:
+          - software_version_id
+          - person_id
+        filter: {}
+- table:
+    name: modelcatalog_configuration_author
+    schema: public
+  object_relationships:
+    - name: configuration
+      using:
+        foreign_key_constraint_on: configuration_id
+    - name: person
+      using:
+        foreign_key_constraint_on: person_id
+  select_permissions:
+    - role: anonymous
+      permission:
+        columns:
+          - configuration_id
+          - person_id
+        filter: {}
+    - role: user
+      permission:
+        columns:
+          - configuration_id
+          - person_id
         filter: {}
