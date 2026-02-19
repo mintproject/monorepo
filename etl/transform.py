@@ -245,13 +245,25 @@ def transform_all(extracted_data: Dict[str, Any]) -> Dict[str, List[Dict[str, An
     """
     print("Transforming extracted data...")
 
-    # Deduplicate entities
+    # Deduplicate entities (original 6)
     extracted_data['software'] = deduplicate_by_id(extracted_data['software'])
     extracted_data['software_versions'] = deduplicate_by_id(extracted_data['software_versions'])
     extracted_data['model_configurations'] = deduplicate_by_id(extracted_data['model_configurations'])
     extracted_data['model_configuration_setups'] = deduplicate_by_id(extracted_data['model_configuration_setups'])
     extracted_data['dataset_specifications'] = deduplicate_by_id(extracted_data['dataset_specifications'])
     extracted_data['parameters'] = deduplicate_by_id(extracted_data['parameters'])
+
+    # Deduplicate new entities (10 new types)
+    extracted_data['persons'] = deduplicate_by_id(extracted_data['persons'])
+    extracted_data['model_categories'] = deduplicate_by_id(extracted_data['model_categories'])
+    extracted_data['regions'] = deduplicate_by_id(extracted_data['regions'])
+    extracted_data['processes'] = deduplicate_by_id(extracted_data['processes'])
+    extracted_data['time_intervals'] = deduplicate_by_id(extracted_data['time_intervals'])
+    extracted_data['causal_diagrams'] = deduplicate_by_id(extracted_data['causal_diagrams'])
+    extracted_data['images'] = deduplicate_by_id(extracted_data['images'])
+    extracted_data['variable_presentations'] = deduplicate_by_id(extracted_data['variable_presentations'])
+    extracted_data['interventions'] = deduplicate_by_id(extracted_data['interventions'])
+    extracted_data['grids'] = deduplicate_by_id(extracted_data['grids'])
 
     # Ensure all entities have labels (required by schema NOT NULL constraint)
     extracted_data['software'] = ensure_labels(extracted_data['software'])
@@ -261,20 +273,79 @@ def transform_all(extracted_data: Dict[str, Any]) -> Dict[str, List[Dict[str, An
     extracted_data['dataset_specifications'] = ensure_labels(extracted_data['dataset_specifications'])
     extracted_data['parameters'] = ensure_labels(extracted_data['parameters'])
 
+    # Ensure labels for new entities
+    extracted_data['persons'] = ensure_labels(extracted_data['persons'])
+    extracted_data['model_categories'] = ensure_labels(extracted_data['model_categories'])
+    extracted_data['regions'] = ensure_labels(extracted_data['regions'])
+    extracted_data['processes'] = ensure_labels(extracted_data['processes'])
+    extracted_data['time_intervals'] = ensure_labels(extracted_data['time_intervals'])
+    extracted_data['causal_diagrams'] = ensure_labels(extracted_data['causal_diagrams'])
+    extracted_data['images'] = ensure_labels(extracted_data['images'])
+    extracted_data['variable_presentations'] = ensure_labels(extracted_data['variable_presentations'])
+    extracted_data['interventions'] = ensure_labels(extracted_data['interventions'])
+    extracted_data['grids'] = ensure_labels(extracted_data['grids'])
+
     # Invert FK relationships
     transformed = invert_fk_relationships(extracted_data)
 
-    # Build junction table rows
+    # Resolve self-referential FKs for hierarchical entities
+    links = extracted_data['links']
+
+    # Build valid ID sets for FK validation
+    valid_category_ids = {e['id'] for e in extracted_data['model_categories']}
+    valid_region_ids = {e['id'] for e in extracted_data['regions']}
+
+    # ModelCategory: parent_category_id
+    category_parent_links = links.get('category_parent', {})
+    for category in extracted_data['model_categories']:
+        category_id = category['id']
+        if category_id in category_parent_links:
+            parent_id = category_parent_links[category_id]
+            # Only set FK if parent exists in extracted data
+            if parent_id in valid_category_ids:
+                category['parent_category_id'] = parent_id
+            else:
+                category['parent_category_id'] = None
+        else:
+            category['parent_category_id'] = None
+
+    # Region: part_of_id
+    region_part_of_links = links.get('region_part_of', {})
+    for region in extracted_data['regions']:
+        region_id = region['id']
+        if region_id in region_part_of_links:
+            part_of_id = region_part_of_links[region_id]
+            # Only set FK if parent exists in extracted data
+            if part_of_id in valid_region_ids:
+                region['part_of_id'] = part_of_id
+            else:
+                region['part_of_id'] = None
+        else:
+            region['part_of_id'] = None
+
+    # Build junction table rows (original 6)
     junction_tables = build_junction_tables(extracted_data)
 
     # Combine entity tables and junction tables
     result = {
+        # Original 6 entity types
         'modelcatalog_software': transformed['software'],
         'modelcatalog_software_version': transformed['software_versions'],
         'modelcatalog_model_configuration': transformed['model_configurations'],
         'modelcatalog_model_configuration_setup': transformed['model_configuration_setups'],
         'modelcatalog_dataset_specification': transformed['dataset_specifications'],
         'modelcatalog_parameter': transformed['parameters'],
+        # 10 new entity types
+        'modelcatalog_person': extracted_data['persons'],
+        'modelcatalog_model_category': extracted_data['model_categories'],
+        'modelcatalog_region': extracted_data['regions'],
+        'modelcatalog_process': extracted_data['processes'],
+        'modelcatalog_time_interval': extracted_data['time_intervals'],
+        'modelcatalog_causal_diagram': extracted_data['causal_diagrams'],
+        'modelcatalog_image': extracted_data['images'],
+        'modelcatalog_variable_presentation': extracted_data['variable_presentations'],
+        'modelcatalog_intervention': extracted_data['interventions'],
+        'modelcatalog_grid': extracted_data['grids'],
     }
 
     result.update(junction_tables)
@@ -286,6 +357,16 @@ def transform_all(extracted_data: Dict[str, Any]) -> Dict[str, List[Dict[str, An
     print(f"  - model_configuration_setup: {len(result['modelcatalog_model_configuration_setup'])} rows")
     print(f"  - dataset_specification: {len(result['modelcatalog_dataset_specification'])} rows")
     print(f"  - parameter: {len(result['modelcatalog_parameter'])} rows")
+    print(f"  - person: {len(result['modelcatalog_person'])} rows")
+    print(f"  - model_category: {len(result['modelcatalog_model_category'])} rows")
+    print(f"  - region: {len(result['modelcatalog_region'])} rows")
+    print(f"  - process: {len(result['modelcatalog_process'])} rows")
+    print(f"  - time_interval: {len(result['modelcatalog_time_interval'])} rows")
+    print(f"  - causal_diagram: {len(result['modelcatalog_causal_diagram'])} rows")
+    print(f"  - image: {len(result['modelcatalog_image'])} rows")
+    print(f"  - variable_presentation: {len(result['modelcatalog_variable_presentation'])} rows")
+    print(f"  - intervention: {len(result['modelcatalog_intervention'])} rows")
+    print(f"  - grid: {len(result['modelcatalog_grid'])} rows")
 
     if transformed['orphan_counts']['software_versions'] > 0:
         print(f"  - WARNING: {transformed['orphan_counts']['software_versions']} orphaned software_versions")
