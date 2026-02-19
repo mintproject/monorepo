@@ -3433,6 +3433,13 @@
     name: modelcatalog_person
     schema: public
   array_relationships:
+    - name: authored_setups
+      using:
+        foreign_key_constraint_on:
+          column: author_id
+          table:
+            name: modelcatalog_model_configuration_setup
+            schema: public
     - name: setup_authors
       using:
         foreign_key_constraint_on:
