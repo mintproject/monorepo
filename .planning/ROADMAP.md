@@ -48,11 +48,11 @@ Plans:
   2. REST endpoint responses match the existing API contract -- golden file comparison shows no structural differences
   3. All existing REST endpoints remain functional and return valid data
   4. Ensemble Manager queries model catalog data via GraphQL instead of the REST client SDK
-**Plans**: TBD
+**Plans:** 2 plans
 
 Plans:
-- [ ] 02-01: FastAPI backend migration and contract testing
-- [ ] 02-02: Ensemble Manager GraphQL integration
+- [ ] 02-01-PLAN.md -- FastAPI HasuraBackend: replace obasparql QueryManager with Hasura GraphQL backend, env var switch in connector.py, contract tests
+- [ ] 02-02-PLAN.md -- Ensemble Manager GraphQL: replace rp.get() REST calls with Apollo Client queries to modelcatalog_* tables
 
 ### Phase 3: FK Migration and Cleanup
 **Goal**: All execution and thread tables reference the new `modelcatalog_*` tables, old model tables are deprecated, and Fuseki is removed from the stack
