@@ -252,9 +252,12 @@
     name: execution
     schema: public
   object_relationships:
-  - name: model
+  - name: modelcatalog_configuration
     using:
-      foreign_key_constraint_on: model_id
+      foreign_key_constraint_on: modelcatalog_configuration_id
+  - name: modelcatalog_setup
+    using:
+      foreign_key_constraint_on: modelcatalog_setup_id
   array_relationships:
   - name: data_bindings
     using:
@@ -293,6 +296,8 @@
       - status
       - execution_engine
       - model_id
+      - modelcatalog_configuration_id
+      - modelcatalog_setup_id
       - start_time
       - end_time
       - run_progress
@@ -305,6 +310,8 @@
       - status
       - execution_engine
       - model_id
+      - modelcatalog_configuration_id
+      - modelcatalog_setup_id
       - start_time
       - end_time
       - run_progress
@@ -318,6 +325,8 @@
       - status
       - execution_engine
       - model_id
+      - modelcatalog_configuration_id
+      - modelcatalog_setup_id
       - start_time
       - end_time
       - run_progress
@@ -331,6 +340,8 @@
       - run_progress
       - execution_engine
       - model_id
+      - modelcatalog_configuration_id
+      - modelcatalog_setup_id
       - run_id
       - status
       - end_time
@@ -402,7 +413,7 @@
   - name: execution
     using:
       foreign_key_constraint_on: execution_id
-  - name: model_parameter
+  - name: modelcatalog_parameter
     using:
       foreign_key_constraint_on: model_parameter_id
   insert_permissions:
@@ -727,6 +738,10 @@
 - table:
     name: model_io
     schema: public
+  object_relationships:
+  - name: modelcatalog_dataset_specification
+    using:
+      foreign_key_constraint_on: modelcatalog_dataset_specification_id
   array_relationships:
   - name: execution_data_bindings
     using:
@@ -787,6 +802,7 @@
       - type
       - description
       - format
+      - modelcatalog_dataset_specification_id
   select_permissions:
   - role: anonymous
     permission:
@@ -796,6 +812,7 @@
       - type
       - description
       - format
+      - modelcatalog_dataset_specification_id
       filter: {}
       allow_aggregations: true
   - role: user
@@ -806,12 +823,14 @@
       - id
       - name
       - type
+      - modelcatalog_dataset_specification_id
       filter: {}
   update_permissions:
   - role: user
     permission:
       columns:
       - id
+      - modelcatalog_dataset_specification_id
       filter: {}
       check: null
 - table:
@@ -893,21 +912,6 @@
   - name: model
     using:
       foreign_key_constraint_on: model_id
-  array_relationships:
-  - name: execution_parameter_bindings
-    using:
-      foreign_key_constraint_on:
-        column: model_parameter_id
-        table:
-          name: execution_parameter_binding
-          schema: public
-  - name: thread_model_parameters
-    using:
-      foreign_key_constraint_on:
-        column: model_parameter_id
-        table:
-          name: thread_model_parameter
-          schema: public
   insert_permissions:
   - role: user
     permission:
@@ -1985,9 +1989,12 @@
     name: thread_model
     schema: public
   object_relationships:
-  - name: model
+  - name: modelcatalog_configuration
     using:
-      foreign_key_constraint_on: model_id
+      foreign_key_constraint_on: modelcatalog_configuration_id
+  - name: modelcatalog_setup
+    using:
+      foreign_key_constraint_on: modelcatalog_setup_id
   - name: thread
     using:
       foreign_key_constraint_on: thread_id
@@ -2042,6 +2049,8 @@
                   _eq: X-Hasura-User-Id
       columns:
       - model_id
+      - modelcatalog_configuration_id
+      - modelcatalog_setup_id
       - thread_id
       - id
   select_permissions:
@@ -2051,12 +2060,16 @@
       - id
       - thread_id
       - model_id
+      - modelcatalog_configuration_id
+      - modelcatalog_setup_id
       filter: {}
       allow_aggregations: true
   - role: user
     permission:
       columns:
       - model_id
+      - modelcatalog_configuration_id
+      - modelcatalog_setup_id
       - thread_id
       - id
       filter:
@@ -2082,6 +2095,8 @@
     permission:
       columns:
       - model_id
+      - modelcatalog_configuration_id
+      - modelcatalog_setup_id
       - thread_id
       - id
       filter:
@@ -2533,7 +2548,7 @@
     name: thread_model_parameter
     schema: public
   object_relationships:
-  - name: model_parameter
+  - name: modelcatalog_parameter
     using:
       foreign_key_constraint_on: model_parameter_id
   - name: thread_model
@@ -3078,6 +3093,20 @@
     using:
       foreign_key_constraint_on: author_id
   array_relationships:
+  - name: executions
+    using:
+      foreign_key_constraint_on:
+        column: modelcatalog_configuration_id
+        table:
+          name: execution
+          schema: public
+  - name: thread_models
+    using:
+      foreign_key_constraint_on:
+        column: modelcatalog_configuration_id
+        table:
+          name: thread_model
+          schema: public
   - name: setups
     using:
       foreign_key_constraint_on:
@@ -3191,6 +3220,20 @@
     using:
       foreign_key_constraint_on: author_id
   array_relationships:
+  - name: executions
+    using:
+      foreign_key_constraint_on:
+        column: modelcatalog_setup_id
+        table:
+          name: execution
+          schema: public
+  - name: thread_models
+    using:
+      foreign_key_constraint_on:
+        column: modelcatalog_setup_id
+        table:
+          name: thread_model
+          schema: public
   - name: inputs
     using:
       foreign_key_constraint_on:
@@ -3287,6 +3330,13 @@
     name: modelcatalog_dataset_specification
     schema: public
   array_relationships:
+  - name: model_ios
+    using:
+      foreign_key_constraint_on:
+        column: modelcatalog_dataset_specification_id
+        table:
+          name: model_io
+          schema: public
   - name: configuration_inputs
     using:
       foreign_key_constraint_on:
@@ -3355,6 +3405,20 @@
     name: modelcatalog_parameter
     schema: public
   array_relationships:
+  - name: execution_parameter_bindings
+    using:
+      foreign_key_constraint_on:
+        column: model_parameter_id
+        table:
+          name: execution_parameter_binding
+          schema: public
+  - name: thread_model_parameters
+    using:
+      foreign_key_constraint_on:
+        column: model_parameter_id
+        table:
+          name: thread_model_parameter
+          schema: public
   - name: configuration_parameters
     using:
       foreign_key_constraint_on:
