@@ -124,6 +124,33 @@ def extract_software(ds: Graph) -> List[Dict[str, Any]]:
     for entity in results:
         entity['author_id'] = author_first.get(entity['id'])
 
+    # Extract rdf:type for software subtype classification
+    type_query = f"""
+    PREFIX sdm: <{config.SDM}>
+    PREFIX rdf: <{config.RDF}>
+
+    SELECT DISTINCT ?id ?rdftype
+    WHERE {{
+        ?id a <{config.TYPE_SOFTWARE}> .
+        ?id rdf:type ?rdftype .
+        FILTER(?rdftype != <{config.TYPE_SOFTWARE}>)
+        FILTER(STRSTARTS(STR(?rdftype), "{config.SDM}"))
+    }}
+    """
+
+    # Map entity ID -> most specific subtype URI
+    subtype_map = {}
+    for row in ds.query(type_query):
+        entity_id = str(row.id)
+        rdf_type = str(row.rdftype)
+        # Keep the most specific subtype (not sdm:Model itself, which is the base)
+        if entity_id not in subtype_map or rdf_type != f"{config.SDM}Model":
+            subtype_map[entity_id] = rdf_type
+
+    # Set type on each entity
+    for entity in results:
+        entity['type'] = subtype_map.get(entity['id'], f"{config.SDM}Model")
+
     print(f"Extracted {len(results)} Software entities")
     return results, version_links, author_links
 
