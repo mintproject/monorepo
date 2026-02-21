@@ -10,28 +10,28 @@ See: .planning/PROJECT.md (updated 2026-02-14)
 ## Current Position
 
 Phase: 2 of 3 (API Integration - gap closure plans complete)
-Plan: 9 of 9 in current phase (02-09 complete, Phase 2 done)
+Plan: 10 of 10 in current phase (02-10 complete, Phase 2 done)
 Status: Complete (Phase 2)
-Last activity: 2026-02-21 -- Completed plan 02-09 (null-table resource types return empty read responses)
+Last activity: 2026-02-21 -- Completed plan 02-10 (software type column, subtype filtering, ETL type extraction)
 
-Progress: [███████████] 80% (Phase 1 complete + Phase 2 complete)
+Progress: [████████████] 85% (Phase 1 complete + Phase 2 complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 14
-- Average duration: 5.0 minutes
-- Total execution time: 1.10 hours
+- Total plans completed: 15
+- Average duration: 5.5 minutes
+- Total execution time: 1.27 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01-schema-and-data-migration | 7 | 39.8 min | 5.7 min |
-| 02-api-integration | 9 | 42.2 min | 4.7 min |
+| 02-api-integration | 10 | 52.2 min | 5.2 min |
 
 **Recent Trend:**
-- Last 5 plans: 5.8 min, 3 min, 5.2 min, 6.7 min, 2 min, 4 min
+- Last 5 plans: 3 min, 5.2 min, 6.7 min, 2 min, 4 min, 10 min
 - Trend: Stable
 
 *Updated after each plan completion*
@@ -56,6 +56,7 @@ Progress: [███████████] 80% (Phase 1 complete + Phase 2 co
 | 02-07 | 94s | 2 | 5 |
 | 02-08 | 230s | 2 | 3 |
 | Phase 02 P09 | 69 | 2 tasks | 2 files |
+| 02-10 | 598s | 3 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -104,6 +105,8 @@ Recent decisions affecting current work:
 - [Phase 02-07]: Ingress routes /v2.0.0 path prefix so v1.8.0 and v2.0.0 coexist on same domain
 - [Phase 02-api-integration]: null-table resource types return 200 [] for list and 404 for get-by-id (matches v1.8.0 behavior for empty named graphs)
 - [Phase 02-api-integration]: write operations on null-table types continue returning 501 (no backing store, writes cannot proceed)
+- [Phase 02-10]: ETL extracts most specific rdf:type for software entities; falls back to sdm:Model if no specialized subtype found in TriG
+- [Phase 02-10]: theory_guidedmodels (underscore) alias required in resource-registry: OpenAPI converts URL hyphens to underscores in operationIds
 
 ### Pending Todos
 
@@ -118,5 +121,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-21
-Stopped at: Completed 02-09-PLAN.md (null-table resource types return empty read responses)
+Stopped at: Completed 02-10-PLAN.md (software type column, subtype API filtering, ETL rdf:type extraction)
 Resume file: .planning/phases/03-fuseki-migration/03-01-PLAN.md (Phase 3 next)
