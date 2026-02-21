@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-02-14)
 ## Current Position
 
 Phase: 3 of 3 (FK Migration and Cleanup - IN PROGRESS)
-Plan: 3 of 4 in current phase (03-01 complete)
+Plan: 4 of 4 in current phase (03-03 complete)
 Status: Phase 3 executing
-Last activity: 2026-02-21 -- 03-01 complete: FK migration SQL files and Hasura metadata updated
+Last activity: 2026-02-21 -- 03-03 complete: SDK removed, adapter rewritten, all services use direct Hasura GraphQL
 
-Progress: [███████████░] 92% (Phase 1 + Phase 2 complete, Phase 3 3/4 plans done)
+Progress: [████████████] 97% (Phase 1 + Phase 2 complete, Phase 3 3/4 plans done)
 
 ## Performance Metrics
 
@@ -62,6 +62,7 @@ Progress: [███████████░] 92% (Phase 1 + Phase 2 complete
 | 02-13 | 88s | 2 tasks | 2 files |
 | 03-02 | 480s | 2 tasks | 6 files |
 | 03-01 (cont) | 576s | 2 tasks | 5 files |
+| 03-03 | 784s | 2 tasks | 12 files |
 
 ## Accumulated Context
 
@@ -125,6 +126,10 @@ Recent decisions affecting current work:
 - [Phase 03-01]: Delete-before-FK-add pattern for execution_parameter_binding and thread_model_parameter (model_parameter_id is part of PK so cannot be nulled; DELETE orphans before ADD CONSTRAINT)
 - [Phase 03-01]: Non-deferrable FK constraints in migration 2 after confirming 0 orphaned rows via user review -- deferrable adds complexity with no benefit when orphan count is 0
 - [Phase 03-01]: Removed execution_parameter_bindings and thread_model_parameters array_relationships from model_parameter in tables.yaml (FK now on modelcatalog_parameter)
+- [Phase 03-03]: Hasura relationship names on modelcatalog_model_configuration/setup are 'parameters', 'inputs', 'outputs' (not setup_parameters/setup_inputs) -- junction tables have 'parameter', 'input', 'output' object rels
+- [Phase 03-03]: convertApiUrlToW3Id moved to model-catalog-graphql-adapter.ts as canonical model catalog utility
+- [Phase 03-03]: All inputs from Hasura modelcatalog_dataset_specification treated as non-fixed (no has_fixed_resource column exists)
+- [Phase 03-03]: useModelParameterService uses has_fixed_value (scalar string) not hasFixedValue (string array SDK style)
 
 ### Pending Todos
 
@@ -139,5 +144,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-21
-Stopped at: Completed 03-01-PLAN.md (FK migration SQL files and Hasura metadata updated)
-Resume file: .planning/phases/03-fk-migration-and-cleanup/03-03-PLAN.md (Phase 3 Plan 3 next)
+Stopped at: Completed 03-03-PLAN.md (SDK removal, adapter rewrite, all services use direct Hasura GraphQL)
+Resume file: .planning/phases/03-fk-migration-and-cleanup/03-04-PLAN.md (Phase 3 Plan 4 next)
