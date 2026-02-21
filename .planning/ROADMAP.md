@@ -52,13 +52,13 @@ Plans:
 **Plans:** 7 plans
 
 Plans:
-- [ ] 02-01-PLAN.md -- Hasura mutation permissions: add insert/update/delete for all modelcatalog tables
-- [ ] 02-02-PLAN.md -- Project scaffolding: new Node.js/TypeScript repo with Fastify, OpenAPI-glue, GraphQL client
-- [ ] 02-03-PLAN.md -- Response/request mappers and resource registry for v1.8.0 format compatibility
-- [ ] 02-04-PLAN.md -- Generic CRUD service with Proxy-based operationId dispatch and JWT security
-- [ ] 02-05-PLAN.md -- GraphQL field selections and integration tests for read operations
-- [ ] 02-06-PLAN.md -- Custom endpoint handlers for 13 /custom/ routes
-- [ ] 02-07-PLAN.md -- Dockerfile, CI/CD pipeline, and Helm chart for deployment
+- [x] 02-01-PLAN.md -- Hasura mutation permissions: add insert/update/delete for all modelcatalog tables
+- [x] 02-02-PLAN.md -- Project scaffolding: new Node.js/TypeScript repo with Fastify, OpenAPI-glue, GraphQL client
+- [x] 02-03-PLAN.md -- Response/request mappers and resource registry for v1.8.0 format compatibility
+- [x] 02-04-PLAN.md -- Generic CRUD service with Proxy-based operationId dispatch and JWT security
+- [x] 02-05-PLAN.md -- GraphQL field selections and integration tests for read operations
+- [x] 02-06-PLAN.md -- Custom endpoint handlers for 13 /custom/ routes
+- [x] 02-07-PLAN.md -- Dockerfile, CI/CD pipeline, and Helm chart for deployment
 
 ### Phase 3: FK Migration and Cleanup
 **Goal**: All execution and thread tables reference the new `modelcatalog_*` tables, old model tables are deprecated, and Fuseki is removed from the stack
@@ -84,5 +84,5 @@ Phases execute in numeric order: 1 -> 2 -> 3
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Schema and Data Migration | 7/7 | Complete | 2026-02-19 |
-| 2. API Integration | 0/7 | Not started | - |
+| 2. API Integration | 7/7 | Gaps found | 2026-02-21 |
 | 3. FK Migration and Cleanup | 0/2 | Not started | - |
