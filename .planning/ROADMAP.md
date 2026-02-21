@@ -13,7 +13,7 @@ This migration moves the MINT Model Catalog from Apache Fuseki (RDF triplestore)
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Schema and Data Migration** - Design modelcatalog_* tables, create Hasura migrations, ETL data from TriG/JSON, validate
-- [x] **Phase 2: API Integration** - New Node.js/TypeScript API at /v2.0.0/ backed by Hasura/PostgreSQL, identical responses to v1.8.0
+- [ ] **Phase 2: API Integration** - New Node.js/TypeScript API at /v2.0.0/ backed by Hasura/PostgreSQL, identical responses to v1.8.0
 - [ ] **Phase 3: FK Migration and Cleanup** - Migrate execution/thread FKs to new tables, remove Fuseki from the stack
 
 ## Phase Details
@@ -49,7 +49,7 @@ Plans:
   3. All existing REST endpoints remain functional at /v1.8.0/ (old API untouched)
   4. Full CRUD (GET, POST, PUT, DELETE) works through Hasura GraphQL mutations
   5. Helm chart deploys the new API alongside existing services
-**Plans:** 10 plans
+**Plans:** 12 plans
 
 Plans:
 - [x] 02-01-PLAN.md -- Hasura mutation permissions: add insert/update/delete for all modelcatalog tables
@@ -62,6 +62,8 @@ Plans:
 - [x] 02-08-PLAN.md -- Gap closure: remove broken user_id filtering from service and custom handlers
 - [x] 02-09-PLAN.md -- Gap closure: return empty read responses for 23 null-table resource types
 - [x] 02-10-PLAN.md -- Gap closure: add type column to modelcatalog_software for software subtype filtering
+- [ ] 02-11-PLAN.md -- Gap closure: rename relationship keys to v1.8.0 OWL names and fix plain ID lookup
+- [ ] 02-12-PLAN.md -- Gap closure: rewrite custom handler GraphQL field selections to match actual schema
 
 ### Phase 3: FK Migration and Cleanup
 **Goal**: All execution and thread tables reference the new `modelcatalog_*` tables, old model tables are deprecated, and Fuseki is removed from the stack
@@ -87,5 +89,5 @@ Phases execute in numeric order: 1 -> 2 -> 3
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Schema and Data Migration | 7/7 | Complete | 2026-02-19 |
-| 2. API Integration | 10/10 | Complete | 2026-02-21 |
+| 2. API Integration | 10/12 | In progress | - |
 | 3. FK Migration and Cleanup | 0/2 | Not started | - |
