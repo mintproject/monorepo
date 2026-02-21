@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-02-14)
 ## Current Position
 
 Phase: 2 of 3 (API Integration - gap closure plans complete)
-Plan: 11 of 11 in current phase (02-11 complete)
+Plan: 13 of 13 in current phase (02-13 complete)
 Status: Complete (Phase 2)
-Last activity: 2026-02-21 -- Completed plan 02-11 (v1.8.0 OWL relationship field names, plain UUID ID resolution)
+Last activity: 2026-02-21 -- Completed plan 02-13 (fullId prefix logic for all five custom handler locations)
 
 Progress: [████████████] 85% (Phase 1 complete + Phase 2 complete)
 
@@ -59,6 +59,7 @@ Progress: [████████████] 85% (Phase 1 complete + Phase 2
 | 02-10 | 598s | 3 tasks | 4 files |
 | Phase 02-api-integration P12 | 226 | 1 tasks | 3 files |
 | 02-11 | 266s | 3 tasks | 4 files |
+| 02-13 | 88s | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -114,6 +115,8 @@ Recent decisions affecting current work:
 - [Phase 02-11]: Registry keys are the API output field names (OWL v1.8.0 property names); hasuraRelName stays as internal Hasura relationship name
 - [Phase 02-11]: Plain UUID IDs accepted in getById/update/delete by prepending resourceConfig.idPrefix; full URIs (https://) pass through unchanged
 - [Phase 02-11]: deleteResource returns deleted: fullId (not deleted: id) so caller sees the resolved full URI
+- [Phase 02-13]: Handler 4 (custom_configuration_id_inputs_get) uses mcConfig.idPrefix from modelconfigurations because path param filters modelcatalog_model_configuration table
+- [Phase 02-13]: Handler 5 (configurationid query param) uses mcConfig.idPrefix from modelconfigurations because filter field is model_configuration_id
 
 ### Pending Todos
 
@@ -128,5 +131,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-21
-Stopped at: Completed 02-11-PLAN.md (v1.8.0 OWL relationship field names, plain UUID ID resolution)
+Stopped at: Completed 02-13-PLAN.md (fullId prefix logic for all five custom handler locations, plain-ID resolution complete)
 Resume file: .planning/phases/03-fuseki-migration/03-01-PLAN.md (Phase 3 next)
