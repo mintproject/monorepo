@@ -69,7 +69,7 @@ export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
         junctionRelName: 'person',
         targetResource: 'persons',
       },
-      versions: {
+      hasVersion: {
         hasuraRelName: 'versions',
         type: 'array',
         targetResource: 'softwareversions',
@@ -101,47 +101,47 @@ export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
         junctionRelName: 'person',
         targetResource: 'persons',
       },
-      configurations: {
+      hasConfiguration: {
         hasuraRelName: 'configurations',
         type: 'array',
         targetResource: 'modelconfigurations',
       },
-      categories: {
+      hasModelCategory: {
         hasuraRelName: 'categories',
         type: 'array',
         junctionTable: 'modelcatalog_software_version_category',
         junctionRelName: 'category',
         targetResource: 'modelcategorys',
       },
-      processes: {
+      hasProcess: {
         hasuraRelName: 'processes',
         type: 'array',
         junctionTable: 'modelcatalog_software_version_process',
         junctionRelName: 'process',
         targetResource: 'processs',
       },
-      grids: {
+      hasGrid: {
         hasuraRelName: 'grids',
         type: 'array',
         junctionTable: 'modelcatalog_software_version_grid',
         junctionRelName: 'grid',
         targetResource: 'grids',
       },
-      explanationDiagrams: {
+      hasExplanationDiagram: {
         hasuraRelName: 'explanation_diagrams',
         type: 'array',
         junctionTable: 'modelcatalog_software_version_image',
         junctionRelName: 'image',
         targetResource: 'images',
       },
-      inputVariables: {
+      hasInputVariable: {
         hasuraRelName: 'input_variables',
         type: 'array',
         junctionTable: 'modelcatalog_software_version_input_variable',
         junctionRelName: 'variable',
         targetResource: 'variablepresentations',
       },
-      outputVariables: {
+      hasOutputVariable: {
         hasuraRelName: 'output_variables',
         type: 'array',
         junctionTable: 'modelcatalog_software_version_output_variable',
@@ -175,47 +175,47 @@ export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
         junctionRelName: 'person',
         targetResource: 'persons',
       },
-      setups: {
+      hasSetup: {
         hasuraRelName: 'setups',
         type: 'array',
         targetResource: 'modelconfigurationsetups',
       },
-      inputs: {
+      hasInput: {
         hasuraRelName: 'inputs',
         type: 'array',
         junctionTable: 'modelcatalog_configuration_input',
         junctionRelName: 'input',
         targetResource: 'datasetspecifications',
       },
-      outputs: {
+      hasOutput: {
         hasuraRelName: 'outputs',
         type: 'array',
         junctionTable: 'modelcatalog_configuration_output',
         junctionRelName: 'output',
         targetResource: 'datasetspecifications',
       },
-      parameters: {
+      hasParameter: {
         hasuraRelName: 'parameters',
         type: 'array',
         junctionTable: 'modelcatalog_configuration_parameter',
         junctionRelName: 'parameter',
         targetResource: 'parameters',
       },
-      causalDiagrams: {
+      hasCausalDiagram: {
         hasuraRelName: 'causal_diagrams',
         type: 'array',
         junctionTable: 'modelcatalog_configuration_causal_diagram',
         junctionRelName: 'causal_diagram',
         targetResource: 'causaldiagrams',
       },
-      timeIntervals: {
+      hasOutputTimeInterval: {
         hasuraRelName: 'time_intervals',
         type: 'array',
         junctionTable: 'modelcatalog_configuration_time_interval',
         junctionRelName: 'time_interval',
         targetResource: 'timeintervals',
       },
-      regions: {
+      hasRegion: {
         hasuraRelName: 'regions',
         type: 'array',
         junctionTable: 'modelcatalog_configuration_region',
@@ -249,35 +249,35 @@ export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
         junctionRelName: 'person',
         targetResource: 'persons',
       },
-      inputs: {
+      hasInput: {
         hasuraRelName: 'inputs',
         type: 'array',
         junctionTable: 'modelcatalog_setup_input',
         junctionRelName: 'input',
         targetResource: 'datasetspecifications',
       },
-      outputs: {
+      hasOutput: {
         hasuraRelName: 'outputs',
         type: 'array',
         junctionTable: 'modelcatalog_setup_output',
         junctionRelName: 'output',
         targetResource: 'datasetspecifications',
       },
-      parameters: {
+      hasParameter: {
         hasuraRelName: 'parameters',
         type: 'array',
         junctionTable: 'modelcatalog_setup_parameter',
         junctionRelName: 'parameter',
         targetResource: 'parameters',
       },
-      calibratedVariables: {
+      calibratedVariable: {
         hasuraRelName: 'calibrated_variables',
         type: 'array',
         junctionTable: 'modelcatalog_setup_calibrated_variable',
         junctionRelName: 'variable',
         targetResource: 'variablepresentations',
       },
-      calibrationTargets: {
+      calibrationTargetVariable: {
         hasuraRelName: 'calibration_targets',
         type: 'array',
         junctionTable: 'modelcatalog_setup_calibration_target',
@@ -312,35 +312,35 @@ export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
         junctionRelName: 'person',
         targetResource: 'persons',
       },
-      inputs: {
+      hasInput: {
         hasuraRelName: 'inputs',
         type: 'array',
         junctionTable: 'modelcatalog_setup_input',
         junctionRelName: 'input',
         targetResource: 'datasetspecifications',
       },
-      outputs: {
+      hasOutput: {
         hasuraRelName: 'outputs',
         type: 'array',
         junctionTable: 'modelcatalog_setup_output',
         junctionRelName: 'output',
         targetResource: 'datasetspecifications',
       },
-      parameters: {
+      hasParameter: {
         hasuraRelName: 'parameters',
         type: 'array',
         junctionTable: 'modelcatalog_setup_parameter',
         junctionRelName: 'parameter',
         targetResource: 'parameters',
       },
-      calibratedVariables: {
+      calibratedVariable: {
         hasuraRelName: 'calibrated_variables',
         type: 'array',
         junctionTable: 'modelcatalog_setup_calibrated_variable',
         junctionRelName: 'variable',
         targetResource: 'variablepresentations',
       },
-      calibrationTargets: {
+      calibrationTargetVariable: {
         hasuraRelName: 'calibration_targets',
         type: 'array',
         junctionTable: 'modelcatalog_setup_calibration_target',
@@ -370,7 +370,7 @@ export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
     typeArray: ['Parameter'],
     idPrefix: ID_PREFIX,
     relationships: {
-      interventions: {
+      hasIntervention: {
         hasuraRelName: 'interventions',
         type: 'array',
         junctionTable: 'modelcatalog_parameter_intervention',
@@ -458,7 +458,7 @@ export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
     typeArray: ['CausalDiagram'],
     idPrefix: ID_PREFIX,
     relationships: {
-      diagramParts: {
+      hasPart: {
         hasuraRelName: 'diagram_parts',
         type: 'array',
         junctionTable: 'modelcatalog_diagram_part',
@@ -527,7 +527,7 @@ export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
         junctionRelName: 'person',
         targetResource: 'persons',
       },
-      versions: {
+      hasVersion: {
         hasuraRelName: 'versions',
         type: 'array',
         targetResource: 'softwareversions',
@@ -547,7 +547,7 @@ export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
         type: 'object',
         targetResource: 'persons',
       },
-      versions: {
+      hasVersion: {
         hasuraRelName: 'versions',
         type: 'array',
         targetResource: 'softwareversions',
@@ -567,7 +567,7 @@ export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
         type: 'object',
         targetResource: 'persons',
       },
-      versions: {
+      hasVersion: {
         hasuraRelName: 'versions',
         type: 'array',
         targetResource: 'softwareversions',
@@ -587,7 +587,7 @@ export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
         type: 'object',
         targetResource: 'persons',
       },
-      versions: {
+      hasVersion: {
         hasuraRelName: 'versions',
         type: 'array',
         targetResource: 'softwareversions',
@@ -607,7 +607,7 @@ export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
         type: 'object',
         targetResource: 'persons',
       },
-      versions: {
+      hasVersion: {
         hasuraRelName: 'versions',
         type: 'array',
         targetResource: 'softwareversions',
@@ -629,7 +629,7 @@ export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
         type: 'object',
         targetResource: 'persons',
       },
-      versions: {
+      hasVersion: {
         hasuraRelName: 'versions',
         type: 'array',
         targetResource: 'softwareversions',
@@ -649,7 +649,7 @@ export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
         type: 'object',
         targetResource: 'persons',
       },
-      versions: {
+      hasVersion: {
         hasuraRelName: 'versions',
         type: 'array',
         targetResource: 'softwareversions',
