@@ -13,7 +13,7 @@ This migration moves the MINT Model Catalog from Apache Fuseki (RDF triplestore)
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Schema and Data Migration** - Design modelcatalog_* tables, create Hasura migrations, ETL data from TriG/JSON, validate
-- [ ] **Phase 2: API Integration** - New Node.js/TypeScript API at /v2.0.0/ backed by Hasura/PostgreSQL, identical responses to v1.8.0
+- [x] **Phase 2: API Integration** - New Node.js/TypeScript API at /v2.0.0/ backed by Hasura/PostgreSQL, identical responses to v1.8.0
 - [ ] **Phase 3: FK Migration and Cleanup** - Migrate execution/thread FKs to new tables, remove Fuseki from the stack
 
 ## Phase Details
@@ -64,7 +64,7 @@ Plans:
 - [x] 02-10-PLAN.md -- Gap closure: add type column to modelcatalog_software for software subtype filtering
 - [x] 02-11-PLAN.md -- Gap closure: rename relationship keys to v1.8.0 OWL names and fix plain ID lookup
 - [x] 02-12-PLAN.md -- Gap closure: rewrite custom handler GraphQL field selections to match actual schema
-- [ ] 02-13-PLAN.md -- Gap closure: apply fullId prefix logic to custom _by_pk handlers
+- [x] 02-13-PLAN.md -- Gap closure: apply fullId prefix logic to custom _by_pk handlers
 
 ### Phase 3: FK Migration and Cleanup
 **Goal**: All execution and thread tables reference the new `modelcatalog_*` tables, old model tables are deprecated, and Fuseki is removed from the stack
@@ -90,5 +90,5 @@ Phases execute in numeric order: 1 -> 2 -> 3
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Schema and Data Migration | 7/7 | Complete | 2026-02-19 |
-| 2. API Integration | 12/13 | In progress | - |
+| 2. API Integration | 13/13 | Complete | 2026-02-21 |
 | 3. FK Migration and Cleanup | 0/2 | Not started | - |

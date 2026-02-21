@@ -1,33 +1,41 @@
 ---
 phase: 02-api-integration
-verified: 2026-02-21T10:50:00Z
+verified: 2026-02-21T17:46:57Z
 status: passed
 score: 5/5 must-haves verified
 re_verification:
   previous_status: gaps_found
-  previous_score: 3/5 fully verified (2 partial)
+  previous_score: 4/5
   gaps_closed:
-    - "Full CRUD works through Hasura GraphQL mutations (user_id filtering removed; username is now no-op)"
-    - "New API at /v2.0.0/ returns data for all 46 resource types (null-table types return 200 [] not 501)"
+    - "Custom endpoint handlers (configurationsetups/{id} and modelconfigurationsetups/{id}) now apply fullId prefix for plain IDs — all five handler locations patched in commit 34627e8 (plan 02-13)"
   gaps_remaining: []
   regressions: []
-human_verification: null
+human_verification:
+  - test: "GET /v2.0.0/custom/modelconfigurationsetups/hand_v6 returns 200 with deeply nested setup"
+    expected: "200 response with SETUP_FIELDS data including inputs/outputs/parameters as junction-traversal shapes"
+    why_human: "Requires live Hasura + populated DB to confirm end-to-end behavior; automated checks confirm correct fullId logic and field selections"
+  - test: "GET /v2.0.0/softwares returns hasVersion (not versions) in relationship fields"
+    expected: "Each software entry has hasVersion array containing nested version objects"
+    why_human: "Requires live API against Hasura to confirm the renamed registry key propagates correctly through response transformer"
+  - test: "GET /v2.0.0/softwares/1bade4cb-d924-4253-bfa9-4c02b461396a returns 200"
+    expected: "Entity returned with idPrefix prepended to find the full URI"
+    why_human: "Requires live Hasura; unit test confirms fullId logic exists but not end-to-end behavior with real DB"
 ---
 
-# Phase 02: API Integration Verification Report (Re-verification)
+# Phase 02: API Integration Verification Report
 
 **Phase Goal:** New Node.js/TypeScript REST API serves identical responses at /v2.0.0/ from Hasura/PostgreSQL, while old FastAPI stays at /v1.8.0/ for parallel validation
-**Verified:** 2026-02-21T10:50:00Z
+**Verified:** 2026-02-21T17:46:57Z
 **Status:** passed
-**Re-verification:** Yes — after gap closure plans 02-08, 02-09, 02-10
+**Re-verification:** Yes — after gap closure in plan 02-13. Previous verification (2026-02-21T17:16:52Z) found Truth 4 partial due to missing fullId prefix in custom handlers.
 
-## Re-verification Context
+## Verification Context
 
-Previous verification (2026-02-21T09:30:00Z) found two gaps:
-1. **Gap 1:** 23 of 46 resource types returned HTTP 501 (hasuraTable: null)
-2. **Gap 2:** username filtering used non-existent user_id column causing Hasura runtime errors
+Plan 02-13 (commits `34627e8` and `b78f752`) applied the fullId prefix pattern to all five custom handler locations that were previously passing raw decoded IDs to Hasura. This closes the last remaining gap from the previous verification.
 
-Gap closure plans 02-08 (user_id removal), 02-09 (null-table empty responses), and 02-10 (software type column) were executed. All commits verified in git log: ae74b18, 2cb6f6a, 5dd0e62, 6dcb570, 71c7c4c.
+**Commits added by plan 02-13:**
+- `34627e8` — feat(02-13): add fullId prefix logic to all five custom handler locations
+- `b78f752` — test(02-13): add integration tests for custom handler plain-ID resolution
 
 ---
 
@@ -37,50 +45,13 @@ Gap closure plans 02-08 (user_id removal), 02-09 (null-table empty responses), a
 
 | # | Truth | Status | Evidence |
 |---|-------|--------|----------|
-| 1 | New API at /v2.0.0/ returns data from PostgreSQL/Hasura for all 46 resource types and 13 custom endpoints | VERIFIED | All 46 types handled: 23 with hasuraTable return live DB data; 23 null-table types return 200 [] (matching v1.8.0 empty named graph behavior). 12/13 custom endpoints return live data; datatransformations returns [] (no table exists in schema, same as v1.8.0). |
-| 2 | REST endpoint responses match the existing v1.8.0 API contract (same JSON structure, array wrapping, URI IDs) | VERIFIED | response.ts implements all v1.8.0 contract rules (scalar array-wrapping, type synthesis, null omission, camelCase, junction traversal). 32 tests pass confirming contract fidelity. No regressions found. |
-| 3 | All existing REST endpoints remain functional at /v1.8.0/ (old API untouched) | VERIFIED | model-catalog.yaml, ingress-model-catalog.yaml, values.yaml model_catalog_api block unchanged (enabled=true, api_version=v1.8.0, image=mintproject/model-catalog-fastapi). No modifications to FastAPI codebase. |
-| 4 | Full CRUD (GET, POST, PUT, DELETE) works through Hasura GraphQL mutations | VERIFIED | user_id WHERE clauses removed from service.ts (commit ae74b18) and all 7 custom handlers (commit 2cb6f6a). Username parameter now accepted as no-op. CRUD wired for 23 non-null-table types; writes correctly return 501 for null-table types. 32/32 tests pass including Test 6 verifying no-op username behavior. |
-| 5 | Helm chart deploys the new API alongside existing services | VERIFIED | model-catalog-api-v2.yaml + ingress-model-catalog-api-v2.yaml present. values.yaml has model_catalog_api_v2 block with enabled=false safe default. /v2.0.0 ingress path routes separately from /v1.8.0/. |
+| 1 | New API at /v2.0.0/ returns data from PostgreSQL/Hasura for all 46 resource types and 13 custom endpoints | VERIFIED | 49 registry entries (24 null + 25 non-null including alias). Null-table reads return 200 []; non-null proceed to GraphQL. 13 custom handlers all present. TypeScript compiles; 36/36 tests pass. |
+| 2 | REST endpoint responses match the existing v1.8.0 API contract (same JSON structure, array wrapping, URI IDs) | VERIFIED | response.ts implements all v1.8.0 rules: scalar array-wrapping, type synthesis, null omission, camelCase, junction traversal. resource-registry.ts uses v1.8.0 OWL property names (hasVersion, hasConfiguration, hasInput, hasOutput, hasParameter, hasSetup, hasModelCategory, hasProcess, hasGrid, hasCausalDiagram, hasOutputTimeInterval, hasRegion, calibratedVariable, calibrationTargetVariable, hasPart, hasIntervention). 36 tests pass. |
+| 3 | All existing REST endpoints remain functional at /v1.8.0/ (old API untouched) | VERIFIED | values.yaml: model_catalog_api block has enabled=true, api_version=v1.8.0, image=mintproject/model-catalog-fastapi. model_catalog_api_v2 block separate with enabled=false safe default. No modifications to FastAPI codebase. |
+| 4 | Full CRUD (GET, POST, PUT, DELETE) works through Hasura GraphQL mutations | VERIFIED | Generic CRUD (service.ts): fullId prefix at lines 130, 230, 297 for getById/update/deleteResource. Custom handlers: ALL FIVE handler locations now apply fullId/fullCfgId prefix. custom_configurationsetups_id_get (line 349), custom_modelconfigurationsetups_id_get (line 377), custom_modelconfigurations_id_get (line 405), custom_configuration_id_inputs_get (line 557) use `variables: { id: fullId }`. custom_datasetspecifications_get (line 488-489) uses `{ cfgId: fullCfgId }`. Zero instances of `variables: { id }` (raw). TypeScript compiles. 36/36 tests pass including 3 new tests for custom handler plain-ID resolution. |
+| 5 | Helm chart deploys the new API alongside existing services | VERIFIED | model-catalog-api-v2.yaml + ingress-model-catalog-api-v2.yaml present. values.yaml has model_catalog_api_v2 block at line 374. /v2.0.0 ingress path routing confirmed. Deployment uses app.ts prefix: 'v2.0.0'. |
 
 **Score:** 5/5 truths verified
-
----
-
-## Gap Closure Verification
-
-### Gap 1 (CLOSED): 23 resource types returned 501
-
-**Plan 02-09** modified `list()` and `getById()` in service.ts:
-- `list()` line 50-53: `reply.code(200).send([])` for null hasuraTable (was 501)
-- `getById()` line 123-126: `reply.code(404).send({ error: 'Not found' })` for null hasuraTable (was 501)
-- Write operations (create/update/deleteResource) still return 501 for null-table types — correct behavior
-- Commits: 5dd0e62 (service.ts), 6dcb570 (datatransformations TODO comment removed)
-
-Evidence:
-- `grep -n "hasuraTable" src/service.ts` shows `reply.code(200).send([])` at line 52 and `reply.code(404).send({ error: 'Not found' })` at line 125
-- No `TODO` in custom-handlers.ts; datatransformations handler returns 200 [] with explanatory comment
-
-### Gap 2 (CLOSED): user_id filtering causing Hasura runtime errors
-
-**Plan 02-08** removed all user_id references from service.ts and custom-handlers.ts:
-- service.ts: `user_id` gone from whereConditions; `username` destructured but unused (no-op)
-- custom-handlers.ts: all 7 handlers cleaned, user_id removed from field selections in SOFTWARE_FIELDS, SETUP_FIELDS, CONFIGURATION_FIELDS and 9 inline query locations
-- Integration test (Test 6) updated to assert username is accepted but produces no user_id WHERE clause
-- Commits: ae74b18 (service.ts), 2cb6f6a (custom-handlers.ts)
-
-Evidence:
-- `grep -rn "user_id" src/` returns only test file references to the text "user_id" in comments/assertions that verify the field does NOT appear in queries
-- `grep -n "username" src/service.ts` shows `{ username, label, page = 1, per_page = 25 } = req.query` — destructured, never used
-
-### Bonus Fix (Plan 02-10): Software type column added
-
-**Plan 02-10** resolved software subtype filtering (getSoftwareTypeFilter producing runtime errors):
-- Migration `1771105512000_modelcatalog_software_type/up.sql`: adds `type TEXT` column with backfill
-- `graphql_engine/metadata/tables.yaml`: `type` added to select (anonymous+user), insert, update permissions for modelcatalog_software
-- `etl/extract.py`: SPARQL type_query extracts rdf:type subtypes per entity; stored in entity['type']
-- `model-catalog-api/src/hasura/field-maps.ts`: `type` included in modelcatalog_software selection
-- `model-catalog-api/src/mappers/resource-registry.ts`: `theory_guidedmodels` underscore alias added for OpenAPI operationId compatibility
 
 ---
 
@@ -88,23 +59,23 @@ Evidence:
 
 | Artifact | Expected | Status | Details |
 |----------|----------|--------|---------|
-| `model-catalog-api/src/app.ts` | Fastify app with openapi-glue and /health endpoint | VERIFIED | v2.0.0 prefix at line 138; /health endpoint present; no regression |
-| `model-catalog-api/src/service.ts` | CatalogService Proxy with 5 generic CRUD handlers + null-table empty responses | VERIFIED | list() returns 200 [] for null hasuraTable; getById() returns 404; user_id removed; typeFilter working |
-| `model-catalog-api/src/hasura/client.ts` | Apollo Client for Hasura | VERIFIED | No change; still present |
-| `model-catalog-api/src/mappers/resource-registry.ts` | 46-entry resource registry + theory_guidedmodels alias | VERIFIED | 49 hasuraTable entries (24 null + 24 non-null + 1 alias); theory_guidedmodels alias added at line 620 |
-| `model-catalog-api/src/mappers/response.ts` | v1.8.0 response transformer | VERIFIED | No change; 32 tests confirm contract fidelity |
-| `model-catalog-api/src/mappers/request.ts` | Hasura input transformer | VERIFIED | No change |
-| `model-catalog-api/src/hasura/field-maps.ts` | GraphQL field selections including type for modelcatalog_software | VERIFIED | `type` added to modelcatalog_software selection at line 43 |
-| `model-catalog-api/src/custom-handlers.ts` | 13 custom endpoint handlers, no user_id, no TODO | VERIFIED | All 13 handlers present; zero user_id references; zero TODO references; datatransformations has explanatory comment |
-| `model-catalog-api/src/security.ts` | BearerAuth security handler | VERIFIED | No change; present |
-| `model-catalog-api/Dockerfile` | Multi-stage node:20-alpine build | VERIFIED | No change; present |
-| `model-catalog-api/.github/workflows/ci.yml` | CI with test gate + Docker Hub push | VERIFIED | No change; present |
-| `graphql_engine/migrations/1771105512000_modelcatalog_software_type/` | up.sql + down.sql for type column | VERIFIED | Both files present; up.sql adds type TEXT + backfill UPDATE |
-| `helm-charts/charts/mint/templates/model-catalog-api-v2.yaml` | Service + Deployment | VERIFIED | No change; present |
-| `helm-charts/charts/mint/templates/ingress-model-catalog-api-v2.yaml` | Ingress for /v2.0.0 | VERIFIED | No change; present |
-| `helm-charts/charts/mint/values.yaml` | model_catalog_api_v2 block + model_catalog_api v1.8.0 block | VERIFIED | Both blocks present; v1.8.0 FastAPI unchanged |
-| `graphql_engine/metadata/tables.yaml` | type column in modelcatalog_software permissions | VERIFIED | type in select (anonymous+user), insert, update permissions at lines 2916, 2933 |
-| `etl/extract.py` | rdf:type extraction for software subtypes | VERIFIED | type_query SPARQL at lines 128-138; subtype_map at lines 142-152; entity['type'] set at line 152 |
+| `model-catalog-api/src/app.ts` | Fastify app with /v2.0.0 prefix and /health endpoint | VERIFIED | v2.0.0 prefix at line 138; /health at line 119 |
+| `model-catalog-api/src/service.ts` | CatalogService with CRUD, fullId prefix, null-table empty responses | VERIFIED | fullId logic at lines 130, 230, 297; null-table 200[] at line 52; user_id absent |
+| `model-catalog-api/src/hasura/client.ts` | Apollo Client for Hasura | VERIFIED | Present; wired via readClient.query in service.ts and custom-handlers.ts |
+| `model-catalog-api/src/mappers/resource-registry.ts` | 46-entry registry with v1.8.0 OWL relationship keys | VERIFIED | 49 entries (25 non-null + 24 null + alias); 25+ relationship key renames confirmed |
+| `model-catalog-api/src/mappers/response.ts` | v1.8.0 response transformer | VERIFIED | 141 lines; uses apiFieldName (registry key) as output JSON key; array-wrap, type synthesis, null omission all implemented |
+| `model-catalog-api/src/mappers/request.ts` | Hasura input transformer | VERIFIED | Present; wired via toHasuraInput in service.ts create/update |
+| `model-catalog-api/src/hasura/field-maps.ts` | GraphQL field selections including type for modelcatalog_software | VERIFIED | type field at line 43 of modelcatalog_software selection |
+| `model-catalog-api/src/custom-handlers.ts` | 13 custom endpoint handlers with valid field selections AND fullId prefix in all five ID-resolving locations | VERIFIED | 13 handlers present; SETUP_FIELDS and CONFIGURATION_FIELDS fixed (02-12); all 5 ID locations use fullId/fullCfgId (02-13). `grep -c 'variables: { id }' custom-handlers.ts` returns 0; `grep -c 'variables: { id: fullId }' custom-handlers.ts` returns 4; `grep -c 'fullCfgId' custom-handlers.ts` returns 2. |
+| `model-catalog-api/src/security.ts` | BearerAuth security handler | VERIFIED | Present; BearerAuth method at line 15 |
+| `model-catalog-api/Dockerfile` | Multi-stage node:20-alpine build | VERIFIED | FROM node:20-alpine AS builder; production stage present |
+| `model-catalog-api/.github/workflows/ci.yml` | CI with test gate + Docker Hub push | VERIFIED | vitest run + docker push in workflow |
+| `graphql_engine/migrations/1771105512000_modelcatalog_software_type/` | up.sql + down.sql for type column | VERIFIED | up.sql: ALTER TABLE modelcatalog_software ADD COLUMN type TEXT + UPDATE backfill |
+| `helm-charts/charts/mint/templates/model-catalog-api-v2.yaml` | Service + Deployment | VERIFIED | Present |
+| `helm-charts/charts/mint/templates/ingress-model-catalog-api-v2.yaml` | Ingress for /v2.0.0 | VERIFIED | Present; uses model_catalog_api_v2 values block |
+| `helm-charts/charts/mint/values.yaml` | model_catalog_api_v2 block + model_catalog_api v1.8.0 block | VERIFIED | model_catalog_api at line 343 (enabled=true, v1.8.0, fastapi); model_catalog_api_v2 at line 374 (enabled=false) |
+| `graphql_engine/metadata/tables.yaml` | All 39 modelcatalog tables with insert/delete permissions; type in modelcatalog_software | VERIFIED | 39 tables; insert/delete permissions; type in column selections |
+| `etl/extract.py` | rdf:type SPARQL extraction for software subtypes | VERIFIED | type_query and entity['type'] set |
 
 ---
 
@@ -112,13 +83,15 @@ Evidence:
 
 | From | To | Via | Status | Details |
 |------|----|-----|--------|---------|
-| `src/service.ts` | Hasura GraphQL API | `readClient.query` with no user_id | WIRED | user_id removed; label + typeFilter only dynamic WHERE conditions |
-| `src/service.ts` | `src/mappers/resource-registry.ts` | `getResourceConfig()` with hasuraTable null check | WIRED | null-table returns 200[]/404 before query; non-null proceeds to GraphQL |
-| `src/custom-handlers.ts` | Hasura GraphQL API | GraphQL queries with no user_id | WIRED | All 7 handlers cleaned; zero user_id in query strings |
-| `etl/extract.py` | `etl/load.py` | `entity['type']` in extracted software dicts | WIRED | type set at line 152; generic load_table mechanism includes all entity dict keys |
-| `graphql_engine/migrations/*/up.sql` | `modelcatalog_software` | `ALTER TABLE ADD COLUMN type TEXT` | WIRED | Migration file exists; tables.yaml has type in all permissions |
-| `src/hasura/field-maps.ts` | `modelcatalog_software` | `type` in GraphQL field selection | WIRED | type at line 43 of field-maps.ts |
-| `src/service.ts` | `src/hasura/field-maps.ts` | `getFieldSelection(hasuraTable)` | WIRED | No change; still wired |
+| `src/service.ts` | Hasura GraphQL API | `readClient.query` with fullId, no user_id | WIRED | fullId at lines 130, 230, 297; user_id absent from grep |
+| `src/service.ts` | `src/mappers/resource-registry.ts` | `getResourceConfig()` + hasuraTable null check | WIRED | null-table early return at lines 50-54 and 123-127 |
+| `src/custom-handlers.ts` | Hasura GraphQL API | GraphQL queries with correct field selections | WIRED | SETUP_FIELDS, CONFIGURATION_FIELDS, SOFTWARE_FIELDS all use valid columns and junction traversal |
+| `src/custom-handlers.ts` | Hasura _by_pk with plain IDs | fullId prefix for all four custom path-param endpoints | WIRED | Lines 349, 377, 405, 557: all use `startsWith('https://')` guard then `variables: { id: fullId }`. Zero raw `variables: { id }` remain. |
+| `src/custom-handlers.ts` | Hasura _where filter on configurationid | fullCfgId prefix for custom_datasetspecifications_get query param | WIRED | Lines 488-489: `fullCfgId` declared and used in `innerVars: { cfgId: fullCfgId }` |
+| `src/mappers/response.ts` | v1.8.0 OWL property names | `result[apiFieldName]` at line 71 | WIRED | Registry keys (hasVersion, hasInput, etc.) drive JSON output field names |
+| `etl/extract.py` | `etl/load.py` | `entity['type']` in software dicts | WIRED | type set at line 152 of extract.py |
+| `graphql_engine/migrations/*/up.sql` | `modelcatalog_software` | `ALTER TABLE ADD COLUMN type TEXT` | WIRED | Migration file exists; type in tables.yaml permissions |
+| `src/hasura/field-maps.ts` | `modelcatalog_software` GraphQL queries | `type` in field selection | WIRED | type at line 43 of field-maps.ts |
 
 ---
 
@@ -126,61 +99,60 @@ Evidence:
 
 | Requirement | Status | Blocking Issue |
 |-------------|--------|----------------|
-| New API at /v2.0.0/ returns data for all 46 resource types | SATISFIED | Null-table types return 200 [] matching v1.8.0 empty named graph behavior |
-| REST responses match v1.8.0 JSON contract | SATISFIED | 32 tests confirm; no regression |
-| All v1.8.0 endpoints remain functional | SATISFIED | values.yaml + helm templates unchanged for FastAPI |
-| Full CRUD through Hasura GraphQL | SATISFIED | user_id removed; CRUD wired for 23 entity-table resources; null-table writes correctly 501 |
-| Helm chart deploys alongside existing services | SATISFIED | Both v1.8.0 and v2.0.0 service blocks in values.yaml; separate ingress paths |
+| API-01: New API at /v2.0.0/ returns data from Hasura for all 46 resource types | SATISFIED | All types handled; 36 tests pass |
+| API-02: REST responses match v1.8.0 JSON contract | SATISFIED | response.ts + registry key renames + 36 tests |
+| API-03: All v1.8.0 endpoints remain functional | SATISFIED | values.yaml + helm templates unchanged for FastAPI |
+| Phase 2 Success Criterion 4: Full CRUD through Hasura | SATISFIED | Generic CRUD + all five custom handler locations now apply fullId prefix; 36/36 tests pass |
+| Phase 2 Success Criterion 5: Helm chart deploys alongside existing services | SATISFIED | Both service blocks in values.yaml; both helm templates present |
 
 ---
 
 ## Anti-Patterns Found
 
-None. All previously-identified anti-patterns have been resolved:
-- `user_id` WHERE clause injections: removed from service.ts and all 7 custom handlers
-- `TODO: datatransformations table does not exist`: removed and replaced with accurate explanatory comment
-- `reply.code(501)` for null-table reads: changed to 200 []/404
+None. The previously-flagged anti-patterns (raw `id` usage in custom handlers at lines 348-359 and 376-386) have been resolved by plan 02-13. `grep -c 'variables: { id }' custom-handlers.ts` returns 0.
 
 ---
 
-## Test Suite Confirmation
+## Human Verification Required
 
-32/32 tests pass as of re-verification:
-- Test 6 ("username filter") now asserts the correct no-op behavior: `expect(callArgs.query).not.toContain('user_id')`
-- All response contract tests pass (array wrapping, type synthesis, null omission, camelCase)
-- Integration tests for list, getById, pagination, label filter, null omission, URI decoding all pass
+### 1. Custom Setup Detail Endpoint with Plain ID
 
----
+**Test:** `curl http://localhost:3000/v2.0.0/custom/modelconfigurationsetups/hand_v6`
+**Expected:** 200 response with full nested setup object including inputs, outputs, parameters as nested objects
+**Why human:** Requires live Hasura + populated DB. Automated checks confirm fullId prefix logic and field name correctness; end-to-end behavior depends on actual DB content and Hasura schema alignment.
 
-## Human Verification (Optional, Not Blocking)
+### 2. Relationship Field Names in Live Response
 
-The following items cannot be verified programmatically but are not blocking:
+**Test:** `curl http://localhost:3000/v2.0.0/softwares | jq '.[0] | keys'`
+**Expected:** Keys include `hasVersion` (not `versions`), `id`, `label`, `description`, `type`, `author`, etc.
+**Why human:** Registry key rename is verified in code; live end-to-end confirmation confirms the transformer produces correct v1.8.0 output against a real Hasura instance.
 
-### 1. Software subtype API endpoint filtering
+### 3. Plain UUID Lookup via Generic Endpoint
 
-**Test:** Start the API pointing at local Hasura, call `GET /v2.0.0/theory-guidedmodels`
-**Expected:** Returns 7 results (Theory-GuidedModel type entities from TriG data)
-**Why human:** Requires live Hasura + populated DB; 02-10 summary confirms this worked during execution but cannot be re-verified without running services
-
-### 2. Username filter API contract compatibility
-
-**Test:** Call `GET /v2.0.0/models?username=mint@isi.edu`
-**Expected:** Returns same result set as `GET /v2.0.0/models` (username ignored, no error)
-**Why human:** Requires live Hasura; test confirms no user_id in query but not actual Hasura response
+**Test:** `curl http://localhost:3000/v2.0.0/softwares/1bade4cb-d924-4253-bfa9-4c02b461396a`
+**Expected:** 200 with software entity (fullId prefix logic prepends `https://w3id.org/okn/i/mint/`)
+**Why human:** Unit test (Test 9 in integration.test.ts) confirms fullId logic in mock; real Hasura needed for end-to-end validation.
 
 ---
 
-## Summary
+## Gap Closure Summary
 
-All 5 success criteria are now satisfied. The three gap closure plans executed cleanly:
-- 02-08 removed the blocking `user_id` runtime error pattern from all list endpoints
-- 02-09 changed 23 null-table resource types from 501 to correct 200[]/404 responses
-- 02-10 added the `type` column to `modelcatalog_software` enabling software subtype filtering
+**Gap from previous verification:** Custom endpoint handlers (`custom_configurationsetups_id_get` and `custom_modelconfigurationsetups_id_get`) did not apply `idPrefix` for plain IDs, passing raw decoded IDs directly to Hasura `_by_pk`.
 
-The phase goal is achieved: the Node.js/TypeScript API serves responses at /v2.0.0/ from PostgreSQL/Hasura for all 46 resource types, the v1.8.0 FastAPI is untouched, and the Helm chart deploys both services.
+**Resolution (plan 02-13, commits `34627e8` and `b78f752`):**
+- All five ID-resolving handler locations in `custom-handlers.ts` now apply the `startsWith('https://')` guard pattern before Hasura queries
+- Handler 1 (`custom_configurationsetups_id_get`, line 349): uses `resourceConfig.idPrefix` from configurationsetups
+- Handler 2 (`custom_modelconfigurationsetups_id_get`, line 377): uses `resourceConfig.idPrefix` from modelconfigurationsetups
+- Handler 3 (`custom_modelconfigurations_id_get`, line 405): uses `resourceConfig.idPrefix` from modelconfigurations
+- Handler 4 (`custom_configuration_id_inputs_get`, line 557): uses `mcConfig.idPrefix` from modelconfigurations (correct — queries modelcatalog_model_configuration table)
+- Handler 5 (`custom_datasetspecifications_get`, line 488-489): uses `mcConfig.idPrefix` from modelconfigurations for `configurationid` query param
+- Three new integration tests (Test 10 describe block) verify plain-ID expansion and full-URI passthrough
+- All 36 tests pass; TypeScript compiles cleanly; `variables: { id }` (raw) count is 0 in custom-handlers.ts
+
+**Phase 2 all 5 success criteria are now fully satisfied.**
 
 ---
 
-_Verified: 2026-02-21T10:50:00Z_
+_Verified: 2026-02-21T17:46:57Z_
 _Verifier: Claude (gsd-verifier)_
-_Re-verification of: 2026-02-21T09:30:00Z verification_
+_Re-verification of: 2026-02-21T17:16:52Z verification (previous status: gaps_found, 4/5 — custom handler plain-ID gap now closed by plan 02-13)_
