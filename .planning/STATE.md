@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-02-14)
 
 ## Current Position
 
-Phase: 2 of 3 (API Integration - COMPLETE, verified 5/5)
-Plan: 13 of 13 in current phase (all complete)
-Status: Phase 2 verified and complete
-Last activity: 2026-02-21 -- Phase 2 execution complete, verification passed 5/5
+Phase: 3 of 3 (FK Migration and Cleanup - IN PROGRESS)
+Plan: 2 of 4 in current phase (03-02 complete)
+Status: Phase 3 executing
+Last activity: 2026-02-21 -- 03-02 complete: Fuseki disabled in Helm, model_catalog_api removed from config files
 
-Progress: [██████████░░] 85% (Phase 1 complete + Phase 2 complete)
+Progress: [███████████░] 90% (Phase 1 + Phase 2 complete, Phase 3 2/4 plans done)
 
 ## Performance Metrics
 
@@ -60,6 +60,7 @@ Progress: [██████████░░] 85% (Phase 1 complete + Phase 2
 | Phase 02-api-integration P12 | 226 | 1 tasks | 3 files |
 | 02-11 | 266s | 3 tasks | 4 files |
 | 02-13 | 88s | 2 tasks | 2 files |
+| 03-02 | 480s | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -117,6 +118,9 @@ Recent decisions affecting current work:
 - [Phase 02-11]: deleteResource returns deleted: fullId (not deleted: id) so caller sees the resolved full URI
 - [Phase 02-13]: Handler 4 (custom_configuration_id_inputs_get) uses mcConfig.idPrefix from modelconfigurations because path param filters modelcatalog_model_configuration table
 - [Phase 02-13]: Handler 5 (configurationid query param) uses mcConfig.idPrefix from modelconfigurations because filter field is model_configuration_id
+- [Phase 03-02]: ingress-model-catalog-endpoint.yaml guarded by AND of model_catalog_endpoint.enabled + ingress.enabled (both conditions required)
+- [Phase 03-02]: model-catalog-endpoint-backup.yaml guarded by AND of model_catalog_endpoint.enabled + backups.enabled (both conditions required)
+- [Phase 03-02]: PVC template left intact with helm.sh/resource-policy: keep for Fuseki data preservation on disable
 
 ### Pending Todos
 
@@ -131,5 +135,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-21
-Stopped at: Completed 02-13-PLAN.md (fullId prefix logic for all five custom handler locations, plain-ID resolution complete)
-Resume file: .planning/phases/03-fuseki-migration/03-01-PLAN.md (Phase 3 next)
+Stopped at: Completed 03-02-PLAN.md (Fuseki disabled in Helm chart, model_catalog_api removed from config files)
+Resume file: .planning/phases/03-fk-migration-and-cleanup/03-03-PLAN.md (Phase 3 Plan 3 next)
