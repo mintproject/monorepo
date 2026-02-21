@@ -18,8 +18,6 @@ import {
     ModelOutput,
     ExecutionSummary
 } from "@/classes/mint/mint-types";
-import { ModelConfigurationSetup } from "@mintproject/modelcatalog_client";
-
 import { GraphQL } from "../../config/graphql";
 
 import getProblemStatementGQL from "./queries/problem-statement/get.graphql";
@@ -92,6 +90,23 @@ import {
     eventToGQL,
     modelFromGQL
 } from "./graphql_adapter";
+
+// Minimal interfaces for functions that accept model catalog data shapes
+interface CatalogModelInput {
+    id: string;
+    hasFixedResource?: any[];
+}
+
+interface CatalogModelParameter {
+    id: string;
+    hasFixedValue?: any[];
+}
+
+interface CatalogModelSetup {
+    id: string;
+    hasInput: CatalogModelInput[];
+    hasParameter: CatalogModelParameter[];
+}
 
 import { Md5 } from "ts-md5";
 import {
@@ -259,7 +274,7 @@ export const getModel = async (modelid: string): Promise<Model> => {
 
 const MAX_CONFIGURATIONS = 1000000;
 export const getTotalConfigurations = (
-    model: ModelConfigurationSetup,
+    model: CatalogModelSetup,
     bindings: ModelIOBindings,
     data: DataMap
 ) => {
@@ -997,7 +1012,7 @@ export const updateThreadInformation = (threadinfo: ThreadInfo) => {
 };
 
 export const setThreadModels = (
-    models: ModelConfigurationSetup[],
+    models: Array<{ id: string }>,
     notes: string,
     thread: Thread
 ) => {

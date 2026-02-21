@@ -1,18 +1,60 @@
 import { DataMap, Dataslice, Thread } from "@/classes/mint/mint-types";
 import { AddDataRequest, DataInput } from "../../paths/problemStatements/tasks/subtasks";
 import { uuidv4 } from "@/classes/graphql/graphql_adapter";
-import {
-    DatasetSpecification,
-    ModelConfiguration,
-    ModelConfigurationSetup
-} from "@mintproject/modelcatalog_client/dist";
 import { BadRequestError, NotFoundError } from "@/classes/common/errors";
-import {
-    convertApiUrlToW3Id,
-    fetchCustomModelConfigurationOrSetup
-} from "@/classes/mint/model-catalog-functions";
+import { convertApiUrlToW3Id, CatalogDatasetSpec, CatalogModelConfigurationSetup, CatalogModelConfiguration } from "@/classes/mint/model-catalog-graphql-adapter";
+import { GraphQL } from "@/config/graphql";
+import { KeycloakAdapter } from "@/config/keycloak-adapter";
+import getModelcatalogConfigurationGQL from "@/classes/graphql/queries/model/get-modelcatalog-configuration.graphql";
+import getModelcatalogSetupGQL from "@/classes/graphql/queries/model/get-modelcatalog-setup.graphql";
 
-const createDataSlice = (dataInput: DataInput, thread: Thread) => {
+// Inline interface for model input with fixed resource support
+// Note: hasFixedResource is not in the new Hasura schema; all inputs from Hasura are treated as non-fixed
+interface ModelInput {
+    id: string;
+    hasFixedResource?: any[];
+}
+
+// Inline interface for model with inputs (compatible with both old and new shapes)
+interface ModelWithInputs {
+    id: string;
+    hasInput: ModelInput[];
+}
+
+const fetchModelByW3Id = async (
+    w3Id: string,
+    accessToken?: string
+): Promise<CatalogModelConfiguration | CatalogModelConfigurationSetup> => {
+    const apolloClient = accessToken
+        ? GraphQL.instanceUsingAccessToken(accessToken)
+        : GraphQL.instance(KeycloakAdapter.getUser());
+
+    // Try configuration first
+    const configResult = await apolloClient.query({
+        query: getModelcatalogConfigurationGQL,
+        variables: { id: w3Id },
+        fetchPolicy: "no-cache"
+    });
+    const catalogConfig = configResult.data?.modelcatalog_model_configuration_by_pk;
+    if (catalogConfig) {
+        return catalogConfig as CatalogModelConfiguration;
+    }
+
+    // Fall back to setup
+    const setupResult = await apolloClient.query({
+        query: getModelcatalogSetupGQL,
+        variables: { id: w3Id },
+        fetchPolicy: "no-cache"
+    });
+    const catalogSetup = setupResult.data?.modelcatalog_model_configuration_setup_by_pk;
+    if (catalogSetup) {
+        return catalogSetup as CatalogModelConfigurationSetup;
+    }
+
+    return null;
+};
+
+const createDataSlice = (dataInput: DataInput, thread: Thread): Dataslice => {
     const sliceid = uuidv4();
     const dataslice = {
         id: sliceid,
@@ -38,11 +80,14 @@ const createDataSlice = (dataInput: DataInput, thread: Thread) => {
     return dataslice;
 };
 
-const hasInputHasFixedResource = (input: DatasetSpecification) => {
+const hasInputHasFixedResource = (input: { hasFixedResource?: any[] }) => {
     return input.hasFixedResource && input.hasFixedResource.length > 0;
 };
 
-const findDataSpecificationByRequest = (input: DatasetSpecification, data: AddDataRequest) => {
+const findDataSpecificationByRequest = (
+    input: { id: string },
+    data: AddDataRequest
+) => {
     const dataInput = data.data.find((d) => d.id === input.id);
     if (!dataInput) {
         throw new BadRequestError(`Data input ${input.id} has not been provided`);
@@ -51,7 +96,7 @@ const findDataSpecificationByRequest = (input: DatasetSpecification, data: AddDa
 };
 
 const createBinding = (
-    input: DatasetSpecification,
+    input: { id: string; hasFixedResource?: any[] },
     data: AddDataRequest,
     thread: Thread
 ): Dataslice => {
@@ -60,7 +105,7 @@ const createBinding = (
 };
 
 const validateThatAllInputsAreBound = (
-    model: ModelConfiguration | ModelConfigurationSetup,
+    model: { id: string; hasInput: ModelInput[] },
     thread: Thread
 ) => {
     const modelInputs = model.hasInput;
@@ -76,20 +121,20 @@ const validateThatAllInputsAreBound = (
 };
 
 const getDataBindings = async (
-    model: ModelConfiguration | ModelConfigurationSetup
-): Promise<DatasetSpecification[]> => {
-    const inputs: DatasetSpecification[] = [];
+    model: { hasInput: ModelInput[] }
+): Promise<CatalogDatasetSpec[]> => {
+    const inputs: CatalogDatasetSpec[] = [];
     const modelInputs = model.hasInput;
     for (const input of modelInputs) {
         if (!hasInputHasFixedResource(input)) {
-            inputs.push(input);
+            inputs.push(input as CatalogDatasetSpec);
         }
     }
     return inputs;
 };
 
 const matchInputs = async (
-    model: ModelConfiguration | ModelConfigurationSetup,
+    model: { id: string; hasInput: ModelInput[] },
     data: AddDataRequest,
     thread: Thread
 ) => {
@@ -112,15 +157,34 @@ const matchInputs = async (
     return dataMap;
 };
 
+/**
+ * Converts a GraphQL catalog model (new shape) to the ModelWithInputs shape.
+ * New shape: model.inputs = [{input: {id, label, ...}}]
+ * For backward compatibility with hasFixedResource: all inputs are treated as non-fixed.
+ */
+const catalogModelToModelWithInputs = (
+    model: CatalogModelConfiguration | CatalogModelConfigurationSetup
+): ModelWithInputs => {
+    const inputs = ((model as any).inputs || []).map((row: any) => ({
+        id: row.input.id,
+        hasFixedResource: [] // No fixed resource in new Hasura schema
+    }));
+    return {
+        id: model.id,
+        hasInput: inputs
+    };
+};
+
 const setInputBindings = async (data: AddDataRequest, subtask: Thread) => {
     let match = false;
     for (const [modelW3Id] of Object.entries(subtask.model_ensembles)) {
         if (modelW3Id === convertApiUrlToW3Id(data.model_id)) {
             match = true;
-            const model = await fetchCustomModelConfigurationOrSetup(data.model_id);
-            if (!model) {
+            const catalogModel = await fetchModelByW3Id(modelW3Id);
+            if (!catalogModel) {
                 throw new NotFoundError("Model not found");
             }
+            const model = catalogModelToModelWithInputs(catalogModel);
             const dataMap = await matchInputs(model, data, subtask);
             validateThatAllInputsAreBound(model, subtask);
             return dataMap;
@@ -132,10 +196,12 @@ const setInputBindings = async (data: AddDataRequest, subtask: Thread) => {
 };
 
 const getDataBindingsByModelId = async (model_id: string) => {
-    const model = await fetchCustomModelConfigurationOrSetup(model_id);
-    if (!model) {
+    const w3Id = convertApiUrlToW3Id(model_id);
+    const catalogModel = await fetchModelByW3Id(w3Id);
+    if (!catalogModel) {
         throw new NotFoundError("Model not found");
     }
+    const model = catalogModelToModelWithInputs(catalogModel);
     return await getDataBindings(model);
 };
 

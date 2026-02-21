@@ -1,10 +1,4 @@
 import {
-    DatasetSpecification,
-    ModelConfiguration,
-    ModelConfigurationSetup,
-    Parameter
-} from "@mintproject/modelcatalog_client/dist";
-import {
     Model_Input_Arr_Rel_Insert_Input,
     Model_Insert_Input,
     Model_Output_Arr_Rel_Insert_Input,
@@ -12,19 +6,112 @@ import {
     Model_Parameter_Insert_Input
 } from "../graphql/types";
 
+const W3_ID_URI_PREFIX = "https://w3id.org/okn/i/mint/";
+
+/**
+ * Converts a Model Catalog REST API URL to a W3ID URI.
+ * e.g. https://api.models.mint.local/v1.8.0/modelconfigurations/UUID?username=x
+ *      -> https://w3id.org/okn/i/mint/UUID
+ */
+export const convertApiUrlToW3Id = (url: string): string => {
+    const baseUrl = url.split("?")[0];
+    const urlParts = baseUrl.split("/");
+    const id = urlParts.pop();
+    return W3_ID_URI_PREFIX + id;
+};
+
+/**
+ * Converts a W3ID URI back to a Model Catalog REST API URL (string manipulation only, no REST call).
+ * e.g. https://w3id.org/okn/i/mint/UUID -> https://api.models.mint.local/v1.8.0/modelconfigurations/UUID
+ */
+export const convertW3IdToApiUrl = (w3Id: string, baseApiUrl: string, type: "modelconfigurations" | "modelconfigurationsetups" = "modelconfigurations"): string => {
+    const uuid = w3Id.replace(W3_ID_URI_PREFIX, "");
+    return `${baseApiUrl}/${type}/${uuid}`;
+};
+
+// Types matching GraphQL query response shapes (flat scalar fields, not array-wrapped)
+export interface CatalogDatasetSpec {
+    id: string;
+    label?: string;
+    description?: string;
+    has_format?: string;
+    position?: number;
+}
+
+export interface CatalogParameter {
+    id: string;
+    label?: string;
+    description?: string;
+    has_default_value?: string;
+    has_fixed_value?: string;
+    has_minimum_accepted_value?: string;
+    has_maximum_accepted_value?: string;
+    parameter_type?: string;
+    position?: number;
+    has_accepted_values?: string;
+    has_data_type?: string;
+}
+
+// Junction row types matching GraphQL query traversal pattern
+export interface CatalogSetupParameterRow {
+    parameter: CatalogParameter;
+}
+
+export interface CatalogSetupInputRow {
+    input: CatalogDatasetSpec;
+}
+
+export interface CatalogSetupOutputRow {
+    output: CatalogDatasetSpec;
+}
+
+export interface CatalogConfigurationParameterRow {
+    parameter: CatalogParameter;
+}
+
+export interface CatalogConfigurationInputRow {
+    input: CatalogDatasetSpec;
+}
+
+export interface CatalogConfigurationOutputRow {
+    output: CatalogDatasetSpec;
+}
+
+export interface CatalogModelConfigurationSetup {
+    id: string;
+    label?: string;
+    description?: string;
+    has_software_image?: string;
+    has_component_location?: string;
+    parameters?: CatalogSetupParameterRow[];
+    inputs?: CatalogSetupInputRow[];
+    outputs?: CatalogSetupOutputRow[];
+}
+
+export interface CatalogModelConfiguration {
+    id: string;
+    label?: string;
+    description?: string;
+    has_component_location?: string;
+    has_software_image?: string;
+    parameters?: CatalogConfigurationParameterRow[];
+    inputs?: CatalogConfigurationInputRow[];
+    outputs?: CatalogConfigurationOutputRow[];
+}
+
 export const modelInputToGraphQL = (
-    dataset: DatasetSpecification[]
+    datasets: CatalogDatasetSpec[]
 ): Model_Input_Arr_Rel_Insert_Input => {
     return {
-        data: dataset.map((dataset) => ({
-            position: dataset.position?.[0] || 0,
+        data: datasets.map((dataset) => ({
+            position: dataset.position || 0,
             model_io: {
                 data: {
                     id: dataset.id,
-                    name: dataset.label?.[0] || "",
-                    type: dataset.type?.[0] || "",
-                    description: dataset.description?.[0] || "",
-                    format: dataset.hasFormat?.[0] || ""
+                    name: dataset.label || "",
+                    type: "",
+                    description: dataset.description || "",
+                    format: dataset.has_format || ""
                 }
             }
         }))
@@ -32,105 +119,114 @@ export const modelInputToGraphQL = (
 };
 
 export const modelOutputToGraphQL = (
-    dataset: DatasetSpecification[]
+    datasets: CatalogDatasetSpec[]
 ): Model_Output_Arr_Rel_Insert_Input => {
     return {
-        data: dataset.map((dataset) => ({
-            position: dataset.position?.[0] || 0,
+        data: datasets.map((dataset) => ({
+            position: dataset.position || 0,
             model_io: {
                 data: {
                     id: dataset.id,
-                    name: dataset.label?.[0] || "",
-                    type: dataset.type?.[0] || "",
-                    description: dataset.description?.[0] || "",
-                    format: dataset.hasFormat?.[0] || ""
+                    name: dataset.label || "",
+                    type: "",
+                    description: dataset.description || "",
+                    format: dataset.has_format || ""
                 }
             }
         }))
     };
 };
 
-export const modelParameterToGraphQL = (parameter: Parameter): Model_Parameter_Insert_Input => {
+export const modelParameterToGraphQL = (
+    parameter: CatalogParameter
+): Model_Parameter_Insert_Input => {
     return {
         id: parameter.id,
-        name: parameter.label?.[0] || "",
-        description: parameter.description?.[0] || "",
-        default: parameter.hasDefaultValue?.[0] || "",
-        fixed_value: parameter.hasFixedValue?.[0] || "",
-        unit: parameter.hasPresentation?.[0]?.usesUnit?.[0]?.id || "",
-        min: parameter.hasMinimumAcceptedValue?.[0] || "",
-        max: parameter.hasMaximumAcceptedValue?.[0] || "",
-        type: parameter.type?.[0] || "",
-        accepted_values: parameter.hasAcceptedValues?.[0] || "",
-        position: parameter.position?.[0] || 0,
-        datatype: parameter.hasDataType?.[0] || ""
+        name: parameter.label || "",
+        description: parameter.description || "",
+        default: parameter.has_default_value || "",
+        fixed_value: parameter.has_fixed_value || "",
+        unit: "",
+        min: parameter.has_minimum_accepted_value || "",
+        max: parameter.has_maximum_accepted_value || "",
+        type: parameter.parameter_type || "",
+        accepted_values: parameter.has_accepted_values || "",
+        position: parameter.position || 0,
+        datatype: parameter.has_data_type || ""
     };
 };
 
 export const modelParametersToGraphQL = (
-    parameter: Parameter[]
+    parameters: CatalogParameter[]
 ): Model_Parameter_Arr_Rel_Insert_Input => {
-    const data = parameter.map((parameter) => modelParameterToGraphQL(parameter));
+    const data = parameters.map((parameter) => modelParameterToGraphQL(parameter));
     return {
         data: data
     };
 };
 
 export const modelConfigurationToGraphQL = (
-    modelConfiguration: ModelConfiguration
+    modelConfiguration: CatalogModelConfiguration
 ): Model_Insert_Input => {
+    const inputs = (modelConfiguration.inputs || []).map((row) => row.input);
+    const outputs = (modelConfiguration.outputs || []).map((row) => row.output);
+    const parameters = (modelConfiguration.parameters || []).map((row) => row.parameter);
+
     return {
         id: modelConfiguration.id || "",
-        name: modelConfiguration.label?.[0] || "",
-        description: modelConfiguration.description?.[0] || "",
-        category: modelConfiguration.hasModelCategory?.[0]?.label?.[0] || "",
-        type: modelConfiguration.type?.[0] || "",
-        region_name: modelConfiguration.hasRegion?.[0]?.label?.[0] || "",
-        dimensionality: modelConfiguration.hasDownloadInstructions?.[0] || "",
-        parameter_assignment: modelConfiguration.parameterization?.[0] || "",
-        parameter_assignment_details: modelConfiguration.hasAssumption?.[0] || "",
-        calibration_target_variable: modelConfiguration.hasOutputVariable?.[0]?.id || "",
-        spatial_grid_type: modelConfiguration.hasGrid?.[0]?.label?.[0] || "",
-        spatial_grid_resolution: modelConfiguration.hasGrid?.[0]?.label?.[0] || "",
-        usage_notes: modelConfiguration.hasUsageNotes?.[0] || "",
-        code_url: modelConfiguration.hasComponentLocation?.[0] || "",
-        output_time_interval: modelConfiguration.hasOutputTimeInterval?.[0]?.id || "",
+        name: modelConfiguration.label || "",
+        description: modelConfiguration.description || "",
+        category: "",
+        type: "",
+        region_name: "",
+        dimensionality: "",
+        parameter_assignment: "",
+        parameter_assignment_details: "",
+        calibration_target_variable: "",
+        spatial_grid_type: "",
+        spatial_grid_resolution: "",
+        usage_notes: "",
+        code_url: modelConfiguration.has_component_location || "",
+        output_time_interval: "",
         model_configuration: modelConfiguration.id || "",
-        software_image: modelConfiguration.hasSoftwareImage?.[0]?.label?.[0] || "",
-        model_version: modelConfiguration.hasVersion?.[0]?.id || "",
+        software_image: modelConfiguration.has_software_image || "",
+        model_version: "",
         model_name: "",
-        inputs: modelInputToGraphQL(modelConfiguration.hasInput || []),
-        parameters: modelParametersToGraphQL(modelConfiguration.hasParameter || []),
-        outputs: modelOutputToGraphQL(modelConfiguration.hasOutput || [])
+        inputs: modelInputToGraphQL(inputs),
+        parameters: modelParametersToGraphQL(parameters),
+        outputs: modelOutputToGraphQL(outputs)
     };
 };
 
 export const modelConfigurationSetupToGraphQL = (
-    modelConfigurationSetup: ModelConfigurationSetup
+    modelConfigurationSetup: CatalogModelConfigurationSetup
 ): Model_Insert_Input => {
+    const inputs = (modelConfigurationSetup.inputs || []).map((row) => row.input);
+    const outputs = (modelConfigurationSetup.outputs || []).map((row) => row.output);
+    const parameters = (modelConfigurationSetup.parameters || []).map((row) => row.parameter);
+
     return {
         id: modelConfigurationSetup.id || "",
-        name: modelConfigurationSetup.label?.[0] || "",
-        description: modelConfigurationSetup.description?.[0] || "",
-        category: modelConfigurationSetup.hasModelCategory?.[0]?.label?.[0] || "",
-        type: modelConfigurationSetup.type?.[0] || "",
-        region_name: modelConfigurationSetup.hasRegion?.[0]?.label?.[0] || "",
-        dimensionality: modelConfigurationSetup.hasDownloadInstructions?.[0] || "",
-        parameter_assignment: modelConfigurationSetup.parameterization?.[0] || "",
-        parameter_assignment_details: modelConfigurationSetup.hasAssumption?.[0] || "",
-        calibration_target_variable: modelConfigurationSetup.hasOutputVariable?.[0]?.id || "",
-        spatial_grid_type: modelConfigurationSetup.hasGrid?.[0]?.label?.[0] || "",
-        spatial_grid_resolution: modelConfigurationSetup.hasGrid?.[0]?.label?.[0] || "",
-        usage_notes: modelConfigurationSetup.hasUsageNotes?.[0] || "",
-        code_url: modelConfigurationSetup.hasComponentLocation?.[0] || "",
-        output_time_interval: modelConfigurationSetup.hasOutputTimeInterval?.[0]?.id || "",
-        // model_configuration: modelConfigurationSetup.id || "",
-        software_image: modelConfigurationSetup.hasSoftwareImage?.[0]?.label?.[0] || "",
-        model_version: modelConfigurationSetup.hasVersion?.[0]?.id || "",
-        model_name: "",
+        name: modelConfigurationSetup.label || "",
+        description: modelConfigurationSetup.description || "",
+        category: "",
+        type: "",
+        region_name: "",
+        dimensionality: "",
+        parameter_assignment: "",
+        parameter_assignment_details: "",
+        calibration_target_variable: "",
+        spatial_grid_type: "",
+        spatial_grid_resolution: "",
+        usage_notes: "",
+        code_url: modelConfigurationSetup.has_component_location || "",
+        output_time_interval: "",
         model_configuration: "",
-        inputs: modelInputToGraphQL(modelConfigurationSetup.hasInput || []),
-        parameters: modelParametersToGraphQL(modelConfigurationSetup.hasParameter || []),
-        outputs: modelOutputToGraphQL(modelConfigurationSetup.hasOutput || [])
+        software_image: modelConfigurationSetup.has_software_image || "",
+        model_version: "",
+        model_name: "",
+        inputs: modelInputToGraphQL(inputs),
+        parameters: modelParametersToGraphQL(parameters),
+        outputs: modelOutputToGraphQL(outputs)
     };
 };

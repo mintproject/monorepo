@@ -19,13 +19,9 @@ import {
 import problemStatementsService from "./problemStatementsService";
 import {
     convertApiUrlToW3Id,
-    convertModelConfigurationW3IdToApiUrl,
-    fetchModelConfiguration,
-    fetchModelConfigurationSetup
-} from "@/classes/mint/model-catalog-functions";
-import {
     modelConfigurationSetupToGraphQL,
-    modelConfigurationToGraphQL
+    modelConfigurationToGraphQL,
+    CatalogDatasetSpec
 } from "@/classes/mint/model-catalog-graphql-adapter";
 import { Model_Insert_Input } from "@/classes/graphql/types";
 import {
@@ -39,7 +35,9 @@ import { TapisExecutionService } from "@/classes/tapis/adapters/TapisExecutionSe
 import { getConfiguration } from "@/classes/mint/mint-functions";
 import { MockExecutionService } from "@/classes/common/__tests__/mocks/MockExecutionService";
 import { ExecutionCreation } from "@/classes/common/ExecutionCreation";
-import { DatasetSpecification } from "@mintproject/modelcatalog_client/dist";
+import { GraphQL } from "@/config/graphql";
+import getModelcatalogConfigurationGQL from "@/classes/graphql/queries/model/get-modelcatalog-configuration.graphql";
+import getModelcatalogSetupGQL from "@/classes/graphql/queries/model/get-modelcatalog-setup.graphql";
 import {
     getThread as getThreadV2,
     checkVariableExistsById as checkVariableExistsByIdV2,
@@ -110,7 +108,7 @@ export interface SubTasksService {
     getModelDataBindings(
         model_id: string,
         authorizationHeader: string
-    ): Promise<DatasetSpecification[]>;
+    ): Promise<CatalogDatasetSpec[]>;
     getBlueprint(
         subtaskId: string,
         authorizationHeader: string,
@@ -269,17 +267,34 @@ const subTasksService: SubTasksService = {
         if (!subtask) {
             throw new NotFoundError("Subtask not found");
         }
+        const apolloClient = GraphQL.instanceUsingAccessToken(access_token);
         for (const modelId of modelIds) {
             const w3Id = convertApiUrlToW3Id(modelId);
             if (!(await getModel(w3Id))) {
                 let modelConfigurationGraphQL: Model_Insert_Input;
                 try {
-                    const modelConfiguration = await fetchModelConfiguration(modelId);
-                    modelConfigurationGraphQL = modelConfigurationToGraphQL(modelConfiguration);
+                    const configResult = await apolloClient.query({
+                        query: getModelcatalogConfigurationGQL,
+                        variables: { id: w3Id },
+                        fetchPolicy: "no-cache"
+                    });
+                    const catalogConfig = configResult.data?.modelcatalog_model_configuration_by_pk;
+                    if (catalogConfig) {
+                        modelConfigurationGraphQL = modelConfigurationToGraphQL(catalogConfig);
+                    } else {
+                        throw new Error("Not found as configuration");
+                    }
                 } catch (error) {
-                    const modelConfigurationSetup = await fetchModelConfigurationSetup(modelId);
-                    modelConfigurationGraphQL =
-                        modelConfigurationSetupToGraphQL(modelConfigurationSetup);
+                    const setupResult = await apolloClient.query({
+                        query: getModelcatalogSetupGQL,
+                        variables: { id: w3Id },
+                        fetchPolicy: "no-cache"
+                    });
+                    const catalogSetup = setupResult.data?.modelcatalog_model_configuration_setup_by_pk;
+                    if (!catalogSetup) {
+                        throw new NotFoundError(`Model configuration not found for id: ${w3Id}`);
+                    }
+                    modelConfigurationGraphQL = modelConfigurationSetupToGraphQL(catalogSetup);
                 }
                 await insertModel([modelConfigurationGraphQL]);
             }
@@ -488,7 +503,7 @@ const subTasksService: SubTasksService = {
                     }
 
                     const binding = {
-                        model_id: await convertModelConfigurationW3IdToApiUrl(modelId),
+                        model_id: modelId,
                         parameters: formattedParameters,
                         inputs: formattedInputs
                     };
