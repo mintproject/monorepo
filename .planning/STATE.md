@@ -5,33 +5,33 @@
 See: .planning/PROJECT.md (updated 2026-02-14)
 
 **Core value:** All model catalog data accessible through a single GraphQL endpoint, eliminating the Fuseki dependency while maintaining REST API compatibility.
-**Current focus:** Phase 2 - API Integration
+**Current focus:** Phase 3 - Fuseki Migration and Cleanup
 
 ## Current Position
 
-Phase: 2 of 3 (API Integration)
-Plan: 7 of 7 in current phase
-Status: In Progress
-Last activity: 2026-02-21 -- Completed plan 02-06 (Custom Endpoint Handlers)
+Phase: 3 of 3 (Fuseki Migration and Cleanup)
+Plan: 0 of ? in current phase (Phase 2 complete, Phase 3 not yet planned)
+Status: Phase 2 Complete
+Last activity: 2026-02-21 -- Completed plan 02-07 (Dockerfile, CI/CD, Helm Deployment)
 
-Progress: [███████░░░] 61% (Phase 1 complete + 6/7 in Phase 2)
+Progress: [██████████░] 68% (Phase 1 complete + 7/7 in Phase 2)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 12
-- Average duration: 5.3 minutes
-- Total execution time: 1.04 hours
+- Total plans completed: 13
+- Average duration: 5.2 minutes
+- Total execution time: 1.08 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01-schema-and-data-migration | 7 | 39.8 min | 5.7 min |
-| 02-api-integration | 5 | 35.0 min | 7.0 min |
+| 02-api-integration | 7 | 37.0 min | 5.3 min |
 
 **Recent Trend:**
-- Last 5 plans: 4.2 min, 2.3 min, 5.8 min, 3 min, 5.2 min, 6.7 min
+- Last 5 plans: 2.3 min, 5.8 min, 3 min, 5.2 min, 6.7 min, 2 min
 - Trend: Stable
 
 *Updated after each plan completion*
@@ -53,6 +53,7 @@ Progress: [███████░░░] 61% (Phase 1 complete + 6/7 in Phase 
 | 02-04 | 978s | 2 | 3 |
 | 02-06 | 400s | 2 | 2 |
 | Phase 02 P05 | 657 | 2 tasks | 5 files |
+| 02-07 | 94s | 2 | 5 |
 
 ## Accumulated Context
 
@@ -95,6 +96,10 @@ Recent decisions affecting current work:
 - [Phase 02-api-integration]: No user_id column in modelcatalog tables; username filtering in service.ts targets non-existent column
 - [Phase 02-api-integration]: junctionRelName added to RelationshipConfig: mapper now traverses junction rows to extract target entities
 - [Phase 02-api-integration]: vi.hoisted() required in vitest when mock factory references module-level variables
+- [Phase 02-07]: openapi.yaml copied into production Docker image (required at runtime by fastify-openapi-glue)
+- [Phase 02-07]: model_catalog_api_v2 disabled by default in values.yaml to avoid breaking existing deployments
+- [Phase 02-07]: HASURA_ADMIN_SECRET sourced from existing mint-secrets resource with optional: true for consistency
+- [Phase 02-07]: Ingress routes /v2.0.0 path prefix so v1.8.0 and v2.0.0 coexist on same domain
 
 ### Pending Todos
 
@@ -109,5 +114,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-21
-Stopped at: Completed 02-06-PLAN.md (Custom Endpoint Handlers)
-Resume file: .planning/phases/02-api-integration/02-07-PLAN.md (next plan)
+Stopped at: Completed 02-07-PLAN.md (Dockerfile, CI/CD, Helm Deployment) -- Phase 2 fully complete
+Resume file: .planning/phases/03-fuseki-migration-and-cleanup/ (Phase 3 not yet planned)
