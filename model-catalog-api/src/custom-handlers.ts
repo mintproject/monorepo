@@ -428,7 +428,8 @@ async function custom_models_standard_variable_get(req: any, reply: any) {
 // ---------------------------------------------------------------------------
 // 10. /custom/datasetspecifications/{id}/datatransformations
 //     (custom_datasetspecifications_id_datatransformations_get)
-// TODO: datatransformations table does not exist in Hasura schema yet. Returns [].
+// No dedicated datatransformations table exists in the PostgreSQL schema.
+// Returns empty array, consistent with null-table resource type behavior.
 // ---------------------------------------------------------------------------
 async function custom_datasetspecifications_id_datatransformations_get(_req: any, reply: any) {
   reply.code(200).send([])
