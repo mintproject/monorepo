@@ -9,48 +9,15 @@
  */
 
 import { randomUUID } from 'crypto'
-import { RESOURCE_REGISTRY, getResourceConfig } from './mappers/resource-registry.js'
+import { getResourceConfig } from './mappers/resource-registry.js'
 import { transformRow, transformList } from './mappers/response.js'
 import { toHasuraInput } from './mappers/request.js'
 import { readClient, getWriteClient, gql } from './hasura/client.js'
-import type { ResourceConfig } from './mappers/resource-registry.js'
+import { getFieldSelection } from './hasura/field-maps.js'
+import { customHandlers } from './custom-handlers.js'
 
 const ID_PREFIX = 'https://w3id.org/okn/i/mint/'
 
-/**
- * Build a GraphQL field selection string for a resource, including
- * all scalar columns and first-level relationship sub-selections.
- *
- * Hasura row fields are always scalar by default; we enumerate relationship
- * names from the resource config so Hasura returns them in the query result.
- */
-function buildFieldSelection(resourceConfig: ResourceConfig, depth = 0): string {
-  const relHasuraNames = Object.values(resourceConfig.relationships).map((r) => r.hasuraRelName)
-
-  // Base scalar selection -- we request all columns via `id` plus a broad set.
-  // Hasura ignores columns that don't exist, so listing common fields is safe.
-  // We also request relationship sub-selections so nested objects come back.
-  let fields = 'id label description has_documentation date_created date_modified user_id'
-
-  // Add resource-specific relationship sub-selections (depth guard)
-  if (depth < 1) {
-    for (const [, relConfig] of Object.entries(resourceConfig.relationships)) {
-      const targetConfig = RESOURCE_REGISTRY[relConfig.targetResource]
-      if (targetConfig && relConfig.type === 'object') {
-        fields += ` ${relConfig.hasuraRelName} { id label }`
-      } else if (targetConfig && relConfig.type === 'array') {
-        fields += ` ${relConfig.hasuraRelName} { id label }`
-      } else {
-        fields += ` ${relConfig.hasuraRelName} { id }`
-      }
-    }
-  }
-
-  // Avoid unused variable warning
-  void relHasuraNames
-
-  return fields
-}
 
 /**
  * Build where clause for software subtype filtering.
@@ -113,7 +80,7 @@ class CatalogServiceImpl {
       ? `where: { ${whereConditions.join(', ')} }`
       : ''
 
-    const fields = buildFieldSelection(resourceConfig)
+    const fields = getFieldSelection(resourceConfig.hasuraTable!)
 
     // Build variable declarations for query signature
     let varDecls = '$limit: Int!, $offset: Int!'
@@ -163,7 +130,7 @@ class CatalogServiceImpl {
     }
 
     const id = decodeURIComponent(req.params.id)
-    const fields = buildFieldSelection(resourceConfig)
+    const fields = getFieldSelection(resourceConfig.hasuraTable!)
 
     const tableSuffix = resourceConfig.hasuraTable.replace('modelcatalog_', '')
     const queryStr = `
@@ -287,7 +254,7 @@ class CatalogServiceImpl {
         variables: { id, set: input },
       })
       // Return updated object
-      const fields = buildFieldSelection(resourceConfig)
+      const fields = getFieldSelection(resourceConfig.hasuraTable!)
       const queryStr = `
         query GetUpdatedQuery($id: String!) {
           modelcatalog_${tableSuffix}_by_pk(id: $id) {
@@ -357,18 +324,27 @@ class CatalogServiceImpl {
   }
 
   /**
-   * Stub for custom endpoints (plan 06 implementation)
+   * Dispatch custom endpoints to the customHandlers registry.
+   * All 13 /custom/ operationIds and user_login_post are handled here.
    */
   async handleCustom(operationId: string, req: any, reply: any) {
-    req.log.warn({ operationId }, 'Custom endpoint not yet implemented')
-    reply.code(501).send({ error: `Custom endpoint '${operationId}' not yet implemented` })
+    const handler = customHandlers[operationId]
+    if (handler) {
+      return handler(req, reply)
+    }
+    req.log.warn({ operationId }, 'Custom endpoint not implemented')
+    reply.code(501).send({ error: `Custom endpoint '${operationId}' not implemented` })
   }
 
   /**
-   * Stub for user login endpoint
+   * user_login_post is also dispatched through customHandlers.
    */
   async userLogin(req: any, reply: any) {
-    reply.code(501).send({ error: 'Login endpoint not yet implemented' })
+    const handler = customHandlers['user_login_post']
+    if (handler) {
+      return handler(req, reply)
+    }
+    reply.code(501).send({ error: 'Login endpoint not implemented' })
   }
 }
 
