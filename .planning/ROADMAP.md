@@ -2,7 +2,7 @@
 
 ## Overview
 
-This migration moves the MINT Model Catalog from Apache Fuseki (RDF triplestore) to PostgreSQL/Hasura GraphQL in three phases. Phase 1 establishes the new `modelcatalog_*` schema and loads all data from the TriG dump. Phase 2 rewires FastAPI and Ensemble Manager to query the new tables instead of Fuseki. Phase 3 migrates foreign keys from existing execution/thread tables to the new schema and removes the Fuseki dependency entirely.
+This migration moves the MINT Model Catalog from Apache Fuseki (RDF triplestore) to PostgreSQL/Hasura GraphQL in three phases. Phase 1 establishes the new `modelcatalog_*` schema and loads all data from the TriG dump. Phase 2 builds a new Node.js/TypeScript REST API serving identical responses from Hasura at /v2.0.0/ while the old API stays at /v1.8.0/. Phase 3 migrates foreign keys from existing execution/thread tables to the new schema and removes the Fuseki dependency entirely.
 
 ## Phases
 
@@ -13,7 +13,7 @@ This migration moves the MINT Model Catalog from Apache Fuseki (RDF triplestore)
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Schema and Data Migration** - Design modelcatalog_* tables, create Hasura migrations, ETL data from TriG/JSON, validate
-- [ ] **Phase 2: API Integration** - Rewire FastAPI and Ensemble Manager to query Hasura/PostgreSQL instead of Fuseki
+- [ ] **Phase 2: API Integration** - New Node.js/TypeScript API at /v2.0.0/ backed by Hasura/PostgreSQL, identical responses to v1.8.0
 - [ ] **Phase 3: FK Migration and Cleanup** - Migrate execution/thread FKs to new tables, remove Fuseki from the stack
 
 ## Phase Details
@@ -40,19 +40,25 @@ Plans:
 - [x] 01-07-PLAN.md -- Gap closure: extend ETL loading and validation for all 36 tables, execute pipeline, verify data population
 
 ### Phase 2: API Integration
-**Goal**: FastAPI REST endpoints and Ensemble Manager read model catalog data from Hasura/PostgreSQL instead of Fuseki, with zero breaking changes to API consumers
+**Goal**: New Node.js/TypeScript REST API serves identical responses at /v2.0.0/ from Hasura/PostgreSQL, while old FastAPI stays at /v1.8.0/ for parallel validation
 **Depends on**: Phase 1
-**Requirements**: API-01, API-02, API-03, API-04
+**Requirements**: API-01, API-02, API-03
 **Success Criteria** (what must be TRUE):
-  1. FastAPI model catalog endpoints return data from PostgreSQL/Hasura instead of Fuseki
-  2. REST endpoint responses match the existing API contract -- golden file comparison shows no structural differences
-  3. All existing REST endpoints remain functional and return valid data
-  4. Ensemble Manager queries model catalog data via GraphQL instead of the REST client SDK
-**Plans:** 2 plans
+  1. New API at /v2.0.0/ returns data from PostgreSQL/Hasura for all 46 resource types and 13 custom endpoints
+  2. REST endpoint responses match the existing v1.8.0 API contract (same JSON structure, array wrapping, URI IDs)
+  3. All existing REST endpoints remain functional at /v1.8.0/ (old API untouched)
+  4. Full CRUD (GET, POST, PUT, DELETE) works through Hasura GraphQL mutations
+  5. Helm chart deploys the new API alongside existing services
+**Plans:** 7 plans
 
 Plans:
-- [ ] 02-01-PLAN.md -- FastAPI HasuraBackend: replace obasparql QueryManager with Hasura GraphQL backend, env var switch in connector.py, contract tests
-- [ ] 02-02-PLAN.md -- Ensemble Manager GraphQL: replace rp.get() REST calls with Apollo Client queries to modelcatalog_* tables
+- [ ] 02-01-PLAN.md -- Hasura mutation permissions: add insert/update/delete for all modelcatalog tables
+- [ ] 02-02-PLAN.md -- Project scaffolding: new Node.js/TypeScript repo with Fastify, OpenAPI-glue, GraphQL client
+- [ ] 02-03-PLAN.md -- Response/request mappers and resource registry for v1.8.0 format compatibility
+- [ ] 02-04-PLAN.md -- Generic CRUD service with Proxy-based operationId dispatch and JWT security
+- [ ] 02-05-PLAN.md -- GraphQL field selections and integration tests for read operations
+- [ ] 02-06-PLAN.md -- Custom endpoint handlers for 13 /custom/ routes
+- [ ] 02-07-PLAN.md -- Dockerfile, CI/CD pipeline, and Helm chart for deployment
 
 ### Phase 3: FK Migration and Cleanup
 **Goal**: All execution and thread tables reference the new `modelcatalog_*` tables, old model tables are deprecated, and Fuseki is removed from the stack
@@ -78,5 +84,5 @@ Phases execute in numeric order: 1 -> 2 -> 3
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Schema and Data Migration | 7/7 | Complete | 2026-02-19 |
-| 2. API Integration | 0/2 | Not started | - |
+| 2. API Integration | 0/7 | Not started | - |
 | 3. FK Migration and Cleanup | 0/2 | Not started | - |
