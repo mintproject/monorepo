@@ -10,28 +10,28 @@ See: .planning/PROJECT.md (updated 2026-02-14)
 ## Current Position
 
 Phase: 2 of 3 (API Integration)
-Plan: 5 of 7 in current phase
+Plan: 7 of 7 in current phase
 Status: In Progress
-Last activity: 2026-02-21 -- Completed plan 02-04 (Generic CRUD Service and OpenAPI-glue Wiring)
+Last activity: 2026-02-21 -- Completed plan 02-06 (Custom Endpoint Handlers)
 
-Progress: [█████░░░░░] 45% (Phase 1 complete + 4/7 in Phase 2)
+Progress: [███████░░░] 61% (Phase 1 complete + 6/7 in Phase 2)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 11
-- Average duration: 5.0 minutes
-- Total execution time: 0.93 hours
+- Total plans completed: 12
+- Average duration: 5.3 minutes
+- Total execution time: 1.04 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01-schema-and-data-migration | 7 | 39.8 min | 5.7 min |
-| 02-api-integration | 4 | 28.3 min | 7.1 min |
+| 02-api-integration | 5 | 35.0 min | 7.0 min |
 
 **Recent Trend:**
-- Last 5 plans: 4 min, 4.2 min, 2.3 min, 5.8 min, 3 min, 5.2 min
+- Last 5 plans: 4.2 min, 2.3 min, 5.8 min, 3 min, 5.2 min, 6.7 min
 - Trend: Stable
 
 *Updated after each plan completion*
@@ -51,6 +51,7 @@ Progress: [█████░░░░░] 45% (Phase 1 complete + 4/7 in Phase 
 | 02-02 | 314s | 2 | 8 |
 | 02-03 | 234s | 2 | 4 |
 | 02-04 | 978s | 2 | 3 |
+| 02-06 | 400s | 2 | 2 |
 
 ## Accumulated Context
 
@@ -85,6 +86,11 @@ Recent decisions affecting current work:
 - [Phase 02-api-integration]: OpenAPI spec pre-processed to strip response/request schemas before openapi-glue registration: prevents AJV compile errors and reduces startup from 31s to under 1s
 - [Phase 02-api-integration]: AJV strict:false required for OpenAPI 3.x keywords (example, xml, externalDocs) in schemas
 - [Phase 02-api-integration]: Bearer token not validated by SecurityHandler; Hasura validates JWT via row-level permissions when token is forwarded
+- [Phase 02-06]: JS-side post-filtering for intervention/region/variable cross-joins (simpler than Hasura nested where for multi-level traversals)
+- [Phase 02-06]: standard_variable handler uses variable presentation label as proxy (standardvariables table does not exist in schema)
+- [Phase 02-06]: datatransformations handler returns empty array stub (datatransformations hasuraTable is null in registry)
+- [Phase 02-06]: configurationsetups and modelconfigurationsetups custom handlers are aliases querying same Hasura table
+- [Phase 02-06]: user_login_post returns 501 -- Keycloak handles auth externally, API never sees credentials
 
 ### Pending Todos
 
@@ -99,5 +105,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-21
-Stopped at: Completed 02-04-PLAN.md (Generic CRUD Service and OpenAPI-glue Wiring)
-Resume file: .planning/phases/02-api-integration/02-05-PLAN.md (next plan)
+Stopped at: Completed 02-06-PLAN.md (Custom Endpoint Handlers)
+Resume file: .planning/phases/02-api-integration/02-07-PLAN.md (next plan)
