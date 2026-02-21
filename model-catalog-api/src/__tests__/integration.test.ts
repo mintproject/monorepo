@@ -35,6 +35,7 @@ vi.mock('../hasura/client.js', () => ({
 
 // Import AFTER mock is set up
 import { CatalogService } from '../service.js'
+import { customHandlers } from '../custom-handlers.js'
 
 // ---------------------------------------------------------------------------
 // Helper: create minimal mock req/reply objects
@@ -412,5 +413,74 @@ describe('getById with plain ID (no URI prefix)', () => {
     expect(mockQuery).toHaveBeenCalledOnce()
     const callArgs = mockQuery.mock.calls[0][0]
     expect(callArgs.variables.id).toBe('https://w3id.org/okn/i/mint/1bade4cb-d924-4253-bfa9-4c02b461396a')
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Test 10: Custom handler plain-ID resolution
+// ---------------------------------------------------------------------------
+describe('Custom handler plain-ID resolution', () => {
+  beforeEach(() => { mockQuery.mockReset() })
+
+  it('custom_configurationsetups_id_get prepends idPrefix for plain ID', async () => {
+    mockQuery.mockResolvedValueOnce({
+      data: {
+        modelcatalog_model_configuration_setup_by_pk: {
+          id: 'https://w3id.org/okn/i/mint/hand_v6',
+          label: 'hand_v6',
+        },
+      },
+    })
+
+    const req = makeReq({ params: { id: 'hand_v6' } })
+    const reply = makeReply()
+    await customHandlers.custom_configurationsetups_id_get(req, reply)
+
+    expect(reply._status).toBe(200)
+    expect(mockQuery).toHaveBeenCalledOnce()
+    const callArgs = mockQuery.mock.calls[0][0]
+    expect(callArgs.variables.id).toBe('https://w3id.org/okn/i/mint/hand_v6')
+  })
+
+  it('custom_modelconfigurationsetups_id_get passes full URI unchanged', async () => {
+    const fullUri = 'https://w3id.org/okn/i/mint/hand_v6'
+    mockQuery.mockResolvedValueOnce({
+      data: {
+        modelcatalog_model_configuration_setup_by_pk: {
+          id: fullUri,
+          label: 'hand_v6',
+        },
+      },
+    })
+
+    const req = makeReq({ params: { id: encodeURIComponent(fullUri) } })
+    const reply = makeReply()
+    await customHandlers.custom_modelconfigurationsetups_id_get(req, reply)
+
+    expect(reply._status).toBe(200)
+    expect(mockQuery).toHaveBeenCalledOnce()
+    const callArgs = mockQuery.mock.calls[0][0]
+    expect(callArgs.variables.id).toBe(fullUri)
+  })
+
+  it('custom_datasetspecifications_get prepends idPrefix for plain configurationid query param', async () => {
+    mockQuery.mockResolvedValueOnce({
+      data: {
+        modelcatalog_configuration_input: [
+          { input: { id: 'https://w3id.org/okn/i/mint/ds1', label: 'ds1', description: null, has_format: null, has_dimensionality: null, position: null } },
+        ],
+        modelcatalog_configuration_output: [],
+      },
+    })
+
+    const plainCfgId = 'some-config-uuid'
+    const req = makeReq({ query: { configurationid: plainCfgId } })
+    const reply = makeReply()
+    await customHandlers.custom_datasetspecifications_get(req, reply)
+
+    expect(reply._status).toBe(200)
+    expect(mockQuery).toHaveBeenCalledOnce()
+    const callArgs = mockQuery.mock.calls[0][0]
+    expect(callArgs.variables.cfgId).toBe('https://w3id.org/okn/i/mint/some-config-uuid')
   })
 })
