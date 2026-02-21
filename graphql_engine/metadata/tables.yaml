@@ -2913,6 +2913,7 @@
       - has_download_url
       - has_purpose
       - author_id
+      - type
   select_permissions:
   - role: anonymous
     permission:
@@ -2929,6 +2930,7 @@
       - has_download_url
       - has_purpose
       - author_id
+      - type
       filter: {}
   - role: user
     permission:
