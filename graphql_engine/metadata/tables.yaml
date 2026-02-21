@@ -539,13 +539,6 @@
     name: model
     schema: public
   array_relationships:
-  - name: executions
-    using:
-      foreign_key_constraint_on:
-        column: model_id
-        table:
-          name: execution
-          schema: public
   - name: inputs
     using:
       foreign_key_constraint_on:
@@ -566,13 +559,6 @@
         column: model_id
         table:
           name: model_parameter
-          schema: public
-  - name: thread_models
-    using:
-      foreign_key_constraint_on:
-        column: model_id
-        table:
-          name: thread_model
           schema: public
   insert_permissions:
   - role: user
