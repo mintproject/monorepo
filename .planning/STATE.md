@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-02-14)
 
 ## Current Position
 
-Phase: 3 of 3 (Fuseki Migration and Cleanup)
-Plan: 0 of ? in current phase (Phase 2 complete, Phase 3 not yet planned)
-Status: Phase 2 Complete
-Last activity: 2026-02-21 -- Completed plan 02-07 (Dockerfile, CI/CD, Helm Deployment)
+Phase: 2 of 3 (API Integration - gap closure plans in progress)
+Plan: 8 of ? in current phase (02-08 complete, 02-09 pending)
+Status: In Progress (gap closure)
+Last activity: 2026-02-21 -- Completed plan 02-08 (Remove user_id filtering blocker)
 
-Progress: [██████████░] 68% (Phase 1 complete + 7/7 in Phase 2)
+Progress: [██████████░] 70% (Phase 1 complete + 8/9 in Phase 2)
 
 ## Performance Metrics
 
@@ -28,10 +28,10 @@ Progress: [██████████░] 68% (Phase 1 complete + 7/7 in Pha
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01-schema-and-data-migration | 7 | 39.8 min | 5.7 min |
-| 02-api-integration | 7 | 37.0 min | 5.3 min |
+| 02-api-integration | 8 | 41.0 min | 5.1 min |
 
 **Recent Trend:**
-- Last 5 plans: 2.3 min, 5.8 min, 3 min, 5.2 min, 6.7 min, 2 min
+- Last 5 plans: 5.8 min, 3 min, 5.2 min, 6.7 min, 2 min, 4 min
 - Trend: Stable
 
 *Updated after each plan completion*
@@ -54,6 +54,7 @@ Progress: [██████████░] 68% (Phase 1 complete + 7/7 in Pha
 | 02-06 | 400s | 2 | 2 |
 | Phase 02 P05 | 657 | 2 tasks | 5 files |
 | 02-07 | 94s | 2 | 5 |
+| 02-08 | 230s | 2 | 3 |
 
 ## Accumulated Context
 
@@ -93,7 +94,7 @@ Recent decisions affecting current work:
 - [Phase 02-06]: datatransformations handler returns empty array stub (datatransformations hasuraTable is null in registry)
 - [Phase 02-06]: configurationsetups and modelconfigurationsetups custom handlers are aliases querying same Hasura table
 - [Phase 02-06]: user_login_post returns 501 -- Keycloak handles auth externally, API never sees credentials
-- [Phase 02-api-integration]: No user_id column in modelcatalog tables; username filtering in service.ts targets non-existent column
+- [Phase 02-08]: username param is now accepted but ignored (no-op) in service.ts and all 7 custom handlers -- no user_id column in modelcatalog_* tables
 - [Phase 02-api-integration]: junctionRelName added to RelationshipConfig: mapper now traverses junction rows to extract target entities
 - [Phase 02-api-integration]: vi.hoisted() required in vitest when mock factory references module-level variables
 - [Phase 02-07]: openapi.yaml copied into production Docker image (required at runtime by fastify-openapi-glue)
@@ -114,5 +115,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-21
-Stopped at: Completed 02-07-PLAN.md (Dockerfile, CI/CD, Helm Deployment) -- Phase 2 fully complete
-Resume file: .planning/phases/03-fuseki-migration-and-cleanup/ (Phase 3 not yet planned)
+Stopped at: Completed 02-08-PLAN.md (Remove user_id filtering blocker from service.ts and custom-handlers.ts)
+Resume file: .planning/phases/02-api-integration/02-09-PLAN.md
