@@ -10,7 +10,7 @@
  * - Use readClient (Apollo Client) for queries via nested GraphQL
  * - Apply transformRow/transformList from mappers/response.ts
  * - Accept standard query params (username, label, page, per_page) where applicable
- * - Filter by user_id when username is provided
+ * - username param is accepted but ignored (no per-user data segregation in PostgreSQL schema)
  * - Decode URI-encoded {id} parameters with decodeURIComponent()
  */
 
@@ -23,7 +23,7 @@ import { getResourceConfig } from './mappers/resource-registry.js'
 // ---------------------------------------------------------------------------
 
 const SOFTWARE_FIELDS = `
-  id label description has_documentation date_created date_modified user_id type
+  id label description has_documentation date_created date_modified type
   author { id label }
   authors { id label }
   versions {
@@ -42,7 +42,7 @@ const SOFTWARE_FIELDS = `
 `
 
 const SETUP_FIELDS = `
-  id label description has_documentation date_created date_modified user_id
+  id label description has_documentation date_created date_modified
   author { id label }
   authors { id label }
   model_configuration {
@@ -66,7 +66,7 @@ const SETUP_FIELDS = `
 `
 
 const CONFIGURATION_FIELDS = `
-  id label description has_documentation date_created date_modified user_id
+  id label description has_documentation date_created date_modified
   author { id label }
   authors { id label }
   software_version { id label description }
@@ -98,16 +98,14 @@ const CONFIGURATION_FIELDS = `
 // ---------------------------------------------------------------------------
 async function custom_model_index_get(req: any, reply: any) {
   const resourceConfig = getResourceConfig('models')!
-  const { username, label } = req.query || {}
+  const { username: _username, label } = req.query || {}
 
   const whereConditions: string[] = ['type: { _eq: "https://w3id.org/okn/o/sdm#Model" }']
   const variables: Record<string, unknown> = {}
 
-  if (username) { whereConditions.push('user_id: { _eq: $username }'); variables['username'] = username }
   if (label) { whereConditions.push('label: { _like: $label }'); variables['label'] = `%${label}%` }
 
   let varDecls = ''
-  if (username) varDecls += ', $username: String!'
   if (label) varDecls += ', $label: String!'
   if (varDecls.startsWith(', ')) varDecls = varDecls.slice(2)
   const sigDecl = varDecls ? `(${varDecls})` : ''
@@ -130,18 +128,12 @@ async function custom_model_index_get(req: any, reply: any) {
 // ---------------------------------------------------------------------------
 async function custom_model_intervention_get(req: any, reply: any) {
   const resourceConfig = getResourceConfig('models')!
-  const { username, label } = req.query || {}
+  const { username: _username, label } = req.query || {}
 
-  const whereConditions: string[] = ['type: { _eq: "https://w3id.org/okn/o/sdm#Model" }']
-  const variables: Record<string, unknown> = {}
-
-  if (username) { whereConditions.push('user_id: { _eq: $username }'); variables['username'] = username }
-
-  const varDecls = username ? '($username: String!)' : ''
   const queryStr = `
-    query CustomModelIntervention${varDecls} {
-      modelcatalog_software(where: { ${whereConditions.join(', ')} } limit: 500 offset: 0) {
-        id label description user_id type
+    query CustomModelIntervention {
+      modelcatalog_software(where: { type: { _eq: "https://w3id.org/okn/o/sdm#Model" } } limit: 500 offset: 0) {
+        id label description type
         author { id label }
         versions {
           id label
@@ -158,7 +150,7 @@ async function custom_model_intervention_get(req: any, reply: any) {
   `
 
   try {
-    const result = await readClient.query({ query: gql`${queryStr}`, variables })
+    const result = await readClient.query({ query: gql`${queryStr}` })
     const data = result.data as Record<string, unknown>
     let rows = (data['modelcatalog_software'] ?? []) as Record<string, unknown>[]
 
@@ -190,18 +182,12 @@ async function custom_model_intervention_get(req: any, reply: any) {
 // ---------------------------------------------------------------------------
 async function custom_model_region_get(req: any, reply: any) {
   const resourceConfig = getResourceConfig('models')!
-  const { username, label } = req.query || {}
+  const { username: _username, label } = req.query || {}
 
-  const whereConditions: string[] = ['type: { _eq: "https://w3id.org/okn/o/sdm#Model" }']
-  const variables: Record<string, unknown> = {}
-
-  if (username) { whereConditions.push('user_id: { _eq: $username }'); variables['username'] = username }
-
-  const varDecls = username ? '($username: String!)' : ''
   const queryStr = `
-    query CustomModelRegion${varDecls} {
-      modelcatalog_software(where: { ${whereConditions.join(', ')} } limit: 500 offset: 0) {
-        id label description user_id type
+    query CustomModelRegion {
+      modelcatalog_software(where: { type: { _eq: "https://w3id.org/okn/o/sdm#Model" } } limit: 500 offset: 0) {
+        id label description type
         author { id label }
         versions { id label configurations { id label regions { id label } } }
       }
@@ -209,7 +195,7 @@ async function custom_model_region_get(req: any, reply: any) {
   `
 
   try {
-    const result = await readClient.query({ query: gql`${queryStr}`, variables })
+    const result = await readClient.query({ query: gql`${queryStr}` })
     const data = result.data as Record<string, unknown>
     let rows = (data['modelcatalog_software'] ?? []) as Record<string, unknown>[]
 
@@ -239,18 +225,12 @@ async function custom_model_region_get(req: any, reply: any) {
 // ---------------------------------------------------------------------------
 async function custom_models_variable_get(req: any, reply: any) {
   const resourceConfig = getResourceConfig('models')!
-  const { username, label } = req.query || {}
+  const { username: _username, label } = req.query || {}
 
-  const whereConditions: string[] = ['type: { _eq: "https://w3id.org/okn/o/sdm#Model" }']
-  const variables: Record<string, unknown> = {}
-
-  if (username) { whereConditions.push('user_id: { _eq: $username }'); variables['username'] = username }
-
-  const varDecls = username ? '($username: String!)' : ''
   const queryStr = `
-    query CustomModelsVariable${varDecls} {
-      modelcatalog_software(where: { ${whereConditions.join(', ')} } limit: 500 offset: 0) {
-        id label description user_id type
+    query CustomModelsVariable {
+      modelcatalog_software(where: { type: { _eq: "https://w3id.org/okn/o/sdm#Model" } } limit: 500 offset: 0) {
+        id label description type
         author { id label }
         versions { id label input_variables { id label } output_variables { id label } }
       }
@@ -258,7 +238,7 @@ async function custom_models_variable_get(req: any, reply: any) {
   `
 
   try {
-    const result = await readClient.query({ query: gql`${queryStr}`, variables })
+    const result = await readClient.query({ query: gql`${queryStr}` })
     const data = result.data as Record<string, unknown>
     let rows = (data['modelcatalog_software'] ?? []) as Record<string, unknown>[]
 
@@ -285,19 +265,12 @@ async function custom_models_variable_get(req: any, reply: any) {
 // ---------------------------------------------------------------------------
 async function custom_modelconfigurationsetups_variable_get(req: any, reply: any) {
   const resourceConfig = getResourceConfig('modelconfigurationsetups')!
-  const { username, label } = req.query || {}
+  const { username: _username, label } = req.query || {}
 
-  const whereConditions: string[] = []
-  const variables: Record<string, unknown> = {}
-
-  if (username) { whereConditions.push('user_id: { _eq: $username }'); variables['username'] = username }
-
-  const whereClause = whereConditions.length > 0 ? `where: { ${whereConditions.join(', ')} }` : ''
-  const varDecls = username ? '($username: String!)' : ''
   const queryStr = `
-    query CustomSetupsVariable${varDecls} {
-      modelcatalog_model_configuration_setup(${whereClause} limit: 500 offset: 0) {
-        id label description user_id
+    query CustomSetupsVariable {
+      modelcatalog_model_configuration_setup(limit: 500 offset: 0) {
+        id label description
         model_configuration { id label }
         inputs { id label variable_presented_as { id label } }
         outputs { id label variable_presented_as { id label } }
@@ -306,7 +279,7 @@ async function custom_modelconfigurationsetups_variable_get(req: any, reply: any
   `
 
   try {
-    const result = await readClient.query({ query: gql`${queryStr}`, variables })
+    const result = await readClient.query({ query: gql`${queryStr}` })
     const data = result.data as Record<string, unknown>
     let rows = (data['modelcatalog_model_configuration_setup'] ?? []) as Record<string, unknown>[]
 
@@ -417,18 +390,12 @@ async function custom_modelconfigurations_id_get(req: any, reply: any) {
 // ---------------------------------------------------------------------------
 async function custom_models_standard_variable_get(req: any, reply: any) {
   const resourceConfig = getResourceConfig('models')!
-  const { username, label } = req.query || {}
+  const { username: _username, label } = req.query || {}
 
-  const whereConditions: string[] = ['type: { _eq: "https://w3id.org/okn/o/sdm#Model" }']
-  const variables: Record<string, unknown> = {}
-
-  if (username) { whereConditions.push('user_id: { _eq: $username }'); variables['username'] = username }
-
-  const varDecls = username ? '($username: String!)' : ''
   const queryStr = `
-    query CustomModelsStandardVariable${varDecls} {
-      modelcatalog_software(where: { ${whereConditions.join(', ')} } limit: 500 offset: 0) {
-        id label description user_id type
+    query CustomModelsStandardVariable {
+      modelcatalog_software(where: { type: { _eq: "https://w3id.org/okn/o/sdm#Model" } } limit: 500 offset: 0) {
+        id label description type
         author { id label }
         versions { id label input_variables { id label } output_variables { id label } }
       }
@@ -436,7 +403,7 @@ async function custom_models_standard_variable_get(req: any, reply: any) {
   `
 
   try {
-    const result = await readClient.query({ query: gql`${queryStr}`, variables })
+    const result = await readClient.query({ query: gql`${queryStr}` })
     const data = result.data as Record<string, unknown>
     let rows = (data['modelcatalog_software'] ?? []) as Record<string, unknown>[]
 
@@ -472,21 +439,19 @@ async function custom_datasetspecifications_id_datatransformations_get(_req: any
 // ---------------------------------------------------------------------------
 async function custom_datasetspecifications_get(req: any, reply: any) {
   const resourceConfig = getResourceConfig('datasetspecifications')!
-  const { username, configurationid } = req.query || {}
+  const { username: _username, configurationid } = req.query || {}
 
   if (configurationid) {
     const cfgId = decodeURIComponent(configurationid)
     const innerVars: Record<string, unknown> = { cfgId }
-    let innerDecls = '$cfgId: String!'
-    if (username) { innerDecls += ', $username: String!'; innerVars['username'] = username }
 
     const cfgQuery = `
-      query CustomDatasetSpecificationsByConfig(${innerDecls}) {
+      query CustomDatasetSpecificationsByConfig($cfgId: String!) {
         modelcatalog_configuration_input(where: { model_configuration_id: { _eq: $cfgId } }) {
-          dataset_specification { id label description has_fixed_resource format_type user_id }
+          dataset_specification { id label description has_fixed_resource format_type }
         }
         modelcatalog_configuration_output(where: { model_configuration_id: { _eq: $cfgId } }) {
-          dataset_specification { id label description has_fixed_resource format_type user_id }
+          dataset_specification { id label description has_fixed_resource format_type }
         }
       }
     `
@@ -517,18 +482,12 @@ async function custom_datasetspecifications_get(req: any, reply: any) {
   const limit = parseInt(String(per_page), 10) || 25
   const offset = (parseInt(String(page), 10) - 1) * limit || 0
 
-  const whereConditions: string[] = []
   const variables: Record<string, unknown> = { limit, offset }
-  if (username) { whereConditions.push('user_id: { _eq: $username }'); variables['username'] = username }
-
-  const whereClause = whereConditions.length > 0 ? `where: { ${whereConditions.join(', ')} }` : ''
-  let varDecls = '$limit: Int!, $offset: Int!'
-  if (username) varDecls += ', $username: String!'
 
   const listQuery = `
-    query CustomDatasetSpecifications(${varDecls}) {
-      modelcatalog_dataset_specification(${whereClause} limit: $limit offset: $offset) {
-        id label description has_fixed_resource format_type user_id
+    query CustomDatasetSpecifications($limit: Int!, $offset: Int!) {
+      modelcatalog_dataset_specification(limit: $limit offset: $offset) {
+        id label description has_fixed_resource format_type
       }
     }
   `
@@ -555,7 +514,7 @@ async function custom_configuration_id_inputs_get(req: any, reply: any) {
     query CustomConfigurationInputs($id: String!) {
       modelcatalog_model_configuration_by_pk(id: $id) {
         inputs {
-          id label description has_fixed_resource format_type user_id
+          id label description has_fixed_resource format_type
           variable_presented_as { id label }
         }
       }
