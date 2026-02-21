@@ -383,3 +383,34 @@ describe('URI-encoded ID decoding', () => {
     expect(callArgs.variables.id).toBe('https://w3id.org/okn/i/mint/CYCLES')
   })
 })
+
+// ---------------------------------------------------------------------------
+// Test 9: Plain UUID ID lookup - service prepends ID_PREFIX when id lacks https://
+// ---------------------------------------------------------------------------
+describe('getById with plain ID (no URI prefix)', () => {
+  beforeEach(() => { mockQuery.mockReset() })
+
+  it('prepends ID_PREFIX when id does not start with https://', async () => {
+    mockQuery.mockResolvedValueOnce({
+      data: {
+        modelcatalog_software_by_pk: {
+          id: 'https://w3id.org/okn/i/mint/1bade4cb-d924-4253-bfa9-4c02b461396a',
+          label: 'TestSW',
+          description: null, keywords: null, license: null, website: null,
+          date_created: null, date_published: null, has_documentation: null,
+          has_download_url: null, has_purpose: null, author_id: null, type: null,
+          author: null, versions: [], authors: [],
+        },
+      },
+    })
+
+    const req = makeReq({ params: { id: '1bade4cb-d924-4253-bfa9-4c02b461396a' } })
+    const reply = makeReply()
+    await (CatalogService as any).softwares_id_get(req, reply)
+
+    expect(reply._status).toBe(200)
+    expect(mockQuery).toHaveBeenCalledOnce()
+    const callArgs = mockQuery.mock.calls[0][0]
+    expect(callArgs.variables.id).toBe('https://w3id.org/okn/i/mint/1bade4cb-d924-4253-bfa9-4c02b461396a')
+  })
+})

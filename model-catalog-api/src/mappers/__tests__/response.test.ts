@@ -190,7 +190,7 @@ describe('transformRow - nested related objects', () => {
       versions: [],
     };
     const result = transformRow(row, softwareConfig);
-    expect(result).not.toHaveProperty('versions');
+    expect(result).not.toHaveProperty('hasVersion');
   });
 });
 
