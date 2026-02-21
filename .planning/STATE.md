@@ -9,26 +9,26 @@ See: .planning/PROJECT.md (updated 2026-02-14)
 
 ## Current Position
 
-Phase: 2 of 3 (API Integration - gap closure plans in progress)
-Plan: 8 of ? in current phase (02-08 complete, 02-09 pending)
-Status: In Progress (gap closure)
-Last activity: 2026-02-21 -- Completed plan 02-08 (Remove user_id filtering blocker)
+Phase: 2 of 3 (API Integration - gap closure plans complete)
+Plan: 9 of 9 in current phase (02-09 complete, Phase 2 done)
+Status: Complete (Phase 2)
+Last activity: 2026-02-21 -- Completed plan 02-09 (null-table resource types return empty read responses)
 
-Progress: [██████████░] 70% (Phase 1 complete + 8/9 in Phase 2)
+Progress: [███████████] 80% (Phase 1 complete + Phase 2 complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 13
-- Average duration: 5.2 minutes
-- Total execution time: 1.08 hours
+- Total plans completed: 14
+- Average duration: 5.0 minutes
+- Total execution time: 1.10 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01-schema-and-data-migration | 7 | 39.8 min | 5.7 min |
-| 02-api-integration | 8 | 41.0 min | 5.1 min |
+| 02-api-integration | 9 | 42.2 min | 4.7 min |
 
 **Recent Trend:**
 - Last 5 plans: 5.8 min, 3 min, 5.2 min, 6.7 min, 2 min, 4 min
@@ -55,6 +55,7 @@ Progress: [██████████░] 70% (Phase 1 complete + 8/9 in Pha
 | Phase 02 P05 | 657 | 2 tasks | 5 files |
 | 02-07 | 94s | 2 | 5 |
 | 02-08 | 230s | 2 | 3 |
+| Phase 02 P09 | 69 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -101,6 +102,8 @@ Recent decisions affecting current work:
 - [Phase 02-07]: model_catalog_api_v2 disabled by default in values.yaml to avoid breaking existing deployments
 - [Phase 02-07]: HASURA_ADMIN_SECRET sourced from existing mint-secrets resource with optional: true for consistency
 - [Phase 02-07]: Ingress routes /v2.0.0 path prefix so v1.8.0 and v2.0.0 coexist on same domain
+- [Phase 02-api-integration]: null-table resource types return 200 [] for list and 404 for get-by-id (matches v1.8.0 behavior for empty named graphs)
+- [Phase 02-api-integration]: write operations on null-table types continue returning 501 (no backing store, writes cannot proceed)
 
 ### Pending Todos
 
@@ -115,5 +118,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-21
-Stopped at: Completed 02-08-PLAN.md (Remove user_id filtering blocker from service.ts and custom-handlers.ts)
-Resume file: .planning/phases/02-api-integration/02-09-PLAN.md
+Stopped at: Completed 02-09-PLAN.md (null-table resource types return empty read responses)
+Resume file: .planning/phases/03-fuseki-migration/03-01-PLAN.md (Phase 3 next)
