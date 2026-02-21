@@ -21,7 +21,7 @@ export const FIELD_SELECTIONS: Record<string, string> = {
   // modelcatalog_software
   // Columns: id, label, description, keywords, license, website,
   //          date_created, date_published, has_documentation, has_download_url,
-  //          has_purpose, author_id
+  //          has_purpose, author_id, type
   // Object relationships: author -> modelcatalog_person
   // Array relationships:
   //   versions -> modelcatalog_software_version (direct)
@@ -40,6 +40,7 @@ has_documentation
 has_download_url
 has_purpose
 author_id
+type
 author {
   id
   label

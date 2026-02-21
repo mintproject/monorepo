@@ -615,6 +615,28 @@ export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
     },
   },
 
+  // Alias for theory-guidedmodels: OpenAPI operationId uses underscore (theory_guidedmodels_get)
+  // while the URL path uses hyphen (/theory-guidedmodels). The Proxy routes operationId to resource name.
+  theory_guidedmodels: {
+    hasuraTable: 'modelcatalog_software',
+    typeUri: 'https://w3id.org/okn/o/sdm#Theory-GuidedModel',
+    typeName: 'Theory-GuidedModel',
+    typeArray: ['Theory-GuidedModel'],
+    idPrefix: ID_PREFIX,
+    relationships: {
+      author: {
+        hasuraRelName: 'author',
+        type: 'object',
+        targetResource: 'persons',
+      },
+      versions: {
+        hasuraRelName: 'versions',
+        type: 'array',
+        targetResource: 'softwareversions',
+      },
+    },
+  },
+
   coupledmodels: {
     hasuraTable: 'modelcatalog_software',
     typeUri: 'https://w3id.org/okn/o/sdm#CoupledModel',
