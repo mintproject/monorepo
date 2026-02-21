@@ -385,7 +385,30 @@ class CatalogServiceImpl {
  * - custom_* -> handleCustom(operationId, ...)
  * - user_login_post -> userLogin(...)
  */
+/**
+ * Returns true if the given operationId is handled by the CatalogService proxy.
+ * Used by both the `has` trap (for `in` operator) and the `get` trap.
+ */
+function isHandledOperationId(prop: string): boolean {
+  if (typeof prop !== 'string') return false
+  if (prop.startsWith('custom_')) return true
+  if (prop === 'user_login_post') return true
+  if (/^(.+?)_(id_)?(get|post|put|delete)$/.test(prop)) return true
+  return false
+}
+
 export const CatalogService = new Proxy(new CatalogServiceImpl(), {
+  /**
+   * The `has` trap is called by the `in` operator.
+   * fastify-openapi-glue checks `operationId in serviceHandlers` to determine
+   * if a handler exists. Without this trap, all dynamic operationIds return false
+   * and the glue falls back to "Operation not implemented".
+   */
+  has(target, prop: string) {
+    if (isHandledOperationId(prop)) return true
+    return prop in target
+  },
+
   get(target, prop: string) {
     // Pass through non-string or symbol properties
     if (typeof prop !== 'string') {
