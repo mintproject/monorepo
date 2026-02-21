@@ -52,6 +52,7 @@ Progress: [███████░░░] 61% (Phase 1 complete + 6/7 in Phase 
 | 02-03 | 234s | 2 | 4 |
 | 02-04 | 978s | 2 | 3 |
 | 02-06 | 400s | 2 | 2 |
+| Phase 02 P05 | 657 | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -91,6 +92,9 @@ Recent decisions affecting current work:
 - [Phase 02-06]: datatransformations handler returns empty array stub (datatransformations hasuraTable is null in registry)
 - [Phase 02-06]: configurationsetups and modelconfigurationsetups custom handlers are aliases querying same Hasura table
 - [Phase 02-06]: user_login_post returns 501 -- Keycloak handles auth externally, API never sees credentials
+- [Phase 02-api-integration]: No user_id column in modelcatalog tables; username filtering in service.ts targets non-existent column
+- [Phase 02-api-integration]: junctionRelName added to RelationshipConfig: mapper now traverses junction rows to extract target entities
+- [Phase 02-api-integration]: vi.hoisted() required in vitest when mock factory references module-level variables
 
 ### Pending Todos
 
