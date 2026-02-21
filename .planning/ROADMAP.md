@@ -74,15 +74,15 @@ Plans:
   1. Every existing `model` table row is classified as either a ModelConfiguration or ModelConfigurationSetup with an explicit mapping to its `modelcatalog_*` counterpart
   2. `execution.model_id`, `thread_model.model_id`, and all related binding tables reference `modelcatalog_*` tables instead of old model tables
   3. No orphaned records and no broken FK references exist after migration -- validated by constraint checks
-  4. Fuseki is removed from the deployment stack and does not appear in docker-compose or deployment configs
+  4. Fuseki is removed from the Helm deployment stack (Docker Compose and CI/CD Fuseki references are deferred to a future phase)
   5. `@mintproject/modelcatalog_client` SDK dependency is removed from Ensemble Manager
 **Plans:** 4 plans
 
 Plans:
-- [ ] 03-01-PLAN.md -- DB FK migration: classification, backfill, parameter repointing, and Hasura metadata updates
+- [ ] 03-01-PLAN.md -- Classification preview, human review gate, DB FK migration, and Hasura metadata updates
 - [ ] 03-02-PLAN.md -- Fuseki Helm removal and model_catalog_api config cleanup
 - [ ] 03-03-PLAN.md -- SDK removal: delete model-catalog-functions.ts, rewrite adapter, create GraphQL queries
-- [ ] 03-04-PLAN.md -- Validation script and user review checkpoint before production deployment
+- [ ] 03-04-PLAN.md -- Post-migration validation script and user review checkpoint before production deployment
 
 ## Progress
 
