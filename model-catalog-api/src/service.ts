@@ -60,10 +60,6 @@ class CatalogServiceImpl {
     const whereConditions: string[] = []
     const variables: Record<string, unknown> = { limit, offset }
 
-    if (username) {
-      whereConditions.push('user_id: { _eq: $username }')
-      variables['username'] = username
-    }
     if (label) {
       whereConditions.push('label: { _eq: $label }')
       variables['label'] = label
@@ -84,7 +80,6 @@ class CatalogServiceImpl {
 
     // Build variable declarations for query signature
     let varDecls = '$limit: Int!, $offset: Int!'
-    if (username) varDecls += ', $username: String!'
     if (label) varDecls += ', $label: String!'
     if (typeFilter) varDecls += ', $typeFilter: String!'
 

@@ -268,12 +268,14 @@ describe('label filter', () => {
 })
 
 // ---------------------------------------------------------------------------
-// Test 6: Username filter - translates to user_id WHERE clause
+// Test 6: Username filter - accepted but ignored (no-op, no user_id column in schema)
+// The modelcatalog_* tables have no user_id column; username param is accepted for
+// API compatibility but does not produce any WHERE clause filtering.
 // ---------------------------------------------------------------------------
 describe('username filter', () => {
   beforeEach(() => { mockQuery.mockReset() })
 
-  it('translates username=mint@isi.edu to user_id WHERE clause in GraphQL query', async () => {
+  it('accepts username=mint@isi.edu but does not add user_id WHERE clause', async () => {
     mockQuery.mockResolvedValueOnce({
       data: { modelcatalog_software: [] },
     })
@@ -284,9 +286,14 @@ describe('username filter', () => {
 
     expect(mockQuery).toHaveBeenCalledOnce()
     const callArgs = mockQuery.mock.calls[0][0]
-    expect(callArgs.variables).toMatchObject({ username: 'mint@isi.edu' })
-    // The query string should include the user_id where clause
-    expect(callArgs.query).toContain('user_id: { _eq: $username }')
+    // username is NOT passed as a GraphQL variable (no-op)
+    expect(callArgs.variables).not.toHaveProperty('username')
+    // The query string must NOT include the user_id where clause
+    expect(callArgs.query).not.toContain('user_id')
+    // Basic pagination variables are still present
+    expect(callArgs.variables).toMatchObject({ limit: 25, offset: 0 })
+    // Request succeeds normally
+    expect(reply._status).toBe(200)
   })
 })
 
