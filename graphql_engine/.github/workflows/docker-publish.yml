@@ -12,8 +12,8 @@ env:
   IMAGE_NAME: graphql-engine
   #variables related with the repository
   REPOSITORY_MAIN_BRANCH: "master"
-  #variables related with the docker imager registry
-  DOCKER_IMAGE_REPOSITORY: mintproject
+  #variables related with the docker image registry
+  DOCKER_IMAGE_REPOSITORY: ghcr.io/mintproject
   DOCKER_IMAGE_NAME: graphql-engine
   DOCKER_FILE: "Dockerfile"
 
@@ -21,12 +21,15 @@ jobs:
   build:
     runs-on: ubuntu-latest
     if: github.event_name == 'push'
+    permissions:
+      contents: read
+      packages: write
     steps:
       - name: Get branch name
         id: branch-name
         uses: tj-actions/branch-names@v6
 
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - name: Create environment variable with the commit id
         run: |
@@ -35,22 +38,23 @@ jobs:
       - name: Expose the commit id
         id: exposeValue
         run: |
-          echo "::set-output name=docker_tag::${{ env.DOCKER_TAG }}"
+          echo "docker_tag=${{ env.DOCKER_TAG }}" >> $GITHUB_OUTPUT
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v2
+        uses: docker/setup-qemu-action@v3
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
+        uses: docker/setup-buildx-action@v3
 
-      - name: Login to DockerHub
-        uses: docker/login-action@v1
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push Docker image
-        uses: docker/build-push-action@v3.0.0
+        uses: docker/build-push-action@v5
         with:
           push: true
           context: .
@@ -60,7 +64,7 @@ jobs:
 
       - name: Running on the default branch.
         if: steps.branch-name.outputs.is_default == 'true'
-        uses: docker/build-push-action@v3.0.0
+        uses: docker/build-push-action@v5
         with:
           push: true
           context: .
@@ -72,11 +76,18 @@ jobs:
     permissions:
       contents: read
       security-events: write
-      packages: write
+      packages: read
     name: "Scan vulnerabilities in the image"
     needs: [build]
     runs-on: ubuntu-latest
     steps:
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
         with:
@@ -89,13 +100,13 @@ jobs:
           ignore-unfixed: "true"
 
       - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v1
+        uses: github/codeql-action/upload-sarif@v3
         if: always()
         with:
           sarif_file: "trivy-results.sarif"
 
   update:
-    needs: build 
+    needs: build
     runs-on: ubuntu-latest
     steps:
       - name: Create environment variable with the commit id
@@ -105,10 +116,10 @@ jobs:
       - name: Expose the commit id
         id: exposeValue
         run: |
-          echo "::set-output name=docker_tag::${{ env.DOCKER_TAG }}"
+          echo "docker_tag=${{ env.DOCKER_TAG }}" >> $GITHUB_OUTPUT
 
       - name: Checkout MINT Instances Repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: mintproject/mint-instances
           path: infrastructure
@@ -116,15 +127,15 @@ jobs:
           ref: master
 
       - name: Checkout MINT Chart Repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         if: github.ref == 'refs/heads/master'
         with:
           repository: mintproject/mint
-          path: mint-chart 
+          path: mint-chart
           token: ${{ secrets.MINT_INSTANCES }}
           ref: main
 
-      - name: Update MINT ISI master 
+      - name: Update MINT ISI master
         uses: fjogeleit/yaml-update-action@main
         if: github.event_name == 'push' && github.ref == 'refs/heads/master'
         with:
@@ -134,10 +145,10 @@ jobs:
           message: "Update hasura"
           repository: mintproject/mint-instances
           workDir: infrastructure
-          branch: master 
+          branch: master
           token: ${{ secrets.MINT_INSTANCES }}
 
-      - name: Update MINT ISI WIFIRE 
+      - name: Update MINT ISI WIFIRE
         uses: fjogeleit/yaml-update-action@main
         if: github.event_name == 'push' && github.ref == 'refs/heads/master'
         with:
@@ -147,7 +158,7 @@ jobs:
           message: "Update hasura"
           repository: mintproject/mint-instances
           workDir: infrastructure
-          branch: master 
+          branch: master
           token: ${{ secrets.MINT_INSTANCES }}
 
       - name: Update MINT ISI dev
@@ -160,7 +171,7 @@ jobs:
           message: "Update hasura"
           repository: mintproject/mint-instances
           workDir: infrastructure
-          branch: master 
+          branch: master
           token: ${{ secrets.MINT_INSTANCES }}
 
 
