@@ -23,74 +23,106 @@ import { getResourceConfig } from './mappers/resource-registry.js'
 // ---------------------------------------------------------------------------
 
 const SOFTWARE_FIELDS = `
-  id label description has_documentation date_created date_modified type
+  id label description has_documentation date_created date_published
+  keywords license website has_download_url has_purpose author_id type
   author { id label }
-  authors { id label }
+  authors {
+    person { id label }
+  }
   versions {
     id label description
     configurations {
       id label description
       setups { id label }
-      inputs { id label }
-      outputs { id label }
-      parameters { id label }
-      regions { id label }
+      inputs { input { id label } }
+      outputs { output { id label } }
+      parameters { parameter { id label } }
+      regions { region { id label } }
     }
-    input_variables { id label }
-    output_variables { id label }
+    input_variables { variable { id label } }
+    output_variables { variable { id label } }
   }
 `
 
 const SETUP_FIELDS = `
-  id label description has_documentation date_created date_modified
+  id label description
+  has_component_location has_implementation_script_location has_software_image has_region
+  author_id calibration_interval calibration_method parameter_assignment_method valid_until
+  model_configuration_id
   author { id label }
-  authors { id label }
   model_configuration {
     id label description
     software_version { id label }
   }
   inputs {
-    id label description has_fixed_resource format_type
-    variable_presented_as { id label }
+    input {
+      id label description has_format has_dimensionality position
+    }
   }
   outputs {
-    id label description has_fixed_resource format_type
-    variable_presented_as { id label }
+    output {
+      id label description has_format has_dimensionality position
+    }
   }
   parameters {
-    id label description has_default_value min_accepted_value max_accepted_value
-    interventions { id label }
+    parameter {
+      id label description has_data_type has_default_value
+      has_minimum_accepted_value has_maximum_accepted_value has_fixed_value
+      position parameter_type
+    }
   }
-  calibrated_variables { id label }
-  calibration_targets { id label }
+  authors {
+    person { id label }
+  }
+  calibrated_variables {
+    variable { id label }
+  }
+  calibration_targets {
+    variable { id label }
+  }
 `
 
 const CONFIGURATION_FIELDS = `
-  id label description has_documentation date_created date_modified
+  id label description keywords usage_notes
+  has_component_location has_implementation_script_location has_software_image has_model_result_table
+  software_version_id author_id
   author { id label }
-  authors { id label }
+  authors {
+    person { id label }
+  }
   software_version { id label description }
   setups {
     id label description
-    parameters { id label }
-    inputs { id label }
-    outputs { id label }
+    parameters { parameter { id label } }
+    inputs { input { id label } }
+    outputs { output { id label } }
   }
   inputs {
-    id label description has_fixed_resource format_type
-    variable_presented_as { id label }
+    input {
+      id label description has_format has_dimensionality position
+    }
   }
   outputs {
-    id label description has_fixed_resource format_type
-    variable_presented_as { id label }
+    output {
+      id label description has_format has_dimensionality position
+    }
   }
   parameters {
-    id label description has_default_value min_accepted_value max_accepted_value
-    interventions { id label }
+    parameter {
+      id label description has_data_type has_default_value
+      has_minimum_accepted_value has_maximum_accepted_value has_fixed_value
+      position parameter_type
+    }
   }
-  causal_diagrams { id label }
-  time_intervals { id label }
-  regions { id label }
+  causal_diagrams {
+    causal_diagram { id label }
+  }
+  time_intervals {
+    time_interval { id label description interval_value interval_unit }
+  }
+  regions {
+    region { id label description }
+  }
 `
 
 // ---------------------------------------------------------------------------
@@ -141,7 +173,7 @@ async function custom_model_intervention_get(req: any, reply: any) {
             id label
             setups {
               id label
-              parameters { id label interventions { id label } }
+              parameters { parameter { id label interventions { intervention { id label } } } }
             }
           }
         }
@@ -158,10 +190,15 @@ async function custom_model_intervention_get(req: any, reply: any) {
       for (const ver of sw.versions ?? []) {
         for (const cfg of ver.configurations ?? []) {
           for (const setup of cfg.setups ?? []) {
-            for (const param of setup.parameters ?? []) {
+            for (const paramJunction of setup.parameters ?? []) {
+              const param = paramJunction.parameter
+              if (!param) continue
               if ((param.interventions ?? []).length > 0) {
                 if (!label) return true
-                return (param.interventions as any[]).some((inv: any) => inv.label?.toLowerCase().includes(label.toLowerCase()))
+                return (param.interventions as any[]).some((invJunction: any) => {
+                  const inv = invJunction.intervention
+                  return inv?.label?.toLowerCase().includes(label.toLowerCase())
+                })
               }
             }
           }
@@ -189,7 +226,7 @@ async function custom_model_region_get(req: any, reply: any) {
       modelcatalog_software(where: { type: { _eq: "https://w3id.org/okn/o/sdm#Model" } } limit: 500 offset: 0) {
         id label description type
         author { id label }
-        versions { id label configurations { id label regions { id label } } }
+        versions { id label configurations { id label regions { region { id label } } } }
       }
     }
   `
@@ -204,8 +241,9 @@ async function custom_model_region_get(req: any, reply: any) {
       rows = rows.filter((sw: any) => {
         for (const ver of sw.versions ?? []) {
           for (const cfg of ver.configurations ?? []) {
-            for (const region of cfg.regions ?? []) {
-              if (region.label?.toLowerCase().includes(lbl)) return true
+            for (const regionJunction of cfg.regions ?? []) {
+              const region = regionJunction.region
+              if (region?.label?.toLowerCase().includes(lbl)) return true
             }
           }
         }
@@ -232,7 +270,7 @@ async function custom_models_variable_get(req: any, reply: any) {
       modelcatalog_software(where: { type: { _eq: "https://w3id.org/okn/o/sdm#Model" } } limit: 500 offset: 0) {
         id label description type
         author { id label }
-        versions { id label input_variables { id label } output_variables { id label } }
+        versions { id label input_variables { variable { id label } } output_variables { variable { id label } } }
       }
     }
   `
@@ -246,8 +284,8 @@ async function custom_models_variable_get(req: any, reply: any) {
       const lbl = label.toLowerCase()
       rows = rows.filter((sw: any) => {
         for (const ver of sw.versions ?? []) {
-          const allVars = [...(ver.input_variables ?? []), ...(ver.output_variables ?? [])]
-          if (allVars.some((v: any) => v.label?.toLowerCase().includes(lbl))) return true
+          const allVarJunctions = [...(ver.input_variables ?? []), ...(ver.output_variables ?? [])]
+          if (allVarJunctions.some((vj: any) => vj.variable?.label?.toLowerCase().includes(lbl))) return true
         }
         return false
       })
@@ -272,8 +310,8 @@ async function custom_modelconfigurationsetups_variable_get(req: any, reply: any
       modelcatalog_model_configuration_setup(limit: 500 offset: 0) {
         id label description
         model_configuration { id label }
-        inputs { id label variable_presented_as { id label } }
-        outputs { id label variable_presented_as { id label } }
+        inputs { input { id label } }
+        outputs { output { id label } }
       }
     }
   `
@@ -286,11 +324,10 @@ async function custom_modelconfigurationsetups_variable_get(req: any, reply: any
     if (label) {
       const lbl = label.toLowerCase()
       rows = rows.filter((setup: any) => {
-        const allSpecs = [...(setup.inputs ?? []), ...(setup.outputs ?? [])]
-        for (const spec of allSpecs) {
-          for (const vp of spec.variable_presented_as ?? []) {
-            if (vp.label?.toLowerCase().includes(lbl)) return true
-          }
+        const allJunctions = [...(setup.inputs ?? []), ...(setup.outputs ?? [])]
+        for (const junction of allJunctions) {
+          const entity = junction.input ?? junction.output
+          if (entity?.label?.toLowerCase().includes(lbl)) return true
         }
         return false
       })
@@ -397,7 +434,7 @@ async function custom_models_standard_variable_get(req: any, reply: any) {
       modelcatalog_software(where: { type: { _eq: "https://w3id.org/okn/o/sdm#Model" } } limit: 500 offset: 0) {
         id label description type
         author { id label }
-        versions { id label input_variables { id label } output_variables { id label } }
+        versions { id label input_variables { variable { id label } } output_variables { variable { id label } } }
       }
     }
   `
@@ -411,8 +448,8 @@ async function custom_models_standard_variable_get(req: any, reply: any) {
       const lbl = label.toLowerCase()
       rows = rows.filter((sw: any) => {
         for (const ver of sw.versions ?? []) {
-          const allVars = [...(ver.input_variables ?? []), ...(ver.output_variables ?? [])]
-          if (allVars.some((v: any) => v.label?.toLowerCase().includes(lbl))) return true
+          const allVarJunctions = [...(ver.input_variables ?? []), ...(ver.output_variables ?? [])]
+          if (allVarJunctions.some((vj: any) => vj.variable?.label?.toLowerCase().includes(lbl))) return true
         }
         return false
       })
@@ -446,13 +483,14 @@ async function custom_datasetspecifications_get(req: any, reply: any) {
     const cfgId = decodeURIComponent(configurationid)
     const innerVars: Record<string, unknown> = { cfgId }
 
+    // Query junction tables directly; relationship names on junction rows are `input` and `output`
     const cfgQuery = `
       query CustomDatasetSpecificationsByConfig($cfgId: String!) {
         modelcatalog_configuration_input(where: { model_configuration_id: { _eq: $cfgId } }) {
-          dataset_specification { id label description has_fixed_resource format_type }
+          input { id label description has_format has_dimensionality position }
         }
         modelcatalog_configuration_output(where: { model_configuration_id: { _eq: $cfgId } }) {
-          dataset_specification { id label description has_fixed_resource format_type }
+          output { id label description has_format has_dimensionality position }
         }
       }
     `
@@ -461,9 +499,9 @@ async function custom_datasetspecifications_get(req: any, reply: any) {
       const result = await readClient.query({ query: gql`${cfgQuery}`, variables: innerVars })
       const cfgData = result.data as Record<string, unknown>
       const inputSpecs = ((cfgData['modelcatalog_configuration_input'] ?? []) as any[])
-        .map((r: any) => r.dataset_specification).filter(Boolean) as Record<string, unknown>[]
+        .map((r: any) => r.input).filter(Boolean) as Record<string, unknown>[]
       const outputSpecs = ((cfgData['modelcatalog_configuration_output'] ?? []) as any[])
-        .map((r: any) => r.dataset_specification).filter(Boolean) as Record<string, unknown>[]
+        .map((r: any) => r.output).filter(Boolean) as Record<string, unknown>[]
 
       const seen = new Set<string>()
       const allSpecs = [...inputSpecs, ...outputSpecs].filter((spec: any) => {
@@ -488,7 +526,7 @@ async function custom_datasetspecifications_get(req: any, reply: any) {
   const listQuery = `
     query CustomDatasetSpecifications($limit: Int!, $offset: Int!) {
       modelcatalog_dataset_specification(limit: $limit offset: $offset) {
-        id label description has_fixed_resource format_type
+        id label description has_format has_dimensionality position
       }
     }
   `
@@ -515,8 +553,7 @@ async function custom_configuration_id_inputs_get(req: any, reply: any) {
     query CustomConfigurationInputs($id: String!) {
       modelcatalog_model_configuration_by_pk(id: $id) {
         inputs {
-          id label description has_fixed_resource format_type
-          variable_presented_as { id label }
+          input { id label description has_format has_dimensionality position }
         }
       }
     }
@@ -527,7 +564,8 @@ async function custom_configuration_id_inputs_get(req: any, reply: any) {
     const data = result.data as Record<string, unknown>
     const cfg = data['modelcatalog_model_configuration_by_pk'] as { inputs?: Record<string, unknown>[] } | null
     if (!cfg) { reply.code(404).send({ error: 'Configuration not found' }); return }
-    const rows = (cfg.inputs ?? []) as Record<string, unknown>[]
+    // Unwrap junction rows to get the actual dataset_specification entities
+    const rows = ((cfg.inputs ?? []) as any[]).map((j: any) => j.input).filter(Boolean) as Record<string, unknown>[]
     reply.code(200).send(transformList(rows, resourceConfig))
   } catch (err: any) {
     req.log.error({ err }, 'custom_configuration_id_inputs_get failed')

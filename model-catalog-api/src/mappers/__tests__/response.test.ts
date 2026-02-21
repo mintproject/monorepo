@@ -154,7 +154,7 @@ describe('transformRow - nested related objects', () => {
     const row = {
       id: 'https://w3id.org/okn/i/mint/CYCLES',
       label: 'CYCLES',
-      // versions is a Hasura array_relationship
+      // versions is a Hasura array_relationship; API key is 'hasVersion' in softwares registry
       versions: [
         { id: 'https://w3id.org/okn/i/mint/CYCLES_v1', label: 'v1.0', software_id: 'https://w3id.org/okn/i/mint/CYCLES' },
         { id: 'https://w3id.org/okn/i/mint/CYCLES_v2', label: 'v2.0', software_id: 'https://w3id.org/okn/i/mint/CYCLES' },
@@ -162,7 +162,8 @@ describe('transformRow - nested related objects', () => {
     };
     const result = transformRow(row, softwareConfig);
 
-    const versions = result['versions'] as Array<Record<string, unknown>>;
+    // The API field name is 'hasVersion' (OWL property), not 'versions'
+    const versions = result['hasVersion'] as Array<Record<string, unknown>>;
     expect(Array.isArray(versions)).toBe(true);
     expect(versions).toHaveLength(2);
 

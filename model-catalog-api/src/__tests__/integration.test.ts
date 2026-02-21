@@ -115,9 +115,9 @@ describe('list software', () => {
     // null fields are omitted
     expect('keywords' in sw).toBe(false)
     expect('license' in sw).toBe(false)
-    // versions nested relationship is included (registry key is 'versions')
-    expect(sw.versions).toBeDefined()
-    expect(Array.isArray(sw.versions)).toBe(true)
+    // versions nested relationship is included (registry key is 'hasVersion' in softwares config)
+    expect(sw.hasVersion).toBeDefined()
+    expect(Array.isArray(sw.hasVersion)).toBe(true)
   })
 })
 
@@ -214,12 +214,12 @@ describe('getById setup with nested data', () => {
     expect(Array.isArray(setup.author)).toBe(true)
     expect(setup.author[0].id).toBe('https://w3id.org/okn/i/mint/person1')
 
-    // Inputs via junction table -- junction is traversed to target; registry key is 'inputs'
-    expect(Array.isArray(setup.inputs)).toBe(true)
-    expect(setup.inputs[0].id).toBe('https://w3id.org/okn/i/mint/spec1')
+    // Inputs via junction table -- junction is traversed to target; registry key is 'hasInput'
+    expect(Array.isArray(setup.hasInput)).toBe(true)
+    expect(setup.hasInput[0].id).toBe('https://w3id.org/okn/i/mint/spec1')
 
-    // Parameters via junction table -- registry key is 'parameters'
-    expect(Array.isArray(setup.parameters)).toBe(true)
+    // Parameters via junction table -- registry key is 'hasParameter'
+    expect(Array.isArray(setup.hasParameter)).toBe(true)
   })
 })
 
