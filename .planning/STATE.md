@@ -10,25 +10,25 @@ See: .planning/PROJECT.md (updated 2026-02-14)
 ## Current Position
 
 Phase: 2 of 3 (API Integration)
-Plan: 3 of 7 in current phase
+Plan: 4 of 7 in current phase
 Status: In Progress
-Last activity: 2026-02-21 -- Completed plan 02-02 (Project Scaffold - Fastify + Apollo Client)
+Last activity: 2026-02-21 -- Completed plan 02-03 (Response/Request Mappers and Resource Registry)
 
-Progress: [████░░░░░░] 33% (Phase 1 complete + 2/7 in Phase 2)
+Progress: [████░░░░░░] 38% (Phase 1 complete + 3/7 in Phase 2)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 9
-- Average duration: 3.4 minutes
-- Total execution time: 0.76 hours
+- Total plans completed: 10
+- Average duration: 3.3 minutes
+- Total execution time: 0.82 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01-schema-and-data-migration | 7 | 39.8 min | 5.7 min |
-| 02-api-integration | 2 | 8.1 min | 4.1 min |
+| 02-api-integration | 3 | 12.0 min | 4.0 min |
 
 **Recent Trend:**
 - Last 5 plans: 4 min, 4.2 min, 2.3 min, 5.8 min, 3 min, 5.2 min
@@ -49,6 +49,7 @@ Progress: [████░░░░░░] 33% (Phase 1 complete + 2/7 in Phase 
 | 01-07 | 350s | 2 | 2 |
 | 02-01 | 152s | 2 | 1 |
 | 02-02 | 314s | 2 | 8 |
+| 02-03 | 234s | 2 | 4 |
 
 ## Accumulated Context
 
@@ -75,6 +76,10 @@ Recent decisions affecting current work:
 - [Phase 02-02]: type=module in package.json required for import.meta with Node16 module resolution
 - [Phase 02-02]: openapi.yaml has 243 operations total (not 105 paths -- research counted paths not operations)
 - [Phase 02-02]: fastify-openapi-glue registration deferred to plan 04 (needs service handlers)
+- [Phase 02-03]: Object relationships also array-wrapped in v1.8.0 responses (author -> [{id, type, ...}])
+- [Phase 02-03]: 23 of 46 API types have no dedicated Hasura table (marked hasuraTable: null); need view strategy
+- [Phase 02-03]: 6 software subtypes share modelcatalog_software table; service handlers add type discriminator filter
+- [Phase 02-03]: configurationsetups is alias for modelconfigurationsetups (same table, different type URI)
 
 ### Pending Todos
 
@@ -89,5 +94,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-21
-Stopped at: Completed 02-02-PLAN.md (Project Scaffold - Fastify + Apollo Client)
-Resume file: .planning/phases/02-api-integration/02-03-PLAN.md (next plan)
+Stopped at: Completed 02-03-PLAN.md (Response/Request Mappers and Resource Registry)
+Resume file: .planning/phases/02-api-integration/02-04-PLAN.md (next plan)
