@@ -77,7 +77,6 @@ export interface MintPreferences {
         secret_access_key?: string;
     };
 
-    model_catalog_api?: string;
     ensemble_manager_api: string;
     ingestion_api: string;
     visualization_url: string;
