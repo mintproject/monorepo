@@ -346,6 +346,7 @@ async function custom_modelconfigurationsetups_variable_get(req: any, reply: any
 async function custom_configurationsetups_id_get(req: any, reply: any) {
   const resourceConfig = getResourceConfig('configurationsetups')!
   const id = decodeURIComponent(req.params.id)
+  const fullId = id.startsWith('https://') ? id : `${resourceConfig.idPrefix}${id}`
 
   const queryStr = `
     query CustomConfigurationSetupById($id: String!) {
@@ -356,7 +357,7 @@ async function custom_configurationsetups_id_get(req: any, reply: any) {
   `
 
   try {
-    const result = await readClient.query({ query: gql`${queryStr}`, variables: { id } })
+    const result = await readClient.query({ query: gql`${queryStr}`, variables: { id: fullId } })
     const data = result.data as Record<string, unknown>
     const row = data['modelcatalog_model_configuration_setup_by_pk'] as Record<string, unknown> | null
     if (!row) { reply.code(404).send({ error: 'Not found' }); return }
@@ -373,6 +374,7 @@ async function custom_configurationsetups_id_get(req: any, reply: any) {
 async function custom_modelconfigurationsetups_id_get(req: any, reply: any) {
   const resourceConfig = getResourceConfig('modelconfigurationsetups')!
   const id = decodeURIComponent(req.params.id)
+  const fullId = id.startsWith('https://') ? id : `${resourceConfig.idPrefix}${id}`
 
   const queryStr = `
     query CustomModelConfigurationSetupById($id: String!) {
@@ -383,7 +385,7 @@ async function custom_modelconfigurationsetups_id_get(req: any, reply: any) {
   `
 
   try {
-    const result = await readClient.query({ query: gql`${queryStr}`, variables: { id } })
+    const result = await readClient.query({ query: gql`${queryStr}`, variables: { id: fullId } })
     const data = result.data as Record<string, unknown>
     const row = data['modelcatalog_model_configuration_setup_by_pk'] as Record<string, unknown> | null
     if (!row) { reply.code(404).send({ error: 'Not found' }); return }
@@ -400,6 +402,7 @@ async function custom_modelconfigurationsetups_id_get(req: any, reply: any) {
 async function custom_modelconfigurations_id_get(req: any, reply: any) {
   const resourceConfig = getResourceConfig('modelconfigurations')!
   const id = decodeURIComponent(req.params.id)
+  const fullId = id.startsWith('https://') ? id : `${resourceConfig.idPrefix}${id}`
 
   const queryStr = `
     query CustomModelConfigurationById($id: String!) {
@@ -410,7 +413,7 @@ async function custom_modelconfigurations_id_get(req: any, reply: any) {
   `
 
   try {
-    const result = await readClient.query({ query: gql`${queryStr}`, variables: { id } })
+    const result = await readClient.query({ query: gql`${queryStr}`, variables: { id: fullId } })
     const data = result.data as Record<string, unknown>
     const row = data['modelcatalog_model_configuration_by_pk'] as Record<string, unknown> | null
     if (!row) { reply.code(404).send({ error: 'Not found' }); return }
@@ -481,7 +484,9 @@ async function custom_datasetspecifications_get(req: any, reply: any) {
 
   if (configurationid) {
     const cfgId = decodeURIComponent(configurationid)
-    const innerVars: Record<string, unknown> = { cfgId }
+    const mcConfig = getResourceConfig('modelconfigurations')!
+    const fullCfgId = cfgId.startsWith('https://') ? cfgId : `${mcConfig.idPrefix}${cfgId}`
+    const innerVars: Record<string, unknown> = { cfgId: fullCfgId }
 
     // Query junction tables directly; relationship names on junction rows are `input` and `output`
     const cfgQuery = `
@@ -548,6 +553,8 @@ async function custom_datasetspecifications_get(req: any, reply: any) {
 async function custom_configuration_id_inputs_get(req: any, reply: any) {
   const resourceConfig = getResourceConfig('datasetspecifications')!
   const id = decodeURIComponent(req.params.id)
+  const mcConfig = getResourceConfig('modelconfigurations')!
+  const fullId = id.startsWith('https://') ? id : `${mcConfig.idPrefix}${id}`
 
   const queryStr = `
     query CustomConfigurationInputs($id: String!) {
@@ -560,7 +567,7 @@ async function custom_configuration_id_inputs_get(req: any, reply: any) {
   `
 
   try {
-    const result = await readClient.query({ query: gql`${queryStr}`, variables: { id } })
+    const result = await readClient.query({ query: gql`${queryStr}`, variables: { id: fullId } })
     const data = result.data as Record<string, unknown>
     const cfg = data['modelcatalog_model_configuration_by_pk'] as { inputs?: Record<string, unknown>[] } | null
     if (!cfg) { reply.code(404).send({ error: 'Configuration not found' }); return }
