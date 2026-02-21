@@ -1,5 +1,5 @@
 ---
-status: complete
+status: diagnosed
 phase: 02-api-integration
 source: 02-01-SUMMARY.md, 02-02-SUMMARY.md, 02-03-SUMMARY.md, 02-04-SUMMARY.md, 02-05-SUMMARY.md, 02-06-SUMMARY.md, 02-07-SUMMARY.md, 02-08-SUMMARY.md, 02-09-SUMMARY.md, 02-10-SUMMARY.md
 started: 2026-02-21T20:00:00Z
@@ -80,9 +80,13 @@ skipped: 0
   reason: "User reported: version should be hasVersion. Relationship field names don't match v1.8.0 API format (e.g. versions instead of hasVersion)"
   severity: major
   test: 3
-  root_cause: ""
-  artifacts: []
-  missing: []
+  root_cause: "Relationship keys in resource-registry.ts use short names (versions, inputs, configurations) instead of v1.8.0 OWL property names (hasVersion, hasInput, hasConfiguration); response mapper uses these keys directly as output field names"
+  artifacts:
+    - path: "model-catalog-api/src/mappers/resource-registry.ts"
+      issue: "All relationship keys use wrong names: versions->hasVersion, configurations->hasConfiguration, inputs->hasInput, outputs->hasOutput, parameters->hasParameter, setups->hasSetup, categories->hasModelCategory, grids->hasGrid, processes->hasProcess, regions->hasRegion, etc."
+  missing:
+    - "Rename all relationship keys in resource-registry.ts to match v1.8.0 OWL property names"
+    - "Verify authors vs author naming (v1.8.0 uses 'author' for both single and array)"
   debug_session: ""
 
 - truth: "GET /v2.0.0/softwares/{id} returns the entity when given a plain ID (not URL-encoded URI)"
@@ -90,9 +94,12 @@ skipped: 0
   reason: "User reported: Not URL-encoded ID, only the plain ID. GET /v2.0.0/softwares/1bade4cb-d924-4253-bfa9-4c02b461396a returns 404 Not found when it should return the entity."
   severity: major
   test: 4
-  root_cause: ""
-  artifacts: []
-  missing: []
+  root_cause: "getById() passes raw path parameter to Hasura _by_pk query without prepending ID_PREFIX; DB stores full URIs (https://w3id.org/okn/i/mint/...) but plain IDs like '1bade4cb-...' are sent as-is"
+  artifacts:
+    - path: "model-catalog-api/src/service.ts"
+      issue: "getById() line 129 decodes URI but never prepends ID_PREFIX; same bug in update() and deleteResource()"
+  missing:
+    - "In getById(), update(), deleteResource(): detect if id starts with 'https://', if not prepend resourceConfig.idPrefix or ID_PREFIX"
   debug_session: ""
 
 - truth: "GET /v2.0.0/custom/modelconfigurationsetups/{id} returns deeply nested setup with all relationships"
@@ -100,7 +107,12 @@ skipped: 0
   reason: "User reported: error 'field has_documentation not found in type modelcatalog_model_configuration_setup' when requesting /custom/modelconfigurationsetups/hand_v6"
   severity: major
   test: 7
-  root_cause: ""
-  artifacts: []
-  missing: []
+  root_cause: "SETUP_FIELDS in custom-handlers.ts requests columns that don't exist on modelcatalog_model_configuration_setup (has_documentation, date_created, date_modified) and uses wrong junction traversal shapes for inputs/outputs/parameters"
+  artifacts:
+    - path: "model-catalog-api/src/custom-handlers.ts"
+      issue: "SETUP_FIELDS has non-existent columns (has_documentation, date_created, date_modified) and wrong nested shapes for junction relationships (inputs/outputs/parameters need junction traversal pattern like 'inputs { input { ... } }')"
+    - path: "model-catalog-api/src/hasura/field-maps.ts"
+      issue: "This file is CORRECT and should be used as the authoritative reference for SETUP_FIELDS rewrite"
+  missing:
+    - "Rewrite SETUP_FIELDS to match actual schema: remove has_documentation/date_created/date_modified, fix junction traversal shapes to match field-maps.ts"
   debug_session: ""

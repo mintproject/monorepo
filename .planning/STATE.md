@@ -57,6 +57,7 @@ Progress: [████████████] 85% (Phase 1 complete + Phase 2
 | 02-08 | 230s | 2 | 3 |
 | Phase 02 P09 | 69 | 2 tasks | 2 files |
 | 02-10 | 598s | 3 tasks | 4 files |
+| Phase 02-api-integration P12 | 226 | 1 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -107,6 +108,8 @@ Recent decisions affecting current work:
 - [Phase 02-api-integration]: write operations on null-table types continue returning 501 (no backing store, writes cannot proceed)
 - [Phase 02-10]: ETL extracts most specific rdf:type for software entities; falls back to sdm:Model if no specialized subtype found in TriG
 - [Phase 02-10]: theory_guidedmodels (underscore) alias required in resource-registry: OpenAPI converts URL hyphens to underscores in operationIds
+- [Phase 02-api-integration]: SETUP_FIELDS: removed non-existent columns (has_documentation, date_created, date_modified); all junction relationships use traversal pattern inputs { input { ... } }
+- [Phase 02-api-integration]: custom_datasetspecifications_get uses 'input'/'output' relationship names on junction rows (not 'dataset_specification')
 
 ### Pending Todos
 
@@ -121,5 +124,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-21
-Stopped at: Completed 02-10-PLAN.md (software type column, subtype API filtering, ETL rdf:type extraction)
+Stopped at: Completed 02-12-PLAN.md (GraphQL field selections fixed to match Hasura schema, UAT issue 7 closed)
 Resume file: .planning/phases/03-fuseki-migration/03-01-PLAN.md (Phase 3 next)
