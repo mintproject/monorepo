@@ -13,6 +13,13 @@ export interface RelationshipConfig {
   type: 'object' | 'array';
   /** Junction table name, if this relationship goes through one */
   junctionTable?: string;
+  /**
+   * Relationship name inside the junction row that points to the target entity.
+   * Only set when junctionTable is present.
+   * e.g. for 'authors' -> modelcatalog_software_author -> person, junctionRelName = 'person'
+   * e.g. for 'inputs' -> modelcatalog_setup_input -> input, junctionRelName = 'input'
+   */
+  junctionRelName?: string;
   /** The API resource name of the target type (for nested transforms) */
   targetResource: string;
 }
@@ -59,6 +66,7 @@ export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
         hasuraRelName: 'authors',
         type: 'array',
         junctionTable: 'modelcatalog_software_author',
+        junctionRelName: 'person',
         targetResource: 'persons',
       },
       versions: {
@@ -90,6 +98,7 @@ export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
         hasuraRelName: 'authors',
         type: 'array',
         junctionTable: 'modelcatalog_version_author',
+        junctionRelName: 'person',
         targetResource: 'persons',
       },
       configurations: {
@@ -101,36 +110,42 @@ export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
         hasuraRelName: 'categories',
         type: 'array',
         junctionTable: 'modelcatalog_software_version_category',
+        junctionRelName: 'category',
         targetResource: 'modelcategorys',
       },
       processes: {
         hasuraRelName: 'processes',
         type: 'array',
         junctionTable: 'modelcatalog_software_version_process',
+        junctionRelName: 'process',
         targetResource: 'processs',
       },
       grids: {
         hasuraRelName: 'grids',
         type: 'array',
         junctionTable: 'modelcatalog_software_version_grid',
+        junctionRelName: 'grid',
         targetResource: 'grids',
       },
       explanationDiagrams: {
         hasuraRelName: 'explanation_diagrams',
         type: 'array',
         junctionTable: 'modelcatalog_software_version_image',
+        junctionRelName: 'image',
         targetResource: 'images',
       },
       inputVariables: {
         hasuraRelName: 'input_variables',
         type: 'array',
         junctionTable: 'modelcatalog_software_version_input_variable',
+        junctionRelName: 'variable',
         targetResource: 'variablepresentations',
       },
       outputVariables: {
         hasuraRelName: 'output_variables',
         type: 'array',
         junctionTable: 'modelcatalog_software_version_output_variable',
+        junctionRelName: 'variable',
         targetResource: 'variablepresentations',
       },
     },
@@ -157,6 +172,7 @@ export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
         hasuraRelName: 'authors',
         type: 'array',
         junctionTable: 'modelcatalog_configuration_author',
+        junctionRelName: 'person',
         targetResource: 'persons',
       },
       setups: {
@@ -168,36 +184,42 @@ export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
         hasuraRelName: 'inputs',
         type: 'array',
         junctionTable: 'modelcatalog_configuration_input',
+        junctionRelName: 'input',
         targetResource: 'datasetspecifications',
       },
       outputs: {
         hasuraRelName: 'outputs',
         type: 'array',
         junctionTable: 'modelcatalog_configuration_output',
+        junctionRelName: 'output',
         targetResource: 'datasetspecifications',
       },
       parameters: {
         hasuraRelName: 'parameters',
         type: 'array',
         junctionTable: 'modelcatalog_configuration_parameter',
+        junctionRelName: 'parameter',
         targetResource: 'parameters',
       },
       causalDiagrams: {
         hasuraRelName: 'causal_diagrams',
         type: 'array',
         junctionTable: 'modelcatalog_configuration_causal_diagram',
+        junctionRelName: 'causal_diagram',
         targetResource: 'causaldiagrams',
       },
       timeIntervals: {
         hasuraRelName: 'time_intervals',
         type: 'array',
         junctionTable: 'modelcatalog_configuration_time_interval',
+        junctionRelName: 'time_interval',
         targetResource: 'timeintervals',
       },
       regions: {
         hasuraRelName: 'regions',
         type: 'array',
         junctionTable: 'modelcatalog_configuration_region',
+        junctionRelName: 'region',
         targetResource: 'regions',
       },
     },
@@ -224,36 +246,42 @@ export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
         hasuraRelName: 'authors',
         type: 'array',
         junctionTable: 'modelcatalog_setup_author',
+        junctionRelName: 'person',
         targetResource: 'persons',
       },
       inputs: {
         hasuraRelName: 'inputs',
         type: 'array',
         junctionTable: 'modelcatalog_setup_input',
+        junctionRelName: 'input',
         targetResource: 'datasetspecifications',
       },
       outputs: {
         hasuraRelName: 'outputs',
         type: 'array',
         junctionTable: 'modelcatalog_setup_output',
+        junctionRelName: 'output',
         targetResource: 'datasetspecifications',
       },
       parameters: {
         hasuraRelName: 'parameters',
         type: 'array',
         junctionTable: 'modelcatalog_setup_parameter',
+        junctionRelName: 'parameter',
         targetResource: 'parameters',
       },
       calibratedVariables: {
         hasuraRelName: 'calibrated_variables',
         type: 'array',
         junctionTable: 'modelcatalog_setup_calibrated_variable',
+        junctionRelName: 'variable',
         targetResource: 'variablepresentations',
       },
       calibrationTargets: {
         hasuraRelName: 'calibration_targets',
         type: 'array',
         junctionTable: 'modelcatalog_setup_calibration_target',
+        junctionRelName: 'variable',
         targetResource: 'variablepresentations',
       },
     },
@@ -281,36 +309,42 @@ export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
         hasuraRelName: 'authors',
         type: 'array',
         junctionTable: 'modelcatalog_setup_author',
+        junctionRelName: 'person',
         targetResource: 'persons',
       },
       inputs: {
         hasuraRelName: 'inputs',
         type: 'array',
         junctionTable: 'modelcatalog_setup_input',
+        junctionRelName: 'input',
         targetResource: 'datasetspecifications',
       },
       outputs: {
         hasuraRelName: 'outputs',
         type: 'array',
         junctionTable: 'modelcatalog_setup_output',
+        junctionRelName: 'output',
         targetResource: 'datasetspecifications',
       },
       parameters: {
         hasuraRelName: 'parameters',
         type: 'array',
         junctionTable: 'modelcatalog_setup_parameter',
+        junctionRelName: 'parameter',
         targetResource: 'parameters',
       },
       calibratedVariables: {
         hasuraRelName: 'calibrated_variables',
         type: 'array',
         junctionTable: 'modelcatalog_setup_calibrated_variable',
+        junctionRelName: 'variable',
         targetResource: 'variablepresentations',
       },
       calibrationTargets: {
         hasuraRelName: 'calibration_targets',
         type: 'array',
         junctionTable: 'modelcatalog_setup_calibration_target',
+        junctionRelName: 'variable',
         targetResource: 'variablepresentations',
       },
     },
@@ -340,6 +374,7 @@ export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
         hasuraRelName: 'interventions',
         type: 'array',
         junctionTable: 'modelcatalog_parameter_intervention',
+        junctionRelName: 'intervention',
         targetResource: 'interventions',
       },
     },
@@ -489,6 +524,7 @@ export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
         hasuraRelName: 'authors',
         type: 'array',
         junctionTable: 'modelcatalog_software_author',
+        junctionRelName: 'person',
         targetResource: 'persons',
       },
       versions: {

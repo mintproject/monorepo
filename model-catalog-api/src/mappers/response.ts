@@ -94,10 +94,24 @@ export function transformRow(
         if (!Array.isArray(relArray) || relArray.length === 0) continue;
 
         if (targetConfig) {
-          const transformed = relArray.map((item) => transformRow(item, targetConfig, depth + 1));
-          result[apiFieldName] = transformed;
+          // If this relationship goes through a junction table, each item is a junction row.
+          // The actual target entity is nested under junctionRelName inside the junction row.
+          const junctionRelName = relConfig.junctionRelName;
+          const transformed = relArray
+            .map((item) => {
+              // Junction traversal: extract the nested target entity if junctionRelName is set
+              // and the nested entity exists as a key in the junction row.
+              const targetRow = (junctionRelName && item[junctionRelName] != null)
+                ? item[junctionRelName] as Record<string, unknown>
+                : item;
+              return transformRow(targetRow, targetConfig, depth + 1);
+            })
+            .filter((item) => item['id'] !== null && item['id'] !== undefined);
+          if (transformed.length > 0) {
+            result[apiFieldName] = transformed;
+          }
         } else {
-          // Fallback: include id-only objects
+          // Fallback: include id-only objects (no target config found)
           const idOnly = relArray
             .filter((item) => item['id'] !== null && item['id'] !== undefined)
             .map((item) => ({ id: item['id'] }));
