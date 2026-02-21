@@ -76,11 +76,13 @@ Plans:
   3. No orphaned records and no broken FK references exist after migration -- validated by constraint checks
   4. Fuseki is removed from the deployment stack and does not appear in docker-compose or deployment configs
   5. `@mintproject/modelcatalog_client` SDK dependency is removed from Ensemble Manager
-**Plans**: TBD
+**Plans:** 4 plans
 
 Plans:
-- [ ] 03-01: Row classification and FK migration
-- [ ] 03-02: Fuseki removal and dependency cleanup
+- [ ] 03-01-PLAN.md -- DB FK migration: classification, backfill, parameter repointing, and Hasura metadata updates
+- [ ] 03-02-PLAN.md -- Fuseki Helm removal and model_catalog_api config cleanup
+- [ ] 03-03-PLAN.md -- SDK removal: delete model-catalog-functions.ts, rewrite adapter, create GraphQL queries
+- [ ] 03-04-PLAN.md -- Validation script and user review checkpoint before production deployment
 
 ## Progress
 
@@ -91,4 +93,4 @@ Phases execute in numeric order: 1 -> 2 -> 3
 |-------|----------------|--------|-----------|
 | 1. Schema and Data Migration | 7/7 | Complete | 2026-02-19 |
 | 2. API Integration | 13/13 | Complete | 2026-02-21 |
-| 3. FK Migration and Cleanup | 0/2 | Not started | - |
+| 3. FK Migration and Cleanup | 0/4 | Not started | - |
