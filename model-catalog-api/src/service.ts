@@ -127,6 +127,7 @@ class CatalogServiceImpl {
     }
 
     const id = decodeURIComponent(req.params.id)
+    const fullId = id.startsWith('https://') ? id : `${resourceConfig.idPrefix}${id}`
     const fields = getFieldSelection(resourceConfig.hasuraTable!)
 
     const tableSuffix = resourceConfig.hasuraTable.replace('modelcatalog_', '')
@@ -141,7 +142,7 @@ class CatalogServiceImpl {
     try {
       const result = await readClient.query({
         query: gql`${queryStr}`,
-        variables: { id },
+        variables: { id: fullId },
       })
       const data = result.data as Record<string, unknown>
       const dataKey = `modelcatalog_${tableSuffix}_by_pk`
@@ -226,6 +227,7 @@ class CatalogServiceImpl {
     }
 
     const id = decodeURIComponent(req.params.id)
+    const fullId = id.startsWith('https://') ? id : `${resourceConfig.idPrefix}${id}`
     const body = req.body || {}
     const input = toHasuraInput(body as Record<string, unknown>, resourceConfig)
 
@@ -248,7 +250,7 @@ class CatalogServiceImpl {
       const writeClient = getWriteClient(authHeader)
       await writeClient.mutate({
         mutation: gql`${mutationStr}`,
-        variables: { id, set: input },
+        variables: { id: fullId, set: input },
       })
       // Return updated object
       const fields = getFieldSelection(resourceConfig.hasuraTable!)
@@ -261,7 +263,7 @@ class CatalogServiceImpl {
       `
       const fetchResult = await readClient.query({
         query: gql`${queryStr}`,
-        variables: { id },
+        variables: { id: fullId },
       })
       const fetchData = fetchResult.data as Record<string, unknown>
       const dataKey = `modelcatalog_${tableSuffix}_by_pk`
@@ -292,6 +294,7 @@ class CatalogServiceImpl {
     }
 
     const id = decodeURIComponent(req.params.id)
+    const fullId = id.startsWith('https://') ? id : `${resourceConfig.idPrefix}${id}`
     const tableSuffix = resourceConfig.hasuraTable.replace('modelcatalog_', '')
     const mutationStr = `
       mutation DeleteMutation($id: String!) {
@@ -311,9 +314,9 @@ class CatalogServiceImpl {
       const writeClient = getWriteClient(authHeader)
       await writeClient.mutate({
         mutation: gql`${mutationStr}`,
-        variables: { id },
+        variables: { id: fullId },
       })
-      reply.code(202).send({ deleted: id })
+      reply.code(202).send({ deleted: fullId })
     } catch (err: any) {
       req.log.error({ err }, 'GraphQL delete mutation failed')
       reply.code(500).send({ error: 'Internal server error', details: err?.message })
