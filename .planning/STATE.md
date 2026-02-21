@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-02-14)
 ## Current Position
 
 Phase: 3 of 3 (FK Migration and Cleanup - IN PROGRESS)
-Plan: 2 of 4 in current phase (03-02 complete)
+Plan: 3 of 4 in current phase (03-01 complete)
 Status: Phase 3 executing
-Last activity: 2026-02-21 -- 03-02 complete: Fuseki disabled in Helm, model_catalog_api removed from config files
+Last activity: 2026-02-21 -- 03-01 complete: FK migration SQL files and Hasura metadata updated
 
-Progress: [███████████░] 90% (Phase 1 + Phase 2 complete, Phase 3 2/4 plans done)
+Progress: [███████████░] 92% (Phase 1 + Phase 2 complete, Phase 3 3/4 plans done)
 
 ## Performance Metrics
 
@@ -61,6 +61,7 @@ Progress: [███████████░] 90% (Phase 1 + Phase 2 complete
 | 02-11 | 266s | 3 tasks | 4 files |
 | 02-13 | 88s | 2 tasks | 2 files |
 | 03-02 | 480s | 2 tasks | 6 files |
+| 03-01 (cont) | 576s | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -121,6 +122,9 @@ Recent decisions affecting current work:
 - [Phase 03-02]: ingress-model-catalog-endpoint.yaml guarded by AND of model_catalog_endpoint.enabled + ingress.enabled (both conditions required)
 - [Phase 03-02]: model-catalog-endpoint-backup.yaml guarded by AND of model_catalog_endpoint.enabled + backups.enabled (both conditions required)
 - [Phase 03-02]: PVC template left intact with helm.sh/resource-policy: keep for Fuseki data preservation on disable
+- [Phase 03-01]: Delete-before-FK-add pattern for execution_parameter_binding and thread_model_parameter (model_parameter_id is part of PK so cannot be nulled; DELETE orphans before ADD CONSTRAINT)
+- [Phase 03-01]: Non-deferrable FK constraints in migration 2 after confirming 0 orphaned rows via user review -- deferrable adds complexity with no benefit when orphan count is 0
+- [Phase 03-01]: Removed execution_parameter_bindings and thread_model_parameters array_relationships from model_parameter in tables.yaml (FK now on modelcatalog_parameter)
 
 ### Pending Todos
 
@@ -135,5 +139,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-21
-Stopped at: Completed 03-02-PLAN.md (Fuseki disabled in Helm chart, model_catalog_api removed from config files)
+Stopped at: Completed 03-01-PLAN.md (FK migration SQL files and Hasura metadata updated)
 Resume file: .planning/phases/03-fk-migration-and-cleanup/03-03-PLAN.md (Phase 3 Plan 3 next)
