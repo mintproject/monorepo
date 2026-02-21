@@ -10,28 +10,28 @@ See: .planning/PROJECT.md (updated 2026-02-14)
 ## Current Position
 
 Phase: 2 of 3 (API Integration)
-Plan: 2 of 7 in current phase
+Plan: 3 of 7 in current phase
 Status: In Progress
-Last activity: 2026-02-21 -- Completed plan 02-01 (Hasura Mutation Permissions)
+Last activity: 2026-02-21 -- Completed plan 02-02 (Project Scaffold - Fastify + Apollo Client)
 
-Progress: [███░░░░░░░] 30% (Phase 1 complete + 1/7 in Phase 2)
+Progress: [████░░░░░░] 33% (Phase 1 complete + 2/7 in Phase 2)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 8
-- Average duration: 3.0 minutes
-- Total execution time: 0.67 hours
+- Total plans completed: 9
+- Average duration: 3.4 minutes
+- Total execution time: 0.76 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01-schema-and-data-migration | 7 | 39.8 min | 5.7 min |
-| 02-api-integration | 1 | 3 min | 3 min |
+| 02-api-integration | 2 | 8.1 min | 4.1 min |
 
 **Recent Trend:**
-- Last 5 plans: 4 min, 4.2 min, 2.3 min, 5.8 min, 3 min
+- Last 5 plans: 4 min, 4.2 min, 2.3 min, 5.8 min, 3 min, 5.2 min
 - Trend: Stable
 
 *Updated after each plan completion*
@@ -48,6 +48,7 @@ Progress: [███░░░░░░░] 30% (Phase 1 complete + 1/7 in Phase 
 | 01-06 | 138s | 2 | 1 |
 | 01-07 | 350s | 2 | 2 |
 | 02-01 | 152s | 2 | 1 |
+| 02-02 | 314s | 2 | 8 |
 
 ## Accumulated Context
 
@@ -70,6 +71,10 @@ Recent decisions affecting current work:
 - [Phase 01-07]: WARN vs FAIL validation strategy for new junction tables (TriG subset may not contain all relationship types)
 - [Phase 02-01]: Junction tables (FK-pair-only) get insert+delete only; entity tables get insert+update+delete
 - [Phase 02-01]: All mutation permissions use unrestricted filter {} consistent with existing non-modelcatalog conventions
+- [Phase 02-02]: Apollo Client v4 is non-generic class; getWriteClient returns ApolloClient (not ApolloClient<unknown>)
+- [Phase 02-02]: type=module in package.json required for import.meta with Node16 module resolution
+- [Phase 02-02]: openapi.yaml has 243 operations total (not 105 paths -- research counted paths not operations)
+- [Phase 02-02]: fastify-openapi-glue registration deferred to plan 04 (needs service handlers)
 
 ### Pending Todos
 
@@ -84,5 +89,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-21
-Stopped at: Completed 02-01-PLAN.md (Hasura Mutation Permissions)
-Resume file: .planning/phases/02-api-integration/02-02-PLAN.md (next plan)
+Stopped at: Completed 02-02-PLAN.md (Project Scaffold - Fastify + Apollo Client)
+Resume file: .planning/phases/02-api-integration/02-03-PLAN.md (next plan)
