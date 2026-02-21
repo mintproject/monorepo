@@ -5,32 +5,33 @@
 See: .planning/PROJECT.md (updated 2026-02-14)
 
 **Core value:** All model catalog data accessible through a single GraphQL endpoint, eliminating the Fuseki dependency while maintaining REST API compatibility.
-**Current focus:** Phase 1 - Schema and Data Migration
+**Current focus:** Phase 2 - API Integration
 
 ## Current Position
 
-Phase: 1 of 3 (Schema and Data Migration)
-Plan: 7 of 7 in current phase
-Status: Complete
-Last activity: 2026-02-19 -- Completed plan 01-07 (ETL Loading and Validation Extension)
+Phase: 2 of 3 (API Integration)
+Plan: 2 of 7 in current phase
+Status: In Progress
+Last activity: 2026-02-21 -- Completed plan 02-01 (Hasura Mutation Permissions)
 
-Progress: [██████████] 100%
+Progress: [███░░░░░░░] 30% (Phase 1 complete + 1/7 in Phase 2)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 7
+- Total plans completed: 8
 - Average duration: 3.0 minutes
-- Total execution time: 0.66 hours
+- Total execution time: 0.67 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01-schema-and-data-migration | 7 | 39.8 min | 5.7 min |
+| 02-api-integration | 1 | 3 min | 3 min |
 
 **Recent Trend:**
-- Last 5 plans: 4 min, 4.2 min, 2.3 min, 5.8 min
+- Last 5 plans: 4 min, 4.2 min, 2.3 min, 5.8 min, 3 min
 - Trend: Stable
 
 *Updated after each plan completion*
@@ -46,6 +47,7 @@ Progress: [██████████] 100%
 | 01-05 | 251s | 2 | 2 |
 | 01-06 | 138s | 2 | 1 |
 | 01-07 | 350s | 2 | 2 |
+| 02-01 | 152s | 2 | 1 |
 
 ## Accumulated Context
 
@@ -66,6 +68,8 @@ Recent decisions affecting current work:
 - [Phase 01-04]: Plural descriptive relationship names make GraphQL queries more intuitive
 - [Phase 01-07]: Two-pass loading for self-referential FK tables to avoid constraint violations
 - [Phase 01-07]: WARN vs FAIL validation strategy for new junction tables (TriG subset may not contain all relationship types)
+- [Phase 02-01]: Junction tables (FK-pair-only) get insert+delete only; entity tables get insert+update+delete
+- [Phase 02-01]: All mutation permissions use unrestricted filter {} consistent with existing non-modelcatalog conventions
 
 ### Pending Todos
 
@@ -79,6 +83,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-02-19
-Stopped at: Completed 01-07-PLAN.md (ETL Loading and Validation Extension) - Phase 01 Complete
-Resume file: .planning/phases/02-api-contract-testing/02-01-PLAN.md (next phase)
+Last session: 2026-02-21
+Stopped at: Completed 02-01-PLAN.md (Hasura Mutation Permissions)
+Resume file: .planning/phases/02-api-integration/02-02-PLAN.md (next plan)
