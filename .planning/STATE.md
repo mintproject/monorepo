@@ -10,25 +10,25 @@ See: .planning/PROJECT.md (updated 2026-02-14)
 ## Current Position
 
 Phase: 2 of 3 (API Integration)
-Plan: 4 of 7 in current phase
+Plan: 5 of 7 in current phase
 Status: In Progress
-Last activity: 2026-02-21 -- Completed plan 02-03 (Response/Request Mappers and Resource Registry)
+Last activity: 2026-02-21 -- Completed plan 02-04 (Generic CRUD Service and OpenAPI-glue Wiring)
 
-Progress: [████░░░░░░] 38% (Phase 1 complete + 3/7 in Phase 2)
+Progress: [█████░░░░░] 45% (Phase 1 complete + 4/7 in Phase 2)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 10
-- Average duration: 3.3 minutes
-- Total execution time: 0.82 hours
+- Total plans completed: 11
+- Average duration: 5.0 minutes
+- Total execution time: 0.93 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01-schema-and-data-migration | 7 | 39.8 min | 5.7 min |
-| 02-api-integration | 3 | 12.0 min | 4.0 min |
+| 02-api-integration | 4 | 28.3 min | 7.1 min |
 
 **Recent Trend:**
 - Last 5 plans: 4 min, 4.2 min, 2.3 min, 5.8 min, 3 min, 5.2 min
@@ -50,6 +50,7 @@ Progress: [████░░░░░░] 38% (Phase 1 complete + 3/7 in Phase 
 | 02-01 | 152s | 2 | 1 |
 | 02-02 | 314s | 2 | 8 |
 | 02-03 | 234s | 2 | 4 |
+| 02-04 | 978s | 2 | 3 |
 
 ## Accumulated Context
 
@@ -80,6 +81,10 @@ Recent decisions affecting current work:
 - [Phase 02-03]: 23 of 46 API types have no dedicated Hasura table (marked hasuraTable: null); need view strategy
 - [Phase 02-03]: 6 software subtypes share modelcatalog_software table; service handlers add type discriminator filter
 - [Phase 02-03]: configurationsetups is alias for modelconfigurationsetups (same table, different type URI)
+- [Phase 02-api-integration]: JavaScript Proxy requires both has() and get() traps; openapi-glue uses 'in' operator to check handler existence
+- [Phase 02-api-integration]: OpenAPI spec pre-processed to strip response/request schemas before openapi-glue registration: prevents AJV compile errors and reduces startup from 31s to under 1s
+- [Phase 02-api-integration]: AJV strict:false required for OpenAPI 3.x keywords (example, xml, externalDocs) in schemas
+- [Phase 02-api-integration]: Bearer token not validated by SecurityHandler; Hasura validates JWT via row-level permissions when token is forwarded
 
 ### Pending Todos
 
@@ -94,5 +99,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-21
-Stopped at: Completed 02-03-PLAN.md (Response/Request Mappers and Resource Registry)
-Resume file: .planning/phases/02-api-integration/02-04-PLAN.md (next plan)
+Stopped at: Completed 02-04-PLAN.md (Generic CRUD Service and OpenAPI-glue Wiring)
+Resume file: .planning/phases/02-api-integration/02-05-PLAN.md (next plan)
