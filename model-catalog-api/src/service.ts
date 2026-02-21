@@ -48,7 +48,8 @@ class CatalogServiceImpl {
       return
     }
     if (!resourceConfig.hasuraTable) {
-      reply.code(501).send({ error: `Resource type '${resource}' not yet implemented` })
+      // No backing table -- return empty list (matches v1.8.0 behavior for empty named graphs)
+      reply.code(200).send([])
       return
     }
 
@@ -120,7 +121,8 @@ class CatalogServiceImpl {
       return
     }
     if (!resourceConfig.hasuraTable) {
-      reply.code(501).send({ error: `Resource type '${resource}' not yet implemented` })
+      // No backing table -- resource cannot exist
+      reply.code(404).send({ error: 'Not found' })
       return
     }
 
