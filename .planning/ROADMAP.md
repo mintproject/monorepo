@@ -14,7 +14,8 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Schema and Data Migration** - Design modelcatalog_* tables, create Hasura migrations, ETL data from TriG/JSON, validate
 - [x] **Phase 2: API Integration** - New Node.js/TypeScript API at /v2.0.0/ backed by Hasura/PostgreSQL, identical responses to v1.8.0
-- [ ] **Phase 3: FK Migration and Cleanup** - Migrate execution/thread FKs to new tables, remove Fuseki from the stack
+- [x] **Phase 3: FK Migration and Cleanup** - Migrate execution/thread FKs to new tables, remove Fuseki from the stack
+- [ ] **Phase 4: Critical Bug Fixes** - Add has_accepted_values column to modelcatalog_parameter, fix configuration_id column name in custom handler
 
 ## Phase Details
 
@@ -84,13 +85,29 @@ Plans:
 - [ ] 03-03-PLAN.md -- SDK removal: delete model-catalog-functions.ts, rewrite adapter, create GraphQL queries
 - [ ] 03-04-PLAN.md -- Post-migration validation script and user review checkpoint before production deployment
 
+### Phase 4: Critical Bug Fixes — Schema Column and Handler Filter
+**Goal**: All E2E flows work end-to-end — Ensemble Manager model run fetches succeed and custom datasetspecifications endpoint returns data
+**Depends on**: Phase 3
+**Requirements**: API-04 (fully satisfied)
+**Gap Closure:** Closes gaps from v2.0 milestone audit
+**Success Criteria** (what must be TRUE):
+  1. `has_accepted_values TEXT[]` column exists on `modelcatalog_parameter` table and is tracked by Hasura
+  2. `get-modelcatalog-setup.graphql` and `get-modelcatalog-configuration.graphql` successfully query `has_accepted_values` without Hasura field-not-found error
+  3. `GET /v2.0.0/custom/datasetspecifications?configurationid=X` returns data (no 500 error) — `configuration_id` column name used in filter
+  4. Ensemble Manager model run E2E flow completes without GraphQL errors
+**Plans:** 1 plan
+
+Plans:
+- [ ] 04-01-PLAN.md -- Add has_accepted_values column migration + fix configuration_id column name in custom handler
+
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 3
+Phases execute in numeric order: 1 -> 2 -> 3 -> 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Schema and Data Migration | 7/7 | Complete | 2026-02-19 |
 | 2. API Integration | 13/13 | Complete | 2026-02-21 |
-| 3. FK Migration and Cleanup | 0/4 | Not started | - |
+| 3. FK Migration and Cleanup | 4/4 | Complete | 2026-02-22 |
+| 4. Critical Bug Fixes | 0/1 | Not started | - |
