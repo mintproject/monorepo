@@ -2,19 +2,18 @@
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-02-14)
+See: .planning/PROJECT.md (updated 2026-03-15)
 
 **Core value:** All model catalog data accessible through a single GraphQL endpoint, eliminating the Fuseki dependency while maintaining REST API compatibility.
-**Current focus:** Phase 04 critical bug fixes — has_accepted_values column, configuration_id handler fix
+**Current focus:** Planning next milestone — v2.0 complete
 
 ## Current Position
 
-Phase: 4 of 4 (Critical Bug Fixes - IN PROGRESS)
-Plan: 1 of 1 in current phase (04-01 complete)
-Status: Phase 04 Plan 01 COMPLETE
-Last activity: 2026-03-15 -- 04-01 complete: has_accepted_values migration, configuration_id WHERE fix, adapter type fix
+Milestone v2.0: COMPLETE (shipped 2026-03-15)
+Status: All 4 phases, 25 plans complete
+Last activity: 2026-03-15 -- v2.0 milestone archived
 
-Progress: [████████████] 100% (Phases 1-3 complete, Phase 4 Plan 1 complete)
+Progress: [████████████] 100% — v2.0 shipped
 
 ## Performance Metrics
 
@@ -139,14 +138,14 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
-None yet.
+None.
 
 ### Blockers/Concerns
 
-None - Phase 04 Plan 01 complete. Two critical bugs fixed: has_accepted_values column added to schema+metadata, configuration_id WHERE clause corrected.
+None — v2.0 milestone complete.
 
 ## Session Continuity
 
 Last session: 2026-03-15
-Stopped at: Completed 04-01-PLAN.md (has_accepted_values migration, configuration_id fix, adapter type fix)
-Resume file: N/A - 04-01 complete
+Stopped at: v2.0 milestone archived
+Resume file: N/A — start next milestone with /gsd:new-milestone
