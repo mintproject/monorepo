@@ -3439,6 +3439,7 @@
       - has_minimum_accepted_value
       - has_maximum_accepted_value
       - has_fixed_value
+      - has_accepted_values
       - position
       - parameter_type
   select_permissions:
@@ -3453,6 +3454,7 @@
       - has_minimum_accepted_value
       - has_maximum_accepted_value
       - has_fixed_value
+      - has_accepted_values
       - position
       - parameter_type
       filter: {}
