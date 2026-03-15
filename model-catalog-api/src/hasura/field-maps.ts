@@ -221,6 +221,7 @@ parameters {
     has_minimum_accepted_value
     has_maximum_accepted_value
     has_fixed_value
+    has_accepted_values
     position
     parameter_type
   }
@@ -323,6 +324,7 @@ parameters {
     has_minimum_accepted_value
     has_maximum_accepted_value
     has_fixed_value
+    has_accepted_values
     position
     parameter_type
   }
@@ -378,6 +380,7 @@ has_default_value
 has_minimum_accepted_value
 has_maximum_accepted_value
 has_fixed_value
+has_accepted_values
 position
 parameter_type
 interventions {
