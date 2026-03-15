@@ -491,10 +491,10 @@ async function custom_datasetspecifications_get(req: any, reply: any) {
     // Query junction tables directly; relationship names on junction rows are `input` and `output`
     const cfgQuery = `
       query CustomDatasetSpecificationsByConfig($cfgId: String!) {
-        modelcatalog_configuration_input(where: { model_configuration_id: { _eq: $cfgId } }) {
+        modelcatalog_configuration_input(where: { configuration_id: { _eq: $cfgId } }) {
           input { id label description has_format has_dimensionality position }
         }
-        modelcatalog_configuration_output(where: { model_configuration_id: { _eq: $cfgId } }) {
+        modelcatalog_configuration_output(where: { configuration_id: { _eq: $cfgId } }) {
           output { id label description has_format has_dimensionality position }
         }
       }

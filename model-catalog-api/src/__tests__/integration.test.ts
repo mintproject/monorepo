@@ -483,4 +483,23 @@ describe('Custom handler plain-ID resolution', () => {
     const callArgs = mockQuery.mock.calls[0][0]
     expect(callArgs.variables.cfgId).toBe('https://w3id.org/okn/i/mint/some-config-uuid')
   })
+
+  it('custom_datasetspecifications_get WHERE clause uses configuration_id not model_configuration_id', async () => {
+    mockQuery.mockResolvedValueOnce({
+      data: {
+        modelcatalog_configuration_input: [],
+        modelcatalog_configuration_output: [],
+      },
+    })
+
+    const req = makeReq({ query: { configurationid: 'some-config-uuid' } })
+    const reply = makeReply()
+    await customHandlers.custom_datasetspecifications_get(req, reply)
+
+    expect(mockQuery).toHaveBeenCalledOnce()
+    const callArgs = mockQuery.mock.calls[0][0]
+    const queryStr = typeof callArgs.query === 'string' ? callArgs.query : callArgs.query?.loc?.source?.body ?? ''
+    expect(queryStr).toContain('configuration_id')
+    expect(queryStr).not.toContain('model_configuration_id')
+  })
 })
