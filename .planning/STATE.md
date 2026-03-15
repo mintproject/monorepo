@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-14)
 
 **Core value:** All model catalog data accessible through a single GraphQL endpoint, eliminating the Fuseki dependency while maintaining REST API compatibility.
-**Current focus:** All phases complete - ready for production deployment
+**Current focus:** Phase 04 critical bug fixes — has_accepted_values column, configuration_id handler fix
 
 ## Current Position
 
-Phase: 3 of 3 (FK Migration and Cleanup - COMPLETE)
-Plan: 4 of 4 in current phase (03-04 complete)
-Status: ALL PHASES COMPLETE
-Last activity: 2026-02-22 -- 03-04 complete: validation script created, testing environment deployment verified, all Phase 3 artifacts approved
+Phase: 4 of 4 (Critical Bug Fixes - IN PROGRESS)
+Plan: 1 of 1 in current phase (04-01 complete)
+Status: Phase 04 Plan 01 COMPLETE
+Last activity: 2026-03-15 -- 04-01 complete: has_accepted_values migration, configuration_id WHERE fix, adapter type fix
 
-Progress: [████████████] 100% (All 3 phases complete)
+Progress: [████████████] 100% (Phases 1-3 complete, Phase 4 Plan 1 complete)
 
 ## Performance Metrics
 
@@ -64,6 +64,7 @@ Progress: [████████████] 100% (All 3 phases complete)
 | 03-01 (cont) | 576s | 2 tasks | 5 files |
 | 03-03 | 784s | 2 tasks | 12 files |
 | 03-04 | checkpoint | 2 tasks | 1 file |
+| Phase 04-critical-bug-fixes P01 | 193 | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -133,6 +134,8 @@ Recent decisions affecting current work:
 - [Phase 03-03]: useModelParameterService uses has_fixed_value (scalar string) not hasFixedValue (string array SDK style)
 - [Phase 03-04]: 1 unmatched model_io row is acceptable (135/136 matched) -- data quality issue in RDF source, not a migration defect
 - [Phase 03-04]: Deployment order validated in testing: DB backup -> schema migrations -> ETL -> FK migrations -> Hasura metadata -> validate SQL -> new code -> helm upgrade
+- [Phase 04-critical-bug-fixes]: Anonymous role in tables.yaml uses explicit inline column list (not alias); must be updated independently of &id006 anchor
+- [Phase 04-critical-bug-fixes]: has_accepted_values TEXT[] not string - adapter fallback is [] not empty string; CatalogParameter interface must use string[] | null
 
 ### Pending Todos
 
@@ -140,10 +143,10 @@ None yet.
 
 ### Blockers/Concerns
 
-None - all phases complete. Production deployment can proceed following the validated deployment order from 03-04.
+None - Phase 04 Plan 01 complete. Two critical bugs fixed: has_accepted_values column added to schema+metadata, configuration_id WHERE clause corrected.
 
 ## Session Continuity
 
-Last session: 2026-02-22
-Stopped at: Completed 03-04-PLAN.md (validation SQL script, testing environment verified, all Phase 3 artifacts approved)
-Resume file: N/A - all phases complete, ready for production deployment
+Last session: 2026-03-15
+Stopped at: Completed 04-01-PLAN.md (has_accepted_values migration, configuration_id fix, adapter type fix)
+Resume file: N/A - 04-01 complete
