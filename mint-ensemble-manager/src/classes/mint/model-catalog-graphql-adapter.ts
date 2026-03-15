@@ -48,7 +48,7 @@ export interface CatalogParameter {
     has_maximum_accepted_value?: string;
     parameter_type?: string;
     position?: number;
-    has_accepted_values?: string;
+    has_accepted_values?: string[] | null;
     has_data_type?: string;
 }
 
@@ -150,7 +150,7 @@ export const modelParameterToGraphQL = (
         min: parameter.has_minimum_accepted_value || "",
         max: parameter.has_maximum_accepted_value || "",
         type: parameter.parameter_type || "",
-        accepted_values: parameter.has_accepted_values || "",
+        accepted_values: parameter.has_accepted_values || [],
         position: parameter.position || 0,
         datatype: parameter.has_data_type || ""
     };
