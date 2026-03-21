@@ -1,7 +1,14 @@
-import { ApolloClient, InMemoryCache, HttpLink, gql } from '@apollo/client/core'
+import {
+  ApolloClient,
+  InMemoryCache,
+  HttpLink,
+  gql,
+} from '@apollo/client/core';
 
-const HASURA_GRAPHQL_URL = process.env.HASURA_GRAPHQL_URL || 'http://localhost:8080/v1/graphql'
-const HASURA_ADMIN_SECRET = process.env.HASURA_ADMIN_SECRET
+const HASURA_GRAPHQL_URL =
+  process.env.HASURA_GRAPHQL_URL ||
+  'http://testing-mint-hasura.mint.svc.cluster.local/v1/graphql';
+const HASURA_ADMIN_SECRET = process.env.HASURA_ADMIN_SECRET || 'CHANGEME';
 
 // Read client: uses admin secret for public data reads (no auth required)
 // fetchPolicy: 'no-cache' ensures always fresh data from Hasura
@@ -21,7 +28,7 @@ export const readClient = new ApolloClient({
       fetchPolicy: 'no-cache',
     },
   },
-})
+});
 
 // Write client factory: creates a new ApolloClient per request with user's JWT forwarded
 // Hasura row-level permissions enforce user scoping based on the JWT claims
@@ -40,8 +47,8 @@ export function getWriteClient(bearerToken: string): ApolloClient {
         fetchPolicy: 'no-cache',
       },
     },
-  })
+  });
 }
 
 // Re-export gql tag for convenience in handler files
-export { gql }
+export { gql };
