@@ -11,7 +11,7 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 
 Milestone v2.0: COMPLETE (shipped 2026-03-15)
 Status: All 4 phases, 25 plans complete
-Last activity: 2026-03-27 - Completed quick task 260326-vn8: Default model type to sdm#Model on POST
+Last activity: 2026-03-27 - Completed quick task 260326-w98: Scope default type assignment to modelcatalog_software only
 
 Progress: [████████████] 100% — v2.0 shipped
 
@@ -156,6 +156,7 @@ None — v2.0 milestone complete.
 | 260326-uun | Fix JWT signature verification error - configure Hasura webhook auth for Tapis JWT tokens | 2026-03-27 | 4f10173 | Verified | [260326-uun-fix-jwt-signature-verification-error-con](./quick/260326-uun-fix-jwt-signature-verification-error-con/) |
 | 260326-v3p | Fix POST models mutation - map camelCase API fields to snake_case Hasura columns | 2026-03-27 | baf99e5 | Verified | [260326-v3p-fix-post-models-mutation-map-camelcase-a](./quick/260326-v3p-fix-post-models-mutation-map-camelcase-a/) |
 | 260326-vn8 | Default model type to sdm#Model when POST body omits type field | 2026-03-27 | 43088a6 | Verified | [260326-vn8-default-model-type-to-sdm-model-when-pos](./quick/260326-vn8-default-model-type-to-sdm-model-when-pos/) |
+| 260326-w98 | Scope default type assignment to modelcatalog_software only | 2026-03-27 | 0402865 | Verified | [260326-w98-modelconfiguration-doesn-t-type-model-so](./quick/260326-w98-modelconfiguration-doesn-t-type-model-so/) |
 
 ## Session Continuity
 
