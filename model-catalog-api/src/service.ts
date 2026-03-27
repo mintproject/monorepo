@@ -188,6 +188,11 @@ class CatalogServiceImpl {
     const body = req.body || {}
     const input = toHasuraInput(body as Record<string, unknown>, resourceConfig)
 
+    // Always set the type column to the resource's canonical type URI.
+    // toHasuraInput intentionally skips the `type` field from the request body
+    // (short name like "Model"), so we set the full URI from the registry.
+    input['type'] = resourceConfig.typeUri
+
     // Generate a URI-based ID if not provided
     if (!input['id']) {
       input['id'] = `${ID_PREFIX}${randomUUID()}`

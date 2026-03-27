@@ -88,3 +88,48 @@ describe('toHasuraInput - softwareversions resource (modelcatalog_software_versi
     expect(result).toEqual({ label: 'Version 1.0', description: 'Version description' });
   });
 });
+
+// ============================================================================
+// Default type assignment: service layer uses resourceConfig.typeUri
+// ============================================================================
+// These tests document the contract: toHasuraInput strips the type field from
+// the request body, and the service.ts create() method is responsible for
+// setting input['type'] = resourceConfig.typeUri before the Hasura mutation.
+
+describe('default type assignment via resourceConfig.typeUri', () => {
+  it('resourceConfig for models has typeUri = https://w3id.org/okn/o/sdm#Model', () => {
+    const config = getResourceConfig('models')!;
+    expect(config.typeUri).toBe('https://w3id.org/okn/o/sdm#Model');
+  });
+
+  it('resourceConfig for empiricalmodels has typeUri = https://w3id.org/okn/o/sdm#EmpiricalModel', () => {
+    const config = getResourceConfig('empiricalmodels')!;
+    expect(config.typeUri).toBe('https://w3id.org/okn/o/sdm#EmpiricalModel');
+  });
+
+  it('resourceConfig for softwareversions has typeUri = https://w3id.org/okn/o/sd#SoftwareVersion', () => {
+    const config = getResourceConfig('softwareversions')!;
+    expect(config.typeUri).toBe('https://w3id.org/okn/o/sd#SoftwareVersion');
+  });
+
+  it('toHasuraInput strips the type field so service layer can assign the canonical URI', () => {
+    const config = getResourceConfig('models')!;
+    // Body includes type as short name (API-level value)
+    const input = toHasuraInput({ label: ['Test'], type: ['Model'] }, config);
+    // toHasuraInput must not set type -- the service layer will assign it
+    expect(input).not.toHaveProperty('type');
+    // Simulating what service.ts create() does after toHasuraInput:
+    input['type'] = config.typeUri;
+    expect(input['type']).toBe('https://w3id.org/okn/o/sdm#Model');
+  });
+
+  it('toHasuraInput on empty body produces no type; service layer assigns canonical URI', () => {
+    const config = getResourceConfig('models')!;
+    // Body has no type field at all
+    const input = toHasuraInput({ label: ['Test'] }, config);
+    expect(input).not.toHaveProperty('type');
+    // Service layer sets it
+    input['type'] = config.typeUri;
+    expect(input['type']).toBe('https://w3id.org/okn/o/sdm#Model');
+  });
+});
