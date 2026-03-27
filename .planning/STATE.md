@@ -11,7 +11,7 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 
 Milestone v2.0: COMPLETE (shipped 2026-03-15)
 Status: All 4 phases, 25 plans complete
-Last activity: 2026-03-15 -- v2.0 milestone archived
+Last activity: 2026-03-27 -- Completed quick task 260326-uar: Fix /models endpoint missing subtypes
 
 Progress: [████████████] 100% — v2.0 shipped
 
@@ -144,8 +144,14 @@ None.
 
 None — v2.0 milestone complete.
 
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 260326-uar | Fix /models endpoint to return Model subclass types | 2026-03-27 | 34587d2 | [260326-uar-fix-model-not-returned-by-v2-api-id-mism](./quick/260326-uar-fix-model-not-returned-by-v2-api-id-mism/) |
+
 ## Session Continuity
 
-Last session: 2026-03-15
-Stopped at: v2.0 milestone archived
-Resume file: N/A — start next milestone with /gsd:new-milestone
+Last session: 2026-03-27
+Stopped at: Completed quick task 260326-uar: Fix /models endpoint missing subtypes
+Resume file: N/A
