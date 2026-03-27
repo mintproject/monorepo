@@ -24,9 +24,16 @@ const ID_PREFIX = 'https://w3id.org/okn/i/mint/'
  * Software subtypes (models, emulators, etc.) share the modelcatalog_software table.
  * The type is stored in a `type` column in Hasura.
  */
-function getSoftwareTypeFilter(resource: string): string | null {
-  const SUBTYPE_MAP: Record<string, string> = {
-    models: 'https://w3id.org/okn/o/sdm#Model',
+export function getSoftwareTypeFilter(resource: string): string | string[] | null {
+  const SUBTYPE_MAP: Record<string, string | string[]> = {
+    models: [
+      'https://w3id.org/okn/o/sdm#Model',
+      'https://w3id.org/okn/o/sdm#EmpiricalModel',
+      'https://w3id.org/okn/o/sdm#CoupledModel',
+      'https://w3id.org/okn/o/sdm#Emulator',
+      'https://w3id.org/okn/o/sdm#HybridModel',
+      'https://w3id.org/okn/o/sdm#Theory-GuidedModel',
+    ],
     empiricalmodels: 'https://w3id.org/okn/o/sdm#EmpiricalModel',
     hybridmodels: 'https://w3id.org/okn/o/sdm#HybridModel',
     emulators: 'https://w3id.org/okn/o/sdm#Emulator',
@@ -69,7 +76,11 @@ class CatalogServiceImpl {
     // Software subtype filter
     const typeFilter = getSoftwareTypeFilter(resource)
     if (typeFilter) {
-      whereConditions.push('type: { _eq: $typeFilter }')
+      if (Array.isArray(typeFilter)) {
+        whereConditions.push('type: { _in: $typeFilter }')
+      } else {
+        whereConditions.push('type: { _eq: $typeFilter }')
+      }
       variables['typeFilter'] = typeFilter
     }
 
@@ -82,7 +93,9 @@ class CatalogServiceImpl {
     // Build variable declarations for query signature
     let varDecls = '$limit: Int!, $offset: Int!'
     if (label) varDecls += ', $label: String!'
-    if (typeFilter) varDecls += ', $typeFilter: String!'
+    if (typeFilter) {
+      varDecls += Array.isArray(typeFilter) ? ', $typeFilter: [String!]!' : ', $typeFilter: String!'
+    }
 
     const queryStr = `
       query ListQuery(${varDecls}) {
