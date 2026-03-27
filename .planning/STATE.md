@@ -11,7 +11,7 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 
 Milestone v2.0: COMPLETE (shipped 2026-03-15)
 Status: All 4 phases, 25 plans complete
-Last activity: 2026-03-27 -- Completed quick task 260326-uar: Fix /models endpoint missing subtypes
+Last activity: 2026-03-27 - Completed quick task 260326-uun: Fix JWT signature verification error
 
 Progress: [████████████] 100% — v2.0 shipped
 
@@ -136,6 +136,10 @@ Recent decisions affecting current work:
 - [Phase 04-critical-bug-fixes]: Anonymous role in tables.yaml uses explicit inline column list (not alias); must be updated independently of &id006 anchor
 - [Phase 04-critical-bug-fixes]: has_accepted_values TEXT[] not string - adapter fallback is [] not empty string; CatalogParameter interface must use string[] | null
 
+### Roadmap Evolution
+
+- Phase 1 added: Test all POST endpoints and create status/error summary
+
 ### Pending Todos
 
 None.
@@ -146,9 +150,10 @@ None — v2.0 milestone complete.
 
 ### Quick Tasks Completed
 
-| # | Description | Date | Commit | Directory |
-|---|-------------|------|--------|-----------|
-| 260326-uar | Fix /models endpoint to return Model subclass types | 2026-03-27 | 34587d2 | [260326-uar-fix-model-not-returned-by-v2-api-id-mism](./quick/260326-uar-fix-model-not-returned-by-v2-api-id-mism/) |
+| # | Description | Date | Commit | Status | Directory |
+|---|-------------|------|--------|--------|-----------|
+| 260326-uar | Fix /models endpoint to return Model subclass types | 2026-03-27 | 34587d2 | | [260326-uar-fix-model-not-returned-by-v2-api-id-mism](./quick/260326-uar-fix-model-not-returned-by-v2-api-id-mism/) |
+| 260326-uun | Fix JWT signature verification error - configure Hasura webhook auth for Tapis JWT tokens | 2026-03-27 | 4f10173 | Verified | [260326-uun-fix-jwt-signature-verification-error-con](./quick/260326-uun-fix-jwt-signature-verification-error-con/) |
 
 ## Session Continuity
 
