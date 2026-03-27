@@ -9,7 +9,41 @@
  * 5. Handle nested related objects by extracting their IDs for FK columns
  */
 
+import { FIELD_SELECTIONS } from '../hasura/field-maps.js';
 import type { ResourceConfig } from './resource-registry.js';
+
+/** Cache of parsed scalar column sets per table name */
+const scalarColumnsCache = new Map<string, Set<string>>();
+
+/**
+ * Parse the field selection string for a Hasura table and return the set of
+ * scalar column names (lines that are plain identifiers with no `{` or `}`).
+ */
+function getScalarColumns(tableName: string): Set<string> {
+  const cached = scalarColumnsCache.get(tableName);
+  if (cached) return cached;
+
+  const selection = FIELD_SELECTIONS[tableName];
+  if (!selection) {
+    const empty = new Set<string>();
+    scalarColumnsCache.set(tableName, empty);
+    return empty;
+  }
+
+  const columns = new Set<string>();
+  for (const rawLine of selection.split('\n')) {
+    const line = rawLine.trim();
+    // Skip blank lines and lines that open/close relationship blocks
+    if (!line || line.includes('{') || line.includes('}')) continue;
+    // Only keep simple identifiers (no spaces, no special chars)
+    if (/^\w+$/.test(line)) {
+      columns.add(line);
+    }
+  }
+
+  scalarColumnsCache.set(tableName, columns);
+  return columns;
+}
 
 /**
  * Convert a camelCase string to snake_case.
@@ -51,11 +85,15 @@ export function toHasuraInput(
   // Build a set of known API relationship field names (camelCase) -> skip from scalar processing
   const relationshipApiNames = new Set(Object.keys(resourceConfig.relationships));
 
+  // Get the valid scalar columns for this resource's Hasura table
+  const scalarColumns =
+    resourceConfig.hasuraTable !== null ? getScalarColumns(resourceConfig.hasuraTable) : new Set<string>();
+
   for (const [key, value] of Object.entries(body)) {
     // Skip type field: not stored in Hasura
     if (key === 'type') continue;
 
-    // id field: pass through as-is (already a URI string)
+    // id field: pass through as-is (always valid; checked before column validation)
     if (key === 'id') {
       if (value !== null && value !== undefined) {
         result['id'] = value;
@@ -67,14 +105,18 @@ export function toHasuraInput(
     // The caller is responsible for extracting IDs from nested objects
     if (relationshipApiNames.has(key)) continue;
 
+    // Convert camelCase to snake_case for Hasura column name
+    const snakeKey = camelToSnake(key);
+
+    // Drop unknown fields: only allow known scalar columns for this table
+    if (!scalarColumns.has(snakeKey)) continue;
+
     // Unwrap scalar value
     const unwrapped = unwrapValue(value);
 
     // Omit null/undefined values
     if (unwrapped === null || unwrapped === undefined) continue;
 
-    // Convert camelCase to snake_case for Hasura column name
-    const snakeKey = camelToSnake(key);
     result[snakeKey] = unwrapped;
   }
 
