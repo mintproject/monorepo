@@ -94,7 +94,12 @@ describe('toHasuraInput - softwareversions resource (modelcatalog_software_versi
 // ============================================================================
 // These tests document the contract: toHasuraInput strips the type field from
 // the request body, and the service.ts create() method is responsible for
-// setting input['type'] = resourceConfig.typeUri before the Hasura mutation.
+// conditionally setting input['type'] = resourceConfig.typeUri only when
+// resourceConfig.hasuraTable === 'modelcatalog_software'.
+//
+// Only modelcatalog_software has a `type` column in the database. All other
+// tables (modelcatalog_model_configuration, modelcatalog_software_version, etc.)
+// lack this column and must NOT receive a type field in INSERT inputs.
 
 describe('default type assignment via resourceConfig.typeUri', () => {
   it('resourceConfig for models has typeUri = https://w3id.org/okn/o/sdm#Model', () => {
@@ -112,24 +117,86 @@ describe('default type assignment via resourceConfig.typeUri', () => {
     expect(config.typeUri).toBe('https://w3id.org/okn/o/sd#SoftwareVersion');
   });
 
+  // ---- Conditional type assignment scope ----
+
+  it('models has hasuraTable === modelcatalog_software, so type SHOULD be assigned on create', () => {
+    const config = getResourceConfig('models')!;
+    expect(config.hasuraTable).toBe('modelcatalog_software');
+  });
+
+  it('softwares has hasuraTable === modelcatalog_software, so type SHOULD be assigned on create', () => {
+    const config = getResourceConfig('softwares')!;
+    expect(config.hasuraTable).toBe('modelcatalog_software');
+  });
+
+  it('modelconfigurations has hasuraTable !== modelcatalog_software -- type must NOT be assigned', () => {
+    const config = getResourceConfig('modelconfigurations')!;
+    expect(config.hasuraTable).not.toBe('modelcatalog_software');
+    // Specifically it uses modelcatalog_model_configuration which has no type column
+    expect(config.hasuraTable).toBe('modelcatalog_model_configuration');
+  });
+
+  it('softwareversions has hasuraTable !== modelcatalog_software -- type must NOT be assigned', () => {
+    const config = getResourceConfig('softwareversions')!;
+    expect(config.hasuraTable).not.toBe('modelcatalog_software');
+    expect(config.hasuraTable).toBe('modelcatalog_software_version');
+  });
+
+  it('simulates create() for models: type IS assigned because hasuraTable === modelcatalog_software', () => {
+    const config = getResourceConfig('models')!;
+    const input = toHasuraInput({ label: ['Test'], type: ['Model'] }, config);
+    expect(input).not.toHaveProperty('type');
+    // Simulate the conditional in service.ts create():
+    if (config.hasuraTable === 'modelcatalog_software') {
+      input['type'] = config.typeUri;
+    }
+    expect(input['type']).toBe('https://w3id.org/okn/o/sdm#Model');
+  });
+
+  it('simulates create() for modelconfigurations: type is NOT assigned -- table lacks type column', () => {
+    const config = getResourceConfig('modelconfigurations')!;
+    const input = toHasuraInput({ label: ['Test Config'] }, config);
+    // Simulate the conditional in service.ts create():
+    if (config.hasuraTable === 'modelcatalog_software') {
+      input['type'] = config.typeUri;
+    }
+    // type must not be in the Hasura INSERT input for modelconfiguration
+    expect(input).not.toHaveProperty('type');
+  });
+
+  it('simulates create() for softwareversions: type is NOT assigned -- table lacks type column', () => {
+    const config = getResourceConfig('softwareversions')!;
+    const input = toHasuraInput({ label: ['v1.0'] }, config);
+    // Simulate the conditional in service.ts create():
+    if (config.hasuraTable === 'modelcatalog_software') {
+      input['type'] = config.typeUri;
+    }
+    // type must not be in the Hasura INSERT input for software_version
+    expect(input).not.toHaveProperty('type');
+  });
+
   it('toHasuraInput strips the type field so service layer can assign the canonical URI', () => {
     const config = getResourceConfig('models')!;
     // Body includes type as short name (API-level value)
     const input = toHasuraInput({ label: ['Test'], type: ['Model'] }, config);
     // toHasuraInput must not set type -- the service layer will assign it
     expect(input).not.toHaveProperty('type');
-    // Simulating what service.ts create() does after toHasuraInput:
-    input['type'] = config.typeUri;
+    // Simulating what service.ts create() does after toHasuraInput (conditional):
+    if (config.hasuraTable === 'modelcatalog_software') {
+      input['type'] = config.typeUri;
+    }
     expect(input['type']).toBe('https://w3id.org/okn/o/sdm#Model');
   });
 
-  it('toHasuraInput on empty body produces no type; service layer assigns canonical URI', () => {
+  it('toHasuraInput on empty body produces no type; service layer assigns canonical URI for software resources', () => {
     const config = getResourceConfig('models')!;
     // Body has no type field at all
     const input = toHasuraInput({ label: ['Test'] }, config);
     expect(input).not.toHaveProperty('type');
-    // Service layer sets it
-    input['type'] = config.typeUri;
+    // Service layer sets it (conditional on hasuraTable)
+    if (config.hasuraTable === 'modelcatalog_software') {
+      input['type'] = config.typeUri;
+    }
     expect(input['type']).toBe('https://w3id.org/okn/o/sdm#Model');
   });
 });

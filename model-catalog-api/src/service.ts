@@ -188,10 +188,14 @@ class CatalogServiceImpl {
     const body = req.body || {}
     const input = toHasuraInput(body as Record<string, unknown>, resourceConfig)
 
-    // Always set the type column to the resource's canonical type URI.
-    // toHasuraInput intentionally skips the `type` field from the request body
-    // (short name like "Model"), so we set the full URI from the registry.
-    input['type'] = resourceConfig.typeUri
+    // Only set the type column for resources stored in modelcatalog_software, which is the
+    // only table with a `type` column (used to distinguish Model subtypes like
+    // sdm#Model, sdm#EmpiricalModel, sd#Software, etc.).
+    // Other tables (modelcatalog_model_configuration, modelcatalog_software_version, etc.)
+    // lack this column and must NOT receive a type field in their INSERT inputs.
+    if (resourceConfig.hasuraTable === 'modelcatalog_software') {
+      input['type'] = resourceConfig.typeUri
+    }
 
     // Generate a URI-based ID if not provided
     if (!input['id']) {
