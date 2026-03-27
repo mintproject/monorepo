@@ -26,3 +26,23 @@ See `.planning/milestones/v2.0-ROADMAP.md` for full phase details.
 | 2. API Integration | v2.0 | 13/13 | Complete | 2026-02-21 |
 | 3. FK Migration and Cleanup | v2.0 | 4/4 | Complete | 2026-02-22 |
 | 4. Critical Bug Fixes | v2.0 | 1/1 | Complete | 2026-03-15 |
+
+### Phase 1: Test all POST endpoints and create status/error summary
+
+**Goal:** [To be planned]
+**Requirements**: TBD
+**Depends on:** Phase 0
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 1 to break down)
+
+### Phase 2: Fix JWT signature verification error on POST endpoints
+
+**Goal:** [To be planned]
+**Requirements**: TBD
+**Depends on:** Phase 1
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 2 to break down)
