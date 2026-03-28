@@ -58,14 +58,31 @@ export function camelToSnake(str: string): string {
  * Single-element arrays are unwrapped: ["value"] -> "value"
  * Empty arrays are treated as null (will be omitted).
  * Non-array values are returned as-is.
+ *
+ * Non-primitive values (objects, nested arrays) are rejected and returned as
+ * null so they get omitted rather than forwarded to Hasura scalar columns.
+ * This prevents "parsing Text failed, expected String, but encountered Object"
+ * errors when clients send placeholder values like intervalUnit:[{}].
  */
 function unwrapValue(value: unknown): unknown {
   if (Array.isArray(value)) {
     if (value.length === 0) return null;
-    if (value.length === 1) return value[0];
-    // Multi-element arrays: return the array as-is (Hasura handles array columns)
-    return value;
+    if (value.length === 1) {
+      const item = value[0];
+      // Reject non-primitive values (objects, arrays) -- Hasura scalar columns
+      // cannot store objects. This handles cases like intervalUnit:[{}] where
+      // the client sends an empty object placeholder instead of a string value.
+      if (item !== null && typeof item === 'object') return null;
+      return item;
+    }
+    // Multi-element arrays: filter out non-primitive items
+    const filtered = value.filter(
+      (item) => item === null || typeof item !== 'object'
+    );
+    return filtered.length > 0 ? filtered : null;
   }
+  // Non-array objects at top level should also be rejected for scalar columns
+  if (value !== null && typeof value === 'object') return null;
   return value;
 }
 
