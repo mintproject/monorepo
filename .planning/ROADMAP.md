@@ -56,4 +56,4 @@ Plans:
 
 Plans:
 - [x] 03-01-PLAN.md — Extend resource registry with parentFkColumn + create buildJunctionInserts helper
-- [ ] 03-02-PLAN.md — Wire junction handling into service.ts create() and update() methods
+- [x] 03-02-PLAN.md — Wire junction handling into service.ts create() and update() methods

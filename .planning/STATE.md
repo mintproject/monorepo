@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: milestone
-status: executing
-stopped_at: Completed 03-01-PLAN.md (Junction Registry Extension and buildJunctionInserts)
-last_updated: "2026-03-28T19:38:28.032Z"
+status: verifying
+stopped_at: Completed 03-02-PLAN.md (Junction-aware service layer)
+last_updated: "2026-03-28T19:41:56.724Z"
 last_activity: 2026-03-28
 progress:
   total_phases: 4
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 26
-  completed_plans: 25
+  completed_plans: 26
   percent: 100
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 Phase: 03 (fix-nested-resource-creation-link-or-create-associated-resources-when-creating-parent-resource) — EXECUTING
 Plan: 2 of 2
 Milestone v2.0: COMPLETE (shipped 2026-03-15)
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-03-28
 
 Progress: [████████████] 100% — v2.0 shipped
@@ -57,6 +57,7 @@ Progress: [████████████] 100% — v2.0 shipped
 
 *Updated after each plan completion*
 | Phase 03-fix-nested-resource-creation-link-or-create-associated-resources-when-creating-parent-resource P01 | 4 | 2 tasks | 3 files |
+| Phase 03-fix-nested-resource-creation-link-or-create-associated-resources-when-creating-parent-resource P02 | 1 | 2 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -110,6 +111,8 @@ Recent decisions affecting current work:
 - [quick-today]: modelcatalog_modelconfiguration_category (&id041) and modelcatalog_modelconfigurationsetup_category (&id042) junction tables; TEXT FKs for configuration category junctions
 - [Phase 03-01]: parentFkColumn added as explicit field on RelationshipConfig (not runtime map) for self-documenting junction FK resolution
 - [Phase 03-01]: buildJunctionInserts is a separate export alongside toHasuraInput, wired into service layer by Plan 02
+- [Phase 03-fix-nested-resource-creation-link-or-create-associated-resources-when-creating-parent-resource]: Used multi-root Hasura mutation for update path: delete junctions + update scalars + insert junctions in one transaction
+- [Phase 03-fix-nested-resource-creation-link-or-create-associated-resources-when-creating-parent-resource]: Used flat FK columns for update-path junction inserts; nested insert syntax only for create() path
 
 ### Roadmap Evolution
 
@@ -141,6 +144,6 @@ None — v2.0 milestone complete.
 
 ## Session Continuity
 
-Last session: 2026-03-28T19:38:28.029Z
-Stopped at: Completed 03-01-PLAN.md (Junction Registry Extension and buildJunctionInserts)
+Last session: 2026-03-28T19:41:56.721Z
+Stopped at: Completed 03-02-PLAN.md (Junction-aware service layer)
 Resume file: None
