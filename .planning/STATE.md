@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-02-14)
 Phase: 1 of 3 (Schema and Data Migration)
 Plan: 1 of 2 in current phase
 Status: In progress
-Last activity: 2026-02-14 -- Completed plan 01-01 (ModelCatalog Schema Migration)
+Last activity: 2026-03-28 - Completed quick task 260328-hu8: Create script to automate MINT hasura/model-catalog deployment
 
 Progress: [██░░░░░░░░] 16%
 
@@ -75,6 +75,12 @@ None yet.
 - FK migration (Phase 3) is highest risk -- mixed data in `model` table needs careful classification before migration
 - Research confidence on migration strategy is MEDIUM -- specifics need validation against actual data
 - Performance benchmarks of current system not yet captured (needed for Phase 2 contract testing)
+
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Status | Directory |
+|---|-------------|------|--------|--------|-----------|
+| 260328-hu8 | Create script to automate MINT hasura/model-catalog deployment | 2026-03-28 | ace51d4 | Verified | [260328-hu8-create-script-to-automate-mint-hasura-mo](./quick/260328-hu8-create-script-to-automate-mint-hasura-mo/) |
 
 ## Session Continuity
 
