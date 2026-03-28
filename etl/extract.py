@@ -599,6 +599,25 @@ def extract_model_configurations(ds: Graph) -> List[Dict[str, Any]]:
     for entity in results:
         entity['author_id'] = author_first.get(entity['id'])
 
+    # Extract hasModelCategory links
+    category_links = {}
+    category_query = f"""
+    PREFIX sdm: <{config.SDM}>
+
+    SELECT DISTINCT ?mc ?category
+    WHERE {{
+        ?mc a <{config.TYPE_MODEL_CONFIGURATION}> .
+        ?mc sdm:hasModelCategory ?category .
+    }}
+    """
+
+    for row in ds.query(category_query):
+        mc_id = str(row.mc)
+        category_id = str(row.category)
+        if mc_id not in category_links:
+            category_links[mc_id] = []
+        category_links[mc_id].append(category_id)
+
     print(f"Extracted {len(results)} ModelConfiguration entities")
     return results, {
         'setup': setup_links,
@@ -609,6 +628,7 @@ def extract_model_configurations(ds: Graph) -> List[Dict[str, Any]]:
         'time_interval': time_interval_links,
         'region': region_links,
         'author': author_links,
+        'category': category_links,
     }
 
 
@@ -776,6 +796,25 @@ def extract_model_configuration_setups(ds: Graph) -> List[Dict[str, Any]]:
             calibration_target_links[setup_id] = []
         calibration_target_links[setup_id].append(variable_id)
 
+    # Extract hasModelCategory links
+    mcs_category_links = {}
+    mcs_category_query = f"""
+    PREFIX sdm: <{config.SDM}>
+
+    SELECT DISTINCT ?setup ?category
+    WHERE {{
+        ?setup a <{config.TYPE_MODEL_CONFIGURATION_SETUP}> .
+        ?setup sdm:hasModelCategory ?category .
+    }}
+    """
+
+    for row in ds.query(mcs_category_query):
+        setup_id = str(row.setup)
+        category_id = str(row.category)
+        if setup_id not in mcs_category_links:
+            mcs_category_links[setup_id] = []
+        mcs_category_links[setup_id].append(category_id)
+
     print(f"Extracted {len(results)} ModelConfigurationSetup entities")
     return results, {
         'input': input_links,
@@ -784,6 +823,7 @@ def extract_model_configuration_setups(ds: Graph) -> List[Dict[str, Any]]:
         'author': author_links,
         'calibrated_variable': calibrated_variable_links,
         'calibration_target': calibration_target_links,
+        'category': mcs_category_links,
     }
 
 
@@ -1284,10 +1324,12 @@ def extract_all(trig_path: str) -> Dict[str, Any]:
             'config_to_causal_diagram': config_link_dicts.get('causal_diagram', {}),
             'config_to_time_interval': config_link_dicts.get('time_interval', {}),
             'config_to_region': config_link_dicts.get('region', {}),
+            'mc_to_category': config_link_dicts.get('category', {}),
             # New ModelConfigurationSetup links
             'setup_to_author': setup_link_dicts.get('author', {}),
             'setup_to_calibrated_variable': setup_link_dicts.get('calibrated_variable', {}),
             'setup_to_calibration_target': setup_link_dicts.get('calibration_target', {}),
+            'mcs_to_category': setup_link_dicts.get('category', {}),
             # Parameter links
             'param_to_intervention': param_intervention_links,
             # Self-referential links

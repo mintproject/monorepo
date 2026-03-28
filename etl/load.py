@@ -39,6 +39,8 @@ def clear_all(conn):
                 modelcatalog_software_version_grid,
                 modelcatalog_software_version_process,
                 modelcatalog_software_version_category,
+                modelcatalog_modelconfigurationsetup_category,
+                modelcatalog_modelconfiguration_category,
                 modelcatalog_software_category,
                 -- Original junction tables (6)
                 modelcatalog_setup_parameter,
@@ -209,6 +211,8 @@ def load_all(transformed_data: Dict[str, List[Dict[str, Any]]], conn):
         'modelcatalog_setup_parameter',
         # New Software junction tables
         'modelcatalog_software_category',
+        'modelcatalog_modelconfiguration_category',
+        'modelcatalog_modelconfigurationsetup_category',
         # New SoftwareVersion junction tables (6)
         'modelcatalog_software_version_category',
         'modelcatalog_software_version_process',

@@ -232,6 +232,36 @@ def build_extended_junction_tables(extracted_data: Dict[str, Any]) -> Dict[str, 
             else:
                 skipped_software_category += 1
 
+    # Build modelconfiguration_category junction
+    mc_category_rows = []
+    skipped_mc_category = 0
+    for mc_id, category_ids in links.get('mc_to_category', {}).items():
+        if mc_id not in valid_configuration_ids:
+            continue
+        for category_id in category_ids:
+            if category_id in valid_category_ids:
+                mc_category_rows.append({
+                    'model_configuration_id': mc_id,
+                    'category_id': category_id,
+                })
+            else:
+                skipped_mc_category += 1
+
+    # Build modelconfigurationsetup_category junction
+    mcs_category_rows = []
+    skipped_mcs_category = 0
+    for mcs_id, category_ids in links.get('mcs_to_category', {}).items():
+        if mcs_id not in valid_setup_ids:
+            continue
+        for category_id in category_ids:
+            if category_id in valid_category_ids:
+                mcs_category_rows.append({
+                    'model_configuration_setup_id': mcs_id,
+                    'category_id': category_id,
+                })
+            else:
+                skipped_mcs_category += 1
+
     # Build software_version_process junction
     for version_id, process_ids in links.get('version_to_process', {}).items():
         if version_id not in valid_software_version_ids:
@@ -442,6 +472,8 @@ def build_extended_junction_tables(extracted_data: Dict[str, Any]) -> Dict[str, 
     print(f"  - configuration_author: {len(configuration_author_rows)} rows")
     print(f"  - software_version_category: {len(version_category_rows)} rows")
     print(f"  - software_category: {len(software_category_rows)} rows")
+    print(f"  - modelconfiguration_category: {len(mc_category_rows)} rows")
+    print(f"  - modelconfigurationsetup_category: {len(mcs_category_rows)} rows")
     print(f"  - software_version_process: {len(version_process_rows)} rows")
     print(f"  - software_version_grid: {len(version_grid_rows)} rows")
     print(f"  - software_version_image: {len(version_image_rows)} rows")
@@ -456,7 +488,8 @@ def build_extended_junction_tables(extracted_data: Dict[str, Any]) -> Dict[str, 
     print(f"  - parameter_intervention: {len(parameter_intervention_rows)} rows")
     print(f"  - diagram_part: {len(diagram_part_rows)} rows")
 
-    total_skipped = (skipped_software_category + skipped_version_category + skipped_version_process + skipped_version_grid +
+    total_skipped = (skipped_software_category + skipped_mc_category + skipped_mcs_category +
+                     skipped_version_category + skipped_version_process + skipped_version_grid +
                      skipped_version_image + skipped_version_input_variable + skipped_version_output_variable +
                      skipped_config_causal + skipped_config_time + skipped_config_region +
                      skipped_setup_author + skipped_setup_calibrated + skipped_setup_target +
@@ -469,6 +502,8 @@ def build_extended_junction_tables(extracted_data: Dict[str, Any]) -> Dict[str, 
         'modelcatalog_version_author': version_author_rows,
         'modelcatalog_configuration_author': configuration_author_rows,
         'modelcatalog_software_category': software_category_rows,
+        'modelcatalog_modelconfiguration_category': mc_category_rows,
+        'modelcatalog_modelconfigurationsetup_category': mcs_category_rows,
         'modelcatalog_software_version_category': version_category_rows,
         'modelcatalog_software_version_process': version_process_rows,
         'modelcatalog_software_version_grid': version_grid_rows,
