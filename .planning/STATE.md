@@ -1,55 +1,55 @@
 ---
 gsd_state_version: 1.0
 milestone: v2.0
-milestone_name: milestone
-status: executing
-stopped_at: Completed quick-260328-igb (fix-timeintervals-api-parsing-error)
-last_updated: "2026-03-28T16:24:32.498Z"
-last_activity: "2026-03-28 - Completed quick task 260328-hu8: Create script to automate MINT hasura/model-catalog deployment"
+milestone_name: DYNAMO Model Catalog GraphQL Migration
+status: complete
+stopped_at: Completed quick task (modelconfiguration/modelconfigurationsetup hasModelCategory junction)
+last_updated: "2026-03-28"
+last_activity: "2026-03-28 - Added hasModelCategory junction tables for modelconfiguration and modelconfigurationsetup"
 progress:
-  total_phases: 2
-  completed_phases: 2
-  total_plans: 20
-  completed_plans: 20
-  percent: 16
+  total_phases: 4
+  completed_phases: 4
+  total_plans: 25
+  completed_plans: 25
+  percent: 100
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-02-14)
+See: .planning/PROJECT.md (updated 2026-03-15)
 
 **Core value:** All model catalog data accessible through a single GraphQL endpoint, eliminating the Fuseki dependency while maintaining REST API compatibility.
-**Current focus:** Phase 1 - Schema and Data Migration
+**Current focus:** Post-v2.0 quick fixes and enhancements
 
 ## Current Position
 
-Phase: 1 of 3 (Schema and Data Migration)
-Plan: 1 of 2 in current phase
-Status: In progress
-Last activity: 2026-03-28 - Completed quick task 260328-igb: Fix timeintervals API parsing error
+Milestone v2.0: COMPLETE (shipped 2026-03-15)
+Status: All 4 phases, 25 plans complete
+Last activity: 2026-03-28 - Added hasModelCategory junction tables for modelconfiguration and modelconfigurationsetup
 
-Progress: [██░░░░░░░░] 16%
+Progress: [████████████] 100% — v2.0 shipped
 
 ## Performance Metrics
 
 **Velocity:**
-
-- Total plans completed: 1
-- Average duration: 3 minutes
-- Total execution time: 0.05 hours
+- Total plans completed: 25
+- Average duration: 5.5 minutes
+- Total execution time: 1.27 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 01-schema-and-data-migration | 1 | 3 min | 3 min |
+| 01-schema-and-data-migration | 7 | 39.8 min | 5.7 min |
+| 02-api-integration | 13 | 55.5 min | 4.3 min |
+| 03-fk-migration-and-cleanup | 4 | — | — |
+| 04-critical-bug-fixes | 1 | — | — |
 
 **Recent Trend:**
-
-- Last 5 plans: 3 min
-- Trend: N/A (only 1 plan completed)
+- Last 5 plans: 3 min, 5.2 min, 6.7 min, 2 min, 4 min
+- Trend: Stable
 
 *Updated after each plan completion*
 
@@ -65,26 +65,74 @@ Recent decisions affecting current work:
 - [01-01]: Made FK columns nullable to handle orphaned entities in RDF data
 - [01-01]: Single parameter table with parameter_type column instead of separate Adjustment table
 - [01-01]: Created 15 indexes covering all FK columns for query performance
+- [Phase 01-03]: Redundant author_id FK + junction table for single/multi-valued author optimization
+- [Phase 01-03]: Polymorphic junction table for CausalDiagram parts with part_type discriminator
+- [Phase 01-04]: Follow existing pattern of anonymous + user permissions with unrestricted read for consistency
+- [Phase 01-04]: Bidirectional relationships on junction tables enable nested GraphQL queries in both directions
+- [Phase 01-04]: Plural descriptive relationship names make GraphQL queries more intuitive
+- [Phase 01-07]: Two-pass loading for self-referential FK tables to avoid constraint violations
+- [Phase 01-07]: WARN vs FAIL validation strategy for new junction tables (TriG subset may not contain all relationship types)
+- [Phase 02-01]: Junction tables (FK-pair-only) get insert+delete only; entity tables get insert+update+delete
+- [Phase 02-01]: All mutation permissions use unrestricted filter {} consistent with existing non-modelcatalog conventions
+- [Phase 02-02]: Apollo Client v4 is non-generic class; getWriteClient returns ApolloClient (not ApolloClient<unknown>)
+- [Phase 02-02]: type=module in package.json required for import.meta with Node16 module resolution
+- [Phase 02-02]: openapi.yaml has 243 operations total (not 105 paths -- research counted paths not operations)
+- [Phase 02-02]: fastify-openapi-glue registration deferred to plan 04 (needs service handlers)
+- [Phase 02-03]: Object relationships also array-wrapped in v1.8.0 responses (author -> [{id, type, ...}])
+- [Phase 02-03]: 23 of 46 API types have no dedicated Hasura table (marked hasuraTable: null); need view strategy
+- [Phase 02-03]: 6 software subtypes share modelcatalog_software table; service handlers add type discriminator filter
+- [Phase 02-03]: configurationsetups is alias for modelconfigurationsetups (same table, different type URI)
+- [Phase 02-api-integration]: JavaScript Proxy requires both has() and get() traps; openapi-glue uses 'in' operator to check handler existence
+- [Phase 02-api-integration]: OpenAPI spec pre-processed to strip response/request schemas before openapi-glue registration
+- [Phase 02-api-integration]: AJV strict:false required for OpenAPI 3.x keywords
+- [Phase 02-api-integration]: Bearer token not validated by SecurityHandler; Hasura validates JWT via row-level permissions
+- [Phase 02-06]: JS-side post-filtering for intervention/region/variable cross-joins
+- [Phase 02-08]: username param accepted but ignored (no-op) -- no user_id column in modelcatalog_* tables
+- [Phase 02-api-integration]: junctionRelName added to RelationshipConfig for junction traversal
+- [Phase 02-07]: model_catalog_api_v2 disabled by default in values.yaml
+- [Phase 02-api-integration]: null-table resource types return 200 [] for list and 404 for get-by-id
+- [Phase 02-10]: ETL extracts most specific rdf:type for software entities; falls back to sdm:Model
+- [Phase 02-11]: Plain UUID IDs accepted by prepending resourceConfig.idPrefix; full URIs pass through unchanged
+- [Phase 03-02]: ingress guarded by AND of model_catalog_endpoint.enabled + ingress.enabled
+- [Phase 03-01]: Delete-before-FK-add pattern for execution_parameter_binding and thread_model_parameter
+- [Phase 03-03]: convertApiUrlToW3Id moved to model-catalog-graphql-adapter.ts as canonical utility
+- [Phase 03-04]: 1 unmatched model_io row acceptable (135/136 matched) -- data quality issue in RDF source
+- [Phase 04-critical-bug-fixes]: Anonymous role in tables.yaml uses explicit inline column list
+- [Phase 04-critical-bug-fixes]: has_accepted_values TEXT[] not string - adapter fallback is [] not empty string
+- [quick-260328-f39]: modelcatalog_software_category junction with YAML anchor &id040
+- [quick-260328-hu8]: deploy-hasura.sh script automates migration apply + metadata apply inside pod
+- [quick-260328-igb]: intervalUnit extracted as string (URI last segment) not object in ETL transform
+- [quick-today]: modelcatalog_modelconfiguration_category (&id041) and modelcatalog_modelconfigurationsetup_category (&id042) junction tables; TEXT FKs for configuration category junctions
+
+### Roadmap Evolution
+
+- Phase 1 added: Test all POST endpoints and create status/error summary
+- Phase 2 added: Fix JWT signature verification error on POST endpoints
 
 ### Pending Todos
 
-None yet.
+None.
 
 ### Blockers/Concerns
 
-- FK migration (Phase 3) is highest risk -- mixed data in `model` table needs careful classification before migration
-- Research confidence on migration strategy is MEDIUM -- specifics need validation against actual data
-- Performance benchmarks of current system not yet captured (needed for Phase 2 contract testing)
+None — v2.0 milestone complete.
 
 ### Quick Tasks Completed
 
 | # | Description | Date | Commit | Status | Directory |
 |---|-------------|------|--------|--------|-----------|
+| 260326-uar | Fix /models endpoint to return Model subclass types | 2026-03-27 | 34587d2 | Verified | [260326-uar-fix-model-not-returned-by-v2-api-id-mism](./quick/260326-uar-fix-model-not-returned-by-v2-api-id-mism/) |
+| 260326-uun | Fix JWT signature verification error - configure Hasura webhook auth for Tapis JWT tokens | 2026-03-27 | 4f10173 | Verified | [260326-uun-fix-jwt-signature-verification-error-con](./quick/260326-uun-fix-jwt-signature-verification-error-con/) |
+| 260326-v3p | Fix POST models mutation - map camelCase API fields to snake_case Hasura columns | 2026-03-27 | baf99e5 | Verified | [260326-v3p-fix-post-models-mutation-map-camelcase-a](./quick/260326-v3p-fix-post-models-mutation-map-camelcase-a/) |
+| 260326-vn8 | Default model type to sdm#Model when POST body omits type field | 2026-03-27 | 43088a6 | Verified | [260326-vn8-default-model-type-to-sdm-model-when-pos](./quick/260326-vn8-default-model-type-to-sdm-model-when-pos/) |
+| 260326-w98 | Scope default type assignment to modelcatalog_software only | 2026-03-27 | 0402865 | Verified | [260326-w98-modelconfiguration-doesn-t-type-model-so](./quick/260326-w98-modelconfiguration-doesn-t-type-model-so/) |
+| 260328-f39 | Add software-category junction, ETL extraction, Hasura table, and API category support | 2026-03-28 | f7d6a8f | Verified | [260328-f39-add-software-category-junction-etl-extra](./quick/260328-f39-add-software-category-junction-etl-extra/) |
 | 260328-hu8 | Create script to automate MINT hasura/model-catalog deployment | 2026-03-28 | ace51d4 | Verified | [260328-hu8-create-script-to-automate-mint-hasura-mo](./quick/260328-hu8-create-script-to-automate-mint-hasura-mo/) |
-| 260328-igb | Fix timeintervals API parsing error - intervalUnit expects String but receives Object | 2026-03-28 | 947426b | Verified | [260328-igb-fix-timeintervals-api-parsing-error-inte](./quick/260328-igb-fix-timeintervals-api-parsing-error-inte/) |
+| 260328-igb | Fix timeintervals API parsing error - intervalUnit expects String but receives Object | 2026-03-28 | 747a1c6 | Verified | [260328-igb-fix-timeintervals-api-parsing-error-inte](./quick/260328-igb-fix-timeintervals-api-parsing-error-inte/) |
+| 260328-mc-cat | Add hasModelCategory junction for modelconfiguration and modelconfigurationsetup | 2026-03-28 | b5b6174 | Verified | — |
 
 ## Session Continuity
 
-Last session: 2026-03-28T16:24:32.490Z
-Stopped at: Completed quick-260328-igb (fix-timeintervals-api-parsing-error)
-Resume file: None
+Last session: 2026-03-28
+Stopped at: Added hasModelCategory junction tables for modelconfiguration and modelconfigurationsetup
+Resume file: N/A

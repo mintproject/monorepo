@@ -158,13 +158,18 @@ else
   echo "  Pod: ${POD}"
 fi
 
-# Step 3 - Apply migrations and metadata
+# Step 3 - Show migration status
+step "Checking migration status"
+
+echo "  Running inside pod: ${POD}"
+run kubectl exec -n "${NAMESPACE}" "${POD}" -- bash -c "cd /hasura && hasura migrate status --skip-update-check"
+
+# Step 4 - Apply migrations and metadata
 step "Applying Hasura migrations and metadata"
 
 HASURA_CMD="cd /hasura && hasura migrate apply --skip-update-check && hasura metadata apply --skip-update-check"
 
 echo "  Running inside pod: ${POD}"
-echo "  Command: ${HASURA_CMD}"
 run kubectl exec -n "${NAMESPACE}" "${POD}" -- bash -c "${HASURA_CMD}"
 
 # Final summary
