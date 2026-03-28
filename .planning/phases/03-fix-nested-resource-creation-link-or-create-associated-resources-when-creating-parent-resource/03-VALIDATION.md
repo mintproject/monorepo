@@ -17,18 +17,18 @@ created: 2026-03-28
 
 | Property | Value |
 |----------|-------|
-| **Framework** | jest 29.x (via ts-jest) |
-| **Config file** | `model-catalog-api/jest.config.ts` |
-| **Quick run command** | `cd model-catalog-api && npx jest --testPathPattern='request.test' --no-coverage` |
-| **Full suite command** | `cd model-catalog-api && npx jest --no-coverage` |
+| **Framework** | vitest |
+| **Config file** | `model-catalog-api/vitest.config.ts` |
+| **Quick run command** | `cd model-catalog-api && npm test -- request` |
+| **Full suite command** | `cd model-catalog-api && npm test` |
 | **Estimated runtime** | ~15 seconds |
 
 ---
 
 ## Sampling Rate
 
-- **After every task commit:** Run `cd model-catalog-api && npx jest --testPathPattern='request.test' --no-coverage`
-- **After every plan wave:** Run `cd model-catalog-api && npx jest --no-coverage`
+- **After every task commit:** Run `cd model-catalog-api && npm test -- request`
+- **After every plan wave:** Run `cd model-catalog-api && npm test`
 - **Before `/gsd:verify-work`:** Full suite must be green
 - **Max feedback latency:** 15 seconds
 
