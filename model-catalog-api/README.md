@@ -47,6 +47,34 @@ npm run codegen    # Regenerate GraphQL types from Hasura schema
 npx vitest run src/__tests__/integration.test.ts
 ```
 
+### Integration tests
+
+Integration tests make real HTTP requests against a live API instance to verify end-to-end behavior (e.g., junction-based relationship CRUD). They are **skipped by default** when running `npm test` so they don't break unit test runs or CI.
+
+To run them:
+
+1. **Obtain a Tapis Bearer token** from https://portals.tapis.io/v3/oauth2/webapp
+
+2. **Set environment variables:**
+
+   ```bash
+   export MINT_API_TOKEN="<your-tapis-bearer-token>"
+   export MINT_API_URL="https://api.models.mint.local/v2.0.0"  # optional, this is the default
+   export NODE_TLS_REJECT_UNAUTHORIZED=0                        # only if using self-signed certs
+   ```
+
+3. **Run the integration tests:**
+
+   ```bash
+   npm test -- junction-integration
+   ```
+
+| Variable | Default | Description |
+|---|---|---|
+| `MINT_API_TOKEN` | *(none)* | Tapis Bearer token. Suite is skipped when unset. |
+| `MINT_API_URL` | `https://api.models.mint.local/v2.0.0` | API base URL to test against |
+| `NODE_TLS_REJECT_UNAUTHORIZED` | `1` | Set to `0` to allow self-signed TLS certificates |
+
 ### Health check
 
 ```
