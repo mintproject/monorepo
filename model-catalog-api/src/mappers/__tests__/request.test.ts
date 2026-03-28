@@ -233,7 +233,7 @@ describe('buildJunctionInserts', () => {
     expect(targetData['id']).toBe('https://w3id.org/okn/i/mint/Economy');
     const targetConflict = category['on_conflict'] as Record<string, unknown>;
     expect(targetConflict['constraint']).toBe('modelcatalog_model_category_pkey');
-    expect(targetConflict['update_columns']).toEqual([]);
+    expect(targetConflict['update_columns']).toEqual(['label']);
   });
 
   it('Test 2: generates UUID-based ID with https prefix when no ID provided', () => {
