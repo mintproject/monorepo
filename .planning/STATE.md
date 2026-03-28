@@ -1,16 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.0
+milestone: v2.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed quick-260328-hu8 (deploy-hasura.sh automation script)
-last_updated: "2026-03-28T15:55:03.791Z"
-last_activity: 2026-02-14 -- Completed plan 01-01 (ModelCatalog Schema Migration)
+stopped_at: Completed quick-260328-igb (fix-timeintervals-api-parsing-error)
+last_updated: "2026-03-28T16:24:32.498Z"
+last_activity: "2026-03-28 - Completed quick task 260328-hu8: Create script to automate MINT hasura/model-catalog deployment"
 progress:
-  total_phases: 3
-  completed_phases: 0
-  total_plans: 2
-  completed_plans: 1
+  total_phases: 2
+  completed_phases: 2
+  total_plans: 20
+  completed_plans: 20
   percent: 16
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-02-14)
 Phase: 1 of 3 (Schema and Data Migration)
 Plan: 1 of 2 in current phase
 Status: In progress
-Last activity: 2026-03-28 - Completed quick task 260328-hu8: Create script to automate MINT hasura/model-catalog deployment
+Last activity: 2026-03-28 - Completed quick task 260328-igb: Fix timeintervals API parsing error
 
 Progress: [██░░░░░░░░] 16%
 
@@ -81,9 +81,10 @@ None yet.
 | # | Description | Date | Commit | Status | Directory |
 |---|-------------|------|--------|--------|-----------|
 | 260328-hu8 | Create script to automate MINT hasura/model-catalog deployment | 2026-03-28 | ace51d4 | Verified | [260328-hu8-create-script-to-automate-mint-hasura-mo](./quick/260328-hu8-create-script-to-automate-mint-hasura-mo/) |
+| 260328-igb | Fix timeintervals API parsing error - intervalUnit expects String but receives Object | 2026-03-28 | 947426b | Verified | [260328-igb-fix-timeintervals-api-parsing-error-inte](./quick/260328-igb-fix-timeintervals-api-parsing-error-inte/) |
 
 ## Session Continuity
 
-Last session: 2026-03-28T15:55:03.782Z
-Stopped at: Completed quick-260328-hu8 (deploy-hasura.sh automation script)
+Last session: 2026-03-28T16:24:32.490Z
+Stopped at: Completed quick-260328-igb (fix-timeintervals-api-parsing-error)
 Resume file: None
