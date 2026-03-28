@@ -265,13 +265,6 @@ class CatalogServiceImpl {
     const input = toHasuraInput(body as Record<string, unknown>, resourceConfig)
 
     const tableSuffix = resourceConfig.hasuraTable.replace('modelcatalog_', '')
-    const mutationStr = `
-      mutation UpdateMutation($id: String!, $set: modelcatalog_${tableSuffix}_set_input!) {
-        update_modelcatalog_${tableSuffix}_by_pk(pk_columns: { id: $id }, _set: $set) {
-          id
-        }
-      }
-    `
 
     const authHeader = req.headers?.authorization
     if (!authHeader) {
@@ -279,11 +272,91 @@ class CatalogServiceImpl {
       return
     }
 
+    // Identify junction relationships explicitly present in the request body (D-07: Pitfall 2 guard)
+    const junctionParts: string[] = []
+    const variables: Record<string, unknown> = { id: fullId, set: input }
+
+    for (const [apiFieldName, relConfig] of Object.entries(resourceConfig.relationships)) {
+      if (!relConfig.junctionTable || !relConfig.junctionRelName || !relConfig.parentFkColumn) continue
+      // Only process junctions for relationship fields explicitly in the request body
+      if (body[apiFieldName] === undefined) continue
+
+      const juncSuffix = relConfig.junctionTable.replace('modelcatalog_', '')
+
+      // Step 1: Delete existing junction rows for this relationship (D-07: replace semantics)
+      junctionParts.push(
+        `del_${relConfig.hasuraRelName}: delete_modelcatalog_${juncSuffix}(where: { ${relConfig.parentFkColumn}: { _eq: $id } }) { affected_rows }`
+      )
+
+      // Step 2: Insert new junction rows with flat FK columns
+      const rawValue = body[apiFieldName]
+      if (!Array.isArray(rawValue) || rawValue.length === 0) continue
+
+      const targetFkColumn = `${relConfig.junctionRelName}_id`
+      const varName = `junc_${relConfig.hasuraRelName}`
+
+      const items = (rawValue as unknown[]).map((item: unknown) =>
+        typeof item === 'string' ? { id: item } : (item as Record<string, unknown>)
+      )
+
+      variables[varName] = items.map((item: Record<string, unknown>) => {
+        const rawItemId = item['id'] as string | undefined
+        const targetId = rawItemId
+          ? rawItemId.startsWith('https://') ? rawItemId : `${ID_PREFIX}${rawItemId}`
+          : `${ID_PREFIX}${randomUUID()}`
+        return {
+          [relConfig.parentFkColumn!]: fullId,
+          [targetFkColumn]: targetId,
+        }
+      })
+
+      const juncSuffix2 = relConfig.junctionTable.replace('modelcatalog_', '')
+      junctionParts.push(
+        `ins_${relConfig.hasuraRelName}: insert_modelcatalog_${juncSuffix2}(objects: $${varName}, on_conflict: { constraint: modelcatalog_${juncSuffix2}_pkey, update_columns: [] }) { affected_rows }`
+      )
+    }
+
+    // Build mutation string: simple _set if no junctions, multi-root otherwise (D-03)
+    let mutationStr: string
+    if (junctionParts.length === 0) {
+      mutationStr = `
+        mutation UpdateMutation($id: String!, $set: modelcatalog_${tableSuffix}_set_input!) {
+          update_modelcatalog_${tableSuffix}_by_pk(pk_columns: { id: $id }, _set: $set) {
+            id
+          }
+        }
+      `
+    } else {
+      // Build variable declarations for junction insert arrays
+      const juncVarDecls = Object.entries(resourceConfig.relationships)
+        .filter(([apiFieldName, relConfig]) =>
+          relConfig.junctionTable &&
+          relConfig.junctionRelName &&
+          relConfig.parentFkColumn &&
+          body[apiFieldName] !== undefined &&
+          Array.isArray(body[apiFieldName]) &&
+          (body[apiFieldName] as unknown[]).length > 0
+        )
+        .map(([, relConfig]) => {
+          const juncSuffix = relConfig.junctionTable!.replace('modelcatalog_', '')
+          return `$junc_${relConfig.hasuraRelName}: [modelcatalog_${juncSuffix}_insert_input!]!`
+        })
+        .join(', ')
+
+      const extraVarDecls = juncVarDecls ? `, ${juncVarDecls}` : ''
+      mutationStr = `
+        mutation UpdateWithJunctions($id: String!, $set: modelcatalog_${tableSuffix}_set_input!${extraVarDecls}) {
+          update_modelcatalog_${tableSuffix}_by_pk(pk_columns: { id: $id }, _set: $set) { id }
+          ${junctionParts.join('\n          ')}
+        }
+      `
+    }
+
     try {
       const writeClient = getWriteClient(authHeader)
       await writeClient.mutate({
         mutation: gql`${mutationStr}`,
-        variables: { id: fullId, set: input },
+        variables,
       })
       // Return updated object
       const fields = getFieldSelection(resourceConfig.hasuraTable!)
@@ -308,6 +381,11 @@ class CatalogServiceImpl {
       reply.code(200).send(transformRow(row, resourceConfig))
     } catch (err: any) {
       req.log.error({ err }, 'GraphQL update mutation failed')
+      const msg = err?.message || ''
+      if (msg.includes('uniqueness violation') || msg.includes('constraint')) {
+        reply.code(400).send({ error: 'Constraint violation', details: msg })
+        return
+      }
       reply.code(500).send({ error: 'Internal server error', details: err?.message })
     }
   }
