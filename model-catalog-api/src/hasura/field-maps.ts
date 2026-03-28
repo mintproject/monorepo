@@ -260,6 +260,12 @@ authors {
     label
   }
 }
+categories {
+  category {
+    id
+    label
+  }
+}
 `.trim(),
 
   // =========================================================================
@@ -349,6 +355,12 @@ calibrated_variables {
 }
 calibration_targets {
   variable {
+    id
+    label
+  }
+}
+categories {
+  category {
     id
     label
   }

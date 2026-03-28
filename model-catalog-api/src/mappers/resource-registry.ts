@@ -229,6 +229,13 @@ export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
         junctionRelName: 'region',
         targetResource: 'regions',
       },
+      hasModelCategory: {
+        hasuraRelName: 'categories',
+        type: 'array',
+        junctionTable: 'modelcatalog_modelconfiguration_category',
+        junctionRelName: 'category',
+        targetResource: 'modelcategorys',
+      },
     },
   },
 
@@ -290,6 +297,13 @@ export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
         junctionTable: 'modelcatalog_setup_calibration_target',
         junctionRelName: 'variable',
         targetResource: 'variablepresentations',
+      },
+      hasModelCategory: {
+        hasuraRelName: 'categories',
+        type: 'array',
+        junctionTable: 'modelcatalog_modelconfigurationsetup_category',
+        junctionRelName: 'category',
+        targetResource: 'modelcategorys',
       },
     },
   },
