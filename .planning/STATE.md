@@ -29,7 +29,7 @@ Phase: 03 (fix-nested-resource-creation-link-or-create-associated-resources-when
 Plan: 2 of 2
 Milestone v2.0: COMPLETE (shipped 2026-03-15)
 Status: Phase complete — ready for verification
-Last activity: 2026-03-28
+Last activity: 2026-03-28 - Completed quick task 260328-oa7: Add junction integration tests
 
 Progress: [████████████] 100% — v2.0 shipped
 
@@ -142,6 +142,7 @@ None — v2.0 milestone complete.
 | 260328-igb | Fix timeintervals API parsing error - intervalUnit expects String but receives Object | 2026-03-28 | 747a1c6 | Verified | [260328-igb-fix-timeintervals-api-parsing-error-inte](./quick/260328-igb-fix-timeintervals-api-parsing-error-inte/) |
 | 260328-mc-cat | Add hasModelCategory junction for modelconfiguration and modelconfigurationsetup | 2026-03-28 | b5b6174 | Verified | — |
 | 260328-n8j | Add live HTTP integration tests for junction-based relationship CRUD | 2026-03-28 | da78c6f | Complete | [260328-n8j-add-integration-test-to-the-changes-perf](./quick/260328-n8j-add-integration-test-to-the-changes-perf/) |
+| 260328-oa7 | Add junction integration tests for modelconfigurations, modelconfigurationsetups, parameters | 2026-03-28 | 33ccb2b | Complete | [260328-oa7-add-more-integration-tests-for-junction-](./quick/260328-oa7-add-more-integration-tests-for-junction-/) |
 
 ## Session Continuity
 
