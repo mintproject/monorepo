@@ -2897,6 +2897,13 @@
         table:
           name: modelcatalog_software_author
           schema: public
+  - name: categories
+    using:
+      foreign_key_constraint_on:
+        column: software_id
+        table:
+          name: modelcatalog_software_category
+          schema: public
   insert_permissions:
   - role: user
     permission:
@@ -3775,6 +3782,13 @@
         column: category_id
         table:
           name: modelcatalog_software_version_category
+          schema: public
+  - name: software_items
+    using:
+      foreign_key_constraint_on:
+        column: category_id
+        table:
+          name: modelcatalog_software_category
           schema: public
   insert_permissions:
   - role: user
@@ -4667,6 +4681,38 @@
   - role: user
     permission:
       columns: *id037
+      filter: {}
+  delete_permissions:
+  - role: user
+    permission:
+      filter: {}
+- table:
+    name: modelcatalog_software_category
+    schema: public
+  object_relationships:
+  - name: software
+    using:
+      foreign_key_constraint_on: software_id
+  - name: category
+    using:
+      foreign_key_constraint_on: category_id
+  insert_permissions:
+  - role: user
+    permission:
+      check: {}
+      columns: &id040
+      - software_id
+      - category_id
+  select_permissions:
+  - role: anonymous
+    permission:
+      columns:
+      - software_id
+      - category_id
+      filter: {}
+  - role: user
+    permission:
+      columns: *id040
       filter: {}
   delete_permissions:
   - role: user
