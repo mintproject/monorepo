@@ -230,3 +230,274 @@ afterAll(async () => {
     }
   }
 })
+
+// ===========================================================================
+// Helper: generate a reusable junction CRUD suite
+// ===========================================================================
+
+interface JunctionTestConfig {
+  suiteName: string
+  endpoint: string
+  testIdSuffix: string
+  typeArray: string[]
+  junctionField: string
+  initialJunction: object
+  replacedJunction: object
+  initialJunctionId: string
+  replacedJunctionId: string
+  setup?: () => Promise<void>
+  teardown?: () => Promise<void>
+}
+
+function junctionCrudSuite(config: JunctionTestConfig): void {
+  const {
+    suiteName,
+    endpoint,
+    testIdSuffix,
+    typeArray,
+    junctionField,
+    initialJunction,
+    replacedJunction,
+    initialJunctionId,
+    replacedJunctionId,
+    setup,
+    teardown,
+  } = config
+
+  const resourceTestId = `https://w3id.org/okn/i/mint/integration-${testIdSuffix}-${TEST_SUFFIX}`
+  const createdResourceIds: Array<{ endpoint: string; id: string }> = []
+  let createdId: string | null = null
+
+  describe.skipIf(!TOKEN)(suiteName, () => {
+    // Optional setup (e.g. create prerequisite resources)
+    if (setup) {
+      it('setup: create prerequisite resources', async () => {
+        await setup()
+      }, TEST_TIMEOUT)
+    }
+
+    // -----------------------------------------------------------------------
+    // Test 1: POST with junction field
+    // -----------------------------------------------------------------------
+    it(`POST ${endpoint} with ${junctionField} creates resource AND junction rows atomically`, async () => {
+      const body = {
+        id: resourceTestId,
+        label: [`Integration Test ${typeArray[0]}`],
+        type: typeArray,
+        [junctionField]: [initialJunction],
+      }
+
+      const { status, data } = await apiRequest('POST', endpoint, body)
+
+      expect(status, `Expected 201 but got ${status}. Response: ${JSON.stringify(data)}`).toBe(201)
+
+      const resource = data as Record<string, unknown>
+      expect(resource).toBeDefined()
+
+      createdId = (resource.id as string) ?? resourceTestId
+      if (createdId) {
+        createdResourceIds.push({ endpoint, id: createdId })
+      }
+    }, TEST_TIMEOUT)
+
+    // -----------------------------------------------------------------------
+    // Test 2: GET verifies junction data persisted
+    // -----------------------------------------------------------------------
+    it(`GET ${endpoint}/{id} returns created resource with ${junctionField} populated`, async () => {
+      expect(createdId, 'Test 1 must pass first (no createdId)').not.toBeNull()
+
+      const encodedId = encodeURIComponent(createdId!)
+      const { status, data } = await apiRequest('GET', `${endpoint}/${encodedId}`)
+
+      expect(status, `Expected 200 but got ${status}. Response: ${JSON.stringify(data)}`).toBe(200)
+
+      const resource = data as Record<string, unknown>
+      expect(resource.label).toEqual([`Integration Test ${typeArray[0]}`])
+
+      const junctionItems = resource[junctionField] as Array<Record<string, unknown>>
+      expect(Array.isArray(junctionItems), `${junctionField} should be an array`).toBe(true)
+      expect(junctionItems.length).toBeGreaterThanOrEqual(1)
+      const initial = junctionItems.find(item => item.id === initialJunctionId)
+      expect(initial, `Initial junction item (${initialJunctionId}) not found in ${junctionField}`).toBeDefined()
+    }, TEST_TIMEOUT)
+
+    // -----------------------------------------------------------------------
+    // Test 3: PUT with junction field (replacement)
+    // -----------------------------------------------------------------------
+    it(`PUT ${endpoint}/{id} with ${junctionField} replaces junction rows (delete-then-insert)`, async () => {
+      expect(createdId, 'Test 1 must pass first (no createdId)').not.toBeNull()
+
+      const encodedId = encodeURIComponent(createdId!)
+      const body = {
+        id: createdId,
+        label: [`Updated Integration Test ${typeArray[0]}`],
+        type: typeArray,
+        [junctionField]: [replacedJunction],
+      }
+
+      const { status, data } = await apiRequest('PUT', `${endpoint}/${encodedId}`, body)
+
+      expect(status, `Expected 200 but got ${status}. Response: ${JSON.stringify(data)}`).toBe(200)
+
+      const resource = data as Record<string, unknown>
+      expect(resource.label).toEqual([`Updated Integration Test ${typeArray[0]}`])
+
+      const junctionItems = resource[junctionField] as Array<Record<string, unknown>>
+      expect(Array.isArray(junctionItems), `${junctionField} should be an array`).toBe(true)
+
+      const replaced = junctionItems.find(item => item.id === replacedJunctionId)
+      expect(replaced, `Replaced junction item (${replacedJunctionId}) should be present after PUT`).toBeDefined()
+
+      const original = junctionItems.find(item => item.id === initialJunctionId)
+      expect(original, `Initial junction item should have been replaced (delete-then-insert semantics)`).toBeUndefined()
+    }, TEST_TIMEOUT)
+
+    // -----------------------------------------------------------------------
+    // Test 4: PUT WITHOUT junction field (no-op guard)
+    // -----------------------------------------------------------------------
+    it(`PUT ${endpoint}/{id} without ${junctionField} leaves existing junction rows untouched`, async () => {
+      expect(createdId, 'Test 1 must pass first (no createdId)').not.toBeNull()
+
+      const encodedId = encodeURIComponent(createdId!)
+      const body = {
+        id: createdId,
+        type: typeArray,
+        description: ['Updated description'],
+      }
+
+      const { status, data } = await apiRequest('PUT', `${endpoint}/${encodedId}`, body)
+
+      expect(status, `Expected 200 but got ${status}. Response: ${JSON.stringify(data)}`).toBe(200)
+
+      const resource = data as Record<string, unknown>
+
+      const junctionItems = resource[junctionField] as Array<Record<string, unknown>>
+      expect(Array.isArray(junctionItems), `${junctionField} should still be an array`).toBe(true)
+
+      const replaced = junctionItems.find(item => item.id === replacedJunctionId)
+      expect(replaced, `Replaced junction item should still be present (PUT without field = no-op on junction)`).toBeDefined()
+    }, TEST_TIMEOUT)
+
+    // -----------------------------------------------------------------------
+    // Test 5: GET final verification
+    // -----------------------------------------------------------------------
+    it(`GET ${endpoint}/{id} final verification confirms all PUT changes are persisted`, async () => {
+      expect(createdId, 'Test 1 must pass first (no createdId)').not.toBeNull()
+
+      const encodedId = encodeURIComponent(createdId!)
+      const { status, data } = await apiRequest('GET', `${endpoint}/${encodedId}`)
+
+      expect(status, `Expected 200 but got ${status}. Response: ${JSON.stringify(data)}`).toBe(200)
+
+      const resource = data as Record<string, unknown>
+
+      expect(resource.label).toEqual([`Updated Integration Test ${typeArray[0]}`])
+      expect(resource.description).toEqual(['Updated description'])
+
+      const junctionItems = resource[junctionField] as Array<Record<string, unknown>>
+      expect(Array.isArray(junctionItems)).toBe(true)
+
+      const replaced = junctionItems.find(item => item.id === replacedJunctionId)
+      expect(replaced, `Replaced junction item must persist across GET after PUT`).toBeDefined()
+
+      const original = junctionItems.find(item => item.id === initialJunctionId)
+      expect(original, `Initial junction item should not reappear after being replaced`).toBeUndefined()
+    }, TEST_TIMEOUT)
+
+    // -----------------------------------------------------------------------
+    // Cleanup
+    // -----------------------------------------------------------------------
+    afterAll(async () => {
+      for (const { endpoint: ep, id } of createdResourceIds) {
+        const encodedId = encodeURIComponent(id)
+        const { status } = await apiRequest('DELETE', `${ep}/${encodedId}`)
+        if (status !== 200 && status !== 204 && status !== 404) {
+          console.warn(`[junction-integration] cleanup: DELETE ${ep}/${encodedId} returned ${status}`)
+        }
+      }
+      if (teardown) {
+        await teardown()
+      }
+    })
+  })
+}
+
+// ===========================================================================
+// Suite: modelconfigurations with hasModelCategory
+// ===========================================================================
+
+junctionCrudSuite({
+  suiteName: 'Junction CRUD — modelconfigurations with hasModelCategory',
+  endpoint: '/modelconfigurations',
+  testIdSuffix: 'mc',
+  typeArray: ['ModelConfiguration'],
+  junctionField: 'hasModelCategory',
+  initialJunction: { id: 'https://w3id.org/okn/i/mint/Economy', label: ['Economy'] },
+  replacedJunction: { id: 'https://w3id.org/okn/i/mint/Agriculture', label: ['Agriculture'] },
+  initialJunctionId: 'https://w3id.org/okn/i/mint/Economy',
+  replacedJunctionId: 'https://w3id.org/okn/i/mint/Agriculture',
+})
+
+// ===========================================================================
+// Suite: modelconfigurationsetups with hasModelCategory
+// ===========================================================================
+
+junctionCrudSuite({
+  suiteName: 'Junction CRUD — modelconfigurationsetups with hasModelCategory',
+  endpoint: '/modelconfigurationsetups',
+  testIdSuffix: 'mcs',
+  typeArray: ['ModelConfigurationSetup'],
+  junctionField: 'hasModelCategory',
+  initialJunction: { id: 'https://w3id.org/okn/i/mint/Economy', label: ['Economy'] },
+  replacedJunction: { id: 'https://w3id.org/okn/i/mint/Agriculture', label: ['Agriculture'] },
+  initialJunctionId: 'https://w3id.org/okn/i/mint/Economy',
+  replacedJunctionId: 'https://w3id.org/okn/i/mint/Agriculture',
+})
+
+// ===========================================================================
+// Suite: parameters with hasIntervention
+// (requires creating Intervention resources as prerequisites)
+// ===========================================================================
+
+const interventionId1 = `https://w3id.org/okn/i/mint/integration-interv-${TEST_SUFFIX}`
+const interventionId2 = `https://w3id.org/okn/i/mint/integration-interv2-${TEST_SUFFIX}`
+const createdInterventionIds: string[] = []
+
+junctionCrudSuite({
+  suiteName: 'Junction CRUD — parameters with hasIntervention',
+  endpoint: '/parameters',
+  testIdSuffix: 'param',
+  typeArray: ['Parameter'],
+  junctionField: 'hasIntervention',
+  initialJunction: { id: interventionId1 },
+  replacedJunction: { id: interventionId2 },
+  initialJunctionId: interventionId1,
+  replacedJunctionId: interventionId2,
+  setup: async () => {
+    // Create both interventions before the parameter tests run
+    for (const [intervId, label] of [
+      [interventionId1, 'Test Intervention 1'],
+      [interventionId2, 'Test Intervention 2'],
+    ] as [string, string][]) {
+      const { status, data } = await apiRequest('POST', '/interventions', {
+        id: intervId,
+        label: [label],
+        type: ['Intervention'],
+      })
+      if (status === 201 || status === 200) {
+        createdInterventionIds.push(intervId)
+      } else {
+        console.warn(`[junction-integration] setup: POST /interventions returned ${status}: ${JSON.stringify(data)}`)
+      }
+    }
+  },
+  teardown: async () => {
+    for (const id of createdInterventionIds) {
+      const encodedId = encodeURIComponent(id)
+      const { status } = await apiRequest('DELETE', `/interventions/${encodedId}`)
+      if (status !== 200 && status !== 204 && status !== 404) {
+        console.warn(`[junction-integration] teardown: DELETE /interventions/${encodedId} returned ${status}`)
+      }
+    }
+  },
+})
