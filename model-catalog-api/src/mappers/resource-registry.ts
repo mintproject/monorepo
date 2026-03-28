@@ -20,6 +20,8 @@ export interface RelationshipConfig {
    * e.g. for 'inputs' -> modelcatalog_setup_input -> input, junctionRelName = 'input'
    */
   junctionRelName?: string;
+  /** FK column name in the junction table pointing back to the parent entity. Required when junctionTable is set. */
+  parentFkColumn?: string;
   /** The API resource name of the target type (for nested transforms) */
   targetResource: string;
 }
@@ -67,6 +69,7 @@ export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
         type: 'array',
         junctionTable: 'modelcatalog_software_author',
         junctionRelName: 'person',
+        parentFkColumn: 'software_id',
         targetResource: 'persons',
       },
       hasVersion: {
@@ -79,6 +82,7 @@ export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
         type: 'array',
         junctionTable: 'modelcatalog_software_category',
         junctionRelName: 'category',
+        parentFkColumn: 'software_id',
         targetResource: 'modelcategorys',
       },
     },
@@ -106,6 +110,7 @@ export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
         type: 'array',
         junctionTable: 'modelcatalog_version_author',
         junctionRelName: 'person',
+        parentFkColumn: 'software_version_id',
         targetResource: 'persons',
       },
       hasConfiguration: {
@@ -118,6 +123,7 @@ export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
         type: 'array',
         junctionTable: 'modelcatalog_software_version_category',
         junctionRelName: 'category',
+        parentFkColumn: 'software_version_id',
         targetResource: 'modelcategorys',
       },
       hasProcess: {
@@ -125,6 +131,7 @@ export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
         type: 'array',
         junctionTable: 'modelcatalog_software_version_process',
         junctionRelName: 'process',
+        parentFkColumn: 'software_version_id',
         targetResource: 'processs',
       },
       hasGrid: {
@@ -132,6 +139,7 @@ export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
         type: 'array',
         junctionTable: 'modelcatalog_software_version_grid',
         junctionRelName: 'grid',
+        parentFkColumn: 'software_version_id',
         targetResource: 'grids',
       },
       hasExplanationDiagram: {
@@ -139,6 +147,7 @@ export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
         type: 'array',
         junctionTable: 'modelcatalog_software_version_image',
         junctionRelName: 'image',
+        parentFkColumn: 'software_version_id',
         targetResource: 'images',
       },
       hasInputVariable: {
@@ -146,6 +155,7 @@ export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
         type: 'array',
         junctionTable: 'modelcatalog_software_version_input_variable',
         junctionRelName: 'variable',
+        parentFkColumn: 'software_version_id',
         targetResource: 'variablepresentations',
       },
       hasOutputVariable: {
@@ -153,6 +163,7 @@ export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
         type: 'array',
         junctionTable: 'modelcatalog_software_version_output_variable',
         junctionRelName: 'variable',
+        parentFkColumn: 'software_version_id',
         targetResource: 'variablepresentations',
       },
     },
@@ -180,6 +191,7 @@ export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
         type: 'array',
         junctionTable: 'modelcatalog_configuration_author',
         junctionRelName: 'person',
+        parentFkColumn: 'configuration_id',
         targetResource: 'persons',
       },
       hasSetup: {
@@ -192,6 +204,7 @@ export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
         type: 'array',
         junctionTable: 'modelcatalog_configuration_input',
         junctionRelName: 'input',
+        parentFkColumn: 'configuration_id',
         targetResource: 'datasetspecifications',
       },
       hasOutput: {
@@ -199,6 +212,7 @@ export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
         type: 'array',
         junctionTable: 'modelcatalog_configuration_output',
         junctionRelName: 'output',
+        parentFkColumn: 'configuration_id',
         targetResource: 'datasetspecifications',
       },
       hasParameter: {
@@ -206,6 +220,7 @@ export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
         type: 'array',
         junctionTable: 'modelcatalog_configuration_parameter',
         junctionRelName: 'parameter',
+        parentFkColumn: 'configuration_id',
         targetResource: 'parameters',
       },
       hasCausalDiagram: {
@@ -213,6 +228,7 @@ export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
         type: 'array',
         junctionTable: 'modelcatalog_configuration_causal_diagram',
         junctionRelName: 'causal_diagram',
+        parentFkColumn: 'configuration_id',
         targetResource: 'causaldiagrams',
       },
       hasOutputTimeInterval: {
@@ -220,6 +236,7 @@ export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
         type: 'array',
         junctionTable: 'modelcatalog_configuration_time_interval',
         junctionRelName: 'time_interval',
+        parentFkColumn: 'configuration_id',
         targetResource: 'timeintervals',
       },
       hasRegion: {
@@ -227,6 +244,7 @@ export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
         type: 'array',
         junctionTable: 'modelcatalog_configuration_region',
         junctionRelName: 'region',
+        parentFkColumn: 'configuration_id',
         targetResource: 'regions',
       },
       hasModelCategory: {
@@ -234,6 +252,7 @@ export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
         type: 'array',
         junctionTable: 'modelcatalog_modelconfiguration_category',
         junctionRelName: 'category',
+        parentFkColumn: 'model_configuration_id',
         targetResource: 'modelcategorys',
       },
     },
@@ -261,6 +280,7 @@ export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
         type: 'array',
         junctionTable: 'modelcatalog_setup_author',
         junctionRelName: 'person',
+        parentFkColumn: 'setup_id',
         targetResource: 'persons',
       },
       hasInput: {
@@ -268,6 +288,7 @@ export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
         type: 'array',
         junctionTable: 'modelcatalog_setup_input',
         junctionRelName: 'input',
+        parentFkColumn: 'setup_id',
         targetResource: 'datasetspecifications',
       },
       hasOutput: {
@@ -275,6 +296,7 @@ export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
         type: 'array',
         junctionTable: 'modelcatalog_setup_output',
         junctionRelName: 'output',
+        parentFkColumn: 'setup_id',
         targetResource: 'datasetspecifications',
       },
       hasParameter: {
@@ -282,6 +304,7 @@ export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
         type: 'array',
         junctionTable: 'modelcatalog_setup_parameter',
         junctionRelName: 'parameter',
+        parentFkColumn: 'setup_id',
         targetResource: 'parameters',
       },
       calibratedVariable: {
@@ -289,6 +312,7 @@ export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
         type: 'array',
         junctionTable: 'modelcatalog_setup_calibrated_variable',
         junctionRelName: 'variable',
+        parentFkColumn: 'setup_id',
         targetResource: 'variablepresentations',
       },
       calibrationTargetVariable: {
@@ -296,6 +320,7 @@ export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
         type: 'array',
         junctionTable: 'modelcatalog_setup_calibration_target',
         junctionRelName: 'variable',
+        parentFkColumn: 'setup_id',
         targetResource: 'variablepresentations',
       },
       hasModelCategory: {
@@ -303,6 +328,7 @@ export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
         type: 'array',
         junctionTable: 'modelcatalog_modelconfigurationsetup_category',
         junctionRelName: 'category',
+        parentFkColumn: 'model_configuration_setup_id',
         targetResource: 'modelcategorys',
       },
     },
@@ -331,6 +357,7 @@ export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
         type: 'array',
         junctionTable: 'modelcatalog_setup_author',
         junctionRelName: 'person',
+        parentFkColumn: 'setup_id',
         targetResource: 'persons',
       },
       hasInput: {
@@ -338,6 +365,7 @@ export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
         type: 'array',
         junctionTable: 'modelcatalog_setup_input',
         junctionRelName: 'input',
+        parentFkColumn: 'setup_id',
         targetResource: 'datasetspecifications',
       },
       hasOutput: {
@@ -345,6 +373,7 @@ export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
         type: 'array',
         junctionTable: 'modelcatalog_setup_output',
         junctionRelName: 'output',
+        parentFkColumn: 'setup_id',
         targetResource: 'datasetspecifications',
       },
       hasParameter: {
@@ -352,6 +381,7 @@ export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
         type: 'array',
         junctionTable: 'modelcatalog_setup_parameter',
         junctionRelName: 'parameter',
+        parentFkColumn: 'setup_id',
         targetResource: 'parameters',
       },
       calibratedVariable: {
@@ -359,6 +389,7 @@ export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
         type: 'array',
         junctionTable: 'modelcatalog_setup_calibrated_variable',
         junctionRelName: 'variable',
+        parentFkColumn: 'setup_id',
         targetResource: 'variablepresentations',
       },
       calibrationTargetVariable: {
@@ -366,6 +397,7 @@ export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
         type: 'array',
         junctionTable: 'modelcatalog_setup_calibration_target',
         junctionRelName: 'variable',
+        parentFkColumn: 'setup_id',
         targetResource: 'variablepresentations',
       },
     },
@@ -396,6 +428,7 @@ export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
         type: 'array',
         junctionTable: 'modelcatalog_parameter_intervention',
         junctionRelName: 'intervention',
+        parentFkColumn: 'parameter_id',
         targetResource: 'interventions',
       },
     },
@@ -546,6 +579,7 @@ export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
         type: 'array',
         junctionTable: 'modelcatalog_software_author',
         junctionRelName: 'person',
+        parentFkColumn: 'software_id',
         targetResource: 'persons',
       },
       hasVersion: {
@@ -558,6 +592,7 @@ export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
         type: 'array',
         junctionTable: 'modelcatalog_software_category',
         junctionRelName: 'category',
+        parentFkColumn: 'software_id',
         targetResource: 'modelcategorys',
       },
     },
@@ -585,6 +620,7 @@ export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
         type: 'array',
         junctionTable: 'modelcatalog_software_category',
         junctionRelName: 'category',
+        parentFkColumn: 'software_id',
         targetResource: 'modelcategorys',
       },
     },
@@ -612,6 +648,7 @@ export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
         type: 'array',
         junctionTable: 'modelcatalog_software_category',
         junctionRelName: 'category',
+        parentFkColumn: 'software_id',
         targetResource: 'modelcategorys',
       },
     },
@@ -639,6 +676,7 @@ export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
         type: 'array',
         junctionTable: 'modelcatalog_software_category',
         junctionRelName: 'category',
+        parentFkColumn: 'software_id',
         targetResource: 'modelcategorys',
       },
     },
@@ -666,6 +704,7 @@ export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
         type: 'array',
         junctionTable: 'modelcatalog_software_category',
         junctionRelName: 'category',
+        parentFkColumn: 'software_id',
         targetResource: 'modelcategorys',
       },
     },
@@ -695,6 +734,7 @@ export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
         type: 'array',
         junctionTable: 'modelcatalog_software_category',
         junctionRelName: 'category',
+        parentFkColumn: 'software_id',
         targetResource: 'modelcategorys',
       },
     },
@@ -722,6 +762,7 @@ export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
         type: 'array',
         junctionTable: 'modelcatalog_software_category',
         junctionRelName: 'category',
+        parentFkColumn: 'software_id',
         targetResource: 'modelcategorys',
       },
     },
