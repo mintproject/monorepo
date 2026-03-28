@@ -11,7 +11,7 @@
 import { randomUUID } from 'crypto'
 import { getResourceConfig } from './mappers/resource-registry.js'
 import { transformRow, transformList } from './mappers/response.js'
-import { toHasuraInput } from './mappers/request.js'
+import { toHasuraInput, buildJunctionInserts } from './mappers/request.js'
 import { readClient, getWriteClient, gql } from './hasura/client.js'
 import { getFieldSelection } from './hasura/field-maps.js'
 import { customHandlers } from './custom-handlers.js'
@@ -202,6 +202,12 @@ class CatalogServiceImpl {
       input['id'] = `${ID_PREFIX}${randomUUID()}`
     }
 
+    // Build junction insert data for relationship fields (D-01, D-03, D-06)
+    const junctionInserts = buildJunctionInserts(body as Record<string, unknown>, resourceConfig)
+
+    // Merge scalar input with junction nested inserts for atomic mutation (D-03)
+    const object = { ...input, ...junctionInserts }
+
     const tableSuffix = resourceConfig.hasuraTable.replace('modelcatalog_', '')
     const mutationStr = `
       mutation CreateMutation($object: modelcatalog_${tableSuffix}_insert_input!) {
@@ -221,7 +227,7 @@ class CatalogServiceImpl {
       const writeClient = getWriteClient(authHeader)
       const result = await writeClient.mutate({
         mutation: gql`${mutationStr}`,
-        variables: { object: input },
+        variables: { object },
       })
       const data = result.data as Record<string, unknown> | null
       const dataKey = `insert_modelcatalog_${tableSuffix}_one`
@@ -230,6 +236,11 @@ class CatalogServiceImpl {
       reply.code(201).send({ id: createdId })
     } catch (err: any) {
       req.log.error({ err }, 'GraphQL create mutation failed')
+      const msg = err?.message || ''
+      if (msg.includes('uniqueness violation') || msg.includes('constraint')) {
+        reply.code(400).send({ error: 'Constraint violation', details: msg })
+        return
+      }
       reply.code(500).send({ error: 'Internal server error', details: err?.message })
     }
   }
