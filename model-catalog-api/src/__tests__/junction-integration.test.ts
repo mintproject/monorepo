@@ -501,3 +501,97 @@ junctionCrudSuite({
     }
   },
 })
+
+// ===========================================================================
+// Suite: softwareversions with hasInputVariable
+// (requires creating VariablePresentation resources as prerequisites)
+// ===========================================================================
+
+const vpId1 = `https://w3id.org/okn/i/mint/integration-vp1-${TEST_SUFFIX}`
+const vpId2 = `https://w3id.org/okn/i/mint/integration-vp2-${TEST_SUFFIX}`
+const createdVpIds: string[] = []
+
+junctionCrudSuite({
+  suiteName: 'Junction CRUD — softwareversions with hasInputVariable',
+  endpoint: '/softwareversions',
+  testIdSuffix: 'sv',
+  typeArray: ['SoftwareVersion'],
+  junctionField: 'hasInputVariable',
+  initialJunction: { id: vpId1, label: ['Test Variable Presentation 1'] },
+  replacedJunction: { id: vpId2, label: ['Test Variable Presentation 2'] },
+  initialJunctionId: vpId1,
+  replacedJunctionId: vpId2,
+  setup: async () => {
+    for (const [vpId, label] of [
+      [vpId1, 'Test Variable Presentation 1'],
+      [vpId2, 'Test Variable Presentation 2'],
+    ] as [string, string][]) {
+      const { status, data } = await apiRequest('POST', '/variablepresentations', {
+        id: vpId,
+        label: [label],
+        type: ['VariablePresentation'],
+      })
+      if (status === 201 || status === 200) {
+        createdVpIds.push(vpId)
+      } else {
+        console.warn(`[junction-integration] setup: POST /variablepresentations returned ${status}: ${JSON.stringify(data)}`)
+      }
+    }
+  },
+  teardown: async () => {
+    for (const id of createdVpIds) {
+      const encodedId = encodeURIComponent(id)
+      const { status } = await apiRequest('DELETE', `/variablepresentations/${encodedId}`)
+      if (status !== 200 && status !== 204 && status !== 404) {
+        console.warn(`[junction-integration] teardown: DELETE /variablepresentations/${encodedId} returned ${status}`)
+      }
+    }
+  },
+})
+
+// ===========================================================================
+// Suite: modelconfigurationsetups with calibratedVariable
+// (requires creating VariablePresentation resources as prerequisites)
+// ===========================================================================
+
+const cvpId1 = `https://w3id.org/okn/i/mint/integration-cvp1-${TEST_SUFFIX}`
+const cvpId2 = `https://w3id.org/okn/i/mint/integration-cvp2-${TEST_SUFFIX}`
+const createdCvpIds: string[] = []
+
+junctionCrudSuite({
+  suiteName: 'Junction CRUD — modelconfigurationsetups with calibratedVariable',
+  endpoint: '/modelconfigurationsetups',
+  testIdSuffix: 'mcs-cv',
+  typeArray: ['ModelConfigurationSetup'],
+  junctionField: 'calibratedVariable',
+  initialJunction: { id: cvpId1, label: ['Test Calibrated VP 1'] },
+  replacedJunction: { id: cvpId2, label: ['Test Calibrated VP 2'] },
+  initialJunctionId: cvpId1,
+  replacedJunctionId: cvpId2,
+  setup: async () => {
+    for (const [vpId, label] of [
+      [cvpId1, 'Test Calibrated VP 1'],
+      [cvpId2, 'Test Calibrated VP 2'],
+    ] as [string, string][]) {
+      const { status, data } = await apiRequest('POST', '/variablepresentations', {
+        id: vpId,
+        label: [label],
+        type: ['VariablePresentation'],
+      })
+      if (status === 201 || status === 200) {
+        createdCvpIds.push(vpId)
+      } else {
+        console.warn(`[junction-integration] setup: POST /variablepresentations returned ${status}: ${JSON.stringify(data)}`)
+      }
+    }
+  },
+  teardown: async () => {
+    for (const id of createdCvpIds) {
+      const encodedId = encodeURIComponent(id)
+      const { status } = await apiRequest('DELETE', `/variablepresentations/${encodedId}`)
+      if (status !== 200 && status !== 204 && status !== 404) {
+        console.warn(`[junction-integration] teardown: DELETE /variablepresentations/${encodedId} returned ${status}`)
+      }
+    }
+  },
+})
