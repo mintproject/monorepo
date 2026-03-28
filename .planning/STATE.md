@@ -141,9 +141,10 @@ None — v2.0 milestone complete.
 | 260328-hu8 | Create script to automate MINT hasura/model-catalog deployment | 2026-03-28 | ace51d4 | Verified | [260328-hu8-create-script-to-automate-mint-hasura-mo](./quick/260328-hu8-create-script-to-automate-mint-hasura-mo/) |
 | 260328-igb | Fix timeintervals API parsing error - intervalUnit expects String but receives Object | 2026-03-28 | 747a1c6 | Verified | [260328-igb-fix-timeintervals-api-parsing-error-inte](./quick/260328-igb-fix-timeintervals-api-parsing-error-inte/) |
 | 260328-mc-cat | Add hasModelCategory junction for modelconfiguration and modelconfigurationsetup | 2026-03-28 | b5b6174 | Verified | — |
+| 260328-n8j | Add live HTTP integration tests for junction-based relationship CRUD | 2026-03-28 | da78c6f | Complete | [260328-n8j-add-integration-test-to-the-changes-perf](./quick/260328-n8j-add-integration-test-to-the-changes-perf/) |
 
 ## Session Continuity
 
-Last session: 2026-03-28T19:41:56.721Z
-Stopped at: Completed 03-02-PLAN.md (Junction-aware service layer)
+Last session: 2026-03-28T19:06:20.000Z
+Stopped at: Completed quick task 260328-n8j (junction integration test)
 Resume file: None
