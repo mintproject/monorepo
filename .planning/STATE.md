@@ -157,7 +157,7 @@ None — v2.0 milestone complete.
 | 260326-v3p | Fix POST models mutation - map camelCase API fields to snake_case Hasura columns | 2026-03-27 | baf99e5 | Verified | [260326-v3p-fix-post-models-mutation-map-camelcase-a](./quick/260326-v3p-fix-post-models-mutation-map-camelcase-a/) |
 | 260326-vn8 | Default model type to sdm#Model when POST body omits type field | 2026-03-27 | 43088a6 | Verified | [260326-vn8-default-model-type-to-sdm-model-when-pos](./quick/260326-vn8-default-model-type-to-sdm-model-when-pos/) |
 | 260326-w98 | Scope default type assignment to modelcatalog_software only | 2026-03-27 | 0402865 | Verified | [260326-w98-modelconfiguration-doesn-t-type-model-so](./quick/260326-w98-modelconfiguration-doesn-t-type-model-so/) |
-| 260328-f39 | Add software-category junction, ETL extraction, Hasura table, and API category support | 2026-03-28 | pending | Pending | [260328-f39-add-software-category-junction-etl-extra](./quick/260328-f39-add-software-category-junction-etl-extra/) |
+| 260328-f39 | Add software-category junction, ETL extraction, Hasura table, and API category support | 2026-03-28 | f7d6a8f | Verified | [260328-f39-add-software-category-junction-etl-extra](./quick/260328-f39-add-software-category-junction-etl-extra/) |
 
 ## Session Continuity
 
