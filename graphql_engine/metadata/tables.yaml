@@ -3156,6 +3156,13 @@
         table:
           name: modelcatalog_configuration_author
           schema: public
+  - name: categories
+    using:
+      foreign_key_constraint_on:
+        column: model_configuration_id
+        table:
+          name: modelcatalog_modelconfiguration_category
+          schema: public
   insert_permissions:
   - role: user
     permission:
@@ -3268,6 +3275,13 @@
         column: setup_id
         table:
           name: modelcatalog_setup_calibration_target
+          schema: public
+  - name: categories
+    using:
+      foreign_key_constraint_on:
+        column: model_configuration_setup_id
+        table:
+          name: modelcatalog_modelconfigurationsetup_category
           schema: public
   insert_permissions:
   - role: user
@@ -3789,6 +3803,20 @@
         column: category_id
         table:
           name: modelcatalog_software_category
+          schema: public
+  - name: configuration_items
+    using:
+      foreign_key_constraint_on:
+        column: category_id
+        table:
+          name: modelcatalog_modelconfiguration_category
+          schema: public
+  - name: configuration_setup_items
+    using:
+      foreign_key_constraint_on:
+        column: category_id
+        table:
+          name: modelcatalog_modelconfigurationsetup_category
           schema: public
   insert_permissions:
   - role: user
@@ -4777,6 +4805,70 @@
   - role: user
     permission:
       columns: *id039
+      filter: {}
+  delete_permissions:
+  - role: user
+    permission:
+      filter: {}
+- table:
+    name: modelcatalog_modelconfiguration_category
+    schema: public
+  object_relationships:
+  - name: model_configuration
+    using:
+      foreign_key_constraint_on: model_configuration_id
+  - name: category
+    using:
+      foreign_key_constraint_on: category_id
+  insert_permissions:
+  - role: user
+    permission:
+      check: {}
+      columns: &id041
+      - model_configuration_id
+      - category_id
+  select_permissions:
+  - role: anonymous
+    permission:
+      columns:
+      - model_configuration_id
+      - category_id
+      filter: {}
+  - role: user
+    permission:
+      columns: *id041
+      filter: {}
+  delete_permissions:
+  - role: user
+    permission:
+      filter: {}
+- table:
+    name: modelcatalog_modelconfigurationsetup_category
+    schema: public
+  object_relationships:
+  - name: model_configuration_setup
+    using:
+      foreign_key_constraint_on: model_configuration_setup_id
+  - name: category
+    using:
+      foreign_key_constraint_on: category_id
+  insert_permissions:
+  - role: user
+    permission:
+      check: {}
+      columns: &id042
+      - model_configuration_setup_id
+      - category_id
+  select_permissions:
+  - role: anonymous
+    permission:
+      columns:
+      - model_configuration_setup_id
+      - category_id
+      filter: {}
+  - role: user
+    permission:
+      columns: *id042
       filter: {}
   delete_permissions:
   - role: user
