@@ -21,6 +21,8 @@ jobs:
   build:
     runs-on: ubuntu-latest
     if: github.event_name == 'push'
+    outputs:
+      docker_tag: ${{ steps.exposeValue.outputs.docker_tag }}
     permissions:
       contents: read
       packages: write
@@ -92,15 +94,14 @@ jobs:
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: ${{ env.DOCKER_IMAGE_REPOSITORY }}/${{ env.DOCKER_IMAGE_NAME }}:${{ needs.build.outputs.docker_tag }}
-          format: "template"
-          template: "@/contrib/sarif.tpl"
+          format: "sarif"
           output: "trivy-results.sarif"
-          severity: ${{ env.VULNERABILITY_SCAN_LEVEL }}
+          severity: "HIGH,CRITICAL"
           exit-code: "0"
           ignore-unfixed: "true"
 
       - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         if: always()
         with:
           sarif_file: "trivy-results.sarif"
