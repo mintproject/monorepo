@@ -11,7 +11,7 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 
 Milestone v2.0: COMPLETE (shipped 2026-03-15)
 Status: All 4 phases, 25 plans complete
-Last activity: 2026-03-27 - Completed quick task 260326-w98: Scope default type assignment to modelcatalog_software only
+Last activity: 2026-03-28 - Completed quick task 260328-f39: Add software-category junction and API category support
 
 Progress: [████████████] 100% — v2.0 shipped
 
@@ -157,9 +157,10 @@ None — v2.0 milestone complete.
 | 260326-v3p | Fix POST models mutation - map camelCase API fields to snake_case Hasura columns | 2026-03-27 | baf99e5 | Verified | [260326-v3p-fix-post-models-mutation-map-camelcase-a](./quick/260326-v3p-fix-post-models-mutation-map-camelcase-a/) |
 | 260326-vn8 | Default model type to sdm#Model when POST body omits type field | 2026-03-27 | 43088a6 | Verified | [260326-vn8-default-model-type-to-sdm-model-when-pos](./quick/260326-vn8-default-model-type-to-sdm-model-when-pos/) |
 | 260326-w98 | Scope default type assignment to modelcatalog_software only | 2026-03-27 | 0402865 | Verified | [260326-w98-modelconfiguration-doesn-t-type-model-so](./quick/260326-w98-modelconfiguration-doesn-t-type-model-so/) |
+| 260328-f39 | Add software-category junction, ETL extraction, Hasura table, and API category support | 2026-03-28 | pending | Pending | [260328-f39-add-software-category-junction-etl-extra](./quick/260328-f39-add-software-category-junction-etl-extra/) |
 
 ## Session Continuity
 
-Last session: 2026-03-27
-Stopped at: Completed quick task 260326-uar: Fix /models endpoint missing subtypes
+Last session: 2026-03-28
+Stopped at: Completed quick task 260328-f39: Add software-category junction and API category support
 Resume file: N/A

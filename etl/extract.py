@@ -116,6 +116,25 @@ def extract_software(ds: Graph) -> List[Dict[str, Any]]:
             author_links[software_id] = []
         author_links[software_id].append(author_id)
 
+    # Extract hasModelCategory links
+    category_links = {}
+    category_query = f"""
+    PREFIX sdm: <{config.SDM}>
+
+    SELECT DISTINCT ?software ?category
+    WHERE {{
+        ?software a <{config.TYPE_SOFTWARE}> .
+        ?software sdm:hasModelCategory ?category .
+    }}
+    """
+
+    for row in ds.query(category_query):
+        software_id = str(row.software)
+        category_id = str(row.category)
+        if software_id not in category_links:
+            category_links[software_id] = []
+        category_links[software_id].append(category_id)
+
     # Set single-valued author_id on entities (first author)
     author_first = {}
     for sw_id, authors in author_links.items():
@@ -152,7 +171,7 @@ def extract_software(ds: Graph) -> List[Dict[str, Any]]:
         entity['type'] = subtype_map.get(entity['id'], f"{config.SDM}Model")
 
     print(f"Extracted {len(results)} Software entities")
-    return results, version_links, author_links
+    return results, version_links, author_links, category_links
 
 
 def extract_software_versions(ds: Graph) -> List[Dict[str, Any]]:
@@ -1205,7 +1224,7 @@ def extract_all(trig_path: str) -> Dict[str, Any]:
     ds = load_dataset(trig_path)
 
     # Extract original entities
-    software, version_links, software_author_links = extract_software(ds)
+    software, version_links, software_author_links, software_category_links = extract_software(ds)
     software_versions, version_link_dicts = extract_software_versions(ds)
     model_configurations, config_link_dicts = extract_model_configurations(ds)
     model_configuration_setups, setup_link_dicts = extract_model_configuration_setups(ds)
@@ -1248,6 +1267,7 @@ def extract_all(trig_path: str) -> Dict[str, Any]:
             # Original links
             'software_to_version': version_links,
             'software_to_author': software_author_links,
+            'software_to_category': software_category_links,
             'version_to_author': version_link_dicts.get('author', {}),
             'config_to_author': config_link_dicts.get('author', {}),
             'version_to_configuration': version_link_dicts.get('configuration', {}),
