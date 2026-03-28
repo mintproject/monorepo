@@ -75,8 +75,45 @@ fi
 echo "  kubectl: found ($(kubectl version --client --short 2>/dev/null | head -1))"
 
 echo "  Checking cluster connectivity..."
-run kubectl cluster-info --request-timeout=5s > /dev/null
-echo "  Cluster: reachable"
+run kubectl get namespace "${NAMESPACE}" --request-timeout=10s > /dev/null
+echo "  Cluster: reachable (namespace '${NAMESPACE}' exists)"
+
+# Step 0.5 - Check submodule changes are pushed
+step "Checking that submodule changes are pushed"
+
+UNPUSHED_SUBS=()
+for sub in model-catalog-api graphql_engine; do
+  if [[ -d "$sub" ]]; then
+    pushd "$sub" > /dev/null
+    BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown")
+    UNPUSHED=$(git log --oneline "@{upstream}..HEAD" 2>/dev/null || echo "")
+    if [[ -n "$UNPUSHED" ]]; then
+      echo "  FAIL: ${sub} has unpushed commits on '${BRANCH}':" >&2
+      echo "$UNPUSHED" | sed 's/^/    /' >&2
+      UNPUSHED_SUBS+=("$sub")
+    else
+      echo "  ${sub} (${BRANCH}): all commits pushed"
+    fi
+    popd > /dev/null
+  fi
+done
+
+if [[ ${#UNPUSHED_SUBS[@]} -gt 0 ]]; then
+  echo ""
+  read -rp "  Push unpushed changes now? [y/N] " answer
+  if [[ "$answer" =~ ^[Yy]$ ]]; then
+    for sub in "${UNPUSHED_SUBS[@]}"; do
+      echo "  Pushing ${sub}..."
+      pushd "$sub" > /dev/null
+      run git push
+      popd > /dev/null
+    done
+    echo "  All submodules pushed."
+  else
+    echo "ERROR: Aborting — push changes first, then re-run." >&2
+    exit 1
+  fi
+fi
 
 # Step 1 - Rollout restarts
 if [[ "$SKIP_RESTART" == false ]]; then
