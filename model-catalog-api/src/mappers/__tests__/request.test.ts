@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { toHasuraInput, camelToSnake } from '../request.js';
+import { toHasuraInput, camelToSnake, buildJunctionInserts } from '../request.js';
 import { getResourceConfig } from '../resource-registry.js';
 
 // ============================================================================
@@ -198,5 +198,127 @@ describe('default type assignment via resourceConfig.typeUri', () => {
       input['type'] = config.typeUri;
     }
     expect(input['type']).toBe('https://w3id.org/okn/o/sdm#Model');
+  });
+});
+
+// ============================================================================
+// buildJunctionInserts
+// ============================================================================
+
+describe('buildJunctionInserts', () => {
+  const modelsConfig = getResourceConfig('models')!;
+  const svConfig = getResourceConfig('softwareversions')!;
+  const causalConfig = getResourceConfig('causaldiagrams')!;
+
+  it('Test 1: produces correct nested insert structure for existing category with full URI ID', () => {
+    const body = {
+      hasModelCategory: [{ id: 'https://w3id.org/okn/i/mint/Economy', label: ['Economy'] }],
+    };
+    const result = buildJunctionInserts(body, modelsConfig);
+    expect(result).toHaveProperty('categories');
+    const categories = result['categories'] as Record<string, unknown>;
+    expect(categories).toHaveProperty('data');
+    expect(categories).toHaveProperty('on_conflict');
+    const onConflict = categories['on_conflict'] as Record<string, unknown>;
+    expect(onConflict['constraint']).toBe('modelcatalog_software_category_pkey');
+    expect(onConflict['update_columns']).toEqual([]);
+    const data = categories['data'] as Record<string, unknown>[];
+    expect(data).toHaveLength(1);
+    const junctionRow = data[0] as Record<string, unknown>;
+    expect(junctionRow).toHaveProperty('category');
+    const category = junctionRow['category'] as Record<string, unknown>;
+    expect(category).toHaveProperty('data');
+    expect(category).toHaveProperty('on_conflict');
+    const targetData = category['data'] as Record<string, unknown>;
+    expect(targetData['id']).toBe('https://w3id.org/okn/i/mint/Economy');
+    const targetConflict = category['on_conflict'] as Record<string, unknown>;
+    expect(targetConflict['constraint']).toBe('modelcatalog_model_category_pkey');
+    expect(targetConflict['update_columns']).toEqual([]);
+  });
+
+  it('Test 2: generates UUID-based ID with https prefix when no ID provided', () => {
+    const body = {
+      hasModelCategory: [{ label: ['New Category'] }],
+    };
+    const result = buildJunctionInserts(body, modelsConfig);
+    const data = (result['categories'] as Record<string, unknown>)['data'] as Record<string, unknown>[];
+    const junctionRow = data[0] as Record<string, unknown>;
+    const category = junctionRow['category'] as Record<string, unknown>;
+    const targetData = category['data'] as Record<string, unknown>;
+    expect(targetData['id']).toMatch(/^https:\/\/w3id\.org\/okn\/i\/mint\/[0-9a-f-]{36}$/);
+  });
+
+  it('Test 3: normalizes array-of-strings to array-of-objects', () => {
+    const body = {
+      hasModelCategory: ['https://w3id.org/okn/i/mint/Economy'],
+    };
+    const result = buildJunctionInserts(body, modelsConfig);
+    const data = (result['categories'] as Record<string, unknown>)['data'] as Record<string, unknown>[];
+    expect(data).toHaveLength(1);
+    const junctionRow = data[0] as Record<string, unknown>;
+    const category = junctionRow['category'] as Record<string, unknown>;
+    const targetData = category['data'] as Record<string, unknown>;
+    expect(targetData['id']).toBe('https://w3id.org/okn/i/mint/Economy');
+  });
+
+  it('Test 4: prepends idPrefix to short IDs (no https prefix)', () => {
+    const body = {
+      hasModelCategory: ['some-uuid'],
+    };
+    const result = buildJunctionInserts(body, modelsConfig);
+    const data = (result['categories'] as Record<string, unknown>)['data'] as Record<string, unknown>[];
+    const junctionRow = data[0] as Record<string, unknown>;
+    const category = junctionRow['category'] as Record<string, unknown>;
+    const targetData = category['data'] as Record<string, unknown>;
+    expect(targetData['id']).toBe('https://w3id.org/okn/i/mint/some-uuid');
+  });
+
+  it('Test 5: returns empty object when no junction fields are present in body', () => {
+    const body = { label: ['Test Model'] };
+    const result = buildJunctionInserts(body, modelsConfig);
+    expect(result).toEqual({});
+  });
+
+  it('Test 6: skips relationships without junctionRelName (causaldiagrams hasPart)', () => {
+    const body = {
+      hasPart: [{ id: 'https://w3id.org/okn/i/mint/some-var' }],
+    };
+    const result = buildJunctionInserts(body, causalConfig);
+    // hasPart has no junctionRelName, so it should be skipped
+    expect(result).not.toHaveProperty('diagram_parts');
+    expect(result).toEqual({});
+  });
+
+  it('Test 7: handles multiple items in array producing multiple junction row entries', () => {
+    const body = {
+      hasModelCategory: [
+        { id: 'https://w3id.org/okn/i/mint/Economy' },
+        { id: 'https://w3id.org/okn/i/mint/Agriculture' },
+      ],
+    };
+    const result = buildJunctionInserts(body, modelsConfig);
+    const data = (result['categories'] as Record<string, unknown>)['data'] as Record<string, unknown>[];
+    expect(data).toHaveLength(2);
+    const firstTarget = (data[0]['category'] as Record<string, unknown>)['data'] as Record<string, unknown>;
+    const secondTarget = (data[1]['category'] as Record<string, unknown>)['data'] as Record<string, unknown>;
+    expect(firstTarget['id']).toBe('https://w3id.org/okn/i/mint/Economy');
+    expect(secondTarget['id']).toBe('https://w3id.org/okn/i/mint/Agriculture');
+  });
+
+  it('Test 8: existing toHasuraInput tests still pass (regression - scalar output unchanged)', () => {
+    const result = toHasuraInput({ label: ['Test'], description: ['Desc'] }, modelsConfig);
+    expect(result).toEqual({ label: 'Test', description: 'Desc' });
+  });
+
+  it('Test 9: maps camelCase scalar fields on nested objects to snake_case', () => {
+    const body = {
+      authors: [{ id: 'https://w3id.org/okn/i/mint/Person1', firstName: 'John', lastName: 'Doe' }],
+    };
+    const result = buildJunctionInserts(body, modelsConfig);
+    const data = (result['authors'] as Record<string, unknown>)['data'] as Record<string, unknown>[];
+    const personData = (data[0]['person'] as Record<string, unknown>)['data'] as Record<string, unknown>;
+    expect(personData['id']).toBe('https://w3id.org/okn/i/mint/Person1');
+    expect(personData).toHaveProperty('first_name', 'John');
+    expect(personData).toHaveProperty('last_name', 'Doe');
   });
 });
