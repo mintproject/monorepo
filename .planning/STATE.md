@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: milestone
-status: completed
-stopped_at: Phase 3 context gathered
-last_updated: "2026-03-28T19:15:04.439Z"
-last_activity: 2026-03-28 - Added hasModelCategory junction tables for modelconfiguration and modelconfigurationsetup
+status: executing
+stopped_at: Completed 03-01-PLAN.md (Junction Registry Extension and buildJunctionInserts)
+last_updated: "2026-03-28T19:38:28.032Z"
+last_activity: 2026-03-28
 progress:
   total_phases: 4
   completed_phases: 3
-  total_plans: 24
-  completed_plans: 24
+  total_plans: 26
+  completed_plans: 25
   percent: 100
 ---
 
@@ -21,13 +21,15 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-15)
 
 **Core value:** All model catalog data accessible through a single GraphQL endpoint, eliminating the Fuseki dependency while maintaining REST API compatibility.
-**Current focus:** Post-v2.0 quick fixes and enhancements
+**Current focus:** Phase 03 — fix-nested-resource-creation-link-or-create-associated-resources-when-creating-parent-resource
 
 ## Current Position
 
+Phase: 03 (fix-nested-resource-creation-link-or-create-associated-resources-when-creating-parent-resource) — EXECUTING
+Plan: 2 of 2
 Milestone v2.0: COMPLETE (shipped 2026-03-15)
-Status: All 4 phases, 25 plans complete
-Last activity: 2026-03-28 - Added hasModelCategory junction tables for modelconfiguration and modelconfigurationsetup
+Status: Ready to execute
+Last activity: 2026-03-28
 
 Progress: [████████████] 100% — v2.0 shipped
 
@@ -54,6 +56,7 @@ Progress: [████████████] 100% — v2.0 shipped
 - Trend: Stable
 
 *Updated after each plan completion*
+| Phase 03-fix-nested-resource-creation-link-or-create-associated-resources-when-creating-parent-resource P01 | 4 | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -105,6 +108,8 @@ Recent decisions affecting current work:
 - [quick-260328-hu8]: deploy-hasura.sh script automates migration apply + metadata apply inside pod
 - [quick-260328-igb]: intervalUnit extracted as string (URI last segment) not object in ETL transform
 - [quick-today]: modelcatalog_modelconfiguration_category (&id041) and modelcatalog_modelconfigurationsetup_category (&id042) junction tables; TEXT FKs for configuration category junctions
+- [Phase 03-01]: parentFkColumn added as explicit field on RelationshipConfig (not runtime map) for self-documenting junction FK resolution
+- [Phase 03-01]: buildJunctionInserts is a separate export alongside toHasuraInput, wired into service layer by Plan 02
 
 ### Roadmap Evolution
 
@@ -136,6 +141,6 @@ None — v2.0 milestone complete.
 
 ## Session Continuity
 
-Last session: 2026-03-28T19:15:04.429Z
-Stopped at: Phase 3 context gathered
-Resume file: .planning/phases/03-fix-nested-resource-creation-link-or-create-associated-resources-when-creating-parent-resource/03-CONTEXT.md
+Last session: 2026-03-28T19:38:28.029Z
+Stopped at: Completed 03-01-PLAN.md (Junction Registry Extension and buildJunctionInserts)
+Resume file: None
