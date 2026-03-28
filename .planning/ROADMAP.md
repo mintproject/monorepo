@@ -46,3 +46,14 @@ Plans:
 
 Plans:
 - [ ] TBD (run /gsd:plan-phase 2 to break down)
+
+### Phase 3: Fix nested resource creation - link or create associated resources when creating parent resource
+
+**Goal:** Make POST and PUT operations handle junction-based relationships atomically, using Hasura nested inserts for create and delete-then-insert for update, across all 25 junction tables.
+**Requirements**: D-01 through D-07 (from CONTEXT.md)
+**Depends on:** Phase 2
+**Plans:** 2 plans
+
+Plans:
+- [ ] 03-01-PLAN.md — Extend resource registry with parentFkColumn + create buildJunctionInserts helper
+- [ ] 03-02-PLAN.md — Wire junction handling into service.ts create() and update() methods
