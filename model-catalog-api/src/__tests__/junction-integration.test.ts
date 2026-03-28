@@ -469,8 +469,8 @@ junctionCrudSuite({
   testIdSuffix: 'param',
   typeArray: ['Parameter'],
   junctionField: 'hasIntervention',
-  initialJunction: { id: interventionId1 },
-  replacedJunction: { id: interventionId2 },
+  initialJunction: { id: interventionId1, label: ['Test Intervention 1'] },
+  replacedJunction: { id: interventionId2, label: ['Test Intervention 2'] },
   initialJunctionId: interventionId1,
   replacedJunctionId: interventionId2,
   setup: async () => {
