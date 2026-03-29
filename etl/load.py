@@ -190,6 +190,8 @@ def load_all(transformed_data: Dict[str, List[Dict[str, Any]]], conn):
         'modelcatalog_time_interval',
         'modelcatalog_causal_diagram',
         'modelcatalog_image',
+        'modelcatalog_standard_variable',
+        'modelcatalog_unit',
         'modelcatalog_variable_presentation',
         'modelcatalog_intervention',
         'modelcatalog_grid',
@@ -200,8 +202,6 @@ def load_all(transformed_data: Dict[str, List[Dict[str, Any]]], conn):
         'modelcatalog_software',
         'modelcatalog_dataset_specification',
         'modelcatalog_parameter',
-        'modelcatalog_standard_variable',
-        'modelcatalog_unit',
         # Original hierarchy tables
         'modelcatalog_software_version',
         'modelcatalog_model_configuration',
