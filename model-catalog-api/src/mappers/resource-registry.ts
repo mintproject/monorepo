@@ -536,7 +536,18 @@ export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
     typeName: 'VariablePresentation',
     typeArray: ['VariablePresentation'],
     idPrefix: ID_PREFIX,
-    relationships: {},
+    relationships: {
+      hasStandardVariable: {
+        hasuraRelName: 'standard_variable',
+        type: 'object',
+        targetResource: 'standardvariables',
+      },
+      usesUnit: {
+        hasuraRelName: 'unit',
+        type: 'object',
+        targetResource: 'units',
+      },
+    },
   },
 
   interventions: {
@@ -945,21 +956,33 @@ export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
   },
 
   standardvariables: {
-    hasuraTable: null,
+    hasuraTable: 'modelcatalog_standard_variable',
     typeUri: 'https://w3id.org/okn/o/sd#StandardVariable',
     typeName: 'StandardVariable',
     typeArray: ['StandardVariable'],
     idPrefix: ID_PREFIX,
-    relationships: {},
+    relationships: {
+      variablePresentations: {
+        hasuraRelName: 'variable_presentations',
+        type: 'array',
+        targetResource: 'variablepresentations',
+      },
+    },
   },
 
   units: {
-    hasuraTable: null,
+    hasuraTable: 'modelcatalog_unit',
     typeUri: 'https://w3id.org/okn/o/sd#Unit',
     typeName: 'Unit',
     typeArray: ['Unit'],
     idPrefix: ID_PREFIX,
-    relationships: {},
+    relationships: {
+      variablePresentations: {
+        hasuraRelName: 'variable_presentations',
+        type: 'array',
+        targetResource: 'variablepresentations',
+      },
+    },
   },
 
   variables: {
