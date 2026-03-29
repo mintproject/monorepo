@@ -4074,6 +4074,86 @@
     permission:
       filter: {}
 - table:
+    name: modelcatalog_standard_variable
+    schema: public
+  array_relationships:
+  - name: variable_presentations
+    using:
+      foreign_key_constraint_on:
+        column: has_standard_variable
+        table:
+          name: modelcatalog_variable_presentation
+          schema: public
+  insert_permissions:
+  - role: user
+    permission:
+      check: {}
+      columns: &id043
+      - id
+      - label
+      - description
+  select_permissions:
+  - role: anonymous
+    permission:
+      columns:
+      - id
+      - label
+      - description
+      filter: {}
+  - role: user
+    permission:
+      columns: *id043
+      filter: {}
+  update_permissions:
+  - role: user
+    permission:
+      columns: *id043
+      filter: {}
+      check: null
+  delete_permissions:
+  - role: user
+    permission:
+      filter: {}
+- table:
+    name: modelcatalog_unit
+    schema: public
+  array_relationships:
+  - name: variable_presentations
+    using:
+      foreign_key_constraint_on:
+        column: uses_unit
+        table:
+          name: modelcatalog_variable_presentation
+          schema: public
+  insert_permissions:
+  - role: user
+    permission:
+      check: {}
+      columns: &id044
+      - id
+      - label
+  select_permissions:
+  - role: anonymous
+    permission:
+      columns:
+      - id
+      - label
+      filter: {}
+  - role: user
+    permission:
+      columns: *id044
+      filter: {}
+  update_permissions:
+  - role: user
+    permission:
+      columns: *id044
+      filter: {}
+      check: null
+  delete_permissions:
+  - role: user
+    permission:
+      filter: {}
+- table:
     name: modelcatalog_variable_presentation
     schema: public
   array_relationships:
@@ -4105,6 +4185,13 @@
         table:
           name: modelcatalog_setup_calibration_target
           schema: public
+  object_relationships:
+  - name: standard_variable
+    using:
+      foreign_key_constraint_on: has_standard_variable
+  - name: unit
+    using:
+      foreign_key_constraint_on: uses_unit
   insert_permissions:
   - role: user
     permission:
