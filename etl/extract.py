@@ -827,8 +827,8 @@ def extract_model_configuration_setups(ds: Graph) -> List[Dict[str, Any]]:
     }
 
 
-def extract_dataset_specifications(ds: Graph) -> List[Dict[str, Any]]:
-    """Extract DatasetSpecification entities."""
+def extract_dataset_specifications(ds: Graph) -> tuple:
+    """Extract DatasetSpecification entities and hasPresentation links."""
     query = f"""
     PREFIX sd: <{config.SD}>
     PREFIX rdfs: <{config.RDFS}>
@@ -857,7 +857,27 @@ def extract_dataset_specifications(ds: Graph) -> List[Dict[str, Any]]:
         results.append(entity)
 
     print(f"Extracted {len(results)} DatasetSpecification entities")
-    return results
+
+    # Extract hasPresentation links
+    presentation_links = {}
+    pres_query = f"""
+    PREFIX sd: <{config.SD}>
+
+    SELECT DISTINCT ?dsi ?presentation
+    WHERE {{
+        ?dsi a <{config.TYPE_DATASET_SPECIFICATION}> .
+        ?dsi sd:hasPresentation ?presentation .
+    }}
+    """
+
+    for row in ds.query(pres_query):
+        dsi_id = str(row.dsi)
+        pres_id = str(row.presentation)
+        if dsi_id not in presentation_links:
+            presentation_links[dsi_id] = []
+        presentation_links[dsi_id].append(pres_id)
+
+    return results, presentation_links
 
 
 def extract_parameters(ds: Graph) -> List[Dict[str, Any]]:
@@ -1351,7 +1371,7 @@ def extract_all(trig_path: str) -> Dict[str, Any]:
     software_versions, version_link_dicts = extract_software_versions(ds)
     model_configurations, config_link_dicts = extract_model_configurations(ds)
     model_configuration_setups, setup_link_dicts = extract_model_configuration_setups(ds)
-    dataset_specifications = extract_dataset_specifications(ds)
+    dataset_specifications, dsi_presentation_links = extract_dataset_specifications(ds)
     parameters, param_intervention_links = extract_parameters(ds)
 
     # Extract new entities
@@ -1422,6 +1442,8 @@ def extract_all(trig_path: str) -> Dict[str, Any]:
             'mcs_to_category': setup_link_dicts.get('category', {}),
             # Parameter links
             'param_to_intervention': param_intervention_links,
+            # DatasetSpecification links
+            'dsi_to_presentation': dsi_presentation_links,
             # Self-referential links
             'category_parent': category_parent_links,
             'region_part_of': region_part_of_links,
