@@ -30,3 +30,5 @@ TYPE_MODEL_CONFIGURATION_SETUP = f"{SDM}ModelConfigurationSetup"
 TYPE_DATASET_SPECIFICATION = f"{SD}DatasetSpecification"
 TYPE_PARAMETER = f"{SD}Parameter"
 TYPE_ADJUSTMENT = "https://w3id.org/wings/export/MINT#Adjustment"
+TYPE_STANDARD_VARIABLE = f"{SD}StandardVariable"
+TYPE_UNIT = "http://qudt.org/1.1/schema/qudt#Unit"  # QUDT ontology, NOT sd:Unit

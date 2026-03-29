@@ -473,6 +473,75 @@ def extract_parameters(ds: Graph) -> List[Dict[str, Any]]:
     return results
 
 
+def extract_standard_variables(ds: Graph) -> List[Dict[str, Any]]:
+    """Extract StandardVariable entities (D-01, D-09)."""
+    query = f"""
+    PREFIX sd: <{config.SD}>
+    PREFIX rdfs: <{config.RDFS}>
+
+    SELECT DISTINCT ?id ?label ?description
+    WHERE {{
+        ?id a <{config.TYPE_STANDARD_VARIABLE}> .
+        OPTIONAL {{ ?id rdfs:label ?label }}
+        OPTIONAL {{ ?id sd:description ?description }}
+    }}
+    """
+    results = []
+    for row in ds.query(query):
+        results.append({
+            'id': str(row.id),
+            'label': str(row.label) if row.label else None,
+            'description': str(row.description) if row.description else None,
+        })
+    print(f"Extracted {len(results)} StandardVariable entities")
+    return results
+
+
+def extract_units(ds: Graph) -> List[Dict[str, Any]]:
+    """Extract Unit entities typed as qudt:Unit (D-02, D-09)."""
+    query = f"""
+    PREFIX rdfs: <{config.RDFS}>
+
+    SELECT DISTINCT ?id ?label
+    WHERE {{
+        ?id a <{config.TYPE_UNIT}> .
+        OPTIONAL {{ ?id rdfs:label ?label }}
+    }}
+    """
+    results = []
+    for row in ds.query(query):
+        results.append({
+            'id': str(row.id),
+            'label': str(row.label) if row.label else None,
+        })
+    print(f"Extracted {len(results)} Unit entities")
+    return results
+
+
+def diagnose_junction_sparsity(ds: Graph):
+    """Diagnose variable junction table sparsity (D-04).
+    Counts actual relationship triples in TriG to determine if sparsity
+    is a data issue or ETL bug."""
+    predicates = {
+        'hasInputVariable': f"{config.SDM}hasInputVariable",
+        'hasOutputVariable': f"{config.SDM}hasOutputVariable",
+        'calibratedVariable': f"{config.SDM}calibratedVariable",
+        'calibrationTargetVariable': f"{config.SDM}calibrationTargetVariable",
+    }
+    print("\n=== Junction Sparsity Diagnostic (D-04) ===")
+    for name, uri in predicates.items():
+        query = f"""
+        SELECT (COUNT(*) AS ?count)
+        WHERE {{
+            ?subject <{uri}> ?object .
+        }}
+        """
+        result = list(ds.query(query))
+        count = int(result[0][0])
+        print(f"  {name}: {count} triples in TriG")
+    print("=== End Diagnostic ===\n")
+
+
 def extract_all(trig_path: str) -> Dict[str, Any]:
     """Extract all entities from the TriG file."""
     ds = load_dataset(trig_path)
@@ -483,6 +552,11 @@ def extract_all(trig_path: str) -> Dict[str, Any]:
     model_configuration_setups, setup_links = extract_model_configuration_setups(ds)
     dataset_specifications = extract_dataset_specifications(ds)
     parameters = extract_parameters(ds)
+    standard_variables = extract_standard_variables(ds)
+    units = extract_units(ds)
+
+    # Run junction sparsity diagnostic (D-04)
+    diagnose_junction_sparsity(ds)
 
     return {
         'software': software,
@@ -491,6 +565,8 @@ def extract_all(trig_path: str) -> Dict[str, Any]:
         'model_configuration_setups': model_configuration_setups,
         'dataset_specifications': dataset_specifications,
         'parameters': parameters,
+        'standard_variables': standard_variables,
+        'units': units,
         'links': {
             'software_to_version': version_links,
             'version_to_configuration': configuration_links,
