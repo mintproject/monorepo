@@ -4,7 +4,7 @@ milestone: v2.0
 milestone_name: milestone
 status: executing
 stopped_at: Completed 05-03-PLAN.md (FK constraints from variable_presentation to standard_variable and unit)
-last_updated: "2026-03-29T12:54:10.983Z"
+last_updated: "2026-03-29T13:02:16.177Z"
 last_activity: 2026-03-29
 progress:
   total_phases: 5
@@ -25,8 +25,8 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 
 ## Current Position
 
-Phase: 05 (variable-migration-analysis-trig-fuseki-to-hasura) — EXECUTING
-Plan: 3 of 3
+Phase: 05
+Plan: Not started
 Milestone v2.0: COMPLETE (shipped 2026-03-15)
 Status: Ready to execute
 Last activity: 2026-03-29
