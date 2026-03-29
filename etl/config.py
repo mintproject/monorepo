@@ -31,6 +31,7 @@ TYPE_DATASET_SPECIFICATION = f"{SD}DatasetSpecification"
 TYPE_PARAMETER = f"{SD}Parameter"
 TYPE_ADJUSTMENT = "https://w3id.org/wings/export/MINT#Adjustment"
 
+
 # New entity types (added in extended schema)
 TYPE_PERSON = f"{SD}Person"
 TYPE_MODEL_CATEGORY = f"{SDM}ModelCategory"
@@ -42,3 +43,5 @@ TYPE_IMAGE = f"{SD}Image"
 TYPE_VARIABLE_PRESENTATION = f"{SD}VariablePresentation"
 TYPE_INTERVENTION = f"{SDM}Intervention"
 TYPE_GRID = f"{SDM}Grid"
+TYPE_STANDARD_VARIABLE = f"{SD}StandardVariable"
+TYPE_UNIT = "http://qudt.org/1.1/schema/qudt#Unit"  # QUDT ontology, NOT sd:Unit

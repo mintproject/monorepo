@@ -66,7 +66,9 @@ def clear_all(conn):
                 modelcatalog_image,
                 modelcatalog_variable_presentation,
                 modelcatalog_intervention,
-                modelcatalog_grid
+                modelcatalog_grid,
+                modelcatalog_standard_variable,
+                modelcatalog_unit
             CASCADE
         """)
     conn.commit()
@@ -198,6 +200,8 @@ def load_all(transformed_data: Dict[str, List[Dict[str, Any]]], conn):
         'modelcatalog_software',
         'modelcatalog_dataset_specification',
         'modelcatalog_parameter',
+        'modelcatalog_standard_variable',
+        'modelcatalog_unit',
         # Original hierarchy tables
         'modelcatalog_software_version',
         'modelcatalog_model_configuration',
