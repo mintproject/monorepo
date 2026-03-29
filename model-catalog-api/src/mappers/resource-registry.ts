@@ -974,7 +974,7 @@ export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
     hasuraTable: 'modelcatalog_unit',
     typeUri: 'https://w3id.org/okn/o/sd#Unit',
     typeName: 'Unit',
-    typeArray: ['Unit'],
+    typeArray: ['Unit', 'http://qudt.org/1.1/schema/qudt#Unit'],
     idPrefix: ID_PREFIX,
     relationships: {
       variablePresentations: {
