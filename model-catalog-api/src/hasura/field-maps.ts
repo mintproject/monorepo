@@ -370,7 +370,8 @@ categories {
   // =========================================================================
   // modelcatalog_dataset_specification
   // Columns: id, label, description, has_format, has_dimensionality, position
-  // No relationships used standalone (accessed via junction traversal)
+  // Array relationships (junction):
+  //   presentations -> modelcatalog_dataset_specification_presentation
   // =========================================================================
   modelcatalog_dataset_specification: `
 id
@@ -379,6 +380,25 @@ description
 has_format
 has_dimensionality
 position
+presentations {
+  presentation {
+    id
+    label
+    description
+    has_long_name
+    has_short_name
+    standard_variable {
+      id
+      label
+      description
+      same_as
+    }
+    unit {
+      id
+      label
+    }
+  }
+}
 `.trim(),
 
   // =========================================================================

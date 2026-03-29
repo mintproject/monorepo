@@ -413,7 +413,16 @@ export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
     typeName: 'DatasetSpecification',
     typeArray: ['DatasetSpecification'],
     idPrefix: ID_PREFIX,
-    relationships: {},
+    relationships: {
+      hasPresentation: {
+        hasuraRelName: 'presentations',
+        type: 'array',
+        junctionTable: 'modelcatalog_dataset_specification_presentation',
+        junctionRelName: 'presentation',
+        parentFkColumn: 'dataset_specification_id',
+        targetResource: 'variablepresentations',
+      },
+    },
   },
 
   parameters: {
