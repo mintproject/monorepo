@@ -35,7 +35,9 @@ def clear_all(conn):
                 modelcatalog_software_version,
                 modelcatalog_software,
                 modelcatalog_dataset_specification,
-                modelcatalog_parameter
+                modelcatalog_parameter,
+                modelcatalog_standard_variable,
+                modelcatalog_unit
             CASCADE
         """)
     conn.commit()
@@ -93,6 +95,8 @@ def load_all(transformed_data: Dict[str, List[Dict[str, Any]]], conn):
         'modelcatalog_software',
         'modelcatalog_dataset_specification',
         'modelcatalog_parameter',
+        'modelcatalog_standard_variable',
+        'modelcatalog_unit',
         # Then tables with FK dependencies in hierarchical order
         'modelcatalog_software_version',
         'modelcatalog_model_configuration',

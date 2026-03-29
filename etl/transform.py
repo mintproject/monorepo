@@ -253,6 +253,14 @@ def transform_all(extracted_data: Dict[str, Any]) -> Dict[str, List[Dict[str, An
     extracted_data['dataset_specifications'] = deduplicate_by_id(extracted_data['dataset_specifications'])
     extracted_data['parameters'] = deduplicate_by_id(extracted_data['parameters'])
 
+    # StandardVariable entities (D-01)
+    standard_variables = deduplicate_by_id(extracted_data['standard_variables'])
+    standard_variables = ensure_labels(standard_variables)
+
+    # Unit entities (D-02)
+    units = deduplicate_by_id(extracted_data['units'])
+    units = ensure_labels(units)
+
     # Ensure all entities have labels (required by schema NOT NULL constraint)
     extracted_data['software'] = ensure_labels(extracted_data['software'])
     extracted_data['software_versions'] = ensure_labels(extracted_data['software_versions'])
@@ -260,6 +268,10 @@ def transform_all(extracted_data: Dict[str, Any]) -> Dict[str, List[Dict[str, An
     extracted_data['model_configuration_setups'] = ensure_labels(extracted_data['model_configuration_setups'])
     extracted_data['dataset_specifications'] = ensure_labels(extracted_data['dataset_specifications'])
     extracted_data['parameters'] = ensure_labels(extracted_data['parameters'])
+
+    # Build valid ID sets for FK validation
+    valid_standard_variable_ids = {e['id'] for e in standard_variables}
+    valid_unit_ids = {e['id'] for e in units}
 
     # Invert FK relationships
     transformed = invert_fk_relationships(extracted_data)
@@ -275,6 +287,8 @@ def transform_all(extracted_data: Dict[str, Any]) -> Dict[str, List[Dict[str, An
         'modelcatalog_model_configuration_setup': transformed['model_configuration_setups'],
         'modelcatalog_dataset_specification': transformed['dataset_specifications'],
         'modelcatalog_parameter': transformed['parameters'],
+        'modelcatalog_standard_variable': standard_variables,
+        'modelcatalog_unit': units,
     }
 
     result.update(junction_tables)
