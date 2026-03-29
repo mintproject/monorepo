@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: milestone
-status: verifying
-stopped_at: Phase 5 context gathered
-last_updated: "2026-03-29T01:00:58.079Z"
-last_activity: "2026-03-28 - Completed quick task 260328-r01: Variable migration analysis from TriG/Fuseki to Hasura"
+status: executing
+stopped_at: Completed 05-01-PLAN.md (StandardVariable and Unit Schema)
+last_updated: "2026-03-29T12:41:45.657Z"
+last_activity: 2026-03-29
 progress:
   total_phases: 5
   completed_phases: 4
-  total_plans: 26
-  completed_plans: 26
+  total_plans: 29
+  completed_plans: 27
   percent: 100
 ---
 
@@ -21,15 +21,15 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-15)
 
 **Core value:** All model catalog data accessible through a single GraphQL endpoint, eliminating the Fuseki dependency while maintaining REST API compatibility.
-**Current focus:** Phase 03 — fix-nested-resource-creation-link-or-create-associated-resources-when-creating-parent-resource
+**Current focus:** Phase 05 — variable-migration-analysis-trig-fuseki-to-hasura
 
 ## Current Position
 
-Phase: 03 (fix-nested-resource-creation-link-or-create-associated-resources-when-creating-parent-resource) — EXECUTING
-Plan: 2 of 2
+Phase: 05 (variable-migration-analysis-trig-fuseki-to-hasura) — EXECUTING
+Plan: 2 of 3
 Milestone v2.0: COMPLETE (shipped 2026-03-15)
-Status: Phase complete — ready for verification
-Last activity: 2026-03-28 - Completed quick task 260328-r01: Variable migration analysis from TriG/Fuseki to Hasura
+Status: Ready to execute
+Last activity: 2026-03-29
 
 Progress: [████████████] 100% — v2.0 shipped
 
@@ -58,6 +58,7 @@ Progress: [████████████] 100% — v2.0 shipped
 *Updated after each plan completion*
 | Phase 03-fix-nested-resource-creation-link-or-create-associated-resources-when-creating-parent-resource P01 | 4 | 2 tasks | 3 files |
 | Phase 03-fix-nested-resource-creation-link-or-create-associated-resources-when-creating-parent-resource P02 | 1 | 2 tasks | 1 files |
+| Phase 05-variable-migration-analysis-trig-fuseki-to-hasura P01 | 2 | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -113,6 +114,8 @@ Recent decisions affecting current work:
 - [Phase 03-01]: buildJunctionInserts is a separate export alongside toHasuraInput, wired into service layer by Plan 02
 - [Phase 03-fix-nested-resource-creation-link-or-create-associated-resources-when-creating-parent-resource]: Used multi-root Hasura mutation for update path: delete junctions + update scalars + insert junctions in one transaction
 - [Phase 03-fix-nested-resource-creation-link-or-create-associated-resources-when-creating-parent-resource]: Used flat FK columns for update-path junction inserts; nested insert syntax only for create() path
+- [Phase 05-variable-migration-analysis-trig-fuseki-to-hasura]: Added VP FK column indexes in migration for has_standard_variable and uses_unit query performance
+- [Phase 05-variable-migration-analysis-trig-fuseki-to-hasura]: VP object_relationships declared without FK constraints - will activate after Plan 03 adds FK constraints
 
 ### Roadmap Evolution
 
@@ -150,6 +153,6 @@ None — v2.0 milestone complete.
 
 ## Session Continuity
 
-Last session: 2026-03-29T01:00:58.071Z
-Stopped at: Phase 5 context gathered
-Resume file: .planning/phases/05-variable-migration-analysis-trig-fuseki-to-hasura/05-CONTEXT.md
+Last session: 2026-03-29T12:41:45.654Z
+Stopped at: Completed 05-01-PLAN.md (StandardVariable and Unit Schema)
+Resume file: None
