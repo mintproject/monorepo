@@ -1,0 +1,1 @@
+DROP TABLE IF EXISTS modelcatalog_dataset_specification_presentation;
