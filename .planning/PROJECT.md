@@ -31,7 +31,7 @@ All model catalog data accessible through a single GraphQL endpoint, eliminating
 
 ### Active
 
-(No active requirements — v2.0 milestone complete. Define next milestone requirements with `/gsd:new-milestone`.)
+- ✓ Analyze TriG data for Variable entities, create StandardVariable and Unit tables, ETL pipeline, FK constraints — Validated in Phase 05: Variable Migration Analysis
 
 ### Out of Scope
 
@@ -45,7 +45,7 @@ All model catalog data accessible through a single GraphQL endpoint, eliminating
 
 ## Context
 
-**Current state (post v2.0):** Model catalog data lives in `modelcatalog_*` PostgreSQL tables (36 tables: 6 entity + junction + extended schema). New Node.js/TypeScript API (`model-catalog-api-v2`) serves /v2.0.0/ endpoints backed by Hasura. Old FastAPI (`model-catalog-fastapi`) still serves /v1.8.0/ for parallel validation. Execution and thread tables now have FK columns pointing to `modelcatalog_model_configuration` and `modelcatalog_model_configuration_setup`. Ensemble Manager uses direct GraphQL queries (no SDK).
+**Current state (post Phase 05):** Model catalog data lives in `modelcatalog_*` PostgreSQL tables (38 tables: 6 entity + junction + extended schema + StandardVariable + Unit). New Node.js/TypeScript API (`model-catalog-api-v2`) serves /v2.0.0/ endpoints backed by Hasura. Old FastAPI (`model-catalog-fastapi`) still serves /v1.8.0/ for parallel validation. Execution and thread tables now have FK columns pointing to `modelcatalog_model_configuration` and `modelcatalog_model_configuration_setup`. Ensemble Manager uses direct GraphQL queries (no SDK). StandardVariable and Unit entities are fully migrated with ETL support and FK constraints from variable_presentation.
 
 **Tech stack:** PostgreSQL + Hasura GraphQL (data layer), Node.js/TypeScript + Fastify + openapi-glue (new API), Python ETL pipeline (one-time migration), Helm chart (deployment).
 
@@ -81,4 +81,4 @@ All model catalog data accessible through a single GraphQL endpoint, eliminating
 
 ---
 
-_Last updated: 2026-03-15 after v2.0 milestone_
+_Last updated: 2026-03-29 after Phase 05 completion_
