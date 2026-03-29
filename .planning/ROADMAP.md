@@ -57,3 +57,15 @@ Plans:
 Plans:
 - [x] 03-01-PLAN.md — Extend resource registry with parentFkColumn + create buildJunctionInserts helper
 - [x] 03-02-PLAN.md — Wire junction handling into service.ts create() and update() methods
+
+### Phase 5: Variable Migration Analysis: TriG/Fuseki to Hasura
+
+**Goal:** Complete the variable ecosystem migration by creating StandardVariable and Unit entity tables, adding FK constraints from VariablePresentation, extending the ETL pipeline to extract and load these entities, and enabling full CRUD API endpoints with bidirectional relationship traversal.
+**Requirements**: D-01 through D-09 (from CONTEXT.md)
+**Depends on:** Phase 4
+**Plans:** 3 plans
+
+Plans:
+- [ ] 05-01-PLAN.md — Create StandardVariable + Unit tables, Hasura metadata, API resource registry
+- [ ] 05-02-PLAN.md — Extend ETL pipeline: extract, transform, load for new entities + junction diagnostic
+- [ ] 05-03-PLAN.md — Add FK constraints from VariablePresentation to StandardVariable and Unit
