@@ -510,8 +510,8 @@ description
 
   // =========================================================================
   // modelcatalog_variable_presentation
-  // Columns: id, label, description, has_long_name, has_short_name,
-  //          has_standard_variable, uses_unit
+  // Columns: id, label, description, has_long_name, has_short_name
+  // Object relationships: standard_variable, unit
   // =========================================================================
   modelcatalog_variable_presentation: `
 id
@@ -519,8 +519,16 @@ label
 description
 has_long_name
 has_short_name
-has_standard_variable
-uses_unit
+standard_variable {
+  id
+  label
+  description
+  same_as
+}
+unit {
+  id
+  label
+}
 `.trim(),
 
   // =========================================================================

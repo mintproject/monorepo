@@ -51,9 +51,10 @@ export function transformRow(
     Object.values(resourceConfig.relationships).map((rel) => rel.hasuraRelName),
   );
 
-  // Step 4: Process all scalar fields (skip id, and any relationship fields)
+  // Step 4: Process all scalar fields (skip id, __typename, and any relationship fields)
   for (const [key, value] of Object.entries(row)) {
     if (key === 'id') continue;
+    if (key === '__typename') continue;
     if (relationshipHasuraNames.has(key)) continue;
 
     // Skip null/undefined values entirely
