@@ -1264,21 +1264,35 @@ def extract_standard_variables(ds: Graph) -> List[Dict[str, Any]]:
     query = f"""
     PREFIX sd: <{config.SD}>
     PREFIX rdfs: <{config.RDFS}>
+    PREFIX owl: <{config.OWL}>
 
-    SELECT DISTINCT ?id ?label ?description
+    SELECT DISTINCT ?id ?label ?description ?sameAs
     WHERE {{
         ?id a <{config.TYPE_STANDARD_VARIABLE}> .
         OPTIONAL {{ ?id rdfs:label ?label }}
         OPTIONAL {{ ?id sd:description ?description }}
+        OPTIONAL {{ ?id owl:sameAs ?sameAs }}
     }}
     """
-    results = []
+    # Group by id since sameAs can be multi-valued
+    grouped = {}
     for row in ds.query(query):
-        results.append({
-            'id': str(row.id),
-            'label': str(row.label) if row.label else None,
-            'description': str(row.description) if row.description else None,
-        })
+        sv_id = str(row.id)
+        if sv_id not in grouped:
+            grouped[sv_id] = {
+                'id': sv_id,
+                'label': str(row.label) if row.label else None,
+                'description': str(row.description) if row.description else None,
+                'same_as': [],
+            }
+        if row.sameAs:
+            grouped[sv_id]['same_as'].append(str(row.sameAs))
+
+    results = list(grouped.values())
+    # Convert empty lists to None for cleaner DB storage
+    for r in results:
+        if not r['same_as']:
+            r['same_as'] = None
     print(f"Extracted {len(results)} StandardVariable entities")
     return results
 
