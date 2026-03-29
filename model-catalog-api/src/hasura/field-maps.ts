@@ -548,6 +548,26 @@ has_spatial_resolution
 has_coordinate_system
 grid_type
 `.trim(),
+
+  // =========================================================================
+  // modelcatalog_standard_variable
+  //          Columns: id, label, description, same_as
+  // =========================================================================
+  modelcatalog_standard_variable: `
+id
+label
+description
+same_as
+`.trim(),
+
+  // =========================================================================
+  // modelcatalog_unit
+  //          Columns: id, label
+  // =========================================================================
+  modelcatalog_unit: `
+id
+label
+`.trim(),
 };
 
 /**
