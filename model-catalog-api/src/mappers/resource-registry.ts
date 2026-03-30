@@ -440,6 +440,14 @@ export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
         parentFkColumn: 'parameter_id',
         targetResource: 'interventions',
       },
+      adjustsVariable: {
+        hasuraRelName: 'adjusts_variables',
+        type: 'array',
+        junctionTable: 'modelcatalog_parameter_adjusts_variable',
+        junctionRelName: 'variable',
+        parentFkColumn: 'parameter_id',
+        targetResource: 'variablepresentations',
+      },
     },
   },
 

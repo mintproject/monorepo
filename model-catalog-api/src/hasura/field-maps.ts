@@ -408,6 +408,7 @@ presentations {
   //          has_fixed_value, position, parameter_type
   // Array relationships (junction):
   //   interventions -> modelcatalog_parameter_intervention -> intervention
+  //   adjusts_variables -> modelcatalog_parameter_adjusts_variable -> variable
   // =========================================================================
   modelcatalog_parameter: `
 id
@@ -425,6 +426,25 @@ interventions {
   intervention {
     id
     label
+  }
+}
+adjusts_variables {
+  variable {
+    id
+    label
+    description
+    has_long_name
+    has_short_name
+    standard_variable {
+      id
+      label
+      description
+      same_as
+    }
+    unit {
+      id
+      label
+    }
   }
 }
 `.trim(),
