@@ -949,8 +949,27 @@ def extract_parameters(ds: Graph) -> List[Dict[str, Any]]:
             intervention_links[param_id] = []
         intervention_links[param_id].append(intervention_id)
 
+    # Extract adjustsVariable links
+    adjusts_variable_links = {}
+    adjusts_query = f"""
+    PREFIX sd: <{config.SD}>
+
+    SELECT DISTINCT ?parameter ?variable
+    WHERE {{
+        ?parameter a <{config.TYPE_PARAMETER}> .
+        ?parameter sd:adjustsVariable ?variable .
+    }}
+    """
+
+    for row in ds.query(adjusts_query):
+        param_id = str(row.parameter)
+        variable_id = str(row.variable)
+        if param_id not in adjusts_variable_links:
+            adjusts_variable_links[param_id] = []
+        adjusts_variable_links[param_id].append(variable_id)
+
     print(f"Extracted {len(results)} Parameter entities")
-    return results, intervention_links
+    return results, intervention_links, adjusts_variable_links
 
 
 def extract_persons(ds: Graph) -> List[Dict[str, Any]]:
@@ -1372,7 +1391,7 @@ def extract_all(trig_path: str) -> Dict[str, Any]:
     model_configurations, config_link_dicts = extract_model_configurations(ds)
     model_configuration_setups, setup_link_dicts = extract_model_configuration_setups(ds)
     dataset_specifications, dsi_presentation_links = extract_dataset_specifications(ds)
-    parameters, param_intervention_links = extract_parameters(ds)
+    parameters, param_intervention_links, param_adjusts_variable_links = extract_parameters(ds)
 
     # Extract new entities
     persons = extract_persons(ds)
@@ -1442,6 +1461,7 @@ def extract_all(trig_path: str) -> Dict[str, Any]:
             'mcs_to_category': setup_link_dicts.get('category', {}),
             # Parameter links
             'param_to_intervention': param_intervention_links,
+            'param_to_adjusts_variable': param_adjusts_variable_links,
             # DatasetSpecification links
             'dsi_to_presentation': dsi_presentation_links,
             # Self-referential links

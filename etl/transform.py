@@ -440,6 +440,23 @@ def build_extended_junction_tables(extracted_data: Dict[str, Any]) -> Dict[str, 
             else:
                 skipped_param_intervention += 1
 
+    # Parameter adjustsVariable junction table (1)
+    param_adjusts_variable_rows = []
+    skipped_param_adjusts = 0
+
+    # Build parameter_adjusts_variable junction
+    for param_id, variable_ids in links.get('param_to_adjusts_variable', {}).items():
+        if param_id not in valid_parameter_ids:
+            continue
+        for variable_id in variable_ids:
+            if variable_id in valid_variable_ids:
+                param_adjusts_variable_rows.append({
+                    'parameter_id': param_id,
+                    'variable_id': variable_id,
+                })
+            else:
+                skipped_param_adjusts += 1
+
     # DatasetSpecification junction table (1)
     dsi_presentation_rows = []
     skipped_dsi_presentation = 0
@@ -505,6 +522,7 @@ def build_extended_junction_tables(extracted_data: Dict[str, Any]) -> Dict[str, 
     print(f"  - setup_calibrated_variable: {len(setup_calibrated_variable_rows)} rows")
     print(f"  - setup_calibration_target: {len(setup_calibration_target_rows)} rows")
     print(f"  - parameter_intervention: {len(parameter_intervention_rows)} rows")
+    print(f"  - parameter_adjusts_variable: {len(param_adjusts_variable_rows)} rows")
     print(f"  - dataset_specification_presentation: {len(dsi_presentation_rows)} rows")
     print(f"  - diagram_part: {len(diagram_part_rows)} rows")
 
@@ -513,7 +531,8 @@ def build_extended_junction_tables(extracted_data: Dict[str, Any]) -> Dict[str, 
                      skipped_version_image + skipped_version_input_variable + skipped_version_output_variable +
                      skipped_config_causal + skipped_config_time + skipped_config_region +
                      skipped_setup_author + skipped_setup_calibrated + skipped_setup_target +
-                     skipped_param_intervention + skipped_dsi_presentation +
+                     skipped_param_intervention + skipped_param_adjusts +
+                     skipped_dsi_presentation +
                      skipped_diagram_part)
     if total_skipped > 0:
         print(f"  - Skipped {total_skipped} junction rows referencing missing entities")
@@ -538,6 +557,7 @@ def build_extended_junction_tables(extracted_data: Dict[str, Any]) -> Dict[str, 
         'modelcatalog_setup_calibrated_variable': setup_calibrated_variable_rows,
         'modelcatalog_setup_calibration_target': setup_calibration_target_rows,
         'modelcatalog_parameter_intervention': parameter_intervention_rows,
+        'modelcatalog_parameter_adjusts_variable': param_adjusts_variable_rows,
         'modelcatalog_dataset_specification_presentation': dsi_presentation_rows,
         'modelcatalog_diagram_part': diagram_part_rows,
     }

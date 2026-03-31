@@ -128,6 +128,7 @@ def validate_junction_tables(conn) -> bool:
         'modelcatalog_setup_calibration_target',
         'modelcatalog_parameter_intervention',
         'modelcatalog_dataset_specification_presentation',
+        'modelcatalog_parameter_adjusts_variable',  # adjustsVariable
         'modelcatalog_diagram_part',
     ]
 
