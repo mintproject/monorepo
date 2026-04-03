@@ -86,6 +86,10 @@ cd mint-ensemble-manager
 npm install && npm run start:watch
 ```
 
+### Kubernetes Deployment
+
+To deploy MINT on a Kubernetes cluster using Helm, see the [Helm Charts installation guide](helm-charts/README.md).
+
 ### Database Setup
 
 ```bash
