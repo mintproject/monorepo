@@ -11,31 +11,53 @@ MINT is a scientific modeling platform that enables researchers to discover, con
 
 ## Architecture
 
-The platform follows a layered architecture backed by PostgreSQL and exposed via GraphQL and REST APIs:
+### Current Architecture (v2.0)
 
-```
-                +-----------+
-                |    UI     |  (LitElement SPA)
-                +-----+-----+
-                      |
-            +---------+---------+
-            |                   |
-    +-------v-------+   +------v--------+
-    | Model Catalog |   |   Ensemble    |
-    |   REST API    |   |   Manager     |
-    |  (Fastify)    |   |  (Express)    |
-    +-------+-------+   +---------------+
-            |
-    +-------v-------+
-    | Hasura GraphQL|
-    +-------+-------+
-            |
-    +-------v-------+
-    |  PostgreSQL   |
-    +---------------+
+The platform follows a layered architecture backed by a single PostgreSQL database, exposed via GraphQL and REST APIs:
+
+```mermaid
+graph TD
+    UI["UI<br/>(LitElement SPA)"]
+    API["Model Catalog REST API<br/>(Fastify)"]
+    EM["Ensemble Manager<br/>(Express)"]
+    HASURA["Hasura GraphQL"]
+    PG[("PostgreSQL")]
+
+    UI --> API
+    UI --> EM
+    API --> HASURA
+    EM --> HASURA
+    HASURA --> PG
 ```
 
 **Data flow:** Scientific model metadata is stored in PostgreSQL, exposed through Hasura GraphQL, and served to clients via a REST API that conforms to an OpenAPI specification. The ETL pipeline handles data migration from the legacy RDF triplestore into the relational database.
+
+### Legacy Architecture (v1.x)
+
+The original architecture used an RDF triplestore (Apache Jena Fuseki) as the data backend, with a Python-based REST API that issued SPARQL queries directly. The Ensemble Manager copied model data from Fuseki into its own Hasura/PostgreSQL database for execution, creating data duplication and potential sync issues between the two stores.
+
+```mermaid
+graph TD
+    UI["UI<br/>(LitElement SPA)"]
+    API["Model Catalog REST API<br/>(FastAPI)"]
+    EM["Ensemble Manager<br/>(Express)"]
+    FUSEKI[("Apache Jena Fuseki<br/>(Triplestore)")]
+    RDF["RDF / TriG Data"]
+    OWL["OWL Ontology<br/>(model-catalog-ontology)"]
+    HASURA["Hasura GraphQL"]
+    PG[("PostgreSQL")]
+
+    UI --> API
+    UI --> EM
+    API -- "SPARQL queries" --> FUSEKI
+    EM -- "copy model data" --> FUSEKI
+    EM --> HASURA
+    HASURA --> PG
+    FUSEKI --> RDF
+    OWL -. "defines schema" .-> FUSEKI
+```
+
+**Data flow:** Model metadata was authored as RDF (TriG format), loaded into Apache Jena Fuseki, and queried via SPARQL by the FastAPI-based REST API. The OWL ontology (`model-catalog-ontology/`) defined the schema for all model catalog entities. This architecture was replaced in v2.0 by the PostgreSQL + Hasura stack via an ETL migration pipeline.
 
 ## Repository Structure
 
