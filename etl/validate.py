@@ -40,12 +40,24 @@ def validate_counts(trig_path: str, conn) -> bool:
 
     # Define entity types to validate
     entity_types = [
+        # Original 6
         ('Software', config.TYPE_SOFTWARE, 'modelcatalog_software'),
         ('SoftwareVersion', config.TYPE_SOFTWARE_VERSION, 'modelcatalog_software_version'),
         ('ModelConfiguration', config.TYPE_MODEL_CONFIGURATION, 'modelcatalog_model_configuration'),
         ('ModelConfigurationSetup', config.TYPE_MODEL_CONFIGURATION_SETUP, 'modelcatalog_model_configuration_setup'),
         ('DatasetSpecification', config.TYPE_DATASET_SPECIFICATION, 'modelcatalog_dataset_specification'),
         ('Parameter', config.TYPE_PARAMETER, 'modelcatalog_parameter'),
+        # New 10
+        ('Person', config.TYPE_PERSON, 'modelcatalog_person'),
+        ('ModelCategory', config.TYPE_MODEL_CATEGORY, 'modelcatalog_model_category'),
+        ('Region', config.TYPE_REGION, 'modelcatalog_region'),
+        ('Process', config.TYPE_PROCESS, 'modelcatalog_process'),
+        ('TimeInterval', config.TYPE_TIME_INTERVAL, 'modelcatalog_time_interval'),
+        ('CausalDiagram', config.TYPE_CAUSAL_DIAGRAM, 'modelcatalog_causal_diagram'),
+        ('Image', config.TYPE_IMAGE, 'modelcatalog_image'),
+        ('VariablePresentation', config.TYPE_VARIABLE_PRESENTATION, 'modelcatalog_variable_presentation'),
+        ('Intervention', config.TYPE_INTERVENTION, 'modelcatalog_intervention'),
+        ('Grid', config.TYPE_GRID, 'modelcatalog_grid'),
     ]
 
     all_passed = True
@@ -90,7 +102,8 @@ def validate_junction_tables(conn) -> bool:
     """
     print("\n=== Junction Table Validation ===\n")
 
-    junction_tables = [
+    # Original junction tables - known to have data (FAIL on 0)
+    original_junction_tables = [
         'modelcatalog_configuration_input',
         'modelcatalog_configuration_output',
         'modelcatalog_configuration_parameter',
@@ -99,13 +112,34 @@ def validate_junction_tables(conn) -> bool:
         'modelcatalog_setup_parameter',
     ]
 
+    # New junction tables - may have 0 rows (WARN on 0)
+    new_junction_tables = [
+        'modelcatalog_software_version_category',
+        'modelcatalog_software_version_process',
+        'modelcatalog_software_version_grid',
+        'modelcatalog_software_version_image',
+        'modelcatalog_software_version_input_variable',
+        'modelcatalog_software_version_output_variable',
+        'modelcatalog_configuration_causal_diagram',
+        'modelcatalog_configuration_time_interval',
+        'modelcatalog_configuration_region',
+        'modelcatalog_setup_author',
+        'modelcatalog_setup_calibrated_variable',
+        'modelcatalog_setup_calibration_target',
+        'modelcatalog_parameter_intervention',
+        'modelcatalog_dataset_specification_presentation',
+        'modelcatalog_parameter_adjusts_variable',  # adjustsVariable
+        'modelcatalog_diagram_part',
+    ]
+
     all_passed = True
 
     with conn.cursor() as cur:
-        print(f"{'Table Name':<40} {'Row Count':<15} {'Status':<10}")
-        print("-" * 70)
+        print(f"{'Table Name':<50} {'Row Count':<15} {'Status':<10}")
+        print("-" * 80)
 
-        for table_name in junction_tables:
+        # Check original junction tables
+        for table_name in original_junction_tables:
             cur.execute(f"SELECT COUNT(*) FROM {table_name}")
             row_count = cur.fetchone()[0]
 
@@ -113,7 +147,16 @@ def validate_junction_tables(conn) -> bool:
             if row_count == 0:
                 all_passed = False
 
-            print(f"{table_name:<40} {row_count:<15} {status:<10}")
+            print(f"{table_name:<50} {row_count:<15} {status:<10}")
+
+        # Check new junction tables
+        for table_name in new_junction_tables:
+            cur.execute(f"SELECT COUNT(*) FROM {table_name}")
+            row_count = cur.fetchone()[0]
+
+            status = "PASS" if row_count > 0 else "WARN"
+
+            print(f"{table_name:<50} {row_count:<15} {status:<10}")
 
     return all_passed
 
@@ -186,6 +229,76 @@ def validate_sample_entities(conn, ds: Graph) -> bool:
         else:
             print("WARNING: No setups have parent configurations")
 
+        # Check 4: Verify Person entities have non-null names
+        cur.execute("""
+            SELECT COUNT(*) FROM modelcatalog_person WHERE label IS NOT NULL AND label != ''
+        """)
+        persons_with_names = cur.fetchone()[0]
+
+        cur.execute("SELECT COUNT(*) FROM modelcatalog_person")
+        total_persons = cur.fetchone()[0]
+
+        if total_persons > 0:
+            print(f"\nPerson entities with names: {persons_with_names}/{total_persons}")
+            if persons_with_names == 0:
+                print("WARNING: No Person entities have names")
+        else:
+            print("\nNo Person entities found (may be expected)")
+
+        # Check 5: Verify SoftwareVersion entities have extended properties
+        cur.execute("""
+            SELECT COUNT(*) FROM modelcatalog_software_version
+            WHERE short_description IS NOT NULL OR limitations IS NOT NULL
+        """)
+        versions_with_extended = cur.fetchone()[0]
+
+        cur.execute("SELECT COUNT(*) FROM modelcatalog_software_version")
+        total_versions = cur.fetchone()[0]
+
+        if total_versions > 0:
+            print(f"SoftwareVersion entities with extended properties: {versions_with_extended}/{total_versions}")
+        else:
+            print("No SoftwareVersion entities found")
+
+        # Check 6: Verify Setup entities have authors
+        cur.execute("""
+            SELECT COUNT(*) FROM modelcatalog_model_configuration_setup WHERE author_id IS NOT NULL
+        """)
+        setups_with_author_id = cur.fetchone()[0]
+
+        cur.execute("""
+            SELECT COUNT(DISTINCT setup_id) FROM modelcatalog_setup_author
+        """)
+        setups_with_authors_via_junction = cur.fetchone()[0]
+
+        cur.execute("SELECT COUNT(*) FROM modelcatalog_model_configuration_setup")
+        total_setups = cur.fetchone()[0]
+
+        if total_setups > 0:
+            print(f"Setups with author_id: {setups_with_author_id}/{total_setups}")
+            print(f"Setups with authors via junction: {setups_with_authors_via_junction}/{total_setups}")
+        else:
+            print("No Setup entities found")
+
+        # Check 7: Verify junction table links to valid entities (spot check setup_author)
+        cur.execute("""
+            SELECT COUNT(*) FROM modelcatalog_setup_author sa
+            WHERE EXISTS (SELECT 1 FROM modelcatalog_person p WHERE p.id = sa.person_id)
+              AND EXISTS (SELECT 1 FROM modelcatalog_model_configuration_setup s WHERE s.id = sa.setup_id)
+        """)
+        valid_setup_author_links = cur.fetchone()[0]
+
+        cur.execute("SELECT COUNT(*) FROM modelcatalog_setup_author")
+        total_setup_author_links = cur.fetchone()[0]
+
+        if total_setup_author_links > 0:
+            print(f"\nValid setup_author links: {valid_setup_author_links}/{total_setup_author_links}")
+            if valid_setup_author_links < total_setup_author_links:
+                print("WARNING: Some setup_author links point to non-existent entities")
+                all_passed = False
+        else:
+            print("\nNo setup_author links found (may be expected)")
+
     return all_passed
 
 
@@ -212,11 +325,24 @@ def validate_orphans(conn):
         print(f"Orphaned configurations (no parent version): {orphaned_configs}")
         print(f"Orphaned setups (no parent configuration): {orphaned_setups}")
 
+        # Check extended schema orphans (informational)
+        cur.execute("SELECT COUNT(*) FROM modelcatalog_model_category WHERE parent_category_id IS NULL")
+        top_level_categories = cur.fetchone()[0]
+        print(f"Top-level model categories (NULL parent): {top_level_categories} (informational)")
+
+        cur.execute("SELECT COUNT(*) FROM modelcatalog_region WHERE part_of_id IS NULL")
+        top_level_regions = cur.fetchone()[0]
+        print(f"Top-level regions (NULL part_of): {top_level_regions} (informational)")
+
+        cur.execute("SELECT COUNT(*) FROM modelcatalog_model_configuration_setup WHERE author_id IS NULL")
+        setups_without_author_id = cur.fetchone()[0]
+        print(f"Setups without author_id: {setups_without_author_id} (informational)")
+
         total_orphans = orphaned_versions + orphaned_configs + orphaned_setups
         if total_orphans > 0:
-            print(f"\nTotal orphans: {total_orphans}")
+            print(f"\nTotal critical orphans: {total_orphans}")
         else:
-            print("\nNo orphaned entities found")
+            print("\nNo critical orphaned entities found")
 
 
 def validate(trig_path: str, conn) -> bool:

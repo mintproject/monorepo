@@ -14,6 +14,22 @@ Extracts model catalog entities from the RDF TriG dump, transforms them into rel
 pip install -r etl/requirements.txt
 ```
 
+## Connecting to the Database
+
+If the database is running on Kubernetes, port-forward the PostgreSQL service first:
+
+```bash
+kubectl -n mint port-forward svc/mint-hasura-db 5432:5432
+```
+
+Then run the ETL in a separate terminal with `--db-host localhost`.
+
+To retrieve the database password from the cluster secret:
+
+```bash
+kubectl -n mint get secret mint-secrets -o jsonpath='{.data.HASURA_GRAPHQL_DATABASE_URL}' | base64 -d
+```
+
 ## Usage
 
 Run the full pipeline (extract, transform, load, validate):

@@ -21,6 +21,7 @@ SD = "https://w3id.org/okn/o/sd#"
 SDM = "https://w3id.org/okn/o/sdm#"
 RDFS = "http://www.w3.org/2000/01/rdf-schema#"
 RDF = "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+OWL = "http://www.w3.org/2002/07/owl#"
 
 # Entity type URIs
 TYPE_SOFTWARE = f"{SDM}Model"
@@ -30,3 +31,18 @@ TYPE_MODEL_CONFIGURATION_SETUP = f"{SDM}ModelConfigurationSetup"
 TYPE_DATASET_SPECIFICATION = f"{SD}DatasetSpecification"
 TYPE_PARAMETER = f"{SD}Parameter"
 TYPE_ADJUSTMENT = "https://w3id.org/wings/export/MINT#Adjustment"
+
+
+# New entity types (added in extended schema)
+TYPE_PERSON = f"{SD}Person"
+TYPE_MODEL_CATEGORY = f"{SDM}ModelCategory"
+TYPE_REGION = f"{SDM}Region"
+TYPE_PROCESS = f"{SDM}Process"
+TYPE_TIME_INTERVAL = f"{SDM}TimeInterval"
+TYPE_CAUSAL_DIAGRAM = f"{SDM}CausalDiagram"
+TYPE_IMAGE = f"{SD}Image"
+TYPE_VARIABLE_PRESENTATION = f"{SD}VariablePresentation"
+TYPE_INTERVENTION = f"{SDM}Intervention"
+TYPE_GRID = f"{SDM}Grid"
+TYPE_STANDARD_VARIABLE = f"{SD}StandardVariable"
+TYPE_UNIT = "http://qudt.org/1.1/schema/qudt#Unit"  # QUDT ontology, NOT sd:Unit
