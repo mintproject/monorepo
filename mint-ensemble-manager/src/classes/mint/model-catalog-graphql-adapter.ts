@@ -150,8 +150,8 @@ export const modelParameterToGraphQL = (
         min: parameter.has_minimum_accepted_value || "",
         max: parameter.has_maximum_accepted_value || "",
         type: parameter.parameter_type || "",
-        accepted_values: parameter.has_accepted_values || [],
-        position: parameter.position || 0,
+        accepted_values: parameter.has_accepted_values?.[0] || "",
+        position: parameter.position?.[0] || 0,
         datatype: parameter.has_data_type || ""
     };
 };
