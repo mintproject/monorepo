@@ -255,9 +255,6 @@
   - name: modelcatalog_configuration
     using:
       foreign_key_constraint_on: modelcatalog_configuration_id
-  - name: modelcatalog_setup
-    using:
-      foreign_key_constraint_on: modelcatalog_setup_id
   array_relationships:
   - name: data_bindings
     using:
@@ -297,7 +294,6 @@
       - execution_engine
       - model_id
       - modelcatalog_configuration_id
-      - modelcatalog_setup_id
       - start_time
       - end_time
       - run_progress
@@ -311,7 +307,6 @@
       - execution_engine
       - model_id
       - modelcatalog_configuration_id
-      - modelcatalog_setup_id
       - start_time
       - end_time
       - run_progress
@@ -326,7 +321,6 @@
       - execution_engine
       - model_id
       - modelcatalog_configuration_id
-      - modelcatalog_setup_id
       - start_time
       - end_time
       - run_progress
@@ -341,7 +335,6 @@
       - execution_engine
       - model_id
       - modelcatalog_configuration_id
-      - modelcatalog_setup_id
       - run_id
       - status
       - end_time
@@ -536,154 +529,6 @@
       filter: {}
       allow_aggregations: true
 - table:
-    name: model
-    schema: public
-  array_relationships:
-  - name: inputs
-    using:
-      foreign_key_constraint_on:
-        column: model_id
-        table:
-          name: model_input
-          schema: public
-  - name: outputs
-    using:
-      foreign_key_constraint_on:
-        column: model_id
-        table:
-          name: model_output
-          schema: public
-  - name: parameters
-    using:
-      foreign_key_constraint_on:
-        column: model_id
-        table:
-          name: model_parameter
-          schema: public
-  insert_permissions:
-  - role: user
-    permission:
-      check: {}
-      columns:
-      - id
-      - name
-      - description
-      - category
-      - type
-      - model_version
-      - model_name
-      - region_name
-      - dimensionality
-      - parameter_assignment
-      - parameter_assignment_details
-      - calibration_target_variable
-      - spatial_grid_type
-      - spatial_grid_resolution
-      - usage_notes
-      - code_url
-      - output_time_interval
-      - model_configuration
-      - software_image
-      - user_id
-  select_permissions:
-  - role: anonymous
-    permission:
-      columns:
-      - id
-      - name
-      - description
-      - category
-      - type
-      - model_version
-      - model_name
-      - region_name
-      - dimensionality
-      - parameter_assignment
-      - parameter_assignment_details
-      - calibration_target_variable
-      - spatial_grid_type
-      - spatial_grid_resolution
-      - usage_notes
-      - code_url
-      - output_time_interval
-      - model_configuration
-      - software_image
-      - user_id
-      filter: {}
-      allow_aggregations: true
-  - role: user
-    permission:
-      columns:
-      - calibration_target_variable
-      - category
-      - code_url
-      - description
-      - dimensionality
-      - id
-      - model_configuration
-      - model_name
-      - model_version
-      - name
-      - output_time_interval
-      - parameter_assignment
-      - parameter_assignment_details
-      - region_name
-      - software_image
-      - spatial_grid_resolution
-      - spatial_grid_type
-      - type
-      - usage_notes
-      - user_id
-      filter: {}
-  update_permissions:
-  - role: user
-    permission:
-      columns:
-      - name
-      filter: {}
-      check: null
-- table:
-    name: model_input
-    schema: public
-  object_relationships:
-  - name: model
-    using:
-      foreign_key_constraint_on: model_id
-  - name: model_io
-    using:
-      foreign_key_constraint_on: model_io_id
-  insert_permissions:
-  - role: user
-    permission:
-      check: {}
-      columns:
-      - model_id
-      - model_io_id
-      - position
-  select_permissions:
-  - role: anonymous
-    permission:
-      columns:
-      - model_id
-      - model_io_id
-      - position
-      filter: {}
-      allow_aggregations: true
-  - role: user
-    permission:
-      columns:
-      - position
-      - model_id
-      - model_io_id
-      filter: {}
-  update_permissions:
-  - role: user
-    permission:
-      columns:
-      - model_id
-      filter: {}
-      check: null
-- table:
     name: model_input_fixed_binding
     schema: public
   object_relationships:
@@ -750,20 +595,7 @@
         table:
           name: model_input_fixed_binding
           schema: public
-  - name: model_inputs
-    using:
-      foreign_key_constraint_on:
-        column: model_io_id
-        table:
-          name: model_input
-          schema: public
-  - name: model_outputs
-    using:
-      foreign_key_constraint_on:
-        column: model_io_id
-        table:
-          name: model_output
-          schema: public
+
   - name: thread_model_ios
     using:
       foreign_key_constraint_on:
@@ -848,118 +680,6 @@
     permission:
       columns:
       - variable_id
-      filter: {}
-      check: null
-- table:
-    name: model_output
-    schema: public
-  object_relationships:
-  - name: model
-    using:
-      foreign_key_constraint_on: model_id
-  - name: model_io
-    using:
-      foreign_key_constraint_on: model_io_id
-  insert_permissions:
-  - role: user
-    permission:
-      check: {}
-      columns:
-      - model_id
-      - model_io_id
-      - position
-  select_permissions:
-  - role: anonymous
-    permission:
-      columns:
-      - model_id
-      - model_io_id
-      - position
-      filter: {}
-      allow_aggregations: true
-  - role: user
-    permission:
-      columns:
-      - position
-      - model_id
-      - model_io_id
-      filter: {}
-  update_permissions:
-  - role: user
-    permission:
-      columns:
-      - model_id
-      filter: {}
-      check: null
-- table:
-    name: model_parameter
-    schema: public
-  object_relationships:
-  - name: model
-    using:
-      foreign_key_constraint_on: model_id
-  insert_permissions:
-  - role: user
-    permission:
-      check: {}
-      columns:
-      - id
-      - name
-      - description
-      - default
-      - fixed_value
-      - unit
-      - min
-      - max
-      - accepted_values
-      - type
-      - adjustment_variable
-      - model_id
-      - position
-      - datatype
-  select_permissions:
-  - role: anonymous
-    permission:
-      columns:
-      - id
-      - name
-      - description
-      - default
-      - fixed_value
-      - unit
-      - min
-      - max
-      - accepted_values
-      - type
-      - adjustment_variable
-      - model_id
-      - position
-      - datatype
-      filter: {}
-      allow_aggregations: true
-  - role: user
-    permission:
-      columns:
-      - position
-      - accepted_values
-      - adjustment_variable
-      - datatype
-      - default
-      - description
-      - fixed_value
-      - id
-      - max
-      - min
-      - model_id
-      - name
-      - type
-      - unit
-      filter: {}
-  update_permissions:
-  - role: user
-    permission:
-      columns:
-      - model_id
       filter: {}
       check: null
 - table:
@@ -1978,9 +1698,6 @@
   - name: modelcatalog_configuration
     using:
       foreign_key_constraint_on: modelcatalog_configuration_id
-  - name: modelcatalog_setup
-    using:
-      foreign_key_constraint_on: modelcatalog_setup_id
   - name: thread
     using:
       foreign_key_constraint_on: thread_id
@@ -2036,7 +1753,6 @@
       columns:
       - model_id
       - modelcatalog_configuration_id
-      - modelcatalog_setup_id
       - thread_id
       - id
   select_permissions:
@@ -2047,7 +1763,6 @@
       - thread_id
       - model_id
       - modelcatalog_configuration_id
-      - modelcatalog_setup_id
       filter: {}
       allow_aggregations: true
   - role: user
@@ -2055,7 +1770,6 @@
       columns:
       - model_id
       - modelcatalog_configuration_id
-      - modelcatalog_setup_id
       - thread_id
       - id
       filter:
@@ -2082,7 +1796,6 @@
       columns:
       - model_id
       - modelcatalog_configuration_id
-      - modelcatalog_setup_id
       - thread_id
       - id
       filter:
@@ -2970,7 +2683,7 @@
       foreign_key_constraint_on:
         column: software_version_id
         table:
-          name: modelcatalog_model_configuration
+          name: modelcatalog_configuration
           schema: public
   - name: categories
     using:
@@ -3076,16 +2789,26 @@
     permission:
       filter: {}
 - table:
-    name: modelcatalog_model_configuration
+    name: modelcatalog_configuration
     schema: public
   object_relationships:
   - name: software_version
     using:
       foreign_key_constraint_on: software_version_id
+  - name: parent_configuration
+    using:
+      foreign_key_constraint_on: model_configuration_id
   - name: author
     using:
       foreign_key_constraint_on: author_id
   array_relationships:
+  - name: child_configurations
+    using:
+      foreign_key_constraint_on:
+        column: model_configuration_id
+        table:
+          name: modelcatalog_configuration
+          schema: public
   - name: executions
     using:
       foreign_key_constraint_on:
@@ -3099,13 +2822,6 @@
         column: modelcatalog_configuration_id
         table:
           name: thread_model
-          schema: public
-  - name: setups
-    using:
-      foreign_key_constraint_on:
-        column: model_configuration_id
-        table:
-          name: modelcatalog_model_configuration_setup
           schema: public
   - name: inputs
     using:
@@ -3128,6 +2844,20 @@
         table:
           name: modelcatalog_configuration_parameter
           schema: public
+  - name: authors
+    using:
+      foreign_key_constraint_on:
+        column: configuration_id
+        table:
+          name: modelcatalog_configuration_author
+          schema: public
+  - name: categories
+    using:
+      foreign_key_constraint_on:
+        column: configuration_id
+        table:
+          name: modelcatalog_configuration_category
+          schema: public
   - name: causal_diagrams
     using:
       foreign_key_constraint_on:
@@ -3149,19 +2879,19 @@
         table:
           name: modelcatalog_configuration_region
           schema: public
-  - name: authors
+  - name: calibrated_variables
     using:
       foreign_key_constraint_on:
         column: configuration_id
         table:
-          name: modelcatalog_configuration_author
+          name: modelcatalog_configuration_calibrated_variable
           schema: public
-  - name: categories
+  - name: calibration_targets
     using:
       foreign_key_constraint_on:
-        column: model_configuration_id
+        column: configuration_id
         table:
-          name: modelcatalog_modelconfiguration_category
+          name: modelcatalog_configuration_calibration_target
           schema: public
   insert_permissions:
   - role: user
@@ -3170,6 +2900,7 @@
       columns: &id003
       - id
       - software_version_id
+      - model_configuration_id
       - label
       - description
       - keywords
@@ -3178,6 +2909,11 @@
       - has_implementation_script_location
       - has_software_image
       - has_model_result_table
+      - has_region
+      - calibration_interval
+      - calibration_method
+      - parameter_assignment_method
+      - valid_until
       - author_id
   select_permissions:
   - role: anonymous
@@ -3185,6 +2921,7 @@
       columns:
       - id
       - software_version_id
+      - model_configuration_id
       - label
       - description
       - keywords
@@ -3193,6 +2930,11 @@
       - has_implementation_script_location
       - has_software_image
       - has_model_result_table
+      - has_region
+      - calibration_interval
+      - calibration_method
+      - parameter_assignment_method
+      - valid_until
       - author_id
       filter: {}
   - role: user
@@ -3203,130 +2945,6 @@
   - role: user
     permission:
       columns: *id003
-      filter: {}
-      check: null
-  delete_permissions:
-  - role: user
-    permission:
-      filter: {}
-- table:
-    name: modelcatalog_model_configuration_setup
-    schema: public
-  object_relationships:
-  - name: model_configuration
-    using:
-      foreign_key_constraint_on: model_configuration_id
-  - name: author
-    using:
-      foreign_key_constraint_on: author_id
-  array_relationships:
-  - name: executions
-    using:
-      foreign_key_constraint_on:
-        column: modelcatalog_setup_id
-        table:
-          name: execution
-          schema: public
-  - name: thread_models
-    using:
-      foreign_key_constraint_on:
-        column: modelcatalog_setup_id
-        table:
-          name: thread_model
-          schema: public
-  - name: inputs
-    using:
-      foreign_key_constraint_on:
-        column: setup_id
-        table:
-          name: modelcatalog_setup_input
-          schema: public
-  - name: outputs
-    using:
-      foreign_key_constraint_on:
-        column: setup_id
-        table:
-          name: modelcatalog_setup_output
-          schema: public
-  - name: parameters
-    using:
-      foreign_key_constraint_on:
-        column: setup_id
-        table:
-          name: modelcatalog_setup_parameter
-          schema: public
-  - name: authors
-    using:
-      foreign_key_constraint_on:
-        column: setup_id
-        table:
-          name: modelcatalog_setup_author
-          schema: public
-  - name: calibrated_variables
-    using:
-      foreign_key_constraint_on:
-        column: setup_id
-        table:
-          name: modelcatalog_setup_calibrated_variable
-          schema: public
-  - name: calibration_targets
-    using:
-      foreign_key_constraint_on:
-        column: setup_id
-        table:
-          name: modelcatalog_setup_calibration_target
-          schema: public
-  - name: categories
-    using:
-      foreign_key_constraint_on:
-        column: model_configuration_setup_id
-        table:
-          name: modelcatalog_modelconfigurationsetup_category
-          schema: public
-  insert_permissions:
-  - role: user
-    permission:
-      check: {}
-      columns: &id004
-      - id
-      - model_configuration_id
-      - label
-      - description
-      - has_component_location
-      - has_implementation_script_location
-      - has_software_image
-      - has_region
-      - author_id
-      - calibration_interval
-      - calibration_method
-      - parameter_assignment_method
-      - valid_until
-  select_permissions:
-  - role: anonymous
-    permission:
-      columns:
-      - id
-      - model_configuration_id
-      - label
-      - description
-      - has_component_location
-      - has_implementation_script_location
-      - has_software_image
-      - has_region
-      - author_id
-      - calibration_interval
-      - calibration_method
-      - parameter_assignment_method
-      - valid_until
-      filter: {}
-  - role: user
-    permission:
-      columns: *id004
-      filter: {}
-  update_permissions:
-  - role: user
-    permission:
-      columns: *id004
       filter: {}
       check: null
   delete_permissions:
@@ -3357,20 +2975,6 @@
         column: output_id
         table:
           name: modelcatalog_configuration_output
-          schema: public
-  - name: setup_inputs
-    using:
-      foreign_key_constraint_on:
-        column: input_id
-        table:
-          name: modelcatalog_setup_input
-          schema: public
-  - name: setup_outputs
-    using:
-      foreign_key_constraint_on:
-        column: output_id
-        table:
-          name: modelcatalog_setup_output
           schema: public
   - name: presentations
     using:
@@ -3439,13 +3043,6 @@
         column: parameter_id
         table:
           name: modelcatalog_configuration_parameter
-          schema: public
-  - name: setup_parameters
-    using:
-      foreign_key_constraint_on:
-        column: parameter_id
-        table:
-          name: modelcatalog_setup_parameter
           schema: public
   - name: interventions
     using:
@@ -3604,102 +3201,6 @@
     permission:
       filter: {}
 - table:
-    name: modelcatalog_setup_input
-    schema: public
-  object_relationships:
-  - name: setup
-    using:
-      foreign_key_constraint_on: setup_id
-  - name: input
-    using:
-      foreign_key_constraint_on: input_id
-  insert_permissions:
-  - role: user
-    permission:
-      check: {}
-      columns: &id010
-      - setup_id
-      - input_id
-  select_permissions:
-  - role: anonymous
-    permission:
-      columns:
-      - setup_id
-      - input_id
-      filter: {}
-  - role: user
-    permission:
-      columns: *id010
-      filter: {}
-  delete_permissions:
-  - role: user
-    permission:
-      filter: {}
-- table:
-    name: modelcatalog_setup_output
-    schema: public
-  object_relationships:
-  - name: setup
-    using:
-      foreign_key_constraint_on: setup_id
-  - name: output
-    using:
-      foreign_key_constraint_on: output_id
-  insert_permissions:
-  - role: user
-    permission:
-      check: {}
-      columns: &id011
-      - setup_id
-      - output_id
-  select_permissions:
-  - role: anonymous
-    permission:
-      columns:
-      - setup_id
-      - output_id
-      filter: {}
-  - role: user
-    permission:
-      columns: *id011
-      filter: {}
-  delete_permissions:
-  - role: user
-    permission:
-      filter: {}
-- table:
-    name: modelcatalog_setup_parameter
-    schema: public
-  object_relationships:
-  - name: setup
-    using:
-      foreign_key_constraint_on: setup_id
-  - name: parameter
-    using:
-      foreign_key_constraint_on: parameter_id
-  insert_permissions:
-  - role: user
-    permission:
-      check: {}
-      columns: &id012
-      - setup_id
-      - parameter_id
-  select_permissions:
-  - role: anonymous
-    permission:
-      columns:
-      - setup_id
-      - parameter_id
-      filter: {}
-  - role: user
-    permission:
-      columns: *id012
-      filter: {}
-  delete_permissions:
-  - role: user
-    permission:
-      filter: {}
-- table:
     name: modelcatalog_person
     schema: public
   array_relationships:
@@ -3722,14 +3223,7 @@
       foreign_key_constraint_on:
         column: author_id
         table:
-          name: modelcatalog_model_configuration
-          schema: public
-  - name: authored_setups
-    using:
-      foreign_key_constraint_on:
-        column: author_id
-        table:
-          name: modelcatalog_model_configuration_setup
+          name: modelcatalog_configuration
           schema: public
   - name: software_authors
     using:
@@ -3751,13 +3245,6 @@
         column: person_id
         table:
           name: modelcatalog_configuration_author
-          schema: public
-  - name: setup_authors
-    using:
-      foreign_key_constraint_on:
-        column: person_id
-        table:
-          name: modelcatalog_setup_author
           schema: public
   insert_permissions:
   - role: user
@@ -3823,14 +3310,7 @@
       foreign_key_constraint_on:
         column: category_id
         table:
-          name: modelcatalog_modelconfiguration_category
-          schema: public
-  - name: configuration_setup_items
-    using:
-      foreign_key_constraint_on:
-        column: category_id
-        table:
-          name: modelcatalog_modelconfigurationsetup_category
+          name: modelcatalog_configuration_category
           schema: public
   insert_permissions:
   - role: user
@@ -4192,14 +3672,14 @@
       foreign_key_constraint_on:
         column: variable_id
         table:
-          name: modelcatalog_setup_calibrated_variable
+          name: modelcatalog_configuration_calibrated_variable
           schema: public
   - name: calibration_target_in
     using:
       foreign_key_constraint_on:
         column: variable_id
         table:
-          name: modelcatalog_setup_calibration_target
+          name: modelcatalog_configuration_calibration_target
           schema: public
   object_relationships:
   - name: standard_variable
@@ -4627,28 +4107,28 @@
     permission:
       filter: {}
 - table:
-    name: modelcatalog_setup_author
+    name: modelcatalog_configuration_calibrated_variable
     schema: public
   object_relationships:
-  - name: setup
+  - name: configuration
     using:
-      foreign_key_constraint_on: setup_id
-  - name: person
+      foreign_key_constraint_on: configuration_id
+  - name: variable
     using:
-      foreign_key_constraint_on: person_id
+      foreign_key_constraint_on: variable_id
   insert_permissions:
   - role: user
     permission:
       check: {}
       columns: &id032
-      - setup_id
-      - person_id
+      - configuration_id
+      - variable_id
   select_permissions:
   - role: anonymous
     permission:
       columns:
-      - setup_id
-      - person_id
+      - configuration_id
+      - variable_id
       filter: {}
   - role: user
     permission:
@@ -4659,12 +4139,12 @@
     permission:
       filter: {}
 - table:
-    name: modelcatalog_setup_calibrated_variable
+    name: modelcatalog_configuration_calibration_target
     schema: public
   object_relationships:
-  - name: setup
+  - name: configuration
     using:
-      foreign_key_constraint_on: setup_id
+      foreign_key_constraint_on: configuration_id
   - name: variable
     using:
       foreign_key_constraint_on: variable_id
@@ -4673,50 +4153,18 @@
     permission:
       check: {}
       columns: &id033
-      - setup_id
+      - configuration_id
       - variable_id
   select_permissions:
   - role: anonymous
     permission:
       columns:
-      - setup_id
+      - configuration_id
       - variable_id
       filter: {}
   - role: user
     permission:
       columns: *id033
-      filter: {}
-  delete_permissions:
-  - role: user
-    permission:
-      filter: {}
-- table:
-    name: modelcatalog_setup_calibration_target
-    schema: public
-  object_relationships:
-  - name: setup
-    using:
-      foreign_key_constraint_on: setup_id
-  - name: variable
-    using:
-      foreign_key_constraint_on: variable_id
-  insert_permissions:
-  - role: user
-    permission:
-      check: {}
-      columns: &id034
-      - setup_id
-      - variable_id
-  select_permissions:
-  - role: anonymous
-    permission:
-      columns:
-      - setup_id
-      - variable_id
-      filter: {}
-  - role: user
-    permission:
-      columns: *id034
       filter: {}
   delete_permissions:
   - role: user
@@ -4914,12 +4362,12 @@
     permission:
       filter: {}
 - table:
-    name: modelcatalog_modelconfiguration_category
+    name: modelcatalog_configuration_category
     schema: public
   object_relationships:
-  - name: model_configuration
+  - name: configuration
     using:
-      foreign_key_constraint_on: model_configuration_id
+      foreign_key_constraint_on: configuration_id
   - name: category
     using:
       foreign_key_constraint_on: category_id
@@ -4928,50 +4376,18 @@
     permission:
       check: {}
       columns: &id041
-      - model_configuration_id
+      - configuration_id
       - category_id
   select_permissions:
   - role: anonymous
     permission:
       columns:
-      - model_configuration_id
+      - configuration_id
       - category_id
       filter: {}
   - role: user
     permission:
       columns: *id041
-      filter: {}
-  delete_permissions:
-  - role: user
-    permission:
-      filter: {}
-- table:
-    name: modelcatalog_modelconfigurationsetup_category
-    schema: public
-  object_relationships:
-  - name: model_configuration_setup
-    using:
-      foreign_key_constraint_on: model_configuration_setup_id
-  - name: category
-    using:
-      foreign_key_constraint_on: category_id
-  insert_permissions:
-  - role: user
-    permission:
-      check: {}
-      columns: &id042
-      - model_configuration_setup_id
-      - category_id
-  select_permissions:
-  - role: anonymous
-    permission:
-      columns:
-      - model_configuration_setup_id
-      - category_id
-      filter: {}
-  - role: user
-    permission:
-      columns: *id042
       filter: {}
   delete_permissions:
   - role: user
