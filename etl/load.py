@@ -24,14 +24,14 @@ def clear_all(conn):
         # Truncate all tables with CASCADE to handle FKs
         cur.execute("""
             TRUNCATE TABLE
-                -- New junction tables (16)
+                -- Configuration junction tables (renamed/merged)
                 modelcatalog_dataset_specification_presentation,
                 modelcatalog_parameter_adjusts_variable,
                 modelcatalog_diagram_part,
                 modelcatalog_parameter_intervention,
-                modelcatalog_setup_calibration_target,
-                modelcatalog_setup_calibrated_variable,
-                modelcatalog_setup_author,
+                modelcatalog_configuration_calibration_target,
+                modelcatalog_configuration_calibrated_variable,
+                modelcatalog_configuration_author,
                 modelcatalog_configuration_region,
                 modelcatalog_configuration_time_interval,
                 modelcatalog_configuration_causal_diagram,
@@ -41,19 +41,14 @@ def clear_all(conn):
                 modelcatalog_software_version_grid,
                 modelcatalog_software_version_process,
                 modelcatalog_software_version_category,
-                modelcatalog_modelconfigurationsetup_category,
-                modelcatalog_modelconfiguration_category,
+                modelcatalog_configuration_category,
                 modelcatalog_software_category,
-                -- Original junction tables (6)
-                modelcatalog_setup_parameter,
-                modelcatalog_setup_output,
-                modelcatalog_setup_input,
+                -- Unified configuration junction tables (input/output/parameter)
                 modelcatalog_configuration_parameter,
                 modelcatalog_configuration_output,
                 modelcatalog_configuration_input,
-                -- Original entity tables (6)
-                modelcatalog_model_configuration_setup,
-                modelcatalog_model_configuration,
+                -- Unified entity table (replaces modelcatalog_model_configuration + modelcatalog_model_configuration_setup)
+                modelcatalog_configuration,
                 modelcatalog_software_version,
                 modelcatalog_software,
                 modelcatalog_dataset_specification,
@@ -182,6 +177,8 @@ def load_all(transformed_data: Dict[str, List[Dict[str, Any]]], conn):
     self_referential_tables = {
         'modelcatalog_model_category': 'parent_category_id',
         'modelcatalog_region': 'part_of_id',
+        # Unified configuration table: Setup rows reference Configuration rows via self-FK
+        'modelcatalog_configuration': 'model_configuration_id',
     }
 
     # Loading order matters due to FK constraints
@@ -200,47 +197,45 @@ def load_all(transformed_data: Dict[str, List[Dict[str, Any]]], conn):
         # Self-referential entity tables (loaded in two passes)
         'modelcatalog_model_category',
         'modelcatalog_region',
-        # Original entity tables with no FK dependencies
+        # Entity tables with no FK dependencies
         'modelcatalog_software',
         'modelcatalog_dataset_specification',
         'modelcatalog_parameter',
-        # Original hierarchy tables
+        # Hierarchy tables
         'modelcatalog_software_version',
-        'modelcatalog_model_configuration',
-        'modelcatalog_model_configuration_setup',
-        # Original junction tables (6)
+        # Unified configuration table (self-referential: Configurations first, Setups second)
+        'modelcatalog_configuration',
+        # Unified configuration junction tables (input/output/parameter cover both config + setup)
         'modelcatalog_configuration_input',
         'modelcatalog_configuration_output',
         'modelcatalog_configuration_parameter',
-        'modelcatalog_setup_input',
-        'modelcatalog_setup_output',
-        'modelcatalog_setup_parameter',
-        # New Software junction tables
+        # Software junction tables
         'modelcatalog_software_category',
-        'modelcatalog_modelconfiguration_category',
-        'modelcatalog_modelconfigurationsetup_category',
-        # New SoftwareVersion junction tables (6)
+        # Unified configuration category junction (merged from modelconfiguration_category + modelconfigurationsetup_category)
+        'modelcatalog_configuration_category',
+        # SoftwareVersion junction tables (6)
         'modelcatalog_software_version_category',
         'modelcatalog_software_version_process',
         'modelcatalog_software_version_grid',
         'modelcatalog_software_version_image',
         'modelcatalog_software_version_input_variable',
         'modelcatalog_software_version_output_variable',
-        # New Configuration junction tables (3)
+        # Configuration junction tables (3, config-only in RDF)
         'modelcatalog_configuration_causal_diagram',
         'modelcatalog_configuration_time_interval',
         'modelcatalog_configuration_region',
-        # New Setup junction tables (3)
-        'modelcatalog_setup_author',
-        'modelcatalog_setup_calibrated_variable',
-        'modelcatalog_setup_calibration_target',
-        # New Parameter junction table (1)
+        # Configuration author junction (merged from configuration_author + setup_author)
+        'modelcatalog_configuration_author',
+        # Configuration calibration junction tables (renamed from setup_*)
+        'modelcatalog_configuration_calibrated_variable',
+        'modelcatalog_configuration_calibration_target',
+        # Parameter junction table (1)
         'modelcatalog_parameter_intervention',
-        # New DatasetSpecification junction table (1)
+        # DatasetSpecification junction table (1)
         'modelcatalog_dataset_specification_presentation',
-        # New Parameter adjustsVariable junction table (1)
+        # Parameter adjustsVariable junction table (1)
         'modelcatalog_parameter_adjusts_variable',
-        # New CausalDiagram parts (1)
+        # CausalDiagram parts (1)
         'modelcatalog_diagram_part',
     ]
 

@@ -129,10 +129,11 @@ def invert_fk_relationships(extracted_data: Dict[str, Any]) -> Dict[str, Any]:
 
 def build_extended_junction_tables(extracted_data: Dict[str, Any]) -> Dict[str, List[Dict[str, str]]]:
     """
-    Build 14 new junction table rows with FK validation.
-    Only include references to entities that exist in our extracted data.
+    Build extended junction table rows with FK validation.
+    Uses unified configurations (merged ModelConfiguration + ModelConfigurationSetup).
     """
     links = extracted_data['links']
+    configuration_links = extracted_data.get('configuration_links', {})
 
     # Build sets of valid IDs for FK validation (new entity types)
     valid_person_ids = {e['id'] for e in extracted_data['persons']}
@@ -146,11 +147,17 @@ def build_extended_junction_tables(extracted_data: Dict[str, Any]) -> Dict[str, 
     valid_intervention_ids = {e['id'] for e in extracted_data['interventions']}
     valid_grid_ids = {e['id'] for e in extracted_data['grids']}
 
-    # Also need valid IDs for existing entity types (for FK validation)
+    # Valid IDs for existing entity types (for FK validation)
     valid_software_ids = {e['id'] for e in extracted_data['software']}
     valid_software_version_ids = {e['id'] for e in extracted_data['software_versions']}
-    valid_configuration_ids = {e['id'] for e in extracted_data['model_configurations']}
-    valid_setup_ids = {e['id'] for e in extracted_data['model_configuration_setups']}
+    # Unified configuration IDs (both ModelConfiguration and ModelConfigurationSetup)
+    if extracted_data.get('configurations'):
+        valid_configuration_ids = {e['id'] for e in extracted_data['configurations']}
+    else:
+        valid_configuration_ids = (
+            {e['id'] for e in extracted_data['model_configurations']} |
+            {e['id'] for e in extracted_data['model_configuration_setups']}
+        )
     valid_parameter_ids = {e['id'] for e in extracted_data['parameters']}
 
     # Software author junction table
@@ -177,15 +184,19 @@ def build_extended_junction_tables(extracted_data: Dict[str, Any]) -> Dict[str, 
                     'person_id': author_id,
                 })
 
-    # ModelConfiguration author junction table
+    # Unified configuration author junction table (covers both config and setup authors)
     configuration_author_rows = []
-    for cfg_id, author_ids in links.get('config_to_author', {}).items():
-        if cfg_id not in valid_configuration_ids:
+    merged_author_links = configuration_links.get('author_links', {})
+    if not merged_author_links:
+        # Fallback: merge config_to_author + setup_to_author from legacy links
+        merged_author_links = {**links.get('config_to_author', {}), **links.get('setup_to_author', {})}
+    for entity_id, author_ids in merged_author_links.items():
+        if entity_id not in valid_configuration_ids:
             continue
         for author_id in author_ids:
             if author_id in valid_person_ids:
                 configuration_author_rows.append({
-                    'configuration_id': cfg_id,
+                    'configuration_id': entity_id,
                     'person_id': author_id,
                 })
 
@@ -232,35 +243,28 @@ def build_extended_junction_tables(extracted_data: Dict[str, Any]) -> Dict[str, 
             else:
                 skipped_software_category += 1
 
-    # Build modelconfiguration_category junction
+    # Build unified configuration_category junction (merges mc + mcs categories)
     mc_category_rows = []
     skipped_mc_category = 0
-    for mc_id, category_ids in links.get('mc_to_category', {}).items():
-        if mc_id not in valid_configuration_ids:
+    merged_category_links = configuration_links.get('category_links', {})
+    if not merged_category_links:
+        # Fallback: merge mc_to_category + mcs_to_category from legacy links
+        merged_category_links = {**links.get('mc_to_category', {}), **links.get('mcs_to_category', {})}
+    for entity_id, category_ids in merged_category_links.items():
+        if entity_id not in valid_configuration_ids:
             continue
         for category_id in category_ids:
             if category_id in valid_category_ids:
                 mc_category_rows.append({
-                    'model_configuration_id': mc_id,
+                    'configuration_id': entity_id,
                     'category_id': category_id,
                 })
             else:
                 skipped_mc_category += 1
 
-    # Build modelconfigurationsetup_category junction
+    # mcs_category_rows is now empty — merged into mc_category_rows above
     mcs_category_rows = []
     skipped_mcs_category = 0
-    for mcs_id, category_ids in links.get('mcs_to_category', {}).items():
-        if mcs_id not in valid_setup_ids:
-            continue
-        for category_id in category_ids:
-            if category_id in valid_category_ids:
-                mcs_category_rows.append({
-                    'model_configuration_setup_id': mcs_id,
-                    'category_id': category_id,
-                })
-            else:
-                skipped_mcs_category += 1
 
     # Build software_version_process junction
     for version_id, process_ids in links.get('version_to_process', {}).items():
@@ -375,8 +379,9 @@ def build_extended_junction_tables(extracted_data: Dict[str, Any]) -> Dict[str, 
             else:
                 skipped_config_region += 1
 
-    # Setup junction tables (3)
-    setup_author_rows = []
+    # Configuration calibrated_variable and calibration_target junction tables (setup-only in RDF)
+    # Using configuration_id FK (unified table), not setup_id (old table)
+    setup_author_rows = []  # Deprecated — author rows now in configuration_author_rows above
     setup_calibrated_variable_rows = []
     setup_calibration_target_rows = []
 
@@ -384,40 +389,33 @@ def build_extended_junction_tables(extracted_data: Dict[str, Any]) -> Dict[str, 
     skipped_setup_calibrated = 0
     skipped_setup_target = 0
 
-    # Build setup_author junction
-    for setup_id, author_ids in links.get('setup_to_author', {}).items():
-        if setup_id not in valid_setup_ids:
-            continue
-        for author_id in author_ids:
-            if author_id in valid_person_ids:
-                setup_author_rows.append({
-                    'setup_id': setup_id,
-                    'person_id': author_id,
-                })
-            else:
-                skipped_setup_author += 1
-
-    # Build setup_calibrated_variable junction
-    for setup_id, variable_ids in links.get('setup_to_calibrated_variable', {}).items():
-        if setup_id not in valid_setup_ids:
+    # Build configuration_calibrated_variable junction (uses configuration_id, not setup_id)
+    calibrated_variable_source = configuration_links.get('calibrated_variable_links', {})
+    if not calibrated_variable_source:
+        calibrated_variable_source = links.get('setup_to_calibrated_variable', {})
+    for entity_id, variable_ids in calibrated_variable_source.items():
+        if entity_id not in valid_configuration_ids:
             continue
         for variable_id in variable_ids:
             if variable_id in valid_variable_ids:
                 setup_calibrated_variable_rows.append({
-                    'setup_id': setup_id,
+                    'configuration_id': entity_id,
                     'variable_id': variable_id,
                 })
             else:
                 skipped_setup_calibrated += 1
 
-    # Build setup_calibration_target junction
-    for setup_id, variable_ids in links.get('setup_to_calibration_target', {}).items():
-        if setup_id not in valid_setup_ids:
+    # Build configuration_calibration_target junction (uses configuration_id, not setup_id)
+    calibration_target_source = configuration_links.get('calibration_target_links', {})
+    if not calibration_target_source:
+        calibration_target_source = links.get('setup_to_calibration_target', {})
+    for entity_id, variable_ids in calibration_target_source.items():
+        if entity_id not in valid_configuration_ids:
             continue
         for variable_id in variable_ids:
             if variable_id in valid_variable_ids:
                 setup_calibration_target_rows.append({
-                    'setup_id': setup_id,
+                    'configuration_id': entity_id,
                     'variable_id': variable_id,
                 })
             else:
@@ -508,8 +506,7 @@ def build_extended_junction_tables(extracted_data: Dict[str, Any]) -> Dict[str, 
     print(f"  - configuration_author: {len(configuration_author_rows)} rows")
     print(f"  - software_version_category: {len(version_category_rows)} rows")
     print(f"  - software_category: {len(software_category_rows)} rows")
-    print(f"  - modelconfiguration_category: {len(mc_category_rows)} rows")
-    print(f"  - modelconfigurationsetup_category: {len(mcs_category_rows)} rows")
+    print(f"  - configuration_category: {len(mc_category_rows)} rows (merged config + setup categories)")
     print(f"  - software_version_process: {len(version_process_rows)} rows")
     print(f"  - software_version_grid: {len(version_grid_rows)} rows")
     print(f"  - software_version_image: {len(version_image_rows)} rows")
@@ -518,9 +515,8 @@ def build_extended_junction_tables(extracted_data: Dict[str, Any]) -> Dict[str, 
     print(f"  - configuration_causal_diagram: {len(config_causal_diagram_rows)} rows")
     print(f"  - configuration_time_interval: {len(config_time_interval_rows)} rows")
     print(f"  - configuration_region: {len(config_region_rows)} rows")
-    print(f"  - setup_author: {len(setup_author_rows)} rows")
-    print(f"  - setup_calibrated_variable: {len(setup_calibrated_variable_rows)} rows")
-    print(f"  - setup_calibration_target: {len(setup_calibration_target_rows)} rows")
+    print(f"  - configuration_calibrated_variable: {len(setup_calibrated_variable_rows)} rows")
+    print(f"  - configuration_calibration_target: {len(setup_calibration_target_rows)} rows")
     print(f"  - parameter_intervention: {len(parameter_intervention_rows)} rows")
     print(f"  - parameter_adjusts_variable: {len(param_adjusts_variable_rows)} rows")
     print(f"  - dataset_specification_presentation: {len(dsi_presentation_rows)} rows")
@@ -542,8 +538,7 @@ def build_extended_junction_tables(extracted_data: Dict[str, Any]) -> Dict[str, 
         'modelcatalog_version_author': version_author_rows,
         'modelcatalog_configuration_author': configuration_author_rows,
         'modelcatalog_software_category': software_category_rows,
-        'modelcatalog_modelconfiguration_category': mc_category_rows,
-        'modelcatalog_modelconfigurationsetup_category': mcs_category_rows,
+        'modelcatalog_configuration_category': mc_category_rows,
         'modelcatalog_software_version_category': version_category_rows,
         'modelcatalog_software_version_process': version_process_rows,
         'modelcatalog_software_version_grid': version_grid_rows,
@@ -553,9 +548,8 @@ def build_extended_junction_tables(extracted_data: Dict[str, Any]) -> Dict[str, 
         'modelcatalog_configuration_causal_diagram': config_causal_diagram_rows,
         'modelcatalog_configuration_time_interval': config_time_interval_rows,
         'modelcatalog_configuration_region': config_region_rows,
-        'modelcatalog_setup_author': setup_author_rows,
-        'modelcatalog_setup_calibrated_variable': setup_calibrated_variable_rows,
-        'modelcatalog_setup_calibration_target': setup_calibration_target_rows,
+        'modelcatalog_configuration_calibrated_variable': setup_calibrated_variable_rows,
+        'modelcatalog_configuration_calibration_target': setup_calibration_target_rows,
         'modelcatalog_parameter_intervention': parameter_intervention_rows,
         'modelcatalog_parameter_adjusts_variable': param_adjusts_variable_rows,
         'modelcatalog_dataset_specification_presentation': dsi_presentation_rows,
@@ -565,16 +559,20 @@ def build_extended_junction_tables(extracted_data: Dict[str, Any]) -> Dict[str, 
 
 def build_junction_tables(extracted_data: Dict[str, Any]) -> Dict[str, List[Dict[str, str]]]:
     """
-    Build junction table rows from hasInput/hasOutput/hasParameter links.
+    Build unified configuration junction table rows from hasInput/hasOutput/hasParameter links.
+    Uses the unified configuration_links from extract_configurations() which merges both
+    ModelConfiguration and ModelConfigurationSetup input/output/parameter links.
     Only include references to entities that exist in our extracted data.
     """
-    links = extracted_data['links']
+    # Use unified configuration_links (from extract_configurations) if available,
+    # fall back to legacy separate links for backward compatibility
+    configuration_links = extracted_data.get('configuration_links', {})
 
     # Build sets of valid IDs for FK validation
     valid_dataset_ids = {e['id'] for e in extracted_data['dataset_specifications']}
     valid_parameter_ids = {e['id'] for e in extracted_data['parameters']}
 
-    # Configuration junction tables
+    # Unified configuration junction tables (covers both old config + setup rows)
     config_input_rows = []
     config_output_rows = []
     config_parameter_rows = []
@@ -583,37 +581,55 @@ def build_junction_tables(extracted_data: Dict[str, Any]) -> Dict[str, List[Dict
     skipped_config_outputs = 0
     skipped_config_params = 0
 
-    for config_id, input_ids in links['configuration']['input'].items():
+    # Use merged input_links from extract_configurations (config + setup combined)
+    merged_input_links = configuration_links.get('input_links', {})
+    if not merged_input_links:
+        # Fallback to legacy links structure
+        links = extracted_data['links']
+        merged_input_links = {**links['configuration']['input'], **links['setup']['input']}
+
+    merged_output_links = configuration_links.get('output_links', {})
+    if not merged_output_links:
+        links = extracted_data['links']
+        merged_output_links = {**links['configuration']['output'], **links['setup']['output']}
+
+    merged_parameter_links = configuration_links.get('parameter_links', {})
+    if not merged_parameter_links:
+        links = extracted_data['links']
+        merged_parameter_links = {**links['configuration']['parameter'], **links['setup']['parameter']}
+
+    for entity_id, input_ids in merged_input_links.items():
         for input_id in input_ids:
             if input_id in valid_dataset_ids:
                 config_input_rows.append({
-                    'configuration_id': config_id,
+                    'configuration_id': entity_id,
                     'input_id': input_id,
                 })
             else:
                 skipped_config_inputs += 1
 
-    for config_id, output_ids in links['configuration']['output'].items():
+    for entity_id, output_ids in merged_output_links.items():
         for output_id in output_ids:
             if output_id in valid_dataset_ids:
                 config_output_rows.append({
-                    'configuration_id': config_id,
+                    'configuration_id': entity_id,
                     'output_id': output_id,
                 })
             else:
                 skipped_config_outputs += 1
 
-    for config_id, param_ids in links['configuration']['parameter'].items():
+    for entity_id, param_ids in merged_parameter_links.items():
         for param_id in param_ids:
             if param_id in valid_parameter_ids:
                 config_parameter_rows.append({
-                    'configuration_id': config_id,
+                    'configuration_id': entity_id,
                     'parameter_id': param_id,
                 })
             else:
                 skipped_config_params += 1
 
-    # Setup junction tables
+    # Legacy setup junction tables kept for backward compatibility only
+    # These are now empty since data is merged into the configuration junctions above
     setup_input_rows = []
     setup_output_rows = []
     setup_parameter_rows = []
@@ -622,46 +638,17 @@ def build_junction_tables(extracted_data: Dict[str, Any]) -> Dict[str, List[Dict
     skipped_setup_outputs = 0
     skipped_setup_params = 0
 
-    for setup_id, input_ids in links['setup']['input'].items():
-        for input_id in input_ids:
-            if input_id in valid_dataset_ids:
-                setup_input_rows.append({
-                    'setup_id': setup_id,
-                    'input_id': input_id,
-                })
-            else:
-                skipped_setup_inputs += 1
-
-    for setup_id, output_ids in links['setup']['output'].items():
-        for output_id in output_ids:
-            if output_id in valid_dataset_ids:
-                setup_output_rows.append({
-                    'setup_id': setup_id,
-                    'output_id': output_id,
-                })
-            else:
-                skipped_setup_outputs += 1
-
-    for setup_id, param_ids in links['setup']['parameter'].items():
-        for param_id in param_ids:
-            if param_id in valid_parameter_ids:
-                setup_parameter_rows.append({
-                    'setup_id': setup_id,
-                    'parameter_id': param_id,
-                })
-            else:
-                skipped_setup_params += 1
+    # NOTE: setup_* junction table rows are intentionally not generated here.
+    # The unified configuration_links from extract_configurations() already merges
+    # both ModelConfiguration and ModelConfigurationSetup input/output/parameter links
+    # into the configuration_id-keyed dicts above.
 
     print(f"Built junction tables:")
-    print(f"  - configuration_input: {len(config_input_rows)} rows")
-    print(f"  - configuration_output: {len(config_output_rows)} rows")
-    print(f"  - configuration_parameter: {len(config_parameter_rows)} rows")
-    print(f"  - setup_input: {len(setup_input_rows)} rows")
-    print(f"  - setup_output: {len(setup_output_rows)} rows")
-    print(f"  - setup_parameter: {len(setup_parameter_rows)} rows")
+    print(f"  - configuration_input: {len(config_input_rows)} rows (merged config + setup)")
+    print(f"  - configuration_output: {len(config_output_rows)} rows (merged config + setup)")
+    print(f"  - configuration_parameter: {len(config_parameter_rows)} rows (merged config + setup)")
 
-    total_skipped = (skipped_config_inputs + skipped_config_outputs + skipped_config_params +
-                     skipped_setup_inputs + skipped_setup_outputs + skipped_setup_params)
+    total_skipped = (skipped_config_inputs + skipped_config_outputs + skipped_config_params)
     if total_skipped > 0:
         print(f"  - Skipped {total_skipped} junction rows referencing missing entities")
 
@@ -669,9 +656,6 @@ def build_junction_tables(extracted_data: Dict[str, Any]) -> Dict[str, List[Dict
         'modelcatalog_configuration_input': config_input_rows,
         'modelcatalog_configuration_output': config_output_rows,
         'modelcatalog_configuration_parameter': config_parameter_rows,
-        'modelcatalog_setup_input': setup_input_rows,
-        'modelcatalog_setup_output': setup_output_rows,
-        'modelcatalog_setup_parameter': setup_parameter_rows,
     }
 
 
@@ -681,9 +665,13 @@ def transform_all(extracted_data: Dict[str, Any]) -> Dict[str, List[Dict[str, An
     """
     print("Transforming extracted data...")
 
-    # Deduplicate entities (original 6)
+    # Deduplicate entities (original 6 + unified configurations)
     extracted_data['software'] = deduplicate_by_id(extracted_data['software'])
     extracted_data['software_versions'] = deduplicate_by_id(extracted_data['software_versions'])
+    # Deduplicate unified configurations (covers both ModelConfiguration and ModelConfigurationSetup)
+    if extracted_data.get('configurations'):
+        extracted_data['configurations'] = deduplicate_by_id(extracted_data['configurations'])
+    # Keep legacy deduplicate for backward-compatible transform helpers
     extracted_data['model_configurations'] = deduplicate_by_id(extracted_data['model_configurations'])
     extracted_data['model_configuration_setups'] = deduplicate_by_id(extracted_data['model_configuration_setups'])
     extracted_data['dataset_specifications'] = deduplicate_by_id(extracted_data['dataset_specifications'])
@@ -771,8 +759,7 @@ def transform_all(extracted_data: Dict[str, Any]) -> Dict[str, List[Dict[str, An
         else:
             region['part_of_id'] = None
 
-    # Validate author_id FK on Software, SoftwareVersion, ModelConfiguration
-    # Some sd:author values reference URIs that aren't sd:Person typed
+    # Validate author_id FK on Software, SoftwareVersion, unified configurations
     valid_person_ids = {e['id'] for e in extracted_data['persons']}
     for entity in transformed['software']:
         if entity.get('author_id') and entity['author_id'] not in valid_person_ids:
@@ -780,6 +767,12 @@ def transform_all(extracted_data: Dict[str, Any]) -> Dict[str, List[Dict[str, An
     for entity in transformed['software_versions']:
         if entity.get('author_id') and entity['author_id'] not in valid_person_ids:
             entity['author_id'] = None
+    # Validate author_id on unified configurations (configs only — setups have author_id=None)
+    for entity in extracted_data.get('configurations', []):
+        if entity.get('author_id') and entity['author_id'] not in valid_person_ids:
+            entity['author_id'] = None
+
+    # Also validate on legacy entities (used by some junction builders as fallback)
     for entity in transformed['model_configurations']:
         if entity.get('author_id') and entity['author_id'] not in valid_person_ids:
             entity['author_id'] = None
@@ -787,19 +780,46 @@ def transform_all(extracted_data: Dict[str, Any]) -> Dict[str, List[Dict[str, An
         if entity.get('author_id') and entity['author_id'] not in valid_person_ids:
             entity['author_id'] = None
 
-    # Build junction table rows (original 6)
+    # Apply software_version_id FK to unified configurations
+    # config_to_version maps config_id -> software_version_id (from version_to_configuration inversion)
+    config_to_version = {}
+    for version_id, config_ids in extracted_data['links']['version_to_configuration'].items():
+        for cfg_id in config_ids:
+            config_to_version[cfg_id] = version_id
+
+    orphaned_configurations = []
+    for entity in extracted_data.get('configurations', []):
+        entity_id = entity['id']
+        if entity_id in config_to_version:
+            entity['software_version_id'] = config_to_version[entity_id]
+        elif entity.get('model_configuration_id') is None:
+            # Configuration (not setup) — should have a software_version_id
+            entity['software_version_id'] = None
+            orphaned_configurations.append(entity_id)
+        else:
+            # Setup entity — software_version_id is inherited from parent config, not a direct FK
+            entity['software_version_id'] = None
+
+    if orphaned_configurations:
+        print(f"WARNING: {len(orphaned_configurations)} Configuration entities have no parent SoftwareVersion")
+
+    # Deduplicate unified configurations
+    extracted_data['configurations'] = deduplicate_by_id(extracted_data.get('configurations', []))
+    extracted_data['configurations'] = ensure_labels(extracted_data['configurations'])
+
+    # Build junction table rows (merged input/output/parameter for unified table)
     junction_tables = build_junction_tables(extracted_data)
 
-    # Build extended junction table rows (14 new)
+    # Build extended junction table rows (author, category, causal_diagram, etc.)
     extended_junction_tables = build_extended_junction_tables(extracted_data)
 
     # Combine entity tables and junction tables
     result = {
-        # Original 6 entity types
+        # Unified configuration entity (D-09: merges ModelConfiguration + ModelConfigurationSetup)
+        'modelcatalog_configuration': extracted_data['configurations'],
+        # Other entity types
         'modelcatalog_software': transformed['software'],
         'modelcatalog_software_version': transformed['software_versions'],
-        'modelcatalog_model_configuration': transformed['model_configurations'],
-        'modelcatalog_model_configuration_setup': transformed['model_configuration_setups'],
         'modelcatalog_dataset_specification': transformed['dataset_specifications'],
         'modelcatalog_parameter': transformed['parameters'],
         # 10 new entity types
@@ -821,10 +841,9 @@ def transform_all(extracted_data: Dict[str, Any]) -> Dict[str, List[Dict[str, An
     result.update(extended_junction_tables)
 
     print(f"Transformation complete:")
+    print(f"  - configuration (unified): {len(result['modelcatalog_configuration'])} rows")
     print(f"  - software: {len(result['modelcatalog_software'])} rows")
     print(f"  - software_version: {len(result['modelcatalog_software_version'])} rows")
-    print(f"  - model_configuration: {len(result['modelcatalog_model_configuration'])} rows")
-    print(f"  - model_configuration_setup: {len(result['modelcatalog_model_configuration_setup'])} rows")
     print(f"  - dataset_specification: {len(result['modelcatalog_dataset_specification'])} rows")
     print(f"  - parameter: {len(result['modelcatalog_parameter'])} rows")
     print(f"  - person: {len(result['modelcatalog_person'])} rows")
@@ -840,9 +859,7 @@ def transform_all(extracted_data: Dict[str, Any]) -> Dict[str, List[Dict[str, An
 
     if transformed['orphan_counts']['software_versions'] > 0:
         print(f"  - WARNING: {transformed['orphan_counts']['software_versions']} orphaned software_versions")
-    if transformed['orphan_counts']['model_configurations'] > 0:
-        print(f"  - WARNING: {transformed['orphan_counts']['model_configurations']} orphaned model_configurations")
-    if transformed['orphan_counts']['model_configuration_setups'] > 0:
-        print(f"  - WARNING: {transformed['orphan_counts']['model_configuration_setups']} orphaned model_configuration_setups")
+    if orphaned_configurations:
+        print(f"  - WARNING: {len(orphaned_configurations)} orphaned configurations")
 
     return result
