@@ -100,7 +100,7 @@ export interface SubTasksService {
     getModelDataBindings(
         model_id: string,
         authorizationHeader: string
-    ): Promise<CatalogDatasetSpec[]>;
+    ): Promise<any[]>;
     getBlueprint(
         subtaskId: string,
         authorizationHeader: string,

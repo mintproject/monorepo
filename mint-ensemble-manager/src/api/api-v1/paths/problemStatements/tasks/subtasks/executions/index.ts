@@ -121,10 +121,10 @@ export const executionsRouter = (): Router => {
                                 if (threadModel.parameter_bindings) {
                                     for (const binding of threadModel.parameter_bindings) {
                                         if (
-                                            binding.model_parameter?.name &&
+                                            binding.model_parameter_id &&
                                             binding.parameter_value
                                         ) {
-                                            bindings[binding.model_parameter.name] =
+                                            bindings[binding.model_parameter_id] =
                                                 binding.parameter_value;
                                         }
                                     }
@@ -133,7 +133,7 @@ export const executionsRouter = (): Router => {
                                 const execution: Execution = {
                                     id: graphqlExecution.id,
                                     modelid:
-                                        threadModel.model?.id || graphqlExecution.model_id || "",
+                                        threadModel.modelcatalog_configuration?.id || graphqlExecution.modelcatalog_configuration_id || "",
                                     bindings: bindings,
                                     runid: graphqlExecution.run_id || graphqlExecution.id,
                                     start_time: graphqlExecution.start_time

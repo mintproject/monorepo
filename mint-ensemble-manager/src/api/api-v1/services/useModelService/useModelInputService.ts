@@ -2,11 +2,34 @@ import { DataMap, Dataslice, Thread } from "@/classes/mint/mint-types";
 import { AddDataRequest, DataInput } from "../../paths/problemStatements/tasks/subtasks";
 import { uuidv4 } from "@/classes/graphql/graphql_adapter";
 import { BadRequestError, NotFoundError } from "@/classes/common/errors";
-import { convertApiUrlToW3Id, CatalogDatasetSpec, CatalogModelConfigurationSetup, CatalogModelConfiguration } from "@/classes/mint/model-catalog-graphql-adapter";
+import { convertApiUrlToW3Id } from "@/classes/mint/model-catalog-graphql-adapter";
+
+// Local types for catalog model data from unified modelcatalog_configuration table
+interface CatalogDatasetSpec {
+    id: string;
+    label?: string;
+    description?: string;
+    has_format?: string;
+    position?: number;
+}
+
+interface CatalogModelConfiguration {
+    id: string;
+    label?: string;
+    description?: string;
+    has_component_location?: string;
+    has_software_image?: string;
+    model_configuration_id?: string | null;
+    inputs?: Array<{ input: CatalogDatasetSpec }>;
+    outputs?: Array<{ output: CatalogDatasetSpec }>;
+    parameters?: Array<{ parameter: any }>;
+}
+
+// Alias: both configurations and setups now come from the same unified table
+type CatalogModelConfigurationSetup = CatalogModelConfiguration;
 import { GraphQL } from "@/config/graphql";
 import { KeycloakAdapter } from "@/config/keycloak-adapter";
 import getModelcatalogConfigurationGQL from "@/classes/graphql/queries/model/get-modelcatalog-configuration.graphql";
-import getModelcatalogSetupGQL from "@/classes/graphql/queries/model/get-modelcatalog-setup.graphql";
 
 // Inline interface for model input with fixed resource support
 // Note: hasFixedResource is not in the new Hasura schema; all inputs from Hasura are treated as non-fixed
@@ -35,20 +58,9 @@ const fetchModelByW3Id = async (
         variables: { id: w3Id },
         fetchPolicy: "no-cache"
     });
-    const catalogConfig = configResult.data?.modelcatalog_model_configuration_by_pk;
+    const catalogConfig = configResult.data?.modelcatalog_configuration_by_pk;
     if (catalogConfig) {
         return catalogConfig as CatalogModelConfiguration;
-    }
-
-    // Fall back to setup
-    const setupResult = await apolloClient.query({
-        query: getModelcatalogSetupGQL,
-        variables: { id: w3Id },
-        fetchPolicy: "no-cache"
-    });
-    const catalogSetup = setupResult.data?.modelcatalog_model_configuration_setup_by_pk;
-    if (catalogSetup) {
-        return catalogSetup as CatalogModelConfigurationSetup;
     }
 
     return null;

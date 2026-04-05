@@ -13,6 +13,7 @@ export type Scalars = {
   Boolean: { input: boolean; output: boolean; }
   Int: { input: number; output: number; }
   Float: { input: number; output: number; }
+  _text: { input: any; output: any; }
   date: { input: any; output: any; }
   float8: { input: any; output: any; }
   geography: { input: any; output: any; }
@@ -82,6 +83,19 @@ export type String_Comparison_Exp = {
   _regex?: InputMaybe<Scalars['String']['input']>;
   /** does the column match the given SQL regular expression */
   _similar?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** Boolean expression to compare columns of type "_text". All fields are combined with logical 'AND'. */
+export type _Text_Comparison_Exp = {
+  _eq?: InputMaybe<Scalars['_text']['input']>;
+  _gt?: InputMaybe<Scalars['_text']['input']>;
+  _gte?: InputMaybe<Scalars['_text']['input']>;
+  _in?: InputMaybe<Array<Scalars['_text']['input']>>;
+  _is_null?: InputMaybe<Scalars['Boolean']['input']>;
+  _lt?: InputMaybe<Scalars['_text']['input']>;
+  _lte?: InputMaybe<Scalars['_text']['input']>;
+  _neq?: InputMaybe<Scalars['_text']['input']>;
+  _nin?: InputMaybe<Array<Scalars['_text']['input']>>;
 };
 
 /** columns and relationships of "dataset" */
@@ -908,9 +922,10 @@ export type Execution = {
   end_time?: Maybe<Scalars['timestamp']['output']>;
   execution_engine?: Maybe<Scalars['String']['output']>;
   id: Scalars['uuid']['output'];
+  model_id?: Maybe<Scalars['String']['output']>;
   /** An object relationship */
-  model: Model;
-  model_id: Scalars['String']['output'];
+  modelcatalog_configuration?: Maybe<Modelcatalog_Configuration>;
+  modelcatalog_configuration_id?: Maybe<Scalars['String']['output']>;
   /** An array relationship */
   parameter_bindings: Array<Execution_Parameter_Binding>;
   /** An aggregate relationship */
@@ -1081,8 +1096,9 @@ export type Execution_Bool_Exp = {
   end_time?: InputMaybe<Timestamp_Comparison_Exp>;
   execution_engine?: InputMaybe<String_Comparison_Exp>;
   id?: InputMaybe<Uuid_Comparison_Exp>;
-  model?: InputMaybe<Model_Bool_Exp>;
   model_id?: InputMaybe<String_Comparison_Exp>;
+  modelcatalog_configuration?: InputMaybe<Modelcatalog_Configuration_Bool_Exp>;
+  modelcatalog_configuration_id?: InputMaybe<String_Comparison_Exp>;
   parameter_bindings?: InputMaybe<Execution_Parameter_Binding_Bool_Exp>;
   results?: InputMaybe<Execution_Result_Bool_Exp>;
   run_id?: InputMaybe<String_Comparison_Exp>;
@@ -1284,8 +1300,9 @@ export type Execution_Insert_Input = {
   end_time?: InputMaybe<Scalars['timestamp']['input']>;
   execution_engine?: InputMaybe<Scalars['String']['input']>;
   id?: InputMaybe<Scalars['uuid']['input']>;
-  model?: InputMaybe<Model_Obj_Rel_Insert_Input>;
   model_id?: InputMaybe<Scalars['String']['input']>;
+  modelcatalog_configuration?: InputMaybe<Modelcatalog_Configuration_Obj_Rel_Insert_Input>;
+  modelcatalog_configuration_id?: InputMaybe<Scalars['String']['input']>;
   parameter_bindings?: InputMaybe<Execution_Parameter_Binding_Arr_Rel_Insert_Input>;
   results?: InputMaybe<Execution_Result_Arr_Rel_Insert_Input>;
   run_id?: InputMaybe<Scalars['String']['input']>;
@@ -1302,6 +1319,7 @@ export type Execution_Max_Fields = {
   execution_engine?: Maybe<Scalars['String']['output']>;
   id?: Maybe<Scalars['uuid']['output']>;
   model_id?: Maybe<Scalars['String']['output']>;
+  modelcatalog_configuration_id?: Maybe<Scalars['String']['output']>;
   run_id?: Maybe<Scalars['String']['output']>;
   run_progress?: Maybe<Scalars['float8']['output']>;
   start_time?: Maybe<Scalars['timestamp']['output']>;
@@ -1314,6 +1332,7 @@ export type Execution_Max_Order_By = {
   execution_engine?: InputMaybe<Order_By>;
   id?: InputMaybe<Order_By>;
   model_id?: InputMaybe<Order_By>;
+  modelcatalog_configuration_id?: InputMaybe<Order_By>;
   run_id?: InputMaybe<Order_By>;
   run_progress?: InputMaybe<Order_By>;
   start_time?: InputMaybe<Order_By>;
@@ -1327,6 +1346,7 @@ export type Execution_Min_Fields = {
   execution_engine?: Maybe<Scalars['String']['output']>;
   id?: Maybe<Scalars['uuid']['output']>;
   model_id?: Maybe<Scalars['String']['output']>;
+  modelcatalog_configuration_id?: Maybe<Scalars['String']['output']>;
   run_id?: Maybe<Scalars['String']['output']>;
   run_progress?: Maybe<Scalars['float8']['output']>;
   start_time?: Maybe<Scalars['timestamp']['output']>;
@@ -1339,6 +1359,7 @@ export type Execution_Min_Order_By = {
   execution_engine?: InputMaybe<Order_By>;
   id?: InputMaybe<Order_By>;
   model_id?: InputMaybe<Order_By>;
+  modelcatalog_configuration_id?: InputMaybe<Order_By>;
   run_id?: InputMaybe<Order_By>;
   run_progress?: InputMaybe<Order_By>;
   start_time?: InputMaybe<Order_By>;
@@ -1374,8 +1395,9 @@ export type Execution_Order_By = {
   end_time?: InputMaybe<Order_By>;
   execution_engine?: InputMaybe<Order_By>;
   id?: InputMaybe<Order_By>;
-  model?: InputMaybe<Model_Order_By>;
   model_id?: InputMaybe<Order_By>;
+  modelcatalog_configuration?: InputMaybe<Modelcatalog_Configuration_Order_By>;
+  modelcatalog_configuration_id?: InputMaybe<Order_By>;
   parameter_bindings_aggregate?: InputMaybe<Execution_Parameter_Binding_Aggregate_Order_By>;
   results_aggregate?: InputMaybe<Execution_Result_Aggregate_Order_By>;
   run_id?: InputMaybe<Order_By>;
@@ -1391,9 +1413,9 @@ export type Execution_Parameter_Binding = {
   /** An object relationship */
   execution: Execution;
   execution_id: Scalars['uuid']['output'];
-  /** An object relationship */
-  model_parameter: Model_Parameter;
   model_parameter_id: Scalars['String']['output'];
+  /** An object relationship */
+  modelcatalog_parameter: Modelcatalog_Parameter;
   parameter_value: Scalars['String']['output'];
 };
 
@@ -1440,8 +1462,8 @@ export type Execution_Parameter_Binding_Bool_Exp = {
   _or?: InputMaybe<Array<Execution_Parameter_Binding_Bool_Exp>>;
   execution?: InputMaybe<Execution_Bool_Exp>;
   execution_id?: InputMaybe<Uuid_Comparison_Exp>;
-  model_parameter?: InputMaybe<Model_Parameter_Bool_Exp>;
   model_parameter_id?: InputMaybe<String_Comparison_Exp>;
+  modelcatalog_parameter?: InputMaybe<Modelcatalog_Parameter_Bool_Exp>;
   parameter_value?: InputMaybe<String_Comparison_Exp>;
 };
 
@@ -1455,8 +1477,8 @@ export enum Execution_Parameter_Binding_Constraint {
 export type Execution_Parameter_Binding_Insert_Input = {
   execution?: InputMaybe<Execution_Obj_Rel_Insert_Input>;
   execution_id?: InputMaybe<Scalars['uuid']['input']>;
-  model_parameter?: InputMaybe<Model_Parameter_Obj_Rel_Insert_Input>;
   model_parameter_id?: InputMaybe<Scalars['String']['input']>;
+  modelcatalog_parameter?: InputMaybe<Modelcatalog_Parameter_Obj_Rel_Insert_Input>;
   parameter_value?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -1510,8 +1532,8 @@ export type Execution_Parameter_Binding_On_Conflict = {
 export type Execution_Parameter_Binding_Order_By = {
   execution?: InputMaybe<Execution_Order_By>;
   execution_id?: InputMaybe<Order_By>;
-  model_parameter?: InputMaybe<Model_Parameter_Order_By>;
   model_parameter_id?: InputMaybe<Order_By>;
+  modelcatalog_parameter?: InputMaybe<Modelcatalog_Parameter_Order_By>;
   parameter_value?: InputMaybe<Order_By>;
 };
 
@@ -1745,6 +1767,8 @@ export enum Execution_Select_Column {
   /** column name */
   ModelId = 'model_id',
   /** column name */
+  ModelcatalogConfigurationId = 'modelcatalog_configuration_id',
+  /** column name */
   RunId = 'run_id',
   /** column name */
   RunProgress = 'run_progress',
@@ -1760,6 +1784,7 @@ export type Execution_Set_Input = {
   execution_engine?: InputMaybe<Scalars['String']['input']>;
   id?: InputMaybe<Scalars['uuid']['input']>;
   model_id?: InputMaybe<Scalars['String']['input']>;
+  modelcatalog_configuration_id?: InputMaybe<Scalars['String']['input']>;
   run_id?: InputMaybe<Scalars['String']['input']>;
   run_progress?: InputMaybe<Scalars['float8']['input']>;
   start_time?: InputMaybe<Scalars['timestamp']['input']>;
@@ -1820,6 +1845,8 @@ export enum Execution_Update_Column {
   Id = 'id',
   /** column name */
   ModelId = 'model_id',
+  /** column name */
+  ModelcatalogConfigurationId = 'modelcatalog_configuration_id',
   /** column name */
   RunId = 'run_id',
   /** column name */
@@ -2118,304 +2145,6 @@ export type Intervention_Updates = {
   where: Intervention_Bool_Exp;
 };
 
-/** columns and relationships of "model" */
-export type Model = {
-  __typename?: 'model';
-  calibration_target_variable?: Maybe<Scalars['String']['output']>;
-  category?: Maybe<Scalars['String']['output']>;
-  code_url?: Maybe<Scalars['String']['output']>;
-  description?: Maybe<Scalars['String']['output']>;
-  dimensionality?: Maybe<Scalars['String']['output']>;
-  /** An array relationship */
-  executions: Array<Execution>;
-  /** An aggregate relationship */
-  executions_aggregate: Execution_Aggregate;
-  id: Scalars['String']['output'];
-  /** An array relationship */
-  inputs: Array<Model_Input>;
-  /** An aggregate relationship */
-  inputs_aggregate: Model_Input_Aggregate;
-  model_configuration: Scalars['String']['output'];
-  model_name: Scalars['String']['output'];
-  model_version: Scalars['String']['output'];
-  name: Scalars['String']['output'];
-  output_time_interval?: Maybe<Scalars['String']['output']>;
-  /** An array relationship */
-  outputs: Array<Model_Output>;
-  /** An aggregate relationship */
-  outputs_aggregate: Model_Output_Aggregate;
-  parameter_assignment?: Maybe<Scalars['String']['output']>;
-  parameter_assignment_details?: Maybe<Scalars['String']['output']>;
-  /** An array relationship */
-  parameters: Array<Model_Parameter>;
-  /** An aggregate relationship */
-  parameters_aggregate: Model_Parameter_Aggregate;
-  region_name?: Maybe<Scalars['String']['output']>;
-  software_image?: Maybe<Scalars['String']['output']>;
-  spatial_grid_resolution?: Maybe<Scalars['String']['output']>;
-  spatial_grid_type?: Maybe<Scalars['String']['output']>;
-  /** An array relationship */
-  thread_models: Array<Thread_Model>;
-  /** An aggregate relationship */
-  thread_models_aggregate: Thread_Model_Aggregate;
-  type: Scalars['String']['output'];
-  usage_notes?: Maybe<Scalars['String']['output']>;
-  user_id?: Maybe<Scalars['String']['output']>;
-};
-
-
-/** columns and relationships of "model" */
-export type ModelExecutionsArgs = {
-  distinct_on?: InputMaybe<Array<Execution_Select_Column>>;
-  limit?: InputMaybe<Scalars['Int']['input']>;
-  offset?: InputMaybe<Scalars['Int']['input']>;
-  order_by?: InputMaybe<Array<Execution_Order_By>>;
-  where?: InputMaybe<Execution_Bool_Exp>;
-};
-
-
-/** columns and relationships of "model" */
-export type ModelExecutions_AggregateArgs = {
-  distinct_on?: InputMaybe<Array<Execution_Select_Column>>;
-  limit?: InputMaybe<Scalars['Int']['input']>;
-  offset?: InputMaybe<Scalars['Int']['input']>;
-  order_by?: InputMaybe<Array<Execution_Order_By>>;
-  where?: InputMaybe<Execution_Bool_Exp>;
-};
-
-
-/** columns and relationships of "model" */
-export type ModelInputsArgs = {
-  distinct_on?: InputMaybe<Array<Model_Input_Select_Column>>;
-  limit?: InputMaybe<Scalars['Int']['input']>;
-  offset?: InputMaybe<Scalars['Int']['input']>;
-  order_by?: InputMaybe<Array<Model_Input_Order_By>>;
-  where?: InputMaybe<Model_Input_Bool_Exp>;
-};
-
-
-/** columns and relationships of "model" */
-export type ModelInputs_AggregateArgs = {
-  distinct_on?: InputMaybe<Array<Model_Input_Select_Column>>;
-  limit?: InputMaybe<Scalars['Int']['input']>;
-  offset?: InputMaybe<Scalars['Int']['input']>;
-  order_by?: InputMaybe<Array<Model_Input_Order_By>>;
-  where?: InputMaybe<Model_Input_Bool_Exp>;
-};
-
-
-/** columns and relationships of "model" */
-export type ModelOutputsArgs = {
-  distinct_on?: InputMaybe<Array<Model_Output_Select_Column>>;
-  limit?: InputMaybe<Scalars['Int']['input']>;
-  offset?: InputMaybe<Scalars['Int']['input']>;
-  order_by?: InputMaybe<Array<Model_Output_Order_By>>;
-  where?: InputMaybe<Model_Output_Bool_Exp>;
-};
-
-
-/** columns and relationships of "model" */
-export type ModelOutputs_AggregateArgs = {
-  distinct_on?: InputMaybe<Array<Model_Output_Select_Column>>;
-  limit?: InputMaybe<Scalars['Int']['input']>;
-  offset?: InputMaybe<Scalars['Int']['input']>;
-  order_by?: InputMaybe<Array<Model_Output_Order_By>>;
-  where?: InputMaybe<Model_Output_Bool_Exp>;
-};
-
-
-/** columns and relationships of "model" */
-export type ModelParametersArgs = {
-  distinct_on?: InputMaybe<Array<Model_Parameter_Select_Column>>;
-  limit?: InputMaybe<Scalars['Int']['input']>;
-  offset?: InputMaybe<Scalars['Int']['input']>;
-  order_by?: InputMaybe<Array<Model_Parameter_Order_By>>;
-  where?: InputMaybe<Model_Parameter_Bool_Exp>;
-};
-
-
-/** columns and relationships of "model" */
-export type ModelParameters_AggregateArgs = {
-  distinct_on?: InputMaybe<Array<Model_Parameter_Select_Column>>;
-  limit?: InputMaybe<Scalars['Int']['input']>;
-  offset?: InputMaybe<Scalars['Int']['input']>;
-  order_by?: InputMaybe<Array<Model_Parameter_Order_By>>;
-  where?: InputMaybe<Model_Parameter_Bool_Exp>;
-};
-
-
-/** columns and relationships of "model" */
-export type ModelThread_ModelsArgs = {
-  distinct_on?: InputMaybe<Array<Thread_Model_Select_Column>>;
-  limit?: InputMaybe<Scalars['Int']['input']>;
-  offset?: InputMaybe<Scalars['Int']['input']>;
-  order_by?: InputMaybe<Array<Thread_Model_Order_By>>;
-  where?: InputMaybe<Thread_Model_Bool_Exp>;
-};
-
-
-/** columns and relationships of "model" */
-export type ModelThread_Models_AggregateArgs = {
-  distinct_on?: InputMaybe<Array<Thread_Model_Select_Column>>;
-  limit?: InputMaybe<Scalars['Int']['input']>;
-  offset?: InputMaybe<Scalars['Int']['input']>;
-  order_by?: InputMaybe<Array<Thread_Model_Order_By>>;
-  where?: InputMaybe<Thread_Model_Bool_Exp>;
-};
-
-/** aggregated selection of "model" */
-export type Model_Aggregate = {
-  __typename?: 'model_aggregate';
-  aggregate?: Maybe<Model_Aggregate_Fields>;
-  nodes: Array<Model>;
-};
-
-/** aggregate fields of "model" */
-export type Model_Aggregate_Fields = {
-  __typename?: 'model_aggregate_fields';
-  count: Scalars['Int']['output'];
-  max?: Maybe<Model_Max_Fields>;
-  min?: Maybe<Model_Min_Fields>;
-};
-
-
-/** aggregate fields of "model" */
-export type Model_Aggregate_FieldsCountArgs = {
-  columns?: InputMaybe<Array<Model_Select_Column>>;
-  distinct?: InputMaybe<Scalars['Boolean']['input']>;
-};
-
-/** Boolean expression to filter rows from the table "model". All fields are combined with a logical 'AND'. */
-export type Model_Bool_Exp = {
-  _and?: InputMaybe<Array<Model_Bool_Exp>>;
-  _not?: InputMaybe<Model_Bool_Exp>;
-  _or?: InputMaybe<Array<Model_Bool_Exp>>;
-  calibration_target_variable?: InputMaybe<String_Comparison_Exp>;
-  category?: InputMaybe<String_Comparison_Exp>;
-  code_url?: InputMaybe<String_Comparison_Exp>;
-  description?: InputMaybe<String_Comparison_Exp>;
-  dimensionality?: InputMaybe<String_Comparison_Exp>;
-  executions?: InputMaybe<Execution_Bool_Exp>;
-  id?: InputMaybe<String_Comparison_Exp>;
-  inputs?: InputMaybe<Model_Input_Bool_Exp>;
-  model_configuration?: InputMaybe<String_Comparison_Exp>;
-  model_name?: InputMaybe<String_Comparison_Exp>;
-  model_version?: InputMaybe<String_Comparison_Exp>;
-  name?: InputMaybe<String_Comparison_Exp>;
-  output_time_interval?: InputMaybe<String_Comparison_Exp>;
-  outputs?: InputMaybe<Model_Output_Bool_Exp>;
-  parameter_assignment?: InputMaybe<String_Comparison_Exp>;
-  parameter_assignment_details?: InputMaybe<String_Comparison_Exp>;
-  parameters?: InputMaybe<Model_Parameter_Bool_Exp>;
-  region_name?: InputMaybe<String_Comparison_Exp>;
-  software_image?: InputMaybe<String_Comparison_Exp>;
-  spatial_grid_resolution?: InputMaybe<String_Comparison_Exp>;
-  spatial_grid_type?: InputMaybe<String_Comparison_Exp>;
-  thread_models?: InputMaybe<Thread_Model_Bool_Exp>;
-  type?: InputMaybe<String_Comparison_Exp>;
-  usage_notes?: InputMaybe<String_Comparison_Exp>;
-  user_id?: InputMaybe<String_Comparison_Exp>;
-};
-
-/** unique or primary key constraints on table "model" */
-export enum Model_Constraint {
-  /** unique or primary key constraint on columns "id" */
-  ModelPkey = 'model_pkey'
-}
-
-/** columns and relationships of "model_input" */
-export type Model_Input = {
-  __typename?: 'model_input';
-  /** An object relationship */
-  model: Model;
-  model_id: Scalars['String']['output'];
-  /** An object relationship */
-  model_io: Model_Io;
-  model_io_id: Scalars['String']['output'];
-  position?: Maybe<Scalars['Int']['output']>;
-};
-
-/** aggregated selection of "model_input" */
-export type Model_Input_Aggregate = {
-  __typename?: 'model_input_aggregate';
-  aggregate?: Maybe<Model_Input_Aggregate_Fields>;
-  nodes: Array<Model_Input>;
-};
-
-/** aggregate fields of "model_input" */
-export type Model_Input_Aggregate_Fields = {
-  __typename?: 'model_input_aggregate_fields';
-  avg?: Maybe<Model_Input_Avg_Fields>;
-  count: Scalars['Int']['output'];
-  max?: Maybe<Model_Input_Max_Fields>;
-  min?: Maybe<Model_Input_Min_Fields>;
-  stddev?: Maybe<Model_Input_Stddev_Fields>;
-  stddev_pop?: Maybe<Model_Input_Stddev_Pop_Fields>;
-  stddev_samp?: Maybe<Model_Input_Stddev_Samp_Fields>;
-  sum?: Maybe<Model_Input_Sum_Fields>;
-  var_pop?: Maybe<Model_Input_Var_Pop_Fields>;
-  var_samp?: Maybe<Model_Input_Var_Samp_Fields>;
-  variance?: Maybe<Model_Input_Variance_Fields>;
-};
-
-
-/** aggregate fields of "model_input" */
-export type Model_Input_Aggregate_FieldsCountArgs = {
-  columns?: InputMaybe<Array<Model_Input_Select_Column>>;
-  distinct?: InputMaybe<Scalars['Boolean']['input']>;
-};
-
-/** order by aggregate values of table "model_input" */
-export type Model_Input_Aggregate_Order_By = {
-  avg?: InputMaybe<Model_Input_Avg_Order_By>;
-  count?: InputMaybe<Order_By>;
-  max?: InputMaybe<Model_Input_Max_Order_By>;
-  min?: InputMaybe<Model_Input_Min_Order_By>;
-  stddev?: InputMaybe<Model_Input_Stddev_Order_By>;
-  stddev_pop?: InputMaybe<Model_Input_Stddev_Pop_Order_By>;
-  stddev_samp?: InputMaybe<Model_Input_Stddev_Samp_Order_By>;
-  sum?: InputMaybe<Model_Input_Sum_Order_By>;
-  var_pop?: InputMaybe<Model_Input_Var_Pop_Order_By>;
-  var_samp?: InputMaybe<Model_Input_Var_Samp_Order_By>;
-  variance?: InputMaybe<Model_Input_Variance_Order_By>;
-};
-
-/** input type for inserting array relation for remote table "model_input" */
-export type Model_Input_Arr_Rel_Insert_Input = {
-  data: Array<Model_Input_Insert_Input>;
-  /** upsert condition */
-  on_conflict?: InputMaybe<Model_Input_On_Conflict>;
-};
-
-/** aggregate avg on columns */
-export type Model_Input_Avg_Fields = {
-  __typename?: 'model_input_avg_fields';
-  position?: Maybe<Scalars['Float']['output']>;
-};
-
-/** order by avg() on columns of table "model_input" */
-export type Model_Input_Avg_Order_By = {
-  position?: InputMaybe<Order_By>;
-};
-
-/** Boolean expression to filter rows from the table "model_input". All fields are combined with a logical 'AND'. */
-export type Model_Input_Bool_Exp = {
-  _and?: InputMaybe<Array<Model_Input_Bool_Exp>>;
-  _not?: InputMaybe<Model_Input_Bool_Exp>;
-  _or?: InputMaybe<Array<Model_Input_Bool_Exp>>;
-  model?: InputMaybe<Model_Bool_Exp>;
-  model_id?: InputMaybe<String_Comparison_Exp>;
-  model_io?: InputMaybe<Model_Io_Bool_Exp>;
-  model_io_id?: InputMaybe<String_Comparison_Exp>;
-  position?: InputMaybe<Int_Comparison_Exp>;
-};
-
-/** unique or primary key constraints on table "model_input" */
-export enum Model_Input_Constraint {
-  /** unique or primary key constraint on columns "model_io_id", "model_id" */
-  ModelInputPkey = 'model_input_pkey'
-}
-
 /** columns and relationships of "model_input_fixed_binding" */
 export type Model_Input_Fixed_Binding = {
   __typename?: 'model_input_fixed_binding';
@@ -2572,222 +2301,6 @@ export type Model_Input_Fixed_Binding_Updates = {
   where: Model_Input_Fixed_Binding_Bool_Exp;
 };
 
-/** input type for incrementing numeric columns in table "model_input" */
-export type Model_Input_Inc_Input = {
-  position?: InputMaybe<Scalars['Int']['input']>;
-};
-
-/** input type for inserting data into table "model_input" */
-export type Model_Input_Insert_Input = {
-  model?: InputMaybe<Model_Obj_Rel_Insert_Input>;
-  model_id?: InputMaybe<Scalars['String']['input']>;
-  model_io?: InputMaybe<Model_Io_Obj_Rel_Insert_Input>;
-  model_io_id?: InputMaybe<Scalars['String']['input']>;
-  position?: InputMaybe<Scalars['Int']['input']>;
-};
-
-/** aggregate max on columns */
-export type Model_Input_Max_Fields = {
-  __typename?: 'model_input_max_fields';
-  model_id?: Maybe<Scalars['String']['output']>;
-  model_io_id?: Maybe<Scalars['String']['output']>;
-  position?: Maybe<Scalars['Int']['output']>;
-};
-
-/** order by max() on columns of table "model_input" */
-export type Model_Input_Max_Order_By = {
-  model_id?: InputMaybe<Order_By>;
-  model_io_id?: InputMaybe<Order_By>;
-  position?: InputMaybe<Order_By>;
-};
-
-/** aggregate min on columns */
-export type Model_Input_Min_Fields = {
-  __typename?: 'model_input_min_fields';
-  model_id?: Maybe<Scalars['String']['output']>;
-  model_io_id?: Maybe<Scalars['String']['output']>;
-  position?: Maybe<Scalars['Int']['output']>;
-};
-
-/** order by min() on columns of table "model_input" */
-export type Model_Input_Min_Order_By = {
-  model_id?: InputMaybe<Order_By>;
-  model_io_id?: InputMaybe<Order_By>;
-  position?: InputMaybe<Order_By>;
-};
-
-/** response of any mutation on the table "model_input" */
-export type Model_Input_Mutation_Response = {
-  __typename?: 'model_input_mutation_response';
-  /** number of rows affected by the mutation */
-  affected_rows: Scalars['Int']['output'];
-  /** data from the rows affected by the mutation */
-  returning: Array<Model_Input>;
-};
-
-/** on_conflict condition type for table "model_input" */
-export type Model_Input_On_Conflict = {
-  constraint: Model_Input_Constraint;
-  update_columns?: Array<Model_Input_Update_Column>;
-  where?: InputMaybe<Model_Input_Bool_Exp>;
-};
-
-/** Ordering options when selecting data from "model_input". */
-export type Model_Input_Order_By = {
-  model?: InputMaybe<Model_Order_By>;
-  model_id?: InputMaybe<Order_By>;
-  model_io?: InputMaybe<Model_Io_Order_By>;
-  model_io_id?: InputMaybe<Order_By>;
-  position?: InputMaybe<Order_By>;
-};
-
-/** primary key columns input for table: model_input */
-export type Model_Input_Pk_Columns_Input = {
-  model_id: Scalars['String']['input'];
-  model_io_id: Scalars['String']['input'];
-};
-
-/** select columns of table "model_input" */
-export enum Model_Input_Select_Column {
-  /** column name */
-  ModelId = 'model_id',
-  /** column name */
-  ModelIoId = 'model_io_id',
-  /** column name */
-  Position = 'position'
-}
-
-/** input type for updating data in table "model_input" */
-export type Model_Input_Set_Input = {
-  model_id?: InputMaybe<Scalars['String']['input']>;
-  model_io_id?: InputMaybe<Scalars['String']['input']>;
-  position?: InputMaybe<Scalars['Int']['input']>;
-};
-
-/** aggregate stddev on columns */
-export type Model_Input_Stddev_Fields = {
-  __typename?: 'model_input_stddev_fields';
-  position?: Maybe<Scalars['Float']['output']>;
-};
-
-/** order by stddev() on columns of table "model_input" */
-export type Model_Input_Stddev_Order_By = {
-  position?: InputMaybe<Order_By>;
-};
-
-/** aggregate stddev_pop on columns */
-export type Model_Input_Stddev_Pop_Fields = {
-  __typename?: 'model_input_stddev_pop_fields';
-  position?: Maybe<Scalars['Float']['output']>;
-};
-
-/** order by stddev_pop() on columns of table "model_input" */
-export type Model_Input_Stddev_Pop_Order_By = {
-  position?: InputMaybe<Order_By>;
-};
-
-/** aggregate stddev_samp on columns */
-export type Model_Input_Stddev_Samp_Fields = {
-  __typename?: 'model_input_stddev_samp_fields';
-  position?: Maybe<Scalars['Float']['output']>;
-};
-
-/** order by stddev_samp() on columns of table "model_input" */
-export type Model_Input_Stddev_Samp_Order_By = {
-  position?: InputMaybe<Order_By>;
-};
-
-/** aggregate sum on columns */
-export type Model_Input_Sum_Fields = {
-  __typename?: 'model_input_sum_fields';
-  position?: Maybe<Scalars['Int']['output']>;
-};
-
-/** order by sum() on columns of table "model_input" */
-export type Model_Input_Sum_Order_By = {
-  position?: InputMaybe<Order_By>;
-};
-
-/** update columns of table "model_input" */
-export enum Model_Input_Update_Column {
-  /** column name */
-  ModelId = 'model_id',
-  /** column name */
-  ModelIoId = 'model_io_id',
-  /** column name */
-  Position = 'position'
-}
-
-export type Model_Input_Updates = {
-  /** increments the numeric columns with given value of the filtered values */
-  _inc?: InputMaybe<Model_Input_Inc_Input>;
-  /** sets the columns of the filtered rows to the given values */
-  _set?: InputMaybe<Model_Input_Set_Input>;
-  where: Model_Input_Bool_Exp;
-};
-
-/** aggregate var_pop on columns */
-export type Model_Input_Var_Pop_Fields = {
-  __typename?: 'model_input_var_pop_fields';
-  position?: Maybe<Scalars['Float']['output']>;
-};
-
-/** order by var_pop() on columns of table "model_input" */
-export type Model_Input_Var_Pop_Order_By = {
-  position?: InputMaybe<Order_By>;
-};
-
-/** aggregate var_samp on columns */
-export type Model_Input_Var_Samp_Fields = {
-  __typename?: 'model_input_var_samp_fields';
-  position?: Maybe<Scalars['Float']['output']>;
-};
-
-/** order by var_samp() on columns of table "model_input" */
-export type Model_Input_Var_Samp_Order_By = {
-  position?: InputMaybe<Order_By>;
-};
-
-/** aggregate variance on columns */
-export type Model_Input_Variance_Fields = {
-  __typename?: 'model_input_variance_fields';
-  position?: Maybe<Scalars['Float']['output']>;
-};
-
-/** order by variance() on columns of table "model_input" */
-export type Model_Input_Variance_Order_By = {
-  position?: InputMaybe<Order_By>;
-};
-
-/** input type for inserting data into table "model" */
-export type Model_Insert_Input = {
-  calibration_target_variable?: InputMaybe<Scalars['String']['input']>;
-  category?: InputMaybe<Scalars['String']['input']>;
-  code_url?: InputMaybe<Scalars['String']['input']>;
-  description?: InputMaybe<Scalars['String']['input']>;
-  dimensionality?: InputMaybe<Scalars['String']['input']>;
-  executions?: InputMaybe<Execution_Arr_Rel_Insert_Input>;
-  id?: InputMaybe<Scalars['String']['input']>;
-  inputs?: InputMaybe<Model_Input_Arr_Rel_Insert_Input>;
-  model_configuration?: InputMaybe<Scalars['String']['input']>;
-  model_name?: InputMaybe<Scalars['String']['input']>;
-  model_version?: InputMaybe<Scalars['String']['input']>;
-  name?: InputMaybe<Scalars['String']['input']>;
-  output_time_interval?: InputMaybe<Scalars['String']['input']>;
-  outputs?: InputMaybe<Model_Output_Arr_Rel_Insert_Input>;
-  parameter_assignment?: InputMaybe<Scalars['String']['input']>;
-  parameter_assignment_details?: InputMaybe<Scalars['String']['input']>;
-  parameters?: InputMaybe<Model_Parameter_Arr_Rel_Insert_Input>;
-  region_name?: InputMaybe<Scalars['String']['input']>;
-  software_image?: InputMaybe<Scalars['String']['input']>;
-  spatial_grid_resolution?: InputMaybe<Scalars['String']['input']>;
-  spatial_grid_type?: InputMaybe<Scalars['String']['input']>;
-  thread_models?: InputMaybe<Thread_Model_Arr_Rel_Insert_Input>;
-  type?: InputMaybe<Scalars['String']['input']>;
-  usage_notes?: InputMaybe<Scalars['String']['input']>;
-  user_id?: InputMaybe<Scalars['String']['input']>;
-};
-
 /** columns and relationships of "model_io" */
 export type Model_Io = {
   __typename?: 'model_io';
@@ -2806,14 +2319,9 @@ export type Model_Io = {
   fixed_bindings_aggregate: Model_Input_Fixed_Binding_Aggregate;
   format?: Maybe<Scalars['String']['output']>;
   id: Scalars['String']['output'];
-  /** An array relationship */
-  model_inputs: Array<Model_Input>;
-  /** An aggregate relationship */
-  model_inputs_aggregate: Model_Input_Aggregate;
-  /** An array relationship */
-  model_outputs: Array<Model_Output>;
-  /** An aggregate relationship */
-  model_outputs_aggregate: Model_Output_Aggregate;
+  /** An object relationship */
+  modelcatalog_dataset_specification?: Maybe<Modelcatalog_Dataset_Specification>;
+  modelcatalog_dataset_specification_id?: Maybe<Scalars['String']['output']>;
   name: Scalars['String']['output'];
   /** An array relationship */
   thread_model_ios: Array<Thread_Model_Io>;
@@ -2888,46 +2396,6 @@ export type Model_IoFixed_Bindings_AggregateArgs = {
 
 
 /** columns and relationships of "model_io" */
-export type Model_IoModel_InputsArgs = {
-  distinct_on?: InputMaybe<Array<Model_Input_Select_Column>>;
-  limit?: InputMaybe<Scalars['Int']['input']>;
-  offset?: InputMaybe<Scalars['Int']['input']>;
-  order_by?: InputMaybe<Array<Model_Input_Order_By>>;
-  where?: InputMaybe<Model_Input_Bool_Exp>;
-};
-
-
-/** columns and relationships of "model_io" */
-export type Model_IoModel_Inputs_AggregateArgs = {
-  distinct_on?: InputMaybe<Array<Model_Input_Select_Column>>;
-  limit?: InputMaybe<Scalars['Int']['input']>;
-  offset?: InputMaybe<Scalars['Int']['input']>;
-  order_by?: InputMaybe<Array<Model_Input_Order_By>>;
-  where?: InputMaybe<Model_Input_Bool_Exp>;
-};
-
-
-/** columns and relationships of "model_io" */
-export type Model_IoModel_OutputsArgs = {
-  distinct_on?: InputMaybe<Array<Model_Output_Select_Column>>;
-  limit?: InputMaybe<Scalars['Int']['input']>;
-  offset?: InputMaybe<Scalars['Int']['input']>;
-  order_by?: InputMaybe<Array<Model_Output_Order_By>>;
-  where?: InputMaybe<Model_Output_Bool_Exp>;
-};
-
-
-/** columns and relationships of "model_io" */
-export type Model_IoModel_Outputs_AggregateArgs = {
-  distinct_on?: InputMaybe<Array<Model_Output_Select_Column>>;
-  limit?: InputMaybe<Scalars['Int']['input']>;
-  offset?: InputMaybe<Scalars['Int']['input']>;
-  order_by?: InputMaybe<Array<Model_Output_Order_By>>;
-  where?: InputMaybe<Model_Output_Bool_Exp>;
-};
-
-
-/** columns and relationships of "model_io" */
 export type Model_IoThread_Model_IosArgs = {
   distinct_on?: InputMaybe<Array<Thread_Model_Io_Select_Column>>;
   limit?: InputMaybe<Scalars['Int']['input']>;
@@ -2988,6 +2456,20 @@ export type Model_Io_Aggregate_FieldsCountArgs = {
   distinct?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
+/** order by aggregate values of table "model_io" */
+export type Model_Io_Aggregate_Order_By = {
+  count?: InputMaybe<Order_By>;
+  max?: InputMaybe<Model_Io_Max_Order_By>;
+  min?: InputMaybe<Model_Io_Min_Order_By>;
+};
+
+/** input type for inserting array relation for remote table "model_io" */
+export type Model_Io_Arr_Rel_Insert_Input = {
+  data: Array<Model_Io_Insert_Input>;
+  /** upsert condition */
+  on_conflict?: InputMaybe<Model_Io_On_Conflict>;
+};
+
 /** Boolean expression to filter rows from the table "model_io". All fields are combined with a logical 'AND'. */
 export type Model_Io_Bool_Exp = {
   _and?: InputMaybe<Array<Model_Io_Bool_Exp>>;
@@ -2999,8 +2481,8 @@ export type Model_Io_Bool_Exp = {
   fixed_bindings?: InputMaybe<Model_Input_Fixed_Binding_Bool_Exp>;
   format?: InputMaybe<String_Comparison_Exp>;
   id?: InputMaybe<String_Comparison_Exp>;
-  model_inputs?: InputMaybe<Model_Input_Bool_Exp>;
-  model_outputs?: InputMaybe<Model_Output_Bool_Exp>;
+  modelcatalog_dataset_specification?: InputMaybe<Modelcatalog_Dataset_Specification_Bool_Exp>;
+  modelcatalog_dataset_specification_id?: InputMaybe<String_Comparison_Exp>;
   name?: InputMaybe<String_Comparison_Exp>;
   thread_model_ios?: InputMaybe<Thread_Model_Io_Bool_Exp>;
   type?: InputMaybe<String_Comparison_Exp>;
@@ -3021,8 +2503,8 @@ export type Model_Io_Insert_Input = {
   fixed_bindings?: InputMaybe<Model_Input_Fixed_Binding_Arr_Rel_Insert_Input>;
   format?: InputMaybe<Scalars['String']['input']>;
   id?: InputMaybe<Scalars['String']['input']>;
-  model_inputs?: InputMaybe<Model_Input_Arr_Rel_Insert_Input>;
-  model_outputs?: InputMaybe<Model_Output_Arr_Rel_Insert_Input>;
+  modelcatalog_dataset_specification?: InputMaybe<Modelcatalog_Dataset_Specification_Obj_Rel_Insert_Input>;
+  modelcatalog_dataset_specification_id?: InputMaybe<Scalars['String']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
   thread_model_ios?: InputMaybe<Thread_Model_Io_Arr_Rel_Insert_Input>;
   type?: InputMaybe<Scalars['String']['input']>;
@@ -3035,8 +2517,19 @@ export type Model_Io_Max_Fields = {
   description?: Maybe<Scalars['String']['output']>;
   format?: Maybe<Scalars['String']['output']>;
   id?: Maybe<Scalars['String']['output']>;
+  modelcatalog_dataset_specification_id?: Maybe<Scalars['String']['output']>;
   name?: Maybe<Scalars['String']['output']>;
   type?: Maybe<Scalars['String']['output']>;
+};
+
+/** order by max() on columns of table "model_io" */
+export type Model_Io_Max_Order_By = {
+  description?: InputMaybe<Order_By>;
+  format?: InputMaybe<Order_By>;
+  id?: InputMaybe<Order_By>;
+  modelcatalog_dataset_specification_id?: InputMaybe<Order_By>;
+  name?: InputMaybe<Order_By>;
+  type?: InputMaybe<Order_By>;
 };
 
 /** aggregate min on columns */
@@ -3045,8 +2538,19 @@ export type Model_Io_Min_Fields = {
   description?: Maybe<Scalars['String']['output']>;
   format?: Maybe<Scalars['String']['output']>;
   id?: Maybe<Scalars['String']['output']>;
+  modelcatalog_dataset_specification_id?: Maybe<Scalars['String']['output']>;
   name?: Maybe<Scalars['String']['output']>;
   type?: Maybe<Scalars['String']['output']>;
+};
+
+/** order by min() on columns of table "model_io" */
+export type Model_Io_Min_Order_By = {
+  description?: InputMaybe<Order_By>;
+  format?: InputMaybe<Order_By>;
+  id?: InputMaybe<Order_By>;
+  modelcatalog_dataset_specification_id?: InputMaybe<Order_By>;
+  name?: InputMaybe<Order_By>;
+  type?: InputMaybe<Order_By>;
 };
 
 /** response of any mutation on the table "model_io" */
@@ -3080,8 +2584,8 @@ export type Model_Io_Order_By = {
   fixed_bindings_aggregate?: InputMaybe<Model_Input_Fixed_Binding_Aggregate_Order_By>;
   format?: InputMaybe<Order_By>;
   id?: InputMaybe<Order_By>;
-  model_inputs_aggregate?: InputMaybe<Model_Input_Aggregate_Order_By>;
-  model_outputs_aggregate?: InputMaybe<Model_Output_Aggregate_Order_By>;
+  modelcatalog_dataset_specification?: InputMaybe<Modelcatalog_Dataset_Specification_Order_By>;
+  modelcatalog_dataset_specification_id?: InputMaybe<Order_By>;
   name?: InputMaybe<Order_By>;
   thread_model_ios_aggregate?: InputMaybe<Thread_Model_Io_Aggregate_Order_By>;
   type?: InputMaybe<Order_By>;
@@ -3102,6 +2606,8 @@ export enum Model_Io_Select_Column {
   /** column name */
   Id = 'id',
   /** column name */
+  ModelcatalogDatasetSpecificationId = 'modelcatalog_dataset_specification_id',
+  /** column name */
   Name = 'name',
   /** column name */
   Type = 'type'
@@ -3112,6 +2618,7 @@ export type Model_Io_Set_Input = {
   description?: InputMaybe<Scalars['String']['input']>;
   format?: InputMaybe<Scalars['String']['input']>;
   id?: InputMaybe<Scalars['String']['input']>;
+  modelcatalog_dataset_specification_id?: InputMaybe<Scalars['String']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
   type?: InputMaybe<Scalars['String']['input']>;
 };
@@ -3124,6 +2631,8 @@ export enum Model_Io_Update_Column {
   Format = 'format',
   /** column name */
   Id = 'id',
+  /** column name */
+  ModelcatalogDatasetSpecificationId = 'modelcatalog_dataset_specification_id',
   /** column name */
   Name = 'name',
   /** column name */
@@ -3292,420 +2801,4033 @@ export type Model_Io_Variable_Updates = {
   where: Model_Io_Variable_Bool_Exp;
 };
 
-/** aggregate max on columns */
-export type Model_Max_Fields = {
-  __typename?: 'model_max_fields';
-  calibration_target_variable?: Maybe<Scalars['String']['output']>;
-  category?: Maybe<Scalars['String']['output']>;
-  code_url?: Maybe<Scalars['String']['output']>;
-  description?: Maybe<Scalars['String']['output']>;
-  dimensionality?: Maybe<Scalars['String']['output']>;
-  id?: Maybe<Scalars['String']['output']>;
-  model_configuration?: Maybe<Scalars['String']['output']>;
-  model_name?: Maybe<Scalars['String']['output']>;
-  model_version?: Maybe<Scalars['String']['output']>;
-  name?: Maybe<Scalars['String']['output']>;
-  output_time_interval?: Maybe<Scalars['String']['output']>;
-  parameter_assignment?: Maybe<Scalars['String']['output']>;
-  parameter_assignment_details?: Maybe<Scalars['String']['output']>;
-  region_name?: Maybe<Scalars['String']['output']>;
-  software_image?: Maybe<Scalars['String']['output']>;
-  spatial_grid_resolution?: Maybe<Scalars['String']['output']>;
-  spatial_grid_type?: Maybe<Scalars['String']['output']>;
-  type?: Maybe<Scalars['String']['output']>;
-  usage_notes?: Maybe<Scalars['String']['output']>;
-  user_id?: Maybe<Scalars['String']['output']>;
+/** columns and relationships of "modelcatalog_causal_diagram" */
+export type Modelcatalog_Causal_Diagram = {
+  __typename?: 'modelcatalog_causal_diagram';
+  /** An array relationship */
+  configurations: Array<Modelcatalog_Configuration_Causal_Diagram>;
+  /** An aggregate relationship */
+  configurations_aggregate: Modelcatalog_Configuration_Causal_Diagram_Aggregate;
+  /** An array relationship */
+  diagram_parts: Array<Modelcatalog_Diagram_Part>;
+  /** An aggregate relationship */
+  diagram_parts_aggregate: Modelcatalog_Diagram_Part_Aggregate;
+  id: Scalars['String']['output'];
+  label: Scalars['String']['output'];
 };
 
-/** aggregate min on columns */
-export type Model_Min_Fields = {
-  __typename?: 'model_min_fields';
-  calibration_target_variable?: Maybe<Scalars['String']['output']>;
-  category?: Maybe<Scalars['String']['output']>;
-  code_url?: Maybe<Scalars['String']['output']>;
-  description?: Maybe<Scalars['String']['output']>;
-  dimensionality?: Maybe<Scalars['String']['output']>;
-  id?: Maybe<Scalars['String']['output']>;
-  model_configuration?: Maybe<Scalars['String']['output']>;
-  model_name?: Maybe<Scalars['String']['output']>;
-  model_version?: Maybe<Scalars['String']['output']>;
-  name?: Maybe<Scalars['String']['output']>;
-  output_time_interval?: Maybe<Scalars['String']['output']>;
-  parameter_assignment?: Maybe<Scalars['String']['output']>;
-  parameter_assignment_details?: Maybe<Scalars['String']['output']>;
-  region_name?: Maybe<Scalars['String']['output']>;
-  software_image?: Maybe<Scalars['String']['output']>;
-  spatial_grid_resolution?: Maybe<Scalars['String']['output']>;
-  spatial_grid_type?: Maybe<Scalars['String']['output']>;
-  type?: Maybe<Scalars['String']['output']>;
-  usage_notes?: Maybe<Scalars['String']['output']>;
-  user_id?: Maybe<Scalars['String']['output']>;
+
+/** columns and relationships of "modelcatalog_causal_diagram" */
+export type Modelcatalog_Causal_DiagramConfigurationsArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Configuration_Causal_Diagram_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Configuration_Causal_Diagram_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Configuration_Causal_Diagram_Bool_Exp>;
 };
 
-/** response of any mutation on the table "model" */
-export type Model_Mutation_Response = {
-  __typename?: 'model_mutation_response';
-  /** number of rows affected by the mutation */
-  affected_rows: Scalars['Int']['output'];
-  /** data from the rows affected by the mutation */
-  returning: Array<Model>;
+
+/** columns and relationships of "modelcatalog_causal_diagram" */
+export type Modelcatalog_Causal_DiagramConfigurations_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Configuration_Causal_Diagram_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Configuration_Causal_Diagram_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Configuration_Causal_Diagram_Bool_Exp>;
 };
 
-/** input type for inserting object relation for remote table "model" */
-export type Model_Obj_Rel_Insert_Input = {
-  data: Model_Insert_Input;
-  /** upsert condition */
-  on_conflict?: InputMaybe<Model_On_Conflict>;
+
+/** columns and relationships of "modelcatalog_causal_diagram" */
+export type Modelcatalog_Causal_DiagramDiagram_PartsArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Diagram_Part_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Diagram_Part_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Diagram_Part_Bool_Exp>;
 };
 
-/** on_conflict condition type for table "model" */
-export type Model_On_Conflict = {
-  constraint: Model_Constraint;
-  update_columns?: Array<Model_Update_Column>;
-  where?: InputMaybe<Model_Bool_Exp>;
+
+/** columns and relationships of "modelcatalog_causal_diagram" */
+export type Modelcatalog_Causal_DiagramDiagram_Parts_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Diagram_Part_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Diagram_Part_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Diagram_Part_Bool_Exp>;
 };
 
-/** Ordering options when selecting data from "model". */
-export type Model_Order_By = {
-  calibration_target_variable?: InputMaybe<Order_By>;
-  category?: InputMaybe<Order_By>;
-  code_url?: InputMaybe<Order_By>;
-  description?: InputMaybe<Order_By>;
-  dimensionality?: InputMaybe<Order_By>;
-  executions_aggregate?: InputMaybe<Execution_Aggregate_Order_By>;
-  id?: InputMaybe<Order_By>;
-  inputs_aggregate?: InputMaybe<Model_Input_Aggregate_Order_By>;
-  model_configuration?: InputMaybe<Order_By>;
-  model_name?: InputMaybe<Order_By>;
-  model_version?: InputMaybe<Order_By>;
-  name?: InputMaybe<Order_By>;
-  output_time_interval?: InputMaybe<Order_By>;
-  outputs_aggregate?: InputMaybe<Model_Output_Aggregate_Order_By>;
-  parameter_assignment?: InputMaybe<Order_By>;
-  parameter_assignment_details?: InputMaybe<Order_By>;
-  parameters_aggregate?: InputMaybe<Model_Parameter_Aggregate_Order_By>;
-  region_name?: InputMaybe<Order_By>;
-  software_image?: InputMaybe<Order_By>;
-  spatial_grid_resolution?: InputMaybe<Order_By>;
-  spatial_grid_type?: InputMaybe<Order_By>;
-  thread_models_aggregate?: InputMaybe<Thread_Model_Aggregate_Order_By>;
-  type?: InputMaybe<Order_By>;
-  usage_notes?: InputMaybe<Order_By>;
-  user_id?: InputMaybe<Order_By>;
+/** aggregated selection of "modelcatalog_causal_diagram" */
+export type Modelcatalog_Causal_Diagram_Aggregate = {
+  __typename?: 'modelcatalog_causal_diagram_aggregate';
+  aggregate?: Maybe<Modelcatalog_Causal_Diagram_Aggregate_Fields>;
+  nodes: Array<Modelcatalog_Causal_Diagram>;
 };
 
-/** columns and relationships of "model_output" */
-export type Model_Output = {
-  __typename?: 'model_output';
-  /** An object relationship */
-  model: Model;
-  model_id: Scalars['String']['output'];
-  /** An object relationship */
-  model_io: Model_Io;
-  model_io_id: Scalars['String']['output'];
-  position?: Maybe<Scalars['Int']['output']>;
-};
-
-/** aggregated selection of "model_output" */
-export type Model_Output_Aggregate = {
-  __typename?: 'model_output_aggregate';
-  aggregate?: Maybe<Model_Output_Aggregate_Fields>;
-  nodes: Array<Model_Output>;
-};
-
-/** aggregate fields of "model_output" */
-export type Model_Output_Aggregate_Fields = {
-  __typename?: 'model_output_aggregate_fields';
-  avg?: Maybe<Model_Output_Avg_Fields>;
+/** aggregate fields of "modelcatalog_causal_diagram" */
+export type Modelcatalog_Causal_Diagram_Aggregate_Fields = {
+  __typename?: 'modelcatalog_causal_diagram_aggregate_fields';
   count: Scalars['Int']['output'];
-  max?: Maybe<Model_Output_Max_Fields>;
-  min?: Maybe<Model_Output_Min_Fields>;
-  stddev?: Maybe<Model_Output_Stddev_Fields>;
-  stddev_pop?: Maybe<Model_Output_Stddev_Pop_Fields>;
-  stddev_samp?: Maybe<Model_Output_Stddev_Samp_Fields>;
-  sum?: Maybe<Model_Output_Sum_Fields>;
-  var_pop?: Maybe<Model_Output_Var_Pop_Fields>;
-  var_samp?: Maybe<Model_Output_Var_Samp_Fields>;
-  variance?: Maybe<Model_Output_Variance_Fields>;
+  max?: Maybe<Modelcatalog_Causal_Diagram_Max_Fields>;
+  min?: Maybe<Modelcatalog_Causal_Diagram_Min_Fields>;
 };
 
 
-/** aggregate fields of "model_output" */
-export type Model_Output_Aggregate_FieldsCountArgs = {
-  columns?: InputMaybe<Array<Model_Output_Select_Column>>;
+/** aggregate fields of "modelcatalog_causal_diagram" */
+export type Modelcatalog_Causal_Diagram_Aggregate_FieldsCountArgs = {
+  columns?: InputMaybe<Array<Modelcatalog_Causal_Diagram_Select_Column>>;
   distinct?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
-/** order by aggregate values of table "model_output" */
-export type Model_Output_Aggregate_Order_By = {
-  avg?: InputMaybe<Model_Output_Avg_Order_By>;
-  count?: InputMaybe<Order_By>;
-  max?: InputMaybe<Model_Output_Max_Order_By>;
-  min?: InputMaybe<Model_Output_Min_Order_By>;
-  stddev?: InputMaybe<Model_Output_Stddev_Order_By>;
-  stddev_pop?: InputMaybe<Model_Output_Stddev_Pop_Order_By>;
-  stddev_samp?: InputMaybe<Model_Output_Stddev_Samp_Order_By>;
-  sum?: InputMaybe<Model_Output_Sum_Order_By>;
-  var_pop?: InputMaybe<Model_Output_Var_Pop_Order_By>;
-  var_samp?: InputMaybe<Model_Output_Var_Samp_Order_By>;
-  variance?: InputMaybe<Model_Output_Variance_Order_By>;
+/** Boolean expression to filter rows from the table "modelcatalog_causal_diagram". All fields are combined with a logical 'AND'. */
+export type Modelcatalog_Causal_Diagram_Bool_Exp = {
+  _and?: InputMaybe<Array<Modelcatalog_Causal_Diagram_Bool_Exp>>;
+  _not?: InputMaybe<Modelcatalog_Causal_Diagram_Bool_Exp>;
+  _or?: InputMaybe<Array<Modelcatalog_Causal_Diagram_Bool_Exp>>;
+  configurations?: InputMaybe<Modelcatalog_Configuration_Causal_Diagram_Bool_Exp>;
+  diagram_parts?: InputMaybe<Modelcatalog_Diagram_Part_Bool_Exp>;
+  id?: InputMaybe<String_Comparison_Exp>;
+  label?: InputMaybe<String_Comparison_Exp>;
 };
 
-/** input type for inserting array relation for remote table "model_output" */
-export type Model_Output_Arr_Rel_Insert_Input = {
-  data: Array<Model_Output_Insert_Input>;
-  /** upsert condition */
-  on_conflict?: InputMaybe<Model_Output_On_Conflict>;
-};
-
-/** aggregate avg on columns */
-export type Model_Output_Avg_Fields = {
-  __typename?: 'model_output_avg_fields';
-  position?: Maybe<Scalars['Float']['output']>;
-};
-
-/** order by avg() on columns of table "model_output" */
-export type Model_Output_Avg_Order_By = {
-  position?: InputMaybe<Order_By>;
-};
-
-/** Boolean expression to filter rows from the table "model_output". All fields are combined with a logical 'AND'. */
-export type Model_Output_Bool_Exp = {
-  _and?: InputMaybe<Array<Model_Output_Bool_Exp>>;
-  _not?: InputMaybe<Model_Output_Bool_Exp>;
-  _or?: InputMaybe<Array<Model_Output_Bool_Exp>>;
-  model?: InputMaybe<Model_Bool_Exp>;
-  model_id?: InputMaybe<String_Comparison_Exp>;
-  model_io?: InputMaybe<Model_Io_Bool_Exp>;
-  model_io_id?: InputMaybe<String_Comparison_Exp>;
-  position?: InputMaybe<Int_Comparison_Exp>;
-};
-
-/** unique or primary key constraints on table "model_output" */
-export enum Model_Output_Constraint {
-  /** unique or primary key constraint on columns "model_io_id", "model_id" */
-  ModelOutputPkey = 'model_output_pkey'
+/** unique or primary key constraints on table "modelcatalog_causal_diagram" */
+export enum Modelcatalog_Causal_Diagram_Constraint {
+  /** unique or primary key constraint on columns "id" */
+  ModelcatalogCausalDiagramPkey = 'modelcatalog_causal_diagram_pkey'
 }
 
-/** input type for incrementing numeric columns in table "model_output" */
-export type Model_Output_Inc_Input = {
-  position?: InputMaybe<Scalars['Int']['input']>;
-};
-
-/** input type for inserting data into table "model_output" */
-export type Model_Output_Insert_Input = {
-  model?: InputMaybe<Model_Obj_Rel_Insert_Input>;
-  model_id?: InputMaybe<Scalars['String']['input']>;
-  model_io?: InputMaybe<Model_Io_Obj_Rel_Insert_Input>;
-  model_io_id?: InputMaybe<Scalars['String']['input']>;
-  position?: InputMaybe<Scalars['Int']['input']>;
+/** input type for inserting data into table "modelcatalog_causal_diagram" */
+export type Modelcatalog_Causal_Diagram_Insert_Input = {
+  configurations?: InputMaybe<Modelcatalog_Configuration_Causal_Diagram_Arr_Rel_Insert_Input>;
+  diagram_parts?: InputMaybe<Modelcatalog_Diagram_Part_Arr_Rel_Insert_Input>;
+  id?: InputMaybe<Scalars['String']['input']>;
+  label?: InputMaybe<Scalars['String']['input']>;
 };
 
 /** aggregate max on columns */
-export type Model_Output_Max_Fields = {
-  __typename?: 'model_output_max_fields';
-  model_id?: Maybe<Scalars['String']['output']>;
-  model_io_id?: Maybe<Scalars['String']['output']>;
-  position?: Maybe<Scalars['Int']['output']>;
-};
-
-/** order by max() on columns of table "model_output" */
-export type Model_Output_Max_Order_By = {
-  model_id?: InputMaybe<Order_By>;
-  model_io_id?: InputMaybe<Order_By>;
-  position?: InputMaybe<Order_By>;
+export type Modelcatalog_Causal_Diagram_Max_Fields = {
+  __typename?: 'modelcatalog_causal_diagram_max_fields';
+  id?: Maybe<Scalars['String']['output']>;
+  label?: Maybe<Scalars['String']['output']>;
 };
 
 /** aggregate min on columns */
-export type Model_Output_Min_Fields = {
-  __typename?: 'model_output_min_fields';
-  model_id?: Maybe<Scalars['String']['output']>;
-  model_io_id?: Maybe<Scalars['String']['output']>;
-  position?: Maybe<Scalars['Int']['output']>;
+export type Modelcatalog_Causal_Diagram_Min_Fields = {
+  __typename?: 'modelcatalog_causal_diagram_min_fields';
+  id?: Maybe<Scalars['String']['output']>;
+  label?: Maybe<Scalars['String']['output']>;
 };
 
-/** order by min() on columns of table "model_output" */
-export type Model_Output_Min_Order_By = {
-  model_id?: InputMaybe<Order_By>;
-  model_io_id?: InputMaybe<Order_By>;
-  position?: InputMaybe<Order_By>;
-};
-
-/** response of any mutation on the table "model_output" */
-export type Model_Output_Mutation_Response = {
-  __typename?: 'model_output_mutation_response';
+/** response of any mutation on the table "modelcatalog_causal_diagram" */
+export type Modelcatalog_Causal_Diagram_Mutation_Response = {
+  __typename?: 'modelcatalog_causal_diagram_mutation_response';
   /** number of rows affected by the mutation */
   affected_rows: Scalars['Int']['output'];
   /** data from the rows affected by the mutation */
-  returning: Array<Model_Output>;
+  returning: Array<Modelcatalog_Causal_Diagram>;
 };
 
-/** on_conflict condition type for table "model_output" */
-export type Model_Output_On_Conflict = {
-  constraint: Model_Output_Constraint;
-  update_columns?: Array<Model_Output_Update_Column>;
-  where?: InputMaybe<Model_Output_Bool_Exp>;
+/** input type for inserting object relation for remote table "modelcatalog_causal_diagram" */
+export type Modelcatalog_Causal_Diagram_Obj_Rel_Insert_Input = {
+  data: Modelcatalog_Causal_Diagram_Insert_Input;
+  /** upsert condition */
+  on_conflict?: InputMaybe<Modelcatalog_Causal_Diagram_On_Conflict>;
 };
 
-/** Ordering options when selecting data from "model_output". */
-export type Model_Output_Order_By = {
-  model?: InputMaybe<Model_Order_By>;
-  model_id?: InputMaybe<Order_By>;
-  model_io?: InputMaybe<Model_Io_Order_By>;
-  model_io_id?: InputMaybe<Order_By>;
+/** on_conflict condition type for table "modelcatalog_causal_diagram" */
+export type Modelcatalog_Causal_Diagram_On_Conflict = {
+  constraint: Modelcatalog_Causal_Diagram_Constraint;
+  update_columns?: Array<Modelcatalog_Causal_Diagram_Update_Column>;
+  where?: InputMaybe<Modelcatalog_Causal_Diagram_Bool_Exp>;
+};
+
+/** Ordering options when selecting data from "modelcatalog_causal_diagram". */
+export type Modelcatalog_Causal_Diagram_Order_By = {
+  configurations_aggregate?: InputMaybe<Modelcatalog_Configuration_Causal_Diagram_Aggregate_Order_By>;
+  diagram_parts_aggregate?: InputMaybe<Modelcatalog_Diagram_Part_Aggregate_Order_By>;
+  id?: InputMaybe<Order_By>;
+  label?: InputMaybe<Order_By>;
+};
+
+/** primary key columns input for table: modelcatalog_causal_diagram */
+export type Modelcatalog_Causal_Diagram_Pk_Columns_Input = {
+  id: Scalars['String']['input'];
+};
+
+/** select columns of table "modelcatalog_causal_diagram" */
+export enum Modelcatalog_Causal_Diagram_Select_Column {
+  /** column name */
+  Id = 'id',
+  /** column name */
+  Label = 'label'
+}
+
+/** input type for updating data in table "modelcatalog_causal_diagram" */
+export type Modelcatalog_Causal_Diagram_Set_Input = {
+  id?: InputMaybe<Scalars['String']['input']>;
+  label?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** update columns of table "modelcatalog_causal_diagram" */
+export enum Modelcatalog_Causal_Diagram_Update_Column {
+  /** column name */
+  Id = 'id',
+  /** column name */
+  Label = 'label'
+}
+
+export type Modelcatalog_Causal_Diagram_Updates = {
+  /** sets the columns of the filtered rows to the given values */
+  _set?: InputMaybe<Modelcatalog_Causal_Diagram_Set_Input>;
+  where: Modelcatalog_Causal_Diagram_Bool_Exp;
+};
+
+/** columns and relationships of "modelcatalog_configuration" */
+export type Modelcatalog_Configuration = {
+  __typename?: 'modelcatalog_configuration';
+  /** An object relationship */
+  author?: Maybe<Modelcatalog_Person>;
+  author_id?: Maybe<Scalars['String']['output']>;
+  /** An array relationship */
+  authors: Array<Modelcatalog_Configuration_Author>;
+  /** An aggregate relationship */
+  authors_aggregate: Modelcatalog_Configuration_Author_Aggregate;
+  /** An array relationship */
+  calibrated_variables: Array<Modelcatalog_Configuration_Calibrated_Variable>;
+  /** An aggregate relationship */
+  calibrated_variables_aggregate: Modelcatalog_Configuration_Calibrated_Variable_Aggregate;
+  calibration_interval?: Maybe<Scalars['String']['output']>;
+  calibration_method?: Maybe<Scalars['String']['output']>;
+  /** An array relationship */
+  calibration_targets: Array<Modelcatalog_Configuration_Calibration_Target>;
+  /** An aggregate relationship */
+  calibration_targets_aggregate: Modelcatalog_Configuration_Calibration_Target_Aggregate;
+  /** An array relationship */
+  categories: Array<Modelcatalog_Configuration_Category>;
+  /** An aggregate relationship */
+  categories_aggregate: Modelcatalog_Configuration_Category_Aggregate;
+  /** An array relationship */
+  causal_diagrams: Array<Modelcatalog_Configuration_Causal_Diagram>;
+  /** An aggregate relationship */
+  causal_diagrams_aggregate: Modelcatalog_Configuration_Causal_Diagram_Aggregate;
+  /** An array relationship */
+  child_configurations: Array<Modelcatalog_Configuration>;
+  /** An aggregate relationship */
+  child_configurations_aggregate: Modelcatalog_Configuration_Aggregate;
+  description?: Maybe<Scalars['String']['output']>;
+  /** An array relationship */
+  executions: Array<Execution>;
+  /** An aggregate relationship */
+  executions_aggregate: Execution_Aggregate;
+  has_component_location?: Maybe<Scalars['String']['output']>;
+  has_implementation_script_location?: Maybe<Scalars['String']['output']>;
+  has_model_result_table?: Maybe<Scalars['String']['output']>;
+  has_region?: Maybe<Scalars['String']['output']>;
+  has_software_image?: Maybe<Scalars['String']['output']>;
+  id: Scalars['String']['output'];
+  /** An array relationship */
+  inputs: Array<Modelcatalog_Configuration_Input>;
+  /** An aggregate relationship */
+  inputs_aggregate: Modelcatalog_Configuration_Input_Aggregate;
+  keywords?: Maybe<Scalars['String']['output']>;
+  label: Scalars['String']['output'];
+  model_configuration_id?: Maybe<Scalars['String']['output']>;
+  /** An array relationship */
+  outputs: Array<Modelcatalog_Configuration_Output>;
+  /** An aggregate relationship */
+  outputs_aggregate: Modelcatalog_Configuration_Output_Aggregate;
+  parameter_assignment_method?: Maybe<Scalars['String']['output']>;
+  /** An array relationship */
+  parameters: Array<Modelcatalog_Configuration_Parameter>;
+  /** An aggregate relationship */
+  parameters_aggregate: Modelcatalog_Configuration_Parameter_Aggregate;
+  /** An object relationship */
+  parent_configuration?: Maybe<Modelcatalog_Configuration>;
+  /** An array relationship */
+  regions: Array<Modelcatalog_Configuration_Region>;
+  /** An aggregate relationship */
+  regions_aggregate: Modelcatalog_Configuration_Region_Aggregate;
+  /** An object relationship */
+  software_version?: Maybe<Modelcatalog_Software_Version>;
+  software_version_id?: Maybe<Scalars['String']['output']>;
+  /** An array relationship */
+  thread_models: Array<Thread_Model>;
+  /** An aggregate relationship */
+  thread_models_aggregate: Thread_Model_Aggregate;
+  /** An array relationship */
+  time_intervals: Array<Modelcatalog_Configuration_Time_Interval>;
+  /** An aggregate relationship */
+  time_intervals_aggregate: Modelcatalog_Configuration_Time_Interval_Aggregate;
+  usage_notes?: Maybe<Scalars['String']['output']>;
+  valid_until?: Maybe<Scalars['String']['output']>;
+};
+
+
+/** columns and relationships of "modelcatalog_configuration" */
+export type Modelcatalog_ConfigurationAuthorsArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Configuration_Author_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Configuration_Author_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Configuration_Author_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_configuration" */
+export type Modelcatalog_ConfigurationAuthors_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Configuration_Author_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Configuration_Author_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Configuration_Author_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_configuration" */
+export type Modelcatalog_ConfigurationCalibrated_VariablesArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Configuration_Calibrated_Variable_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Configuration_Calibrated_Variable_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Configuration_Calibrated_Variable_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_configuration" */
+export type Modelcatalog_ConfigurationCalibrated_Variables_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Configuration_Calibrated_Variable_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Configuration_Calibrated_Variable_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Configuration_Calibrated_Variable_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_configuration" */
+export type Modelcatalog_ConfigurationCalibration_TargetsArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Configuration_Calibration_Target_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Configuration_Calibration_Target_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Configuration_Calibration_Target_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_configuration" */
+export type Modelcatalog_ConfigurationCalibration_Targets_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Configuration_Calibration_Target_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Configuration_Calibration_Target_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Configuration_Calibration_Target_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_configuration" */
+export type Modelcatalog_ConfigurationCategoriesArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Configuration_Category_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Configuration_Category_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Configuration_Category_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_configuration" */
+export type Modelcatalog_ConfigurationCategories_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Configuration_Category_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Configuration_Category_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Configuration_Category_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_configuration" */
+export type Modelcatalog_ConfigurationCausal_DiagramsArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Configuration_Causal_Diagram_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Configuration_Causal_Diagram_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Configuration_Causal_Diagram_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_configuration" */
+export type Modelcatalog_ConfigurationCausal_Diagrams_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Configuration_Causal_Diagram_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Configuration_Causal_Diagram_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Configuration_Causal_Diagram_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_configuration" */
+export type Modelcatalog_ConfigurationChild_ConfigurationsArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Configuration_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Configuration_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Configuration_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_configuration" */
+export type Modelcatalog_ConfigurationChild_Configurations_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Configuration_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Configuration_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Configuration_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_configuration" */
+export type Modelcatalog_ConfigurationExecutionsArgs = {
+  distinct_on?: InputMaybe<Array<Execution_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Execution_Order_By>>;
+  where?: InputMaybe<Execution_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_configuration" */
+export type Modelcatalog_ConfigurationExecutions_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Execution_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Execution_Order_By>>;
+  where?: InputMaybe<Execution_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_configuration" */
+export type Modelcatalog_ConfigurationInputsArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Configuration_Input_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Configuration_Input_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Configuration_Input_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_configuration" */
+export type Modelcatalog_ConfigurationInputs_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Configuration_Input_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Configuration_Input_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Configuration_Input_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_configuration" */
+export type Modelcatalog_ConfigurationOutputsArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Configuration_Output_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Configuration_Output_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Configuration_Output_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_configuration" */
+export type Modelcatalog_ConfigurationOutputs_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Configuration_Output_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Configuration_Output_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Configuration_Output_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_configuration" */
+export type Modelcatalog_ConfigurationParametersArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Configuration_Parameter_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Configuration_Parameter_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Configuration_Parameter_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_configuration" */
+export type Modelcatalog_ConfigurationParameters_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Configuration_Parameter_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Configuration_Parameter_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Configuration_Parameter_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_configuration" */
+export type Modelcatalog_ConfigurationRegionsArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Configuration_Region_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Configuration_Region_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Configuration_Region_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_configuration" */
+export type Modelcatalog_ConfigurationRegions_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Configuration_Region_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Configuration_Region_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Configuration_Region_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_configuration" */
+export type Modelcatalog_ConfigurationThread_ModelsArgs = {
+  distinct_on?: InputMaybe<Array<Thread_Model_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Thread_Model_Order_By>>;
+  where?: InputMaybe<Thread_Model_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_configuration" */
+export type Modelcatalog_ConfigurationThread_Models_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Thread_Model_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Thread_Model_Order_By>>;
+  where?: InputMaybe<Thread_Model_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_configuration" */
+export type Modelcatalog_ConfigurationTime_IntervalsArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Configuration_Time_Interval_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Configuration_Time_Interval_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Configuration_Time_Interval_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_configuration" */
+export type Modelcatalog_ConfigurationTime_Intervals_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Configuration_Time_Interval_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Configuration_Time_Interval_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Configuration_Time_Interval_Bool_Exp>;
+};
+
+/** aggregated selection of "modelcatalog_configuration" */
+export type Modelcatalog_Configuration_Aggregate = {
+  __typename?: 'modelcatalog_configuration_aggregate';
+  aggregate?: Maybe<Modelcatalog_Configuration_Aggregate_Fields>;
+  nodes: Array<Modelcatalog_Configuration>;
+};
+
+/** aggregate fields of "modelcatalog_configuration" */
+export type Modelcatalog_Configuration_Aggregate_Fields = {
+  __typename?: 'modelcatalog_configuration_aggregate_fields';
+  count: Scalars['Int']['output'];
+  max?: Maybe<Modelcatalog_Configuration_Max_Fields>;
+  min?: Maybe<Modelcatalog_Configuration_Min_Fields>;
+};
+
+
+/** aggregate fields of "modelcatalog_configuration" */
+export type Modelcatalog_Configuration_Aggregate_FieldsCountArgs = {
+  columns?: InputMaybe<Array<Modelcatalog_Configuration_Select_Column>>;
+  distinct?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
+/** order by aggregate values of table "modelcatalog_configuration" */
+export type Modelcatalog_Configuration_Aggregate_Order_By = {
+  count?: InputMaybe<Order_By>;
+  max?: InputMaybe<Modelcatalog_Configuration_Max_Order_By>;
+  min?: InputMaybe<Modelcatalog_Configuration_Min_Order_By>;
+};
+
+/** input type for inserting array relation for remote table "modelcatalog_configuration" */
+export type Modelcatalog_Configuration_Arr_Rel_Insert_Input = {
+  data: Array<Modelcatalog_Configuration_Insert_Input>;
+  /** upsert condition */
+  on_conflict?: InputMaybe<Modelcatalog_Configuration_On_Conflict>;
+};
+
+/** columns and relationships of "modelcatalog_configuration_author" */
+export type Modelcatalog_Configuration_Author = {
+  __typename?: 'modelcatalog_configuration_author';
+  /** An object relationship */
+  configuration: Modelcatalog_Configuration;
+  configuration_id: Scalars['String']['output'];
+  /** An object relationship */
+  person: Modelcatalog_Person;
+  person_id: Scalars['String']['output'];
+};
+
+/** aggregated selection of "modelcatalog_configuration_author" */
+export type Modelcatalog_Configuration_Author_Aggregate = {
+  __typename?: 'modelcatalog_configuration_author_aggregate';
+  aggregate?: Maybe<Modelcatalog_Configuration_Author_Aggregate_Fields>;
+  nodes: Array<Modelcatalog_Configuration_Author>;
+};
+
+/** aggregate fields of "modelcatalog_configuration_author" */
+export type Modelcatalog_Configuration_Author_Aggregate_Fields = {
+  __typename?: 'modelcatalog_configuration_author_aggregate_fields';
+  count: Scalars['Int']['output'];
+  max?: Maybe<Modelcatalog_Configuration_Author_Max_Fields>;
+  min?: Maybe<Modelcatalog_Configuration_Author_Min_Fields>;
+};
+
+
+/** aggregate fields of "modelcatalog_configuration_author" */
+export type Modelcatalog_Configuration_Author_Aggregate_FieldsCountArgs = {
+  columns?: InputMaybe<Array<Modelcatalog_Configuration_Author_Select_Column>>;
+  distinct?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
+/** order by aggregate values of table "modelcatalog_configuration_author" */
+export type Modelcatalog_Configuration_Author_Aggregate_Order_By = {
+  count?: InputMaybe<Order_By>;
+  max?: InputMaybe<Modelcatalog_Configuration_Author_Max_Order_By>;
+  min?: InputMaybe<Modelcatalog_Configuration_Author_Min_Order_By>;
+};
+
+/** input type for inserting array relation for remote table "modelcatalog_configuration_author" */
+export type Modelcatalog_Configuration_Author_Arr_Rel_Insert_Input = {
+  data: Array<Modelcatalog_Configuration_Author_Insert_Input>;
+  /** upsert condition */
+  on_conflict?: InputMaybe<Modelcatalog_Configuration_Author_On_Conflict>;
+};
+
+/** Boolean expression to filter rows from the table "modelcatalog_configuration_author". All fields are combined with a logical 'AND'. */
+export type Modelcatalog_Configuration_Author_Bool_Exp = {
+  _and?: InputMaybe<Array<Modelcatalog_Configuration_Author_Bool_Exp>>;
+  _not?: InputMaybe<Modelcatalog_Configuration_Author_Bool_Exp>;
+  _or?: InputMaybe<Array<Modelcatalog_Configuration_Author_Bool_Exp>>;
+  configuration?: InputMaybe<Modelcatalog_Configuration_Bool_Exp>;
+  configuration_id?: InputMaybe<String_Comparison_Exp>;
+  person?: InputMaybe<Modelcatalog_Person_Bool_Exp>;
+  person_id?: InputMaybe<String_Comparison_Exp>;
+};
+
+/** unique or primary key constraints on table "modelcatalog_configuration_author" */
+export enum Modelcatalog_Configuration_Author_Constraint {
+  /** unique or primary key constraint on columns "configuration_id", "person_id" */
+  ModelcatalogConfigurationAuthorPkey = 'modelcatalog_configuration_author_pkey'
+}
+
+/** input type for inserting data into table "modelcatalog_configuration_author" */
+export type Modelcatalog_Configuration_Author_Insert_Input = {
+  configuration?: InputMaybe<Modelcatalog_Configuration_Obj_Rel_Insert_Input>;
+  configuration_id?: InputMaybe<Scalars['String']['input']>;
+  person?: InputMaybe<Modelcatalog_Person_Obj_Rel_Insert_Input>;
+  person_id?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** aggregate max on columns */
+export type Modelcatalog_Configuration_Author_Max_Fields = {
+  __typename?: 'modelcatalog_configuration_author_max_fields';
+  configuration_id?: Maybe<Scalars['String']['output']>;
+  person_id?: Maybe<Scalars['String']['output']>;
+};
+
+/** order by max() on columns of table "modelcatalog_configuration_author" */
+export type Modelcatalog_Configuration_Author_Max_Order_By = {
+  configuration_id?: InputMaybe<Order_By>;
+  person_id?: InputMaybe<Order_By>;
+};
+
+/** aggregate min on columns */
+export type Modelcatalog_Configuration_Author_Min_Fields = {
+  __typename?: 'modelcatalog_configuration_author_min_fields';
+  configuration_id?: Maybe<Scalars['String']['output']>;
+  person_id?: Maybe<Scalars['String']['output']>;
+};
+
+/** order by min() on columns of table "modelcatalog_configuration_author" */
+export type Modelcatalog_Configuration_Author_Min_Order_By = {
+  configuration_id?: InputMaybe<Order_By>;
+  person_id?: InputMaybe<Order_By>;
+};
+
+/** response of any mutation on the table "modelcatalog_configuration_author" */
+export type Modelcatalog_Configuration_Author_Mutation_Response = {
+  __typename?: 'modelcatalog_configuration_author_mutation_response';
+  /** number of rows affected by the mutation */
+  affected_rows: Scalars['Int']['output'];
+  /** data from the rows affected by the mutation */
+  returning: Array<Modelcatalog_Configuration_Author>;
+};
+
+/** on_conflict condition type for table "modelcatalog_configuration_author" */
+export type Modelcatalog_Configuration_Author_On_Conflict = {
+  constraint: Modelcatalog_Configuration_Author_Constraint;
+  update_columns?: Array<Modelcatalog_Configuration_Author_Update_Column>;
+  where?: InputMaybe<Modelcatalog_Configuration_Author_Bool_Exp>;
+};
+
+/** Ordering options when selecting data from "modelcatalog_configuration_author". */
+export type Modelcatalog_Configuration_Author_Order_By = {
+  configuration?: InputMaybe<Modelcatalog_Configuration_Order_By>;
+  configuration_id?: InputMaybe<Order_By>;
+  person?: InputMaybe<Modelcatalog_Person_Order_By>;
+  person_id?: InputMaybe<Order_By>;
+};
+
+/** primary key columns input for table: modelcatalog_configuration_author */
+export type Modelcatalog_Configuration_Author_Pk_Columns_Input = {
+  configuration_id: Scalars['String']['input'];
+  person_id: Scalars['String']['input'];
+};
+
+/** select columns of table "modelcatalog_configuration_author" */
+export enum Modelcatalog_Configuration_Author_Select_Column {
+  /** column name */
+  ConfigurationId = 'configuration_id',
+  /** column name */
+  PersonId = 'person_id'
+}
+
+/** input type for updating data in table "modelcatalog_configuration_author" */
+export type Modelcatalog_Configuration_Author_Set_Input = {
+  configuration_id?: InputMaybe<Scalars['String']['input']>;
+  person_id?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** update columns of table "modelcatalog_configuration_author" */
+export enum Modelcatalog_Configuration_Author_Update_Column {
+  /** column name */
+  ConfigurationId = 'configuration_id',
+  /** column name */
+  PersonId = 'person_id'
+}
+
+export type Modelcatalog_Configuration_Author_Updates = {
+  /** sets the columns of the filtered rows to the given values */
+  _set?: InputMaybe<Modelcatalog_Configuration_Author_Set_Input>;
+  where: Modelcatalog_Configuration_Author_Bool_Exp;
+};
+
+/** Boolean expression to filter rows from the table "modelcatalog_configuration". All fields are combined with a logical 'AND'. */
+export type Modelcatalog_Configuration_Bool_Exp = {
+  _and?: InputMaybe<Array<Modelcatalog_Configuration_Bool_Exp>>;
+  _not?: InputMaybe<Modelcatalog_Configuration_Bool_Exp>;
+  _or?: InputMaybe<Array<Modelcatalog_Configuration_Bool_Exp>>;
+  author?: InputMaybe<Modelcatalog_Person_Bool_Exp>;
+  author_id?: InputMaybe<String_Comparison_Exp>;
+  authors?: InputMaybe<Modelcatalog_Configuration_Author_Bool_Exp>;
+  calibrated_variables?: InputMaybe<Modelcatalog_Configuration_Calibrated_Variable_Bool_Exp>;
+  calibration_interval?: InputMaybe<String_Comparison_Exp>;
+  calibration_method?: InputMaybe<String_Comparison_Exp>;
+  calibration_targets?: InputMaybe<Modelcatalog_Configuration_Calibration_Target_Bool_Exp>;
+  categories?: InputMaybe<Modelcatalog_Configuration_Category_Bool_Exp>;
+  causal_diagrams?: InputMaybe<Modelcatalog_Configuration_Causal_Diagram_Bool_Exp>;
+  child_configurations?: InputMaybe<Modelcatalog_Configuration_Bool_Exp>;
+  description?: InputMaybe<String_Comparison_Exp>;
+  executions?: InputMaybe<Execution_Bool_Exp>;
+  has_component_location?: InputMaybe<String_Comparison_Exp>;
+  has_implementation_script_location?: InputMaybe<String_Comparison_Exp>;
+  has_model_result_table?: InputMaybe<String_Comparison_Exp>;
+  has_region?: InputMaybe<String_Comparison_Exp>;
+  has_software_image?: InputMaybe<String_Comparison_Exp>;
+  id?: InputMaybe<String_Comparison_Exp>;
+  inputs?: InputMaybe<Modelcatalog_Configuration_Input_Bool_Exp>;
+  keywords?: InputMaybe<String_Comparison_Exp>;
+  label?: InputMaybe<String_Comparison_Exp>;
+  model_configuration_id?: InputMaybe<String_Comparison_Exp>;
+  outputs?: InputMaybe<Modelcatalog_Configuration_Output_Bool_Exp>;
+  parameter_assignment_method?: InputMaybe<String_Comparison_Exp>;
+  parameters?: InputMaybe<Modelcatalog_Configuration_Parameter_Bool_Exp>;
+  parent_configuration?: InputMaybe<Modelcatalog_Configuration_Bool_Exp>;
+  regions?: InputMaybe<Modelcatalog_Configuration_Region_Bool_Exp>;
+  software_version?: InputMaybe<Modelcatalog_Software_Version_Bool_Exp>;
+  software_version_id?: InputMaybe<String_Comparison_Exp>;
+  thread_models?: InputMaybe<Thread_Model_Bool_Exp>;
+  time_intervals?: InputMaybe<Modelcatalog_Configuration_Time_Interval_Bool_Exp>;
+  usage_notes?: InputMaybe<String_Comparison_Exp>;
+  valid_until?: InputMaybe<String_Comparison_Exp>;
+};
+
+/** columns and relationships of "modelcatalog_configuration_calibrated_variable" */
+export type Modelcatalog_Configuration_Calibrated_Variable = {
+  __typename?: 'modelcatalog_configuration_calibrated_variable';
+  /** An object relationship */
+  configuration: Modelcatalog_Configuration;
+  configuration_id: Scalars['String']['output'];
+  /** An object relationship */
+  variable: Modelcatalog_Variable_Presentation;
+  variable_id: Scalars['String']['output'];
+};
+
+/** aggregated selection of "modelcatalog_configuration_calibrated_variable" */
+export type Modelcatalog_Configuration_Calibrated_Variable_Aggregate = {
+  __typename?: 'modelcatalog_configuration_calibrated_variable_aggregate';
+  aggregate?: Maybe<Modelcatalog_Configuration_Calibrated_Variable_Aggregate_Fields>;
+  nodes: Array<Modelcatalog_Configuration_Calibrated_Variable>;
+};
+
+/** aggregate fields of "modelcatalog_configuration_calibrated_variable" */
+export type Modelcatalog_Configuration_Calibrated_Variable_Aggregate_Fields = {
+  __typename?: 'modelcatalog_configuration_calibrated_variable_aggregate_fields';
+  count: Scalars['Int']['output'];
+  max?: Maybe<Modelcatalog_Configuration_Calibrated_Variable_Max_Fields>;
+  min?: Maybe<Modelcatalog_Configuration_Calibrated_Variable_Min_Fields>;
+};
+
+
+/** aggregate fields of "modelcatalog_configuration_calibrated_variable" */
+export type Modelcatalog_Configuration_Calibrated_Variable_Aggregate_FieldsCountArgs = {
+  columns?: InputMaybe<Array<Modelcatalog_Configuration_Calibrated_Variable_Select_Column>>;
+  distinct?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
+/** order by aggregate values of table "modelcatalog_configuration_calibrated_variable" */
+export type Modelcatalog_Configuration_Calibrated_Variable_Aggregate_Order_By = {
+  count?: InputMaybe<Order_By>;
+  max?: InputMaybe<Modelcatalog_Configuration_Calibrated_Variable_Max_Order_By>;
+  min?: InputMaybe<Modelcatalog_Configuration_Calibrated_Variable_Min_Order_By>;
+};
+
+/** input type for inserting array relation for remote table "modelcatalog_configuration_calibrated_variable" */
+export type Modelcatalog_Configuration_Calibrated_Variable_Arr_Rel_Insert_Input = {
+  data: Array<Modelcatalog_Configuration_Calibrated_Variable_Insert_Input>;
+  /** upsert condition */
+  on_conflict?: InputMaybe<Modelcatalog_Configuration_Calibrated_Variable_On_Conflict>;
+};
+
+/** Boolean expression to filter rows from the table "modelcatalog_configuration_calibrated_variable". All fields are combined with a logical 'AND'. */
+export type Modelcatalog_Configuration_Calibrated_Variable_Bool_Exp = {
+  _and?: InputMaybe<Array<Modelcatalog_Configuration_Calibrated_Variable_Bool_Exp>>;
+  _not?: InputMaybe<Modelcatalog_Configuration_Calibrated_Variable_Bool_Exp>;
+  _or?: InputMaybe<Array<Modelcatalog_Configuration_Calibrated_Variable_Bool_Exp>>;
+  configuration?: InputMaybe<Modelcatalog_Configuration_Bool_Exp>;
+  configuration_id?: InputMaybe<String_Comparison_Exp>;
+  variable?: InputMaybe<Modelcatalog_Variable_Presentation_Bool_Exp>;
+  variable_id?: InputMaybe<String_Comparison_Exp>;
+};
+
+/** unique or primary key constraints on table "modelcatalog_configuration_calibrated_variable" */
+export enum Modelcatalog_Configuration_Calibrated_Variable_Constraint {
+  /** unique or primary key constraint on columns "configuration_id", "variable_id" */
+  ModelcatalogSetupCalibratedVariablePkey = 'modelcatalog_setup_calibrated_variable_pkey'
+}
+
+/** input type for inserting data into table "modelcatalog_configuration_calibrated_variable" */
+export type Modelcatalog_Configuration_Calibrated_Variable_Insert_Input = {
+  configuration?: InputMaybe<Modelcatalog_Configuration_Obj_Rel_Insert_Input>;
+  configuration_id?: InputMaybe<Scalars['String']['input']>;
+  variable?: InputMaybe<Modelcatalog_Variable_Presentation_Obj_Rel_Insert_Input>;
+  variable_id?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** aggregate max on columns */
+export type Modelcatalog_Configuration_Calibrated_Variable_Max_Fields = {
+  __typename?: 'modelcatalog_configuration_calibrated_variable_max_fields';
+  configuration_id?: Maybe<Scalars['String']['output']>;
+  variable_id?: Maybe<Scalars['String']['output']>;
+};
+
+/** order by max() on columns of table "modelcatalog_configuration_calibrated_variable" */
+export type Modelcatalog_Configuration_Calibrated_Variable_Max_Order_By = {
+  configuration_id?: InputMaybe<Order_By>;
+  variable_id?: InputMaybe<Order_By>;
+};
+
+/** aggregate min on columns */
+export type Modelcatalog_Configuration_Calibrated_Variable_Min_Fields = {
+  __typename?: 'modelcatalog_configuration_calibrated_variable_min_fields';
+  configuration_id?: Maybe<Scalars['String']['output']>;
+  variable_id?: Maybe<Scalars['String']['output']>;
+};
+
+/** order by min() on columns of table "modelcatalog_configuration_calibrated_variable" */
+export type Modelcatalog_Configuration_Calibrated_Variable_Min_Order_By = {
+  configuration_id?: InputMaybe<Order_By>;
+  variable_id?: InputMaybe<Order_By>;
+};
+
+/** response of any mutation on the table "modelcatalog_configuration_calibrated_variable" */
+export type Modelcatalog_Configuration_Calibrated_Variable_Mutation_Response = {
+  __typename?: 'modelcatalog_configuration_calibrated_variable_mutation_response';
+  /** number of rows affected by the mutation */
+  affected_rows: Scalars['Int']['output'];
+  /** data from the rows affected by the mutation */
+  returning: Array<Modelcatalog_Configuration_Calibrated_Variable>;
+};
+
+/** on_conflict condition type for table "modelcatalog_configuration_calibrated_variable" */
+export type Modelcatalog_Configuration_Calibrated_Variable_On_Conflict = {
+  constraint: Modelcatalog_Configuration_Calibrated_Variable_Constraint;
+  update_columns?: Array<Modelcatalog_Configuration_Calibrated_Variable_Update_Column>;
+  where?: InputMaybe<Modelcatalog_Configuration_Calibrated_Variable_Bool_Exp>;
+};
+
+/** Ordering options when selecting data from "modelcatalog_configuration_calibrated_variable". */
+export type Modelcatalog_Configuration_Calibrated_Variable_Order_By = {
+  configuration?: InputMaybe<Modelcatalog_Configuration_Order_By>;
+  configuration_id?: InputMaybe<Order_By>;
+  variable?: InputMaybe<Modelcatalog_Variable_Presentation_Order_By>;
+  variable_id?: InputMaybe<Order_By>;
+};
+
+/** primary key columns input for table: modelcatalog_configuration_calibrated_variable */
+export type Modelcatalog_Configuration_Calibrated_Variable_Pk_Columns_Input = {
+  configuration_id: Scalars['String']['input'];
+  variable_id: Scalars['String']['input'];
+};
+
+/** select columns of table "modelcatalog_configuration_calibrated_variable" */
+export enum Modelcatalog_Configuration_Calibrated_Variable_Select_Column {
+  /** column name */
+  ConfigurationId = 'configuration_id',
+  /** column name */
+  VariableId = 'variable_id'
+}
+
+/** input type for updating data in table "modelcatalog_configuration_calibrated_variable" */
+export type Modelcatalog_Configuration_Calibrated_Variable_Set_Input = {
+  configuration_id?: InputMaybe<Scalars['String']['input']>;
+  variable_id?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** update columns of table "modelcatalog_configuration_calibrated_variable" */
+export enum Modelcatalog_Configuration_Calibrated_Variable_Update_Column {
+  /** column name */
+  ConfigurationId = 'configuration_id',
+  /** column name */
+  VariableId = 'variable_id'
+}
+
+export type Modelcatalog_Configuration_Calibrated_Variable_Updates = {
+  /** sets the columns of the filtered rows to the given values */
+  _set?: InputMaybe<Modelcatalog_Configuration_Calibrated_Variable_Set_Input>;
+  where: Modelcatalog_Configuration_Calibrated_Variable_Bool_Exp;
+};
+
+/** columns and relationships of "modelcatalog_configuration_calibration_target" */
+export type Modelcatalog_Configuration_Calibration_Target = {
+  __typename?: 'modelcatalog_configuration_calibration_target';
+  /** An object relationship */
+  configuration: Modelcatalog_Configuration;
+  configuration_id: Scalars['String']['output'];
+  /** An object relationship */
+  variable: Modelcatalog_Variable_Presentation;
+  variable_id: Scalars['String']['output'];
+};
+
+/** aggregated selection of "modelcatalog_configuration_calibration_target" */
+export type Modelcatalog_Configuration_Calibration_Target_Aggregate = {
+  __typename?: 'modelcatalog_configuration_calibration_target_aggregate';
+  aggregate?: Maybe<Modelcatalog_Configuration_Calibration_Target_Aggregate_Fields>;
+  nodes: Array<Modelcatalog_Configuration_Calibration_Target>;
+};
+
+/** aggregate fields of "modelcatalog_configuration_calibration_target" */
+export type Modelcatalog_Configuration_Calibration_Target_Aggregate_Fields = {
+  __typename?: 'modelcatalog_configuration_calibration_target_aggregate_fields';
+  count: Scalars['Int']['output'];
+  max?: Maybe<Modelcatalog_Configuration_Calibration_Target_Max_Fields>;
+  min?: Maybe<Modelcatalog_Configuration_Calibration_Target_Min_Fields>;
+};
+
+
+/** aggregate fields of "modelcatalog_configuration_calibration_target" */
+export type Modelcatalog_Configuration_Calibration_Target_Aggregate_FieldsCountArgs = {
+  columns?: InputMaybe<Array<Modelcatalog_Configuration_Calibration_Target_Select_Column>>;
+  distinct?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
+/** order by aggregate values of table "modelcatalog_configuration_calibration_target" */
+export type Modelcatalog_Configuration_Calibration_Target_Aggregate_Order_By = {
+  count?: InputMaybe<Order_By>;
+  max?: InputMaybe<Modelcatalog_Configuration_Calibration_Target_Max_Order_By>;
+  min?: InputMaybe<Modelcatalog_Configuration_Calibration_Target_Min_Order_By>;
+};
+
+/** input type for inserting array relation for remote table "modelcatalog_configuration_calibration_target" */
+export type Modelcatalog_Configuration_Calibration_Target_Arr_Rel_Insert_Input = {
+  data: Array<Modelcatalog_Configuration_Calibration_Target_Insert_Input>;
+  /** upsert condition */
+  on_conflict?: InputMaybe<Modelcatalog_Configuration_Calibration_Target_On_Conflict>;
+};
+
+/** Boolean expression to filter rows from the table "modelcatalog_configuration_calibration_target". All fields are combined with a logical 'AND'. */
+export type Modelcatalog_Configuration_Calibration_Target_Bool_Exp = {
+  _and?: InputMaybe<Array<Modelcatalog_Configuration_Calibration_Target_Bool_Exp>>;
+  _not?: InputMaybe<Modelcatalog_Configuration_Calibration_Target_Bool_Exp>;
+  _or?: InputMaybe<Array<Modelcatalog_Configuration_Calibration_Target_Bool_Exp>>;
+  configuration?: InputMaybe<Modelcatalog_Configuration_Bool_Exp>;
+  configuration_id?: InputMaybe<String_Comparison_Exp>;
+  variable?: InputMaybe<Modelcatalog_Variable_Presentation_Bool_Exp>;
+  variable_id?: InputMaybe<String_Comparison_Exp>;
+};
+
+/** unique or primary key constraints on table "modelcatalog_configuration_calibration_target" */
+export enum Modelcatalog_Configuration_Calibration_Target_Constraint {
+  /** unique or primary key constraint on columns "configuration_id", "variable_id" */
+  ModelcatalogSetupCalibrationTargetPkey = 'modelcatalog_setup_calibration_target_pkey'
+}
+
+/** input type for inserting data into table "modelcatalog_configuration_calibration_target" */
+export type Modelcatalog_Configuration_Calibration_Target_Insert_Input = {
+  configuration?: InputMaybe<Modelcatalog_Configuration_Obj_Rel_Insert_Input>;
+  configuration_id?: InputMaybe<Scalars['String']['input']>;
+  variable?: InputMaybe<Modelcatalog_Variable_Presentation_Obj_Rel_Insert_Input>;
+  variable_id?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** aggregate max on columns */
+export type Modelcatalog_Configuration_Calibration_Target_Max_Fields = {
+  __typename?: 'modelcatalog_configuration_calibration_target_max_fields';
+  configuration_id?: Maybe<Scalars['String']['output']>;
+  variable_id?: Maybe<Scalars['String']['output']>;
+};
+
+/** order by max() on columns of table "modelcatalog_configuration_calibration_target" */
+export type Modelcatalog_Configuration_Calibration_Target_Max_Order_By = {
+  configuration_id?: InputMaybe<Order_By>;
+  variable_id?: InputMaybe<Order_By>;
+};
+
+/** aggregate min on columns */
+export type Modelcatalog_Configuration_Calibration_Target_Min_Fields = {
+  __typename?: 'modelcatalog_configuration_calibration_target_min_fields';
+  configuration_id?: Maybe<Scalars['String']['output']>;
+  variable_id?: Maybe<Scalars['String']['output']>;
+};
+
+/** order by min() on columns of table "modelcatalog_configuration_calibration_target" */
+export type Modelcatalog_Configuration_Calibration_Target_Min_Order_By = {
+  configuration_id?: InputMaybe<Order_By>;
+  variable_id?: InputMaybe<Order_By>;
+};
+
+/** response of any mutation on the table "modelcatalog_configuration_calibration_target" */
+export type Modelcatalog_Configuration_Calibration_Target_Mutation_Response = {
+  __typename?: 'modelcatalog_configuration_calibration_target_mutation_response';
+  /** number of rows affected by the mutation */
+  affected_rows: Scalars['Int']['output'];
+  /** data from the rows affected by the mutation */
+  returning: Array<Modelcatalog_Configuration_Calibration_Target>;
+};
+
+/** on_conflict condition type for table "modelcatalog_configuration_calibration_target" */
+export type Modelcatalog_Configuration_Calibration_Target_On_Conflict = {
+  constraint: Modelcatalog_Configuration_Calibration_Target_Constraint;
+  update_columns?: Array<Modelcatalog_Configuration_Calibration_Target_Update_Column>;
+  where?: InputMaybe<Modelcatalog_Configuration_Calibration_Target_Bool_Exp>;
+};
+
+/** Ordering options when selecting data from "modelcatalog_configuration_calibration_target". */
+export type Modelcatalog_Configuration_Calibration_Target_Order_By = {
+  configuration?: InputMaybe<Modelcatalog_Configuration_Order_By>;
+  configuration_id?: InputMaybe<Order_By>;
+  variable?: InputMaybe<Modelcatalog_Variable_Presentation_Order_By>;
+  variable_id?: InputMaybe<Order_By>;
+};
+
+/** primary key columns input for table: modelcatalog_configuration_calibration_target */
+export type Modelcatalog_Configuration_Calibration_Target_Pk_Columns_Input = {
+  configuration_id: Scalars['String']['input'];
+  variable_id: Scalars['String']['input'];
+};
+
+/** select columns of table "modelcatalog_configuration_calibration_target" */
+export enum Modelcatalog_Configuration_Calibration_Target_Select_Column {
+  /** column name */
+  ConfigurationId = 'configuration_id',
+  /** column name */
+  VariableId = 'variable_id'
+}
+
+/** input type for updating data in table "modelcatalog_configuration_calibration_target" */
+export type Modelcatalog_Configuration_Calibration_Target_Set_Input = {
+  configuration_id?: InputMaybe<Scalars['String']['input']>;
+  variable_id?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** update columns of table "modelcatalog_configuration_calibration_target" */
+export enum Modelcatalog_Configuration_Calibration_Target_Update_Column {
+  /** column name */
+  ConfigurationId = 'configuration_id',
+  /** column name */
+  VariableId = 'variable_id'
+}
+
+export type Modelcatalog_Configuration_Calibration_Target_Updates = {
+  /** sets the columns of the filtered rows to the given values */
+  _set?: InputMaybe<Modelcatalog_Configuration_Calibration_Target_Set_Input>;
+  where: Modelcatalog_Configuration_Calibration_Target_Bool_Exp;
+};
+
+/** columns and relationships of "modelcatalog_configuration_category" */
+export type Modelcatalog_Configuration_Category = {
+  __typename?: 'modelcatalog_configuration_category';
+  /** An object relationship */
+  category: Modelcatalog_Model_Category;
+  category_id: Scalars['String']['output'];
+  /** An object relationship */
+  configuration: Modelcatalog_Configuration;
+  configuration_id: Scalars['String']['output'];
+};
+
+/** aggregated selection of "modelcatalog_configuration_category" */
+export type Modelcatalog_Configuration_Category_Aggregate = {
+  __typename?: 'modelcatalog_configuration_category_aggregate';
+  aggregate?: Maybe<Modelcatalog_Configuration_Category_Aggregate_Fields>;
+  nodes: Array<Modelcatalog_Configuration_Category>;
+};
+
+/** aggregate fields of "modelcatalog_configuration_category" */
+export type Modelcatalog_Configuration_Category_Aggregate_Fields = {
+  __typename?: 'modelcatalog_configuration_category_aggregate_fields';
+  count: Scalars['Int']['output'];
+  max?: Maybe<Modelcatalog_Configuration_Category_Max_Fields>;
+  min?: Maybe<Modelcatalog_Configuration_Category_Min_Fields>;
+};
+
+
+/** aggregate fields of "modelcatalog_configuration_category" */
+export type Modelcatalog_Configuration_Category_Aggregate_FieldsCountArgs = {
+  columns?: InputMaybe<Array<Modelcatalog_Configuration_Category_Select_Column>>;
+  distinct?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
+/** order by aggregate values of table "modelcatalog_configuration_category" */
+export type Modelcatalog_Configuration_Category_Aggregate_Order_By = {
+  count?: InputMaybe<Order_By>;
+  max?: InputMaybe<Modelcatalog_Configuration_Category_Max_Order_By>;
+  min?: InputMaybe<Modelcatalog_Configuration_Category_Min_Order_By>;
+};
+
+/** input type for inserting array relation for remote table "modelcatalog_configuration_category" */
+export type Modelcatalog_Configuration_Category_Arr_Rel_Insert_Input = {
+  data: Array<Modelcatalog_Configuration_Category_Insert_Input>;
+  /** upsert condition */
+  on_conflict?: InputMaybe<Modelcatalog_Configuration_Category_On_Conflict>;
+};
+
+/** Boolean expression to filter rows from the table "modelcatalog_configuration_category". All fields are combined with a logical 'AND'. */
+export type Modelcatalog_Configuration_Category_Bool_Exp = {
+  _and?: InputMaybe<Array<Modelcatalog_Configuration_Category_Bool_Exp>>;
+  _not?: InputMaybe<Modelcatalog_Configuration_Category_Bool_Exp>;
+  _or?: InputMaybe<Array<Modelcatalog_Configuration_Category_Bool_Exp>>;
+  category?: InputMaybe<Modelcatalog_Model_Category_Bool_Exp>;
+  category_id?: InputMaybe<String_Comparison_Exp>;
+  configuration?: InputMaybe<Modelcatalog_Configuration_Bool_Exp>;
+  configuration_id?: InputMaybe<String_Comparison_Exp>;
+};
+
+/** unique or primary key constraints on table "modelcatalog_configuration_category" */
+export enum Modelcatalog_Configuration_Category_Constraint {
+  /** unique or primary key constraint on columns "configuration_id", "category_id" */
+  ModelcatalogConfigurationCategoryPkey = 'modelcatalog_configuration_category_pkey'
+}
+
+/** input type for inserting data into table "modelcatalog_configuration_category" */
+export type Modelcatalog_Configuration_Category_Insert_Input = {
+  category?: InputMaybe<Modelcatalog_Model_Category_Obj_Rel_Insert_Input>;
+  category_id?: InputMaybe<Scalars['String']['input']>;
+  configuration?: InputMaybe<Modelcatalog_Configuration_Obj_Rel_Insert_Input>;
+  configuration_id?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** aggregate max on columns */
+export type Modelcatalog_Configuration_Category_Max_Fields = {
+  __typename?: 'modelcatalog_configuration_category_max_fields';
+  category_id?: Maybe<Scalars['String']['output']>;
+  configuration_id?: Maybe<Scalars['String']['output']>;
+};
+
+/** order by max() on columns of table "modelcatalog_configuration_category" */
+export type Modelcatalog_Configuration_Category_Max_Order_By = {
+  category_id?: InputMaybe<Order_By>;
+  configuration_id?: InputMaybe<Order_By>;
+};
+
+/** aggregate min on columns */
+export type Modelcatalog_Configuration_Category_Min_Fields = {
+  __typename?: 'modelcatalog_configuration_category_min_fields';
+  category_id?: Maybe<Scalars['String']['output']>;
+  configuration_id?: Maybe<Scalars['String']['output']>;
+};
+
+/** order by min() on columns of table "modelcatalog_configuration_category" */
+export type Modelcatalog_Configuration_Category_Min_Order_By = {
+  category_id?: InputMaybe<Order_By>;
+  configuration_id?: InputMaybe<Order_By>;
+};
+
+/** response of any mutation on the table "modelcatalog_configuration_category" */
+export type Modelcatalog_Configuration_Category_Mutation_Response = {
+  __typename?: 'modelcatalog_configuration_category_mutation_response';
+  /** number of rows affected by the mutation */
+  affected_rows: Scalars['Int']['output'];
+  /** data from the rows affected by the mutation */
+  returning: Array<Modelcatalog_Configuration_Category>;
+};
+
+/** on_conflict condition type for table "modelcatalog_configuration_category" */
+export type Modelcatalog_Configuration_Category_On_Conflict = {
+  constraint: Modelcatalog_Configuration_Category_Constraint;
+  update_columns?: Array<Modelcatalog_Configuration_Category_Update_Column>;
+  where?: InputMaybe<Modelcatalog_Configuration_Category_Bool_Exp>;
+};
+
+/** Ordering options when selecting data from "modelcatalog_configuration_category". */
+export type Modelcatalog_Configuration_Category_Order_By = {
+  category?: InputMaybe<Modelcatalog_Model_Category_Order_By>;
+  category_id?: InputMaybe<Order_By>;
+  configuration?: InputMaybe<Modelcatalog_Configuration_Order_By>;
+  configuration_id?: InputMaybe<Order_By>;
+};
+
+/** primary key columns input for table: modelcatalog_configuration_category */
+export type Modelcatalog_Configuration_Category_Pk_Columns_Input = {
+  category_id: Scalars['String']['input'];
+  configuration_id: Scalars['String']['input'];
+};
+
+/** select columns of table "modelcatalog_configuration_category" */
+export enum Modelcatalog_Configuration_Category_Select_Column {
+  /** column name */
+  CategoryId = 'category_id',
+  /** column name */
+  ConfigurationId = 'configuration_id'
+}
+
+/** input type for updating data in table "modelcatalog_configuration_category" */
+export type Modelcatalog_Configuration_Category_Set_Input = {
+  category_id?: InputMaybe<Scalars['String']['input']>;
+  configuration_id?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** update columns of table "modelcatalog_configuration_category" */
+export enum Modelcatalog_Configuration_Category_Update_Column {
+  /** column name */
+  CategoryId = 'category_id',
+  /** column name */
+  ConfigurationId = 'configuration_id'
+}
+
+export type Modelcatalog_Configuration_Category_Updates = {
+  /** sets the columns of the filtered rows to the given values */
+  _set?: InputMaybe<Modelcatalog_Configuration_Category_Set_Input>;
+  where: Modelcatalog_Configuration_Category_Bool_Exp;
+};
+
+/** columns and relationships of "modelcatalog_configuration_causal_diagram" */
+export type Modelcatalog_Configuration_Causal_Diagram = {
+  __typename?: 'modelcatalog_configuration_causal_diagram';
+  /** An object relationship */
+  causal_diagram: Modelcatalog_Causal_Diagram;
+  causal_diagram_id: Scalars['String']['output'];
+  /** An object relationship */
+  configuration: Modelcatalog_Configuration;
+  configuration_id: Scalars['String']['output'];
+};
+
+/** aggregated selection of "modelcatalog_configuration_causal_diagram" */
+export type Modelcatalog_Configuration_Causal_Diagram_Aggregate = {
+  __typename?: 'modelcatalog_configuration_causal_diagram_aggregate';
+  aggregate?: Maybe<Modelcatalog_Configuration_Causal_Diagram_Aggregate_Fields>;
+  nodes: Array<Modelcatalog_Configuration_Causal_Diagram>;
+};
+
+/** aggregate fields of "modelcatalog_configuration_causal_diagram" */
+export type Modelcatalog_Configuration_Causal_Diagram_Aggregate_Fields = {
+  __typename?: 'modelcatalog_configuration_causal_diagram_aggregate_fields';
+  count: Scalars['Int']['output'];
+  max?: Maybe<Modelcatalog_Configuration_Causal_Diagram_Max_Fields>;
+  min?: Maybe<Modelcatalog_Configuration_Causal_Diagram_Min_Fields>;
+};
+
+
+/** aggregate fields of "modelcatalog_configuration_causal_diagram" */
+export type Modelcatalog_Configuration_Causal_Diagram_Aggregate_FieldsCountArgs = {
+  columns?: InputMaybe<Array<Modelcatalog_Configuration_Causal_Diagram_Select_Column>>;
+  distinct?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
+/** order by aggregate values of table "modelcatalog_configuration_causal_diagram" */
+export type Modelcatalog_Configuration_Causal_Diagram_Aggregate_Order_By = {
+  count?: InputMaybe<Order_By>;
+  max?: InputMaybe<Modelcatalog_Configuration_Causal_Diagram_Max_Order_By>;
+  min?: InputMaybe<Modelcatalog_Configuration_Causal_Diagram_Min_Order_By>;
+};
+
+/** input type for inserting array relation for remote table "modelcatalog_configuration_causal_diagram" */
+export type Modelcatalog_Configuration_Causal_Diagram_Arr_Rel_Insert_Input = {
+  data: Array<Modelcatalog_Configuration_Causal_Diagram_Insert_Input>;
+  /** upsert condition */
+  on_conflict?: InputMaybe<Modelcatalog_Configuration_Causal_Diagram_On_Conflict>;
+};
+
+/** Boolean expression to filter rows from the table "modelcatalog_configuration_causal_diagram". All fields are combined with a logical 'AND'. */
+export type Modelcatalog_Configuration_Causal_Diagram_Bool_Exp = {
+  _and?: InputMaybe<Array<Modelcatalog_Configuration_Causal_Diagram_Bool_Exp>>;
+  _not?: InputMaybe<Modelcatalog_Configuration_Causal_Diagram_Bool_Exp>;
+  _or?: InputMaybe<Array<Modelcatalog_Configuration_Causal_Diagram_Bool_Exp>>;
+  causal_diagram?: InputMaybe<Modelcatalog_Causal_Diagram_Bool_Exp>;
+  causal_diagram_id?: InputMaybe<String_Comparison_Exp>;
+  configuration?: InputMaybe<Modelcatalog_Configuration_Bool_Exp>;
+  configuration_id?: InputMaybe<String_Comparison_Exp>;
+};
+
+/** unique or primary key constraints on table "modelcatalog_configuration_causal_diagram" */
+export enum Modelcatalog_Configuration_Causal_Diagram_Constraint {
+  /** unique or primary key constraint on columns "configuration_id", "causal_diagram_id" */
+  ModelcatalogConfigurationCausalDiagramPkey = 'modelcatalog_configuration_causal_diagram_pkey'
+}
+
+/** input type for inserting data into table "modelcatalog_configuration_causal_diagram" */
+export type Modelcatalog_Configuration_Causal_Diagram_Insert_Input = {
+  causal_diagram?: InputMaybe<Modelcatalog_Causal_Diagram_Obj_Rel_Insert_Input>;
+  causal_diagram_id?: InputMaybe<Scalars['String']['input']>;
+  configuration?: InputMaybe<Modelcatalog_Configuration_Obj_Rel_Insert_Input>;
+  configuration_id?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** aggregate max on columns */
+export type Modelcatalog_Configuration_Causal_Diagram_Max_Fields = {
+  __typename?: 'modelcatalog_configuration_causal_diagram_max_fields';
+  causal_diagram_id?: Maybe<Scalars['String']['output']>;
+  configuration_id?: Maybe<Scalars['String']['output']>;
+};
+
+/** order by max() on columns of table "modelcatalog_configuration_causal_diagram" */
+export type Modelcatalog_Configuration_Causal_Diagram_Max_Order_By = {
+  causal_diagram_id?: InputMaybe<Order_By>;
+  configuration_id?: InputMaybe<Order_By>;
+};
+
+/** aggregate min on columns */
+export type Modelcatalog_Configuration_Causal_Diagram_Min_Fields = {
+  __typename?: 'modelcatalog_configuration_causal_diagram_min_fields';
+  causal_diagram_id?: Maybe<Scalars['String']['output']>;
+  configuration_id?: Maybe<Scalars['String']['output']>;
+};
+
+/** order by min() on columns of table "modelcatalog_configuration_causal_diagram" */
+export type Modelcatalog_Configuration_Causal_Diagram_Min_Order_By = {
+  causal_diagram_id?: InputMaybe<Order_By>;
+  configuration_id?: InputMaybe<Order_By>;
+};
+
+/** response of any mutation on the table "modelcatalog_configuration_causal_diagram" */
+export type Modelcatalog_Configuration_Causal_Diagram_Mutation_Response = {
+  __typename?: 'modelcatalog_configuration_causal_diagram_mutation_response';
+  /** number of rows affected by the mutation */
+  affected_rows: Scalars['Int']['output'];
+  /** data from the rows affected by the mutation */
+  returning: Array<Modelcatalog_Configuration_Causal_Diagram>;
+};
+
+/** on_conflict condition type for table "modelcatalog_configuration_causal_diagram" */
+export type Modelcatalog_Configuration_Causal_Diagram_On_Conflict = {
+  constraint: Modelcatalog_Configuration_Causal_Diagram_Constraint;
+  update_columns?: Array<Modelcatalog_Configuration_Causal_Diagram_Update_Column>;
+  where?: InputMaybe<Modelcatalog_Configuration_Causal_Diagram_Bool_Exp>;
+};
+
+/** Ordering options when selecting data from "modelcatalog_configuration_causal_diagram". */
+export type Modelcatalog_Configuration_Causal_Diagram_Order_By = {
+  causal_diagram?: InputMaybe<Modelcatalog_Causal_Diagram_Order_By>;
+  causal_diagram_id?: InputMaybe<Order_By>;
+  configuration?: InputMaybe<Modelcatalog_Configuration_Order_By>;
+  configuration_id?: InputMaybe<Order_By>;
+};
+
+/** primary key columns input for table: modelcatalog_configuration_causal_diagram */
+export type Modelcatalog_Configuration_Causal_Diagram_Pk_Columns_Input = {
+  causal_diagram_id: Scalars['String']['input'];
+  configuration_id: Scalars['String']['input'];
+};
+
+/** select columns of table "modelcatalog_configuration_causal_diagram" */
+export enum Modelcatalog_Configuration_Causal_Diagram_Select_Column {
+  /** column name */
+  CausalDiagramId = 'causal_diagram_id',
+  /** column name */
+  ConfigurationId = 'configuration_id'
+}
+
+/** input type for updating data in table "modelcatalog_configuration_causal_diagram" */
+export type Modelcatalog_Configuration_Causal_Diagram_Set_Input = {
+  causal_diagram_id?: InputMaybe<Scalars['String']['input']>;
+  configuration_id?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** update columns of table "modelcatalog_configuration_causal_diagram" */
+export enum Modelcatalog_Configuration_Causal_Diagram_Update_Column {
+  /** column name */
+  CausalDiagramId = 'causal_diagram_id',
+  /** column name */
+  ConfigurationId = 'configuration_id'
+}
+
+export type Modelcatalog_Configuration_Causal_Diagram_Updates = {
+  /** sets the columns of the filtered rows to the given values */
+  _set?: InputMaybe<Modelcatalog_Configuration_Causal_Diagram_Set_Input>;
+  where: Modelcatalog_Configuration_Causal_Diagram_Bool_Exp;
+};
+
+/** unique or primary key constraints on table "modelcatalog_configuration" */
+export enum Modelcatalog_Configuration_Constraint {
+  /** unique or primary key constraint on columns "id" */
+  ModelcatalogConfigurationPkey = 'modelcatalog_configuration_pkey'
+}
+
+/** columns and relationships of "modelcatalog_configuration_input" */
+export type Modelcatalog_Configuration_Input = {
+  __typename?: 'modelcatalog_configuration_input';
+  /** An object relationship */
+  configuration: Modelcatalog_Configuration;
+  configuration_id: Scalars['String']['output'];
+  /** An object relationship */
+  input: Modelcatalog_Dataset_Specification;
+  input_id: Scalars['String']['output'];
+};
+
+/** aggregated selection of "modelcatalog_configuration_input" */
+export type Modelcatalog_Configuration_Input_Aggregate = {
+  __typename?: 'modelcatalog_configuration_input_aggregate';
+  aggregate?: Maybe<Modelcatalog_Configuration_Input_Aggregate_Fields>;
+  nodes: Array<Modelcatalog_Configuration_Input>;
+};
+
+/** aggregate fields of "modelcatalog_configuration_input" */
+export type Modelcatalog_Configuration_Input_Aggregate_Fields = {
+  __typename?: 'modelcatalog_configuration_input_aggregate_fields';
+  count: Scalars['Int']['output'];
+  max?: Maybe<Modelcatalog_Configuration_Input_Max_Fields>;
+  min?: Maybe<Modelcatalog_Configuration_Input_Min_Fields>;
+};
+
+
+/** aggregate fields of "modelcatalog_configuration_input" */
+export type Modelcatalog_Configuration_Input_Aggregate_FieldsCountArgs = {
+  columns?: InputMaybe<Array<Modelcatalog_Configuration_Input_Select_Column>>;
+  distinct?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
+/** order by aggregate values of table "modelcatalog_configuration_input" */
+export type Modelcatalog_Configuration_Input_Aggregate_Order_By = {
+  count?: InputMaybe<Order_By>;
+  max?: InputMaybe<Modelcatalog_Configuration_Input_Max_Order_By>;
+  min?: InputMaybe<Modelcatalog_Configuration_Input_Min_Order_By>;
+};
+
+/** input type for inserting array relation for remote table "modelcatalog_configuration_input" */
+export type Modelcatalog_Configuration_Input_Arr_Rel_Insert_Input = {
+  data: Array<Modelcatalog_Configuration_Input_Insert_Input>;
+  /** upsert condition */
+  on_conflict?: InputMaybe<Modelcatalog_Configuration_Input_On_Conflict>;
+};
+
+/** Boolean expression to filter rows from the table "modelcatalog_configuration_input". All fields are combined with a logical 'AND'. */
+export type Modelcatalog_Configuration_Input_Bool_Exp = {
+  _and?: InputMaybe<Array<Modelcatalog_Configuration_Input_Bool_Exp>>;
+  _not?: InputMaybe<Modelcatalog_Configuration_Input_Bool_Exp>;
+  _or?: InputMaybe<Array<Modelcatalog_Configuration_Input_Bool_Exp>>;
+  configuration?: InputMaybe<Modelcatalog_Configuration_Bool_Exp>;
+  configuration_id?: InputMaybe<String_Comparison_Exp>;
+  input?: InputMaybe<Modelcatalog_Dataset_Specification_Bool_Exp>;
+  input_id?: InputMaybe<String_Comparison_Exp>;
+};
+
+/** unique or primary key constraints on table "modelcatalog_configuration_input" */
+export enum Modelcatalog_Configuration_Input_Constraint {
+  /** unique or primary key constraint on columns "configuration_id", "input_id" */
+  ModelcatalogConfigurationInputPkey = 'modelcatalog_configuration_input_pkey'
+}
+
+/** input type for inserting data into table "modelcatalog_configuration_input" */
+export type Modelcatalog_Configuration_Input_Insert_Input = {
+  configuration?: InputMaybe<Modelcatalog_Configuration_Obj_Rel_Insert_Input>;
+  configuration_id?: InputMaybe<Scalars['String']['input']>;
+  input?: InputMaybe<Modelcatalog_Dataset_Specification_Obj_Rel_Insert_Input>;
+  input_id?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** aggregate max on columns */
+export type Modelcatalog_Configuration_Input_Max_Fields = {
+  __typename?: 'modelcatalog_configuration_input_max_fields';
+  configuration_id?: Maybe<Scalars['String']['output']>;
+  input_id?: Maybe<Scalars['String']['output']>;
+};
+
+/** order by max() on columns of table "modelcatalog_configuration_input" */
+export type Modelcatalog_Configuration_Input_Max_Order_By = {
+  configuration_id?: InputMaybe<Order_By>;
+  input_id?: InputMaybe<Order_By>;
+};
+
+/** aggregate min on columns */
+export type Modelcatalog_Configuration_Input_Min_Fields = {
+  __typename?: 'modelcatalog_configuration_input_min_fields';
+  configuration_id?: Maybe<Scalars['String']['output']>;
+  input_id?: Maybe<Scalars['String']['output']>;
+};
+
+/** order by min() on columns of table "modelcatalog_configuration_input" */
+export type Modelcatalog_Configuration_Input_Min_Order_By = {
+  configuration_id?: InputMaybe<Order_By>;
+  input_id?: InputMaybe<Order_By>;
+};
+
+/** response of any mutation on the table "modelcatalog_configuration_input" */
+export type Modelcatalog_Configuration_Input_Mutation_Response = {
+  __typename?: 'modelcatalog_configuration_input_mutation_response';
+  /** number of rows affected by the mutation */
+  affected_rows: Scalars['Int']['output'];
+  /** data from the rows affected by the mutation */
+  returning: Array<Modelcatalog_Configuration_Input>;
+};
+
+/** on_conflict condition type for table "modelcatalog_configuration_input" */
+export type Modelcatalog_Configuration_Input_On_Conflict = {
+  constraint: Modelcatalog_Configuration_Input_Constraint;
+  update_columns?: Array<Modelcatalog_Configuration_Input_Update_Column>;
+  where?: InputMaybe<Modelcatalog_Configuration_Input_Bool_Exp>;
+};
+
+/** Ordering options when selecting data from "modelcatalog_configuration_input". */
+export type Modelcatalog_Configuration_Input_Order_By = {
+  configuration?: InputMaybe<Modelcatalog_Configuration_Order_By>;
+  configuration_id?: InputMaybe<Order_By>;
+  input?: InputMaybe<Modelcatalog_Dataset_Specification_Order_By>;
+  input_id?: InputMaybe<Order_By>;
+};
+
+/** primary key columns input for table: modelcatalog_configuration_input */
+export type Modelcatalog_Configuration_Input_Pk_Columns_Input = {
+  configuration_id: Scalars['String']['input'];
+  input_id: Scalars['String']['input'];
+};
+
+/** select columns of table "modelcatalog_configuration_input" */
+export enum Modelcatalog_Configuration_Input_Select_Column {
+  /** column name */
+  ConfigurationId = 'configuration_id',
+  /** column name */
+  InputId = 'input_id'
+}
+
+/** input type for updating data in table "modelcatalog_configuration_input" */
+export type Modelcatalog_Configuration_Input_Set_Input = {
+  configuration_id?: InputMaybe<Scalars['String']['input']>;
+  input_id?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** update columns of table "modelcatalog_configuration_input" */
+export enum Modelcatalog_Configuration_Input_Update_Column {
+  /** column name */
+  ConfigurationId = 'configuration_id',
+  /** column name */
+  InputId = 'input_id'
+}
+
+export type Modelcatalog_Configuration_Input_Updates = {
+  /** sets the columns of the filtered rows to the given values */
+  _set?: InputMaybe<Modelcatalog_Configuration_Input_Set_Input>;
+  where: Modelcatalog_Configuration_Input_Bool_Exp;
+};
+
+/** input type for inserting data into table "modelcatalog_configuration" */
+export type Modelcatalog_Configuration_Insert_Input = {
+  author?: InputMaybe<Modelcatalog_Person_Obj_Rel_Insert_Input>;
+  author_id?: InputMaybe<Scalars['String']['input']>;
+  authors?: InputMaybe<Modelcatalog_Configuration_Author_Arr_Rel_Insert_Input>;
+  calibrated_variables?: InputMaybe<Modelcatalog_Configuration_Calibrated_Variable_Arr_Rel_Insert_Input>;
+  calibration_interval?: InputMaybe<Scalars['String']['input']>;
+  calibration_method?: InputMaybe<Scalars['String']['input']>;
+  calibration_targets?: InputMaybe<Modelcatalog_Configuration_Calibration_Target_Arr_Rel_Insert_Input>;
+  categories?: InputMaybe<Modelcatalog_Configuration_Category_Arr_Rel_Insert_Input>;
+  causal_diagrams?: InputMaybe<Modelcatalog_Configuration_Causal_Diagram_Arr_Rel_Insert_Input>;
+  child_configurations?: InputMaybe<Modelcatalog_Configuration_Arr_Rel_Insert_Input>;
+  description?: InputMaybe<Scalars['String']['input']>;
+  executions?: InputMaybe<Execution_Arr_Rel_Insert_Input>;
+  has_component_location?: InputMaybe<Scalars['String']['input']>;
+  has_implementation_script_location?: InputMaybe<Scalars['String']['input']>;
+  has_model_result_table?: InputMaybe<Scalars['String']['input']>;
+  has_region?: InputMaybe<Scalars['String']['input']>;
+  has_software_image?: InputMaybe<Scalars['String']['input']>;
+  id?: InputMaybe<Scalars['String']['input']>;
+  inputs?: InputMaybe<Modelcatalog_Configuration_Input_Arr_Rel_Insert_Input>;
+  keywords?: InputMaybe<Scalars['String']['input']>;
+  label?: InputMaybe<Scalars['String']['input']>;
+  model_configuration_id?: InputMaybe<Scalars['String']['input']>;
+  outputs?: InputMaybe<Modelcatalog_Configuration_Output_Arr_Rel_Insert_Input>;
+  parameter_assignment_method?: InputMaybe<Scalars['String']['input']>;
+  parameters?: InputMaybe<Modelcatalog_Configuration_Parameter_Arr_Rel_Insert_Input>;
+  parent_configuration?: InputMaybe<Modelcatalog_Configuration_Obj_Rel_Insert_Input>;
+  regions?: InputMaybe<Modelcatalog_Configuration_Region_Arr_Rel_Insert_Input>;
+  software_version?: InputMaybe<Modelcatalog_Software_Version_Obj_Rel_Insert_Input>;
+  software_version_id?: InputMaybe<Scalars['String']['input']>;
+  thread_models?: InputMaybe<Thread_Model_Arr_Rel_Insert_Input>;
+  time_intervals?: InputMaybe<Modelcatalog_Configuration_Time_Interval_Arr_Rel_Insert_Input>;
+  usage_notes?: InputMaybe<Scalars['String']['input']>;
+  valid_until?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** aggregate max on columns */
+export type Modelcatalog_Configuration_Max_Fields = {
+  __typename?: 'modelcatalog_configuration_max_fields';
+  author_id?: Maybe<Scalars['String']['output']>;
+  calibration_interval?: Maybe<Scalars['String']['output']>;
+  calibration_method?: Maybe<Scalars['String']['output']>;
+  description?: Maybe<Scalars['String']['output']>;
+  has_component_location?: Maybe<Scalars['String']['output']>;
+  has_implementation_script_location?: Maybe<Scalars['String']['output']>;
+  has_model_result_table?: Maybe<Scalars['String']['output']>;
+  has_region?: Maybe<Scalars['String']['output']>;
+  has_software_image?: Maybe<Scalars['String']['output']>;
+  id?: Maybe<Scalars['String']['output']>;
+  keywords?: Maybe<Scalars['String']['output']>;
+  label?: Maybe<Scalars['String']['output']>;
+  model_configuration_id?: Maybe<Scalars['String']['output']>;
+  parameter_assignment_method?: Maybe<Scalars['String']['output']>;
+  software_version_id?: Maybe<Scalars['String']['output']>;
+  usage_notes?: Maybe<Scalars['String']['output']>;
+  valid_until?: Maybe<Scalars['String']['output']>;
+};
+
+/** order by max() on columns of table "modelcatalog_configuration" */
+export type Modelcatalog_Configuration_Max_Order_By = {
+  author_id?: InputMaybe<Order_By>;
+  calibration_interval?: InputMaybe<Order_By>;
+  calibration_method?: InputMaybe<Order_By>;
+  description?: InputMaybe<Order_By>;
+  has_component_location?: InputMaybe<Order_By>;
+  has_implementation_script_location?: InputMaybe<Order_By>;
+  has_model_result_table?: InputMaybe<Order_By>;
+  has_region?: InputMaybe<Order_By>;
+  has_software_image?: InputMaybe<Order_By>;
+  id?: InputMaybe<Order_By>;
+  keywords?: InputMaybe<Order_By>;
+  label?: InputMaybe<Order_By>;
+  model_configuration_id?: InputMaybe<Order_By>;
+  parameter_assignment_method?: InputMaybe<Order_By>;
+  software_version_id?: InputMaybe<Order_By>;
+  usage_notes?: InputMaybe<Order_By>;
+  valid_until?: InputMaybe<Order_By>;
+};
+
+/** aggregate min on columns */
+export type Modelcatalog_Configuration_Min_Fields = {
+  __typename?: 'modelcatalog_configuration_min_fields';
+  author_id?: Maybe<Scalars['String']['output']>;
+  calibration_interval?: Maybe<Scalars['String']['output']>;
+  calibration_method?: Maybe<Scalars['String']['output']>;
+  description?: Maybe<Scalars['String']['output']>;
+  has_component_location?: Maybe<Scalars['String']['output']>;
+  has_implementation_script_location?: Maybe<Scalars['String']['output']>;
+  has_model_result_table?: Maybe<Scalars['String']['output']>;
+  has_region?: Maybe<Scalars['String']['output']>;
+  has_software_image?: Maybe<Scalars['String']['output']>;
+  id?: Maybe<Scalars['String']['output']>;
+  keywords?: Maybe<Scalars['String']['output']>;
+  label?: Maybe<Scalars['String']['output']>;
+  model_configuration_id?: Maybe<Scalars['String']['output']>;
+  parameter_assignment_method?: Maybe<Scalars['String']['output']>;
+  software_version_id?: Maybe<Scalars['String']['output']>;
+  usage_notes?: Maybe<Scalars['String']['output']>;
+  valid_until?: Maybe<Scalars['String']['output']>;
+};
+
+/** order by min() on columns of table "modelcatalog_configuration" */
+export type Modelcatalog_Configuration_Min_Order_By = {
+  author_id?: InputMaybe<Order_By>;
+  calibration_interval?: InputMaybe<Order_By>;
+  calibration_method?: InputMaybe<Order_By>;
+  description?: InputMaybe<Order_By>;
+  has_component_location?: InputMaybe<Order_By>;
+  has_implementation_script_location?: InputMaybe<Order_By>;
+  has_model_result_table?: InputMaybe<Order_By>;
+  has_region?: InputMaybe<Order_By>;
+  has_software_image?: InputMaybe<Order_By>;
+  id?: InputMaybe<Order_By>;
+  keywords?: InputMaybe<Order_By>;
+  label?: InputMaybe<Order_By>;
+  model_configuration_id?: InputMaybe<Order_By>;
+  parameter_assignment_method?: InputMaybe<Order_By>;
+  software_version_id?: InputMaybe<Order_By>;
+  usage_notes?: InputMaybe<Order_By>;
+  valid_until?: InputMaybe<Order_By>;
+};
+
+/** response of any mutation on the table "modelcatalog_configuration" */
+export type Modelcatalog_Configuration_Mutation_Response = {
+  __typename?: 'modelcatalog_configuration_mutation_response';
+  /** number of rows affected by the mutation */
+  affected_rows: Scalars['Int']['output'];
+  /** data from the rows affected by the mutation */
+  returning: Array<Modelcatalog_Configuration>;
+};
+
+/** input type for inserting object relation for remote table "modelcatalog_configuration" */
+export type Modelcatalog_Configuration_Obj_Rel_Insert_Input = {
+  data: Modelcatalog_Configuration_Insert_Input;
+  /** upsert condition */
+  on_conflict?: InputMaybe<Modelcatalog_Configuration_On_Conflict>;
+};
+
+/** on_conflict condition type for table "modelcatalog_configuration" */
+export type Modelcatalog_Configuration_On_Conflict = {
+  constraint: Modelcatalog_Configuration_Constraint;
+  update_columns?: Array<Modelcatalog_Configuration_Update_Column>;
+  where?: InputMaybe<Modelcatalog_Configuration_Bool_Exp>;
+};
+
+/** Ordering options when selecting data from "modelcatalog_configuration". */
+export type Modelcatalog_Configuration_Order_By = {
+  author?: InputMaybe<Modelcatalog_Person_Order_By>;
+  author_id?: InputMaybe<Order_By>;
+  authors_aggregate?: InputMaybe<Modelcatalog_Configuration_Author_Aggregate_Order_By>;
+  calibrated_variables_aggregate?: InputMaybe<Modelcatalog_Configuration_Calibrated_Variable_Aggregate_Order_By>;
+  calibration_interval?: InputMaybe<Order_By>;
+  calibration_method?: InputMaybe<Order_By>;
+  calibration_targets_aggregate?: InputMaybe<Modelcatalog_Configuration_Calibration_Target_Aggregate_Order_By>;
+  categories_aggregate?: InputMaybe<Modelcatalog_Configuration_Category_Aggregate_Order_By>;
+  causal_diagrams_aggregate?: InputMaybe<Modelcatalog_Configuration_Causal_Diagram_Aggregate_Order_By>;
+  child_configurations_aggregate?: InputMaybe<Modelcatalog_Configuration_Aggregate_Order_By>;
+  description?: InputMaybe<Order_By>;
+  executions_aggregate?: InputMaybe<Execution_Aggregate_Order_By>;
+  has_component_location?: InputMaybe<Order_By>;
+  has_implementation_script_location?: InputMaybe<Order_By>;
+  has_model_result_table?: InputMaybe<Order_By>;
+  has_region?: InputMaybe<Order_By>;
+  has_software_image?: InputMaybe<Order_By>;
+  id?: InputMaybe<Order_By>;
+  inputs_aggregate?: InputMaybe<Modelcatalog_Configuration_Input_Aggregate_Order_By>;
+  keywords?: InputMaybe<Order_By>;
+  label?: InputMaybe<Order_By>;
+  model_configuration_id?: InputMaybe<Order_By>;
+  outputs_aggregate?: InputMaybe<Modelcatalog_Configuration_Output_Aggregate_Order_By>;
+  parameter_assignment_method?: InputMaybe<Order_By>;
+  parameters_aggregate?: InputMaybe<Modelcatalog_Configuration_Parameter_Aggregate_Order_By>;
+  parent_configuration?: InputMaybe<Modelcatalog_Configuration_Order_By>;
+  regions_aggregate?: InputMaybe<Modelcatalog_Configuration_Region_Aggregate_Order_By>;
+  software_version?: InputMaybe<Modelcatalog_Software_Version_Order_By>;
+  software_version_id?: InputMaybe<Order_By>;
+  thread_models_aggregate?: InputMaybe<Thread_Model_Aggregate_Order_By>;
+  time_intervals_aggregate?: InputMaybe<Modelcatalog_Configuration_Time_Interval_Aggregate_Order_By>;
+  usage_notes?: InputMaybe<Order_By>;
+  valid_until?: InputMaybe<Order_By>;
+};
+
+/** columns and relationships of "modelcatalog_configuration_output" */
+export type Modelcatalog_Configuration_Output = {
+  __typename?: 'modelcatalog_configuration_output';
+  /** An object relationship */
+  configuration: Modelcatalog_Configuration;
+  configuration_id: Scalars['String']['output'];
+  /** An object relationship */
+  output: Modelcatalog_Dataset_Specification;
+  output_id: Scalars['String']['output'];
+};
+
+/** aggregated selection of "modelcatalog_configuration_output" */
+export type Modelcatalog_Configuration_Output_Aggregate = {
+  __typename?: 'modelcatalog_configuration_output_aggregate';
+  aggregate?: Maybe<Modelcatalog_Configuration_Output_Aggregate_Fields>;
+  nodes: Array<Modelcatalog_Configuration_Output>;
+};
+
+/** aggregate fields of "modelcatalog_configuration_output" */
+export type Modelcatalog_Configuration_Output_Aggregate_Fields = {
+  __typename?: 'modelcatalog_configuration_output_aggregate_fields';
+  count: Scalars['Int']['output'];
+  max?: Maybe<Modelcatalog_Configuration_Output_Max_Fields>;
+  min?: Maybe<Modelcatalog_Configuration_Output_Min_Fields>;
+};
+
+
+/** aggregate fields of "modelcatalog_configuration_output" */
+export type Modelcatalog_Configuration_Output_Aggregate_FieldsCountArgs = {
+  columns?: InputMaybe<Array<Modelcatalog_Configuration_Output_Select_Column>>;
+  distinct?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
+/** order by aggregate values of table "modelcatalog_configuration_output" */
+export type Modelcatalog_Configuration_Output_Aggregate_Order_By = {
+  count?: InputMaybe<Order_By>;
+  max?: InputMaybe<Modelcatalog_Configuration_Output_Max_Order_By>;
+  min?: InputMaybe<Modelcatalog_Configuration_Output_Min_Order_By>;
+};
+
+/** input type for inserting array relation for remote table "modelcatalog_configuration_output" */
+export type Modelcatalog_Configuration_Output_Arr_Rel_Insert_Input = {
+  data: Array<Modelcatalog_Configuration_Output_Insert_Input>;
+  /** upsert condition */
+  on_conflict?: InputMaybe<Modelcatalog_Configuration_Output_On_Conflict>;
+};
+
+/** Boolean expression to filter rows from the table "modelcatalog_configuration_output". All fields are combined with a logical 'AND'. */
+export type Modelcatalog_Configuration_Output_Bool_Exp = {
+  _and?: InputMaybe<Array<Modelcatalog_Configuration_Output_Bool_Exp>>;
+  _not?: InputMaybe<Modelcatalog_Configuration_Output_Bool_Exp>;
+  _or?: InputMaybe<Array<Modelcatalog_Configuration_Output_Bool_Exp>>;
+  configuration?: InputMaybe<Modelcatalog_Configuration_Bool_Exp>;
+  configuration_id?: InputMaybe<String_Comparison_Exp>;
+  output?: InputMaybe<Modelcatalog_Dataset_Specification_Bool_Exp>;
+  output_id?: InputMaybe<String_Comparison_Exp>;
+};
+
+/** unique or primary key constraints on table "modelcatalog_configuration_output" */
+export enum Modelcatalog_Configuration_Output_Constraint {
+  /** unique or primary key constraint on columns "configuration_id", "output_id" */
+  ModelcatalogConfigurationOutputPkey = 'modelcatalog_configuration_output_pkey'
+}
+
+/** input type for inserting data into table "modelcatalog_configuration_output" */
+export type Modelcatalog_Configuration_Output_Insert_Input = {
+  configuration?: InputMaybe<Modelcatalog_Configuration_Obj_Rel_Insert_Input>;
+  configuration_id?: InputMaybe<Scalars['String']['input']>;
+  output?: InputMaybe<Modelcatalog_Dataset_Specification_Obj_Rel_Insert_Input>;
+  output_id?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** aggregate max on columns */
+export type Modelcatalog_Configuration_Output_Max_Fields = {
+  __typename?: 'modelcatalog_configuration_output_max_fields';
+  configuration_id?: Maybe<Scalars['String']['output']>;
+  output_id?: Maybe<Scalars['String']['output']>;
+};
+
+/** order by max() on columns of table "modelcatalog_configuration_output" */
+export type Modelcatalog_Configuration_Output_Max_Order_By = {
+  configuration_id?: InputMaybe<Order_By>;
+  output_id?: InputMaybe<Order_By>;
+};
+
+/** aggregate min on columns */
+export type Modelcatalog_Configuration_Output_Min_Fields = {
+  __typename?: 'modelcatalog_configuration_output_min_fields';
+  configuration_id?: Maybe<Scalars['String']['output']>;
+  output_id?: Maybe<Scalars['String']['output']>;
+};
+
+/** order by min() on columns of table "modelcatalog_configuration_output" */
+export type Modelcatalog_Configuration_Output_Min_Order_By = {
+  configuration_id?: InputMaybe<Order_By>;
+  output_id?: InputMaybe<Order_By>;
+};
+
+/** response of any mutation on the table "modelcatalog_configuration_output" */
+export type Modelcatalog_Configuration_Output_Mutation_Response = {
+  __typename?: 'modelcatalog_configuration_output_mutation_response';
+  /** number of rows affected by the mutation */
+  affected_rows: Scalars['Int']['output'];
+  /** data from the rows affected by the mutation */
+  returning: Array<Modelcatalog_Configuration_Output>;
+};
+
+/** on_conflict condition type for table "modelcatalog_configuration_output" */
+export type Modelcatalog_Configuration_Output_On_Conflict = {
+  constraint: Modelcatalog_Configuration_Output_Constraint;
+  update_columns?: Array<Modelcatalog_Configuration_Output_Update_Column>;
+  where?: InputMaybe<Modelcatalog_Configuration_Output_Bool_Exp>;
+};
+
+/** Ordering options when selecting data from "modelcatalog_configuration_output". */
+export type Modelcatalog_Configuration_Output_Order_By = {
+  configuration?: InputMaybe<Modelcatalog_Configuration_Order_By>;
+  configuration_id?: InputMaybe<Order_By>;
+  output?: InputMaybe<Modelcatalog_Dataset_Specification_Order_By>;
+  output_id?: InputMaybe<Order_By>;
+};
+
+/** primary key columns input for table: modelcatalog_configuration_output */
+export type Modelcatalog_Configuration_Output_Pk_Columns_Input = {
+  configuration_id: Scalars['String']['input'];
+  output_id: Scalars['String']['input'];
+};
+
+/** select columns of table "modelcatalog_configuration_output" */
+export enum Modelcatalog_Configuration_Output_Select_Column {
+  /** column name */
+  ConfigurationId = 'configuration_id',
+  /** column name */
+  OutputId = 'output_id'
+}
+
+/** input type for updating data in table "modelcatalog_configuration_output" */
+export type Modelcatalog_Configuration_Output_Set_Input = {
+  configuration_id?: InputMaybe<Scalars['String']['input']>;
+  output_id?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** update columns of table "modelcatalog_configuration_output" */
+export enum Modelcatalog_Configuration_Output_Update_Column {
+  /** column name */
+  ConfigurationId = 'configuration_id',
+  /** column name */
+  OutputId = 'output_id'
+}
+
+export type Modelcatalog_Configuration_Output_Updates = {
+  /** sets the columns of the filtered rows to the given values */
+  _set?: InputMaybe<Modelcatalog_Configuration_Output_Set_Input>;
+  where: Modelcatalog_Configuration_Output_Bool_Exp;
+};
+
+/** columns and relationships of "modelcatalog_configuration_parameter" */
+export type Modelcatalog_Configuration_Parameter = {
+  __typename?: 'modelcatalog_configuration_parameter';
+  /** An object relationship */
+  configuration: Modelcatalog_Configuration;
+  configuration_id: Scalars['String']['output'];
+  /** An object relationship */
+  parameter: Modelcatalog_Parameter;
+  parameter_id: Scalars['String']['output'];
+};
+
+/** aggregated selection of "modelcatalog_configuration_parameter" */
+export type Modelcatalog_Configuration_Parameter_Aggregate = {
+  __typename?: 'modelcatalog_configuration_parameter_aggregate';
+  aggregate?: Maybe<Modelcatalog_Configuration_Parameter_Aggregate_Fields>;
+  nodes: Array<Modelcatalog_Configuration_Parameter>;
+};
+
+/** aggregate fields of "modelcatalog_configuration_parameter" */
+export type Modelcatalog_Configuration_Parameter_Aggregate_Fields = {
+  __typename?: 'modelcatalog_configuration_parameter_aggregate_fields';
+  count: Scalars['Int']['output'];
+  max?: Maybe<Modelcatalog_Configuration_Parameter_Max_Fields>;
+  min?: Maybe<Modelcatalog_Configuration_Parameter_Min_Fields>;
+};
+
+
+/** aggregate fields of "modelcatalog_configuration_parameter" */
+export type Modelcatalog_Configuration_Parameter_Aggregate_FieldsCountArgs = {
+  columns?: InputMaybe<Array<Modelcatalog_Configuration_Parameter_Select_Column>>;
+  distinct?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
+/** order by aggregate values of table "modelcatalog_configuration_parameter" */
+export type Modelcatalog_Configuration_Parameter_Aggregate_Order_By = {
+  count?: InputMaybe<Order_By>;
+  max?: InputMaybe<Modelcatalog_Configuration_Parameter_Max_Order_By>;
+  min?: InputMaybe<Modelcatalog_Configuration_Parameter_Min_Order_By>;
+};
+
+/** input type for inserting array relation for remote table "modelcatalog_configuration_parameter" */
+export type Modelcatalog_Configuration_Parameter_Arr_Rel_Insert_Input = {
+  data: Array<Modelcatalog_Configuration_Parameter_Insert_Input>;
+  /** upsert condition */
+  on_conflict?: InputMaybe<Modelcatalog_Configuration_Parameter_On_Conflict>;
+};
+
+/** Boolean expression to filter rows from the table "modelcatalog_configuration_parameter". All fields are combined with a logical 'AND'. */
+export type Modelcatalog_Configuration_Parameter_Bool_Exp = {
+  _and?: InputMaybe<Array<Modelcatalog_Configuration_Parameter_Bool_Exp>>;
+  _not?: InputMaybe<Modelcatalog_Configuration_Parameter_Bool_Exp>;
+  _or?: InputMaybe<Array<Modelcatalog_Configuration_Parameter_Bool_Exp>>;
+  configuration?: InputMaybe<Modelcatalog_Configuration_Bool_Exp>;
+  configuration_id?: InputMaybe<String_Comparison_Exp>;
+  parameter?: InputMaybe<Modelcatalog_Parameter_Bool_Exp>;
+  parameter_id?: InputMaybe<String_Comparison_Exp>;
+};
+
+/** unique or primary key constraints on table "modelcatalog_configuration_parameter" */
+export enum Modelcatalog_Configuration_Parameter_Constraint {
+  /** unique or primary key constraint on columns "configuration_id", "parameter_id" */
+  ModelcatalogConfigurationParameterPkey = 'modelcatalog_configuration_parameter_pkey'
+}
+
+/** input type for inserting data into table "modelcatalog_configuration_parameter" */
+export type Modelcatalog_Configuration_Parameter_Insert_Input = {
+  configuration?: InputMaybe<Modelcatalog_Configuration_Obj_Rel_Insert_Input>;
+  configuration_id?: InputMaybe<Scalars['String']['input']>;
+  parameter?: InputMaybe<Modelcatalog_Parameter_Obj_Rel_Insert_Input>;
+  parameter_id?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** aggregate max on columns */
+export type Modelcatalog_Configuration_Parameter_Max_Fields = {
+  __typename?: 'modelcatalog_configuration_parameter_max_fields';
+  configuration_id?: Maybe<Scalars['String']['output']>;
+  parameter_id?: Maybe<Scalars['String']['output']>;
+};
+
+/** order by max() on columns of table "modelcatalog_configuration_parameter" */
+export type Modelcatalog_Configuration_Parameter_Max_Order_By = {
+  configuration_id?: InputMaybe<Order_By>;
+  parameter_id?: InputMaybe<Order_By>;
+};
+
+/** aggregate min on columns */
+export type Modelcatalog_Configuration_Parameter_Min_Fields = {
+  __typename?: 'modelcatalog_configuration_parameter_min_fields';
+  configuration_id?: Maybe<Scalars['String']['output']>;
+  parameter_id?: Maybe<Scalars['String']['output']>;
+};
+
+/** order by min() on columns of table "modelcatalog_configuration_parameter" */
+export type Modelcatalog_Configuration_Parameter_Min_Order_By = {
+  configuration_id?: InputMaybe<Order_By>;
+  parameter_id?: InputMaybe<Order_By>;
+};
+
+/** response of any mutation on the table "modelcatalog_configuration_parameter" */
+export type Modelcatalog_Configuration_Parameter_Mutation_Response = {
+  __typename?: 'modelcatalog_configuration_parameter_mutation_response';
+  /** number of rows affected by the mutation */
+  affected_rows: Scalars['Int']['output'];
+  /** data from the rows affected by the mutation */
+  returning: Array<Modelcatalog_Configuration_Parameter>;
+};
+
+/** on_conflict condition type for table "modelcatalog_configuration_parameter" */
+export type Modelcatalog_Configuration_Parameter_On_Conflict = {
+  constraint: Modelcatalog_Configuration_Parameter_Constraint;
+  update_columns?: Array<Modelcatalog_Configuration_Parameter_Update_Column>;
+  where?: InputMaybe<Modelcatalog_Configuration_Parameter_Bool_Exp>;
+};
+
+/** Ordering options when selecting data from "modelcatalog_configuration_parameter". */
+export type Modelcatalog_Configuration_Parameter_Order_By = {
+  configuration?: InputMaybe<Modelcatalog_Configuration_Order_By>;
+  configuration_id?: InputMaybe<Order_By>;
+  parameter?: InputMaybe<Modelcatalog_Parameter_Order_By>;
+  parameter_id?: InputMaybe<Order_By>;
+};
+
+/** primary key columns input for table: modelcatalog_configuration_parameter */
+export type Modelcatalog_Configuration_Parameter_Pk_Columns_Input = {
+  configuration_id: Scalars['String']['input'];
+  parameter_id: Scalars['String']['input'];
+};
+
+/** select columns of table "modelcatalog_configuration_parameter" */
+export enum Modelcatalog_Configuration_Parameter_Select_Column {
+  /** column name */
+  ConfigurationId = 'configuration_id',
+  /** column name */
+  ParameterId = 'parameter_id'
+}
+
+/** input type for updating data in table "modelcatalog_configuration_parameter" */
+export type Modelcatalog_Configuration_Parameter_Set_Input = {
+  configuration_id?: InputMaybe<Scalars['String']['input']>;
+  parameter_id?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** update columns of table "modelcatalog_configuration_parameter" */
+export enum Modelcatalog_Configuration_Parameter_Update_Column {
+  /** column name */
+  ConfigurationId = 'configuration_id',
+  /** column name */
+  ParameterId = 'parameter_id'
+}
+
+export type Modelcatalog_Configuration_Parameter_Updates = {
+  /** sets the columns of the filtered rows to the given values */
+  _set?: InputMaybe<Modelcatalog_Configuration_Parameter_Set_Input>;
+  where: Modelcatalog_Configuration_Parameter_Bool_Exp;
+};
+
+/** primary key columns input for table: modelcatalog_configuration */
+export type Modelcatalog_Configuration_Pk_Columns_Input = {
+  id: Scalars['String']['input'];
+};
+
+/** columns and relationships of "modelcatalog_configuration_region" */
+export type Modelcatalog_Configuration_Region = {
+  __typename?: 'modelcatalog_configuration_region';
+  /** An object relationship */
+  configuration: Modelcatalog_Configuration;
+  configuration_id: Scalars['String']['output'];
+  /** An object relationship */
+  region: Modelcatalog_Region;
+  region_id: Scalars['String']['output'];
+};
+
+/** aggregated selection of "modelcatalog_configuration_region" */
+export type Modelcatalog_Configuration_Region_Aggregate = {
+  __typename?: 'modelcatalog_configuration_region_aggregate';
+  aggregate?: Maybe<Modelcatalog_Configuration_Region_Aggregate_Fields>;
+  nodes: Array<Modelcatalog_Configuration_Region>;
+};
+
+/** aggregate fields of "modelcatalog_configuration_region" */
+export type Modelcatalog_Configuration_Region_Aggregate_Fields = {
+  __typename?: 'modelcatalog_configuration_region_aggregate_fields';
+  count: Scalars['Int']['output'];
+  max?: Maybe<Modelcatalog_Configuration_Region_Max_Fields>;
+  min?: Maybe<Modelcatalog_Configuration_Region_Min_Fields>;
+};
+
+
+/** aggregate fields of "modelcatalog_configuration_region" */
+export type Modelcatalog_Configuration_Region_Aggregate_FieldsCountArgs = {
+  columns?: InputMaybe<Array<Modelcatalog_Configuration_Region_Select_Column>>;
+  distinct?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
+/** order by aggregate values of table "modelcatalog_configuration_region" */
+export type Modelcatalog_Configuration_Region_Aggregate_Order_By = {
+  count?: InputMaybe<Order_By>;
+  max?: InputMaybe<Modelcatalog_Configuration_Region_Max_Order_By>;
+  min?: InputMaybe<Modelcatalog_Configuration_Region_Min_Order_By>;
+};
+
+/** input type for inserting array relation for remote table "modelcatalog_configuration_region" */
+export type Modelcatalog_Configuration_Region_Arr_Rel_Insert_Input = {
+  data: Array<Modelcatalog_Configuration_Region_Insert_Input>;
+  /** upsert condition */
+  on_conflict?: InputMaybe<Modelcatalog_Configuration_Region_On_Conflict>;
+};
+
+/** Boolean expression to filter rows from the table "modelcatalog_configuration_region". All fields are combined with a logical 'AND'. */
+export type Modelcatalog_Configuration_Region_Bool_Exp = {
+  _and?: InputMaybe<Array<Modelcatalog_Configuration_Region_Bool_Exp>>;
+  _not?: InputMaybe<Modelcatalog_Configuration_Region_Bool_Exp>;
+  _or?: InputMaybe<Array<Modelcatalog_Configuration_Region_Bool_Exp>>;
+  configuration?: InputMaybe<Modelcatalog_Configuration_Bool_Exp>;
+  configuration_id?: InputMaybe<String_Comparison_Exp>;
+  region?: InputMaybe<Modelcatalog_Region_Bool_Exp>;
+  region_id?: InputMaybe<String_Comparison_Exp>;
+};
+
+/** unique or primary key constraints on table "modelcatalog_configuration_region" */
+export enum Modelcatalog_Configuration_Region_Constraint {
+  /** unique or primary key constraint on columns "configuration_id", "region_id" */
+  ModelcatalogConfigurationRegionPkey = 'modelcatalog_configuration_region_pkey'
+}
+
+/** input type for inserting data into table "modelcatalog_configuration_region" */
+export type Modelcatalog_Configuration_Region_Insert_Input = {
+  configuration?: InputMaybe<Modelcatalog_Configuration_Obj_Rel_Insert_Input>;
+  configuration_id?: InputMaybe<Scalars['String']['input']>;
+  region?: InputMaybe<Modelcatalog_Region_Obj_Rel_Insert_Input>;
+  region_id?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** aggregate max on columns */
+export type Modelcatalog_Configuration_Region_Max_Fields = {
+  __typename?: 'modelcatalog_configuration_region_max_fields';
+  configuration_id?: Maybe<Scalars['String']['output']>;
+  region_id?: Maybe<Scalars['String']['output']>;
+};
+
+/** order by max() on columns of table "modelcatalog_configuration_region" */
+export type Modelcatalog_Configuration_Region_Max_Order_By = {
+  configuration_id?: InputMaybe<Order_By>;
+  region_id?: InputMaybe<Order_By>;
+};
+
+/** aggregate min on columns */
+export type Modelcatalog_Configuration_Region_Min_Fields = {
+  __typename?: 'modelcatalog_configuration_region_min_fields';
+  configuration_id?: Maybe<Scalars['String']['output']>;
+  region_id?: Maybe<Scalars['String']['output']>;
+};
+
+/** order by min() on columns of table "modelcatalog_configuration_region" */
+export type Modelcatalog_Configuration_Region_Min_Order_By = {
+  configuration_id?: InputMaybe<Order_By>;
+  region_id?: InputMaybe<Order_By>;
+};
+
+/** response of any mutation on the table "modelcatalog_configuration_region" */
+export type Modelcatalog_Configuration_Region_Mutation_Response = {
+  __typename?: 'modelcatalog_configuration_region_mutation_response';
+  /** number of rows affected by the mutation */
+  affected_rows: Scalars['Int']['output'];
+  /** data from the rows affected by the mutation */
+  returning: Array<Modelcatalog_Configuration_Region>;
+};
+
+/** on_conflict condition type for table "modelcatalog_configuration_region" */
+export type Modelcatalog_Configuration_Region_On_Conflict = {
+  constraint: Modelcatalog_Configuration_Region_Constraint;
+  update_columns?: Array<Modelcatalog_Configuration_Region_Update_Column>;
+  where?: InputMaybe<Modelcatalog_Configuration_Region_Bool_Exp>;
+};
+
+/** Ordering options when selecting data from "modelcatalog_configuration_region". */
+export type Modelcatalog_Configuration_Region_Order_By = {
+  configuration?: InputMaybe<Modelcatalog_Configuration_Order_By>;
+  configuration_id?: InputMaybe<Order_By>;
+  region?: InputMaybe<Modelcatalog_Region_Order_By>;
+  region_id?: InputMaybe<Order_By>;
+};
+
+/** primary key columns input for table: modelcatalog_configuration_region */
+export type Modelcatalog_Configuration_Region_Pk_Columns_Input = {
+  configuration_id: Scalars['String']['input'];
+  region_id: Scalars['String']['input'];
+};
+
+/** select columns of table "modelcatalog_configuration_region" */
+export enum Modelcatalog_Configuration_Region_Select_Column {
+  /** column name */
+  ConfigurationId = 'configuration_id',
+  /** column name */
+  RegionId = 'region_id'
+}
+
+/** input type for updating data in table "modelcatalog_configuration_region" */
+export type Modelcatalog_Configuration_Region_Set_Input = {
+  configuration_id?: InputMaybe<Scalars['String']['input']>;
+  region_id?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** update columns of table "modelcatalog_configuration_region" */
+export enum Modelcatalog_Configuration_Region_Update_Column {
+  /** column name */
+  ConfigurationId = 'configuration_id',
+  /** column name */
+  RegionId = 'region_id'
+}
+
+export type Modelcatalog_Configuration_Region_Updates = {
+  /** sets the columns of the filtered rows to the given values */
+  _set?: InputMaybe<Modelcatalog_Configuration_Region_Set_Input>;
+  where: Modelcatalog_Configuration_Region_Bool_Exp;
+};
+
+/** select columns of table "modelcatalog_configuration" */
+export enum Modelcatalog_Configuration_Select_Column {
+  /** column name */
+  AuthorId = 'author_id',
+  /** column name */
+  CalibrationInterval = 'calibration_interval',
+  /** column name */
+  CalibrationMethod = 'calibration_method',
+  /** column name */
+  Description = 'description',
+  /** column name */
+  HasComponentLocation = 'has_component_location',
+  /** column name */
+  HasImplementationScriptLocation = 'has_implementation_script_location',
+  /** column name */
+  HasModelResultTable = 'has_model_result_table',
+  /** column name */
+  HasRegion = 'has_region',
+  /** column name */
+  HasSoftwareImage = 'has_software_image',
+  /** column name */
+  Id = 'id',
+  /** column name */
+  Keywords = 'keywords',
+  /** column name */
+  Label = 'label',
+  /** column name */
+  ModelConfigurationId = 'model_configuration_id',
+  /** column name */
+  ParameterAssignmentMethod = 'parameter_assignment_method',
+  /** column name */
+  SoftwareVersionId = 'software_version_id',
+  /** column name */
+  UsageNotes = 'usage_notes',
+  /** column name */
+  ValidUntil = 'valid_until'
+}
+
+/** input type for updating data in table "modelcatalog_configuration" */
+export type Modelcatalog_Configuration_Set_Input = {
+  author_id?: InputMaybe<Scalars['String']['input']>;
+  calibration_interval?: InputMaybe<Scalars['String']['input']>;
+  calibration_method?: InputMaybe<Scalars['String']['input']>;
+  description?: InputMaybe<Scalars['String']['input']>;
+  has_component_location?: InputMaybe<Scalars['String']['input']>;
+  has_implementation_script_location?: InputMaybe<Scalars['String']['input']>;
+  has_model_result_table?: InputMaybe<Scalars['String']['input']>;
+  has_region?: InputMaybe<Scalars['String']['input']>;
+  has_software_image?: InputMaybe<Scalars['String']['input']>;
+  id?: InputMaybe<Scalars['String']['input']>;
+  keywords?: InputMaybe<Scalars['String']['input']>;
+  label?: InputMaybe<Scalars['String']['input']>;
+  model_configuration_id?: InputMaybe<Scalars['String']['input']>;
+  parameter_assignment_method?: InputMaybe<Scalars['String']['input']>;
+  software_version_id?: InputMaybe<Scalars['String']['input']>;
+  usage_notes?: InputMaybe<Scalars['String']['input']>;
+  valid_until?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** columns and relationships of "modelcatalog_configuration_time_interval" */
+export type Modelcatalog_Configuration_Time_Interval = {
+  __typename?: 'modelcatalog_configuration_time_interval';
+  /** An object relationship */
+  configuration: Modelcatalog_Configuration;
+  configuration_id: Scalars['String']['output'];
+  /** An object relationship */
+  time_interval: Modelcatalog_Time_Interval;
+  time_interval_id: Scalars['String']['output'];
+};
+
+/** aggregated selection of "modelcatalog_configuration_time_interval" */
+export type Modelcatalog_Configuration_Time_Interval_Aggregate = {
+  __typename?: 'modelcatalog_configuration_time_interval_aggregate';
+  aggregate?: Maybe<Modelcatalog_Configuration_Time_Interval_Aggregate_Fields>;
+  nodes: Array<Modelcatalog_Configuration_Time_Interval>;
+};
+
+/** aggregate fields of "modelcatalog_configuration_time_interval" */
+export type Modelcatalog_Configuration_Time_Interval_Aggregate_Fields = {
+  __typename?: 'modelcatalog_configuration_time_interval_aggregate_fields';
+  count: Scalars['Int']['output'];
+  max?: Maybe<Modelcatalog_Configuration_Time_Interval_Max_Fields>;
+  min?: Maybe<Modelcatalog_Configuration_Time_Interval_Min_Fields>;
+};
+
+
+/** aggregate fields of "modelcatalog_configuration_time_interval" */
+export type Modelcatalog_Configuration_Time_Interval_Aggregate_FieldsCountArgs = {
+  columns?: InputMaybe<Array<Modelcatalog_Configuration_Time_Interval_Select_Column>>;
+  distinct?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
+/** order by aggregate values of table "modelcatalog_configuration_time_interval" */
+export type Modelcatalog_Configuration_Time_Interval_Aggregate_Order_By = {
+  count?: InputMaybe<Order_By>;
+  max?: InputMaybe<Modelcatalog_Configuration_Time_Interval_Max_Order_By>;
+  min?: InputMaybe<Modelcatalog_Configuration_Time_Interval_Min_Order_By>;
+};
+
+/** input type for inserting array relation for remote table "modelcatalog_configuration_time_interval" */
+export type Modelcatalog_Configuration_Time_Interval_Arr_Rel_Insert_Input = {
+  data: Array<Modelcatalog_Configuration_Time_Interval_Insert_Input>;
+  /** upsert condition */
+  on_conflict?: InputMaybe<Modelcatalog_Configuration_Time_Interval_On_Conflict>;
+};
+
+/** Boolean expression to filter rows from the table "modelcatalog_configuration_time_interval". All fields are combined with a logical 'AND'. */
+export type Modelcatalog_Configuration_Time_Interval_Bool_Exp = {
+  _and?: InputMaybe<Array<Modelcatalog_Configuration_Time_Interval_Bool_Exp>>;
+  _not?: InputMaybe<Modelcatalog_Configuration_Time_Interval_Bool_Exp>;
+  _or?: InputMaybe<Array<Modelcatalog_Configuration_Time_Interval_Bool_Exp>>;
+  configuration?: InputMaybe<Modelcatalog_Configuration_Bool_Exp>;
+  configuration_id?: InputMaybe<String_Comparison_Exp>;
+  time_interval?: InputMaybe<Modelcatalog_Time_Interval_Bool_Exp>;
+  time_interval_id?: InputMaybe<String_Comparison_Exp>;
+};
+
+/** unique or primary key constraints on table "modelcatalog_configuration_time_interval" */
+export enum Modelcatalog_Configuration_Time_Interval_Constraint {
+  /** unique or primary key constraint on columns "configuration_id", "time_interval_id" */
+  ModelcatalogConfigurationTimeIntervalPkey = 'modelcatalog_configuration_time_interval_pkey'
+}
+
+/** input type for inserting data into table "modelcatalog_configuration_time_interval" */
+export type Modelcatalog_Configuration_Time_Interval_Insert_Input = {
+  configuration?: InputMaybe<Modelcatalog_Configuration_Obj_Rel_Insert_Input>;
+  configuration_id?: InputMaybe<Scalars['String']['input']>;
+  time_interval?: InputMaybe<Modelcatalog_Time_Interval_Obj_Rel_Insert_Input>;
+  time_interval_id?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** aggregate max on columns */
+export type Modelcatalog_Configuration_Time_Interval_Max_Fields = {
+  __typename?: 'modelcatalog_configuration_time_interval_max_fields';
+  configuration_id?: Maybe<Scalars['String']['output']>;
+  time_interval_id?: Maybe<Scalars['String']['output']>;
+};
+
+/** order by max() on columns of table "modelcatalog_configuration_time_interval" */
+export type Modelcatalog_Configuration_Time_Interval_Max_Order_By = {
+  configuration_id?: InputMaybe<Order_By>;
+  time_interval_id?: InputMaybe<Order_By>;
+};
+
+/** aggregate min on columns */
+export type Modelcatalog_Configuration_Time_Interval_Min_Fields = {
+  __typename?: 'modelcatalog_configuration_time_interval_min_fields';
+  configuration_id?: Maybe<Scalars['String']['output']>;
+  time_interval_id?: Maybe<Scalars['String']['output']>;
+};
+
+/** order by min() on columns of table "modelcatalog_configuration_time_interval" */
+export type Modelcatalog_Configuration_Time_Interval_Min_Order_By = {
+  configuration_id?: InputMaybe<Order_By>;
+  time_interval_id?: InputMaybe<Order_By>;
+};
+
+/** response of any mutation on the table "modelcatalog_configuration_time_interval" */
+export type Modelcatalog_Configuration_Time_Interval_Mutation_Response = {
+  __typename?: 'modelcatalog_configuration_time_interval_mutation_response';
+  /** number of rows affected by the mutation */
+  affected_rows: Scalars['Int']['output'];
+  /** data from the rows affected by the mutation */
+  returning: Array<Modelcatalog_Configuration_Time_Interval>;
+};
+
+/** on_conflict condition type for table "modelcatalog_configuration_time_interval" */
+export type Modelcatalog_Configuration_Time_Interval_On_Conflict = {
+  constraint: Modelcatalog_Configuration_Time_Interval_Constraint;
+  update_columns?: Array<Modelcatalog_Configuration_Time_Interval_Update_Column>;
+  where?: InputMaybe<Modelcatalog_Configuration_Time_Interval_Bool_Exp>;
+};
+
+/** Ordering options when selecting data from "modelcatalog_configuration_time_interval". */
+export type Modelcatalog_Configuration_Time_Interval_Order_By = {
+  configuration?: InputMaybe<Modelcatalog_Configuration_Order_By>;
+  configuration_id?: InputMaybe<Order_By>;
+  time_interval?: InputMaybe<Modelcatalog_Time_Interval_Order_By>;
+  time_interval_id?: InputMaybe<Order_By>;
+};
+
+/** primary key columns input for table: modelcatalog_configuration_time_interval */
+export type Modelcatalog_Configuration_Time_Interval_Pk_Columns_Input = {
+  configuration_id: Scalars['String']['input'];
+  time_interval_id: Scalars['String']['input'];
+};
+
+/** select columns of table "modelcatalog_configuration_time_interval" */
+export enum Modelcatalog_Configuration_Time_Interval_Select_Column {
+  /** column name */
+  ConfigurationId = 'configuration_id',
+  /** column name */
+  TimeIntervalId = 'time_interval_id'
+}
+
+/** input type for updating data in table "modelcatalog_configuration_time_interval" */
+export type Modelcatalog_Configuration_Time_Interval_Set_Input = {
+  configuration_id?: InputMaybe<Scalars['String']['input']>;
+  time_interval_id?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** update columns of table "modelcatalog_configuration_time_interval" */
+export enum Modelcatalog_Configuration_Time_Interval_Update_Column {
+  /** column name */
+  ConfigurationId = 'configuration_id',
+  /** column name */
+  TimeIntervalId = 'time_interval_id'
+}
+
+export type Modelcatalog_Configuration_Time_Interval_Updates = {
+  /** sets the columns of the filtered rows to the given values */
+  _set?: InputMaybe<Modelcatalog_Configuration_Time_Interval_Set_Input>;
+  where: Modelcatalog_Configuration_Time_Interval_Bool_Exp;
+};
+
+/** update columns of table "modelcatalog_configuration" */
+export enum Modelcatalog_Configuration_Update_Column {
+  /** column name */
+  AuthorId = 'author_id',
+  /** column name */
+  CalibrationInterval = 'calibration_interval',
+  /** column name */
+  CalibrationMethod = 'calibration_method',
+  /** column name */
+  Description = 'description',
+  /** column name */
+  HasComponentLocation = 'has_component_location',
+  /** column name */
+  HasImplementationScriptLocation = 'has_implementation_script_location',
+  /** column name */
+  HasModelResultTable = 'has_model_result_table',
+  /** column name */
+  HasRegion = 'has_region',
+  /** column name */
+  HasSoftwareImage = 'has_software_image',
+  /** column name */
+  Id = 'id',
+  /** column name */
+  Keywords = 'keywords',
+  /** column name */
+  Label = 'label',
+  /** column name */
+  ModelConfigurationId = 'model_configuration_id',
+  /** column name */
+  ParameterAssignmentMethod = 'parameter_assignment_method',
+  /** column name */
+  SoftwareVersionId = 'software_version_id',
+  /** column name */
+  UsageNotes = 'usage_notes',
+  /** column name */
+  ValidUntil = 'valid_until'
+}
+
+export type Modelcatalog_Configuration_Updates = {
+  /** sets the columns of the filtered rows to the given values */
+  _set?: InputMaybe<Modelcatalog_Configuration_Set_Input>;
+  where: Modelcatalog_Configuration_Bool_Exp;
+};
+
+/** columns and relationships of "modelcatalog_dataset_specification" */
+export type Modelcatalog_Dataset_Specification = {
+  __typename?: 'modelcatalog_dataset_specification';
+  /** An array relationship */
+  configuration_inputs: Array<Modelcatalog_Configuration_Input>;
+  /** An aggregate relationship */
+  configuration_inputs_aggregate: Modelcatalog_Configuration_Input_Aggregate;
+  /** An array relationship */
+  configuration_outputs: Array<Modelcatalog_Configuration_Output>;
+  /** An aggregate relationship */
+  configuration_outputs_aggregate: Modelcatalog_Configuration_Output_Aggregate;
+  description?: Maybe<Scalars['String']['output']>;
+  has_dimensionality?: Maybe<Scalars['Int']['output']>;
+  has_format?: Maybe<Scalars['String']['output']>;
+  id: Scalars['String']['output'];
+  label: Scalars['String']['output'];
+  /** An array relationship */
+  model_ios: Array<Model_Io>;
+  /** An aggregate relationship */
+  model_ios_aggregate: Model_Io_Aggregate;
+  position?: Maybe<Scalars['Int']['output']>;
+  /** An array relationship */
+  presentations: Array<Modelcatalog_Dataset_Specification_Presentation>;
+  /** An aggregate relationship */
+  presentations_aggregate: Modelcatalog_Dataset_Specification_Presentation_Aggregate;
+};
+
+
+/** columns and relationships of "modelcatalog_dataset_specification" */
+export type Modelcatalog_Dataset_SpecificationConfiguration_InputsArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Configuration_Input_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Configuration_Input_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Configuration_Input_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_dataset_specification" */
+export type Modelcatalog_Dataset_SpecificationConfiguration_Inputs_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Configuration_Input_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Configuration_Input_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Configuration_Input_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_dataset_specification" */
+export type Modelcatalog_Dataset_SpecificationConfiguration_OutputsArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Configuration_Output_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Configuration_Output_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Configuration_Output_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_dataset_specification" */
+export type Modelcatalog_Dataset_SpecificationConfiguration_Outputs_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Configuration_Output_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Configuration_Output_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Configuration_Output_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_dataset_specification" */
+export type Modelcatalog_Dataset_SpecificationModel_IosArgs = {
+  distinct_on?: InputMaybe<Array<Model_Io_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Model_Io_Order_By>>;
+  where?: InputMaybe<Model_Io_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_dataset_specification" */
+export type Modelcatalog_Dataset_SpecificationModel_Ios_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Model_Io_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Model_Io_Order_By>>;
+  where?: InputMaybe<Model_Io_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_dataset_specification" */
+export type Modelcatalog_Dataset_SpecificationPresentationsArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Dataset_Specification_Presentation_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Dataset_Specification_Presentation_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Dataset_Specification_Presentation_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_dataset_specification" */
+export type Modelcatalog_Dataset_SpecificationPresentations_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Dataset_Specification_Presentation_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Dataset_Specification_Presentation_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Dataset_Specification_Presentation_Bool_Exp>;
+};
+
+/** aggregated selection of "modelcatalog_dataset_specification" */
+export type Modelcatalog_Dataset_Specification_Aggregate = {
+  __typename?: 'modelcatalog_dataset_specification_aggregate';
+  aggregate?: Maybe<Modelcatalog_Dataset_Specification_Aggregate_Fields>;
+  nodes: Array<Modelcatalog_Dataset_Specification>;
+};
+
+/** aggregate fields of "modelcatalog_dataset_specification" */
+export type Modelcatalog_Dataset_Specification_Aggregate_Fields = {
+  __typename?: 'modelcatalog_dataset_specification_aggregate_fields';
+  avg?: Maybe<Modelcatalog_Dataset_Specification_Avg_Fields>;
+  count: Scalars['Int']['output'];
+  max?: Maybe<Modelcatalog_Dataset_Specification_Max_Fields>;
+  min?: Maybe<Modelcatalog_Dataset_Specification_Min_Fields>;
+  stddev?: Maybe<Modelcatalog_Dataset_Specification_Stddev_Fields>;
+  stddev_pop?: Maybe<Modelcatalog_Dataset_Specification_Stddev_Pop_Fields>;
+  stddev_samp?: Maybe<Modelcatalog_Dataset_Specification_Stddev_Samp_Fields>;
+  sum?: Maybe<Modelcatalog_Dataset_Specification_Sum_Fields>;
+  var_pop?: Maybe<Modelcatalog_Dataset_Specification_Var_Pop_Fields>;
+  var_samp?: Maybe<Modelcatalog_Dataset_Specification_Var_Samp_Fields>;
+  variance?: Maybe<Modelcatalog_Dataset_Specification_Variance_Fields>;
+};
+
+
+/** aggregate fields of "modelcatalog_dataset_specification" */
+export type Modelcatalog_Dataset_Specification_Aggregate_FieldsCountArgs = {
+  columns?: InputMaybe<Array<Modelcatalog_Dataset_Specification_Select_Column>>;
+  distinct?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
+/** aggregate avg on columns */
+export type Modelcatalog_Dataset_Specification_Avg_Fields = {
+  __typename?: 'modelcatalog_dataset_specification_avg_fields';
+  has_dimensionality?: Maybe<Scalars['Float']['output']>;
+  position?: Maybe<Scalars['Float']['output']>;
+};
+
+/** Boolean expression to filter rows from the table "modelcatalog_dataset_specification". All fields are combined with a logical 'AND'. */
+export type Modelcatalog_Dataset_Specification_Bool_Exp = {
+  _and?: InputMaybe<Array<Modelcatalog_Dataset_Specification_Bool_Exp>>;
+  _not?: InputMaybe<Modelcatalog_Dataset_Specification_Bool_Exp>;
+  _or?: InputMaybe<Array<Modelcatalog_Dataset_Specification_Bool_Exp>>;
+  configuration_inputs?: InputMaybe<Modelcatalog_Configuration_Input_Bool_Exp>;
+  configuration_outputs?: InputMaybe<Modelcatalog_Configuration_Output_Bool_Exp>;
+  description?: InputMaybe<String_Comparison_Exp>;
+  has_dimensionality?: InputMaybe<Int_Comparison_Exp>;
+  has_format?: InputMaybe<String_Comparison_Exp>;
+  id?: InputMaybe<String_Comparison_Exp>;
+  label?: InputMaybe<String_Comparison_Exp>;
+  model_ios?: InputMaybe<Model_Io_Bool_Exp>;
+  position?: InputMaybe<Int_Comparison_Exp>;
+  presentations?: InputMaybe<Modelcatalog_Dataset_Specification_Presentation_Bool_Exp>;
+};
+
+/** unique or primary key constraints on table "modelcatalog_dataset_specification" */
+export enum Modelcatalog_Dataset_Specification_Constraint {
+  /** unique or primary key constraint on columns "id" */
+  ModelcatalogDatasetSpecificationPkey = 'modelcatalog_dataset_specification_pkey'
+}
+
+/** input type for incrementing numeric columns in table "modelcatalog_dataset_specification" */
+export type Modelcatalog_Dataset_Specification_Inc_Input = {
+  has_dimensionality?: InputMaybe<Scalars['Int']['input']>;
+  position?: InputMaybe<Scalars['Int']['input']>;
+};
+
+/** input type for inserting data into table "modelcatalog_dataset_specification" */
+export type Modelcatalog_Dataset_Specification_Insert_Input = {
+  configuration_inputs?: InputMaybe<Modelcatalog_Configuration_Input_Arr_Rel_Insert_Input>;
+  configuration_outputs?: InputMaybe<Modelcatalog_Configuration_Output_Arr_Rel_Insert_Input>;
+  description?: InputMaybe<Scalars['String']['input']>;
+  has_dimensionality?: InputMaybe<Scalars['Int']['input']>;
+  has_format?: InputMaybe<Scalars['String']['input']>;
+  id?: InputMaybe<Scalars['String']['input']>;
+  label?: InputMaybe<Scalars['String']['input']>;
+  model_ios?: InputMaybe<Model_Io_Arr_Rel_Insert_Input>;
+  position?: InputMaybe<Scalars['Int']['input']>;
+  presentations?: InputMaybe<Modelcatalog_Dataset_Specification_Presentation_Arr_Rel_Insert_Input>;
+};
+
+/** aggregate max on columns */
+export type Modelcatalog_Dataset_Specification_Max_Fields = {
+  __typename?: 'modelcatalog_dataset_specification_max_fields';
+  description?: Maybe<Scalars['String']['output']>;
+  has_dimensionality?: Maybe<Scalars['Int']['output']>;
+  has_format?: Maybe<Scalars['String']['output']>;
+  id?: Maybe<Scalars['String']['output']>;
+  label?: Maybe<Scalars['String']['output']>;
+  position?: Maybe<Scalars['Int']['output']>;
+};
+
+/** aggregate min on columns */
+export type Modelcatalog_Dataset_Specification_Min_Fields = {
+  __typename?: 'modelcatalog_dataset_specification_min_fields';
+  description?: Maybe<Scalars['String']['output']>;
+  has_dimensionality?: Maybe<Scalars['Int']['output']>;
+  has_format?: Maybe<Scalars['String']['output']>;
+  id?: Maybe<Scalars['String']['output']>;
+  label?: Maybe<Scalars['String']['output']>;
+  position?: Maybe<Scalars['Int']['output']>;
+};
+
+/** response of any mutation on the table "modelcatalog_dataset_specification" */
+export type Modelcatalog_Dataset_Specification_Mutation_Response = {
+  __typename?: 'modelcatalog_dataset_specification_mutation_response';
+  /** number of rows affected by the mutation */
+  affected_rows: Scalars['Int']['output'];
+  /** data from the rows affected by the mutation */
+  returning: Array<Modelcatalog_Dataset_Specification>;
+};
+
+/** input type for inserting object relation for remote table "modelcatalog_dataset_specification" */
+export type Modelcatalog_Dataset_Specification_Obj_Rel_Insert_Input = {
+  data: Modelcatalog_Dataset_Specification_Insert_Input;
+  /** upsert condition */
+  on_conflict?: InputMaybe<Modelcatalog_Dataset_Specification_On_Conflict>;
+};
+
+/** on_conflict condition type for table "modelcatalog_dataset_specification" */
+export type Modelcatalog_Dataset_Specification_On_Conflict = {
+  constraint: Modelcatalog_Dataset_Specification_Constraint;
+  update_columns?: Array<Modelcatalog_Dataset_Specification_Update_Column>;
+  where?: InputMaybe<Modelcatalog_Dataset_Specification_Bool_Exp>;
+};
+
+/** Ordering options when selecting data from "modelcatalog_dataset_specification". */
+export type Modelcatalog_Dataset_Specification_Order_By = {
+  configuration_inputs_aggregate?: InputMaybe<Modelcatalog_Configuration_Input_Aggregate_Order_By>;
+  configuration_outputs_aggregate?: InputMaybe<Modelcatalog_Configuration_Output_Aggregate_Order_By>;
+  description?: InputMaybe<Order_By>;
+  has_dimensionality?: InputMaybe<Order_By>;
+  has_format?: InputMaybe<Order_By>;
+  id?: InputMaybe<Order_By>;
+  label?: InputMaybe<Order_By>;
+  model_ios_aggregate?: InputMaybe<Model_Io_Aggregate_Order_By>;
   position?: InputMaybe<Order_By>;
+  presentations_aggregate?: InputMaybe<Modelcatalog_Dataset_Specification_Presentation_Aggregate_Order_By>;
 };
 
-/** primary key columns input for table: model_output */
-export type Model_Output_Pk_Columns_Input = {
-  model_id: Scalars['String']['input'];
-  model_io_id: Scalars['String']['input'];
+/** primary key columns input for table: modelcatalog_dataset_specification */
+export type Modelcatalog_Dataset_Specification_Pk_Columns_Input = {
+  id: Scalars['String']['input'];
 };
 
-/** select columns of table "model_output" */
-export enum Model_Output_Select_Column {
+/** columns and relationships of "modelcatalog_dataset_specification_presentation" */
+export type Modelcatalog_Dataset_Specification_Presentation = {
+  __typename?: 'modelcatalog_dataset_specification_presentation';
+  /** An object relationship */
+  dataset_specification: Modelcatalog_Dataset_Specification;
+  dataset_specification_id: Scalars['String']['output'];
+  /** An object relationship */
+  presentation: Modelcatalog_Variable_Presentation;
+  presentation_id: Scalars['String']['output'];
+};
+
+/** aggregated selection of "modelcatalog_dataset_specification_presentation" */
+export type Modelcatalog_Dataset_Specification_Presentation_Aggregate = {
+  __typename?: 'modelcatalog_dataset_specification_presentation_aggregate';
+  aggregate?: Maybe<Modelcatalog_Dataset_Specification_Presentation_Aggregate_Fields>;
+  nodes: Array<Modelcatalog_Dataset_Specification_Presentation>;
+};
+
+/** aggregate fields of "modelcatalog_dataset_specification_presentation" */
+export type Modelcatalog_Dataset_Specification_Presentation_Aggregate_Fields = {
+  __typename?: 'modelcatalog_dataset_specification_presentation_aggregate_fields';
+  count: Scalars['Int']['output'];
+  max?: Maybe<Modelcatalog_Dataset_Specification_Presentation_Max_Fields>;
+  min?: Maybe<Modelcatalog_Dataset_Specification_Presentation_Min_Fields>;
+};
+
+
+/** aggregate fields of "modelcatalog_dataset_specification_presentation" */
+export type Modelcatalog_Dataset_Specification_Presentation_Aggregate_FieldsCountArgs = {
+  columns?: InputMaybe<Array<Modelcatalog_Dataset_Specification_Presentation_Select_Column>>;
+  distinct?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
+/** order by aggregate values of table "modelcatalog_dataset_specification_presentation" */
+export type Modelcatalog_Dataset_Specification_Presentation_Aggregate_Order_By = {
+  count?: InputMaybe<Order_By>;
+  max?: InputMaybe<Modelcatalog_Dataset_Specification_Presentation_Max_Order_By>;
+  min?: InputMaybe<Modelcatalog_Dataset_Specification_Presentation_Min_Order_By>;
+};
+
+/** input type for inserting array relation for remote table "modelcatalog_dataset_specification_presentation" */
+export type Modelcatalog_Dataset_Specification_Presentation_Arr_Rel_Insert_Input = {
+  data: Array<Modelcatalog_Dataset_Specification_Presentation_Insert_Input>;
+  /** upsert condition */
+  on_conflict?: InputMaybe<Modelcatalog_Dataset_Specification_Presentation_On_Conflict>;
+};
+
+/** Boolean expression to filter rows from the table "modelcatalog_dataset_specification_presentation". All fields are combined with a logical 'AND'. */
+export type Modelcatalog_Dataset_Specification_Presentation_Bool_Exp = {
+  _and?: InputMaybe<Array<Modelcatalog_Dataset_Specification_Presentation_Bool_Exp>>;
+  _not?: InputMaybe<Modelcatalog_Dataset_Specification_Presentation_Bool_Exp>;
+  _or?: InputMaybe<Array<Modelcatalog_Dataset_Specification_Presentation_Bool_Exp>>;
+  dataset_specification?: InputMaybe<Modelcatalog_Dataset_Specification_Bool_Exp>;
+  dataset_specification_id?: InputMaybe<String_Comparison_Exp>;
+  presentation?: InputMaybe<Modelcatalog_Variable_Presentation_Bool_Exp>;
+  presentation_id?: InputMaybe<String_Comparison_Exp>;
+};
+
+/** unique or primary key constraints on table "modelcatalog_dataset_specification_presentation" */
+export enum Modelcatalog_Dataset_Specification_Presentation_Constraint {
+  /** unique or primary key constraint on columns "presentation_id", "dataset_specification_id" */
+  ModelcatalogDatasetSpecificationPresentationPkey = 'modelcatalog_dataset_specification_presentation_pkey'
+}
+
+/** input type for inserting data into table "modelcatalog_dataset_specification_presentation" */
+export type Modelcatalog_Dataset_Specification_Presentation_Insert_Input = {
+  dataset_specification?: InputMaybe<Modelcatalog_Dataset_Specification_Obj_Rel_Insert_Input>;
+  dataset_specification_id?: InputMaybe<Scalars['String']['input']>;
+  presentation?: InputMaybe<Modelcatalog_Variable_Presentation_Obj_Rel_Insert_Input>;
+  presentation_id?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** aggregate max on columns */
+export type Modelcatalog_Dataset_Specification_Presentation_Max_Fields = {
+  __typename?: 'modelcatalog_dataset_specification_presentation_max_fields';
+  dataset_specification_id?: Maybe<Scalars['String']['output']>;
+  presentation_id?: Maybe<Scalars['String']['output']>;
+};
+
+/** order by max() on columns of table "modelcatalog_dataset_specification_presentation" */
+export type Modelcatalog_Dataset_Specification_Presentation_Max_Order_By = {
+  dataset_specification_id?: InputMaybe<Order_By>;
+  presentation_id?: InputMaybe<Order_By>;
+};
+
+/** aggregate min on columns */
+export type Modelcatalog_Dataset_Specification_Presentation_Min_Fields = {
+  __typename?: 'modelcatalog_dataset_specification_presentation_min_fields';
+  dataset_specification_id?: Maybe<Scalars['String']['output']>;
+  presentation_id?: Maybe<Scalars['String']['output']>;
+};
+
+/** order by min() on columns of table "modelcatalog_dataset_specification_presentation" */
+export type Modelcatalog_Dataset_Specification_Presentation_Min_Order_By = {
+  dataset_specification_id?: InputMaybe<Order_By>;
+  presentation_id?: InputMaybe<Order_By>;
+};
+
+/** response of any mutation on the table "modelcatalog_dataset_specification_presentation" */
+export type Modelcatalog_Dataset_Specification_Presentation_Mutation_Response = {
+  __typename?: 'modelcatalog_dataset_specification_presentation_mutation_response';
+  /** number of rows affected by the mutation */
+  affected_rows: Scalars['Int']['output'];
+  /** data from the rows affected by the mutation */
+  returning: Array<Modelcatalog_Dataset_Specification_Presentation>;
+};
+
+/** on_conflict condition type for table "modelcatalog_dataset_specification_presentation" */
+export type Modelcatalog_Dataset_Specification_Presentation_On_Conflict = {
+  constraint: Modelcatalog_Dataset_Specification_Presentation_Constraint;
+  update_columns?: Array<Modelcatalog_Dataset_Specification_Presentation_Update_Column>;
+  where?: InputMaybe<Modelcatalog_Dataset_Specification_Presentation_Bool_Exp>;
+};
+
+/** Ordering options when selecting data from "modelcatalog_dataset_specification_presentation". */
+export type Modelcatalog_Dataset_Specification_Presentation_Order_By = {
+  dataset_specification?: InputMaybe<Modelcatalog_Dataset_Specification_Order_By>;
+  dataset_specification_id?: InputMaybe<Order_By>;
+  presentation?: InputMaybe<Modelcatalog_Variable_Presentation_Order_By>;
+  presentation_id?: InputMaybe<Order_By>;
+};
+
+/** primary key columns input for table: modelcatalog_dataset_specification_presentation */
+export type Modelcatalog_Dataset_Specification_Presentation_Pk_Columns_Input = {
+  dataset_specification_id: Scalars['String']['input'];
+  presentation_id: Scalars['String']['input'];
+};
+
+/** select columns of table "modelcatalog_dataset_specification_presentation" */
+export enum Modelcatalog_Dataset_Specification_Presentation_Select_Column {
   /** column name */
-  ModelId = 'model_id',
+  DatasetSpecificationId = 'dataset_specification_id',
   /** column name */
-  ModelIoId = 'model_io_id',
+  PresentationId = 'presentation_id'
+}
+
+/** input type for updating data in table "modelcatalog_dataset_specification_presentation" */
+export type Modelcatalog_Dataset_Specification_Presentation_Set_Input = {
+  dataset_specification_id?: InputMaybe<Scalars['String']['input']>;
+  presentation_id?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** update columns of table "modelcatalog_dataset_specification_presentation" */
+export enum Modelcatalog_Dataset_Specification_Presentation_Update_Column {
+  /** column name */
+  DatasetSpecificationId = 'dataset_specification_id',
+  /** column name */
+  PresentationId = 'presentation_id'
+}
+
+export type Modelcatalog_Dataset_Specification_Presentation_Updates = {
+  /** sets the columns of the filtered rows to the given values */
+  _set?: InputMaybe<Modelcatalog_Dataset_Specification_Presentation_Set_Input>;
+  where: Modelcatalog_Dataset_Specification_Presentation_Bool_Exp;
+};
+
+/** select columns of table "modelcatalog_dataset_specification" */
+export enum Modelcatalog_Dataset_Specification_Select_Column {
+  /** column name */
+  Description = 'description',
+  /** column name */
+  HasDimensionality = 'has_dimensionality',
+  /** column name */
+  HasFormat = 'has_format',
+  /** column name */
+  Id = 'id',
+  /** column name */
+  Label = 'label',
   /** column name */
   Position = 'position'
 }
 
-/** input type for updating data in table "model_output" */
-export type Model_Output_Set_Input = {
-  model_id?: InputMaybe<Scalars['String']['input']>;
-  model_io_id?: InputMaybe<Scalars['String']['input']>;
+/** input type for updating data in table "modelcatalog_dataset_specification" */
+export type Modelcatalog_Dataset_Specification_Set_Input = {
+  description?: InputMaybe<Scalars['String']['input']>;
+  has_dimensionality?: InputMaybe<Scalars['Int']['input']>;
+  has_format?: InputMaybe<Scalars['String']['input']>;
+  id?: InputMaybe<Scalars['String']['input']>;
+  label?: InputMaybe<Scalars['String']['input']>;
   position?: InputMaybe<Scalars['Int']['input']>;
 };
 
 /** aggregate stddev on columns */
-export type Model_Output_Stddev_Fields = {
-  __typename?: 'model_output_stddev_fields';
+export type Modelcatalog_Dataset_Specification_Stddev_Fields = {
+  __typename?: 'modelcatalog_dataset_specification_stddev_fields';
+  has_dimensionality?: Maybe<Scalars['Float']['output']>;
   position?: Maybe<Scalars['Float']['output']>;
-};
-
-/** order by stddev() on columns of table "model_output" */
-export type Model_Output_Stddev_Order_By = {
-  position?: InputMaybe<Order_By>;
 };
 
 /** aggregate stddev_pop on columns */
-export type Model_Output_Stddev_Pop_Fields = {
-  __typename?: 'model_output_stddev_pop_fields';
+export type Modelcatalog_Dataset_Specification_Stddev_Pop_Fields = {
+  __typename?: 'modelcatalog_dataset_specification_stddev_pop_fields';
+  has_dimensionality?: Maybe<Scalars['Float']['output']>;
   position?: Maybe<Scalars['Float']['output']>;
-};
-
-/** order by stddev_pop() on columns of table "model_output" */
-export type Model_Output_Stddev_Pop_Order_By = {
-  position?: InputMaybe<Order_By>;
 };
 
 /** aggregate stddev_samp on columns */
-export type Model_Output_Stddev_Samp_Fields = {
-  __typename?: 'model_output_stddev_samp_fields';
+export type Modelcatalog_Dataset_Specification_Stddev_Samp_Fields = {
+  __typename?: 'modelcatalog_dataset_specification_stddev_samp_fields';
+  has_dimensionality?: Maybe<Scalars['Float']['output']>;
   position?: Maybe<Scalars['Float']['output']>;
 };
 
-/** order by stddev_samp() on columns of table "model_output" */
-export type Model_Output_Stddev_Samp_Order_By = {
-  position?: InputMaybe<Order_By>;
-};
-
 /** aggregate sum on columns */
-export type Model_Output_Sum_Fields = {
-  __typename?: 'model_output_sum_fields';
+export type Modelcatalog_Dataset_Specification_Sum_Fields = {
+  __typename?: 'modelcatalog_dataset_specification_sum_fields';
+  has_dimensionality?: Maybe<Scalars['Int']['output']>;
   position?: Maybe<Scalars['Int']['output']>;
 };
 
-/** order by sum() on columns of table "model_output" */
-export type Model_Output_Sum_Order_By = {
-  position?: InputMaybe<Order_By>;
-};
-
-/** update columns of table "model_output" */
-export enum Model_Output_Update_Column {
+/** update columns of table "modelcatalog_dataset_specification" */
+export enum Modelcatalog_Dataset_Specification_Update_Column {
   /** column name */
-  ModelId = 'model_id',
+  Description = 'description',
   /** column name */
-  ModelIoId = 'model_io_id',
+  HasDimensionality = 'has_dimensionality',
+  /** column name */
+  HasFormat = 'has_format',
+  /** column name */
+  Id = 'id',
+  /** column name */
+  Label = 'label',
   /** column name */
   Position = 'position'
 }
 
-export type Model_Output_Updates = {
+export type Modelcatalog_Dataset_Specification_Updates = {
   /** increments the numeric columns with given value of the filtered values */
-  _inc?: InputMaybe<Model_Output_Inc_Input>;
+  _inc?: InputMaybe<Modelcatalog_Dataset_Specification_Inc_Input>;
   /** sets the columns of the filtered rows to the given values */
-  _set?: InputMaybe<Model_Output_Set_Input>;
-  where: Model_Output_Bool_Exp;
+  _set?: InputMaybe<Modelcatalog_Dataset_Specification_Set_Input>;
+  where: Modelcatalog_Dataset_Specification_Bool_Exp;
 };
 
 /** aggregate var_pop on columns */
-export type Model_Output_Var_Pop_Fields = {
-  __typename?: 'model_output_var_pop_fields';
+export type Modelcatalog_Dataset_Specification_Var_Pop_Fields = {
+  __typename?: 'modelcatalog_dataset_specification_var_pop_fields';
+  has_dimensionality?: Maybe<Scalars['Float']['output']>;
   position?: Maybe<Scalars['Float']['output']>;
-};
-
-/** order by var_pop() on columns of table "model_output" */
-export type Model_Output_Var_Pop_Order_By = {
-  position?: InputMaybe<Order_By>;
 };
 
 /** aggregate var_samp on columns */
-export type Model_Output_Var_Samp_Fields = {
-  __typename?: 'model_output_var_samp_fields';
+export type Modelcatalog_Dataset_Specification_Var_Samp_Fields = {
+  __typename?: 'modelcatalog_dataset_specification_var_samp_fields';
+  has_dimensionality?: Maybe<Scalars['Float']['output']>;
   position?: Maybe<Scalars['Float']['output']>;
-};
-
-/** order by var_samp() on columns of table "model_output" */
-export type Model_Output_Var_Samp_Order_By = {
-  position?: InputMaybe<Order_By>;
 };
 
 /** aggregate variance on columns */
-export type Model_Output_Variance_Fields = {
-  __typename?: 'model_output_variance_fields';
+export type Modelcatalog_Dataset_Specification_Variance_Fields = {
+  __typename?: 'modelcatalog_dataset_specification_variance_fields';
+  has_dimensionality?: Maybe<Scalars['Float']['output']>;
   position?: Maybe<Scalars['Float']['output']>;
 };
 
-/** order by variance() on columns of table "model_output" */
-export type Model_Output_Variance_Order_By = {
-  position?: InputMaybe<Order_By>;
+/** columns and relationships of "modelcatalog_diagram_part" */
+export type Modelcatalog_Diagram_Part = {
+  __typename?: 'modelcatalog_diagram_part';
+  /** An object relationship */
+  causal_diagram: Modelcatalog_Causal_Diagram;
+  causal_diagram_id: Scalars['String']['output'];
+  part_id: Scalars['String']['output'];
+  part_type: Scalars['String']['output'];
 };
 
-/** columns and relationships of "model_parameter" */
-export type Model_Parameter = {
-  __typename?: 'model_parameter';
-  accepted_values?: Maybe<Scalars['String']['output']>;
-  adjustment_variable?: Maybe<Scalars['String']['output']>;
-  datatype?: Maybe<Scalars['String']['output']>;
-  default?: Maybe<Scalars['String']['output']>;
+/** aggregated selection of "modelcatalog_diagram_part" */
+export type Modelcatalog_Diagram_Part_Aggregate = {
+  __typename?: 'modelcatalog_diagram_part_aggregate';
+  aggregate?: Maybe<Modelcatalog_Diagram_Part_Aggregate_Fields>;
+  nodes: Array<Modelcatalog_Diagram_Part>;
+};
+
+/** aggregate fields of "modelcatalog_diagram_part" */
+export type Modelcatalog_Diagram_Part_Aggregate_Fields = {
+  __typename?: 'modelcatalog_diagram_part_aggregate_fields';
+  count: Scalars['Int']['output'];
+  max?: Maybe<Modelcatalog_Diagram_Part_Max_Fields>;
+  min?: Maybe<Modelcatalog_Diagram_Part_Min_Fields>;
+};
+
+
+/** aggregate fields of "modelcatalog_diagram_part" */
+export type Modelcatalog_Diagram_Part_Aggregate_FieldsCountArgs = {
+  columns?: InputMaybe<Array<Modelcatalog_Diagram_Part_Select_Column>>;
+  distinct?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
+/** order by aggregate values of table "modelcatalog_diagram_part" */
+export type Modelcatalog_Diagram_Part_Aggregate_Order_By = {
+  count?: InputMaybe<Order_By>;
+  max?: InputMaybe<Modelcatalog_Diagram_Part_Max_Order_By>;
+  min?: InputMaybe<Modelcatalog_Diagram_Part_Min_Order_By>;
+};
+
+/** input type for inserting array relation for remote table "modelcatalog_diagram_part" */
+export type Modelcatalog_Diagram_Part_Arr_Rel_Insert_Input = {
+  data: Array<Modelcatalog_Diagram_Part_Insert_Input>;
+  /** upsert condition */
+  on_conflict?: InputMaybe<Modelcatalog_Diagram_Part_On_Conflict>;
+};
+
+/** Boolean expression to filter rows from the table "modelcatalog_diagram_part". All fields are combined with a logical 'AND'. */
+export type Modelcatalog_Diagram_Part_Bool_Exp = {
+  _and?: InputMaybe<Array<Modelcatalog_Diagram_Part_Bool_Exp>>;
+  _not?: InputMaybe<Modelcatalog_Diagram_Part_Bool_Exp>;
+  _or?: InputMaybe<Array<Modelcatalog_Diagram_Part_Bool_Exp>>;
+  causal_diagram?: InputMaybe<Modelcatalog_Causal_Diagram_Bool_Exp>;
+  causal_diagram_id?: InputMaybe<String_Comparison_Exp>;
+  part_id?: InputMaybe<String_Comparison_Exp>;
+  part_type?: InputMaybe<String_Comparison_Exp>;
+};
+
+/** unique or primary key constraints on table "modelcatalog_diagram_part" */
+export enum Modelcatalog_Diagram_Part_Constraint {
+  /** unique or primary key constraint on columns "part_id", "causal_diagram_id" */
+  ModelcatalogDiagramPartPkey = 'modelcatalog_diagram_part_pkey'
+}
+
+/** input type for inserting data into table "modelcatalog_diagram_part" */
+export type Modelcatalog_Diagram_Part_Insert_Input = {
+  causal_diagram?: InputMaybe<Modelcatalog_Causal_Diagram_Obj_Rel_Insert_Input>;
+  causal_diagram_id?: InputMaybe<Scalars['String']['input']>;
+  part_id?: InputMaybe<Scalars['String']['input']>;
+  part_type?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** aggregate max on columns */
+export type Modelcatalog_Diagram_Part_Max_Fields = {
+  __typename?: 'modelcatalog_diagram_part_max_fields';
+  causal_diagram_id?: Maybe<Scalars['String']['output']>;
+  part_id?: Maybe<Scalars['String']['output']>;
+  part_type?: Maybe<Scalars['String']['output']>;
+};
+
+/** order by max() on columns of table "modelcatalog_diagram_part" */
+export type Modelcatalog_Diagram_Part_Max_Order_By = {
+  causal_diagram_id?: InputMaybe<Order_By>;
+  part_id?: InputMaybe<Order_By>;
+  part_type?: InputMaybe<Order_By>;
+};
+
+/** aggregate min on columns */
+export type Modelcatalog_Diagram_Part_Min_Fields = {
+  __typename?: 'modelcatalog_diagram_part_min_fields';
+  causal_diagram_id?: Maybe<Scalars['String']['output']>;
+  part_id?: Maybe<Scalars['String']['output']>;
+  part_type?: Maybe<Scalars['String']['output']>;
+};
+
+/** order by min() on columns of table "modelcatalog_diagram_part" */
+export type Modelcatalog_Diagram_Part_Min_Order_By = {
+  causal_diagram_id?: InputMaybe<Order_By>;
+  part_id?: InputMaybe<Order_By>;
+  part_type?: InputMaybe<Order_By>;
+};
+
+/** response of any mutation on the table "modelcatalog_diagram_part" */
+export type Modelcatalog_Diagram_Part_Mutation_Response = {
+  __typename?: 'modelcatalog_diagram_part_mutation_response';
+  /** number of rows affected by the mutation */
+  affected_rows: Scalars['Int']['output'];
+  /** data from the rows affected by the mutation */
+  returning: Array<Modelcatalog_Diagram_Part>;
+};
+
+/** on_conflict condition type for table "modelcatalog_diagram_part" */
+export type Modelcatalog_Diagram_Part_On_Conflict = {
+  constraint: Modelcatalog_Diagram_Part_Constraint;
+  update_columns?: Array<Modelcatalog_Diagram_Part_Update_Column>;
+  where?: InputMaybe<Modelcatalog_Diagram_Part_Bool_Exp>;
+};
+
+/** Ordering options when selecting data from "modelcatalog_diagram_part". */
+export type Modelcatalog_Diagram_Part_Order_By = {
+  causal_diagram?: InputMaybe<Modelcatalog_Causal_Diagram_Order_By>;
+  causal_diagram_id?: InputMaybe<Order_By>;
+  part_id?: InputMaybe<Order_By>;
+  part_type?: InputMaybe<Order_By>;
+};
+
+/** primary key columns input for table: modelcatalog_diagram_part */
+export type Modelcatalog_Diagram_Part_Pk_Columns_Input = {
+  causal_diagram_id: Scalars['String']['input'];
+  part_id: Scalars['String']['input'];
+};
+
+/** select columns of table "modelcatalog_diagram_part" */
+export enum Modelcatalog_Diagram_Part_Select_Column {
+  /** column name */
+  CausalDiagramId = 'causal_diagram_id',
+  /** column name */
+  PartId = 'part_id',
+  /** column name */
+  PartType = 'part_type'
+}
+
+/** input type for updating data in table "modelcatalog_diagram_part" */
+export type Modelcatalog_Diagram_Part_Set_Input = {
+  causal_diagram_id?: InputMaybe<Scalars['String']['input']>;
+  part_id?: InputMaybe<Scalars['String']['input']>;
+  part_type?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** update columns of table "modelcatalog_diagram_part" */
+export enum Modelcatalog_Diagram_Part_Update_Column {
+  /** column name */
+  CausalDiagramId = 'causal_diagram_id',
+  /** column name */
+  PartId = 'part_id',
+  /** column name */
+  PartType = 'part_type'
+}
+
+export type Modelcatalog_Diagram_Part_Updates = {
+  /** sets the columns of the filtered rows to the given values */
+  _set?: InputMaybe<Modelcatalog_Diagram_Part_Set_Input>;
+  where: Modelcatalog_Diagram_Part_Bool_Exp;
+};
+
+/** columns and relationships of "modelcatalog_grid" */
+export type Modelcatalog_Grid = {
+  __typename?: 'modelcatalog_grid';
+  description?: Maybe<Scalars['String']['output']>;
+  grid_type?: Maybe<Scalars['String']['output']>;
+  has_coordinate_system?: Maybe<Scalars['String']['output']>;
+  has_dimension?: Maybe<Scalars['String']['output']>;
+  has_shape?: Maybe<Scalars['String']['output']>;
+  has_spatial_resolution?: Maybe<Scalars['String']['output']>;
+  id: Scalars['String']['output'];
+  label: Scalars['String']['output'];
+  /** An array relationship */
+  software_versions: Array<Modelcatalog_Software_Version_Grid>;
+  /** An aggregate relationship */
+  software_versions_aggregate: Modelcatalog_Software_Version_Grid_Aggregate;
+};
+
+
+/** columns and relationships of "modelcatalog_grid" */
+export type Modelcatalog_GridSoftware_VersionsArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Software_Version_Grid_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Software_Version_Grid_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Software_Version_Grid_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_grid" */
+export type Modelcatalog_GridSoftware_Versions_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Software_Version_Grid_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Software_Version_Grid_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Software_Version_Grid_Bool_Exp>;
+};
+
+/** aggregated selection of "modelcatalog_grid" */
+export type Modelcatalog_Grid_Aggregate = {
+  __typename?: 'modelcatalog_grid_aggregate';
+  aggregate?: Maybe<Modelcatalog_Grid_Aggregate_Fields>;
+  nodes: Array<Modelcatalog_Grid>;
+};
+
+/** aggregate fields of "modelcatalog_grid" */
+export type Modelcatalog_Grid_Aggregate_Fields = {
+  __typename?: 'modelcatalog_grid_aggregate_fields';
+  count: Scalars['Int']['output'];
+  max?: Maybe<Modelcatalog_Grid_Max_Fields>;
+  min?: Maybe<Modelcatalog_Grid_Min_Fields>;
+};
+
+
+/** aggregate fields of "modelcatalog_grid" */
+export type Modelcatalog_Grid_Aggregate_FieldsCountArgs = {
+  columns?: InputMaybe<Array<Modelcatalog_Grid_Select_Column>>;
+  distinct?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
+/** Boolean expression to filter rows from the table "modelcatalog_grid". All fields are combined with a logical 'AND'. */
+export type Modelcatalog_Grid_Bool_Exp = {
+  _and?: InputMaybe<Array<Modelcatalog_Grid_Bool_Exp>>;
+  _not?: InputMaybe<Modelcatalog_Grid_Bool_Exp>;
+  _or?: InputMaybe<Array<Modelcatalog_Grid_Bool_Exp>>;
+  description?: InputMaybe<String_Comparison_Exp>;
+  grid_type?: InputMaybe<String_Comparison_Exp>;
+  has_coordinate_system?: InputMaybe<String_Comparison_Exp>;
+  has_dimension?: InputMaybe<String_Comparison_Exp>;
+  has_shape?: InputMaybe<String_Comparison_Exp>;
+  has_spatial_resolution?: InputMaybe<String_Comparison_Exp>;
+  id?: InputMaybe<String_Comparison_Exp>;
+  label?: InputMaybe<String_Comparison_Exp>;
+  software_versions?: InputMaybe<Modelcatalog_Software_Version_Grid_Bool_Exp>;
+};
+
+/** unique or primary key constraints on table "modelcatalog_grid" */
+export enum Modelcatalog_Grid_Constraint {
+  /** unique or primary key constraint on columns "id" */
+  ModelcatalogGridPkey = 'modelcatalog_grid_pkey'
+}
+
+/** input type for inserting data into table "modelcatalog_grid" */
+export type Modelcatalog_Grid_Insert_Input = {
+  description?: InputMaybe<Scalars['String']['input']>;
+  grid_type?: InputMaybe<Scalars['String']['input']>;
+  has_coordinate_system?: InputMaybe<Scalars['String']['input']>;
+  has_dimension?: InputMaybe<Scalars['String']['input']>;
+  has_shape?: InputMaybe<Scalars['String']['input']>;
+  has_spatial_resolution?: InputMaybe<Scalars['String']['input']>;
+  id?: InputMaybe<Scalars['String']['input']>;
+  label?: InputMaybe<Scalars['String']['input']>;
+  software_versions?: InputMaybe<Modelcatalog_Software_Version_Grid_Arr_Rel_Insert_Input>;
+};
+
+/** aggregate max on columns */
+export type Modelcatalog_Grid_Max_Fields = {
+  __typename?: 'modelcatalog_grid_max_fields';
+  description?: Maybe<Scalars['String']['output']>;
+  grid_type?: Maybe<Scalars['String']['output']>;
+  has_coordinate_system?: Maybe<Scalars['String']['output']>;
+  has_dimension?: Maybe<Scalars['String']['output']>;
+  has_shape?: Maybe<Scalars['String']['output']>;
+  has_spatial_resolution?: Maybe<Scalars['String']['output']>;
+  id?: Maybe<Scalars['String']['output']>;
+  label?: Maybe<Scalars['String']['output']>;
+};
+
+/** aggregate min on columns */
+export type Modelcatalog_Grid_Min_Fields = {
+  __typename?: 'modelcatalog_grid_min_fields';
+  description?: Maybe<Scalars['String']['output']>;
+  grid_type?: Maybe<Scalars['String']['output']>;
+  has_coordinate_system?: Maybe<Scalars['String']['output']>;
+  has_dimension?: Maybe<Scalars['String']['output']>;
+  has_shape?: Maybe<Scalars['String']['output']>;
+  has_spatial_resolution?: Maybe<Scalars['String']['output']>;
+  id?: Maybe<Scalars['String']['output']>;
+  label?: Maybe<Scalars['String']['output']>;
+};
+
+/** response of any mutation on the table "modelcatalog_grid" */
+export type Modelcatalog_Grid_Mutation_Response = {
+  __typename?: 'modelcatalog_grid_mutation_response';
+  /** number of rows affected by the mutation */
+  affected_rows: Scalars['Int']['output'];
+  /** data from the rows affected by the mutation */
+  returning: Array<Modelcatalog_Grid>;
+};
+
+/** input type for inserting object relation for remote table "modelcatalog_grid" */
+export type Modelcatalog_Grid_Obj_Rel_Insert_Input = {
+  data: Modelcatalog_Grid_Insert_Input;
+  /** upsert condition */
+  on_conflict?: InputMaybe<Modelcatalog_Grid_On_Conflict>;
+};
+
+/** on_conflict condition type for table "modelcatalog_grid" */
+export type Modelcatalog_Grid_On_Conflict = {
+  constraint: Modelcatalog_Grid_Constraint;
+  update_columns?: Array<Modelcatalog_Grid_Update_Column>;
+  where?: InputMaybe<Modelcatalog_Grid_Bool_Exp>;
+};
+
+/** Ordering options when selecting data from "modelcatalog_grid". */
+export type Modelcatalog_Grid_Order_By = {
+  description?: InputMaybe<Order_By>;
+  grid_type?: InputMaybe<Order_By>;
+  has_coordinate_system?: InputMaybe<Order_By>;
+  has_dimension?: InputMaybe<Order_By>;
+  has_shape?: InputMaybe<Order_By>;
+  has_spatial_resolution?: InputMaybe<Order_By>;
+  id?: InputMaybe<Order_By>;
+  label?: InputMaybe<Order_By>;
+  software_versions_aggregate?: InputMaybe<Modelcatalog_Software_Version_Grid_Aggregate_Order_By>;
+};
+
+/** primary key columns input for table: modelcatalog_grid */
+export type Modelcatalog_Grid_Pk_Columns_Input = {
+  id: Scalars['String']['input'];
+};
+
+/** select columns of table "modelcatalog_grid" */
+export enum Modelcatalog_Grid_Select_Column {
+  /** column name */
+  Description = 'description',
+  /** column name */
+  GridType = 'grid_type',
+  /** column name */
+  HasCoordinateSystem = 'has_coordinate_system',
+  /** column name */
+  HasDimension = 'has_dimension',
+  /** column name */
+  HasShape = 'has_shape',
+  /** column name */
+  HasSpatialResolution = 'has_spatial_resolution',
+  /** column name */
+  Id = 'id',
+  /** column name */
+  Label = 'label'
+}
+
+/** input type for updating data in table "modelcatalog_grid" */
+export type Modelcatalog_Grid_Set_Input = {
+  description?: InputMaybe<Scalars['String']['input']>;
+  grid_type?: InputMaybe<Scalars['String']['input']>;
+  has_coordinate_system?: InputMaybe<Scalars['String']['input']>;
+  has_dimension?: InputMaybe<Scalars['String']['input']>;
+  has_shape?: InputMaybe<Scalars['String']['input']>;
+  has_spatial_resolution?: InputMaybe<Scalars['String']['input']>;
+  id?: InputMaybe<Scalars['String']['input']>;
+  label?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** update columns of table "modelcatalog_grid" */
+export enum Modelcatalog_Grid_Update_Column {
+  /** column name */
+  Description = 'description',
+  /** column name */
+  GridType = 'grid_type',
+  /** column name */
+  HasCoordinateSystem = 'has_coordinate_system',
+  /** column name */
+  HasDimension = 'has_dimension',
+  /** column name */
+  HasShape = 'has_shape',
+  /** column name */
+  HasSpatialResolution = 'has_spatial_resolution',
+  /** column name */
+  Id = 'id',
+  /** column name */
+  Label = 'label'
+}
+
+export type Modelcatalog_Grid_Updates = {
+  /** sets the columns of the filtered rows to the given values */
+  _set?: InputMaybe<Modelcatalog_Grid_Set_Input>;
+  where: Modelcatalog_Grid_Bool_Exp;
+};
+
+/** columns and relationships of "modelcatalog_image" */
+export type Modelcatalog_Image = {
+  __typename?: 'modelcatalog_image';
+  description?: Maybe<Scalars['String']['output']>;
+  id: Scalars['String']['output'];
+  label: Scalars['String']['output'];
+  /** An array relationship */
+  software_versions: Array<Modelcatalog_Software_Version_Image>;
+  /** An aggregate relationship */
+  software_versions_aggregate: Modelcatalog_Software_Version_Image_Aggregate;
+};
+
+
+/** columns and relationships of "modelcatalog_image" */
+export type Modelcatalog_ImageSoftware_VersionsArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Software_Version_Image_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Software_Version_Image_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Software_Version_Image_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_image" */
+export type Modelcatalog_ImageSoftware_Versions_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Software_Version_Image_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Software_Version_Image_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Software_Version_Image_Bool_Exp>;
+};
+
+/** aggregated selection of "modelcatalog_image" */
+export type Modelcatalog_Image_Aggregate = {
+  __typename?: 'modelcatalog_image_aggregate';
+  aggregate?: Maybe<Modelcatalog_Image_Aggregate_Fields>;
+  nodes: Array<Modelcatalog_Image>;
+};
+
+/** aggregate fields of "modelcatalog_image" */
+export type Modelcatalog_Image_Aggregate_Fields = {
+  __typename?: 'modelcatalog_image_aggregate_fields';
+  count: Scalars['Int']['output'];
+  max?: Maybe<Modelcatalog_Image_Max_Fields>;
+  min?: Maybe<Modelcatalog_Image_Min_Fields>;
+};
+
+
+/** aggregate fields of "modelcatalog_image" */
+export type Modelcatalog_Image_Aggregate_FieldsCountArgs = {
+  columns?: InputMaybe<Array<Modelcatalog_Image_Select_Column>>;
+  distinct?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
+/** Boolean expression to filter rows from the table "modelcatalog_image". All fields are combined with a logical 'AND'. */
+export type Modelcatalog_Image_Bool_Exp = {
+  _and?: InputMaybe<Array<Modelcatalog_Image_Bool_Exp>>;
+  _not?: InputMaybe<Modelcatalog_Image_Bool_Exp>;
+  _or?: InputMaybe<Array<Modelcatalog_Image_Bool_Exp>>;
+  description?: InputMaybe<String_Comparison_Exp>;
+  id?: InputMaybe<String_Comparison_Exp>;
+  label?: InputMaybe<String_Comparison_Exp>;
+  software_versions?: InputMaybe<Modelcatalog_Software_Version_Image_Bool_Exp>;
+};
+
+/** unique or primary key constraints on table "modelcatalog_image" */
+export enum Modelcatalog_Image_Constraint {
+  /** unique or primary key constraint on columns "id" */
+  ModelcatalogImagePkey = 'modelcatalog_image_pkey'
+}
+
+/** input type for inserting data into table "modelcatalog_image" */
+export type Modelcatalog_Image_Insert_Input = {
+  description?: InputMaybe<Scalars['String']['input']>;
+  id?: InputMaybe<Scalars['String']['input']>;
+  label?: InputMaybe<Scalars['String']['input']>;
+  software_versions?: InputMaybe<Modelcatalog_Software_Version_Image_Arr_Rel_Insert_Input>;
+};
+
+/** aggregate max on columns */
+export type Modelcatalog_Image_Max_Fields = {
+  __typename?: 'modelcatalog_image_max_fields';
+  description?: Maybe<Scalars['String']['output']>;
+  id?: Maybe<Scalars['String']['output']>;
+  label?: Maybe<Scalars['String']['output']>;
+};
+
+/** aggregate min on columns */
+export type Modelcatalog_Image_Min_Fields = {
+  __typename?: 'modelcatalog_image_min_fields';
+  description?: Maybe<Scalars['String']['output']>;
+  id?: Maybe<Scalars['String']['output']>;
+  label?: Maybe<Scalars['String']['output']>;
+};
+
+/** response of any mutation on the table "modelcatalog_image" */
+export type Modelcatalog_Image_Mutation_Response = {
+  __typename?: 'modelcatalog_image_mutation_response';
+  /** number of rows affected by the mutation */
+  affected_rows: Scalars['Int']['output'];
+  /** data from the rows affected by the mutation */
+  returning: Array<Modelcatalog_Image>;
+};
+
+/** input type for inserting object relation for remote table "modelcatalog_image" */
+export type Modelcatalog_Image_Obj_Rel_Insert_Input = {
+  data: Modelcatalog_Image_Insert_Input;
+  /** upsert condition */
+  on_conflict?: InputMaybe<Modelcatalog_Image_On_Conflict>;
+};
+
+/** on_conflict condition type for table "modelcatalog_image" */
+export type Modelcatalog_Image_On_Conflict = {
+  constraint: Modelcatalog_Image_Constraint;
+  update_columns?: Array<Modelcatalog_Image_Update_Column>;
+  where?: InputMaybe<Modelcatalog_Image_Bool_Exp>;
+};
+
+/** Ordering options when selecting data from "modelcatalog_image". */
+export type Modelcatalog_Image_Order_By = {
+  description?: InputMaybe<Order_By>;
+  id?: InputMaybe<Order_By>;
+  label?: InputMaybe<Order_By>;
+  software_versions_aggregate?: InputMaybe<Modelcatalog_Software_Version_Image_Aggregate_Order_By>;
+};
+
+/** primary key columns input for table: modelcatalog_image */
+export type Modelcatalog_Image_Pk_Columns_Input = {
+  id: Scalars['String']['input'];
+};
+
+/** select columns of table "modelcatalog_image" */
+export enum Modelcatalog_Image_Select_Column {
+  /** column name */
+  Description = 'description',
+  /** column name */
+  Id = 'id',
+  /** column name */
+  Label = 'label'
+}
+
+/** input type for updating data in table "modelcatalog_image" */
+export type Modelcatalog_Image_Set_Input = {
+  description?: InputMaybe<Scalars['String']['input']>;
+  id?: InputMaybe<Scalars['String']['input']>;
+  label?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** update columns of table "modelcatalog_image" */
+export enum Modelcatalog_Image_Update_Column {
+  /** column name */
+  Description = 'description',
+  /** column name */
+  Id = 'id',
+  /** column name */
+  Label = 'label'
+}
+
+export type Modelcatalog_Image_Updates = {
+  /** sets the columns of the filtered rows to the given values */
+  _set?: InputMaybe<Modelcatalog_Image_Set_Input>;
+  where: Modelcatalog_Image_Bool_Exp;
+};
+
+/** columns and relationships of "modelcatalog_intervention" */
+export type Modelcatalog_Intervention = {
+  __typename?: 'modelcatalog_intervention';
+  description?: Maybe<Scalars['String']['output']>;
+  id: Scalars['String']['output'];
+  label: Scalars['String']['output'];
+  /** An array relationship */
+  parameters: Array<Modelcatalog_Parameter_Intervention>;
+  /** An aggregate relationship */
+  parameters_aggregate: Modelcatalog_Parameter_Intervention_Aggregate;
+};
+
+
+/** columns and relationships of "modelcatalog_intervention" */
+export type Modelcatalog_InterventionParametersArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Parameter_Intervention_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Parameter_Intervention_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Parameter_Intervention_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_intervention" */
+export type Modelcatalog_InterventionParameters_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Parameter_Intervention_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Parameter_Intervention_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Parameter_Intervention_Bool_Exp>;
+};
+
+/** aggregated selection of "modelcatalog_intervention" */
+export type Modelcatalog_Intervention_Aggregate = {
+  __typename?: 'modelcatalog_intervention_aggregate';
+  aggregate?: Maybe<Modelcatalog_Intervention_Aggregate_Fields>;
+  nodes: Array<Modelcatalog_Intervention>;
+};
+
+/** aggregate fields of "modelcatalog_intervention" */
+export type Modelcatalog_Intervention_Aggregate_Fields = {
+  __typename?: 'modelcatalog_intervention_aggregate_fields';
+  count: Scalars['Int']['output'];
+  max?: Maybe<Modelcatalog_Intervention_Max_Fields>;
+  min?: Maybe<Modelcatalog_Intervention_Min_Fields>;
+};
+
+
+/** aggregate fields of "modelcatalog_intervention" */
+export type Modelcatalog_Intervention_Aggregate_FieldsCountArgs = {
+  columns?: InputMaybe<Array<Modelcatalog_Intervention_Select_Column>>;
+  distinct?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
+/** Boolean expression to filter rows from the table "modelcatalog_intervention". All fields are combined with a logical 'AND'. */
+export type Modelcatalog_Intervention_Bool_Exp = {
+  _and?: InputMaybe<Array<Modelcatalog_Intervention_Bool_Exp>>;
+  _not?: InputMaybe<Modelcatalog_Intervention_Bool_Exp>;
+  _or?: InputMaybe<Array<Modelcatalog_Intervention_Bool_Exp>>;
+  description?: InputMaybe<String_Comparison_Exp>;
+  id?: InputMaybe<String_Comparison_Exp>;
+  label?: InputMaybe<String_Comparison_Exp>;
+  parameters?: InputMaybe<Modelcatalog_Parameter_Intervention_Bool_Exp>;
+};
+
+/** unique or primary key constraints on table "modelcatalog_intervention" */
+export enum Modelcatalog_Intervention_Constraint {
+  /** unique or primary key constraint on columns "id" */
+  ModelcatalogInterventionPkey = 'modelcatalog_intervention_pkey'
+}
+
+/** input type for inserting data into table "modelcatalog_intervention" */
+export type Modelcatalog_Intervention_Insert_Input = {
+  description?: InputMaybe<Scalars['String']['input']>;
+  id?: InputMaybe<Scalars['String']['input']>;
+  label?: InputMaybe<Scalars['String']['input']>;
+  parameters?: InputMaybe<Modelcatalog_Parameter_Intervention_Arr_Rel_Insert_Input>;
+};
+
+/** aggregate max on columns */
+export type Modelcatalog_Intervention_Max_Fields = {
+  __typename?: 'modelcatalog_intervention_max_fields';
+  description?: Maybe<Scalars['String']['output']>;
+  id?: Maybe<Scalars['String']['output']>;
+  label?: Maybe<Scalars['String']['output']>;
+};
+
+/** aggregate min on columns */
+export type Modelcatalog_Intervention_Min_Fields = {
+  __typename?: 'modelcatalog_intervention_min_fields';
+  description?: Maybe<Scalars['String']['output']>;
+  id?: Maybe<Scalars['String']['output']>;
+  label?: Maybe<Scalars['String']['output']>;
+};
+
+/** response of any mutation on the table "modelcatalog_intervention" */
+export type Modelcatalog_Intervention_Mutation_Response = {
+  __typename?: 'modelcatalog_intervention_mutation_response';
+  /** number of rows affected by the mutation */
+  affected_rows: Scalars['Int']['output'];
+  /** data from the rows affected by the mutation */
+  returning: Array<Modelcatalog_Intervention>;
+};
+
+/** input type for inserting object relation for remote table "modelcatalog_intervention" */
+export type Modelcatalog_Intervention_Obj_Rel_Insert_Input = {
+  data: Modelcatalog_Intervention_Insert_Input;
+  /** upsert condition */
+  on_conflict?: InputMaybe<Modelcatalog_Intervention_On_Conflict>;
+};
+
+/** on_conflict condition type for table "modelcatalog_intervention" */
+export type Modelcatalog_Intervention_On_Conflict = {
+  constraint: Modelcatalog_Intervention_Constraint;
+  update_columns?: Array<Modelcatalog_Intervention_Update_Column>;
+  where?: InputMaybe<Modelcatalog_Intervention_Bool_Exp>;
+};
+
+/** Ordering options when selecting data from "modelcatalog_intervention". */
+export type Modelcatalog_Intervention_Order_By = {
+  description?: InputMaybe<Order_By>;
+  id?: InputMaybe<Order_By>;
+  label?: InputMaybe<Order_By>;
+  parameters_aggregate?: InputMaybe<Modelcatalog_Parameter_Intervention_Aggregate_Order_By>;
+};
+
+/** primary key columns input for table: modelcatalog_intervention */
+export type Modelcatalog_Intervention_Pk_Columns_Input = {
+  id: Scalars['String']['input'];
+};
+
+/** select columns of table "modelcatalog_intervention" */
+export enum Modelcatalog_Intervention_Select_Column {
+  /** column name */
+  Description = 'description',
+  /** column name */
+  Id = 'id',
+  /** column name */
+  Label = 'label'
+}
+
+/** input type for updating data in table "modelcatalog_intervention" */
+export type Modelcatalog_Intervention_Set_Input = {
+  description?: InputMaybe<Scalars['String']['input']>;
+  id?: InputMaybe<Scalars['String']['input']>;
+  label?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** update columns of table "modelcatalog_intervention" */
+export enum Modelcatalog_Intervention_Update_Column {
+  /** column name */
+  Description = 'description',
+  /** column name */
+  Id = 'id',
+  /** column name */
+  Label = 'label'
+}
+
+export type Modelcatalog_Intervention_Updates = {
+  /** sets the columns of the filtered rows to the given values */
+  _set?: InputMaybe<Modelcatalog_Intervention_Set_Input>;
+  where: Modelcatalog_Intervention_Bool_Exp;
+};
+
+/** columns and relationships of "modelcatalog_model_category" */
+export type Modelcatalog_Model_Category = {
+  __typename?: 'modelcatalog_model_category';
+  /** An array relationship */
+  configuration_items: Array<Modelcatalog_Configuration_Category>;
+  /** An aggregate relationship */
+  configuration_items_aggregate: Modelcatalog_Configuration_Category_Aggregate;
+  id: Scalars['String']['output'];
+  label: Scalars['String']['output'];
+  /** An object relationship */
+  parent_category?: Maybe<Modelcatalog_Model_Category>;
+  parent_category_id?: Maybe<Scalars['String']['output']>;
+  /** An array relationship */
+  software_items: Array<Modelcatalog_Software_Category>;
+  /** An aggregate relationship */
+  software_items_aggregate: Modelcatalog_Software_Category_Aggregate;
+  /** An array relationship */
+  software_versions: Array<Modelcatalog_Software_Version_Category>;
+  /** An aggregate relationship */
+  software_versions_aggregate: Modelcatalog_Software_Version_Category_Aggregate;
+  /** An array relationship */
+  subcategories: Array<Modelcatalog_Model_Category>;
+  /** An aggregate relationship */
+  subcategories_aggregate: Modelcatalog_Model_Category_Aggregate;
+};
+
+
+/** columns and relationships of "modelcatalog_model_category" */
+export type Modelcatalog_Model_CategoryConfiguration_ItemsArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Configuration_Category_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Configuration_Category_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Configuration_Category_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_model_category" */
+export type Modelcatalog_Model_CategoryConfiguration_Items_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Configuration_Category_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Configuration_Category_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Configuration_Category_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_model_category" */
+export type Modelcatalog_Model_CategorySoftware_ItemsArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Software_Category_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Software_Category_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Software_Category_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_model_category" */
+export type Modelcatalog_Model_CategorySoftware_Items_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Software_Category_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Software_Category_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Software_Category_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_model_category" */
+export type Modelcatalog_Model_CategorySoftware_VersionsArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Software_Version_Category_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Software_Version_Category_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Software_Version_Category_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_model_category" */
+export type Modelcatalog_Model_CategorySoftware_Versions_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Software_Version_Category_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Software_Version_Category_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Software_Version_Category_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_model_category" */
+export type Modelcatalog_Model_CategorySubcategoriesArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Model_Category_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Model_Category_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Model_Category_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_model_category" */
+export type Modelcatalog_Model_CategorySubcategories_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Model_Category_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Model_Category_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Model_Category_Bool_Exp>;
+};
+
+/** aggregated selection of "modelcatalog_model_category" */
+export type Modelcatalog_Model_Category_Aggregate = {
+  __typename?: 'modelcatalog_model_category_aggregate';
+  aggregate?: Maybe<Modelcatalog_Model_Category_Aggregate_Fields>;
+  nodes: Array<Modelcatalog_Model_Category>;
+};
+
+/** aggregate fields of "modelcatalog_model_category" */
+export type Modelcatalog_Model_Category_Aggregate_Fields = {
+  __typename?: 'modelcatalog_model_category_aggregate_fields';
+  count: Scalars['Int']['output'];
+  max?: Maybe<Modelcatalog_Model_Category_Max_Fields>;
+  min?: Maybe<Modelcatalog_Model_Category_Min_Fields>;
+};
+
+
+/** aggregate fields of "modelcatalog_model_category" */
+export type Modelcatalog_Model_Category_Aggregate_FieldsCountArgs = {
+  columns?: InputMaybe<Array<Modelcatalog_Model_Category_Select_Column>>;
+  distinct?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
+/** order by aggregate values of table "modelcatalog_model_category" */
+export type Modelcatalog_Model_Category_Aggregate_Order_By = {
+  count?: InputMaybe<Order_By>;
+  max?: InputMaybe<Modelcatalog_Model_Category_Max_Order_By>;
+  min?: InputMaybe<Modelcatalog_Model_Category_Min_Order_By>;
+};
+
+/** input type for inserting array relation for remote table "modelcatalog_model_category" */
+export type Modelcatalog_Model_Category_Arr_Rel_Insert_Input = {
+  data: Array<Modelcatalog_Model_Category_Insert_Input>;
+  /** upsert condition */
+  on_conflict?: InputMaybe<Modelcatalog_Model_Category_On_Conflict>;
+};
+
+/** Boolean expression to filter rows from the table "modelcatalog_model_category". All fields are combined with a logical 'AND'. */
+export type Modelcatalog_Model_Category_Bool_Exp = {
+  _and?: InputMaybe<Array<Modelcatalog_Model_Category_Bool_Exp>>;
+  _not?: InputMaybe<Modelcatalog_Model_Category_Bool_Exp>;
+  _or?: InputMaybe<Array<Modelcatalog_Model_Category_Bool_Exp>>;
+  configuration_items?: InputMaybe<Modelcatalog_Configuration_Category_Bool_Exp>;
+  id?: InputMaybe<String_Comparison_Exp>;
+  label?: InputMaybe<String_Comparison_Exp>;
+  parent_category?: InputMaybe<Modelcatalog_Model_Category_Bool_Exp>;
+  parent_category_id?: InputMaybe<String_Comparison_Exp>;
+  software_items?: InputMaybe<Modelcatalog_Software_Category_Bool_Exp>;
+  software_versions?: InputMaybe<Modelcatalog_Software_Version_Category_Bool_Exp>;
+  subcategories?: InputMaybe<Modelcatalog_Model_Category_Bool_Exp>;
+};
+
+/** unique or primary key constraints on table "modelcatalog_model_category" */
+export enum Modelcatalog_Model_Category_Constraint {
+  /** unique or primary key constraint on columns "id" */
+  ModelcatalogModelCategoryPkey = 'modelcatalog_model_category_pkey'
+}
+
+/** input type for inserting data into table "modelcatalog_model_category" */
+export type Modelcatalog_Model_Category_Insert_Input = {
+  configuration_items?: InputMaybe<Modelcatalog_Configuration_Category_Arr_Rel_Insert_Input>;
+  id?: InputMaybe<Scalars['String']['input']>;
+  label?: InputMaybe<Scalars['String']['input']>;
+  parent_category?: InputMaybe<Modelcatalog_Model_Category_Obj_Rel_Insert_Input>;
+  parent_category_id?: InputMaybe<Scalars['String']['input']>;
+  software_items?: InputMaybe<Modelcatalog_Software_Category_Arr_Rel_Insert_Input>;
+  software_versions?: InputMaybe<Modelcatalog_Software_Version_Category_Arr_Rel_Insert_Input>;
+  subcategories?: InputMaybe<Modelcatalog_Model_Category_Arr_Rel_Insert_Input>;
+};
+
+/** aggregate max on columns */
+export type Modelcatalog_Model_Category_Max_Fields = {
+  __typename?: 'modelcatalog_model_category_max_fields';
+  id?: Maybe<Scalars['String']['output']>;
+  label?: Maybe<Scalars['String']['output']>;
+  parent_category_id?: Maybe<Scalars['String']['output']>;
+};
+
+/** order by max() on columns of table "modelcatalog_model_category" */
+export type Modelcatalog_Model_Category_Max_Order_By = {
+  id?: InputMaybe<Order_By>;
+  label?: InputMaybe<Order_By>;
+  parent_category_id?: InputMaybe<Order_By>;
+};
+
+/** aggregate min on columns */
+export type Modelcatalog_Model_Category_Min_Fields = {
+  __typename?: 'modelcatalog_model_category_min_fields';
+  id?: Maybe<Scalars['String']['output']>;
+  label?: Maybe<Scalars['String']['output']>;
+  parent_category_id?: Maybe<Scalars['String']['output']>;
+};
+
+/** order by min() on columns of table "modelcatalog_model_category" */
+export type Modelcatalog_Model_Category_Min_Order_By = {
+  id?: InputMaybe<Order_By>;
+  label?: InputMaybe<Order_By>;
+  parent_category_id?: InputMaybe<Order_By>;
+};
+
+/** response of any mutation on the table "modelcatalog_model_category" */
+export type Modelcatalog_Model_Category_Mutation_Response = {
+  __typename?: 'modelcatalog_model_category_mutation_response';
+  /** number of rows affected by the mutation */
+  affected_rows: Scalars['Int']['output'];
+  /** data from the rows affected by the mutation */
+  returning: Array<Modelcatalog_Model_Category>;
+};
+
+/** input type for inserting object relation for remote table "modelcatalog_model_category" */
+export type Modelcatalog_Model_Category_Obj_Rel_Insert_Input = {
+  data: Modelcatalog_Model_Category_Insert_Input;
+  /** upsert condition */
+  on_conflict?: InputMaybe<Modelcatalog_Model_Category_On_Conflict>;
+};
+
+/** on_conflict condition type for table "modelcatalog_model_category" */
+export type Modelcatalog_Model_Category_On_Conflict = {
+  constraint: Modelcatalog_Model_Category_Constraint;
+  update_columns?: Array<Modelcatalog_Model_Category_Update_Column>;
+  where?: InputMaybe<Modelcatalog_Model_Category_Bool_Exp>;
+};
+
+/** Ordering options when selecting data from "modelcatalog_model_category". */
+export type Modelcatalog_Model_Category_Order_By = {
+  configuration_items_aggregate?: InputMaybe<Modelcatalog_Configuration_Category_Aggregate_Order_By>;
+  id?: InputMaybe<Order_By>;
+  label?: InputMaybe<Order_By>;
+  parent_category?: InputMaybe<Modelcatalog_Model_Category_Order_By>;
+  parent_category_id?: InputMaybe<Order_By>;
+  software_items_aggregate?: InputMaybe<Modelcatalog_Software_Category_Aggregate_Order_By>;
+  software_versions_aggregate?: InputMaybe<Modelcatalog_Software_Version_Category_Aggregate_Order_By>;
+  subcategories_aggregate?: InputMaybe<Modelcatalog_Model_Category_Aggregate_Order_By>;
+};
+
+/** primary key columns input for table: modelcatalog_model_category */
+export type Modelcatalog_Model_Category_Pk_Columns_Input = {
+  id: Scalars['String']['input'];
+};
+
+/** select columns of table "modelcatalog_model_category" */
+export enum Modelcatalog_Model_Category_Select_Column {
+  /** column name */
+  Id = 'id',
+  /** column name */
+  Label = 'label',
+  /** column name */
+  ParentCategoryId = 'parent_category_id'
+}
+
+/** input type for updating data in table "modelcatalog_model_category" */
+export type Modelcatalog_Model_Category_Set_Input = {
+  id?: InputMaybe<Scalars['String']['input']>;
+  label?: InputMaybe<Scalars['String']['input']>;
+  parent_category_id?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** update columns of table "modelcatalog_model_category" */
+export enum Modelcatalog_Model_Category_Update_Column {
+  /** column name */
+  Id = 'id',
+  /** column name */
+  Label = 'label',
+  /** column name */
+  ParentCategoryId = 'parent_category_id'
+}
+
+export type Modelcatalog_Model_Category_Updates = {
+  /** sets the columns of the filtered rows to the given values */
+  _set?: InputMaybe<Modelcatalog_Model_Category_Set_Input>;
+  where: Modelcatalog_Model_Category_Bool_Exp;
+};
+
+/** columns and relationships of "modelcatalog_parameter" */
+export type Modelcatalog_Parameter = {
+  __typename?: 'modelcatalog_parameter';
+  /** An array relationship */
+  adjusts_variables: Array<Modelcatalog_Parameter_Adjusts_Variable>;
+  /** An aggregate relationship */
+  adjusts_variables_aggregate: Modelcatalog_Parameter_Adjusts_Variable_Aggregate;
+  /** An array relationship */
+  configuration_parameters: Array<Modelcatalog_Configuration_Parameter>;
+  /** An aggregate relationship */
+  configuration_parameters_aggregate: Modelcatalog_Configuration_Parameter_Aggregate;
   description?: Maybe<Scalars['String']['output']>;
   /** An array relationship */
   execution_parameter_bindings: Array<Execution_Parameter_Binding>;
   /** An aggregate relationship */
   execution_parameter_bindings_aggregate: Execution_Parameter_Binding_Aggregate;
-  fixed_value?: Maybe<Scalars['String']['output']>;
+  has_accepted_values?: Maybe<Scalars['_text']['output']>;
+  has_data_type?: Maybe<Scalars['String']['output']>;
+  has_default_value?: Maybe<Scalars['String']['output']>;
+  has_fixed_value?: Maybe<Scalars['String']['output']>;
+  has_maximum_accepted_value?: Maybe<Scalars['String']['output']>;
+  has_minimum_accepted_value?: Maybe<Scalars['String']['output']>;
   id: Scalars['String']['output'];
-  max?: Maybe<Scalars['String']['output']>;
-  min?: Maybe<Scalars['String']['output']>;
-  /** An object relationship */
-  model: Model;
-  model_id: Scalars['String']['output'];
-  name: Scalars['String']['output'];
+  /** An array relationship */
+  interventions: Array<Modelcatalog_Parameter_Intervention>;
+  /** An aggregate relationship */
+  interventions_aggregate: Modelcatalog_Parameter_Intervention_Aggregate;
+  label: Scalars['String']['output'];
+  parameter_type?: Maybe<Scalars['String']['output']>;
   position?: Maybe<Scalars['Int']['output']>;
   /** An array relationship */
   thread_model_parameters: Array<Thread_Model_Parameter>;
   /** An aggregate relationship */
   thread_model_parameters_aggregate: Thread_Model_Parameter_Aggregate;
-  type?: Maybe<Scalars['String']['output']>;
-  unit?: Maybe<Scalars['String']['output']>;
 };
 
 
-/** columns and relationships of "model_parameter" */
-export type Model_ParameterExecution_Parameter_BindingsArgs = {
+/** columns and relationships of "modelcatalog_parameter" */
+export type Modelcatalog_ParameterAdjusts_VariablesArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Parameter_Adjusts_Variable_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Parameter_Adjusts_Variable_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Parameter_Adjusts_Variable_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_parameter" */
+export type Modelcatalog_ParameterAdjusts_Variables_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Parameter_Adjusts_Variable_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Parameter_Adjusts_Variable_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Parameter_Adjusts_Variable_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_parameter" */
+export type Modelcatalog_ParameterConfiguration_ParametersArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Configuration_Parameter_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Configuration_Parameter_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Configuration_Parameter_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_parameter" */
+export type Modelcatalog_ParameterConfiguration_Parameters_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Configuration_Parameter_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Configuration_Parameter_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Configuration_Parameter_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_parameter" */
+export type Modelcatalog_ParameterExecution_Parameter_BindingsArgs = {
   distinct_on?: InputMaybe<Array<Execution_Parameter_Binding_Select_Column>>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
@@ -3714,8 +6836,8 @@ export type Model_ParameterExecution_Parameter_BindingsArgs = {
 };
 
 
-/** columns and relationships of "model_parameter" */
-export type Model_ParameterExecution_Parameter_Bindings_AggregateArgs = {
+/** columns and relationships of "modelcatalog_parameter" */
+export type Modelcatalog_ParameterExecution_Parameter_Bindings_AggregateArgs = {
   distinct_on?: InputMaybe<Array<Execution_Parameter_Binding_Select_Column>>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
@@ -3724,8 +6846,28 @@ export type Model_ParameterExecution_Parameter_Bindings_AggregateArgs = {
 };
 
 
-/** columns and relationships of "model_parameter" */
-export type Model_ParameterThread_Model_ParametersArgs = {
+/** columns and relationships of "modelcatalog_parameter" */
+export type Modelcatalog_ParameterInterventionsArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Parameter_Intervention_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Parameter_Intervention_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Parameter_Intervention_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_parameter" */
+export type Modelcatalog_ParameterInterventions_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Parameter_Intervention_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Parameter_Intervention_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Parameter_Intervention_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_parameter" */
+export type Modelcatalog_ParameterThread_Model_ParametersArgs = {
   distinct_on?: InputMaybe<Array<Thread_Model_Parameter_Select_Column>>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
@@ -3734,8 +6876,8 @@ export type Model_ParameterThread_Model_ParametersArgs = {
 };
 
 
-/** columns and relationships of "model_parameter" */
-export type Model_ParameterThread_Model_Parameters_AggregateArgs = {
+/** columns and relationships of "modelcatalog_parameter" */
+export type Modelcatalog_ParameterThread_Model_Parameters_AggregateArgs = {
   distinct_on?: InputMaybe<Array<Thread_Model_Parameter_Select_Column>>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
@@ -3743,536 +6885,4469 @@ export type Model_ParameterThread_Model_Parameters_AggregateArgs = {
   where?: InputMaybe<Thread_Model_Parameter_Bool_Exp>;
 };
 
-/** aggregated selection of "model_parameter" */
-export type Model_Parameter_Aggregate = {
-  __typename?: 'model_parameter_aggregate';
-  aggregate?: Maybe<Model_Parameter_Aggregate_Fields>;
-  nodes: Array<Model_Parameter>;
+/** columns and relationships of "modelcatalog_parameter_adjusts_variable" */
+export type Modelcatalog_Parameter_Adjusts_Variable = {
+  __typename?: 'modelcatalog_parameter_adjusts_variable';
+  /** An object relationship */
+  parameter: Modelcatalog_Parameter;
+  parameter_id: Scalars['String']['output'];
+  /** An object relationship */
+  variable: Modelcatalog_Variable_Presentation;
+  variable_id: Scalars['String']['output'];
 };
 
-/** aggregate fields of "model_parameter" */
-export type Model_Parameter_Aggregate_Fields = {
-  __typename?: 'model_parameter_aggregate_fields';
-  avg?: Maybe<Model_Parameter_Avg_Fields>;
+/** aggregated selection of "modelcatalog_parameter_adjusts_variable" */
+export type Modelcatalog_Parameter_Adjusts_Variable_Aggregate = {
+  __typename?: 'modelcatalog_parameter_adjusts_variable_aggregate';
+  aggregate?: Maybe<Modelcatalog_Parameter_Adjusts_Variable_Aggregate_Fields>;
+  nodes: Array<Modelcatalog_Parameter_Adjusts_Variable>;
+};
+
+/** aggregate fields of "modelcatalog_parameter_adjusts_variable" */
+export type Modelcatalog_Parameter_Adjusts_Variable_Aggregate_Fields = {
+  __typename?: 'modelcatalog_parameter_adjusts_variable_aggregate_fields';
   count: Scalars['Int']['output'];
-  max?: Maybe<Model_Parameter_Max_Fields>;
-  min?: Maybe<Model_Parameter_Min_Fields>;
-  stddev?: Maybe<Model_Parameter_Stddev_Fields>;
-  stddev_pop?: Maybe<Model_Parameter_Stddev_Pop_Fields>;
-  stddev_samp?: Maybe<Model_Parameter_Stddev_Samp_Fields>;
-  sum?: Maybe<Model_Parameter_Sum_Fields>;
-  var_pop?: Maybe<Model_Parameter_Var_Pop_Fields>;
-  var_samp?: Maybe<Model_Parameter_Var_Samp_Fields>;
-  variance?: Maybe<Model_Parameter_Variance_Fields>;
+  max?: Maybe<Modelcatalog_Parameter_Adjusts_Variable_Max_Fields>;
+  min?: Maybe<Modelcatalog_Parameter_Adjusts_Variable_Min_Fields>;
 };
 
 
-/** aggregate fields of "model_parameter" */
-export type Model_Parameter_Aggregate_FieldsCountArgs = {
-  columns?: InputMaybe<Array<Model_Parameter_Select_Column>>;
+/** aggregate fields of "modelcatalog_parameter_adjusts_variable" */
+export type Modelcatalog_Parameter_Adjusts_Variable_Aggregate_FieldsCountArgs = {
+  columns?: InputMaybe<Array<Modelcatalog_Parameter_Adjusts_Variable_Select_Column>>;
   distinct?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
-/** order by aggregate values of table "model_parameter" */
-export type Model_Parameter_Aggregate_Order_By = {
-  avg?: InputMaybe<Model_Parameter_Avg_Order_By>;
+/** order by aggregate values of table "modelcatalog_parameter_adjusts_variable" */
+export type Modelcatalog_Parameter_Adjusts_Variable_Aggregate_Order_By = {
   count?: InputMaybe<Order_By>;
-  max?: InputMaybe<Model_Parameter_Max_Order_By>;
-  min?: InputMaybe<Model_Parameter_Min_Order_By>;
-  stddev?: InputMaybe<Model_Parameter_Stddev_Order_By>;
-  stddev_pop?: InputMaybe<Model_Parameter_Stddev_Pop_Order_By>;
-  stddev_samp?: InputMaybe<Model_Parameter_Stddev_Samp_Order_By>;
-  sum?: InputMaybe<Model_Parameter_Sum_Order_By>;
-  var_pop?: InputMaybe<Model_Parameter_Var_Pop_Order_By>;
-  var_samp?: InputMaybe<Model_Parameter_Var_Samp_Order_By>;
-  variance?: InputMaybe<Model_Parameter_Variance_Order_By>;
+  max?: InputMaybe<Modelcatalog_Parameter_Adjusts_Variable_Max_Order_By>;
+  min?: InputMaybe<Modelcatalog_Parameter_Adjusts_Variable_Min_Order_By>;
 };
 
-/** input type for inserting array relation for remote table "model_parameter" */
-export type Model_Parameter_Arr_Rel_Insert_Input = {
-  data: Array<Model_Parameter_Insert_Input>;
+/** input type for inserting array relation for remote table "modelcatalog_parameter_adjusts_variable" */
+export type Modelcatalog_Parameter_Adjusts_Variable_Arr_Rel_Insert_Input = {
+  data: Array<Modelcatalog_Parameter_Adjusts_Variable_Insert_Input>;
   /** upsert condition */
-  on_conflict?: InputMaybe<Model_Parameter_On_Conflict>;
+  on_conflict?: InputMaybe<Modelcatalog_Parameter_Adjusts_Variable_On_Conflict>;
 };
 
-/** aggregate avg on columns */
-export type Model_Parameter_Avg_Fields = {
-  __typename?: 'model_parameter_avg_fields';
-  position?: Maybe<Scalars['Float']['output']>;
+/** Boolean expression to filter rows from the table "modelcatalog_parameter_adjusts_variable". All fields are combined with a logical 'AND'. */
+export type Modelcatalog_Parameter_Adjusts_Variable_Bool_Exp = {
+  _and?: InputMaybe<Array<Modelcatalog_Parameter_Adjusts_Variable_Bool_Exp>>;
+  _not?: InputMaybe<Modelcatalog_Parameter_Adjusts_Variable_Bool_Exp>;
+  _or?: InputMaybe<Array<Modelcatalog_Parameter_Adjusts_Variable_Bool_Exp>>;
+  parameter?: InputMaybe<Modelcatalog_Parameter_Bool_Exp>;
+  parameter_id?: InputMaybe<String_Comparison_Exp>;
+  variable?: InputMaybe<Modelcatalog_Variable_Presentation_Bool_Exp>;
+  variable_id?: InputMaybe<String_Comparison_Exp>;
 };
 
-/** order by avg() on columns of table "model_parameter" */
-export type Model_Parameter_Avg_Order_By = {
-  position?: InputMaybe<Order_By>;
-};
-
-/** Boolean expression to filter rows from the table "model_parameter". All fields are combined with a logical 'AND'. */
-export type Model_Parameter_Bool_Exp = {
-  _and?: InputMaybe<Array<Model_Parameter_Bool_Exp>>;
-  _not?: InputMaybe<Model_Parameter_Bool_Exp>;
-  _or?: InputMaybe<Array<Model_Parameter_Bool_Exp>>;
-  accepted_values?: InputMaybe<String_Comparison_Exp>;
-  adjustment_variable?: InputMaybe<String_Comparison_Exp>;
-  datatype?: InputMaybe<String_Comparison_Exp>;
-  default?: InputMaybe<String_Comparison_Exp>;
-  description?: InputMaybe<String_Comparison_Exp>;
-  execution_parameter_bindings?: InputMaybe<Execution_Parameter_Binding_Bool_Exp>;
-  fixed_value?: InputMaybe<String_Comparison_Exp>;
-  id?: InputMaybe<String_Comparison_Exp>;
-  max?: InputMaybe<String_Comparison_Exp>;
-  min?: InputMaybe<String_Comparison_Exp>;
-  model?: InputMaybe<Model_Bool_Exp>;
-  model_id?: InputMaybe<String_Comparison_Exp>;
-  name?: InputMaybe<String_Comparison_Exp>;
-  position?: InputMaybe<Int_Comparison_Exp>;
-  thread_model_parameters?: InputMaybe<Thread_Model_Parameter_Bool_Exp>;
-  type?: InputMaybe<String_Comparison_Exp>;
-  unit?: InputMaybe<String_Comparison_Exp>;
-};
-
-/** unique or primary key constraints on table "model_parameter" */
-export enum Model_Parameter_Constraint {
-  /** unique or primary key constraint on columns "id" */
-  ModelParameterPkey = 'model_parameter_pkey'
+/** unique or primary key constraints on table "modelcatalog_parameter_adjusts_variable" */
+export enum Modelcatalog_Parameter_Adjusts_Variable_Constraint {
+  /** unique or primary key constraint on columns "variable_id", "parameter_id" */
+  ModelcatalogParameterAdjustsVariablePkey = 'modelcatalog_parameter_adjusts_variable_pkey'
 }
 
-/** input type for incrementing numeric columns in table "model_parameter" */
-export type Model_Parameter_Inc_Input = {
-  position?: InputMaybe<Scalars['Int']['input']>;
-};
-
-/** input type for inserting data into table "model_parameter" */
-export type Model_Parameter_Insert_Input = {
-  accepted_values?: InputMaybe<Scalars['String']['input']>;
-  adjustment_variable?: InputMaybe<Scalars['String']['input']>;
-  datatype?: InputMaybe<Scalars['String']['input']>;
-  default?: InputMaybe<Scalars['String']['input']>;
-  description?: InputMaybe<Scalars['String']['input']>;
-  execution_parameter_bindings?: InputMaybe<Execution_Parameter_Binding_Arr_Rel_Insert_Input>;
-  fixed_value?: InputMaybe<Scalars['String']['input']>;
-  id?: InputMaybe<Scalars['String']['input']>;
-  max?: InputMaybe<Scalars['String']['input']>;
-  min?: InputMaybe<Scalars['String']['input']>;
-  model?: InputMaybe<Model_Obj_Rel_Insert_Input>;
-  model_id?: InputMaybe<Scalars['String']['input']>;
-  name?: InputMaybe<Scalars['String']['input']>;
-  position?: InputMaybe<Scalars['Int']['input']>;
-  thread_model_parameters?: InputMaybe<Thread_Model_Parameter_Arr_Rel_Insert_Input>;
-  type?: InputMaybe<Scalars['String']['input']>;
-  unit?: InputMaybe<Scalars['String']['input']>;
+/** input type for inserting data into table "modelcatalog_parameter_adjusts_variable" */
+export type Modelcatalog_Parameter_Adjusts_Variable_Insert_Input = {
+  parameter?: InputMaybe<Modelcatalog_Parameter_Obj_Rel_Insert_Input>;
+  parameter_id?: InputMaybe<Scalars['String']['input']>;
+  variable?: InputMaybe<Modelcatalog_Variable_Presentation_Obj_Rel_Insert_Input>;
+  variable_id?: InputMaybe<Scalars['String']['input']>;
 };
 
 /** aggregate max on columns */
-export type Model_Parameter_Max_Fields = {
-  __typename?: 'model_parameter_max_fields';
-  accepted_values?: Maybe<Scalars['String']['output']>;
-  adjustment_variable?: Maybe<Scalars['String']['output']>;
-  datatype?: Maybe<Scalars['String']['output']>;
-  default?: Maybe<Scalars['String']['output']>;
-  description?: Maybe<Scalars['String']['output']>;
-  fixed_value?: Maybe<Scalars['String']['output']>;
-  id?: Maybe<Scalars['String']['output']>;
-  max?: Maybe<Scalars['String']['output']>;
-  min?: Maybe<Scalars['String']['output']>;
-  model_id?: Maybe<Scalars['String']['output']>;
-  name?: Maybe<Scalars['String']['output']>;
-  position?: Maybe<Scalars['Int']['output']>;
-  type?: Maybe<Scalars['String']['output']>;
-  unit?: Maybe<Scalars['String']['output']>;
+export type Modelcatalog_Parameter_Adjusts_Variable_Max_Fields = {
+  __typename?: 'modelcatalog_parameter_adjusts_variable_max_fields';
+  parameter_id?: Maybe<Scalars['String']['output']>;
+  variable_id?: Maybe<Scalars['String']['output']>;
 };
 
-/** order by max() on columns of table "model_parameter" */
-export type Model_Parameter_Max_Order_By = {
-  accepted_values?: InputMaybe<Order_By>;
-  adjustment_variable?: InputMaybe<Order_By>;
-  datatype?: InputMaybe<Order_By>;
-  default?: InputMaybe<Order_By>;
-  description?: InputMaybe<Order_By>;
-  fixed_value?: InputMaybe<Order_By>;
-  id?: InputMaybe<Order_By>;
-  max?: InputMaybe<Order_By>;
-  min?: InputMaybe<Order_By>;
-  model_id?: InputMaybe<Order_By>;
-  name?: InputMaybe<Order_By>;
-  position?: InputMaybe<Order_By>;
-  type?: InputMaybe<Order_By>;
-  unit?: InputMaybe<Order_By>;
+/** order by max() on columns of table "modelcatalog_parameter_adjusts_variable" */
+export type Modelcatalog_Parameter_Adjusts_Variable_Max_Order_By = {
+  parameter_id?: InputMaybe<Order_By>;
+  variable_id?: InputMaybe<Order_By>;
 };
 
 /** aggregate min on columns */
-export type Model_Parameter_Min_Fields = {
-  __typename?: 'model_parameter_min_fields';
-  accepted_values?: Maybe<Scalars['String']['output']>;
-  adjustment_variable?: Maybe<Scalars['String']['output']>;
-  datatype?: Maybe<Scalars['String']['output']>;
-  default?: Maybe<Scalars['String']['output']>;
-  description?: Maybe<Scalars['String']['output']>;
-  fixed_value?: Maybe<Scalars['String']['output']>;
-  id?: Maybe<Scalars['String']['output']>;
-  max?: Maybe<Scalars['String']['output']>;
-  min?: Maybe<Scalars['String']['output']>;
-  model_id?: Maybe<Scalars['String']['output']>;
-  name?: Maybe<Scalars['String']['output']>;
-  position?: Maybe<Scalars['Int']['output']>;
-  type?: Maybe<Scalars['String']['output']>;
-  unit?: Maybe<Scalars['String']['output']>;
+export type Modelcatalog_Parameter_Adjusts_Variable_Min_Fields = {
+  __typename?: 'modelcatalog_parameter_adjusts_variable_min_fields';
+  parameter_id?: Maybe<Scalars['String']['output']>;
+  variable_id?: Maybe<Scalars['String']['output']>;
 };
 
-/** order by min() on columns of table "model_parameter" */
-export type Model_Parameter_Min_Order_By = {
-  accepted_values?: InputMaybe<Order_By>;
-  adjustment_variable?: InputMaybe<Order_By>;
-  datatype?: InputMaybe<Order_By>;
-  default?: InputMaybe<Order_By>;
-  description?: InputMaybe<Order_By>;
-  fixed_value?: InputMaybe<Order_By>;
-  id?: InputMaybe<Order_By>;
-  max?: InputMaybe<Order_By>;
-  min?: InputMaybe<Order_By>;
-  model_id?: InputMaybe<Order_By>;
-  name?: InputMaybe<Order_By>;
-  position?: InputMaybe<Order_By>;
-  type?: InputMaybe<Order_By>;
-  unit?: InputMaybe<Order_By>;
+/** order by min() on columns of table "modelcatalog_parameter_adjusts_variable" */
+export type Modelcatalog_Parameter_Adjusts_Variable_Min_Order_By = {
+  parameter_id?: InputMaybe<Order_By>;
+  variable_id?: InputMaybe<Order_By>;
 };
 
-/** response of any mutation on the table "model_parameter" */
-export type Model_Parameter_Mutation_Response = {
-  __typename?: 'model_parameter_mutation_response';
+/** response of any mutation on the table "modelcatalog_parameter_adjusts_variable" */
+export type Modelcatalog_Parameter_Adjusts_Variable_Mutation_Response = {
+  __typename?: 'modelcatalog_parameter_adjusts_variable_mutation_response';
   /** number of rows affected by the mutation */
   affected_rows: Scalars['Int']['output'];
   /** data from the rows affected by the mutation */
-  returning: Array<Model_Parameter>;
+  returning: Array<Modelcatalog_Parameter_Adjusts_Variable>;
 };
 
-/** input type for inserting object relation for remote table "model_parameter" */
-export type Model_Parameter_Obj_Rel_Insert_Input = {
-  data: Model_Parameter_Insert_Input;
-  /** upsert condition */
-  on_conflict?: InputMaybe<Model_Parameter_On_Conflict>;
+/** on_conflict condition type for table "modelcatalog_parameter_adjusts_variable" */
+export type Modelcatalog_Parameter_Adjusts_Variable_On_Conflict = {
+  constraint: Modelcatalog_Parameter_Adjusts_Variable_Constraint;
+  update_columns?: Array<Modelcatalog_Parameter_Adjusts_Variable_Update_Column>;
+  where?: InputMaybe<Modelcatalog_Parameter_Adjusts_Variable_Bool_Exp>;
 };
 
-/** on_conflict condition type for table "model_parameter" */
-export type Model_Parameter_On_Conflict = {
-  constraint: Model_Parameter_Constraint;
-  update_columns?: Array<Model_Parameter_Update_Column>;
-  where?: InputMaybe<Model_Parameter_Bool_Exp>;
+/** Ordering options when selecting data from "modelcatalog_parameter_adjusts_variable". */
+export type Modelcatalog_Parameter_Adjusts_Variable_Order_By = {
+  parameter?: InputMaybe<Modelcatalog_Parameter_Order_By>;
+  parameter_id?: InputMaybe<Order_By>;
+  variable?: InputMaybe<Modelcatalog_Variable_Presentation_Order_By>;
+  variable_id?: InputMaybe<Order_By>;
 };
 
-/** Ordering options when selecting data from "model_parameter". */
-export type Model_Parameter_Order_By = {
-  accepted_values?: InputMaybe<Order_By>;
-  adjustment_variable?: InputMaybe<Order_By>;
-  datatype?: InputMaybe<Order_By>;
-  default?: InputMaybe<Order_By>;
-  description?: InputMaybe<Order_By>;
-  execution_parameter_bindings_aggregate?: InputMaybe<Execution_Parameter_Binding_Aggregate_Order_By>;
-  fixed_value?: InputMaybe<Order_By>;
-  id?: InputMaybe<Order_By>;
-  max?: InputMaybe<Order_By>;
-  min?: InputMaybe<Order_By>;
-  model?: InputMaybe<Model_Order_By>;
-  model_id?: InputMaybe<Order_By>;
-  name?: InputMaybe<Order_By>;
-  position?: InputMaybe<Order_By>;
-  thread_model_parameters_aggregate?: InputMaybe<Thread_Model_Parameter_Aggregate_Order_By>;
-  type?: InputMaybe<Order_By>;
-  unit?: InputMaybe<Order_By>;
+/** primary key columns input for table: modelcatalog_parameter_adjusts_variable */
+export type Modelcatalog_Parameter_Adjusts_Variable_Pk_Columns_Input = {
+  parameter_id: Scalars['String']['input'];
+  variable_id: Scalars['String']['input'];
 };
 
-/** primary key columns input for table: model_parameter */
-export type Model_Parameter_Pk_Columns_Input = {
-  id: Scalars['String']['input'];
-};
-
-/** select columns of table "model_parameter" */
-export enum Model_Parameter_Select_Column {
+/** select columns of table "modelcatalog_parameter_adjusts_variable" */
+export enum Modelcatalog_Parameter_Adjusts_Variable_Select_Column {
   /** column name */
-  AcceptedValues = 'accepted_values',
+  ParameterId = 'parameter_id',
   /** column name */
-  AdjustmentVariable = 'adjustment_variable',
-  /** column name */
-  Datatype = 'datatype',
-  /** column name */
-  Default = 'default',
-  /** column name */
-  Description = 'description',
-  /** column name */
-  FixedValue = 'fixed_value',
-  /** column name */
-  Id = 'id',
-  /** column name */
-  Max = 'max',
-  /** column name */
-  Min = 'min',
-  /** column name */
-  ModelId = 'model_id',
-  /** column name */
-  Name = 'name',
-  /** column name */
-  Position = 'position',
-  /** column name */
-  Type = 'type',
-  /** column name */
-  Unit = 'unit'
+  VariableId = 'variable_id'
 }
 
-/** input type for updating data in table "model_parameter" */
-export type Model_Parameter_Set_Input = {
-  accepted_values?: InputMaybe<Scalars['String']['input']>;
-  adjustment_variable?: InputMaybe<Scalars['String']['input']>;
-  datatype?: InputMaybe<Scalars['String']['input']>;
-  default?: InputMaybe<Scalars['String']['input']>;
-  description?: InputMaybe<Scalars['String']['input']>;
-  fixed_value?: InputMaybe<Scalars['String']['input']>;
-  id?: InputMaybe<Scalars['String']['input']>;
-  max?: InputMaybe<Scalars['String']['input']>;
-  min?: InputMaybe<Scalars['String']['input']>;
-  model_id?: InputMaybe<Scalars['String']['input']>;
-  name?: InputMaybe<Scalars['String']['input']>;
+/** input type for updating data in table "modelcatalog_parameter_adjusts_variable" */
+export type Modelcatalog_Parameter_Adjusts_Variable_Set_Input = {
+  parameter_id?: InputMaybe<Scalars['String']['input']>;
+  variable_id?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** update columns of table "modelcatalog_parameter_adjusts_variable" */
+export enum Modelcatalog_Parameter_Adjusts_Variable_Update_Column {
+  /** column name */
+  ParameterId = 'parameter_id',
+  /** column name */
+  VariableId = 'variable_id'
+}
+
+export type Modelcatalog_Parameter_Adjusts_Variable_Updates = {
+  /** sets the columns of the filtered rows to the given values */
+  _set?: InputMaybe<Modelcatalog_Parameter_Adjusts_Variable_Set_Input>;
+  where: Modelcatalog_Parameter_Adjusts_Variable_Bool_Exp;
+};
+
+/** aggregated selection of "modelcatalog_parameter" */
+export type Modelcatalog_Parameter_Aggregate = {
+  __typename?: 'modelcatalog_parameter_aggregate';
+  aggregate?: Maybe<Modelcatalog_Parameter_Aggregate_Fields>;
+  nodes: Array<Modelcatalog_Parameter>;
+};
+
+/** aggregate fields of "modelcatalog_parameter" */
+export type Modelcatalog_Parameter_Aggregate_Fields = {
+  __typename?: 'modelcatalog_parameter_aggregate_fields';
+  avg?: Maybe<Modelcatalog_Parameter_Avg_Fields>;
+  count: Scalars['Int']['output'];
+  max?: Maybe<Modelcatalog_Parameter_Max_Fields>;
+  min?: Maybe<Modelcatalog_Parameter_Min_Fields>;
+  stddev?: Maybe<Modelcatalog_Parameter_Stddev_Fields>;
+  stddev_pop?: Maybe<Modelcatalog_Parameter_Stddev_Pop_Fields>;
+  stddev_samp?: Maybe<Modelcatalog_Parameter_Stddev_Samp_Fields>;
+  sum?: Maybe<Modelcatalog_Parameter_Sum_Fields>;
+  var_pop?: Maybe<Modelcatalog_Parameter_Var_Pop_Fields>;
+  var_samp?: Maybe<Modelcatalog_Parameter_Var_Samp_Fields>;
+  variance?: Maybe<Modelcatalog_Parameter_Variance_Fields>;
+};
+
+
+/** aggregate fields of "modelcatalog_parameter" */
+export type Modelcatalog_Parameter_Aggregate_FieldsCountArgs = {
+  columns?: InputMaybe<Array<Modelcatalog_Parameter_Select_Column>>;
+  distinct?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
+/** aggregate avg on columns */
+export type Modelcatalog_Parameter_Avg_Fields = {
+  __typename?: 'modelcatalog_parameter_avg_fields';
+  position?: Maybe<Scalars['Float']['output']>;
+};
+
+/** Boolean expression to filter rows from the table "modelcatalog_parameter". All fields are combined with a logical 'AND'. */
+export type Modelcatalog_Parameter_Bool_Exp = {
+  _and?: InputMaybe<Array<Modelcatalog_Parameter_Bool_Exp>>;
+  _not?: InputMaybe<Modelcatalog_Parameter_Bool_Exp>;
+  _or?: InputMaybe<Array<Modelcatalog_Parameter_Bool_Exp>>;
+  adjusts_variables?: InputMaybe<Modelcatalog_Parameter_Adjusts_Variable_Bool_Exp>;
+  configuration_parameters?: InputMaybe<Modelcatalog_Configuration_Parameter_Bool_Exp>;
+  description?: InputMaybe<String_Comparison_Exp>;
+  execution_parameter_bindings?: InputMaybe<Execution_Parameter_Binding_Bool_Exp>;
+  has_accepted_values?: InputMaybe<_Text_Comparison_Exp>;
+  has_data_type?: InputMaybe<String_Comparison_Exp>;
+  has_default_value?: InputMaybe<String_Comparison_Exp>;
+  has_fixed_value?: InputMaybe<String_Comparison_Exp>;
+  has_maximum_accepted_value?: InputMaybe<String_Comparison_Exp>;
+  has_minimum_accepted_value?: InputMaybe<String_Comparison_Exp>;
+  id?: InputMaybe<String_Comparison_Exp>;
+  interventions?: InputMaybe<Modelcatalog_Parameter_Intervention_Bool_Exp>;
+  label?: InputMaybe<String_Comparison_Exp>;
+  parameter_type?: InputMaybe<String_Comparison_Exp>;
+  position?: InputMaybe<Int_Comparison_Exp>;
+  thread_model_parameters?: InputMaybe<Thread_Model_Parameter_Bool_Exp>;
+};
+
+/** unique or primary key constraints on table "modelcatalog_parameter" */
+export enum Modelcatalog_Parameter_Constraint {
+  /** unique or primary key constraint on columns "id" */
+  ModelcatalogParameterPkey = 'modelcatalog_parameter_pkey'
+}
+
+/** input type for incrementing numeric columns in table "modelcatalog_parameter" */
+export type Modelcatalog_Parameter_Inc_Input = {
   position?: InputMaybe<Scalars['Int']['input']>;
-  type?: InputMaybe<Scalars['String']['input']>;
-  unit?: InputMaybe<Scalars['String']['input']>;
 };
 
-/** aggregate stddev on columns */
-export type Model_Parameter_Stddev_Fields = {
-  __typename?: 'model_parameter_stddev_fields';
-  position?: Maybe<Scalars['Float']['output']>;
+/** input type for inserting data into table "modelcatalog_parameter" */
+export type Modelcatalog_Parameter_Insert_Input = {
+  adjusts_variables?: InputMaybe<Modelcatalog_Parameter_Adjusts_Variable_Arr_Rel_Insert_Input>;
+  configuration_parameters?: InputMaybe<Modelcatalog_Configuration_Parameter_Arr_Rel_Insert_Input>;
+  description?: InputMaybe<Scalars['String']['input']>;
+  execution_parameter_bindings?: InputMaybe<Execution_Parameter_Binding_Arr_Rel_Insert_Input>;
+  has_accepted_values?: InputMaybe<Scalars['_text']['input']>;
+  has_data_type?: InputMaybe<Scalars['String']['input']>;
+  has_default_value?: InputMaybe<Scalars['String']['input']>;
+  has_fixed_value?: InputMaybe<Scalars['String']['input']>;
+  has_maximum_accepted_value?: InputMaybe<Scalars['String']['input']>;
+  has_minimum_accepted_value?: InputMaybe<Scalars['String']['input']>;
+  id?: InputMaybe<Scalars['String']['input']>;
+  interventions?: InputMaybe<Modelcatalog_Parameter_Intervention_Arr_Rel_Insert_Input>;
+  label?: InputMaybe<Scalars['String']['input']>;
+  parameter_type?: InputMaybe<Scalars['String']['input']>;
+  position?: InputMaybe<Scalars['Int']['input']>;
+  thread_model_parameters?: InputMaybe<Thread_Model_Parameter_Arr_Rel_Insert_Input>;
 };
 
-/** order by stddev() on columns of table "model_parameter" */
-export type Model_Parameter_Stddev_Order_By = {
-  position?: InputMaybe<Order_By>;
+/** columns and relationships of "modelcatalog_parameter_intervention" */
+export type Modelcatalog_Parameter_Intervention = {
+  __typename?: 'modelcatalog_parameter_intervention';
+  /** An object relationship */
+  intervention: Modelcatalog_Intervention;
+  intervention_id: Scalars['String']['output'];
+  /** An object relationship */
+  parameter: Modelcatalog_Parameter;
+  parameter_id: Scalars['String']['output'];
 };
 
-/** aggregate stddev_pop on columns */
-export type Model_Parameter_Stddev_Pop_Fields = {
-  __typename?: 'model_parameter_stddev_pop_fields';
-  position?: Maybe<Scalars['Float']['output']>;
+/** aggregated selection of "modelcatalog_parameter_intervention" */
+export type Modelcatalog_Parameter_Intervention_Aggregate = {
+  __typename?: 'modelcatalog_parameter_intervention_aggregate';
+  aggregate?: Maybe<Modelcatalog_Parameter_Intervention_Aggregate_Fields>;
+  nodes: Array<Modelcatalog_Parameter_Intervention>;
 };
 
-/** order by stddev_pop() on columns of table "model_parameter" */
-export type Model_Parameter_Stddev_Pop_Order_By = {
-  position?: InputMaybe<Order_By>;
+/** aggregate fields of "modelcatalog_parameter_intervention" */
+export type Modelcatalog_Parameter_Intervention_Aggregate_Fields = {
+  __typename?: 'modelcatalog_parameter_intervention_aggregate_fields';
+  count: Scalars['Int']['output'];
+  max?: Maybe<Modelcatalog_Parameter_Intervention_Max_Fields>;
+  min?: Maybe<Modelcatalog_Parameter_Intervention_Min_Fields>;
 };
 
-/** aggregate stddev_samp on columns */
-export type Model_Parameter_Stddev_Samp_Fields = {
-  __typename?: 'model_parameter_stddev_samp_fields';
-  position?: Maybe<Scalars['Float']['output']>;
+
+/** aggregate fields of "modelcatalog_parameter_intervention" */
+export type Modelcatalog_Parameter_Intervention_Aggregate_FieldsCountArgs = {
+  columns?: InputMaybe<Array<Modelcatalog_Parameter_Intervention_Select_Column>>;
+  distinct?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
-/** order by stddev_samp() on columns of table "model_parameter" */
-export type Model_Parameter_Stddev_Samp_Order_By = {
-  position?: InputMaybe<Order_By>;
+/** order by aggregate values of table "modelcatalog_parameter_intervention" */
+export type Modelcatalog_Parameter_Intervention_Aggregate_Order_By = {
+  count?: InputMaybe<Order_By>;
+  max?: InputMaybe<Modelcatalog_Parameter_Intervention_Max_Order_By>;
+  min?: InputMaybe<Modelcatalog_Parameter_Intervention_Min_Order_By>;
 };
 
-/** aggregate sum on columns */
-export type Model_Parameter_Sum_Fields = {
-  __typename?: 'model_parameter_sum_fields';
+/** input type for inserting array relation for remote table "modelcatalog_parameter_intervention" */
+export type Modelcatalog_Parameter_Intervention_Arr_Rel_Insert_Input = {
+  data: Array<Modelcatalog_Parameter_Intervention_Insert_Input>;
+  /** upsert condition */
+  on_conflict?: InputMaybe<Modelcatalog_Parameter_Intervention_On_Conflict>;
+};
+
+/** Boolean expression to filter rows from the table "modelcatalog_parameter_intervention". All fields are combined with a logical 'AND'. */
+export type Modelcatalog_Parameter_Intervention_Bool_Exp = {
+  _and?: InputMaybe<Array<Modelcatalog_Parameter_Intervention_Bool_Exp>>;
+  _not?: InputMaybe<Modelcatalog_Parameter_Intervention_Bool_Exp>;
+  _or?: InputMaybe<Array<Modelcatalog_Parameter_Intervention_Bool_Exp>>;
+  intervention?: InputMaybe<Modelcatalog_Intervention_Bool_Exp>;
+  intervention_id?: InputMaybe<String_Comparison_Exp>;
+  parameter?: InputMaybe<Modelcatalog_Parameter_Bool_Exp>;
+  parameter_id?: InputMaybe<String_Comparison_Exp>;
+};
+
+/** unique or primary key constraints on table "modelcatalog_parameter_intervention" */
+export enum Modelcatalog_Parameter_Intervention_Constraint {
+  /** unique or primary key constraint on columns "intervention_id", "parameter_id" */
+  ModelcatalogParameterInterventionPkey = 'modelcatalog_parameter_intervention_pkey'
+}
+
+/** input type for inserting data into table "modelcatalog_parameter_intervention" */
+export type Modelcatalog_Parameter_Intervention_Insert_Input = {
+  intervention?: InputMaybe<Modelcatalog_Intervention_Obj_Rel_Insert_Input>;
+  intervention_id?: InputMaybe<Scalars['String']['input']>;
+  parameter?: InputMaybe<Modelcatalog_Parameter_Obj_Rel_Insert_Input>;
+  parameter_id?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** aggregate max on columns */
+export type Modelcatalog_Parameter_Intervention_Max_Fields = {
+  __typename?: 'modelcatalog_parameter_intervention_max_fields';
+  intervention_id?: Maybe<Scalars['String']['output']>;
+  parameter_id?: Maybe<Scalars['String']['output']>;
+};
+
+/** order by max() on columns of table "modelcatalog_parameter_intervention" */
+export type Modelcatalog_Parameter_Intervention_Max_Order_By = {
+  intervention_id?: InputMaybe<Order_By>;
+  parameter_id?: InputMaybe<Order_By>;
+};
+
+/** aggregate min on columns */
+export type Modelcatalog_Parameter_Intervention_Min_Fields = {
+  __typename?: 'modelcatalog_parameter_intervention_min_fields';
+  intervention_id?: Maybe<Scalars['String']['output']>;
+  parameter_id?: Maybe<Scalars['String']['output']>;
+};
+
+/** order by min() on columns of table "modelcatalog_parameter_intervention" */
+export type Modelcatalog_Parameter_Intervention_Min_Order_By = {
+  intervention_id?: InputMaybe<Order_By>;
+  parameter_id?: InputMaybe<Order_By>;
+};
+
+/** response of any mutation on the table "modelcatalog_parameter_intervention" */
+export type Modelcatalog_Parameter_Intervention_Mutation_Response = {
+  __typename?: 'modelcatalog_parameter_intervention_mutation_response';
+  /** number of rows affected by the mutation */
+  affected_rows: Scalars['Int']['output'];
+  /** data from the rows affected by the mutation */
+  returning: Array<Modelcatalog_Parameter_Intervention>;
+};
+
+/** on_conflict condition type for table "modelcatalog_parameter_intervention" */
+export type Modelcatalog_Parameter_Intervention_On_Conflict = {
+  constraint: Modelcatalog_Parameter_Intervention_Constraint;
+  update_columns?: Array<Modelcatalog_Parameter_Intervention_Update_Column>;
+  where?: InputMaybe<Modelcatalog_Parameter_Intervention_Bool_Exp>;
+};
+
+/** Ordering options when selecting data from "modelcatalog_parameter_intervention". */
+export type Modelcatalog_Parameter_Intervention_Order_By = {
+  intervention?: InputMaybe<Modelcatalog_Intervention_Order_By>;
+  intervention_id?: InputMaybe<Order_By>;
+  parameter?: InputMaybe<Modelcatalog_Parameter_Order_By>;
+  parameter_id?: InputMaybe<Order_By>;
+};
+
+/** primary key columns input for table: modelcatalog_parameter_intervention */
+export type Modelcatalog_Parameter_Intervention_Pk_Columns_Input = {
+  intervention_id: Scalars['String']['input'];
+  parameter_id: Scalars['String']['input'];
+};
+
+/** select columns of table "modelcatalog_parameter_intervention" */
+export enum Modelcatalog_Parameter_Intervention_Select_Column {
+  /** column name */
+  InterventionId = 'intervention_id',
+  /** column name */
+  ParameterId = 'parameter_id'
+}
+
+/** input type for updating data in table "modelcatalog_parameter_intervention" */
+export type Modelcatalog_Parameter_Intervention_Set_Input = {
+  intervention_id?: InputMaybe<Scalars['String']['input']>;
+  parameter_id?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** update columns of table "modelcatalog_parameter_intervention" */
+export enum Modelcatalog_Parameter_Intervention_Update_Column {
+  /** column name */
+  InterventionId = 'intervention_id',
+  /** column name */
+  ParameterId = 'parameter_id'
+}
+
+export type Modelcatalog_Parameter_Intervention_Updates = {
+  /** sets the columns of the filtered rows to the given values */
+  _set?: InputMaybe<Modelcatalog_Parameter_Intervention_Set_Input>;
+  where: Modelcatalog_Parameter_Intervention_Bool_Exp;
+};
+
+/** aggregate max on columns */
+export type Modelcatalog_Parameter_Max_Fields = {
+  __typename?: 'modelcatalog_parameter_max_fields';
+  description?: Maybe<Scalars['String']['output']>;
+  has_data_type?: Maybe<Scalars['String']['output']>;
+  has_default_value?: Maybe<Scalars['String']['output']>;
+  has_fixed_value?: Maybe<Scalars['String']['output']>;
+  has_maximum_accepted_value?: Maybe<Scalars['String']['output']>;
+  has_minimum_accepted_value?: Maybe<Scalars['String']['output']>;
+  id?: Maybe<Scalars['String']['output']>;
+  label?: Maybe<Scalars['String']['output']>;
+  parameter_type?: Maybe<Scalars['String']['output']>;
   position?: Maybe<Scalars['Int']['output']>;
 };
 
-/** order by sum() on columns of table "model_parameter" */
-export type Model_Parameter_Sum_Order_By = {
+/** aggregate min on columns */
+export type Modelcatalog_Parameter_Min_Fields = {
+  __typename?: 'modelcatalog_parameter_min_fields';
+  description?: Maybe<Scalars['String']['output']>;
+  has_data_type?: Maybe<Scalars['String']['output']>;
+  has_default_value?: Maybe<Scalars['String']['output']>;
+  has_fixed_value?: Maybe<Scalars['String']['output']>;
+  has_maximum_accepted_value?: Maybe<Scalars['String']['output']>;
+  has_minimum_accepted_value?: Maybe<Scalars['String']['output']>;
+  id?: Maybe<Scalars['String']['output']>;
+  label?: Maybe<Scalars['String']['output']>;
+  parameter_type?: Maybe<Scalars['String']['output']>;
+  position?: Maybe<Scalars['Int']['output']>;
+};
+
+/** response of any mutation on the table "modelcatalog_parameter" */
+export type Modelcatalog_Parameter_Mutation_Response = {
+  __typename?: 'modelcatalog_parameter_mutation_response';
+  /** number of rows affected by the mutation */
+  affected_rows: Scalars['Int']['output'];
+  /** data from the rows affected by the mutation */
+  returning: Array<Modelcatalog_Parameter>;
+};
+
+/** input type for inserting object relation for remote table "modelcatalog_parameter" */
+export type Modelcatalog_Parameter_Obj_Rel_Insert_Input = {
+  data: Modelcatalog_Parameter_Insert_Input;
+  /** upsert condition */
+  on_conflict?: InputMaybe<Modelcatalog_Parameter_On_Conflict>;
+};
+
+/** on_conflict condition type for table "modelcatalog_parameter" */
+export type Modelcatalog_Parameter_On_Conflict = {
+  constraint: Modelcatalog_Parameter_Constraint;
+  update_columns?: Array<Modelcatalog_Parameter_Update_Column>;
+  where?: InputMaybe<Modelcatalog_Parameter_Bool_Exp>;
+};
+
+/** Ordering options when selecting data from "modelcatalog_parameter". */
+export type Modelcatalog_Parameter_Order_By = {
+  adjusts_variables_aggregate?: InputMaybe<Modelcatalog_Parameter_Adjusts_Variable_Aggregate_Order_By>;
+  configuration_parameters_aggregate?: InputMaybe<Modelcatalog_Configuration_Parameter_Aggregate_Order_By>;
+  description?: InputMaybe<Order_By>;
+  execution_parameter_bindings_aggregate?: InputMaybe<Execution_Parameter_Binding_Aggregate_Order_By>;
+  has_accepted_values?: InputMaybe<Order_By>;
+  has_data_type?: InputMaybe<Order_By>;
+  has_default_value?: InputMaybe<Order_By>;
+  has_fixed_value?: InputMaybe<Order_By>;
+  has_maximum_accepted_value?: InputMaybe<Order_By>;
+  has_minimum_accepted_value?: InputMaybe<Order_By>;
+  id?: InputMaybe<Order_By>;
+  interventions_aggregate?: InputMaybe<Modelcatalog_Parameter_Intervention_Aggregate_Order_By>;
+  label?: InputMaybe<Order_By>;
+  parameter_type?: InputMaybe<Order_By>;
   position?: InputMaybe<Order_By>;
+  thread_model_parameters_aggregate?: InputMaybe<Thread_Model_Parameter_Aggregate_Order_By>;
 };
 
-/** update columns of table "model_parameter" */
-export enum Model_Parameter_Update_Column {
-  /** column name */
-  AcceptedValues = 'accepted_values',
-  /** column name */
-  AdjustmentVariable = 'adjustment_variable',
-  /** column name */
-  Datatype = 'datatype',
-  /** column name */
-  Default = 'default',
-  /** column name */
-  Description = 'description',
-  /** column name */
-  FixedValue = 'fixed_value',
-  /** column name */
-  Id = 'id',
-  /** column name */
-  Max = 'max',
-  /** column name */
-  Min = 'min',
-  /** column name */
-  ModelId = 'model_id',
-  /** column name */
-  Name = 'name',
-  /** column name */
-  Position = 'position',
-  /** column name */
-  Type = 'type',
-  /** column name */
-  Unit = 'unit'
-}
-
-export type Model_Parameter_Updates = {
-  /** increments the numeric columns with given value of the filtered values */
-  _inc?: InputMaybe<Model_Parameter_Inc_Input>;
-  /** sets the columns of the filtered rows to the given values */
-  _set?: InputMaybe<Model_Parameter_Set_Input>;
-  where: Model_Parameter_Bool_Exp;
-};
-
-/** aggregate var_pop on columns */
-export type Model_Parameter_Var_Pop_Fields = {
-  __typename?: 'model_parameter_var_pop_fields';
-  position?: Maybe<Scalars['Float']['output']>;
-};
-
-/** order by var_pop() on columns of table "model_parameter" */
-export type Model_Parameter_Var_Pop_Order_By = {
-  position?: InputMaybe<Order_By>;
-};
-
-/** aggregate var_samp on columns */
-export type Model_Parameter_Var_Samp_Fields = {
-  __typename?: 'model_parameter_var_samp_fields';
-  position?: Maybe<Scalars['Float']['output']>;
-};
-
-/** order by var_samp() on columns of table "model_parameter" */
-export type Model_Parameter_Var_Samp_Order_By = {
-  position?: InputMaybe<Order_By>;
-};
-
-/** aggregate variance on columns */
-export type Model_Parameter_Variance_Fields = {
-  __typename?: 'model_parameter_variance_fields';
-  position?: Maybe<Scalars['Float']['output']>;
-};
-
-/** order by variance() on columns of table "model_parameter" */
-export type Model_Parameter_Variance_Order_By = {
-  position?: InputMaybe<Order_By>;
-};
-
-/** primary key columns input for table: model */
-export type Model_Pk_Columns_Input = {
+/** primary key columns input for table: modelcatalog_parameter */
+export type Modelcatalog_Parameter_Pk_Columns_Input = {
   id: Scalars['String']['input'];
 };
 
-/** select columns of table "model" */
-export enum Model_Select_Column {
-  /** column name */
-  CalibrationTargetVariable = 'calibration_target_variable',
-  /** column name */
-  Category = 'category',
-  /** column name */
-  CodeUrl = 'code_url',
+/** select columns of table "modelcatalog_parameter" */
+export enum Modelcatalog_Parameter_Select_Column {
   /** column name */
   Description = 'description',
   /** column name */
-  Dimensionality = 'dimensionality',
+  HasAcceptedValues = 'has_accepted_values',
+  /** column name */
+  HasDataType = 'has_data_type',
+  /** column name */
+  HasDefaultValue = 'has_default_value',
+  /** column name */
+  HasFixedValue = 'has_fixed_value',
+  /** column name */
+  HasMaximumAcceptedValue = 'has_maximum_accepted_value',
+  /** column name */
+  HasMinimumAcceptedValue = 'has_minimum_accepted_value',
   /** column name */
   Id = 'id',
   /** column name */
-  ModelConfiguration = 'model_configuration',
+  Label = 'label',
   /** column name */
-  ModelName = 'model_name',
+  ParameterType = 'parameter_type',
   /** column name */
-  ModelVersion = 'model_version',
-  /** column name */
-  Name = 'name',
-  /** column name */
-  OutputTimeInterval = 'output_time_interval',
-  /** column name */
-  ParameterAssignment = 'parameter_assignment',
-  /** column name */
-  ParameterAssignmentDetails = 'parameter_assignment_details',
-  /** column name */
-  RegionName = 'region_name',
-  /** column name */
-  SoftwareImage = 'software_image',
-  /** column name */
-  SpatialGridResolution = 'spatial_grid_resolution',
-  /** column name */
-  SpatialGridType = 'spatial_grid_type',
-  /** column name */
-  Type = 'type',
-  /** column name */
-  UsageNotes = 'usage_notes',
-  /** column name */
-  UserId = 'user_id'
+  Position = 'position'
 }
 
-/** input type for updating data in table "model" */
-export type Model_Set_Input = {
-  calibration_target_variable?: InputMaybe<Scalars['String']['input']>;
-  category?: InputMaybe<Scalars['String']['input']>;
-  code_url?: InputMaybe<Scalars['String']['input']>;
+/** input type for updating data in table "modelcatalog_parameter" */
+export type Modelcatalog_Parameter_Set_Input = {
   description?: InputMaybe<Scalars['String']['input']>;
-  dimensionality?: InputMaybe<Scalars['String']['input']>;
+  has_accepted_values?: InputMaybe<Scalars['_text']['input']>;
+  has_data_type?: InputMaybe<Scalars['String']['input']>;
+  has_default_value?: InputMaybe<Scalars['String']['input']>;
+  has_fixed_value?: InputMaybe<Scalars['String']['input']>;
+  has_maximum_accepted_value?: InputMaybe<Scalars['String']['input']>;
+  has_minimum_accepted_value?: InputMaybe<Scalars['String']['input']>;
   id?: InputMaybe<Scalars['String']['input']>;
-  model_configuration?: InputMaybe<Scalars['String']['input']>;
-  model_name?: InputMaybe<Scalars['String']['input']>;
-  model_version?: InputMaybe<Scalars['String']['input']>;
-  name?: InputMaybe<Scalars['String']['input']>;
-  output_time_interval?: InputMaybe<Scalars['String']['input']>;
-  parameter_assignment?: InputMaybe<Scalars['String']['input']>;
-  parameter_assignment_details?: InputMaybe<Scalars['String']['input']>;
-  region_name?: InputMaybe<Scalars['String']['input']>;
-  software_image?: InputMaybe<Scalars['String']['input']>;
-  spatial_grid_resolution?: InputMaybe<Scalars['String']['input']>;
-  spatial_grid_type?: InputMaybe<Scalars['String']['input']>;
-  type?: InputMaybe<Scalars['String']['input']>;
-  usage_notes?: InputMaybe<Scalars['String']['input']>;
-  user_id?: InputMaybe<Scalars['String']['input']>;
+  label?: InputMaybe<Scalars['String']['input']>;
+  parameter_type?: InputMaybe<Scalars['String']['input']>;
+  position?: InputMaybe<Scalars['Int']['input']>;
 };
 
-/** update columns of table "model" */
-export enum Model_Update_Column {
-  /** column name */
-  CalibrationTargetVariable = 'calibration_target_variable',
-  /** column name */
-  Category = 'category',
-  /** column name */
-  CodeUrl = 'code_url',
+/** aggregate stddev on columns */
+export type Modelcatalog_Parameter_Stddev_Fields = {
+  __typename?: 'modelcatalog_parameter_stddev_fields';
+  position?: Maybe<Scalars['Float']['output']>;
+};
+
+/** aggregate stddev_pop on columns */
+export type Modelcatalog_Parameter_Stddev_Pop_Fields = {
+  __typename?: 'modelcatalog_parameter_stddev_pop_fields';
+  position?: Maybe<Scalars['Float']['output']>;
+};
+
+/** aggregate stddev_samp on columns */
+export type Modelcatalog_Parameter_Stddev_Samp_Fields = {
+  __typename?: 'modelcatalog_parameter_stddev_samp_fields';
+  position?: Maybe<Scalars['Float']['output']>;
+};
+
+/** aggregate sum on columns */
+export type Modelcatalog_Parameter_Sum_Fields = {
+  __typename?: 'modelcatalog_parameter_sum_fields';
+  position?: Maybe<Scalars['Int']['output']>;
+};
+
+/** update columns of table "modelcatalog_parameter" */
+export enum Modelcatalog_Parameter_Update_Column {
   /** column name */
   Description = 'description',
   /** column name */
-  Dimensionality = 'dimensionality',
+  HasAcceptedValues = 'has_accepted_values',
+  /** column name */
+  HasDataType = 'has_data_type',
+  /** column name */
+  HasDefaultValue = 'has_default_value',
+  /** column name */
+  HasFixedValue = 'has_fixed_value',
+  /** column name */
+  HasMaximumAcceptedValue = 'has_maximum_accepted_value',
+  /** column name */
+  HasMinimumAcceptedValue = 'has_minimum_accepted_value',
   /** column name */
   Id = 'id',
   /** column name */
-  ModelConfiguration = 'model_configuration',
+  Label = 'label',
   /** column name */
-  ModelName = 'model_name',
+  ParameterType = 'parameter_type',
   /** column name */
-  ModelVersion = 'model_version',
+  Position = 'position'
+}
+
+export type Modelcatalog_Parameter_Updates = {
+  /** increments the numeric columns with given value of the filtered values */
+  _inc?: InputMaybe<Modelcatalog_Parameter_Inc_Input>;
+  /** sets the columns of the filtered rows to the given values */
+  _set?: InputMaybe<Modelcatalog_Parameter_Set_Input>;
+  where: Modelcatalog_Parameter_Bool_Exp;
+};
+
+/** aggregate var_pop on columns */
+export type Modelcatalog_Parameter_Var_Pop_Fields = {
+  __typename?: 'modelcatalog_parameter_var_pop_fields';
+  position?: Maybe<Scalars['Float']['output']>;
+};
+
+/** aggregate var_samp on columns */
+export type Modelcatalog_Parameter_Var_Samp_Fields = {
+  __typename?: 'modelcatalog_parameter_var_samp_fields';
+  position?: Maybe<Scalars['Float']['output']>;
+};
+
+/** aggregate variance on columns */
+export type Modelcatalog_Parameter_Variance_Fields = {
+  __typename?: 'modelcatalog_parameter_variance_fields';
+  position?: Maybe<Scalars['Float']['output']>;
+};
+
+/** columns and relationships of "modelcatalog_person" */
+export type Modelcatalog_Person = {
+  __typename?: 'modelcatalog_person';
+  /** An array relationship */
+  authored_configurations: Array<Modelcatalog_Configuration>;
+  /** An aggregate relationship */
+  authored_configurations_aggregate: Modelcatalog_Configuration_Aggregate;
+  /** An array relationship */
+  authored_software: Array<Modelcatalog_Software>;
+  /** An aggregate relationship */
+  authored_software_aggregate: Modelcatalog_Software_Aggregate;
+  /** An array relationship */
+  authored_versions: Array<Modelcatalog_Software_Version>;
+  /** An aggregate relationship */
+  authored_versions_aggregate: Modelcatalog_Software_Version_Aggregate;
+  /** An array relationship */
+  configuration_authors: Array<Modelcatalog_Configuration_Author>;
+  /** An aggregate relationship */
+  configuration_authors_aggregate: Modelcatalog_Configuration_Author_Aggregate;
+  id: Scalars['String']['output'];
+  label: Scalars['String']['output'];
+  name?: Maybe<Scalars['String']['output']>;
+  /** An array relationship */
+  software_authors: Array<Modelcatalog_Software_Author>;
+  /** An aggregate relationship */
+  software_authors_aggregate: Modelcatalog_Software_Author_Aggregate;
+  /** An array relationship */
+  version_authors: Array<Modelcatalog_Version_Author>;
+  /** An aggregate relationship */
+  version_authors_aggregate: Modelcatalog_Version_Author_Aggregate;
+};
+
+
+/** columns and relationships of "modelcatalog_person" */
+export type Modelcatalog_PersonAuthored_ConfigurationsArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Configuration_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Configuration_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Configuration_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_person" */
+export type Modelcatalog_PersonAuthored_Configurations_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Configuration_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Configuration_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Configuration_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_person" */
+export type Modelcatalog_PersonAuthored_SoftwareArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Software_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Software_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Software_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_person" */
+export type Modelcatalog_PersonAuthored_Software_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Software_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Software_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Software_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_person" */
+export type Modelcatalog_PersonAuthored_VersionsArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Software_Version_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Software_Version_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Software_Version_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_person" */
+export type Modelcatalog_PersonAuthored_Versions_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Software_Version_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Software_Version_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Software_Version_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_person" */
+export type Modelcatalog_PersonConfiguration_AuthorsArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Configuration_Author_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Configuration_Author_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Configuration_Author_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_person" */
+export type Modelcatalog_PersonConfiguration_Authors_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Configuration_Author_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Configuration_Author_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Configuration_Author_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_person" */
+export type Modelcatalog_PersonSoftware_AuthorsArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Software_Author_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Software_Author_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Software_Author_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_person" */
+export type Modelcatalog_PersonSoftware_Authors_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Software_Author_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Software_Author_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Software_Author_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_person" */
+export type Modelcatalog_PersonVersion_AuthorsArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Version_Author_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Version_Author_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Version_Author_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_person" */
+export type Modelcatalog_PersonVersion_Authors_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Version_Author_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Version_Author_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Version_Author_Bool_Exp>;
+};
+
+/** aggregated selection of "modelcatalog_person" */
+export type Modelcatalog_Person_Aggregate = {
+  __typename?: 'modelcatalog_person_aggregate';
+  aggregate?: Maybe<Modelcatalog_Person_Aggregate_Fields>;
+  nodes: Array<Modelcatalog_Person>;
+};
+
+/** aggregate fields of "modelcatalog_person" */
+export type Modelcatalog_Person_Aggregate_Fields = {
+  __typename?: 'modelcatalog_person_aggregate_fields';
+  count: Scalars['Int']['output'];
+  max?: Maybe<Modelcatalog_Person_Max_Fields>;
+  min?: Maybe<Modelcatalog_Person_Min_Fields>;
+};
+
+
+/** aggregate fields of "modelcatalog_person" */
+export type Modelcatalog_Person_Aggregate_FieldsCountArgs = {
+  columns?: InputMaybe<Array<Modelcatalog_Person_Select_Column>>;
+  distinct?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
+/** Boolean expression to filter rows from the table "modelcatalog_person". All fields are combined with a logical 'AND'. */
+export type Modelcatalog_Person_Bool_Exp = {
+  _and?: InputMaybe<Array<Modelcatalog_Person_Bool_Exp>>;
+  _not?: InputMaybe<Modelcatalog_Person_Bool_Exp>;
+  _or?: InputMaybe<Array<Modelcatalog_Person_Bool_Exp>>;
+  authored_configurations?: InputMaybe<Modelcatalog_Configuration_Bool_Exp>;
+  authored_software?: InputMaybe<Modelcatalog_Software_Bool_Exp>;
+  authored_versions?: InputMaybe<Modelcatalog_Software_Version_Bool_Exp>;
+  configuration_authors?: InputMaybe<Modelcatalog_Configuration_Author_Bool_Exp>;
+  id?: InputMaybe<String_Comparison_Exp>;
+  label?: InputMaybe<String_Comparison_Exp>;
+  name?: InputMaybe<String_Comparison_Exp>;
+  software_authors?: InputMaybe<Modelcatalog_Software_Author_Bool_Exp>;
+  version_authors?: InputMaybe<Modelcatalog_Version_Author_Bool_Exp>;
+};
+
+/** unique or primary key constraints on table "modelcatalog_person" */
+export enum Modelcatalog_Person_Constraint {
+  /** unique or primary key constraint on columns "id" */
+  ModelcatalogPersonPkey = 'modelcatalog_person_pkey'
+}
+
+/** input type for inserting data into table "modelcatalog_person" */
+export type Modelcatalog_Person_Insert_Input = {
+  authored_configurations?: InputMaybe<Modelcatalog_Configuration_Arr_Rel_Insert_Input>;
+  authored_software?: InputMaybe<Modelcatalog_Software_Arr_Rel_Insert_Input>;
+  authored_versions?: InputMaybe<Modelcatalog_Software_Version_Arr_Rel_Insert_Input>;
+  configuration_authors?: InputMaybe<Modelcatalog_Configuration_Author_Arr_Rel_Insert_Input>;
+  id?: InputMaybe<Scalars['String']['input']>;
+  label?: InputMaybe<Scalars['String']['input']>;
+  name?: InputMaybe<Scalars['String']['input']>;
+  software_authors?: InputMaybe<Modelcatalog_Software_Author_Arr_Rel_Insert_Input>;
+  version_authors?: InputMaybe<Modelcatalog_Version_Author_Arr_Rel_Insert_Input>;
+};
+
+/** aggregate max on columns */
+export type Modelcatalog_Person_Max_Fields = {
+  __typename?: 'modelcatalog_person_max_fields';
+  id?: Maybe<Scalars['String']['output']>;
+  label?: Maybe<Scalars['String']['output']>;
+  name?: Maybe<Scalars['String']['output']>;
+};
+
+/** aggregate min on columns */
+export type Modelcatalog_Person_Min_Fields = {
+  __typename?: 'modelcatalog_person_min_fields';
+  id?: Maybe<Scalars['String']['output']>;
+  label?: Maybe<Scalars['String']['output']>;
+  name?: Maybe<Scalars['String']['output']>;
+};
+
+/** response of any mutation on the table "modelcatalog_person" */
+export type Modelcatalog_Person_Mutation_Response = {
+  __typename?: 'modelcatalog_person_mutation_response';
+  /** number of rows affected by the mutation */
+  affected_rows: Scalars['Int']['output'];
+  /** data from the rows affected by the mutation */
+  returning: Array<Modelcatalog_Person>;
+};
+
+/** input type for inserting object relation for remote table "modelcatalog_person" */
+export type Modelcatalog_Person_Obj_Rel_Insert_Input = {
+  data: Modelcatalog_Person_Insert_Input;
+  /** upsert condition */
+  on_conflict?: InputMaybe<Modelcatalog_Person_On_Conflict>;
+};
+
+/** on_conflict condition type for table "modelcatalog_person" */
+export type Modelcatalog_Person_On_Conflict = {
+  constraint: Modelcatalog_Person_Constraint;
+  update_columns?: Array<Modelcatalog_Person_Update_Column>;
+  where?: InputMaybe<Modelcatalog_Person_Bool_Exp>;
+};
+
+/** Ordering options when selecting data from "modelcatalog_person". */
+export type Modelcatalog_Person_Order_By = {
+  authored_configurations_aggregate?: InputMaybe<Modelcatalog_Configuration_Aggregate_Order_By>;
+  authored_software_aggregate?: InputMaybe<Modelcatalog_Software_Aggregate_Order_By>;
+  authored_versions_aggregate?: InputMaybe<Modelcatalog_Software_Version_Aggregate_Order_By>;
+  configuration_authors_aggregate?: InputMaybe<Modelcatalog_Configuration_Author_Aggregate_Order_By>;
+  id?: InputMaybe<Order_By>;
+  label?: InputMaybe<Order_By>;
+  name?: InputMaybe<Order_By>;
+  software_authors_aggregate?: InputMaybe<Modelcatalog_Software_Author_Aggregate_Order_By>;
+  version_authors_aggregate?: InputMaybe<Modelcatalog_Version_Author_Aggregate_Order_By>;
+};
+
+/** primary key columns input for table: modelcatalog_person */
+export type Modelcatalog_Person_Pk_Columns_Input = {
+  id: Scalars['String']['input'];
+};
+
+/** select columns of table "modelcatalog_person" */
+export enum Modelcatalog_Person_Select_Column {
   /** column name */
-  Name = 'name',
+  Id = 'id',
   /** column name */
-  OutputTimeInterval = 'output_time_interval',
+  Label = 'label',
   /** column name */
-  ParameterAssignment = 'parameter_assignment',
+  Name = 'name'
+}
+
+/** input type for updating data in table "modelcatalog_person" */
+export type Modelcatalog_Person_Set_Input = {
+  id?: InputMaybe<Scalars['String']['input']>;
+  label?: InputMaybe<Scalars['String']['input']>;
+  name?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** update columns of table "modelcatalog_person" */
+export enum Modelcatalog_Person_Update_Column {
   /** column name */
-  ParameterAssignmentDetails = 'parameter_assignment_details',
+  Id = 'id',
   /** column name */
-  RegionName = 'region_name',
+  Label = 'label',
   /** column name */
-  SoftwareImage = 'software_image',
+  Name = 'name'
+}
+
+export type Modelcatalog_Person_Updates = {
+  /** sets the columns of the filtered rows to the given values */
+  _set?: InputMaybe<Modelcatalog_Person_Set_Input>;
+  where: Modelcatalog_Person_Bool_Exp;
+};
+
+/** columns and relationships of "modelcatalog_process" */
+export type Modelcatalog_Process = {
+  __typename?: 'modelcatalog_process';
+  id: Scalars['String']['output'];
+  label: Scalars['String']['output'];
+  /** An array relationship */
+  software_versions: Array<Modelcatalog_Software_Version_Process>;
+  /** An aggregate relationship */
+  software_versions_aggregate: Modelcatalog_Software_Version_Process_Aggregate;
+};
+
+
+/** columns and relationships of "modelcatalog_process" */
+export type Modelcatalog_ProcessSoftware_VersionsArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Software_Version_Process_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Software_Version_Process_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Software_Version_Process_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_process" */
+export type Modelcatalog_ProcessSoftware_Versions_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Software_Version_Process_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Software_Version_Process_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Software_Version_Process_Bool_Exp>;
+};
+
+/** aggregated selection of "modelcatalog_process" */
+export type Modelcatalog_Process_Aggregate = {
+  __typename?: 'modelcatalog_process_aggregate';
+  aggregate?: Maybe<Modelcatalog_Process_Aggregate_Fields>;
+  nodes: Array<Modelcatalog_Process>;
+};
+
+/** aggregate fields of "modelcatalog_process" */
+export type Modelcatalog_Process_Aggregate_Fields = {
+  __typename?: 'modelcatalog_process_aggregate_fields';
+  count: Scalars['Int']['output'];
+  max?: Maybe<Modelcatalog_Process_Max_Fields>;
+  min?: Maybe<Modelcatalog_Process_Min_Fields>;
+};
+
+
+/** aggregate fields of "modelcatalog_process" */
+export type Modelcatalog_Process_Aggregate_FieldsCountArgs = {
+  columns?: InputMaybe<Array<Modelcatalog_Process_Select_Column>>;
+  distinct?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
+/** Boolean expression to filter rows from the table "modelcatalog_process". All fields are combined with a logical 'AND'. */
+export type Modelcatalog_Process_Bool_Exp = {
+  _and?: InputMaybe<Array<Modelcatalog_Process_Bool_Exp>>;
+  _not?: InputMaybe<Modelcatalog_Process_Bool_Exp>;
+  _or?: InputMaybe<Array<Modelcatalog_Process_Bool_Exp>>;
+  id?: InputMaybe<String_Comparison_Exp>;
+  label?: InputMaybe<String_Comparison_Exp>;
+  software_versions?: InputMaybe<Modelcatalog_Software_Version_Process_Bool_Exp>;
+};
+
+/** unique or primary key constraints on table "modelcatalog_process" */
+export enum Modelcatalog_Process_Constraint {
+  /** unique or primary key constraint on columns "id" */
+  ModelcatalogProcessPkey = 'modelcatalog_process_pkey'
+}
+
+/** input type for inserting data into table "modelcatalog_process" */
+export type Modelcatalog_Process_Insert_Input = {
+  id?: InputMaybe<Scalars['String']['input']>;
+  label?: InputMaybe<Scalars['String']['input']>;
+  software_versions?: InputMaybe<Modelcatalog_Software_Version_Process_Arr_Rel_Insert_Input>;
+};
+
+/** aggregate max on columns */
+export type Modelcatalog_Process_Max_Fields = {
+  __typename?: 'modelcatalog_process_max_fields';
+  id?: Maybe<Scalars['String']['output']>;
+  label?: Maybe<Scalars['String']['output']>;
+};
+
+/** aggregate min on columns */
+export type Modelcatalog_Process_Min_Fields = {
+  __typename?: 'modelcatalog_process_min_fields';
+  id?: Maybe<Scalars['String']['output']>;
+  label?: Maybe<Scalars['String']['output']>;
+};
+
+/** response of any mutation on the table "modelcatalog_process" */
+export type Modelcatalog_Process_Mutation_Response = {
+  __typename?: 'modelcatalog_process_mutation_response';
+  /** number of rows affected by the mutation */
+  affected_rows: Scalars['Int']['output'];
+  /** data from the rows affected by the mutation */
+  returning: Array<Modelcatalog_Process>;
+};
+
+/** input type for inserting object relation for remote table "modelcatalog_process" */
+export type Modelcatalog_Process_Obj_Rel_Insert_Input = {
+  data: Modelcatalog_Process_Insert_Input;
+  /** upsert condition */
+  on_conflict?: InputMaybe<Modelcatalog_Process_On_Conflict>;
+};
+
+/** on_conflict condition type for table "modelcatalog_process" */
+export type Modelcatalog_Process_On_Conflict = {
+  constraint: Modelcatalog_Process_Constraint;
+  update_columns?: Array<Modelcatalog_Process_Update_Column>;
+  where?: InputMaybe<Modelcatalog_Process_Bool_Exp>;
+};
+
+/** Ordering options when selecting data from "modelcatalog_process". */
+export type Modelcatalog_Process_Order_By = {
+  id?: InputMaybe<Order_By>;
+  label?: InputMaybe<Order_By>;
+  software_versions_aggregate?: InputMaybe<Modelcatalog_Software_Version_Process_Aggregate_Order_By>;
+};
+
+/** primary key columns input for table: modelcatalog_process */
+export type Modelcatalog_Process_Pk_Columns_Input = {
+  id: Scalars['String']['input'];
+};
+
+/** select columns of table "modelcatalog_process" */
+export enum Modelcatalog_Process_Select_Column {
   /** column name */
-  SpatialGridResolution = 'spatial_grid_resolution',
+  Id = 'id',
   /** column name */
-  SpatialGridType = 'spatial_grid_type',
+  Label = 'label'
+}
+
+/** input type for updating data in table "modelcatalog_process" */
+export type Modelcatalog_Process_Set_Input = {
+  id?: InputMaybe<Scalars['String']['input']>;
+  label?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** update columns of table "modelcatalog_process" */
+export enum Modelcatalog_Process_Update_Column {
+  /** column name */
+  Id = 'id',
+  /** column name */
+  Label = 'label'
+}
+
+export type Modelcatalog_Process_Updates = {
+  /** sets the columns of the filtered rows to the given values */
+  _set?: InputMaybe<Modelcatalog_Process_Set_Input>;
+  where: Modelcatalog_Process_Bool_Exp;
+};
+
+/** columns and relationships of "modelcatalog_region" */
+export type Modelcatalog_Region = {
+  __typename?: 'modelcatalog_region';
+  /** An array relationship */
+  configurations: Array<Modelcatalog_Configuration_Region>;
+  /** An aggregate relationship */
+  configurations_aggregate: Modelcatalog_Configuration_Region_Aggregate;
+  description?: Maybe<Scalars['String']['output']>;
+  id: Scalars['String']['output'];
+  label: Scalars['String']['output'];
+  /** An object relationship */
+  part_of?: Maybe<Modelcatalog_Region>;
+  part_of_id?: Maybe<Scalars['String']['output']>;
+  /** An array relationship */
+  subregions: Array<Modelcatalog_Region>;
+  /** An aggregate relationship */
+  subregions_aggregate: Modelcatalog_Region_Aggregate;
+};
+
+
+/** columns and relationships of "modelcatalog_region" */
+export type Modelcatalog_RegionConfigurationsArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Configuration_Region_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Configuration_Region_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Configuration_Region_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_region" */
+export type Modelcatalog_RegionConfigurations_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Configuration_Region_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Configuration_Region_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Configuration_Region_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_region" */
+export type Modelcatalog_RegionSubregionsArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Region_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Region_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Region_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_region" */
+export type Modelcatalog_RegionSubregions_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Region_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Region_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Region_Bool_Exp>;
+};
+
+/** aggregated selection of "modelcatalog_region" */
+export type Modelcatalog_Region_Aggregate = {
+  __typename?: 'modelcatalog_region_aggregate';
+  aggregate?: Maybe<Modelcatalog_Region_Aggregate_Fields>;
+  nodes: Array<Modelcatalog_Region>;
+};
+
+/** aggregate fields of "modelcatalog_region" */
+export type Modelcatalog_Region_Aggregate_Fields = {
+  __typename?: 'modelcatalog_region_aggregate_fields';
+  count: Scalars['Int']['output'];
+  max?: Maybe<Modelcatalog_Region_Max_Fields>;
+  min?: Maybe<Modelcatalog_Region_Min_Fields>;
+};
+
+
+/** aggregate fields of "modelcatalog_region" */
+export type Modelcatalog_Region_Aggregate_FieldsCountArgs = {
+  columns?: InputMaybe<Array<Modelcatalog_Region_Select_Column>>;
+  distinct?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
+/** order by aggregate values of table "modelcatalog_region" */
+export type Modelcatalog_Region_Aggregate_Order_By = {
+  count?: InputMaybe<Order_By>;
+  max?: InputMaybe<Modelcatalog_Region_Max_Order_By>;
+  min?: InputMaybe<Modelcatalog_Region_Min_Order_By>;
+};
+
+/** input type for inserting array relation for remote table "modelcatalog_region" */
+export type Modelcatalog_Region_Arr_Rel_Insert_Input = {
+  data: Array<Modelcatalog_Region_Insert_Input>;
+  /** upsert condition */
+  on_conflict?: InputMaybe<Modelcatalog_Region_On_Conflict>;
+};
+
+/** Boolean expression to filter rows from the table "modelcatalog_region". All fields are combined with a logical 'AND'. */
+export type Modelcatalog_Region_Bool_Exp = {
+  _and?: InputMaybe<Array<Modelcatalog_Region_Bool_Exp>>;
+  _not?: InputMaybe<Modelcatalog_Region_Bool_Exp>;
+  _or?: InputMaybe<Array<Modelcatalog_Region_Bool_Exp>>;
+  configurations?: InputMaybe<Modelcatalog_Configuration_Region_Bool_Exp>;
+  description?: InputMaybe<String_Comparison_Exp>;
+  id?: InputMaybe<String_Comparison_Exp>;
+  label?: InputMaybe<String_Comparison_Exp>;
+  part_of?: InputMaybe<Modelcatalog_Region_Bool_Exp>;
+  part_of_id?: InputMaybe<String_Comparison_Exp>;
+  subregions?: InputMaybe<Modelcatalog_Region_Bool_Exp>;
+};
+
+/** unique or primary key constraints on table "modelcatalog_region" */
+export enum Modelcatalog_Region_Constraint {
+  /** unique or primary key constraint on columns "id" */
+  ModelcatalogRegionPkey = 'modelcatalog_region_pkey'
+}
+
+/** input type for inserting data into table "modelcatalog_region" */
+export type Modelcatalog_Region_Insert_Input = {
+  configurations?: InputMaybe<Modelcatalog_Configuration_Region_Arr_Rel_Insert_Input>;
+  description?: InputMaybe<Scalars['String']['input']>;
+  id?: InputMaybe<Scalars['String']['input']>;
+  label?: InputMaybe<Scalars['String']['input']>;
+  part_of?: InputMaybe<Modelcatalog_Region_Obj_Rel_Insert_Input>;
+  part_of_id?: InputMaybe<Scalars['String']['input']>;
+  subregions?: InputMaybe<Modelcatalog_Region_Arr_Rel_Insert_Input>;
+};
+
+/** aggregate max on columns */
+export type Modelcatalog_Region_Max_Fields = {
+  __typename?: 'modelcatalog_region_max_fields';
+  description?: Maybe<Scalars['String']['output']>;
+  id?: Maybe<Scalars['String']['output']>;
+  label?: Maybe<Scalars['String']['output']>;
+  part_of_id?: Maybe<Scalars['String']['output']>;
+};
+
+/** order by max() on columns of table "modelcatalog_region" */
+export type Modelcatalog_Region_Max_Order_By = {
+  description?: InputMaybe<Order_By>;
+  id?: InputMaybe<Order_By>;
+  label?: InputMaybe<Order_By>;
+  part_of_id?: InputMaybe<Order_By>;
+};
+
+/** aggregate min on columns */
+export type Modelcatalog_Region_Min_Fields = {
+  __typename?: 'modelcatalog_region_min_fields';
+  description?: Maybe<Scalars['String']['output']>;
+  id?: Maybe<Scalars['String']['output']>;
+  label?: Maybe<Scalars['String']['output']>;
+  part_of_id?: Maybe<Scalars['String']['output']>;
+};
+
+/** order by min() on columns of table "modelcatalog_region" */
+export type Modelcatalog_Region_Min_Order_By = {
+  description?: InputMaybe<Order_By>;
+  id?: InputMaybe<Order_By>;
+  label?: InputMaybe<Order_By>;
+  part_of_id?: InputMaybe<Order_By>;
+};
+
+/** response of any mutation on the table "modelcatalog_region" */
+export type Modelcatalog_Region_Mutation_Response = {
+  __typename?: 'modelcatalog_region_mutation_response';
+  /** number of rows affected by the mutation */
+  affected_rows: Scalars['Int']['output'];
+  /** data from the rows affected by the mutation */
+  returning: Array<Modelcatalog_Region>;
+};
+
+/** input type for inserting object relation for remote table "modelcatalog_region" */
+export type Modelcatalog_Region_Obj_Rel_Insert_Input = {
+  data: Modelcatalog_Region_Insert_Input;
+  /** upsert condition */
+  on_conflict?: InputMaybe<Modelcatalog_Region_On_Conflict>;
+};
+
+/** on_conflict condition type for table "modelcatalog_region" */
+export type Modelcatalog_Region_On_Conflict = {
+  constraint: Modelcatalog_Region_Constraint;
+  update_columns?: Array<Modelcatalog_Region_Update_Column>;
+  where?: InputMaybe<Modelcatalog_Region_Bool_Exp>;
+};
+
+/** Ordering options when selecting data from "modelcatalog_region". */
+export type Modelcatalog_Region_Order_By = {
+  configurations_aggregate?: InputMaybe<Modelcatalog_Configuration_Region_Aggregate_Order_By>;
+  description?: InputMaybe<Order_By>;
+  id?: InputMaybe<Order_By>;
+  label?: InputMaybe<Order_By>;
+  part_of?: InputMaybe<Modelcatalog_Region_Order_By>;
+  part_of_id?: InputMaybe<Order_By>;
+  subregions_aggregate?: InputMaybe<Modelcatalog_Region_Aggregate_Order_By>;
+};
+
+/** primary key columns input for table: modelcatalog_region */
+export type Modelcatalog_Region_Pk_Columns_Input = {
+  id: Scalars['String']['input'];
+};
+
+/** select columns of table "modelcatalog_region" */
+export enum Modelcatalog_Region_Select_Column {
+  /** column name */
+  Description = 'description',
+  /** column name */
+  Id = 'id',
+  /** column name */
+  Label = 'label',
+  /** column name */
+  PartOfId = 'part_of_id'
+}
+
+/** input type for updating data in table "modelcatalog_region" */
+export type Modelcatalog_Region_Set_Input = {
+  description?: InputMaybe<Scalars['String']['input']>;
+  id?: InputMaybe<Scalars['String']['input']>;
+  label?: InputMaybe<Scalars['String']['input']>;
+  part_of_id?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** update columns of table "modelcatalog_region" */
+export enum Modelcatalog_Region_Update_Column {
+  /** column name */
+  Description = 'description',
+  /** column name */
+  Id = 'id',
+  /** column name */
+  Label = 'label',
+  /** column name */
+  PartOfId = 'part_of_id'
+}
+
+export type Modelcatalog_Region_Updates = {
+  /** sets the columns of the filtered rows to the given values */
+  _set?: InputMaybe<Modelcatalog_Region_Set_Input>;
+  where: Modelcatalog_Region_Bool_Exp;
+};
+
+/** columns and relationships of "modelcatalog_software" */
+export type Modelcatalog_Software = {
+  __typename?: 'modelcatalog_software';
+  /** An object relationship */
+  author?: Maybe<Modelcatalog_Person>;
+  author_id?: Maybe<Scalars['String']['output']>;
+  /** An array relationship */
+  authors: Array<Modelcatalog_Software_Author>;
+  /** An aggregate relationship */
+  authors_aggregate: Modelcatalog_Software_Author_Aggregate;
+  /** An array relationship */
+  categories: Array<Modelcatalog_Software_Category>;
+  /** An aggregate relationship */
+  categories_aggregate: Modelcatalog_Software_Category_Aggregate;
+  date_created?: Maybe<Scalars['String']['output']>;
+  date_published?: Maybe<Scalars['String']['output']>;
+  description?: Maybe<Scalars['String']['output']>;
+  has_documentation?: Maybe<Scalars['String']['output']>;
+  has_download_url?: Maybe<Scalars['String']['output']>;
+  has_purpose?: Maybe<Scalars['String']['output']>;
+  id: Scalars['String']['output'];
+  keywords?: Maybe<Scalars['String']['output']>;
+  label: Scalars['String']['output'];
+  license?: Maybe<Scalars['String']['output']>;
+  type?: Maybe<Scalars['String']['output']>;
+  /** An array relationship */
+  versions: Array<Modelcatalog_Software_Version>;
+  /** An aggregate relationship */
+  versions_aggregate: Modelcatalog_Software_Version_Aggregate;
+  website?: Maybe<Scalars['String']['output']>;
+};
+
+
+/** columns and relationships of "modelcatalog_software" */
+export type Modelcatalog_SoftwareAuthorsArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Software_Author_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Software_Author_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Software_Author_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_software" */
+export type Modelcatalog_SoftwareAuthors_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Software_Author_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Software_Author_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Software_Author_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_software" */
+export type Modelcatalog_SoftwareCategoriesArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Software_Category_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Software_Category_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Software_Category_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_software" */
+export type Modelcatalog_SoftwareCategories_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Software_Category_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Software_Category_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Software_Category_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_software" */
+export type Modelcatalog_SoftwareVersionsArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Software_Version_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Software_Version_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Software_Version_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_software" */
+export type Modelcatalog_SoftwareVersions_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Software_Version_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Software_Version_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Software_Version_Bool_Exp>;
+};
+
+/** aggregated selection of "modelcatalog_software" */
+export type Modelcatalog_Software_Aggregate = {
+  __typename?: 'modelcatalog_software_aggregate';
+  aggregate?: Maybe<Modelcatalog_Software_Aggregate_Fields>;
+  nodes: Array<Modelcatalog_Software>;
+};
+
+/** aggregate fields of "modelcatalog_software" */
+export type Modelcatalog_Software_Aggregate_Fields = {
+  __typename?: 'modelcatalog_software_aggregate_fields';
+  count: Scalars['Int']['output'];
+  max?: Maybe<Modelcatalog_Software_Max_Fields>;
+  min?: Maybe<Modelcatalog_Software_Min_Fields>;
+};
+
+
+/** aggregate fields of "modelcatalog_software" */
+export type Modelcatalog_Software_Aggregate_FieldsCountArgs = {
+  columns?: InputMaybe<Array<Modelcatalog_Software_Select_Column>>;
+  distinct?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
+/** order by aggregate values of table "modelcatalog_software" */
+export type Modelcatalog_Software_Aggregate_Order_By = {
+  count?: InputMaybe<Order_By>;
+  max?: InputMaybe<Modelcatalog_Software_Max_Order_By>;
+  min?: InputMaybe<Modelcatalog_Software_Min_Order_By>;
+};
+
+/** input type for inserting array relation for remote table "modelcatalog_software" */
+export type Modelcatalog_Software_Arr_Rel_Insert_Input = {
+  data: Array<Modelcatalog_Software_Insert_Input>;
+  /** upsert condition */
+  on_conflict?: InputMaybe<Modelcatalog_Software_On_Conflict>;
+};
+
+/** columns and relationships of "modelcatalog_software_author" */
+export type Modelcatalog_Software_Author = {
+  __typename?: 'modelcatalog_software_author';
+  /** An object relationship */
+  person: Modelcatalog_Person;
+  person_id: Scalars['String']['output'];
+  /** An object relationship */
+  software: Modelcatalog_Software;
+  software_id: Scalars['String']['output'];
+};
+
+/** aggregated selection of "modelcatalog_software_author" */
+export type Modelcatalog_Software_Author_Aggregate = {
+  __typename?: 'modelcatalog_software_author_aggregate';
+  aggregate?: Maybe<Modelcatalog_Software_Author_Aggregate_Fields>;
+  nodes: Array<Modelcatalog_Software_Author>;
+};
+
+/** aggregate fields of "modelcatalog_software_author" */
+export type Modelcatalog_Software_Author_Aggregate_Fields = {
+  __typename?: 'modelcatalog_software_author_aggregate_fields';
+  count: Scalars['Int']['output'];
+  max?: Maybe<Modelcatalog_Software_Author_Max_Fields>;
+  min?: Maybe<Modelcatalog_Software_Author_Min_Fields>;
+};
+
+
+/** aggregate fields of "modelcatalog_software_author" */
+export type Modelcatalog_Software_Author_Aggregate_FieldsCountArgs = {
+  columns?: InputMaybe<Array<Modelcatalog_Software_Author_Select_Column>>;
+  distinct?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
+/** order by aggregate values of table "modelcatalog_software_author" */
+export type Modelcatalog_Software_Author_Aggregate_Order_By = {
+  count?: InputMaybe<Order_By>;
+  max?: InputMaybe<Modelcatalog_Software_Author_Max_Order_By>;
+  min?: InputMaybe<Modelcatalog_Software_Author_Min_Order_By>;
+};
+
+/** input type for inserting array relation for remote table "modelcatalog_software_author" */
+export type Modelcatalog_Software_Author_Arr_Rel_Insert_Input = {
+  data: Array<Modelcatalog_Software_Author_Insert_Input>;
+  /** upsert condition */
+  on_conflict?: InputMaybe<Modelcatalog_Software_Author_On_Conflict>;
+};
+
+/** Boolean expression to filter rows from the table "modelcatalog_software_author". All fields are combined with a logical 'AND'. */
+export type Modelcatalog_Software_Author_Bool_Exp = {
+  _and?: InputMaybe<Array<Modelcatalog_Software_Author_Bool_Exp>>;
+  _not?: InputMaybe<Modelcatalog_Software_Author_Bool_Exp>;
+  _or?: InputMaybe<Array<Modelcatalog_Software_Author_Bool_Exp>>;
+  person?: InputMaybe<Modelcatalog_Person_Bool_Exp>;
+  person_id?: InputMaybe<String_Comparison_Exp>;
+  software?: InputMaybe<Modelcatalog_Software_Bool_Exp>;
+  software_id?: InputMaybe<String_Comparison_Exp>;
+};
+
+/** unique or primary key constraints on table "modelcatalog_software_author" */
+export enum Modelcatalog_Software_Author_Constraint {
+  /** unique or primary key constraint on columns "person_id", "software_id" */
+  ModelcatalogSoftwareAuthorPkey = 'modelcatalog_software_author_pkey'
+}
+
+/** input type for inserting data into table "modelcatalog_software_author" */
+export type Modelcatalog_Software_Author_Insert_Input = {
+  person?: InputMaybe<Modelcatalog_Person_Obj_Rel_Insert_Input>;
+  person_id?: InputMaybe<Scalars['String']['input']>;
+  software?: InputMaybe<Modelcatalog_Software_Obj_Rel_Insert_Input>;
+  software_id?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** aggregate max on columns */
+export type Modelcatalog_Software_Author_Max_Fields = {
+  __typename?: 'modelcatalog_software_author_max_fields';
+  person_id?: Maybe<Scalars['String']['output']>;
+  software_id?: Maybe<Scalars['String']['output']>;
+};
+
+/** order by max() on columns of table "modelcatalog_software_author" */
+export type Modelcatalog_Software_Author_Max_Order_By = {
+  person_id?: InputMaybe<Order_By>;
+  software_id?: InputMaybe<Order_By>;
+};
+
+/** aggregate min on columns */
+export type Modelcatalog_Software_Author_Min_Fields = {
+  __typename?: 'modelcatalog_software_author_min_fields';
+  person_id?: Maybe<Scalars['String']['output']>;
+  software_id?: Maybe<Scalars['String']['output']>;
+};
+
+/** order by min() on columns of table "modelcatalog_software_author" */
+export type Modelcatalog_Software_Author_Min_Order_By = {
+  person_id?: InputMaybe<Order_By>;
+  software_id?: InputMaybe<Order_By>;
+};
+
+/** response of any mutation on the table "modelcatalog_software_author" */
+export type Modelcatalog_Software_Author_Mutation_Response = {
+  __typename?: 'modelcatalog_software_author_mutation_response';
+  /** number of rows affected by the mutation */
+  affected_rows: Scalars['Int']['output'];
+  /** data from the rows affected by the mutation */
+  returning: Array<Modelcatalog_Software_Author>;
+};
+
+/** on_conflict condition type for table "modelcatalog_software_author" */
+export type Modelcatalog_Software_Author_On_Conflict = {
+  constraint: Modelcatalog_Software_Author_Constraint;
+  update_columns?: Array<Modelcatalog_Software_Author_Update_Column>;
+  where?: InputMaybe<Modelcatalog_Software_Author_Bool_Exp>;
+};
+
+/** Ordering options when selecting data from "modelcatalog_software_author". */
+export type Modelcatalog_Software_Author_Order_By = {
+  person?: InputMaybe<Modelcatalog_Person_Order_By>;
+  person_id?: InputMaybe<Order_By>;
+  software?: InputMaybe<Modelcatalog_Software_Order_By>;
+  software_id?: InputMaybe<Order_By>;
+};
+
+/** primary key columns input for table: modelcatalog_software_author */
+export type Modelcatalog_Software_Author_Pk_Columns_Input = {
+  person_id: Scalars['String']['input'];
+  software_id: Scalars['String']['input'];
+};
+
+/** select columns of table "modelcatalog_software_author" */
+export enum Modelcatalog_Software_Author_Select_Column {
+  /** column name */
+  PersonId = 'person_id',
+  /** column name */
+  SoftwareId = 'software_id'
+}
+
+/** input type for updating data in table "modelcatalog_software_author" */
+export type Modelcatalog_Software_Author_Set_Input = {
+  person_id?: InputMaybe<Scalars['String']['input']>;
+  software_id?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** update columns of table "modelcatalog_software_author" */
+export enum Modelcatalog_Software_Author_Update_Column {
+  /** column name */
+  PersonId = 'person_id',
+  /** column name */
+  SoftwareId = 'software_id'
+}
+
+export type Modelcatalog_Software_Author_Updates = {
+  /** sets the columns of the filtered rows to the given values */
+  _set?: InputMaybe<Modelcatalog_Software_Author_Set_Input>;
+  where: Modelcatalog_Software_Author_Bool_Exp;
+};
+
+/** Boolean expression to filter rows from the table "modelcatalog_software". All fields are combined with a logical 'AND'. */
+export type Modelcatalog_Software_Bool_Exp = {
+  _and?: InputMaybe<Array<Modelcatalog_Software_Bool_Exp>>;
+  _not?: InputMaybe<Modelcatalog_Software_Bool_Exp>;
+  _or?: InputMaybe<Array<Modelcatalog_Software_Bool_Exp>>;
+  author?: InputMaybe<Modelcatalog_Person_Bool_Exp>;
+  author_id?: InputMaybe<String_Comparison_Exp>;
+  authors?: InputMaybe<Modelcatalog_Software_Author_Bool_Exp>;
+  categories?: InputMaybe<Modelcatalog_Software_Category_Bool_Exp>;
+  date_created?: InputMaybe<String_Comparison_Exp>;
+  date_published?: InputMaybe<String_Comparison_Exp>;
+  description?: InputMaybe<String_Comparison_Exp>;
+  has_documentation?: InputMaybe<String_Comparison_Exp>;
+  has_download_url?: InputMaybe<String_Comparison_Exp>;
+  has_purpose?: InputMaybe<String_Comparison_Exp>;
+  id?: InputMaybe<String_Comparison_Exp>;
+  keywords?: InputMaybe<String_Comparison_Exp>;
+  label?: InputMaybe<String_Comparison_Exp>;
+  license?: InputMaybe<String_Comparison_Exp>;
+  type?: InputMaybe<String_Comparison_Exp>;
+  versions?: InputMaybe<Modelcatalog_Software_Version_Bool_Exp>;
+  website?: InputMaybe<String_Comparison_Exp>;
+};
+
+/** columns and relationships of "modelcatalog_software_category" */
+export type Modelcatalog_Software_Category = {
+  __typename?: 'modelcatalog_software_category';
+  /** An object relationship */
+  category: Modelcatalog_Model_Category;
+  category_id: Scalars['String']['output'];
+  /** An object relationship */
+  software: Modelcatalog_Software;
+  software_id: Scalars['String']['output'];
+};
+
+/** aggregated selection of "modelcatalog_software_category" */
+export type Modelcatalog_Software_Category_Aggregate = {
+  __typename?: 'modelcatalog_software_category_aggregate';
+  aggregate?: Maybe<Modelcatalog_Software_Category_Aggregate_Fields>;
+  nodes: Array<Modelcatalog_Software_Category>;
+};
+
+/** aggregate fields of "modelcatalog_software_category" */
+export type Modelcatalog_Software_Category_Aggregate_Fields = {
+  __typename?: 'modelcatalog_software_category_aggregate_fields';
+  count: Scalars['Int']['output'];
+  max?: Maybe<Modelcatalog_Software_Category_Max_Fields>;
+  min?: Maybe<Modelcatalog_Software_Category_Min_Fields>;
+};
+
+
+/** aggregate fields of "modelcatalog_software_category" */
+export type Modelcatalog_Software_Category_Aggregate_FieldsCountArgs = {
+  columns?: InputMaybe<Array<Modelcatalog_Software_Category_Select_Column>>;
+  distinct?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
+/** order by aggregate values of table "modelcatalog_software_category" */
+export type Modelcatalog_Software_Category_Aggregate_Order_By = {
+  count?: InputMaybe<Order_By>;
+  max?: InputMaybe<Modelcatalog_Software_Category_Max_Order_By>;
+  min?: InputMaybe<Modelcatalog_Software_Category_Min_Order_By>;
+};
+
+/** input type for inserting array relation for remote table "modelcatalog_software_category" */
+export type Modelcatalog_Software_Category_Arr_Rel_Insert_Input = {
+  data: Array<Modelcatalog_Software_Category_Insert_Input>;
+  /** upsert condition */
+  on_conflict?: InputMaybe<Modelcatalog_Software_Category_On_Conflict>;
+};
+
+/** Boolean expression to filter rows from the table "modelcatalog_software_category". All fields are combined with a logical 'AND'. */
+export type Modelcatalog_Software_Category_Bool_Exp = {
+  _and?: InputMaybe<Array<Modelcatalog_Software_Category_Bool_Exp>>;
+  _not?: InputMaybe<Modelcatalog_Software_Category_Bool_Exp>;
+  _or?: InputMaybe<Array<Modelcatalog_Software_Category_Bool_Exp>>;
+  category?: InputMaybe<Modelcatalog_Model_Category_Bool_Exp>;
+  category_id?: InputMaybe<String_Comparison_Exp>;
+  software?: InputMaybe<Modelcatalog_Software_Bool_Exp>;
+  software_id?: InputMaybe<String_Comparison_Exp>;
+};
+
+/** unique or primary key constraints on table "modelcatalog_software_category" */
+export enum Modelcatalog_Software_Category_Constraint {
+  /** unique or primary key constraint on columns "category_id", "software_id" */
+  ModelcatalogSoftwareCategoryPkey = 'modelcatalog_software_category_pkey'
+}
+
+/** input type for inserting data into table "modelcatalog_software_category" */
+export type Modelcatalog_Software_Category_Insert_Input = {
+  category?: InputMaybe<Modelcatalog_Model_Category_Obj_Rel_Insert_Input>;
+  category_id?: InputMaybe<Scalars['String']['input']>;
+  software?: InputMaybe<Modelcatalog_Software_Obj_Rel_Insert_Input>;
+  software_id?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** aggregate max on columns */
+export type Modelcatalog_Software_Category_Max_Fields = {
+  __typename?: 'modelcatalog_software_category_max_fields';
+  category_id?: Maybe<Scalars['String']['output']>;
+  software_id?: Maybe<Scalars['String']['output']>;
+};
+
+/** order by max() on columns of table "modelcatalog_software_category" */
+export type Modelcatalog_Software_Category_Max_Order_By = {
+  category_id?: InputMaybe<Order_By>;
+  software_id?: InputMaybe<Order_By>;
+};
+
+/** aggregate min on columns */
+export type Modelcatalog_Software_Category_Min_Fields = {
+  __typename?: 'modelcatalog_software_category_min_fields';
+  category_id?: Maybe<Scalars['String']['output']>;
+  software_id?: Maybe<Scalars['String']['output']>;
+};
+
+/** order by min() on columns of table "modelcatalog_software_category" */
+export type Modelcatalog_Software_Category_Min_Order_By = {
+  category_id?: InputMaybe<Order_By>;
+  software_id?: InputMaybe<Order_By>;
+};
+
+/** response of any mutation on the table "modelcatalog_software_category" */
+export type Modelcatalog_Software_Category_Mutation_Response = {
+  __typename?: 'modelcatalog_software_category_mutation_response';
+  /** number of rows affected by the mutation */
+  affected_rows: Scalars['Int']['output'];
+  /** data from the rows affected by the mutation */
+  returning: Array<Modelcatalog_Software_Category>;
+};
+
+/** on_conflict condition type for table "modelcatalog_software_category" */
+export type Modelcatalog_Software_Category_On_Conflict = {
+  constraint: Modelcatalog_Software_Category_Constraint;
+  update_columns?: Array<Modelcatalog_Software_Category_Update_Column>;
+  where?: InputMaybe<Modelcatalog_Software_Category_Bool_Exp>;
+};
+
+/** Ordering options when selecting data from "modelcatalog_software_category". */
+export type Modelcatalog_Software_Category_Order_By = {
+  category?: InputMaybe<Modelcatalog_Model_Category_Order_By>;
+  category_id?: InputMaybe<Order_By>;
+  software?: InputMaybe<Modelcatalog_Software_Order_By>;
+  software_id?: InputMaybe<Order_By>;
+};
+
+/** primary key columns input for table: modelcatalog_software_category */
+export type Modelcatalog_Software_Category_Pk_Columns_Input = {
+  category_id: Scalars['String']['input'];
+  software_id: Scalars['String']['input'];
+};
+
+/** select columns of table "modelcatalog_software_category" */
+export enum Modelcatalog_Software_Category_Select_Column {
+  /** column name */
+  CategoryId = 'category_id',
+  /** column name */
+  SoftwareId = 'software_id'
+}
+
+/** input type for updating data in table "modelcatalog_software_category" */
+export type Modelcatalog_Software_Category_Set_Input = {
+  category_id?: InputMaybe<Scalars['String']['input']>;
+  software_id?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** update columns of table "modelcatalog_software_category" */
+export enum Modelcatalog_Software_Category_Update_Column {
+  /** column name */
+  CategoryId = 'category_id',
+  /** column name */
+  SoftwareId = 'software_id'
+}
+
+export type Modelcatalog_Software_Category_Updates = {
+  /** sets the columns of the filtered rows to the given values */
+  _set?: InputMaybe<Modelcatalog_Software_Category_Set_Input>;
+  where: Modelcatalog_Software_Category_Bool_Exp;
+};
+
+/** unique or primary key constraints on table "modelcatalog_software" */
+export enum Modelcatalog_Software_Constraint {
+  /** unique or primary key constraint on columns "id" */
+  ModelcatalogSoftwarePkey = 'modelcatalog_software_pkey'
+}
+
+/** input type for inserting data into table "modelcatalog_software" */
+export type Modelcatalog_Software_Insert_Input = {
+  author?: InputMaybe<Modelcatalog_Person_Obj_Rel_Insert_Input>;
+  author_id?: InputMaybe<Scalars['String']['input']>;
+  authors?: InputMaybe<Modelcatalog_Software_Author_Arr_Rel_Insert_Input>;
+  categories?: InputMaybe<Modelcatalog_Software_Category_Arr_Rel_Insert_Input>;
+  date_created?: InputMaybe<Scalars['String']['input']>;
+  date_published?: InputMaybe<Scalars['String']['input']>;
+  description?: InputMaybe<Scalars['String']['input']>;
+  has_documentation?: InputMaybe<Scalars['String']['input']>;
+  has_download_url?: InputMaybe<Scalars['String']['input']>;
+  has_purpose?: InputMaybe<Scalars['String']['input']>;
+  id?: InputMaybe<Scalars['String']['input']>;
+  keywords?: InputMaybe<Scalars['String']['input']>;
+  label?: InputMaybe<Scalars['String']['input']>;
+  license?: InputMaybe<Scalars['String']['input']>;
+  type?: InputMaybe<Scalars['String']['input']>;
+  versions?: InputMaybe<Modelcatalog_Software_Version_Arr_Rel_Insert_Input>;
+  website?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** aggregate max on columns */
+export type Modelcatalog_Software_Max_Fields = {
+  __typename?: 'modelcatalog_software_max_fields';
+  author_id?: Maybe<Scalars['String']['output']>;
+  date_created?: Maybe<Scalars['String']['output']>;
+  date_published?: Maybe<Scalars['String']['output']>;
+  description?: Maybe<Scalars['String']['output']>;
+  has_documentation?: Maybe<Scalars['String']['output']>;
+  has_download_url?: Maybe<Scalars['String']['output']>;
+  has_purpose?: Maybe<Scalars['String']['output']>;
+  id?: Maybe<Scalars['String']['output']>;
+  keywords?: Maybe<Scalars['String']['output']>;
+  label?: Maybe<Scalars['String']['output']>;
+  license?: Maybe<Scalars['String']['output']>;
+  type?: Maybe<Scalars['String']['output']>;
+  website?: Maybe<Scalars['String']['output']>;
+};
+
+/** order by max() on columns of table "modelcatalog_software" */
+export type Modelcatalog_Software_Max_Order_By = {
+  author_id?: InputMaybe<Order_By>;
+  date_created?: InputMaybe<Order_By>;
+  date_published?: InputMaybe<Order_By>;
+  description?: InputMaybe<Order_By>;
+  has_documentation?: InputMaybe<Order_By>;
+  has_download_url?: InputMaybe<Order_By>;
+  has_purpose?: InputMaybe<Order_By>;
+  id?: InputMaybe<Order_By>;
+  keywords?: InputMaybe<Order_By>;
+  label?: InputMaybe<Order_By>;
+  license?: InputMaybe<Order_By>;
+  type?: InputMaybe<Order_By>;
+  website?: InputMaybe<Order_By>;
+};
+
+/** aggregate min on columns */
+export type Modelcatalog_Software_Min_Fields = {
+  __typename?: 'modelcatalog_software_min_fields';
+  author_id?: Maybe<Scalars['String']['output']>;
+  date_created?: Maybe<Scalars['String']['output']>;
+  date_published?: Maybe<Scalars['String']['output']>;
+  description?: Maybe<Scalars['String']['output']>;
+  has_documentation?: Maybe<Scalars['String']['output']>;
+  has_download_url?: Maybe<Scalars['String']['output']>;
+  has_purpose?: Maybe<Scalars['String']['output']>;
+  id?: Maybe<Scalars['String']['output']>;
+  keywords?: Maybe<Scalars['String']['output']>;
+  label?: Maybe<Scalars['String']['output']>;
+  license?: Maybe<Scalars['String']['output']>;
+  type?: Maybe<Scalars['String']['output']>;
+  website?: Maybe<Scalars['String']['output']>;
+};
+
+/** order by min() on columns of table "modelcatalog_software" */
+export type Modelcatalog_Software_Min_Order_By = {
+  author_id?: InputMaybe<Order_By>;
+  date_created?: InputMaybe<Order_By>;
+  date_published?: InputMaybe<Order_By>;
+  description?: InputMaybe<Order_By>;
+  has_documentation?: InputMaybe<Order_By>;
+  has_download_url?: InputMaybe<Order_By>;
+  has_purpose?: InputMaybe<Order_By>;
+  id?: InputMaybe<Order_By>;
+  keywords?: InputMaybe<Order_By>;
+  label?: InputMaybe<Order_By>;
+  license?: InputMaybe<Order_By>;
+  type?: InputMaybe<Order_By>;
+  website?: InputMaybe<Order_By>;
+};
+
+/** response of any mutation on the table "modelcatalog_software" */
+export type Modelcatalog_Software_Mutation_Response = {
+  __typename?: 'modelcatalog_software_mutation_response';
+  /** number of rows affected by the mutation */
+  affected_rows: Scalars['Int']['output'];
+  /** data from the rows affected by the mutation */
+  returning: Array<Modelcatalog_Software>;
+};
+
+/** input type for inserting object relation for remote table "modelcatalog_software" */
+export type Modelcatalog_Software_Obj_Rel_Insert_Input = {
+  data: Modelcatalog_Software_Insert_Input;
+  /** upsert condition */
+  on_conflict?: InputMaybe<Modelcatalog_Software_On_Conflict>;
+};
+
+/** on_conflict condition type for table "modelcatalog_software" */
+export type Modelcatalog_Software_On_Conflict = {
+  constraint: Modelcatalog_Software_Constraint;
+  update_columns?: Array<Modelcatalog_Software_Update_Column>;
+  where?: InputMaybe<Modelcatalog_Software_Bool_Exp>;
+};
+
+/** Ordering options when selecting data from "modelcatalog_software". */
+export type Modelcatalog_Software_Order_By = {
+  author?: InputMaybe<Modelcatalog_Person_Order_By>;
+  author_id?: InputMaybe<Order_By>;
+  authors_aggregate?: InputMaybe<Modelcatalog_Software_Author_Aggregate_Order_By>;
+  categories_aggregate?: InputMaybe<Modelcatalog_Software_Category_Aggregate_Order_By>;
+  date_created?: InputMaybe<Order_By>;
+  date_published?: InputMaybe<Order_By>;
+  description?: InputMaybe<Order_By>;
+  has_documentation?: InputMaybe<Order_By>;
+  has_download_url?: InputMaybe<Order_By>;
+  has_purpose?: InputMaybe<Order_By>;
+  id?: InputMaybe<Order_By>;
+  keywords?: InputMaybe<Order_By>;
+  label?: InputMaybe<Order_By>;
+  license?: InputMaybe<Order_By>;
+  type?: InputMaybe<Order_By>;
+  versions_aggregate?: InputMaybe<Modelcatalog_Software_Version_Aggregate_Order_By>;
+  website?: InputMaybe<Order_By>;
+};
+
+/** primary key columns input for table: modelcatalog_software */
+export type Modelcatalog_Software_Pk_Columns_Input = {
+  id: Scalars['String']['input'];
+};
+
+/** select columns of table "modelcatalog_software" */
+export enum Modelcatalog_Software_Select_Column {
+  /** column name */
+  AuthorId = 'author_id',
+  /** column name */
+  DateCreated = 'date_created',
+  /** column name */
+  DatePublished = 'date_published',
+  /** column name */
+  Description = 'description',
+  /** column name */
+  HasDocumentation = 'has_documentation',
+  /** column name */
+  HasDownloadUrl = 'has_download_url',
+  /** column name */
+  HasPurpose = 'has_purpose',
+  /** column name */
+  Id = 'id',
+  /** column name */
+  Keywords = 'keywords',
+  /** column name */
+  Label = 'label',
+  /** column name */
+  License = 'license',
   /** column name */
   Type = 'type',
   /** column name */
-  UsageNotes = 'usage_notes',
-  /** column name */
-  UserId = 'user_id'
+  Website = 'website'
 }
 
-export type Model_Updates = {
+/** input type for updating data in table "modelcatalog_software" */
+export type Modelcatalog_Software_Set_Input = {
+  author_id?: InputMaybe<Scalars['String']['input']>;
+  date_created?: InputMaybe<Scalars['String']['input']>;
+  date_published?: InputMaybe<Scalars['String']['input']>;
+  description?: InputMaybe<Scalars['String']['input']>;
+  has_documentation?: InputMaybe<Scalars['String']['input']>;
+  has_download_url?: InputMaybe<Scalars['String']['input']>;
+  has_purpose?: InputMaybe<Scalars['String']['input']>;
+  id?: InputMaybe<Scalars['String']['input']>;
+  keywords?: InputMaybe<Scalars['String']['input']>;
+  label?: InputMaybe<Scalars['String']['input']>;
+  license?: InputMaybe<Scalars['String']['input']>;
+  type?: InputMaybe<Scalars['String']['input']>;
+  website?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** update columns of table "modelcatalog_software" */
+export enum Modelcatalog_Software_Update_Column {
+  /** column name */
+  AuthorId = 'author_id',
+  /** column name */
+  DateCreated = 'date_created',
+  /** column name */
+  DatePublished = 'date_published',
+  /** column name */
+  Description = 'description',
+  /** column name */
+  HasDocumentation = 'has_documentation',
+  /** column name */
+  HasDownloadUrl = 'has_download_url',
+  /** column name */
+  HasPurpose = 'has_purpose',
+  /** column name */
+  Id = 'id',
+  /** column name */
+  Keywords = 'keywords',
+  /** column name */
+  Label = 'label',
+  /** column name */
+  License = 'license',
+  /** column name */
+  Type = 'type',
+  /** column name */
+  Website = 'website'
+}
+
+export type Modelcatalog_Software_Updates = {
   /** sets the columns of the filtered rows to the given values */
-  _set?: InputMaybe<Model_Set_Input>;
-  where: Model_Bool_Exp;
+  _set?: InputMaybe<Modelcatalog_Software_Set_Input>;
+  where: Modelcatalog_Software_Bool_Exp;
+};
+
+/** columns and relationships of "modelcatalog_software_version" */
+export type Modelcatalog_Software_Version = {
+  __typename?: 'modelcatalog_software_version';
+  /** An object relationship */
+  author?: Maybe<Modelcatalog_Person>;
+  author_id?: Maybe<Scalars['String']['output']>;
+  /** An array relationship */
+  authors: Array<Modelcatalog_Version_Author>;
+  /** An aggregate relationship */
+  authors_aggregate: Modelcatalog_Version_Author_Aggregate;
+  /** An array relationship */
+  categories: Array<Modelcatalog_Software_Version_Category>;
+  /** An aggregate relationship */
+  categories_aggregate: Modelcatalog_Software_Version_Category_Aggregate;
+  /** An array relationship */
+  configurations: Array<Modelcatalog_Configuration>;
+  /** An aggregate relationship */
+  configurations_aggregate: Modelcatalog_Configuration_Aggregate;
+  date_created?: Maybe<Scalars['String']['output']>;
+  description?: Maybe<Scalars['String']['output']>;
+  /** An array relationship */
+  explanation_diagrams: Array<Modelcatalog_Software_Version_Image>;
+  /** An aggregate relationship */
+  explanation_diagrams_aggregate: Modelcatalog_Software_Version_Image_Aggregate;
+  /** An array relationship */
+  grids: Array<Modelcatalog_Software_Version_Grid>;
+  /** An aggregate relationship */
+  grids_aggregate: Modelcatalog_Software_Version_Grid_Aggregate;
+  has_source_code?: Maybe<Scalars['String']['output']>;
+  has_usage_notes?: Maybe<Scalars['String']['output']>;
+  id: Scalars['String']['output'];
+  /** An array relationship */
+  input_variables: Array<Modelcatalog_Software_Version_Input_Variable>;
+  /** An aggregate relationship */
+  input_variables_aggregate: Modelcatalog_Software_Version_Input_Variable_Aggregate;
+  keywords?: Maybe<Scalars['String']['output']>;
+  label: Scalars['String']['output'];
+  limitations?: Maybe<Scalars['String']['output']>;
+  /** An array relationship */
+  output_variables: Array<Modelcatalog_Software_Version_Output_Variable>;
+  /** An aggregate relationship */
+  output_variables_aggregate: Modelcatalog_Software_Version_Output_Variable_Aggregate;
+  parameterization?: Maybe<Scalars['String']['output']>;
+  /** An array relationship */
+  processes: Array<Modelcatalog_Software_Version_Process>;
+  /** An aggregate relationship */
+  processes_aggregate: Modelcatalog_Software_Version_Process_Aggregate;
+  runtime_estimation?: Maybe<Scalars['String']['output']>;
+  short_description?: Maybe<Scalars['String']['output']>;
+  /** An object relationship */
+  software?: Maybe<Modelcatalog_Software>;
+  software_id?: Maybe<Scalars['String']['output']>;
+  theoretical_basis?: Maybe<Scalars['String']['output']>;
+  version_id?: Maybe<Scalars['String']['output']>;
+};
+
+
+/** columns and relationships of "modelcatalog_software_version" */
+export type Modelcatalog_Software_VersionAuthorsArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Version_Author_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Version_Author_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Version_Author_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_software_version" */
+export type Modelcatalog_Software_VersionAuthors_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Version_Author_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Version_Author_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Version_Author_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_software_version" */
+export type Modelcatalog_Software_VersionCategoriesArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Software_Version_Category_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Software_Version_Category_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Software_Version_Category_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_software_version" */
+export type Modelcatalog_Software_VersionCategories_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Software_Version_Category_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Software_Version_Category_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Software_Version_Category_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_software_version" */
+export type Modelcatalog_Software_VersionConfigurationsArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Configuration_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Configuration_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Configuration_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_software_version" */
+export type Modelcatalog_Software_VersionConfigurations_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Configuration_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Configuration_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Configuration_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_software_version" */
+export type Modelcatalog_Software_VersionExplanation_DiagramsArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Software_Version_Image_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Software_Version_Image_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Software_Version_Image_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_software_version" */
+export type Modelcatalog_Software_VersionExplanation_Diagrams_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Software_Version_Image_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Software_Version_Image_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Software_Version_Image_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_software_version" */
+export type Modelcatalog_Software_VersionGridsArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Software_Version_Grid_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Software_Version_Grid_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Software_Version_Grid_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_software_version" */
+export type Modelcatalog_Software_VersionGrids_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Software_Version_Grid_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Software_Version_Grid_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Software_Version_Grid_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_software_version" */
+export type Modelcatalog_Software_VersionInput_VariablesArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Software_Version_Input_Variable_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Software_Version_Input_Variable_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Software_Version_Input_Variable_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_software_version" */
+export type Modelcatalog_Software_VersionInput_Variables_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Software_Version_Input_Variable_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Software_Version_Input_Variable_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Software_Version_Input_Variable_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_software_version" */
+export type Modelcatalog_Software_VersionOutput_VariablesArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Software_Version_Output_Variable_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Software_Version_Output_Variable_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Software_Version_Output_Variable_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_software_version" */
+export type Modelcatalog_Software_VersionOutput_Variables_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Software_Version_Output_Variable_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Software_Version_Output_Variable_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Software_Version_Output_Variable_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_software_version" */
+export type Modelcatalog_Software_VersionProcessesArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Software_Version_Process_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Software_Version_Process_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Software_Version_Process_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_software_version" */
+export type Modelcatalog_Software_VersionProcesses_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Software_Version_Process_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Software_Version_Process_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Software_Version_Process_Bool_Exp>;
+};
+
+/** aggregated selection of "modelcatalog_software_version" */
+export type Modelcatalog_Software_Version_Aggregate = {
+  __typename?: 'modelcatalog_software_version_aggregate';
+  aggregate?: Maybe<Modelcatalog_Software_Version_Aggregate_Fields>;
+  nodes: Array<Modelcatalog_Software_Version>;
+};
+
+/** aggregate fields of "modelcatalog_software_version" */
+export type Modelcatalog_Software_Version_Aggregate_Fields = {
+  __typename?: 'modelcatalog_software_version_aggregate_fields';
+  count: Scalars['Int']['output'];
+  max?: Maybe<Modelcatalog_Software_Version_Max_Fields>;
+  min?: Maybe<Modelcatalog_Software_Version_Min_Fields>;
+};
+
+
+/** aggregate fields of "modelcatalog_software_version" */
+export type Modelcatalog_Software_Version_Aggregate_FieldsCountArgs = {
+  columns?: InputMaybe<Array<Modelcatalog_Software_Version_Select_Column>>;
+  distinct?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
+/** order by aggregate values of table "modelcatalog_software_version" */
+export type Modelcatalog_Software_Version_Aggregate_Order_By = {
+  count?: InputMaybe<Order_By>;
+  max?: InputMaybe<Modelcatalog_Software_Version_Max_Order_By>;
+  min?: InputMaybe<Modelcatalog_Software_Version_Min_Order_By>;
+};
+
+/** input type for inserting array relation for remote table "modelcatalog_software_version" */
+export type Modelcatalog_Software_Version_Arr_Rel_Insert_Input = {
+  data: Array<Modelcatalog_Software_Version_Insert_Input>;
+  /** upsert condition */
+  on_conflict?: InputMaybe<Modelcatalog_Software_Version_On_Conflict>;
+};
+
+/** Boolean expression to filter rows from the table "modelcatalog_software_version". All fields are combined with a logical 'AND'. */
+export type Modelcatalog_Software_Version_Bool_Exp = {
+  _and?: InputMaybe<Array<Modelcatalog_Software_Version_Bool_Exp>>;
+  _not?: InputMaybe<Modelcatalog_Software_Version_Bool_Exp>;
+  _or?: InputMaybe<Array<Modelcatalog_Software_Version_Bool_Exp>>;
+  author?: InputMaybe<Modelcatalog_Person_Bool_Exp>;
+  author_id?: InputMaybe<String_Comparison_Exp>;
+  authors?: InputMaybe<Modelcatalog_Version_Author_Bool_Exp>;
+  categories?: InputMaybe<Modelcatalog_Software_Version_Category_Bool_Exp>;
+  configurations?: InputMaybe<Modelcatalog_Configuration_Bool_Exp>;
+  date_created?: InputMaybe<String_Comparison_Exp>;
+  description?: InputMaybe<String_Comparison_Exp>;
+  explanation_diagrams?: InputMaybe<Modelcatalog_Software_Version_Image_Bool_Exp>;
+  grids?: InputMaybe<Modelcatalog_Software_Version_Grid_Bool_Exp>;
+  has_source_code?: InputMaybe<String_Comparison_Exp>;
+  has_usage_notes?: InputMaybe<String_Comparison_Exp>;
+  id?: InputMaybe<String_Comparison_Exp>;
+  input_variables?: InputMaybe<Modelcatalog_Software_Version_Input_Variable_Bool_Exp>;
+  keywords?: InputMaybe<String_Comparison_Exp>;
+  label?: InputMaybe<String_Comparison_Exp>;
+  limitations?: InputMaybe<String_Comparison_Exp>;
+  output_variables?: InputMaybe<Modelcatalog_Software_Version_Output_Variable_Bool_Exp>;
+  parameterization?: InputMaybe<String_Comparison_Exp>;
+  processes?: InputMaybe<Modelcatalog_Software_Version_Process_Bool_Exp>;
+  runtime_estimation?: InputMaybe<String_Comparison_Exp>;
+  short_description?: InputMaybe<String_Comparison_Exp>;
+  software?: InputMaybe<Modelcatalog_Software_Bool_Exp>;
+  software_id?: InputMaybe<String_Comparison_Exp>;
+  theoretical_basis?: InputMaybe<String_Comparison_Exp>;
+  version_id?: InputMaybe<String_Comparison_Exp>;
+};
+
+/** columns and relationships of "modelcatalog_software_version_category" */
+export type Modelcatalog_Software_Version_Category = {
+  __typename?: 'modelcatalog_software_version_category';
+  /** An object relationship */
+  category: Modelcatalog_Model_Category;
+  category_id: Scalars['String']['output'];
+  /** An object relationship */
+  software_version: Modelcatalog_Software_Version;
+  software_version_id: Scalars['String']['output'];
+};
+
+/** aggregated selection of "modelcatalog_software_version_category" */
+export type Modelcatalog_Software_Version_Category_Aggregate = {
+  __typename?: 'modelcatalog_software_version_category_aggregate';
+  aggregate?: Maybe<Modelcatalog_Software_Version_Category_Aggregate_Fields>;
+  nodes: Array<Modelcatalog_Software_Version_Category>;
+};
+
+/** aggregate fields of "modelcatalog_software_version_category" */
+export type Modelcatalog_Software_Version_Category_Aggregate_Fields = {
+  __typename?: 'modelcatalog_software_version_category_aggregate_fields';
+  count: Scalars['Int']['output'];
+  max?: Maybe<Modelcatalog_Software_Version_Category_Max_Fields>;
+  min?: Maybe<Modelcatalog_Software_Version_Category_Min_Fields>;
+};
+
+
+/** aggregate fields of "modelcatalog_software_version_category" */
+export type Modelcatalog_Software_Version_Category_Aggregate_FieldsCountArgs = {
+  columns?: InputMaybe<Array<Modelcatalog_Software_Version_Category_Select_Column>>;
+  distinct?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
+/** order by aggregate values of table "modelcatalog_software_version_category" */
+export type Modelcatalog_Software_Version_Category_Aggregate_Order_By = {
+  count?: InputMaybe<Order_By>;
+  max?: InputMaybe<Modelcatalog_Software_Version_Category_Max_Order_By>;
+  min?: InputMaybe<Modelcatalog_Software_Version_Category_Min_Order_By>;
+};
+
+/** input type for inserting array relation for remote table "modelcatalog_software_version_category" */
+export type Modelcatalog_Software_Version_Category_Arr_Rel_Insert_Input = {
+  data: Array<Modelcatalog_Software_Version_Category_Insert_Input>;
+  /** upsert condition */
+  on_conflict?: InputMaybe<Modelcatalog_Software_Version_Category_On_Conflict>;
+};
+
+/** Boolean expression to filter rows from the table "modelcatalog_software_version_category". All fields are combined with a logical 'AND'. */
+export type Modelcatalog_Software_Version_Category_Bool_Exp = {
+  _and?: InputMaybe<Array<Modelcatalog_Software_Version_Category_Bool_Exp>>;
+  _not?: InputMaybe<Modelcatalog_Software_Version_Category_Bool_Exp>;
+  _or?: InputMaybe<Array<Modelcatalog_Software_Version_Category_Bool_Exp>>;
+  category?: InputMaybe<Modelcatalog_Model_Category_Bool_Exp>;
+  category_id?: InputMaybe<String_Comparison_Exp>;
+  software_version?: InputMaybe<Modelcatalog_Software_Version_Bool_Exp>;
+  software_version_id?: InputMaybe<String_Comparison_Exp>;
+};
+
+/** unique or primary key constraints on table "modelcatalog_software_version_category" */
+export enum Modelcatalog_Software_Version_Category_Constraint {
+  /** unique or primary key constraint on columns "category_id", "software_version_id" */
+  ModelcatalogSoftwareVersionCategoryPkey = 'modelcatalog_software_version_category_pkey'
+}
+
+/** input type for inserting data into table "modelcatalog_software_version_category" */
+export type Modelcatalog_Software_Version_Category_Insert_Input = {
+  category?: InputMaybe<Modelcatalog_Model_Category_Obj_Rel_Insert_Input>;
+  category_id?: InputMaybe<Scalars['String']['input']>;
+  software_version?: InputMaybe<Modelcatalog_Software_Version_Obj_Rel_Insert_Input>;
+  software_version_id?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** aggregate max on columns */
+export type Modelcatalog_Software_Version_Category_Max_Fields = {
+  __typename?: 'modelcatalog_software_version_category_max_fields';
+  category_id?: Maybe<Scalars['String']['output']>;
+  software_version_id?: Maybe<Scalars['String']['output']>;
+};
+
+/** order by max() on columns of table "modelcatalog_software_version_category" */
+export type Modelcatalog_Software_Version_Category_Max_Order_By = {
+  category_id?: InputMaybe<Order_By>;
+  software_version_id?: InputMaybe<Order_By>;
+};
+
+/** aggregate min on columns */
+export type Modelcatalog_Software_Version_Category_Min_Fields = {
+  __typename?: 'modelcatalog_software_version_category_min_fields';
+  category_id?: Maybe<Scalars['String']['output']>;
+  software_version_id?: Maybe<Scalars['String']['output']>;
+};
+
+/** order by min() on columns of table "modelcatalog_software_version_category" */
+export type Modelcatalog_Software_Version_Category_Min_Order_By = {
+  category_id?: InputMaybe<Order_By>;
+  software_version_id?: InputMaybe<Order_By>;
+};
+
+/** response of any mutation on the table "modelcatalog_software_version_category" */
+export type Modelcatalog_Software_Version_Category_Mutation_Response = {
+  __typename?: 'modelcatalog_software_version_category_mutation_response';
+  /** number of rows affected by the mutation */
+  affected_rows: Scalars['Int']['output'];
+  /** data from the rows affected by the mutation */
+  returning: Array<Modelcatalog_Software_Version_Category>;
+};
+
+/** on_conflict condition type for table "modelcatalog_software_version_category" */
+export type Modelcatalog_Software_Version_Category_On_Conflict = {
+  constraint: Modelcatalog_Software_Version_Category_Constraint;
+  update_columns?: Array<Modelcatalog_Software_Version_Category_Update_Column>;
+  where?: InputMaybe<Modelcatalog_Software_Version_Category_Bool_Exp>;
+};
+
+/** Ordering options when selecting data from "modelcatalog_software_version_category". */
+export type Modelcatalog_Software_Version_Category_Order_By = {
+  category?: InputMaybe<Modelcatalog_Model_Category_Order_By>;
+  category_id?: InputMaybe<Order_By>;
+  software_version?: InputMaybe<Modelcatalog_Software_Version_Order_By>;
+  software_version_id?: InputMaybe<Order_By>;
+};
+
+/** primary key columns input for table: modelcatalog_software_version_category */
+export type Modelcatalog_Software_Version_Category_Pk_Columns_Input = {
+  category_id: Scalars['String']['input'];
+  software_version_id: Scalars['String']['input'];
+};
+
+/** select columns of table "modelcatalog_software_version_category" */
+export enum Modelcatalog_Software_Version_Category_Select_Column {
+  /** column name */
+  CategoryId = 'category_id',
+  /** column name */
+  SoftwareVersionId = 'software_version_id'
+}
+
+/** input type for updating data in table "modelcatalog_software_version_category" */
+export type Modelcatalog_Software_Version_Category_Set_Input = {
+  category_id?: InputMaybe<Scalars['String']['input']>;
+  software_version_id?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** update columns of table "modelcatalog_software_version_category" */
+export enum Modelcatalog_Software_Version_Category_Update_Column {
+  /** column name */
+  CategoryId = 'category_id',
+  /** column name */
+  SoftwareVersionId = 'software_version_id'
+}
+
+export type Modelcatalog_Software_Version_Category_Updates = {
+  /** sets the columns of the filtered rows to the given values */
+  _set?: InputMaybe<Modelcatalog_Software_Version_Category_Set_Input>;
+  where: Modelcatalog_Software_Version_Category_Bool_Exp;
+};
+
+/** unique or primary key constraints on table "modelcatalog_software_version" */
+export enum Modelcatalog_Software_Version_Constraint {
+  /** unique or primary key constraint on columns "id" */
+  ModelcatalogSoftwareVersionPkey = 'modelcatalog_software_version_pkey'
+}
+
+/** columns and relationships of "modelcatalog_software_version_grid" */
+export type Modelcatalog_Software_Version_Grid = {
+  __typename?: 'modelcatalog_software_version_grid';
+  /** An object relationship */
+  grid: Modelcatalog_Grid;
+  grid_id: Scalars['String']['output'];
+  /** An object relationship */
+  software_version: Modelcatalog_Software_Version;
+  software_version_id: Scalars['String']['output'];
+};
+
+/** aggregated selection of "modelcatalog_software_version_grid" */
+export type Modelcatalog_Software_Version_Grid_Aggregate = {
+  __typename?: 'modelcatalog_software_version_grid_aggregate';
+  aggregate?: Maybe<Modelcatalog_Software_Version_Grid_Aggregate_Fields>;
+  nodes: Array<Modelcatalog_Software_Version_Grid>;
+};
+
+/** aggregate fields of "modelcatalog_software_version_grid" */
+export type Modelcatalog_Software_Version_Grid_Aggregate_Fields = {
+  __typename?: 'modelcatalog_software_version_grid_aggregate_fields';
+  count: Scalars['Int']['output'];
+  max?: Maybe<Modelcatalog_Software_Version_Grid_Max_Fields>;
+  min?: Maybe<Modelcatalog_Software_Version_Grid_Min_Fields>;
+};
+
+
+/** aggregate fields of "modelcatalog_software_version_grid" */
+export type Modelcatalog_Software_Version_Grid_Aggregate_FieldsCountArgs = {
+  columns?: InputMaybe<Array<Modelcatalog_Software_Version_Grid_Select_Column>>;
+  distinct?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
+/** order by aggregate values of table "modelcatalog_software_version_grid" */
+export type Modelcatalog_Software_Version_Grid_Aggregate_Order_By = {
+  count?: InputMaybe<Order_By>;
+  max?: InputMaybe<Modelcatalog_Software_Version_Grid_Max_Order_By>;
+  min?: InputMaybe<Modelcatalog_Software_Version_Grid_Min_Order_By>;
+};
+
+/** input type for inserting array relation for remote table "modelcatalog_software_version_grid" */
+export type Modelcatalog_Software_Version_Grid_Arr_Rel_Insert_Input = {
+  data: Array<Modelcatalog_Software_Version_Grid_Insert_Input>;
+  /** upsert condition */
+  on_conflict?: InputMaybe<Modelcatalog_Software_Version_Grid_On_Conflict>;
+};
+
+/** Boolean expression to filter rows from the table "modelcatalog_software_version_grid". All fields are combined with a logical 'AND'. */
+export type Modelcatalog_Software_Version_Grid_Bool_Exp = {
+  _and?: InputMaybe<Array<Modelcatalog_Software_Version_Grid_Bool_Exp>>;
+  _not?: InputMaybe<Modelcatalog_Software_Version_Grid_Bool_Exp>;
+  _or?: InputMaybe<Array<Modelcatalog_Software_Version_Grid_Bool_Exp>>;
+  grid?: InputMaybe<Modelcatalog_Grid_Bool_Exp>;
+  grid_id?: InputMaybe<String_Comparison_Exp>;
+  software_version?: InputMaybe<Modelcatalog_Software_Version_Bool_Exp>;
+  software_version_id?: InputMaybe<String_Comparison_Exp>;
+};
+
+/** unique or primary key constraints on table "modelcatalog_software_version_grid" */
+export enum Modelcatalog_Software_Version_Grid_Constraint {
+  /** unique or primary key constraint on columns "grid_id", "software_version_id" */
+  ModelcatalogSoftwareVersionGridPkey = 'modelcatalog_software_version_grid_pkey'
+}
+
+/** input type for inserting data into table "modelcatalog_software_version_grid" */
+export type Modelcatalog_Software_Version_Grid_Insert_Input = {
+  grid?: InputMaybe<Modelcatalog_Grid_Obj_Rel_Insert_Input>;
+  grid_id?: InputMaybe<Scalars['String']['input']>;
+  software_version?: InputMaybe<Modelcatalog_Software_Version_Obj_Rel_Insert_Input>;
+  software_version_id?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** aggregate max on columns */
+export type Modelcatalog_Software_Version_Grid_Max_Fields = {
+  __typename?: 'modelcatalog_software_version_grid_max_fields';
+  grid_id?: Maybe<Scalars['String']['output']>;
+  software_version_id?: Maybe<Scalars['String']['output']>;
+};
+
+/** order by max() on columns of table "modelcatalog_software_version_grid" */
+export type Modelcatalog_Software_Version_Grid_Max_Order_By = {
+  grid_id?: InputMaybe<Order_By>;
+  software_version_id?: InputMaybe<Order_By>;
+};
+
+/** aggregate min on columns */
+export type Modelcatalog_Software_Version_Grid_Min_Fields = {
+  __typename?: 'modelcatalog_software_version_grid_min_fields';
+  grid_id?: Maybe<Scalars['String']['output']>;
+  software_version_id?: Maybe<Scalars['String']['output']>;
+};
+
+/** order by min() on columns of table "modelcatalog_software_version_grid" */
+export type Modelcatalog_Software_Version_Grid_Min_Order_By = {
+  grid_id?: InputMaybe<Order_By>;
+  software_version_id?: InputMaybe<Order_By>;
+};
+
+/** response of any mutation on the table "modelcatalog_software_version_grid" */
+export type Modelcatalog_Software_Version_Grid_Mutation_Response = {
+  __typename?: 'modelcatalog_software_version_grid_mutation_response';
+  /** number of rows affected by the mutation */
+  affected_rows: Scalars['Int']['output'];
+  /** data from the rows affected by the mutation */
+  returning: Array<Modelcatalog_Software_Version_Grid>;
+};
+
+/** on_conflict condition type for table "modelcatalog_software_version_grid" */
+export type Modelcatalog_Software_Version_Grid_On_Conflict = {
+  constraint: Modelcatalog_Software_Version_Grid_Constraint;
+  update_columns?: Array<Modelcatalog_Software_Version_Grid_Update_Column>;
+  where?: InputMaybe<Modelcatalog_Software_Version_Grid_Bool_Exp>;
+};
+
+/** Ordering options when selecting data from "modelcatalog_software_version_grid". */
+export type Modelcatalog_Software_Version_Grid_Order_By = {
+  grid?: InputMaybe<Modelcatalog_Grid_Order_By>;
+  grid_id?: InputMaybe<Order_By>;
+  software_version?: InputMaybe<Modelcatalog_Software_Version_Order_By>;
+  software_version_id?: InputMaybe<Order_By>;
+};
+
+/** primary key columns input for table: modelcatalog_software_version_grid */
+export type Modelcatalog_Software_Version_Grid_Pk_Columns_Input = {
+  grid_id: Scalars['String']['input'];
+  software_version_id: Scalars['String']['input'];
+};
+
+/** select columns of table "modelcatalog_software_version_grid" */
+export enum Modelcatalog_Software_Version_Grid_Select_Column {
+  /** column name */
+  GridId = 'grid_id',
+  /** column name */
+  SoftwareVersionId = 'software_version_id'
+}
+
+/** input type for updating data in table "modelcatalog_software_version_grid" */
+export type Modelcatalog_Software_Version_Grid_Set_Input = {
+  grid_id?: InputMaybe<Scalars['String']['input']>;
+  software_version_id?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** update columns of table "modelcatalog_software_version_grid" */
+export enum Modelcatalog_Software_Version_Grid_Update_Column {
+  /** column name */
+  GridId = 'grid_id',
+  /** column name */
+  SoftwareVersionId = 'software_version_id'
+}
+
+export type Modelcatalog_Software_Version_Grid_Updates = {
+  /** sets the columns of the filtered rows to the given values */
+  _set?: InputMaybe<Modelcatalog_Software_Version_Grid_Set_Input>;
+  where: Modelcatalog_Software_Version_Grid_Bool_Exp;
+};
+
+/** columns and relationships of "modelcatalog_software_version_image" */
+export type Modelcatalog_Software_Version_Image = {
+  __typename?: 'modelcatalog_software_version_image';
+  /** An object relationship */
+  image: Modelcatalog_Image;
+  image_id: Scalars['String']['output'];
+  /** An object relationship */
+  software_version: Modelcatalog_Software_Version;
+  software_version_id: Scalars['String']['output'];
+};
+
+/** aggregated selection of "modelcatalog_software_version_image" */
+export type Modelcatalog_Software_Version_Image_Aggregate = {
+  __typename?: 'modelcatalog_software_version_image_aggregate';
+  aggregate?: Maybe<Modelcatalog_Software_Version_Image_Aggregate_Fields>;
+  nodes: Array<Modelcatalog_Software_Version_Image>;
+};
+
+/** aggregate fields of "modelcatalog_software_version_image" */
+export type Modelcatalog_Software_Version_Image_Aggregate_Fields = {
+  __typename?: 'modelcatalog_software_version_image_aggregate_fields';
+  count: Scalars['Int']['output'];
+  max?: Maybe<Modelcatalog_Software_Version_Image_Max_Fields>;
+  min?: Maybe<Modelcatalog_Software_Version_Image_Min_Fields>;
+};
+
+
+/** aggregate fields of "modelcatalog_software_version_image" */
+export type Modelcatalog_Software_Version_Image_Aggregate_FieldsCountArgs = {
+  columns?: InputMaybe<Array<Modelcatalog_Software_Version_Image_Select_Column>>;
+  distinct?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
+/** order by aggregate values of table "modelcatalog_software_version_image" */
+export type Modelcatalog_Software_Version_Image_Aggregate_Order_By = {
+  count?: InputMaybe<Order_By>;
+  max?: InputMaybe<Modelcatalog_Software_Version_Image_Max_Order_By>;
+  min?: InputMaybe<Modelcatalog_Software_Version_Image_Min_Order_By>;
+};
+
+/** input type for inserting array relation for remote table "modelcatalog_software_version_image" */
+export type Modelcatalog_Software_Version_Image_Arr_Rel_Insert_Input = {
+  data: Array<Modelcatalog_Software_Version_Image_Insert_Input>;
+  /** upsert condition */
+  on_conflict?: InputMaybe<Modelcatalog_Software_Version_Image_On_Conflict>;
+};
+
+/** Boolean expression to filter rows from the table "modelcatalog_software_version_image". All fields are combined with a logical 'AND'. */
+export type Modelcatalog_Software_Version_Image_Bool_Exp = {
+  _and?: InputMaybe<Array<Modelcatalog_Software_Version_Image_Bool_Exp>>;
+  _not?: InputMaybe<Modelcatalog_Software_Version_Image_Bool_Exp>;
+  _or?: InputMaybe<Array<Modelcatalog_Software_Version_Image_Bool_Exp>>;
+  image?: InputMaybe<Modelcatalog_Image_Bool_Exp>;
+  image_id?: InputMaybe<String_Comparison_Exp>;
+  software_version?: InputMaybe<Modelcatalog_Software_Version_Bool_Exp>;
+  software_version_id?: InputMaybe<String_Comparison_Exp>;
+};
+
+/** unique or primary key constraints on table "modelcatalog_software_version_image" */
+export enum Modelcatalog_Software_Version_Image_Constraint {
+  /** unique or primary key constraint on columns "image_id", "software_version_id" */
+  ModelcatalogSoftwareVersionImagePkey = 'modelcatalog_software_version_image_pkey'
+}
+
+/** input type for inserting data into table "modelcatalog_software_version_image" */
+export type Modelcatalog_Software_Version_Image_Insert_Input = {
+  image?: InputMaybe<Modelcatalog_Image_Obj_Rel_Insert_Input>;
+  image_id?: InputMaybe<Scalars['String']['input']>;
+  software_version?: InputMaybe<Modelcatalog_Software_Version_Obj_Rel_Insert_Input>;
+  software_version_id?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** aggregate max on columns */
+export type Modelcatalog_Software_Version_Image_Max_Fields = {
+  __typename?: 'modelcatalog_software_version_image_max_fields';
+  image_id?: Maybe<Scalars['String']['output']>;
+  software_version_id?: Maybe<Scalars['String']['output']>;
+};
+
+/** order by max() on columns of table "modelcatalog_software_version_image" */
+export type Modelcatalog_Software_Version_Image_Max_Order_By = {
+  image_id?: InputMaybe<Order_By>;
+  software_version_id?: InputMaybe<Order_By>;
+};
+
+/** aggregate min on columns */
+export type Modelcatalog_Software_Version_Image_Min_Fields = {
+  __typename?: 'modelcatalog_software_version_image_min_fields';
+  image_id?: Maybe<Scalars['String']['output']>;
+  software_version_id?: Maybe<Scalars['String']['output']>;
+};
+
+/** order by min() on columns of table "modelcatalog_software_version_image" */
+export type Modelcatalog_Software_Version_Image_Min_Order_By = {
+  image_id?: InputMaybe<Order_By>;
+  software_version_id?: InputMaybe<Order_By>;
+};
+
+/** response of any mutation on the table "modelcatalog_software_version_image" */
+export type Modelcatalog_Software_Version_Image_Mutation_Response = {
+  __typename?: 'modelcatalog_software_version_image_mutation_response';
+  /** number of rows affected by the mutation */
+  affected_rows: Scalars['Int']['output'];
+  /** data from the rows affected by the mutation */
+  returning: Array<Modelcatalog_Software_Version_Image>;
+};
+
+/** on_conflict condition type for table "modelcatalog_software_version_image" */
+export type Modelcatalog_Software_Version_Image_On_Conflict = {
+  constraint: Modelcatalog_Software_Version_Image_Constraint;
+  update_columns?: Array<Modelcatalog_Software_Version_Image_Update_Column>;
+  where?: InputMaybe<Modelcatalog_Software_Version_Image_Bool_Exp>;
+};
+
+/** Ordering options when selecting data from "modelcatalog_software_version_image". */
+export type Modelcatalog_Software_Version_Image_Order_By = {
+  image?: InputMaybe<Modelcatalog_Image_Order_By>;
+  image_id?: InputMaybe<Order_By>;
+  software_version?: InputMaybe<Modelcatalog_Software_Version_Order_By>;
+  software_version_id?: InputMaybe<Order_By>;
+};
+
+/** primary key columns input for table: modelcatalog_software_version_image */
+export type Modelcatalog_Software_Version_Image_Pk_Columns_Input = {
+  image_id: Scalars['String']['input'];
+  software_version_id: Scalars['String']['input'];
+};
+
+/** select columns of table "modelcatalog_software_version_image" */
+export enum Modelcatalog_Software_Version_Image_Select_Column {
+  /** column name */
+  ImageId = 'image_id',
+  /** column name */
+  SoftwareVersionId = 'software_version_id'
+}
+
+/** input type for updating data in table "modelcatalog_software_version_image" */
+export type Modelcatalog_Software_Version_Image_Set_Input = {
+  image_id?: InputMaybe<Scalars['String']['input']>;
+  software_version_id?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** update columns of table "modelcatalog_software_version_image" */
+export enum Modelcatalog_Software_Version_Image_Update_Column {
+  /** column name */
+  ImageId = 'image_id',
+  /** column name */
+  SoftwareVersionId = 'software_version_id'
+}
+
+export type Modelcatalog_Software_Version_Image_Updates = {
+  /** sets the columns of the filtered rows to the given values */
+  _set?: InputMaybe<Modelcatalog_Software_Version_Image_Set_Input>;
+  where: Modelcatalog_Software_Version_Image_Bool_Exp;
+};
+
+/** columns and relationships of "modelcatalog_software_version_input_variable" */
+export type Modelcatalog_Software_Version_Input_Variable = {
+  __typename?: 'modelcatalog_software_version_input_variable';
+  /** An object relationship */
+  software_version: Modelcatalog_Software_Version;
+  software_version_id: Scalars['String']['output'];
+  /** An object relationship */
+  variable: Modelcatalog_Variable_Presentation;
+  variable_id: Scalars['String']['output'];
+};
+
+/** aggregated selection of "modelcatalog_software_version_input_variable" */
+export type Modelcatalog_Software_Version_Input_Variable_Aggregate = {
+  __typename?: 'modelcatalog_software_version_input_variable_aggregate';
+  aggregate?: Maybe<Modelcatalog_Software_Version_Input_Variable_Aggregate_Fields>;
+  nodes: Array<Modelcatalog_Software_Version_Input_Variable>;
+};
+
+/** aggregate fields of "modelcatalog_software_version_input_variable" */
+export type Modelcatalog_Software_Version_Input_Variable_Aggregate_Fields = {
+  __typename?: 'modelcatalog_software_version_input_variable_aggregate_fields';
+  count: Scalars['Int']['output'];
+  max?: Maybe<Modelcatalog_Software_Version_Input_Variable_Max_Fields>;
+  min?: Maybe<Modelcatalog_Software_Version_Input_Variable_Min_Fields>;
+};
+
+
+/** aggregate fields of "modelcatalog_software_version_input_variable" */
+export type Modelcatalog_Software_Version_Input_Variable_Aggregate_FieldsCountArgs = {
+  columns?: InputMaybe<Array<Modelcatalog_Software_Version_Input_Variable_Select_Column>>;
+  distinct?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
+/** order by aggregate values of table "modelcatalog_software_version_input_variable" */
+export type Modelcatalog_Software_Version_Input_Variable_Aggregate_Order_By = {
+  count?: InputMaybe<Order_By>;
+  max?: InputMaybe<Modelcatalog_Software_Version_Input_Variable_Max_Order_By>;
+  min?: InputMaybe<Modelcatalog_Software_Version_Input_Variable_Min_Order_By>;
+};
+
+/** input type for inserting array relation for remote table "modelcatalog_software_version_input_variable" */
+export type Modelcatalog_Software_Version_Input_Variable_Arr_Rel_Insert_Input = {
+  data: Array<Modelcatalog_Software_Version_Input_Variable_Insert_Input>;
+  /** upsert condition */
+  on_conflict?: InputMaybe<Modelcatalog_Software_Version_Input_Variable_On_Conflict>;
+};
+
+/** Boolean expression to filter rows from the table "modelcatalog_software_version_input_variable". All fields are combined with a logical 'AND'. */
+export type Modelcatalog_Software_Version_Input_Variable_Bool_Exp = {
+  _and?: InputMaybe<Array<Modelcatalog_Software_Version_Input_Variable_Bool_Exp>>;
+  _not?: InputMaybe<Modelcatalog_Software_Version_Input_Variable_Bool_Exp>;
+  _or?: InputMaybe<Array<Modelcatalog_Software_Version_Input_Variable_Bool_Exp>>;
+  software_version?: InputMaybe<Modelcatalog_Software_Version_Bool_Exp>;
+  software_version_id?: InputMaybe<String_Comparison_Exp>;
+  variable?: InputMaybe<Modelcatalog_Variable_Presentation_Bool_Exp>;
+  variable_id?: InputMaybe<String_Comparison_Exp>;
+};
+
+/** unique or primary key constraints on table "modelcatalog_software_version_input_variable" */
+export enum Modelcatalog_Software_Version_Input_Variable_Constraint {
+  /** unique or primary key constraint on columns "variable_id", "software_version_id" */
+  ModelcatalogSoftwareVersionInputVariablePkey = 'modelcatalog_software_version_input_variable_pkey'
+}
+
+/** input type for inserting data into table "modelcatalog_software_version_input_variable" */
+export type Modelcatalog_Software_Version_Input_Variable_Insert_Input = {
+  software_version?: InputMaybe<Modelcatalog_Software_Version_Obj_Rel_Insert_Input>;
+  software_version_id?: InputMaybe<Scalars['String']['input']>;
+  variable?: InputMaybe<Modelcatalog_Variable_Presentation_Obj_Rel_Insert_Input>;
+  variable_id?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** aggregate max on columns */
+export type Modelcatalog_Software_Version_Input_Variable_Max_Fields = {
+  __typename?: 'modelcatalog_software_version_input_variable_max_fields';
+  software_version_id?: Maybe<Scalars['String']['output']>;
+  variable_id?: Maybe<Scalars['String']['output']>;
+};
+
+/** order by max() on columns of table "modelcatalog_software_version_input_variable" */
+export type Modelcatalog_Software_Version_Input_Variable_Max_Order_By = {
+  software_version_id?: InputMaybe<Order_By>;
+  variable_id?: InputMaybe<Order_By>;
+};
+
+/** aggregate min on columns */
+export type Modelcatalog_Software_Version_Input_Variable_Min_Fields = {
+  __typename?: 'modelcatalog_software_version_input_variable_min_fields';
+  software_version_id?: Maybe<Scalars['String']['output']>;
+  variable_id?: Maybe<Scalars['String']['output']>;
+};
+
+/** order by min() on columns of table "modelcatalog_software_version_input_variable" */
+export type Modelcatalog_Software_Version_Input_Variable_Min_Order_By = {
+  software_version_id?: InputMaybe<Order_By>;
+  variable_id?: InputMaybe<Order_By>;
+};
+
+/** response of any mutation on the table "modelcatalog_software_version_input_variable" */
+export type Modelcatalog_Software_Version_Input_Variable_Mutation_Response = {
+  __typename?: 'modelcatalog_software_version_input_variable_mutation_response';
+  /** number of rows affected by the mutation */
+  affected_rows: Scalars['Int']['output'];
+  /** data from the rows affected by the mutation */
+  returning: Array<Modelcatalog_Software_Version_Input_Variable>;
+};
+
+/** on_conflict condition type for table "modelcatalog_software_version_input_variable" */
+export type Modelcatalog_Software_Version_Input_Variable_On_Conflict = {
+  constraint: Modelcatalog_Software_Version_Input_Variable_Constraint;
+  update_columns?: Array<Modelcatalog_Software_Version_Input_Variable_Update_Column>;
+  where?: InputMaybe<Modelcatalog_Software_Version_Input_Variable_Bool_Exp>;
+};
+
+/** Ordering options when selecting data from "modelcatalog_software_version_input_variable". */
+export type Modelcatalog_Software_Version_Input_Variable_Order_By = {
+  software_version?: InputMaybe<Modelcatalog_Software_Version_Order_By>;
+  software_version_id?: InputMaybe<Order_By>;
+  variable?: InputMaybe<Modelcatalog_Variable_Presentation_Order_By>;
+  variable_id?: InputMaybe<Order_By>;
+};
+
+/** primary key columns input for table: modelcatalog_software_version_input_variable */
+export type Modelcatalog_Software_Version_Input_Variable_Pk_Columns_Input = {
+  software_version_id: Scalars['String']['input'];
+  variable_id: Scalars['String']['input'];
+};
+
+/** select columns of table "modelcatalog_software_version_input_variable" */
+export enum Modelcatalog_Software_Version_Input_Variable_Select_Column {
+  /** column name */
+  SoftwareVersionId = 'software_version_id',
+  /** column name */
+  VariableId = 'variable_id'
+}
+
+/** input type for updating data in table "modelcatalog_software_version_input_variable" */
+export type Modelcatalog_Software_Version_Input_Variable_Set_Input = {
+  software_version_id?: InputMaybe<Scalars['String']['input']>;
+  variable_id?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** update columns of table "modelcatalog_software_version_input_variable" */
+export enum Modelcatalog_Software_Version_Input_Variable_Update_Column {
+  /** column name */
+  SoftwareVersionId = 'software_version_id',
+  /** column name */
+  VariableId = 'variable_id'
+}
+
+export type Modelcatalog_Software_Version_Input_Variable_Updates = {
+  /** sets the columns of the filtered rows to the given values */
+  _set?: InputMaybe<Modelcatalog_Software_Version_Input_Variable_Set_Input>;
+  where: Modelcatalog_Software_Version_Input_Variable_Bool_Exp;
+};
+
+/** input type for inserting data into table "modelcatalog_software_version" */
+export type Modelcatalog_Software_Version_Insert_Input = {
+  author?: InputMaybe<Modelcatalog_Person_Obj_Rel_Insert_Input>;
+  author_id?: InputMaybe<Scalars['String']['input']>;
+  authors?: InputMaybe<Modelcatalog_Version_Author_Arr_Rel_Insert_Input>;
+  categories?: InputMaybe<Modelcatalog_Software_Version_Category_Arr_Rel_Insert_Input>;
+  configurations?: InputMaybe<Modelcatalog_Configuration_Arr_Rel_Insert_Input>;
+  date_created?: InputMaybe<Scalars['String']['input']>;
+  description?: InputMaybe<Scalars['String']['input']>;
+  explanation_diagrams?: InputMaybe<Modelcatalog_Software_Version_Image_Arr_Rel_Insert_Input>;
+  grids?: InputMaybe<Modelcatalog_Software_Version_Grid_Arr_Rel_Insert_Input>;
+  has_source_code?: InputMaybe<Scalars['String']['input']>;
+  has_usage_notes?: InputMaybe<Scalars['String']['input']>;
+  id?: InputMaybe<Scalars['String']['input']>;
+  input_variables?: InputMaybe<Modelcatalog_Software_Version_Input_Variable_Arr_Rel_Insert_Input>;
+  keywords?: InputMaybe<Scalars['String']['input']>;
+  label?: InputMaybe<Scalars['String']['input']>;
+  limitations?: InputMaybe<Scalars['String']['input']>;
+  output_variables?: InputMaybe<Modelcatalog_Software_Version_Output_Variable_Arr_Rel_Insert_Input>;
+  parameterization?: InputMaybe<Scalars['String']['input']>;
+  processes?: InputMaybe<Modelcatalog_Software_Version_Process_Arr_Rel_Insert_Input>;
+  runtime_estimation?: InputMaybe<Scalars['String']['input']>;
+  short_description?: InputMaybe<Scalars['String']['input']>;
+  software?: InputMaybe<Modelcatalog_Software_Obj_Rel_Insert_Input>;
+  software_id?: InputMaybe<Scalars['String']['input']>;
+  theoretical_basis?: InputMaybe<Scalars['String']['input']>;
+  version_id?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** aggregate max on columns */
+export type Modelcatalog_Software_Version_Max_Fields = {
+  __typename?: 'modelcatalog_software_version_max_fields';
+  author_id?: Maybe<Scalars['String']['output']>;
+  date_created?: Maybe<Scalars['String']['output']>;
+  description?: Maybe<Scalars['String']['output']>;
+  has_source_code?: Maybe<Scalars['String']['output']>;
+  has_usage_notes?: Maybe<Scalars['String']['output']>;
+  id?: Maybe<Scalars['String']['output']>;
+  keywords?: Maybe<Scalars['String']['output']>;
+  label?: Maybe<Scalars['String']['output']>;
+  limitations?: Maybe<Scalars['String']['output']>;
+  parameterization?: Maybe<Scalars['String']['output']>;
+  runtime_estimation?: Maybe<Scalars['String']['output']>;
+  short_description?: Maybe<Scalars['String']['output']>;
+  software_id?: Maybe<Scalars['String']['output']>;
+  theoretical_basis?: Maybe<Scalars['String']['output']>;
+  version_id?: Maybe<Scalars['String']['output']>;
+};
+
+/** order by max() on columns of table "modelcatalog_software_version" */
+export type Modelcatalog_Software_Version_Max_Order_By = {
+  author_id?: InputMaybe<Order_By>;
+  date_created?: InputMaybe<Order_By>;
+  description?: InputMaybe<Order_By>;
+  has_source_code?: InputMaybe<Order_By>;
+  has_usage_notes?: InputMaybe<Order_By>;
+  id?: InputMaybe<Order_By>;
+  keywords?: InputMaybe<Order_By>;
+  label?: InputMaybe<Order_By>;
+  limitations?: InputMaybe<Order_By>;
+  parameterization?: InputMaybe<Order_By>;
+  runtime_estimation?: InputMaybe<Order_By>;
+  short_description?: InputMaybe<Order_By>;
+  software_id?: InputMaybe<Order_By>;
+  theoretical_basis?: InputMaybe<Order_By>;
+  version_id?: InputMaybe<Order_By>;
+};
+
+/** aggregate min on columns */
+export type Modelcatalog_Software_Version_Min_Fields = {
+  __typename?: 'modelcatalog_software_version_min_fields';
+  author_id?: Maybe<Scalars['String']['output']>;
+  date_created?: Maybe<Scalars['String']['output']>;
+  description?: Maybe<Scalars['String']['output']>;
+  has_source_code?: Maybe<Scalars['String']['output']>;
+  has_usage_notes?: Maybe<Scalars['String']['output']>;
+  id?: Maybe<Scalars['String']['output']>;
+  keywords?: Maybe<Scalars['String']['output']>;
+  label?: Maybe<Scalars['String']['output']>;
+  limitations?: Maybe<Scalars['String']['output']>;
+  parameterization?: Maybe<Scalars['String']['output']>;
+  runtime_estimation?: Maybe<Scalars['String']['output']>;
+  short_description?: Maybe<Scalars['String']['output']>;
+  software_id?: Maybe<Scalars['String']['output']>;
+  theoretical_basis?: Maybe<Scalars['String']['output']>;
+  version_id?: Maybe<Scalars['String']['output']>;
+};
+
+/** order by min() on columns of table "modelcatalog_software_version" */
+export type Modelcatalog_Software_Version_Min_Order_By = {
+  author_id?: InputMaybe<Order_By>;
+  date_created?: InputMaybe<Order_By>;
+  description?: InputMaybe<Order_By>;
+  has_source_code?: InputMaybe<Order_By>;
+  has_usage_notes?: InputMaybe<Order_By>;
+  id?: InputMaybe<Order_By>;
+  keywords?: InputMaybe<Order_By>;
+  label?: InputMaybe<Order_By>;
+  limitations?: InputMaybe<Order_By>;
+  parameterization?: InputMaybe<Order_By>;
+  runtime_estimation?: InputMaybe<Order_By>;
+  short_description?: InputMaybe<Order_By>;
+  software_id?: InputMaybe<Order_By>;
+  theoretical_basis?: InputMaybe<Order_By>;
+  version_id?: InputMaybe<Order_By>;
+};
+
+/** response of any mutation on the table "modelcatalog_software_version" */
+export type Modelcatalog_Software_Version_Mutation_Response = {
+  __typename?: 'modelcatalog_software_version_mutation_response';
+  /** number of rows affected by the mutation */
+  affected_rows: Scalars['Int']['output'];
+  /** data from the rows affected by the mutation */
+  returning: Array<Modelcatalog_Software_Version>;
+};
+
+/** input type for inserting object relation for remote table "modelcatalog_software_version" */
+export type Modelcatalog_Software_Version_Obj_Rel_Insert_Input = {
+  data: Modelcatalog_Software_Version_Insert_Input;
+  /** upsert condition */
+  on_conflict?: InputMaybe<Modelcatalog_Software_Version_On_Conflict>;
+};
+
+/** on_conflict condition type for table "modelcatalog_software_version" */
+export type Modelcatalog_Software_Version_On_Conflict = {
+  constraint: Modelcatalog_Software_Version_Constraint;
+  update_columns?: Array<Modelcatalog_Software_Version_Update_Column>;
+  where?: InputMaybe<Modelcatalog_Software_Version_Bool_Exp>;
+};
+
+/** Ordering options when selecting data from "modelcatalog_software_version". */
+export type Modelcatalog_Software_Version_Order_By = {
+  author?: InputMaybe<Modelcatalog_Person_Order_By>;
+  author_id?: InputMaybe<Order_By>;
+  authors_aggregate?: InputMaybe<Modelcatalog_Version_Author_Aggregate_Order_By>;
+  categories_aggregate?: InputMaybe<Modelcatalog_Software_Version_Category_Aggregate_Order_By>;
+  configurations_aggregate?: InputMaybe<Modelcatalog_Configuration_Aggregate_Order_By>;
+  date_created?: InputMaybe<Order_By>;
+  description?: InputMaybe<Order_By>;
+  explanation_diagrams_aggregate?: InputMaybe<Modelcatalog_Software_Version_Image_Aggregate_Order_By>;
+  grids_aggregate?: InputMaybe<Modelcatalog_Software_Version_Grid_Aggregate_Order_By>;
+  has_source_code?: InputMaybe<Order_By>;
+  has_usage_notes?: InputMaybe<Order_By>;
+  id?: InputMaybe<Order_By>;
+  input_variables_aggregate?: InputMaybe<Modelcatalog_Software_Version_Input_Variable_Aggregate_Order_By>;
+  keywords?: InputMaybe<Order_By>;
+  label?: InputMaybe<Order_By>;
+  limitations?: InputMaybe<Order_By>;
+  output_variables_aggregate?: InputMaybe<Modelcatalog_Software_Version_Output_Variable_Aggregate_Order_By>;
+  parameterization?: InputMaybe<Order_By>;
+  processes_aggregate?: InputMaybe<Modelcatalog_Software_Version_Process_Aggregate_Order_By>;
+  runtime_estimation?: InputMaybe<Order_By>;
+  short_description?: InputMaybe<Order_By>;
+  software?: InputMaybe<Modelcatalog_Software_Order_By>;
+  software_id?: InputMaybe<Order_By>;
+  theoretical_basis?: InputMaybe<Order_By>;
+  version_id?: InputMaybe<Order_By>;
+};
+
+/** columns and relationships of "modelcatalog_software_version_output_variable" */
+export type Modelcatalog_Software_Version_Output_Variable = {
+  __typename?: 'modelcatalog_software_version_output_variable';
+  /** An object relationship */
+  software_version: Modelcatalog_Software_Version;
+  software_version_id: Scalars['String']['output'];
+  /** An object relationship */
+  variable: Modelcatalog_Variable_Presentation;
+  variable_id: Scalars['String']['output'];
+};
+
+/** aggregated selection of "modelcatalog_software_version_output_variable" */
+export type Modelcatalog_Software_Version_Output_Variable_Aggregate = {
+  __typename?: 'modelcatalog_software_version_output_variable_aggregate';
+  aggregate?: Maybe<Modelcatalog_Software_Version_Output_Variable_Aggregate_Fields>;
+  nodes: Array<Modelcatalog_Software_Version_Output_Variable>;
+};
+
+/** aggregate fields of "modelcatalog_software_version_output_variable" */
+export type Modelcatalog_Software_Version_Output_Variable_Aggregate_Fields = {
+  __typename?: 'modelcatalog_software_version_output_variable_aggregate_fields';
+  count: Scalars['Int']['output'];
+  max?: Maybe<Modelcatalog_Software_Version_Output_Variable_Max_Fields>;
+  min?: Maybe<Modelcatalog_Software_Version_Output_Variable_Min_Fields>;
+};
+
+
+/** aggregate fields of "modelcatalog_software_version_output_variable" */
+export type Modelcatalog_Software_Version_Output_Variable_Aggregate_FieldsCountArgs = {
+  columns?: InputMaybe<Array<Modelcatalog_Software_Version_Output_Variable_Select_Column>>;
+  distinct?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
+/** order by aggregate values of table "modelcatalog_software_version_output_variable" */
+export type Modelcatalog_Software_Version_Output_Variable_Aggregate_Order_By = {
+  count?: InputMaybe<Order_By>;
+  max?: InputMaybe<Modelcatalog_Software_Version_Output_Variable_Max_Order_By>;
+  min?: InputMaybe<Modelcatalog_Software_Version_Output_Variable_Min_Order_By>;
+};
+
+/** input type for inserting array relation for remote table "modelcatalog_software_version_output_variable" */
+export type Modelcatalog_Software_Version_Output_Variable_Arr_Rel_Insert_Input = {
+  data: Array<Modelcatalog_Software_Version_Output_Variable_Insert_Input>;
+  /** upsert condition */
+  on_conflict?: InputMaybe<Modelcatalog_Software_Version_Output_Variable_On_Conflict>;
+};
+
+/** Boolean expression to filter rows from the table "modelcatalog_software_version_output_variable". All fields are combined with a logical 'AND'. */
+export type Modelcatalog_Software_Version_Output_Variable_Bool_Exp = {
+  _and?: InputMaybe<Array<Modelcatalog_Software_Version_Output_Variable_Bool_Exp>>;
+  _not?: InputMaybe<Modelcatalog_Software_Version_Output_Variable_Bool_Exp>;
+  _or?: InputMaybe<Array<Modelcatalog_Software_Version_Output_Variable_Bool_Exp>>;
+  software_version?: InputMaybe<Modelcatalog_Software_Version_Bool_Exp>;
+  software_version_id?: InputMaybe<String_Comparison_Exp>;
+  variable?: InputMaybe<Modelcatalog_Variable_Presentation_Bool_Exp>;
+  variable_id?: InputMaybe<String_Comparison_Exp>;
+};
+
+/** unique or primary key constraints on table "modelcatalog_software_version_output_variable" */
+export enum Modelcatalog_Software_Version_Output_Variable_Constraint {
+  /** unique or primary key constraint on columns "variable_id", "software_version_id" */
+  ModelcatalogSoftwareVersionOutputVariablePkey = 'modelcatalog_software_version_output_variable_pkey'
+}
+
+/** input type for inserting data into table "modelcatalog_software_version_output_variable" */
+export type Modelcatalog_Software_Version_Output_Variable_Insert_Input = {
+  software_version?: InputMaybe<Modelcatalog_Software_Version_Obj_Rel_Insert_Input>;
+  software_version_id?: InputMaybe<Scalars['String']['input']>;
+  variable?: InputMaybe<Modelcatalog_Variable_Presentation_Obj_Rel_Insert_Input>;
+  variable_id?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** aggregate max on columns */
+export type Modelcatalog_Software_Version_Output_Variable_Max_Fields = {
+  __typename?: 'modelcatalog_software_version_output_variable_max_fields';
+  software_version_id?: Maybe<Scalars['String']['output']>;
+  variable_id?: Maybe<Scalars['String']['output']>;
+};
+
+/** order by max() on columns of table "modelcatalog_software_version_output_variable" */
+export type Modelcatalog_Software_Version_Output_Variable_Max_Order_By = {
+  software_version_id?: InputMaybe<Order_By>;
+  variable_id?: InputMaybe<Order_By>;
+};
+
+/** aggregate min on columns */
+export type Modelcatalog_Software_Version_Output_Variable_Min_Fields = {
+  __typename?: 'modelcatalog_software_version_output_variable_min_fields';
+  software_version_id?: Maybe<Scalars['String']['output']>;
+  variable_id?: Maybe<Scalars['String']['output']>;
+};
+
+/** order by min() on columns of table "modelcatalog_software_version_output_variable" */
+export type Modelcatalog_Software_Version_Output_Variable_Min_Order_By = {
+  software_version_id?: InputMaybe<Order_By>;
+  variable_id?: InputMaybe<Order_By>;
+};
+
+/** response of any mutation on the table "modelcatalog_software_version_output_variable" */
+export type Modelcatalog_Software_Version_Output_Variable_Mutation_Response = {
+  __typename?: 'modelcatalog_software_version_output_variable_mutation_response';
+  /** number of rows affected by the mutation */
+  affected_rows: Scalars['Int']['output'];
+  /** data from the rows affected by the mutation */
+  returning: Array<Modelcatalog_Software_Version_Output_Variable>;
+};
+
+/** on_conflict condition type for table "modelcatalog_software_version_output_variable" */
+export type Modelcatalog_Software_Version_Output_Variable_On_Conflict = {
+  constraint: Modelcatalog_Software_Version_Output_Variable_Constraint;
+  update_columns?: Array<Modelcatalog_Software_Version_Output_Variable_Update_Column>;
+  where?: InputMaybe<Modelcatalog_Software_Version_Output_Variable_Bool_Exp>;
+};
+
+/** Ordering options when selecting data from "modelcatalog_software_version_output_variable". */
+export type Modelcatalog_Software_Version_Output_Variable_Order_By = {
+  software_version?: InputMaybe<Modelcatalog_Software_Version_Order_By>;
+  software_version_id?: InputMaybe<Order_By>;
+  variable?: InputMaybe<Modelcatalog_Variable_Presentation_Order_By>;
+  variable_id?: InputMaybe<Order_By>;
+};
+
+/** primary key columns input for table: modelcatalog_software_version_output_variable */
+export type Modelcatalog_Software_Version_Output_Variable_Pk_Columns_Input = {
+  software_version_id: Scalars['String']['input'];
+  variable_id: Scalars['String']['input'];
+};
+
+/** select columns of table "modelcatalog_software_version_output_variable" */
+export enum Modelcatalog_Software_Version_Output_Variable_Select_Column {
+  /** column name */
+  SoftwareVersionId = 'software_version_id',
+  /** column name */
+  VariableId = 'variable_id'
+}
+
+/** input type for updating data in table "modelcatalog_software_version_output_variable" */
+export type Modelcatalog_Software_Version_Output_Variable_Set_Input = {
+  software_version_id?: InputMaybe<Scalars['String']['input']>;
+  variable_id?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** update columns of table "modelcatalog_software_version_output_variable" */
+export enum Modelcatalog_Software_Version_Output_Variable_Update_Column {
+  /** column name */
+  SoftwareVersionId = 'software_version_id',
+  /** column name */
+  VariableId = 'variable_id'
+}
+
+export type Modelcatalog_Software_Version_Output_Variable_Updates = {
+  /** sets the columns of the filtered rows to the given values */
+  _set?: InputMaybe<Modelcatalog_Software_Version_Output_Variable_Set_Input>;
+  where: Modelcatalog_Software_Version_Output_Variable_Bool_Exp;
+};
+
+/** primary key columns input for table: modelcatalog_software_version */
+export type Modelcatalog_Software_Version_Pk_Columns_Input = {
+  id: Scalars['String']['input'];
+};
+
+/** columns and relationships of "modelcatalog_software_version_process" */
+export type Modelcatalog_Software_Version_Process = {
+  __typename?: 'modelcatalog_software_version_process';
+  /** An object relationship */
+  process: Modelcatalog_Process;
+  process_id: Scalars['String']['output'];
+  /** An object relationship */
+  software_version: Modelcatalog_Software_Version;
+  software_version_id: Scalars['String']['output'];
+};
+
+/** aggregated selection of "modelcatalog_software_version_process" */
+export type Modelcatalog_Software_Version_Process_Aggregate = {
+  __typename?: 'modelcatalog_software_version_process_aggregate';
+  aggregate?: Maybe<Modelcatalog_Software_Version_Process_Aggregate_Fields>;
+  nodes: Array<Modelcatalog_Software_Version_Process>;
+};
+
+/** aggregate fields of "modelcatalog_software_version_process" */
+export type Modelcatalog_Software_Version_Process_Aggregate_Fields = {
+  __typename?: 'modelcatalog_software_version_process_aggregate_fields';
+  count: Scalars['Int']['output'];
+  max?: Maybe<Modelcatalog_Software_Version_Process_Max_Fields>;
+  min?: Maybe<Modelcatalog_Software_Version_Process_Min_Fields>;
+};
+
+
+/** aggregate fields of "modelcatalog_software_version_process" */
+export type Modelcatalog_Software_Version_Process_Aggregate_FieldsCountArgs = {
+  columns?: InputMaybe<Array<Modelcatalog_Software_Version_Process_Select_Column>>;
+  distinct?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
+/** order by aggregate values of table "modelcatalog_software_version_process" */
+export type Modelcatalog_Software_Version_Process_Aggregate_Order_By = {
+  count?: InputMaybe<Order_By>;
+  max?: InputMaybe<Modelcatalog_Software_Version_Process_Max_Order_By>;
+  min?: InputMaybe<Modelcatalog_Software_Version_Process_Min_Order_By>;
+};
+
+/** input type for inserting array relation for remote table "modelcatalog_software_version_process" */
+export type Modelcatalog_Software_Version_Process_Arr_Rel_Insert_Input = {
+  data: Array<Modelcatalog_Software_Version_Process_Insert_Input>;
+  /** upsert condition */
+  on_conflict?: InputMaybe<Modelcatalog_Software_Version_Process_On_Conflict>;
+};
+
+/** Boolean expression to filter rows from the table "modelcatalog_software_version_process". All fields are combined with a logical 'AND'. */
+export type Modelcatalog_Software_Version_Process_Bool_Exp = {
+  _and?: InputMaybe<Array<Modelcatalog_Software_Version_Process_Bool_Exp>>;
+  _not?: InputMaybe<Modelcatalog_Software_Version_Process_Bool_Exp>;
+  _or?: InputMaybe<Array<Modelcatalog_Software_Version_Process_Bool_Exp>>;
+  process?: InputMaybe<Modelcatalog_Process_Bool_Exp>;
+  process_id?: InputMaybe<String_Comparison_Exp>;
+  software_version?: InputMaybe<Modelcatalog_Software_Version_Bool_Exp>;
+  software_version_id?: InputMaybe<String_Comparison_Exp>;
+};
+
+/** unique or primary key constraints on table "modelcatalog_software_version_process" */
+export enum Modelcatalog_Software_Version_Process_Constraint {
+  /** unique or primary key constraint on columns "process_id", "software_version_id" */
+  ModelcatalogSoftwareVersionProcessPkey = 'modelcatalog_software_version_process_pkey'
+}
+
+/** input type for inserting data into table "modelcatalog_software_version_process" */
+export type Modelcatalog_Software_Version_Process_Insert_Input = {
+  process?: InputMaybe<Modelcatalog_Process_Obj_Rel_Insert_Input>;
+  process_id?: InputMaybe<Scalars['String']['input']>;
+  software_version?: InputMaybe<Modelcatalog_Software_Version_Obj_Rel_Insert_Input>;
+  software_version_id?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** aggregate max on columns */
+export type Modelcatalog_Software_Version_Process_Max_Fields = {
+  __typename?: 'modelcatalog_software_version_process_max_fields';
+  process_id?: Maybe<Scalars['String']['output']>;
+  software_version_id?: Maybe<Scalars['String']['output']>;
+};
+
+/** order by max() on columns of table "modelcatalog_software_version_process" */
+export type Modelcatalog_Software_Version_Process_Max_Order_By = {
+  process_id?: InputMaybe<Order_By>;
+  software_version_id?: InputMaybe<Order_By>;
+};
+
+/** aggregate min on columns */
+export type Modelcatalog_Software_Version_Process_Min_Fields = {
+  __typename?: 'modelcatalog_software_version_process_min_fields';
+  process_id?: Maybe<Scalars['String']['output']>;
+  software_version_id?: Maybe<Scalars['String']['output']>;
+};
+
+/** order by min() on columns of table "modelcatalog_software_version_process" */
+export type Modelcatalog_Software_Version_Process_Min_Order_By = {
+  process_id?: InputMaybe<Order_By>;
+  software_version_id?: InputMaybe<Order_By>;
+};
+
+/** response of any mutation on the table "modelcatalog_software_version_process" */
+export type Modelcatalog_Software_Version_Process_Mutation_Response = {
+  __typename?: 'modelcatalog_software_version_process_mutation_response';
+  /** number of rows affected by the mutation */
+  affected_rows: Scalars['Int']['output'];
+  /** data from the rows affected by the mutation */
+  returning: Array<Modelcatalog_Software_Version_Process>;
+};
+
+/** on_conflict condition type for table "modelcatalog_software_version_process" */
+export type Modelcatalog_Software_Version_Process_On_Conflict = {
+  constraint: Modelcatalog_Software_Version_Process_Constraint;
+  update_columns?: Array<Modelcatalog_Software_Version_Process_Update_Column>;
+  where?: InputMaybe<Modelcatalog_Software_Version_Process_Bool_Exp>;
+};
+
+/** Ordering options when selecting data from "modelcatalog_software_version_process". */
+export type Modelcatalog_Software_Version_Process_Order_By = {
+  process?: InputMaybe<Modelcatalog_Process_Order_By>;
+  process_id?: InputMaybe<Order_By>;
+  software_version?: InputMaybe<Modelcatalog_Software_Version_Order_By>;
+  software_version_id?: InputMaybe<Order_By>;
+};
+
+/** primary key columns input for table: modelcatalog_software_version_process */
+export type Modelcatalog_Software_Version_Process_Pk_Columns_Input = {
+  process_id: Scalars['String']['input'];
+  software_version_id: Scalars['String']['input'];
+};
+
+/** select columns of table "modelcatalog_software_version_process" */
+export enum Modelcatalog_Software_Version_Process_Select_Column {
+  /** column name */
+  ProcessId = 'process_id',
+  /** column name */
+  SoftwareVersionId = 'software_version_id'
+}
+
+/** input type for updating data in table "modelcatalog_software_version_process" */
+export type Modelcatalog_Software_Version_Process_Set_Input = {
+  process_id?: InputMaybe<Scalars['String']['input']>;
+  software_version_id?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** update columns of table "modelcatalog_software_version_process" */
+export enum Modelcatalog_Software_Version_Process_Update_Column {
+  /** column name */
+  ProcessId = 'process_id',
+  /** column name */
+  SoftwareVersionId = 'software_version_id'
+}
+
+export type Modelcatalog_Software_Version_Process_Updates = {
+  /** sets the columns of the filtered rows to the given values */
+  _set?: InputMaybe<Modelcatalog_Software_Version_Process_Set_Input>;
+  where: Modelcatalog_Software_Version_Process_Bool_Exp;
+};
+
+/** select columns of table "modelcatalog_software_version" */
+export enum Modelcatalog_Software_Version_Select_Column {
+  /** column name */
+  AuthorId = 'author_id',
+  /** column name */
+  DateCreated = 'date_created',
+  /** column name */
+  Description = 'description',
+  /** column name */
+  HasSourceCode = 'has_source_code',
+  /** column name */
+  HasUsageNotes = 'has_usage_notes',
+  /** column name */
+  Id = 'id',
+  /** column name */
+  Keywords = 'keywords',
+  /** column name */
+  Label = 'label',
+  /** column name */
+  Limitations = 'limitations',
+  /** column name */
+  Parameterization = 'parameterization',
+  /** column name */
+  RuntimeEstimation = 'runtime_estimation',
+  /** column name */
+  ShortDescription = 'short_description',
+  /** column name */
+  SoftwareId = 'software_id',
+  /** column name */
+  TheoreticalBasis = 'theoretical_basis',
+  /** column name */
+  VersionId = 'version_id'
+}
+
+/** input type for updating data in table "modelcatalog_software_version" */
+export type Modelcatalog_Software_Version_Set_Input = {
+  author_id?: InputMaybe<Scalars['String']['input']>;
+  date_created?: InputMaybe<Scalars['String']['input']>;
+  description?: InputMaybe<Scalars['String']['input']>;
+  has_source_code?: InputMaybe<Scalars['String']['input']>;
+  has_usage_notes?: InputMaybe<Scalars['String']['input']>;
+  id?: InputMaybe<Scalars['String']['input']>;
+  keywords?: InputMaybe<Scalars['String']['input']>;
+  label?: InputMaybe<Scalars['String']['input']>;
+  limitations?: InputMaybe<Scalars['String']['input']>;
+  parameterization?: InputMaybe<Scalars['String']['input']>;
+  runtime_estimation?: InputMaybe<Scalars['String']['input']>;
+  short_description?: InputMaybe<Scalars['String']['input']>;
+  software_id?: InputMaybe<Scalars['String']['input']>;
+  theoretical_basis?: InputMaybe<Scalars['String']['input']>;
+  version_id?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** update columns of table "modelcatalog_software_version" */
+export enum Modelcatalog_Software_Version_Update_Column {
+  /** column name */
+  AuthorId = 'author_id',
+  /** column name */
+  DateCreated = 'date_created',
+  /** column name */
+  Description = 'description',
+  /** column name */
+  HasSourceCode = 'has_source_code',
+  /** column name */
+  HasUsageNotes = 'has_usage_notes',
+  /** column name */
+  Id = 'id',
+  /** column name */
+  Keywords = 'keywords',
+  /** column name */
+  Label = 'label',
+  /** column name */
+  Limitations = 'limitations',
+  /** column name */
+  Parameterization = 'parameterization',
+  /** column name */
+  RuntimeEstimation = 'runtime_estimation',
+  /** column name */
+  ShortDescription = 'short_description',
+  /** column name */
+  SoftwareId = 'software_id',
+  /** column name */
+  TheoreticalBasis = 'theoretical_basis',
+  /** column name */
+  VersionId = 'version_id'
+}
+
+export type Modelcatalog_Software_Version_Updates = {
+  /** sets the columns of the filtered rows to the given values */
+  _set?: InputMaybe<Modelcatalog_Software_Version_Set_Input>;
+  where: Modelcatalog_Software_Version_Bool_Exp;
+};
+
+/** columns and relationships of "modelcatalog_standard_variable" */
+export type Modelcatalog_Standard_Variable = {
+  __typename?: 'modelcatalog_standard_variable';
+  description?: Maybe<Scalars['String']['output']>;
+  id: Scalars['String']['output'];
+  label: Scalars['String']['output'];
+  same_as?: Maybe<Scalars['_text']['output']>;
+  /** An array relationship */
+  variable_presentations: Array<Modelcatalog_Variable_Presentation>;
+  /** An aggregate relationship */
+  variable_presentations_aggregate: Modelcatalog_Variable_Presentation_Aggregate;
+};
+
+
+/** columns and relationships of "modelcatalog_standard_variable" */
+export type Modelcatalog_Standard_VariableVariable_PresentationsArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Variable_Presentation_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Variable_Presentation_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Variable_Presentation_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_standard_variable" */
+export type Modelcatalog_Standard_VariableVariable_Presentations_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Variable_Presentation_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Variable_Presentation_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Variable_Presentation_Bool_Exp>;
+};
+
+/** aggregated selection of "modelcatalog_standard_variable" */
+export type Modelcatalog_Standard_Variable_Aggregate = {
+  __typename?: 'modelcatalog_standard_variable_aggregate';
+  aggregate?: Maybe<Modelcatalog_Standard_Variable_Aggregate_Fields>;
+  nodes: Array<Modelcatalog_Standard_Variable>;
+};
+
+/** aggregate fields of "modelcatalog_standard_variable" */
+export type Modelcatalog_Standard_Variable_Aggregate_Fields = {
+  __typename?: 'modelcatalog_standard_variable_aggregate_fields';
+  count: Scalars['Int']['output'];
+  max?: Maybe<Modelcatalog_Standard_Variable_Max_Fields>;
+  min?: Maybe<Modelcatalog_Standard_Variable_Min_Fields>;
+};
+
+
+/** aggregate fields of "modelcatalog_standard_variable" */
+export type Modelcatalog_Standard_Variable_Aggregate_FieldsCountArgs = {
+  columns?: InputMaybe<Array<Modelcatalog_Standard_Variable_Select_Column>>;
+  distinct?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
+/** Boolean expression to filter rows from the table "modelcatalog_standard_variable". All fields are combined with a logical 'AND'. */
+export type Modelcatalog_Standard_Variable_Bool_Exp = {
+  _and?: InputMaybe<Array<Modelcatalog_Standard_Variable_Bool_Exp>>;
+  _not?: InputMaybe<Modelcatalog_Standard_Variable_Bool_Exp>;
+  _or?: InputMaybe<Array<Modelcatalog_Standard_Variable_Bool_Exp>>;
+  description?: InputMaybe<String_Comparison_Exp>;
+  id?: InputMaybe<String_Comparison_Exp>;
+  label?: InputMaybe<String_Comparison_Exp>;
+  same_as?: InputMaybe<_Text_Comparison_Exp>;
+  variable_presentations?: InputMaybe<Modelcatalog_Variable_Presentation_Bool_Exp>;
+};
+
+/** unique or primary key constraints on table "modelcatalog_standard_variable" */
+export enum Modelcatalog_Standard_Variable_Constraint {
+  /** unique or primary key constraint on columns "id" */
+  ModelcatalogStandardVariablePkey = 'modelcatalog_standard_variable_pkey'
+}
+
+/** input type for inserting data into table "modelcatalog_standard_variable" */
+export type Modelcatalog_Standard_Variable_Insert_Input = {
+  description?: InputMaybe<Scalars['String']['input']>;
+  id?: InputMaybe<Scalars['String']['input']>;
+  label?: InputMaybe<Scalars['String']['input']>;
+  same_as?: InputMaybe<Scalars['_text']['input']>;
+  variable_presentations?: InputMaybe<Modelcatalog_Variable_Presentation_Arr_Rel_Insert_Input>;
+};
+
+/** aggregate max on columns */
+export type Modelcatalog_Standard_Variable_Max_Fields = {
+  __typename?: 'modelcatalog_standard_variable_max_fields';
+  description?: Maybe<Scalars['String']['output']>;
+  id?: Maybe<Scalars['String']['output']>;
+  label?: Maybe<Scalars['String']['output']>;
+};
+
+/** aggregate min on columns */
+export type Modelcatalog_Standard_Variable_Min_Fields = {
+  __typename?: 'modelcatalog_standard_variable_min_fields';
+  description?: Maybe<Scalars['String']['output']>;
+  id?: Maybe<Scalars['String']['output']>;
+  label?: Maybe<Scalars['String']['output']>;
+};
+
+/** response of any mutation on the table "modelcatalog_standard_variable" */
+export type Modelcatalog_Standard_Variable_Mutation_Response = {
+  __typename?: 'modelcatalog_standard_variable_mutation_response';
+  /** number of rows affected by the mutation */
+  affected_rows: Scalars['Int']['output'];
+  /** data from the rows affected by the mutation */
+  returning: Array<Modelcatalog_Standard_Variable>;
+};
+
+/** input type for inserting object relation for remote table "modelcatalog_standard_variable" */
+export type Modelcatalog_Standard_Variable_Obj_Rel_Insert_Input = {
+  data: Modelcatalog_Standard_Variable_Insert_Input;
+  /** upsert condition */
+  on_conflict?: InputMaybe<Modelcatalog_Standard_Variable_On_Conflict>;
+};
+
+/** on_conflict condition type for table "modelcatalog_standard_variable" */
+export type Modelcatalog_Standard_Variable_On_Conflict = {
+  constraint: Modelcatalog_Standard_Variable_Constraint;
+  update_columns?: Array<Modelcatalog_Standard_Variable_Update_Column>;
+  where?: InputMaybe<Modelcatalog_Standard_Variable_Bool_Exp>;
+};
+
+/** Ordering options when selecting data from "modelcatalog_standard_variable". */
+export type Modelcatalog_Standard_Variable_Order_By = {
+  description?: InputMaybe<Order_By>;
+  id?: InputMaybe<Order_By>;
+  label?: InputMaybe<Order_By>;
+  same_as?: InputMaybe<Order_By>;
+  variable_presentations_aggregate?: InputMaybe<Modelcatalog_Variable_Presentation_Aggregate_Order_By>;
+};
+
+/** primary key columns input for table: modelcatalog_standard_variable */
+export type Modelcatalog_Standard_Variable_Pk_Columns_Input = {
+  id: Scalars['String']['input'];
+};
+
+/** select columns of table "modelcatalog_standard_variable" */
+export enum Modelcatalog_Standard_Variable_Select_Column {
+  /** column name */
+  Description = 'description',
+  /** column name */
+  Id = 'id',
+  /** column name */
+  Label = 'label',
+  /** column name */
+  SameAs = 'same_as'
+}
+
+/** input type for updating data in table "modelcatalog_standard_variable" */
+export type Modelcatalog_Standard_Variable_Set_Input = {
+  description?: InputMaybe<Scalars['String']['input']>;
+  id?: InputMaybe<Scalars['String']['input']>;
+  label?: InputMaybe<Scalars['String']['input']>;
+  same_as?: InputMaybe<Scalars['_text']['input']>;
+};
+
+/** update columns of table "modelcatalog_standard_variable" */
+export enum Modelcatalog_Standard_Variable_Update_Column {
+  /** column name */
+  Description = 'description',
+  /** column name */
+  Id = 'id',
+  /** column name */
+  Label = 'label',
+  /** column name */
+  SameAs = 'same_as'
+}
+
+export type Modelcatalog_Standard_Variable_Updates = {
+  /** sets the columns of the filtered rows to the given values */
+  _set?: InputMaybe<Modelcatalog_Standard_Variable_Set_Input>;
+  where: Modelcatalog_Standard_Variable_Bool_Exp;
+};
+
+/** columns and relationships of "modelcatalog_time_interval" */
+export type Modelcatalog_Time_Interval = {
+  __typename?: 'modelcatalog_time_interval';
+  /** An array relationship */
+  configurations: Array<Modelcatalog_Configuration_Time_Interval>;
+  /** An aggregate relationship */
+  configurations_aggregate: Modelcatalog_Configuration_Time_Interval_Aggregate;
+  description?: Maybe<Scalars['String']['output']>;
+  id: Scalars['String']['output'];
+  interval_unit?: Maybe<Scalars['String']['output']>;
+  interval_value?: Maybe<Scalars['String']['output']>;
+  label: Scalars['String']['output'];
+};
+
+
+/** columns and relationships of "modelcatalog_time_interval" */
+export type Modelcatalog_Time_IntervalConfigurationsArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Configuration_Time_Interval_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Configuration_Time_Interval_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Configuration_Time_Interval_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_time_interval" */
+export type Modelcatalog_Time_IntervalConfigurations_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Configuration_Time_Interval_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Configuration_Time_Interval_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Configuration_Time_Interval_Bool_Exp>;
+};
+
+/** aggregated selection of "modelcatalog_time_interval" */
+export type Modelcatalog_Time_Interval_Aggregate = {
+  __typename?: 'modelcatalog_time_interval_aggregate';
+  aggregate?: Maybe<Modelcatalog_Time_Interval_Aggregate_Fields>;
+  nodes: Array<Modelcatalog_Time_Interval>;
+};
+
+/** aggregate fields of "modelcatalog_time_interval" */
+export type Modelcatalog_Time_Interval_Aggregate_Fields = {
+  __typename?: 'modelcatalog_time_interval_aggregate_fields';
+  count: Scalars['Int']['output'];
+  max?: Maybe<Modelcatalog_Time_Interval_Max_Fields>;
+  min?: Maybe<Modelcatalog_Time_Interval_Min_Fields>;
+};
+
+
+/** aggregate fields of "modelcatalog_time_interval" */
+export type Modelcatalog_Time_Interval_Aggregate_FieldsCountArgs = {
+  columns?: InputMaybe<Array<Modelcatalog_Time_Interval_Select_Column>>;
+  distinct?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
+/** Boolean expression to filter rows from the table "modelcatalog_time_interval". All fields are combined with a logical 'AND'. */
+export type Modelcatalog_Time_Interval_Bool_Exp = {
+  _and?: InputMaybe<Array<Modelcatalog_Time_Interval_Bool_Exp>>;
+  _not?: InputMaybe<Modelcatalog_Time_Interval_Bool_Exp>;
+  _or?: InputMaybe<Array<Modelcatalog_Time_Interval_Bool_Exp>>;
+  configurations?: InputMaybe<Modelcatalog_Configuration_Time_Interval_Bool_Exp>;
+  description?: InputMaybe<String_Comparison_Exp>;
+  id?: InputMaybe<String_Comparison_Exp>;
+  interval_unit?: InputMaybe<String_Comparison_Exp>;
+  interval_value?: InputMaybe<String_Comparison_Exp>;
+  label?: InputMaybe<String_Comparison_Exp>;
+};
+
+/** unique or primary key constraints on table "modelcatalog_time_interval" */
+export enum Modelcatalog_Time_Interval_Constraint {
+  /** unique or primary key constraint on columns "id" */
+  ModelcatalogTimeIntervalPkey = 'modelcatalog_time_interval_pkey'
+}
+
+/** input type for inserting data into table "modelcatalog_time_interval" */
+export type Modelcatalog_Time_Interval_Insert_Input = {
+  configurations?: InputMaybe<Modelcatalog_Configuration_Time_Interval_Arr_Rel_Insert_Input>;
+  description?: InputMaybe<Scalars['String']['input']>;
+  id?: InputMaybe<Scalars['String']['input']>;
+  interval_unit?: InputMaybe<Scalars['String']['input']>;
+  interval_value?: InputMaybe<Scalars['String']['input']>;
+  label?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** aggregate max on columns */
+export type Modelcatalog_Time_Interval_Max_Fields = {
+  __typename?: 'modelcatalog_time_interval_max_fields';
+  description?: Maybe<Scalars['String']['output']>;
+  id?: Maybe<Scalars['String']['output']>;
+  interval_unit?: Maybe<Scalars['String']['output']>;
+  interval_value?: Maybe<Scalars['String']['output']>;
+  label?: Maybe<Scalars['String']['output']>;
+};
+
+/** aggregate min on columns */
+export type Modelcatalog_Time_Interval_Min_Fields = {
+  __typename?: 'modelcatalog_time_interval_min_fields';
+  description?: Maybe<Scalars['String']['output']>;
+  id?: Maybe<Scalars['String']['output']>;
+  interval_unit?: Maybe<Scalars['String']['output']>;
+  interval_value?: Maybe<Scalars['String']['output']>;
+  label?: Maybe<Scalars['String']['output']>;
+};
+
+/** response of any mutation on the table "modelcatalog_time_interval" */
+export type Modelcatalog_Time_Interval_Mutation_Response = {
+  __typename?: 'modelcatalog_time_interval_mutation_response';
+  /** number of rows affected by the mutation */
+  affected_rows: Scalars['Int']['output'];
+  /** data from the rows affected by the mutation */
+  returning: Array<Modelcatalog_Time_Interval>;
+};
+
+/** input type for inserting object relation for remote table "modelcatalog_time_interval" */
+export type Modelcatalog_Time_Interval_Obj_Rel_Insert_Input = {
+  data: Modelcatalog_Time_Interval_Insert_Input;
+  /** upsert condition */
+  on_conflict?: InputMaybe<Modelcatalog_Time_Interval_On_Conflict>;
+};
+
+/** on_conflict condition type for table "modelcatalog_time_interval" */
+export type Modelcatalog_Time_Interval_On_Conflict = {
+  constraint: Modelcatalog_Time_Interval_Constraint;
+  update_columns?: Array<Modelcatalog_Time_Interval_Update_Column>;
+  where?: InputMaybe<Modelcatalog_Time_Interval_Bool_Exp>;
+};
+
+/** Ordering options when selecting data from "modelcatalog_time_interval". */
+export type Modelcatalog_Time_Interval_Order_By = {
+  configurations_aggregate?: InputMaybe<Modelcatalog_Configuration_Time_Interval_Aggregate_Order_By>;
+  description?: InputMaybe<Order_By>;
+  id?: InputMaybe<Order_By>;
+  interval_unit?: InputMaybe<Order_By>;
+  interval_value?: InputMaybe<Order_By>;
+  label?: InputMaybe<Order_By>;
+};
+
+/** primary key columns input for table: modelcatalog_time_interval */
+export type Modelcatalog_Time_Interval_Pk_Columns_Input = {
+  id: Scalars['String']['input'];
+};
+
+/** select columns of table "modelcatalog_time_interval" */
+export enum Modelcatalog_Time_Interval_Select_Column {
+  /** column name */
+  Description = 'description',
+  /** column name */
+  Id = 'id',
+  /** column name */
+  IntervalUnit = 'interval_unit',
+  /** column name */
+  IntervalValue = 'interval_value',
+  /** column name */
+  Label = 'label'
+}
+
+/** input type for updating data in table "modelcatalog_time_interval" */
+export type Modelcatalog_Time_Interval_Set_Input = {
+  description?: InputMaybe<Scalars['String']['input']>;
+  id?: InputMaybe<Scalars['String']['input']>;
+  interval_unit?: InputMaybe<Scalars['String']['input']>;
+  interval_value?: InputMaybe<Scalars['String']['input']>;
+  label?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** update columns of table "modelcatalog_time_interval" */
+export enum Modelcatalog_Time_Interval_Update_Column {
+  /** column name */
+  Description = 'description',
+  /** column name */
+  Id = 'id',
+  /** column name */
+  IntervalUnit = 'interval_unit',
+  /** column name */
+  IntervalValue = 'interval_value',
+  /** column name */
+  Label = 'label'
+}
+
+export type Modelcatalog_Time_Interval_Updates = {
+  /** sets the columns of the filtered rows to the given values */
+  _set?: InputMaybe<Modelcatalog_Time_Interval_Set_Input>;
+  where: Modelcatalog_Time_Interval_Bool_Exp;
+};
+
+/** columns and relationships of "modelcatalog_unit" */
+export type Modelcatalog_Unit = {
+  __typename?: 'modelcatalog_unit';
+  id: Scalars['String']['output'];
+  label: Scalars['String']['output'];
+  /** An array relationship */
+  variable_presentations: Array<Modelcatalog_Variable_Presentation>;
+  /** An aggregate relationship */
+  variable_presentations_aggregate: Modelcatalog_Variable_Presentation_Aggregate;
+};
+
+
+/** columns and relationships of "modelcatalog_unit" */
+export type Modelcatalog_UnitVariable_PresentationsArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Variable_Presentation_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Variable_Presentation_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Variable_Presentation_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_unit" */
+export type Modelcatalog_UnitVariable_Presentations_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Variable_Presentation_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Variable_Presentation_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Variable_Presentation_Bool_Exp>;
+};
+
+/** aggregated selection of "modelcatalog_unit" */
+export type Modelcatalog_Unit_Aggregate = {
+  __typename?: 'modelcatalog_unit_aggregate';
+  aggregate?: Maybe<Modelcatalog_Unit_Aggregate_Fields>;
+  nodes: Array<Modelcatalog_Unit>;
+};
+
+/** aggregate fields of "modelcatalog_unit" */
+export type Modelcatalog_Unit_Aggregate_Fields = {
+  __typename?: 'modelcatalog_unit_aggregate_fields';
+  count: Scalars['Int']['output'];
+  max?: Maybe<Modelcatalog_Unit_Max_Fields>;
+  min?: Maybe<Modelcatalog_Unit_Min_Fields>;
+};
+
+
+/** aggregate fields of "modelcatalog_unit" */
+export type Modelcatalog_Unit_Aggregate_FieldsCountArgs = {
+  columns?: InputMaybe<Array<Modelcatalog_Unit_Select_Column>>;
+  distinct?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
+/** Boolean expression to filter rows from the table "modelcatalog_unit". All fields are combined with a logical 'AND'. */
+export type Modelcatalog_Unit_Bool_Exp = {
+  _and?: InputMaybe<Array<Modelcatalog_Unit_Bool_Exp>>;
+  _not?: InputMaybe<Modelcatalog_Unit_Bool_Exp>;
+  _or?: InputMaybe<Array<Modelcatalog_Unit_Bool_Exp>>;
+  id?: InputMaybe<String_Comparison_Exp>;
+  label?: InputMaybe<String_Comparison_Exp>;
+  variable_presentations?: InputMaybe<Modelcatalog_Variable_Presentation_Bool_Exp>;
+};
+
+/** unique or primary key constraints on table "modelcatalog_unit" */
+export enum Modelcatalog_Unit_Constraint {
+  /** unique or primary key constraint on columns "id" */
+  ModelcatalogUnitPkey = 'modelcatalog_unit_pkey'
+}
+
+/** input type for inserting data into table "modelcatalog_unit" */
+export type Modelcatalog_Unit_Insert_Input = {
+  id?: InputMaybe<Scalars['String']['input']>;
+  label?: InputMaybe<Scalars['String']['input']>;
+  variable_presentations?: InputMaybe<Modelcatalog_Variable_Presentation_Arr_Rel_Insert_Input>;
+};
+
+/** aggregate max on columns */
+export type Modelcatalog_Unit_Max_Fields = {
+  __typename?: 'modelcatalog_unit_max_fields';
+  id?: Maybe<Scalars['String']['output']>;
+  label?: Maybe<Scalars['String']['output']>;
+};
+
+/** aggregate min on columns */
+export type Modelcatalog_Unit_Min_Fields = {
+  __typename?: 'modelcatalog_unit_min_fields';
+  id?: Maybe<Scalars['String']['output']>;
+  label?: Maybe<Scalars['String']['output']>;
+};
+
+/** response of any mutation on the table "modelcatalog_unit" */
+export type Modelcatalog_Unit_Mutation_Response = {
+  __typename?: 'modelcatalog_unit_mutation_response';
+  /** number of rows affected by the mutation */
+  affected_rows: Scalars['Int']['output'];
+  /** data from the rows affected by the mutation */
+  returning: Array<Modelcatalog_Unit>;
+};
+
+/** input type for inserting object relation for remote table "modelcatalog_unit" */
+export type Modelcatalog_Unit_Obj_Rel_Insert_Input = {
+  data: Modelcatalog_Unit_Insert_Input;
+  /** upsert condition */
+  on_conflict?: InputMaybe<Modelcatalog_Unit_On_Conflict>;
+};
+
+/** on_conflict condition type for table "modelcatalog_unit" */
+export type Modelcatalog_Unit_On_Conflict = {
+  constraint: Modelcatalog_Unit_Constraint;
+  update_columns?: Array<Modelcatalog_Unit_Update_Column>;
+  where?: InputMaybe<Modelcatalog_Unit_Bool_Exp>;
+};
+
+/** Ordering options when selecting data from "modelcatalog_unit". */
+export type Modelcatalog_Unit_Order_By = {
+  id?: InputMaybe<Order_By>;
+  label?: InputMaybe<Order_By>;
+  variable_presentations_aggregate?: InputMaybe<Modelcatalog_Variable_Presentation_Aggregate_Order_By>;
+};
+
+/** primary key columns input for table: modelcatalog_unit */
+export type Modelcatalog_Unit_Pk_Columns_Input = {
+  id: Scalars['String']['input'];
+};
+
+/** select columns of table "modelcatalog_unit" */
+export enum Modelcatalog_Unit_Select_Column {
+  /** column name */
+  Id = 'id',
+  /** column name */
+  Label = 'label'
+}
+
+/** input type for updating data in table "modelcatalog_unit" */
+export type Modelcatalog_Unit_Set_Input = {
+  id?: InputMaybe<Scalars['String']['input']>;
+  label?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** update columns of table "modelcatalog_unit" */
+export enum Modelcatalog_Unit_Update_Column {
+  /** column name */
+  Id = 'id',
+  /** column name */
+  Label = 'label'
+}
+
+export type Modelcatalog_Unit_Updates = {
+  /** sets the columns of the filtered rows to the given values */
+  _set?: InputMaybe<Modelcatalog_Unit_Set_Input>;
+  where: Modelcatalog_Unit_Bool_Exp;
+};
+
+/** columns and relationships of "modelcatalog_variable_presentation" */
+export type Modelcatalog_Variable_Presentation = {
+  __typename?: 'modelcatalog_variable_presentation';
+  /** An array relationship */
+  calibrated_in: Array<Modelcatalog_Configuration_Calibrated_Variable>;
+  /** An aggregate relationship */
+  calibrated_in_aggregate: Modelcatalog_Configuration_Calibrated_Variable_Aggregate;
+  /** An array relationship */
+  calibration_target_in: Array<Modelcatalog_Configuration_Calibration_Target>;
+  /** An aggregate relationship */
+  calibration_target_in_aggregate: Modelcatalog_Configuration_Calibration_Target_Aggregate;
+  description?: Maybe<Scalars['String']['output']>;
+  has_long_name?: Maybe<Scalars['String']['output']>;
+  has_short_name?: Maybe<Scalars['String']['output']>;
+  has_standard_variable?: Maybe<Scalars['String']['output']>;
+  id: Scalars['String']['output'];
+  /** An array relationship */
+  input_variable_of: Array<Modelcatalog_Software_Version_Input_Variable>;
+  /** An aggregate relationship */
+  input_variable_of_aggregate: Modelcatalog_Software_Version_Input_Variable_Aggregate;
+  label: Scalars['String']['output'];
+  /** An array relationship */
+  output_variable_of: Array<Modelcatalog_Software_Version_Output_Variable>;
+  /** An aggregate relationship */
+  output_variable_of_aggregate: Modelcatalog_Software_Version_Output_Variable_Aggregate;
+  /** An object relationship */
+  standard_variable?: Maybe<Modelcatalog_Standard_Variable>;
+  /** An object relationship */
+  unit?: Maybe<Modelcatalog_Unit>;
+  uses_unit?: Maybe<Scalars['String']['output']>;
+};
+
+
+/** columns and relationships of "modelcatalog_variable_presentation" */
+export type Modelcatalog_Variable_PresentationCalibrated_InArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Configuration_Calibrated_Variable_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Configuration_Calibrated_Variable_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Configuration_Calibrated_Variable_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_variable_presentation" */
+export type Modelcatalog_Variable_PresentationCalibrated_In_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Configuration_Calibrated_Variable_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Configuration_Calibrated_Variable_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Configuration_Calibrated_Variable_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_variable_presentation" */
+export type Modelcatalog_Variable_PresentationCalibration_Target_InArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Configuration_Calibration_Target_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Configuration_Calibration_Target_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Configuration_Calibration_Target_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_variable_presentation" */
+export type Modelcatalog_Variable_PresentationCalibration_Target_In_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Configuration_Calibration_Target_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Configuration_Calibration_Target_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Configuration_Calibration_Target_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_variable_presentation" */
+export type Modelcatalog_Variable_PresentationInput_Variable_OfArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Software_Version_Input_Variable_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Software_Version_Input_Variable_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Software_Version_Input_Variable_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_variable_presentation" */
+export type Modelcatalog_Variable_PresentationInput_Variable_Of_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Software_Version_Input_Variable_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Software_Version_Input_Variable_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Software_Version_Input_Variable_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_variable_presentation" */
+export type Modelcatalog_Variable_PresentationOutput_Variable_OfArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Software_Version_Output_Variable_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Software_Version_Output_Variable_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Software_Version_Output_Variable_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_variable_presentation" */
+export type Modelcatalog_Variable_PresentationOutput_Variable_Of_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Software_Version_Output_Variable_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Software_Version_Output_Variable_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Software_Version_Output_Variable_Bool_Exp>;
+};
+
+/** aggregated selection of "modelcatalog_variable_presentation" */
+export type Modelcatalog_Variable_Presentation_Aggregate = {
+  __typename?: 'modelcatalog_variable_presentation_aggregate';
+  aggregate?: Maybe<Modelcatalog_Variable_Presentation_Aggregate_Fields>;
+  nodes: Array<Modelcatalog_Variable_Presentation>;
+};
+
+/** aggregate fields of "modelcatalog_variable_presentation" */
+export type Modelcatalog_Variable_Presentation_Aggregate_Fields = {
+  __typename?: 'modelcatalog_variable_presentation_aggregate_fields';
+  count: Scalars['Int']['output'];
+  max?: Maybe<Modelcatalog_Variable_Presentation_Max_Fields>;
+  min?: Maybe<Modelcatalog_Variable_Presentation_Min_Fields>;
+};
+
+
+/** aggregate fields of "modelcatalog_variable_presentation" */
+export type Modelcatalog_Variable_Presentation_Aggregate_FieldsCountArgs = {
+  columns?: InputMaybe<Array<Modelcatalog_Variable_Presentation_Select_Column>>;
+  distinct?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
+/** order by aggregate values of table "modelcatalog_variable_presentation" */
+export type Modelcatalog_Variable_Presentation_Aggregate_Order_By = {
+  count?: InputMaybe<Order_By>;
+  max?: InputMaybe<Modelcatalog_Variable_Presentation_Max_Order_By>;
+  min?: InputMaybe<Modelcatalog_Variable_Presentation_Min_Order_By>;
+};
+
+/** input type for inserting array relation for remote table "modelcatalog_variable_presentation" */
+export type Modelcatalog_Variable_Presentation_Arr_Rel_Insert_Input = {
+  data: Array<Modelcatalog_Variable_Presentation_Insert_Input>;
+  /** upsert condition */
+  on_conflict?: InputMaybe<Modelcatalog_Variable_Presentation_On_Conflict>;
+};
+
+/** Boolean expression to filter rows from the table "modelcatalog_variable_presentation". All fields are combined with a logical 'AND'. */
+export type Modelcatalog_Variable_Presentation_Bool_Exp = {
+  _and?: InputMaybe<Array<Modelcatalog_Variable_Presentation_Bool_Exp>>;
+  _not?: InputMaybe<Modelcatalog_Variable_Presentation_Bool_Exp>;
+  _or?: InputMaybe<Array<Modelcatalog_Variable_Presentation_Bool_Exp>>;
+  calibrated_in?: InputMaybe<Modelcatalog_Configuration_Calibrated_Variable_Bool_Exp>;
+  calibration_target_in?: InputMaybe<Modelcatalog_Configuration_Calibration_Target_Bool_Exp>;
+  description?: InputMaybe<String_Comparison_Exp>;
+  has_long_name?: InputMaybe<String_Comparison_Exp>;
+  has_short_name?: InputMaybe<String_Comparison_Exp>;
+  has_standard_variable?: InputMaybe<String_Comparison_Exp>;
+  id?: InputMaybe<String_Comparison_Exp>;
+  input_variable_of?: InputMaybe<Modelcatalog_Software_Version_Input_Variable_Bool_Exp>;
+  label?: InputMaybe<String_Comparison_Exp>;
+  output_variable_of?: InputMaybe<Modelcatalog_Software_Version_Output_Variable_Bool_Exp>;
+  standard_variable?: InputMaybe<Modelcatalog_Standard_Variable_Bool_Exp>;
+  unit?: InputMaybe<Modelcatalog_Unit_Bool_Exp>;
+  uses_unit?: InputMaybe<String_Comparison_Exp>;
+};
+
+/** unique or primary key constraints on table "modelcatalog_variable_presentation" */
+export enum Modelcatalog_Variable_Presentation_Constraint {
+  /** unique or primary key constraint on columns "id" */
+  ModelcatalogVariablePresentationPkey = 'modelcatalog_variable_presentation_pkey'
+}
+
+/** input type for inserting data into table "modelcatalog_variable_presentation" */
+export type Modelcatalog_Variable_Presentation_Insert_Input = {
+  calibrated_in?: InputMaybe<Modelcatalog_Configuration_Calibrated_Variable_Arr_Rel_Insert_Input>;
+  calibration_target_in?: InputMaybe<Modelcatalog_Configuration_Calibration_Target_Arr_Rel_Insert_Input>;
+  description?: InputMaybe<Scalars['String']['input']>;
+  has_long_name?: InputMaybe<Scalars['String']['input']>;
+  has_short_name?: InputMaybe<Scalars['String']['input']>;
+  has_standard_variable?: InputMaybe<Scalars['String']['input']>;
+  id?: InputMaybe<Scalars['String']['input']>;
+  input_variable_of?: InputMaybe<Modelcatalog_Software_Version_Input_Variable_Arr_Rel_Insert_Input>;
+  label?: InputMaybe<Scalars['String']['input']>;
+  output_variable_of?: InputMaybe<Modelcatalog_Software_Version_Output_Variable_Arr_Rel_Insert_Input>;
+  standard_variable?: InputMaybe<Modelcatalog_Standard_Variable_Obj_Rel_Insert_Input>;
+  unit?: InputMaybe<Modelcatalog_Unit_Obj_Rel_Insert_Input>;
+  uses_unit?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** aggregate max on columns */
+export type Modelcatalog_Variable_Presentation_Max_Fields = {
+  __typename?: 'modelcatalog_variable_presentation_max_fields';
+  description?: Maybe<Scalars['String']['output']>;
+  has_long_name?: Maybe<Scalars['String']['output']>;
+  has_short_name?: Maybe<Scalars['String']['output']>;
+  has_standard_variable?: Maybe<Scalars['String']['output']>;
+  id?: Maybe<Scalars['String']['output']>;
+  label?: Maybe<Scalars['String']['output']>;
+  uses_unit?: Maybe<Scalars['String']['output']>;
+};
+
+/** order by max() on columns of table "modelcatalog_variable_presentation" */
+export type Modelcatalog_Variable_Presentation_Max_Order_By = {
+  description?: InputMaybe<Order_By>;
+  has_long_name?: InputMaybe<Order_By>;
+  has_short_name?: InputMaybe<Order_By>;
+  has_standard_variable?: InputMaybe<Order_By>;
+  id?: InputMaybe<Order_By>;
+  label?: InputMaybe<Order_By>;
+  uses_unit?: InputMaybe<Order_By>;
+};
+
+/** aggregate min on columns */
+export type Modelcatalog_Variable_Presentation_Min_Fields = {
+  __typename?: 'modelcatalog_variable_presentation_min_fields';
+  description?: Maybe<Scalars['String']['output']>;
+  has_long_name?: Maybe<Scalars['String']['output']>;
+  has_short_name?: Maybe<Scalars['String']['output']>;
+  has_standard_variable?: Maybe<Scalars['String']['output']>;
+  id?: Maybe<Scalars['String']['output']>;
+  label?: Maybe<Scalars['String']['output']>;
+  uses_unit?: Maybe<Scalars['String']['output']>;
+};
+
+/** order by min() on columns of table "modelcatalog_variable_presentation" */
+export type Modelcatalog_Variable_Presentation_Min_Order_By = {
+  description?: InputMaybe<Order_By>;
+  has_long_name?: InputMaybe<Order_By>;
+  has_short_name?: InputMaybe<Order_By>;
+  has_standard_variable?: InputMaybe<Order_By>;
+  id?: InputMaybe<Order_By>;
+  label?: InputMaybe<Order_By>;
+  uses_unit?: InputMaybe<Order_By>;
+};
+
+/** response of any mutation on the table "modelcatalog_variable_presentation" */
+export type Modelcatalog_Variable_Presentation_Mutation_Response = {
+  __typename?: 'modelcatalog_variable_presentation_mutation_response';
+  /** number of rows affected by the mutation */
+  affected_rows: Scalars['Int']['output'];
+  /** data from the rows affected by the mutation */
+  returning: Array<Modelcatalog_Variable_Presentation>;
+};
+
+/** input type for inserting object relation for remote table "modelcatalog_variable_presentation" */
+export type Modelcatalog_Variable_Presentation_Obj_Rel_Insert_Input = {
+  data: Modelcatalog_Variable_Presentation_Insert_Input;
+  /** upsert condition */
+  on_conflict?: InputMaybe<Modelcatalog_Variable_Presentation_On_Conflict>;
+};
+
+/** on_conflict condition type for table "modelcatalog_variable_presentation" */
+export type Modelcatalog_Variable_Presentation_On_Conflict = {
+  constraint: Modelcatalog_Variable_Presentation_Constraint;
+  update_columns?: Array<Modelcatalog_Variable_Presentation_Update_Column>;
+  where?: InputMaybe<Modelcatalog_Variable_Presentation_Bool_Exp>;
+};
+
+/** Ordering options when selecting data from "modelcatalog_variable_presentation". */
+export type Modelcatalog_Variable_Presentation_Order_By = {
+  calibrated_in_aggregate?: InputMaybe<Modelcatalog_Configuration_Calibrated_Variable_Aggregate_Order_By>;
+  calibration_target_in_aggregate?: InputMaybe<Modelcatalog_Configuration_Calibration_Target_Aggregate_Order_By>;
+  description?: InputMaybe<Order_By>;
+  has_long_name?: InputMaybe<Order_By>;
+  has_short_name?: InputMaybe<Order_By>;
+  has_standard_variable?: InputMaybe<Order_By>;
+  id?: InputMaybe<Order_By>;
+  input_variable_of_aggregate?: InputMaybe<Modelcatalog_Software_Version_Input_Variable_Aggregate_Order_By>;
+  label?: InputMaybe<Order_By>;
+  output_variable_of_aggregate?: InputMaybe<Modelcatalog_Software_Version_Output_Variable_Aggregate_Order_By>;
+  standard_variable?: InputMaybe<Modelcatalog_Standard_Variable_Order_By>;
+  unit?: InputMaybe<Modelcatalog_Unit_Order_By>;
+  uses_unit?: InputMaybe<Order_By>;
+};
+
+/** primary key columns input for table: modelcatalog_variable_presentation */
+export type Modelcatalog_Variable_Presentation_Pk_Columns_Input = {
+  id: Scalars['String']['input'];
+};
+
+/** select columns of table "modelcatalog_variable_presentation" */
+export enum Modelcatalog_Variable_Presentation_Select_Column {
+  /** column name */
+  Description = 'description',
+  /** column name */
+  HasLongName = 'has_long_name',
+  /** column name */
+  HasShortName = 'has_short_name',
+  /** column name */
+  HasStandardVariable = 'has_standard_variable',
+  /** column name */
+  Id = 'id',
+  /** column name */
+  Label = 'label',
+  /** column name */
+  UsesUnit = 'uses_unit'
+}
+
+/** input type for updating data in table "modelcatalog_variable_presentation" */
+export type Modelcatalog_Variable_Presentation_Set_Input = {
+  description?: InputMaybe<Scalars['String']['input']>;
+  has_long_name?: InputMaybe<Scalars['String']['input']>;
+  has_short_name?: InputMaybe<Scalars['String']['input']>;
+  has_standard_variable?: InputMaybe<Scalars['String']['input']>;
+  id?: InputMaybe<Scalars['String']['input']>;
+  label?: InputMaybe<Scalars['String']['input']>;
+  uses_unit?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** update columns of table "modelcatalog_variable_presentation" */
+export enum Modelcatalog_Variable_Presentation_Update_Column {
+  /** column name */
+  Description = 'description',
+  /** column name */
+  HasLongName = 'has_long_name',
+  /** column name */
+  HasShortName = 'has_short_name',
+  /** column name */
+  HasStandardVariable = 'has_standard_variable',
+  /** column name */
+  Id = 'id',
+  /** column name */
+  Label = 'label',
+  /** column name */
+  UsesUnit = 'uses_unit'
+}
+
+export type Modelcatalog_Variable_Presentation_Updates = {
+  /** sets the columns of the filtered rows to the given values */
+  _set?: InputMaybe<Modelcatalog_Variable_Presentation_Set_Input>;
+  where: Modelcatalog_Variable_Presentation_Bool_Exp;
+};
+
+/** columns and relationships of "modelcatalog_version_author" */
+export type Modelcatalog_Version_Author = {
+  __typename?: 'modelcatalog_version_author';
+  /** An object relationship */
+  person: Modelcatalog_Person;
+  person_id: Scalars['String']['output'];
+  /** An object relationship */
+  software_version: Modelcatalog_Software_Version;
+  software_version_id: Scalars['String']['output'];
+};
+
+/** aggregated selection of "modelcatalog_version_author" */
+export type Modelcatalog_Version_Author_Aggregate = {
+  __typename?: 'modelcatalog_version_author_aggregate';
+  aggregate?: Maybe<Modelcatalog_Version_Author_Aggregate_Fields>;
+  nodes: Array<Modelcatalog_Version_Author>;
+};
+
+/** aggregate fields of "modelcatalog_version_author" */
+export type Modelcatalog_Version_Author_Aggregate_Fields = {
+  __typename?: 'modelcatalog_version_author_aggregate_fields';
+  count: Scalars['Int']['output'];
+  max?: Maybe<Modelcatalog_Version_Author_Max_Fields>;
+  min?: Maybe<Modelcatalog_Version_Author_Min_Fields>;
+};
+
+
+/** aggregate fields of "modelcatalog_version_author" */
+export type Modelcatalog_Version_Author_Aggregate_FieldsCountArgs = {
+  columns?: InputMaybe<Array<Modelcatalog_Version_Author_Select_Column>>;
+  distinct?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
+/** order by aggregate values of table "modelcatalog_version_author" */
+export type Modelcatalog_Version_Author_Aggregate_Order_By = {
+  count?: InputMaybe<Order_By>;
+  max?: InputMaybe<Modelcatalog_Version_Author_Max_Order_By>;
+  min?: InputMaybe<Modelcatalog_Version_Author_Min_Order_By>;
+};
+
+/** input type for inserting array relation for remote table "modelcatalog_version_author" */
+export type Modelcatalog_Version_Author_Arr_Rel_Insert_Input = {
+  data: Array<Modelcatalog_Version_Author_Insert_Input>;
+  /** upsert condition */
+  on_conflict?: InputMaybe<Modelcatalog_Version_Author_On_Conflict>;
+};
+
+/** Boolean expression to filter rows from the table "modelcatalog_version_author". All fields are combined with a logical 'AND'. */
+export type Modelcatalog_Version_Author_Bool_Exp = {
+  _and?: InputMaybe<Array<Modelcatalog_Version_Author_Bool_Exp>>;
+  _not?: InputMaybe<Modelcatalog_Version_Author_Bool_Exp>;
+  _or?: InputMaybe<Array<Modelcatalog_Version_Author_Bool_Exp>>;
+  person?: InputMaybe<Modelcatalog_Person_Bool_Exp>;
+  person_id?: InputMaybe<String_Comparison_Exp>;
+  software_version?: InputMaybe<Modelcatalog_Software_Version_Bool_Exp>;
+  software_version_id?: InputMaybe<String_Comparison_Exp>;
+};
+
+/** unique or primary key constraints on table "modelcatalog_version_author" */
+export enum Modelcatalog_Version_Author_Constraint {
+  /** unique or primary key constraint on columns "person_id", "software_version_id" */
+  ModelcatalogVersionAuthorPkey = 'modelcatalog_version_author_pkey'
+}
+
+/** input type for inserting data into table "modelcatalog_version_author" */
+export type Modelcatalog_Version_Author_Insert_Input = {
+  person?: InputMaybe<Modelcatalog_Person_Obj_Rel_Insert_Input>;
+  person_id?: InputMaybe<Scalars['String']['input']>;
+  software_version?: InputMaybe<Modelcatalog_Software_Version_Obj_Rel_Insert_Input>;
+  software_version_id?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** aggregate max on columns */
+export type Modelcatalog_Version_Author_Max_Fields = {
+  __typename?: 'modelcatalog_version_author_max_fields';
+  person_id?: Maybe<Scalars['String']['output']>;
+  software_version_id?: Maybe<Scalars['String']['output']>;
+};
+
+/** order by max() on columns of table "modelcatalog_version_author" */
+export type Modelcatalog_Version_Author_Max_Order_By = {
+  person_id?: InputMaybe<Order_By>;
+  software_version_id?: InputMaybe<Order_By>;
+};
+
+/** aggregate min on columns */
+export type Modelcatalog_Version_Author_Min_Fields = {
+  __typename?: 'modelcatalog_version_author_min_fields';
+  person_id?: Maybe<Scalars['String']['output']>;
+  software_version_id?: Maybe<Scalars['String']['output']>;
+};
+
+/** order by min() on columns of table "modelcatalog_version_author" */
+export type Modelcatalog_Version_Author_Min_Order_By = {
+  person_id?: InputMaybe<Order_By>;
+  software_version_id?: InputMaybe<Order_By>;
+};
+
+/** response of any mutation on the table "modelcatalog_version_author" */
+export type Modelcatalog_Version_Author_Mutation_Response = {
+  __typename?: 'modelcatalog_version_author_mutation_response';
+  /** number of rows affected by the mutation */
+  affected_rows: Scalars['Int']['output'];
+  /** data from the rows affected by the mutation */
+  returning: Array<Modelcatalog_Version_Author>;
+};
+
+/** on_conflict condition type for table "modelcatalog_version_author" */
+export type Modelcatalog_Version_Author_On_Conflict = {
+  constraint: Modelcatalog_Version_Author_Constraint;
+  update_columns?: Array<Modelcatalog_Version_Author_Update_Column>;
+  where?: InputMaybe<Modelcatalog_Version_Author_Bool_Exp>;
+};
+
+/** Ordering options when selecting data from "modelcatalog_version_author". */
+export type Modelcatalog_Version_Author_Order_By = {
+  person?: InputMaybe<Modelcatalog_Person_Order_By>;
+  person_id?: InputMaybe<Order_By>;
+  software_version?: InputMaybe<Modelcatalog_Software_Version_Order_By>;
+  software_version_id?: InputMaybe<Order_By>;
+};
+
+/** primary key columns input for table: modelcatalog_version_author */
+export type Modelcatalog_Version_Author_Pk_Columns_Input = {
+  person_id: Scalars['String']['input'];
+  software_version_id: Scalars['String']['input'];
+};
+
+/** select columns of table "modelcatalog_version_author" */
+export enum Modelcatalog_Version_Author_Select_Column {
+  /** column name */
+  PersonId = 'person_id',
+  /** column name */
+  SoftwareVersionId = 'software_version_id'
+}
+
+/** input type for updating data in table "modelcatalog_version_author" */
+export type Modelcatalog_Version_Author_Set_Input = {
+  person_id?: InputMaybe<Scalars['String']['input']>;
+  software_version_id?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** update columns of table "modelcatalog_version_author" */
+export enum Modelcatalog_Version_Author_Update_Column {
+  /** column name */
+  PersonId = 'person_id',
+  /** column name */
+  SoftwareVersionId = 'software_version_id'
+}
+
+export type Modelcatalog_Version_Author_Updates = {
+  /** sets the columns of the filtered rows to the given values */
+  _set?: InputMaybe<Modelcatalog_Version_Author_Set_Input>;
+  where: Modelcatalog_Version_Author_Bool_Exp;
 };
 
 /** mutation root */
@@ -4310,14 +11385,6 @@ export type Mutation_Root = {
   delete_intervention?: Maybe<Intervention_Mutation_Response>;
   /** delete single row from the table: "intervention" */
   delete_intervention_by_pk?: Maybe<Intervention>;
-  /** delete data from the table: "model" */
-  delete_model?: Maybe<Model_Mutation_Response>;
-  /** delete single row from the table: "model" */
-  delete_model_by_pk?: Maybe<Model>;
-  /** delete data from the table: "model_input" */
-  delete_model_input?: Maybe<Model_Input_Mutation_Response>;
-  /** delete single row from the table: "model_input" */
-  delete_model_input_by_pk?: Maybe<Model_Input>;
   /** delete data from the table: "model_input_fixed_binding" */
   delete_model_input_fixed_binding?: Maybe<Model_Input_Fixed_Binding_Mutation_Response>;
   /** delete single row from the table: "model_input_fixed_binding" */
@@ -4330,14 +11397,166 @@ export type Mutation_Root = {
   delete_model_io_variable?: Maybe<Model_Io_Variable_Mutation_Response>;
   /** delete single row from the table: "model_io_variable" */
   delete_model_io_variable_by_pk?: Maybe<Model_Io_Variable>;
-  /** delete data from the table: "model_output" */
-  delete_model_output?: Maybe<Model_Output_Mutation_Response>;
-  /** delete single row from the table: "model_output" */
-  delete_model_output_by_pk?: Maybe<Model_Output>;
-  /** delete data from the table: "model_parameter" */
-  delete_model_parameter?: Maybe<Model_Parameter_Mutation_Response>;
-  /** delete single row from the table: "model_parameter" */
-  delete_model_parameter_by_pk?: Maybe<Model_Parameter>;
+  /** delete data from the table: "modelcatalog_causal_diagram" */
+  delete_modelcatalog_causal_diagram?: Maybe<Modelcatalog_Causal_Diagram_Mutation_Response>;
+  /** delete single row from the table: "modelcatalog_causal_diagram" */
+  delete_modelcatalog_causal_diagram_by_pk?: Maybe<Modelcatalog_Causal_Diagram>;
+  /** delete data from the table: "modelcatalog_configuration" */
+  delete_modelcatalog_configuration?: Maybe<Modelcatalog_Configuration_Mutation_Response>;
+  /** delete data from the table: "modelcatalog_configuration_author" */
+  delete_modelcatalog_configuration_author?: Maybe<Modelcatalog_Configuration_Author_Mutation_Response>;
+  /** delete single row from the table: "modelcatalog_configuration_author" */
+  delete_modelcatalog_configuration_author_by_pk?: Maybe<Modelcatalog_Configuration_Author>;
+  /** delete single row from the table: "modelcatalog_configuration" */
+  delete_modelcatalog_configuration_by_pk?: Maybe<Modelcatalog_Configuration>;
+  /** delete data from the table: "modelcatalog_configuration_calibrated_variable" */
+  delete_modelcatalog_configuration_calibrated_variable?: Maybe<Modelcatalog_Configuration_Calibrated_Variable_Mutation_Response>;
+  /** delete single row from the table: "modelcatalog_configuration_calibrated_variable" */
+  delete_modelcatalog_configuration_calibrated_variable_by_pk?: Maybe<Modelcatalog_Configuration_Calibrated_Variable>;
+  /** delete data from the table: "modelcatalog_configuration_calibration_target" */
+  delete_modelcatalog_configuration_calibration_target?: Maybe<Modelcatalog_Configuration_Calibration_Target_Mutation_Response>;
+  /** delete single row from the table: "modelcatalog_configuration_calibration_target" */
+  delete_modelcatalog_configuration_calibration_target_by_pk?: Maybe<Modelcatalog_Configuration_Calibration_Target>;
+  /** delete data from the table: "modelcatalog_configuration_category" */
+  delete_modelcatalog_configuration_category?: Maybe<Modelcatalog_Configuration_Category_Mutation_Response>;
+  /** delete single row from the table: "modelcatalog_configuration_category" */
+  delete_modelcatalog_configuration_category_by_pk?: Maybe<Modelcatalog_Configuration_Category>;
+  /** delete data from the table: "modelcatalog_configuration_causal_diagram" */
+  delete_modelcatalog_configuration_causal_diagram?: Maybe<Modelcatalog_Configuration_Causal_Diagram_Mutation_Response>;
+  /** delete single row from the table: "modelcatalog_configuration_causal_diagram" */
+  delete_modelcatalog_configuration_causal_diagram_by_pk?: Maybe<Modelcatalog_Configuration_Causal_Diagram>;
+  /** delete data from the table: "modelcatalog_configuration_input" */
+  delete_modelcatalog_configuration_input?: Maybe<Modelcatalog_Configuration_Input_Mutation_Response>;
+  /** delete single row from the table: "modelcatalog_configuration_input" */
+  delete_modelcatalog_configuration_input_by_pk?: Maybe<Modelcatalog_Configuration_Input>;
+  /** delete data from the table: "modelcatalog_configuration_output" */
+  delete_modelcatalog_configuration_output?: Maybe<Modelcatalog_Configuration_Output_Mutation_Response>;
+  /** delete single row from the table: "modelcatalog_configuration_output" */
+  delete_modelcatalog_configuration_output_by_pk?: Maybe<Modelcatalog_Configuration_Output>;
+  /** delete data from the table: "modelcatalog_configuration_parameter" */
+  delete_modelcatalog_configuration_parameter?: Maybe<Modelcatalog_Configuration_Parameter_Mutation_Response>;
+  /** delete single row from the table: "modelcatalog_configuration_parameter" */
+  delete_modelcatalog_configuration_parameter_by_pk?: Maybe<Modelcatalog_Configuration_Parameter>;
+  /** delete data from the table: "modelcatalog_configuration_region" */
+  delete_modelcatalog_configuration_region?: Maybe<Modelcatalog_Configuration_Region_Mutation_Response>;
+  /** delete single row from the table: "modelcatalog_configuration_region" */
+  delete_modelcatalog_configuration_region_by_pk?: Maybe<Modelcatalog_Configuration_Region>;
+  /** delete data from the table: "modelcatalog_configuration_time_interval" */
+  delete_modelcatalog_configuration_time_interval?: Maybe<Modelcatalog_Configuration_Time_Interval_Mutation_Response>;
+  /** delete single row from the table: "modelcatalog_configuration_time_interval" */
+  delete_modelcatalog_configuration_time_interval_by_pk?: Maybe<Modelcatalog_Configuration_Time_Interval>;
+  /** delete data from the table: "modelcatalog_dataset_specification" */
+  delete_modelcatalog_dataset_specification?: Maybe<Modelcatalog_Dataset_Specification_Mutation_Response>;
+  /** delete single row from the table: "modelcatalog_dataset_specification" */
+  delete_modelcatalog_dataset_specification_by_pk?: Maybe<Modelcatalog_Dataset_Specification>;
+  /** delete data from the table: "modelcatalog_dataset_specification_presentation" */
+  delete_modelcatalog_dataset_specification_presentation?: Maybe<Modelcatalog_Dataset_Specification_Presentation_Mutation_Response>;
+  /** delete single row from the table: "modelcatalog_dataset_specification_presentation" */
+  delete_modelcatalog_dataset_specification_presentation_by_pk?: Maybe<Modelcatalog_Dataset_Specification_Presentation>;
+  /** delete data from the table: "modelcatalog_diagram_part" */
+  delete_modelcatalog_diagram_part?: Maybe<Modelcatalog_Diagram_Part_Mutation_Response>;
+  /** delete single row from the table: "modelcatalog_diagram_part" */
+  delete_modelcatalog_diagram_part_by_pk?: Maybe<Modelcatalog_Diagram_Part>;
+  /** delete data from the table: "modelcatalog_grid" */
+  delete_modelcatalog_grid?: Maybe<Modelcatalog_Grid_Mutation_Response>;
+  /** delete single row from the table: "modelcatalog_grid" */
+  delete_modelcatalog_grid_by_pk?: Maybe<Modelcatalog_Grid>;
+  /** delete data from the table: "modelcatalog_image" */
+  delete_modelcatalog_image?: Maybe<Modelcatalog_Image_Mutation_Response>;
+  /** delete single row from the table: "modelcatalog_image" */
+  delete_modelcatalog_image_by_pk?: Maybe<Modelcatalog_Image>;
+  /** delete data from the table: "modelcatalog_intervention" */
+  delete_modelcatalog_intervention?: Maybe<Modelcatalog_Intervention_Mutation_Response>;
+  /** delete single row from the table: "modelcatalog_intervention" */
+  delete_modelcatalog_intervention_by_pk?: Maybe<Modelcatalog_Intervention>;
+  /** delete data from the table: "modelcatalog_model_category" */
+  delete_modelcatalog_model_category?: Maybe<Modelcatalog_Model_Category_Mutation_Response>;
+  /** delete single row from the table: "modelcatalog_model_category" */
+  delete_modelcatalog_model_category_by_pk?: Maybe<Modelcatalog_Model_Category>;
+  /** delete data from the table: "modelcatalog_parameter" */
+  delete_modelcatalog_parameter?: Maybe<Modelcatalog_Parameter_Mutation_Response>;
+  /** delete data from the table: "modelcatalog_parameter_adjusts_variable" */
+  delete_modelcatalog_parameter_adjusts_variable?: Maybe<Modelcatalog_Parameter_Adjusts_Variable_Mutation_Response>;
+  /** delete single row from the table: "modelcatalog_parameter_adjusts_variable" */
+  delete_modelcatalog_parameter_adjusts_variable_by_pk?: Maybe<Modelcatalog_Parameter_Adjusts_Variable>;
+  /** delete single row from the table: "modelcatalog_parameter" */
+  delete_modelcatalog_parameter_by_pk?: Maybe<Modelcatalog_Parameter>;
+  /** delete data from the table: "modelcatalog_parameter_intervention" */
+  delete_modelcatalog_parameter_intervention?: Maybe<Modelcatalog_Parameter_Intervention_Mutation_Response>;
+  /** delete single row from the table: "modelcatalog_parameter_intervention" */
+  delete_modelcatalog_parameter_intervention_by_pk?: Maybe<Modelcatalog_Parameter_Intervention>;
+  /** delete data from the table: "modelcatalog_person" */
+  delete_modelcatalog_person?: Maybe<Modelcatalog_Person_Mutation_Response>;
+  /** delete single row from the table: "modelcatalog_person" */
+  delete_modelcatalog_person_by_pk?: Maybe<Modelcatalog_Person>;
+  /** delete data from the table: "modelcatalog_process" */
+  delete_modelcatalog_process?: Maybe<Modelcatalog_Process_Mutation_Response>;
+  /** delete single row from the table: "modelcatalog_process" */
+  delete_modelcatalog_process_by_pk?: Maybe<Modelcatalog_Process>;
+  /** delete data from the table: "modelcatalog_region" */
+  delete_modelcatalog_region?: Maybe<Modelcatalog_Region_Mutation_Response>;
+  /** delete single row from the table: "modelcatalog_region" */
+  delete_modelcatalog_region_by_pk?: Maybe<Modelcatalog_Region>;
+  /** delete data from the table: "modelcatalog_software" */
+  delete_modelcatalog_software?: Maybe<Modelcatalog_Software_Mutation_Response>;
+  /** delete data from the table: "modelcatalog_software_author" */
+  delete_modelcatalog_software_author?: Maybe<Modelcatalog_Software_Author_Mutation_Response>;
+  /** delete single row from the table: "modelcatalog_software_author" */
+  delete_modelcatalog_software_author_by_pk?: Maybe<Modelcatalog_Software_Author>;
+  /** delete single row from the table: "modelcatalog_software" */
+  delete_modelcatalog_software_by_pk?: Maybe<Modelcatalog_Software>;
+  /** delete data from the table: "modelcatalog_software_category" */
+  delete_modelcatalog_software_category?: Maybe<Modelcatalog_Software_Category_Mutation_Response>;
+  /** delete single row from the table: "modelcatalog_software_category" */
+  delete_modelcatalog_software_category_by_pk?: Maybe<Modelcatalog_Software_Category>;
+  /** delete data from the table: "modelcatalog_software_version" */
+  delete_modelcatalog_software_version?: Maybe<Modelcatalog_Software_Version_Mutation_Response>;
+  /** delete single row from the table: "modelcatalog_software_version" */
+  delete_modelcatalog_software_version_by_pk?: Maybe<Modelcatalog_Software_Version>;
+  /** delete data from the table: "modelcatalog_software_version_category" */
+  delete_modelcatalog_software_version_category?: Maybe<Modelcatalog_Software_Version_Category_Mutation_Response>;
+  /** delete single row from the table: "modelcatalog_software_version_category" */
+  delete_modelcatalog_software_version_category_by_pk?: Maybe<Modelcatalog_Software_Version_Category>;
+  /** delete data from the table: "modelcatalog_software_version_grid" */
+  delete_modelcatalog_software_version_grid?: Maybe<Modelcatalog_Software_Version_Grid_Mutation_Response>;
+  /** delete single row from the table: "modelcatalog_software_version_grid" */
+  delete_modelcatalog_software_version_grid_by_pk?: Maybe<Modelcatalog_Software_Version_Grid>;
+  /** delete data from the table: "modelcatalog_software_version_image" */
+  delete_modelcatalog_software_version_image?: Maybe<Modelcatalog_Software_Version_Image_Mutation_Response>;
+  /** delete single row from the table: "modelcatalog_software_version_image" */
+  delete_modelcatalog_software_version_image_by_pk?: Maybe<Modelcatalog_Software_Version_Image>;
+  /** delete data from the table: "modelcatalog_software_version_input_variable" */
+  delete_modelcatalog_software_version_input_variable?: Maybe<Modelcatalog_Software_Version_Input_Variable_Mutation_Response>;
+  /** delete single row from the table: "modelcatalog_software_version_input_variable" */
+  delete_modelcatalog_software_version_input_variable_by_pk?: Maybe<Modelcatalog_Software_Version_Input_Variable>;
+  /** delete data from the table: "modelcatalog_software_version_output_variable" */
+  delete_modelcatalog_software_version_output_variable?: Maybe<Modelcatalog_Software_Version_Output_Variable_Mutation_Response>;
+  /** delete single row from the table: "modelcatalog_software_version_output_variable" */
+  delete_modelcatalog_software_version_output_variable_by_pk?: Maybe<Modelcatalog_Software_Version_Output_Variable>;
+  /** delete data from the table: "modelcatalog_software_version_process" */
+  delete_modelcatalog_software_version_process?: Maybe<Modelcatalog_Software_Version_Process_Mutation_Response>;
+  /** delete single row from the table: "modelcatalog_software_version_process" */
+  delete_modelcatalog_software_version_process_by_pk?: Maybe<Modelcatalog_Software_Version_Process>;
+  /** delete data from the table: "modelcatalog_standard_variable" */
+  delete_modelcatalog_standard_variable?: Maybe<Modelcatalog_Standard_Variable_Mutation_Response>;
+  /** delete single row from the table: "modelcatalog_standard_variable" */
+  delete_modelcatalog_standard_variable_by_pk?: Maybe<Modelcatalog_Standard_Variable>;
+  /** delete data from the table: "modelcatalog_time_interval" */
+  delete_modelcatalog_time_interval?: Maybe<Modelcatalog_Time_Interval_Mutation_Response>;
+  /** delete single row from the table: "modelcatalog_time_interval" */
+  delete_modelcatalog_time_interval_by_pk?: Maybe<Modelcatalog_Time_Interval>;
+  /** delete data from the table: "modelcatalog_unit" */
+  delete_modelcatalog_unit?: Maybe<Modelcatalog_Unit_Mutation_Response>;
+  /** delete single row from the table: "modelcatalog_unit" */
+  delete_modelcatalog_unit_by_pk?: Maybe<Modelcatalog_Unit>;
+  /** delete data from the table: "modelcatalog_variable_presentation" */
+  delete_modelcatalog_variable_presentation?: Maybe<Modelcatalog_Variable_Presentation_Mutation_Response>;
+  /** delete single row from the table: "modelcatalog_variable_presentation" */
+  delete_modelcatalog_variable_presentation_by_pk?: Maybe<Modelcatalog_Variable_Presentation>;
+  /** delete data from the table: "modelcatalog_version_author" */
+  delete_modelcatalog_version_author?: Maybe<Modelcatalog_Version_Author_Mutation_Response>;
+  /** delete single row from the table: "modelcatalog_version_author" */
+  delete_modelcatalog_version_author_by_pk?: Maybe<Modelcatalog_Version_Author>;
   /** delete data from the table: "problem_statement" */
   delete_problem_statement?: Maybe<Problem_Statement_Mutation_Response>;
   /** delete single row from the table: "problem_statement" */
@@ -4464,16 +11683,10 @@ export type Mutation_Root = {
   insert_intervention?: Maybe<Intervention_Mutation_Response>;
   /** insert a single row into the table: "intervention" */
   insert_intervention_one?: Maybe<Intervention>;
-  /** insert data into the table: "model" */
-  insert_model?: Maybe<Model_Mutation_Response>;
-  /** insert data into the table: "model_input" */
-  insert_model_input?: Maybe<Model_Input_Mutation_Response>;
   /** insert data into the table: "model_input_fixed_binding" */
   insert_model_input_fixed_binding?: Maybe<Model_Input_Fixed_Binding_Mutation_Response>;
   /** insert a single row into the table: "model_input_fixed_binding" */
   insert_model_input_fixed_binding_one?: Maybe<Model_Input_Fixed_Binding>;
-  /** insert a single row into the table: "model_input" */
-  insert_model_input_one?: Maybe<Model_Input>;
   /** insert data into the table: "model_io" */
   insert_model_io?: Maybe<Model_Io_Mutation_Response>;
   /** insert a single row into the table: "model_io" */
@@ -4482,16 +11695,166 @@ export type Mutation_Root = {
   insert_model_io_variable?: Maybe<Model_Io_Variable_Mutation_Response>;
   /** insert a single row into the table: "model_io_variable" */
   insert_model_io_variable_one?: Maybe<Model_Io_Variable>;
-  /** insert a single row into the table: "model" */
-  insert_model_one?: Maybe<Model>;
-  /** insert data into the table: "model_output" */
-  insert_model_output?: Maybe<Model_Output_Mutation_Response>;
-  /** insert a single row into the table: "model_output" */
-  insert_model_output_one?: Maybe<Model_Output>;
-  /** insert data into the table: "model_parameter" */
-  insert_model_parameter?: Maybe<Model_Parameter_Mutation_Response>;
-  /** insert a single row into the table: "model_parameter" */
-  insert_model_parameter_one?: Maybe<Model_Parameter>;
+  /** insert data into the table: "modelcatalog_causal_diagram" */
+  insert_modelcatalog_causal_diagram?: Maybe<Modelcatalog_Causal_Diagram_Mutation_Response>;
+  /** insert a single row into the table: "modelcatalog_causal_diagram" */
+  insert_modelcatalog_causal_diagram_one?: Maybe<Modelcatalog_Causal_Diagram>;
+  /** insert data into the table: "modelcatalog_configuration" */
+  insert_modelcatalog_configuration?: Maybe<Modelcatalog_Configuration_Mutation_Response>;
+  /** insert data into the table: "modelcatalog_configuration_author" */
+  insert_modelcatalog_configuration_author?: Maybe<Modelcatalog_Configuration_Author_Mutation_Response>;
+  /** insert a single row into the table: "modelcatalog_configuration_author" */
+  insert_modelcatalog_configuration_author_one?: Maybe<Modelcatalog_Configuration_Author>;
+  /** insert data into the table: "modelcatalog_configuration_calibrated_variable" */
+  insert_modelcatalog_configuration_calibrated_variable?: Maybe<Modelcatalog_Configuration_Calibrated_Variable_Mutation_Response>;
+  /** insert a single row into the table: "modelcatalog_configuration_calibrated_variable" */
+  insert_modelcatalog_configuration_calibrated_variable_one?: Maybe<Modelcatalog_Configuration_Calibrated_Variable>;
+  /** insert data into the table: "modelcatalog_configuration_calibration_target" */
+  insert_modelcatalog_configuration_calibration_target?: Maybe<Modelcatalog_Configuration_Calibration_Target_Mutation_Response>;
+  /** insert a single row into the table: "modelcatalog_configuration_calibration_target" */
+  insert_modelcatalog_configuration_calibration_target_one?: Maybe<Modelcatalog_Configuration_Calibration_Target>;
+  /** insert data into the table: "modelcatalog_configuration_category" */
+  insert_modelcatalog_configuration_category?: Maybe<Modelcatalog_Configuration_Category_Mutation_Response>;
+  /** insert a single row into the table: "modelcatalog_configuration_category" */
+  insert_modelcatalog_configuration_category_one?: Maybe<Modelcatalog_Configuration_Category>;
+  /** insert data into the table: "modelcatalog_configuration_causal_diagram" */
+  insert_modelcatalog_configuration_causal_diagram?: Maybe<Modelcatalog_Configuration_Causal_Diagram_Mutation_Response>;
+  /** insert a single row into the table: "modelcatalog_configuration_causal_diagram" */
+  insert_modelcatalog_configuration_causal_diagram_one?: Maybe<Modelcatalog_Configuration_Causal_Diagram>;
+  /** insert data into the table: "modelcatalog_configuration_input" */
+  insert_modelcatalog_configuration_input?: Maybe<Modelcatalog_Configuration_Input_Mutation_Response>;
+  /** insert a single row into the table: "modelcatalog_configuration_input" */
+  insert_modelcatalog_configuration_input_one?: Maybe<Modelcatalog_Configuration_Input>;
+  /** insert a single row into the table: "modelcatalog_configuration" */
+  insert_modelcatalog_configuration_one?: Maybe<Modelcatalog_Configuration>;
+  /** insert data into the table: "modelcatalog_configuration_output" */
+  insert_modelcatalog_configuration_output?: Maybe<Modelcatalog_Configuration_Output_Mutation_Response>;
+  /** insert a single row into the table: "modelcatalog_configuration_output" */
+  insert_modelcatalog_configuration_output_one?: Maybe<Modelcatalog_Configuration_Output>;
+  /** insert data into the table: "modelcatalog_configuration_parameter" */
+  insert_modelcatalog_configuration_parameter?: Maybe<Modelcatalog_Configuration_Parameter_Mutation_Response>;
+  /** insert a single row into the table: "modelcatalog_configuration_parameter" */
+  insert_modelcatalog_configuration_parameter_one?: Maybe<Modelcatalog_Configuration_Parameter>;
+  /** insert data into the table: "modelcatalog_configuration_region" */
+  insert_modelcatalog_configuration_region?: Maybe<Modelcatalog_Configuration_Region_Mutation_Response>;
+  /** insert a single row into the table: "modelcatalog_configuration_region" */
+  insert_modelcatalog_configuration_region_one?: Maybe<Modelcatalog_Configuration_Region>;
+  /** insert data into the table: "modelcatalog_configuration_time_interval" */
+  insert_modelcatalog_configuration_time_interval?: Maybe<Modelcatalog_Configuration_Time_Interval_Mutation_Response>;
+  /** insert a single row into the table: "modelcatalog_configuration_time_interval" */
+  insert_modelcatalog_configuration_time_interval_one?: Maybe<Modelcatalog_Configuration_Time_Interval>;
+  /** insert data into the table: "modelcatalog_dataset_specification" */
+  insert_modelcatalog_dataset_specification?: Maybe<Modelcatalog_Dataset_Specification_Mutation_Response>;
+  /** insert a single row into the table: "modelcatalog_dataset_specification" */
+  insert_modelcatalog_dataset_specification_one?: Maybe<Modelcatalog_Dataset_Specification>;
+  /** insert data into the table: "modelcatalog_dataset_specification_presentation" */
+  insert_modelcatalog_dataset_specification_presentation?: Maybe<Modelcatalog_Dataset_Specification_Presentation_Mutation_Response>;
+  /** insert a single row into the table: "modelcatalog_dataset_specification_presentation" */
+  insert_modelcatalog_dataset_specification_presentation_one?: Maybe<Modelcatalog_Dataset_Specification_Presentation>;
+  /** insert data into the table: "modelcatalog_diagram_part" */
+  insert_modelcatalog_diagram_part?: Maybe<Modelcatalog_Diagram_Part_Mutation_Response>;
+  /** insert a single row into the table: "modelcatalog_diagram_part" */
+  insert_modelcatalog_diagram_part_one?: Maybe<Modelcatalog_Diagram_Part>;
+  /** insert data into the table: "modelcatalog_grid" */
+  insert_modelcatalog_grid?: Maybe<Modelcatalog_Grid_Mutation_Response>;
+  /** insert a single row into the table: "modelcatalog_grid" */
+  insert_modelcatalog_grid_one?: Maybe<Modelcatalog_Grid>;
+  /** insert data into the table: "modelcatalog_image" */
+  insert_modelcatalog_image?: Maybe<Modelcatalog_Image_Mutation_Response>;
+  /** insert a single row into the table: "modelcatalog_image" */
+  insert_modelcatalog_image_one?: Maybe<Modelcatalog_Image>;
+  /** insert data into the table: "modelcatalog_intervention" */
+  insert_modelcatalog_intervention?: Maybe<Modelcatalog_Intervention_Mutation_Response>;
+  /** insert a single row into the table: "modelcatalog_intervention" */
+  insert_modelcatalog_intervention_one?: Maybe<Modelcatalog_Intervention>;
+  /** insert data into the table: "modelcatalog_model_category" */
+  insert_modelcatalog_model_category?: Maybe<Modelcatalog_Model_Category_Mutation_Response>;
+  /** insert a single row into the table: "modelcatalog_model_category" */
+  insert_modelcatalog_model_category_one?: Maybe<Modelcatalog_Model_Category>;
+  /** insert data into the table: "modelcatalog_parameter" */
+  insert_modelcatalog_parameter?: Maybe<Modelcatalog_Parameter_Mutation_Response>;
+  /** insert data into the table: "modelcatalog_parameter_adjusts_variable" */
+  insert_modelcatalog_parameter_adjusts_variable?: Maybe<Modelcatalog_Parameter_Adjusts_Variable_Mutation_Response>;
+  /** insert a single row into the table: "modelcatalog_parameter_adjusts_variable" */
+  insert_modelcatalog_parameter_adjusts_variable_one?: Maybe<Modelcatalog_Parameter_Adjusts_Variable>;
+  /** insert data into the table: "modelcatalog_parameter_intervention" */
+  insert_modelcatalog_parameter_intervention?: Maybe<Modelcatalog_Parameter_Intervention_Mutation_Response>;
+  /** insert a single row into the table: "modelcatalog_parameter_intervention" */
+  insert_modelcatalog_parameter_intervention_one?: Maybe<Modelcatalog_Parameter_Intervention>;
+  /** insert a single row into the table: "modelcatalog_parameter" */
+  insert_modelcatalog_parameter_one?: Maybe<Modelcatalog_Parameter>;
+  /** insert data into the table: "modelcatalog_person" */
+  insert_modelcatalog_person?: Maybe<Modelcatalog_Person_Mutation_Response>;
+  /** insert a single row into the table: "modelcatalog_person" */
+  insert_modelcatalog_person_one?: Maybe<Modelcatalog_Person>;
+  /** insert data into the table: "modelcatalog_process" */
+  insert_modelcatalog_process?: Maybe<Modelcatalog_Process_Mutation_Response>;
+  /** insert a single row into the table: "modelcatalog_process" */
+  insert_modelcatalog_process_one?: Maybe<Modelcatalog_Process>;
+  /** insert data into the table: "modelcatalog_region" */
+  insert_modelcatalog_region?: Maybe<Modelcatalog_Region_Mutation_Response>;
+  /** insert a single row into the table: "modelcatalog_region" */
+  insert_modelcatalog_region_one?: Maybe<Modelcatalog_Region>;
+  /** insert data into the table: "modelcatalog_software" */
+  insert_modelcatalog_software?: Maybe<Modelcatalog_Software_Mutation_Response>;
+  /** insert data into the table: "modelcatalog_software_author" */
+  insert_modelcatalog_software_author?: Maybe<Modelcatalog_Software_Author_Mutation_Response>;
+  /** insert a single row into the table: "modelcatalog_software_author" */
+  insert_modelcatalog_software_author_one?: Maybe<Modelcatalog_Software_Author>;
+  /** insert data into the table: "modelcatalog_software_category" */
+  insert_modelcatalog_software_category?: Maybe<Modelcatalog_Software_Category_Mutation_Response>;
+  /** insert a single row into the table: "modelcatalog_software_category" */
+  insert_modelcatalog_software_category_one?: Maybe<Modelcatalog_Software_Category>;
+  /** insert a single row into the table: "modelcatalog_software" */
+  insert_modelcatalog_software_one?: Maybe<Modelcatalog_Software>;
+  /** insert data into the table: "modelcatalog_software_version" */
+  insert_modelcatalog_software_version?: Maybe<Modelcatalog_Software_Version_Mutation_Response>;
+  /** insert data into the table: "modelcatalog_software_version_category" */
+  insert_modelcatalog_software_version_category?: Maybe<Modelcatalog_Software_Version_Category_Mutation_Response>;
+  /** insert a single row into the table: "modelcatalog_software_version_category" */
+  insert_modelcatalog_software_version_category_one?: Maybe<Modelcatalog_Software_Version_Category>;
+  /** insert data into the table: "modelcatalog_software_version_grid" */
+  insert_modelcatalog_software_version_grid?: Maybe<Modelcatalog_Software_Version_Grid_Mutation_Response>;
+  /** insert a single row into the table: "modelcatalog_software_version_grid" */
+  insert_modelcatalog_software_version_grid_one?: Maybe<Modelcatalog_Software_Version_Grid>;
+  /** insert data into the table: "modelcatalog_software_version_image" */
+  insert_modelcatalog_software_version_image?: Maybe<Modelcatalog_Software_Version_Image_Mutation_Response>;
+  /** insert a single row into the table: "modelcatalog_software_version_image" */
+  insert_modelcatalog_software_version_image_one?: Maybe<Modelcatalog_Software_Version_Image>;
+  /** insert data into the table: "modelcatalog_software_version_input_variable" */
+  insert_modelcatalog_software_version_input_variable?: Maybe<Modelcatalog_Software_Version_Input_Variable_Mutation_Response>;
+  /** insert a single row into the table: "modelcatalog_software_version_input_variable" */
+  insert_modelcatalog_software_version_input_variable_one?: Maybe<Modelcatalog_Software_Version_Input_Variable>;
+  /** insert a single row into the table: "modelcatalog_software_version" */
+  insert_modelcatalog_software_version_one?: Maybe<Modelcatalog_Software_Version>;
+  /** insert data into the table: "modelcatalog_software_version_output_variable" */
+  insert_modelcatalog_software_version_output_variable?: Maybe<Modelcatalog_Software_Version_Output_Variable_Mutation_Response>;
+  /** insert a single row into the table: "modelcatalog_software_version_output_variable" */
+  insert_modelcatalog_software_version_output_variable_one?: Maybe<Modelcatalog_Software_Version_Output_Variable>;
+  /** insert data into the table: "modelcatalog_software_version_process" */
+  insert_modelcatalog_software_version_process?: Maybe<Modelcatalog_Software_Version_Process_Mutation_Response>;
+  /** insert a single row into the table: "modelcatalog_software_version_process" */
+  insert_modelcatalog_software_version_process_one?: Maybe<Modelcatalog_Software_Version_Process>;
+  /** insert data into the table: "modelcatalog_standard_variable" */
+  insert_modelcatalog_standard_variable?: Maybe<Modelcatalog_Standard_Variable_Mutation_Response>;
+  /** insert a single row into the table: "modelcatalog_standard_variable" */
+  insert_modelcatalog_standard_variable_one?: Maybe<Modelcatalog_Standard_Variable>;
+  /** insert data into the table: "modelcatalog_time_interval" */
+  insert_modelcatalog_time_interval?: Maybe<Modelcatalog_Time_Interval_Mutation_Response>;
+  /** insert a single row into the table: "modelcatalog_time_interval" */
+  insert_modelcatalog_time_interval_one?: Maybe<Modelcatalog_Time_Interval>;
+  /** insert data into the table: "modelcatalog_unit" */
+  insert_modelcatalog_unit?: Maybe<Modelcatalog_Unit_Mutation_Response>;
+  /** insert a single row into the table: "modelcatalog_unit" */
+  insert_modelcatalog_unit_one?: Maybe<Modelcatalog_Unit>;
+  /** insert data into the table: "modelcatalog_variable_presentation" */
+  insert_modelcatalog_variable_presentation?: Maybe<Modelcatalog_Variable_Presentation_Mutation_Response>;
+  /** insert a single row into the table: "modelcatalog_variable_presentation" */
+  insert_modelcatalog_variable_presentation_one?: Maybe<Modelcatalog_Variable_Presentation>;
+  /** insert data into the table: "modelcatalog_version_author" */
+  insert_modelcatalog_version_author?: Maybe<Modelcatalog_Version_Author_Mutation_Response>;
+  /** insert a single row into the table: "modelcatalog_version_author" */
+  insert_modelcatalog_version_author_one?: Maybe<Modelcatalog_Version_Author>;
   /** insert data into the table: "problem_statement" */
   insert_problem_statement?: Maybe<Problem_Statement_Mutation_Response>;
   /** insert a single row into the table: "problem_statement" */
@@ -4636,22 +11999,12 @@ export type Mutation_Root = {
   update_intervention_by_pk?: Maybe<Intervention>;
   /** update multiples rows of table: "intervention" */
   update_intervention_many?: Maybe<Array<Maybe<Intervention_Mutation_Response>>>;
-  /** update data of the table: "model" */
-  update_model?: Maybe<Model_Mutation_Response>;
-  /** update single row of the table: "model" */
-  update_model_by_pk?: Maybe<Model>;
-  /** update data of the table: "model_input" */
-  update_model_input?: Maybe<Model_Input_Mutation_Response>;
-  /** update single row of the table: "model_input" */
-  update_model_input_by_pk?: Maybe<Model_Input>;
   /** update data of the table: "model_input_fixed_binding" */
   update_model_input_fixed_binding?: Maybe<Model_Input_Fixed_Binding_Mutation_Response>;
   /** update single row of the table: "model_input_fixed_binding" */
   update_model_input_fixed_binding_by_pk?: Maybe<Model_Input_Fixed_Binding>;
   /** update multiples rows of table: "model_input_fixed_binding" */
   update_model_input_fixed_binding_many?: Maybe<Array<Maybe<Model_Input_Fixed_Binding_Mutation_Response>>>;
-  /** update multiples rows of table: "model_input" */
-  update_model_input_many?: Maybe<Array<Maybe<Model_Input_Mutation_Response>>>;
   /** update data of the table: "model_io" */
   update_model_io?: Maybe<Model_Io_Mutation_Response>;
   /** update single row of the table: "model_io" */
@@ -4664,20 +12017,246 @@ export type Mutation_Root = {
   update_model_io_variable_by_pk?: Maybe<Model_Io_Variable>;
   /** update multiples rows of table: "model_io_variable" */
   update_model_io_variable_many?: Maybe<Array<Maybe<Model_Io_Variable_Mutation_Response>>>;
-  /** update multiples rows of table: "model" */
-  update_model_many?: Maybe<Array<Maybe<Model_Mutation_Response>>>;
-  /** update data of the table: "model_output" */
-  update_model_output?: Maybe<Model_Output_Mutation_Response>;
-  /** update single row of the table: "model_output" */
-  update_model_output_by_pk?: Maybe<Model_Output>;
-  /** update multiples rows of table: "model_output" */
-  update_model_output_many?: Maybe<Array<Maybe<Model_Output_Mutation_Response>>>;
-  /** update data of the table: "model_parameter" */
-  update_model_parameter?: Maybe<Model_Parameter_Mutation_Response>;
-  /** update single row of the table: "model_parameter" */
-  update_model_parameter_by_pk?: Maybe<Model_Parameter>;
-  /** update multiples rows of table: "model_parameter" */
-  update_model_parameter_many?: Maybe<Array<Maybe<Model_Parameter_Mutation_Response>>>;
+  /** update data of the table: "modelcatalog_causal_diagram" */
+  update_modelcatalog_causal_diagram?: Maybe<Modelcatalog_Causal_Diagram_Mutation_Response>;
+  /** update single row of the table: "modelcatalog_causal_diagram" */
+  update_modelcatalog_causal_diagram_by_pk?: Maybe<Modelcatalog_Causal_Diagram>;
+  /** update multiples rows of table: "modelcatalog_causal_diagram" */
+  update_modelcatalog_causal_diagram_many?: Maybe<Array<Maybe<Modelcatalog_Causal_Diagram_Mutation_Response>>>;
+  /** update data of the table: "modelcatalog_configuration" */
+  update_modelcatalog_configuration?: Maybe<Modelcatalog_Configuration_Mutation_Response>;
+  /** update data of the table: "modelcatalog_configuration_author" */
+  update_modelcatalog_configuration_author?: Maybe<Modelcatalog_Configuration_Author_Mutation_Response>;
+  /** update single row of the table: "modelcatalog_configuration_author" */
+  update_modelcatalog_configuration_author_by_pk?: Maybe<Modelcatalog_Configuration_Author>;
+  /** update multiples rows of table: "modelcatalog_configuration_author" */
+  update_modelcatalog_configuration_author_many?: Maybe<Array<Maybe<Modelcatalog_Configuration_Author_Mutation_Response>>>;
+  /** update single row of the table: "modelcatalog_configuration" */
+  update_modelcatalog_configuration_by_pk?: Maybe<Modelcatalog_Configuration>;
+  /** update data of the table: "modelcatalog_configuration_calibrated_variable" */
+  update_modelcatalog_configuration_calibrated_variable?: Maybe<Modelcatalog_Configuration_Calibrated_Variable_Mutation_Response>;
+  /** update single row of the table: "modelcatalog_configuration_calibrated_variable" */
+  update_modelcatalog_configuration_calibrated_variable_by_pk?: Maybe<Modelcatalog_Configuration_Calibrated_Variable>;
+  /** update multiples rows of table: "modelcatalog_configuration_calibrated_variable" */
+  update_modelcatalog_configuration_calibrated_variable_many?: Maybe<Array<Maybe<Modelcatalog_Configuration_Calibrated_Variable_Mutation_Response>>>;
+  /** update data of the table: "modelcatalog_configuration_calibration_target" */
+  update_modelcatalog_configuration_calibration_target?: Maybe<Modelcatalog_Configuration_Calibration_Target_Mutation_Response>;
+  /** update single row of the table: "modelcatalog_configuration_calibration_target" */
+  update_modelcatalog_configuration_calibration_target_by_pk?: Maybe<Modelcatalog_Configuration_Calibration_Target>;
+  /** update multiples rows of table: "modelcatalog_configuration_calibration_target" */
+  update_modelcatalog_configuration_calibration_target_many?: Maybe<Array<Maybe<Modelcatalog_Configuration_Calibration_Target_Mutation_Response>>>;
+  /** update data of the table: "modelcatalog_configuration_category" */
+  update_modelcatalog_configuration_category?: Maybe<Modelcatalog_Configuration_Category_Mutation_Response>;
+  /** update single row of the table: "modelcatalog_configuration_category" */
+  update_modelcatalog_configuration_category_by_pk?: Maybe<Modelcatalog_Configuration_Category>;
+  /** update multiples rows of table: "modelcatalog_configuration_category" */
+  update_modelcatalog_configuration_category_many?: Maybe<Array<Maybe<Modelcatalog_Configuration_Category_Mutation_Response>>>;
+  /** update data of the table: "modelcatalog_configuration_causal_diagram" */
+  update_modelcatalog_configuration_causal_diagram?: Maybe<Modelcatalog_Configuration_Causal_Diagram_Mutation_Response>;
+  /** update single row of the table: "modelcatalog_configuration_causal_diagram" */
+  update_modelcatalog_configuration_causal_diagram_by_pk?: Maybe<Modelcatalog_Configuration_Causal_Diagram>;
+  /** update multiples rows of table: "modelcatalog_configuration_causal_diagram" */
+  update_modelcatalog_configuration_causal_diagram_many?: Maybe<Array<Maybe<Modelcatalog_Configuration_Causal_Diagram_Mutation_Response>>>;
+  /** update data of the table: "modelcatalog_configuration_input" */
+  update_modelcatalog_configuration_input?: Maybe<Modelcatalog_Configuration_Input_Mutation_Response>;
+  /** update single row of the table: "modelcatalog_configuration_input" */
+  update_modelcatalog_configuration_input_by_pk?: Maybe<Modelcatalog_Configuration_Input>;
+  /** update multiples rows of table: "modelcatalog_configuration_input" */
+  update_modelcatalog_configuration_input_many?: Maybe<Array<Maybe<Modelcatalog_Configuration_Input_Mutation_Response>>>;
+  /** update multiples rows of table: "modelcatalog_configuration" */
+  update_modelcatalog_configuration_many?: Maybe<Array<Maybe<Modelcatalog_Configuration_Mutation_Response>>>;
+  /** update data of the table: "modelcatalog_configuration_output" */
+  update_modelcatalog_configuration_output?: Maybe<Modelcatalog_Configuration_Output_Mutation_Response>;
+  /** update single row of the table: "modelcatalog_configuration_output" */
+  update_modelcatalog_configuration_output_by_pk?: Maybe<Modelcatalog_Configuration_Output>;
+  /** update multiples rows of table: "modelcatalog_configuration_output" */
+  update_modelcatalog_configuration_output_many?: Maybe<Array<Maybe<Modelcatalog_Configuration_Output_Mutation_Response>>>;
+  /** update data of the table: "modelcatalog_configuration_parameter" */
+  update_modelcatalog_configuration_parameter?: Maybe<Modelcatalog_Configuration_Parameter_Mutation_Response>;
+  /** update single row of the table: "modelcatalog_configuration_parameter" */
+  update_modelcatalog_configuration_parameter_by_pk?: Maybe<Modelcatalog_Configuration_Parameter>;
+  /** update multiples rows of table: "modelcatalog_configuration_parameter" */
+  update_modelcatalog_configuration_parameter_many?: Maybe<Array<Maybe<Modelcatalog_Configuration_Parameter_Mutation_Response>>>;
+  /** update data of the table: "modelcatalog_configuration_region" */
+  update_modelcatalog_configuration_region?: Maybe<Modelcatalog_Configuration_Region_Mutation_Response>;
+  /** update single row of the table: "modelcatalog_configuration_region" */
+  update_modelcatalog_configuration_region_by_pk?: Maybe<Modelcatalog_Configuration_Region>;
+  /** update multiples rows of table: "modelcatalog_configuration_region" */
+  update_modelcatalog_configuration_region_many?: Maybe<Array<Maybe<Modelcatalog_Configuration_Region_Mutation_Response>>>;
+  /** update data of the table: "modelcatalog_configuration_time_interval" */
+  update_modelcatalog_configuration_time_interval?: Maybe<Modelcatalog_Configuration_Time_Interval_Mutation_Response>;
+  /** update single row of the table: "modelcatalog_configuration_time_interval" */
+  update_modelcatalog_configuration_time_interval_by_pk?: Maybe<Modelcatalog_Configuration_Time_Interval>;
+  /** update multiples rows of table: "modelcatalog_configuration_time_interval" */
+  update_modelcatalog_configuration_time_interval_many?: Maybe<Array<Maybe<Modelcatalog_Configuration_Time_Interval_Mutation_Response>>>;
+  /** update data of the table: "modelcatalog_dataset_specification" */
+  update_modelcatalog_dataset_specification?: Maybe<Modelcatalog_Dataset_Specification_Mutation_Response>;
+  /** update single row of the table: "modelcatalog_dataset_specification" */
+  update_modelcatalog_dataset_specification_by_pk?: Maybe<Modelcatalog_Dataset_Specification>;
+  /** update multiples rows of table: "modelcatalog_dataset_specification" */
+  update_modelcatalog_dataset_specification_many?: Maybe<Array<Maybe<Modelcatalog_Dataset_Specification_Mutation_Response>>>;
+  /** update data of the table: "modelcatalog_dataset_specification_presentation" */
+  update_modelcatalog_dataset_specification_presentation?: Maybe<Modelcatalog_Dataset_Specification_Presentation_Mutation_Response>;
+  /** update single row of the table: "modelcatalog_dataset_specification_presentation" */
+  update_modelcatalog_dataset_specification_presentation_by_pk?: Maybe<Modelcatalog_Dataset_Specification_Presentation>;
+  /** update multiples rows of table: "modelcatalog_dataset_specification_presentation" */
+  update_modelcatalog_dataset_specification_presentation_many?: Maybe<Array<Maybe<Modelcatalog_Dataset_Specification_Presentation_Mutation_Response>>>;
+  /** update data of the table: "modelcatalog_diagram_part" */
+  update_modelcatalog_diagram_part?: Maybe<Modelcatalog_Diagram_Part_Mutation_Response>;
+  /** update single row of the table: "modelcatalog_diagram_part" */
+  update_modelcatalog_diagram_part_by_pk?: Maybe<Modelcatalog_Diagram_Part>;
+  /** update multiples rows of table: "modelcatalog_diagram_part" */
+  update_modelcatalog_diagram_part_many?: Maybe<Array<Maybe<Modelcatalog_Diagram_Part_Mutation_Response>>>;
+  /** update data of the table: "modelcatalog_grid" */
+  update_modelcatalog_grid?: Maybe<Modelcatalog_Grid_Mutation_Response>;
+  /** update single row of the table: "modelcatalog_grid" */
+  update_modelcatalog_grid_by_pk?: Maybe<Modelcatalog_Grid>;
+  /** update multiples rows of table: "modelcatalog_grid" */
+  update_modelcatalog_grid_many?: Maybe<Array<Maybe<Modelcatalog_Grid_Mutation_Response>>>;
+  /** update data of the table: "modelcatalog_image" */
+  update_modelcatalog_image?: Maybe<Modelcatalog_Image_Mutation_Response>;
+  /** update single row of the table: "modelcatalog_image" */
+  update_modelcatalog_image_by_pk?: Maybe<Modelcatalog_Image>;
+  /** update multiples rows of table: "modelcatalog_image" */
+  update_modelcatalog_image_many?: Maybe<Array<Maybe<Modelcatalog_Image_Mutation_Response>>>;
+  /** update data of the table: "modelcatalog_intervention" */
+  update_modelcatalog_intervention?: Maybe<Modelcatalog_Intervention_Mutation_Response>;
+  /** update single row of the table: "modelcatalog_intervention" */
+  update_modelcatalog_intervention_by_pk?: Maybe<Modelcatalog_Intervention>;
+  /** update multiples rows of table: "modelcatalog_intervention" */
+  update_modelcatalog_intervention_many?: Maybe<Array<Maybe<Modelcatalog_Intervention_Mutation_Response>>>;
+  /** update data of the table: "modelcatalog_model_category" */
+  update_modelcatalog_model_category?: Maybe<Modelcatalog_Model_Category_Mutation_Response>;
+  /** update single row of the table: "modelcatalog_model_category" */
+  update_modelcatalog_model_category_by_pk?: Maybe<Modelcatalog_Model_Category>;
+  /** update multiples rows of table: "modelcatalog_model_category" */
+  update_modelcatalog_model_category_many?: Maybe<Array<Maybe<Modelcatalog_Model_Category_Mutation_Response>>>;
+  /** update data of the table: "modelcatalog_parameter" */
+  update_modelcatalog_parameter?: Maybe<Modelcatalog_Parameter_Mutation_Response>;
+  /** update data of the table: "modelcatalog_parameter_adjusts_variable" */
+  update_modelcatalog_parameter_adjusts_variable?: Maybe<Modelcatalog_Parameter_Adjusts_Variable_Mutation_Response>;
+  /** update single row of the table: "modelcatalog_parameter_adjusts_variable" */
+  update_modelcatalog_parameter_adjusts_variable_by_pk?: Maybe<Modelcatalog_Parameter_Adjusts_Variable>;
+  /** update multiples rows of table: "modelcatalog_parameter_adjusts_variable" */
+  update_modelcatalog_parameter_adjusts_variable_many?: Maybe<Array<Maybe<Modelcatalog_Parameter_Adjusts_Variable_Mutation_Response>>>;
+  /** update single row of the table: "modelcatalog_parameter" */
+  update_modelcatalog_parameter_by_pk?: Maybe<Modelcatalog_Parameter>;
+  /** update data of the table: "modelcatalog_parameter_intervention" */
+  update_modelcatalog_parameter_intervention?: Maybe<Modelcatalog_Parameter_Intervention_Mutation_Response>;
+  /** update single row of the table: "modelcatalog_parameter_intervention" */
+  update_modelcatalog_parameter_intervention_by_pk?: Maybe<Modelcatalog_Parameter_Intervention>;
+  /** update multiples rows of table: "modelcatalog_parameter_intervention" */
+  update_modelcatalog_parameter_intervention_many?: Maybe<Array<Maybe<Modelcatalog_Parameter_Intervention_Mutation_Response>>>;
+  /** update multiples rows of table: "modelcatalog_parameter" */
+  update_modelcatalog_parameter_many?: Maybe<Array<Maybe<Modelcatalog_Parameter_Mutation_Response>>>;
+  /** update data of the table: "modelcatalog_person" */
+  update_modelcatalog_person?: Maybe<Modelcatalog_Person_Mutation_Response>;
+  /** update single row of the table: "modelcatalog_person" */
+  update_modelcatalog_person_by_pk?: Maybe<Modelcatalog_Person>;
+  /** update multiples rows of table: "modelcatalog_person" */
+  update_modelcatalog_person_many?: Maybe<Array<Maybe<Modelcatalog_Person_Mutation_Response>>>;
+  /** update data of the table: "modelcatalog_process" */
+  update_modelcatalog_process?: Maybe<Modelcatalog_Process_Mutation_Response>;
+  /** update single row of the table: "modelcatalog_process" */
+  update_modelcatalog_process_by_pk?: Maybe<Modelcatalog_Process>;
+  /** update multiples rows of table: "modelcatalog_process" */
+  update_modelcatalog_process_many?: Maybe<Array<Maybe<Modelcatalog_Process_Mutation_Response>>>;
+  /** update data of the table: "modelcatalog_region" */
+  update_modelcatalog_region?: Maybe<Modelcatalog_Region_Mutation_Response>;
+  /** update single row of the table: "modelcatalog_region" */
+  update_modelcatalog_region_by_pk?: Maybe<Modelcatalog_Region>;
+  /** update multiples rows of table: "modelcatalog_region" */
+  update_modelcatalog_region_many?: Maybe<Array<Maybe<Modelcatalog_Region_Mutation_Response>>>;
+  /** update data of the table: "modelcatalog_software" */
+  update_modelcatalog_software?: Maybe<Modelcatalog_Software_Mutation_Response>;
+  /** update data of the table: "modelcatalog_software_author" */
+  update_modelcatalog_software_author?: Maybe<Modelcatalog_Software_Author_Mutation_Response>;
+  /** update single row of the table: "modelcatalog_software_author" */
+  update_modelcatalog_software_author_by_pk?: Maybe<Modelcatalog_Software_Author>;
+  /** update multiples rows of table: "modelcatalog_software_author" */
+  update_modelcatalog_software_author_many?: Maybe<Array<Maybe<Modelcatalog_Software_Author_Mutation_Response>>>;
+  /** update single row of the table: "modelcatalog_software" */
+  update_modelcatalog_software_by_pk?: Maybe<Modelcatalog_Software>;
+  /** update data of the table: "modelcatalog_software_category" */
+  update_modelcatalog_software_category?: Maybe<Modelcatalog_Software_Category_Mutation_Response>;
+  /** update single row of the table: "modelcatalog_software_category" */
+  update_modelcatalog_software_category_by_pk?: Maybe<Modelcatalog_Software_Category>;
+  /** update multiples rows of table: "modelcatalog_software_category" */
+  update_modelcatalog_software_category_many?: Maybe<Array<Maybe<Modelcatalog_Software_Category_Mutation_Response>>>;
+  /** update multiples rows of table: "modelcatalog_software" */
+  update_modelcatalog_software_many?: Maybe<Array<Maybe<Modelcatalog_Software_Mutation_Response>>>;
+  /** update data of the table: "modelcatalog_software_version" */
+  update_modelcatalog_software_version?: Maybe<Modelcatalog_Software_Version_Mutation_Response>;
+  /** update single row of the table: "modelcatalog_software_version" */
+  update_modelcatalog_software_version_by_pk?: Maybe<Modelcatalog_Software_Version>;
+  /** update data of the table: "modelcatalog_software_version_category" */
+  update_modelcatalog_software_version_category?: Maybe<Modelcatalog_Software_Version_Category_Mutation_Response>;
+  /** update single row of the table: "modelcatalog_software_version_category" */
+  update_modelcatalog_software_version_category_by_pk?: Maybe<Modelcatalog_Software_Version_Category>;
+  /** update multiples rows of table: "modelcatalog_software_version_category" */
+  update_modelcatalog_software_version_category_many?: Maybe<Array<Maybe<Modelcatalog_Software_Version_Category_Mutation_Response>>>;
+  /** update data of the table: "modelcatalog_software_version_grid" */
+  update_modelcatalog_software_version_grid?: Maybe<Modelcatalog_Software_Version_Grid_Mutation_Response>;
+  /** update single row of the table: "modelcatalog_software_version_grid" */
+  update_modelcatalog_software_version_grid_by_pk?: Maybe<Modelcatalog_Software_Version_Grid>;
+  /** update multiples rows of table: "modelcatalog_software_version_grid" */
+  update_modelcatalog_software_version_grid_many?: Maybe<Array<Maybe<Modelcatalog_Software_Version_Grid_Mutation_Response>>>;
+  /** update data of the table: "modelcatalog_software_version_image" */
+  update_modelcatalog_software_version_image?: Maybe<Modelcatalog_Software_Version_Image_Mutation_Response>;
+  /** update single row of the table: "modelcatalog_software_version_image" */
+  update_modelcatalog_software_version_image_by_pk?: Maybe<Modelcatalog_Software_Version_Image>;
+  /** update multiples rows of table: "modelcatalog_software_version_image" */
+  update_modelcatalog_software_version_image_many?: Maybe<Array<Maybe<Modelcatalog_Software_Version_Image_Mutation_Response>>>;
+  /** update data of the table: "modelcatalog_software_version_input_variable" */
+  update_modelcatalog_software_version_input_variable?: Maybe<Modelcatalog_Software_Version_Input_Variable_Mutation_Response>;
+  /** update single row of the table: "modelcatalog_software_version_input_variable" */
+  update_modelcatalog_software_version_input_variable_by_pk?: Maybe<Modelcatalog_Software_Version_Input_Variable>;
+  /** update multiples rows of table: "modelcatalog_software_version_input_variable" */
+  update_modelcatalog_software_version_input_variable_many?: Maybe<Array<Maybe<Modelcatalog_Software_Version_Input_Variable_Mutation_Response>>>;
+  /** update multiples rows of table: "modelcatalog_software_version" */
+  update_modelcatalog_software_version_many?: Maybe<Array<Maybe<Modelcatalog_Software_Version_Mutation_Response>>>;
+  /** update data of the table: "modelcatalog_software_version_output_variable" */
+  update_modelcatalog_software_version_output_variable?: Maybe<Modelcatalog_Software_Version_Output_Variable_Mutation_Response>;
+  /** update single row of the table: "modelcatalog_software_version_output_variable" */
+  update_modelcatalog_software_version_output_variable_by_pk?: Maybe<Modelcatalog_Software_Version_Output_Variable>;
+  /** update multiples rows of table: "modelcatalog_software_version_output_variable" */
+  update_modelcatalog_software_version_output_variable_many?: Maybe<Array<Maybe<Modelcatalog_Software_Version_Output_Variable_Mutation_Response>>>;
+  /** update data of the table: "modelcatalog_software_version_process" */
+  update_modelcatalog_software_version_process?: Maybe<Modelcatalog_Software_Version_Process_Mutation_Response>;
+  /** update single row of the table: "modelcatalog_software_version_process" */
+  update_modelcatalog_software_version_process_by_pk?: Maybe<Modelcatalog_Software_Version_Process>;
+  /** update multiples rows of table: "modelcatalog_software_version_process" */
+  update_modelcatalog_software_version_process_many?: Maybe<Array<Maybe<Modelcatalog_Software_Version_Process_Mutation_Response>>>;
+  /** update data of the table: "modelcatalog_standard_variable" */
+  update_modelcatalog_standard_variable?: Maybe<Modelcatalog_Standard_Variable_Mutation_Response>;
+  /** update single row of the table: "modelcatalog_standard_variable" */
+  update_modelcatalog_standard_variable_by_pk?: Maybe<Modelcatalog_Standard_Variable>;
+  /** update multiples rows of table: "modelcatalog_standard_variable" */
+  update_modelcatalog_standard_variable_many?: Maybe<Array<Maybe<Modelcatalog_Standard_Variable_Mutation_Response>>>;
+  /** update data of the table: "modelcatalog_time_interval" */
+  update_modelcatalog_time_interval?: Maybe<Modelcatalog_Time_Interval_Mutation_Response>;
+  /** update single row of the table: "modelcatalog_time_interval" */
+  update_modelcatalog_time_interval_by_pk?: Maybe<Modelcatalog_Time_Interval>;
+  /** update multiples rows of table: "modelcatalog_time_interval" */
+  update_modelcatalog_time_interval_many?: Maybe<Array<Maybe<Modelcatalog_Time_Interval_Mutation_Response>>>;
+  /** update data of the table: "modelcatalog_unit" */
+  update_modelcatalog_unit?: Maybe<Modelcatalog_Unit_Mutation_Response>;
+  /** update single row of the table: "modelcatalog_unit" */
+  update_modelcatalog_unit_by_pk?: Maybe<Modelcatalog_Unit>;
+  /** update multiples rows of table: "modelcatalog_unit" */
+  update_modelcatalog_unit_many?: Maybe<Array<Maybe<Modelcatalog_Unit_Mutation_Response>>>;
+  /** update data of the table: "modelcatalog_variable_presentation" */
+  update_modelcatalog_variable_presentation?: Maybe<Modelcatalog_Variable_Presentation_Mutation_Response>;
+  /** update single row of the table: "modelcatalog_variable_presentation" */
+  update_modelcatalog_variable_presentation_by_pk?: Maybe<Modelcatalog_Variable_Presentation>;
+  /** update multiples rows of table: "modelcatalog_variable_presentation" */
+  update_modelcatalog_variable_presentation_many?: Maybe<Array<Maybe<Modelcatalog_Variable_Presentation_Mutation_Response>>>;
+  /** update data of the table: "modelcatalog_version_author" */
+  update_modelcatalog_version_author?: Maybe<Modelcatalog_Version_Author_Mutation_Response>;
+  /** update single row of the table: "modelcatalog_version_author" */
+  update_modelcatalog_version_author_by_pk?: Maybe<Modelcatalog_Version_Author>;
+  /** update multiples rows of table: "modelcatalog_version_author" */
+  update_modelcatalog_version_author_many?: Maybe<Array<Maybe<Modelcatalog_Version_Author_Mutation_Response>>>;
   /** update data of the table: "problem_statement" */
   update_problem_statement?: Maybe<Problem_Statement_Mutation_Response>;
   /** update single row of the table: "problem_statement" */
@@ -4926,31 +12505,6 @@ export type Mutation_RootDelete_Intervention_By_PkArgs = {
 
 
 /** mutation root */
-export type Mutation_RootDelete_ModelArgs = {
-  where: Model_Bool_Exp;
-};
-
-
-/** mutation root */
-export type Mutation_RootDelete_Model_By_PkArgs = {
-  id: Scalars['String']['input'];
-};
-
-
-/** mutation root */
-export type Mutation_RootDelete_Model_InputArgs = {
-  where: Model_Input_Bool_Exp;
-};
-
-
-/** mutation root */
-export type Mutation_RootDelete_Model_Input_By_PkArgs = {
-  model_id: Scalars['String']['input'];
-  model_io_id: Scalars['String']['input'];
-};
-
-
-/** mutation root */
 export type Mutation_RootDelete_Model_Input_Fixed_BindingArgs = {
   where: Model_Input_Fixed_Binding_Bool_Exp;
 };
@@ -4989,27 +12543,505 @@ export type Mutation_RootDelete_Model_Io_Variable_By_PkArgs = {
 
 
 /** mutation root */
-export type Mutation_RootDelete_Model_OutputArgs = {
-  where: Model_Output_Bool_Exp;
+export type Mutation_RootDelete_Modelcatalog_Causal_DiagramArgs = {
+  where: Modelcatalog_Causal_Diagram_Bool_Exp;
 };
 
 
 /** mutation root */
-export type Mutation_RootDelete_Model_Output_By_PkArgs = {
-  model_id: Scalars['String']['input'];
-  model_io_id: Scalars['String']['input'];
-};
-
-
-/** mutation root */
-export type Mutation_RootDelete_Model_ParameterArgs = {
-  where: Model_Parameter_Bool_Exp;
-};
-
-
-/** mutation root */
-export type Mutation_RootDelete_Model_Parameter_By_PkArgs = {
+export type Mutation_RootDelete_Modelcatalog_Causal_Diagram_By_PkArgs = {
   id: Scalars['String']['input'];
+};
+
+
+/** mutation root */
+export type Mutation_RootDelete_Modelcatalog_ConfigurationArgs = {
+  where: Modelcatalog_Configuration_Bool_Exp;
+};
+
+
+/** mutation root */
+export type Mutation_RootDelete_Modelcatalog_Configuration_AuthorArgs = {
+  where: Modelcatalog_Configuration_Author_Bool_Exp;
+};
+
+
+/** mutation root */
+export type Mutation_RootDelete_Modelcatalog_Configuration_Author_By_PkArgs = {
+  configuration_id: Scalars['String']['input'];
+  person_id: Scalars['String']['input'];
+};
+
+
+/** mutation root */
+export type Mutation_RootDelete_Modelcatalog_Configuration_By_PkArgs = {
+  id: Scalars['String']['input'];
+};
+
+
+/** mutation root */
+export type Mutation_RootDelete_Modelcatalog_Configuration_Calibrated_VariableArgs = {
+  where: Modelcatalog_Configuration_Calibrated_Variable_Bool_Exp;
+};
+
+
+/** mutation root */
+export type Mutation_RootDelete_Modelcatalog_Configuration_Calibrated_Variable_By_PkArgs = {
+  configuration_id: Scalars['String']['input'];
+  variable_id: Scalars['String']['input'];
+};
+
+
+/** mutation root */
+export type Mutation_RootDelete_Modelcatalog_Configuration_Calibration_TargetArgs = {
+  where: Modelcatalog_Configuration_Calibration_Target_Bool_Exp;
+};
+
+
+/** mutation root */
+export type Mutation_RootDelete_Modelcatalog_Configuration_Calibration_Target_By_PkArgs = {
+  configuration_id: Scalars['String']['input'];
+  variable_id: Scalars['String']['input'];
+};
+
+
+/** mutation root */
+export type Mutation_RootDelete_Modelcatalog_Configuration_CategoryArgs = {
+  where: Modelcatalog_Configuration_Category_Bool_Exp;
+};
+
+
+/** mutation root */
+export type Mutation_RootDelete_Modelcatalog_Configuration_Category_By_PkArgs = {
+  category_id: Scalars['String']['input'];
+  configuration_id: Scalars['String']['input'];
+};
+
+
+/** mutation root */
+export type Mutation_RootDelete_Modelcatalog_Configuration_Causal_DiagramArgs = {
+  where: Modelcatalog_Configuration_Causal_Diagram_Bool_Exp;
+};
+
+
+/** mutation root */
+export type Mutation_RootDelete_Modelcatalog_Configuration_Causal_Diagram_By_PkArgs = {
+  causal_diagram_id: Scalars['String']['input'];
+  configuration_id: Scalars['String']['input'];
+};
+
+
+/** mutation root */
+export type Mutation_RootDelete_Modelcatalog_Configuration_InputArgs = {
+  where: Modelcatalog_Configuration_Input_Bool_Exp;
+};
+
+
+/** mutation root */
+export type Mutation_RootDelete_Modelcatalog_Configuration_Input_By_PkArgs = {
+  configuration_id: Scalars['String']['input'];
+  input_id: Scalars['String']['input'];
+};
+
+
+/** mutation root */
+export type Mutation_RootDelete_Modelcatalog_Configuration_OutputArgs = {
+  where: Modelcatalog_Configuration_Output_Bool_Exp;
+};
+
+
+/** mutation root */
+export type Mutation_RootDelete_Modelcatalog_Configuration_Output_By_PkArgs = {
+  configuration_id: Scalars['String']['input'];
+  output_id: Scalars['String']['input'];
+};
+
+
+/** mutation root */
+export type Mutation_RootDelete_Modelcatalog_Configuration_ParameterArgs = {
+  where: Modelcatalog_Configuration_Parameter_Bool_Exp;
+};
+
+
+/** mutation root */
+export type Mutation_RootDelete_Modelcatalog_Configuration_Parameter_By_PkArgs = {
+  configuration_id: Scalars['String']['input'];
+  parameter_id: Scalars['String']['input'];
+};
+
+
+/** mutation root */
+export type Mutation_RootDelete_Modelcatalog_Configuration_RegionArgs = {
+  where: Modelcatalog_Configuration_Region_Bool_Exp;
+};
+
+
+/** mutation root */
+export type Mutation_RootDelete_Modelcatalog_Configuration_Region_By_PkArgs = {
+  configuration_id: Scalars['String']['input'];
+  region_id: Scalars['String']['input'];
+};
+
+
+/** mutation root */
+export type Mutation_RootDelete_Modelcatalog_Configuration_Time_IntervalArgs = {
+  where: Modelcatalog_Configuration_Time_Interval_Bool_Exp;
+};
+
+
+/** mutation root */
+export type Mutation_RootDelete_Modelcatalog_Configuration_Time_Interval_By_PkArgs = {
+  configuration_id: Scalars['String']['input'];
+  time_interval_id: Scalars['String']['input'];
+};
+
+
+/** mutation root */
+export type Mutation_RootDelete_Modelcatalog_Dataset_SpecificationArgs = {
+  where: Modelcatalog_Dataset_Specification_Bool_Exp;
+};
+
+
+/** mutation root */
+export type Mutation_RootDelete_Modelcatalog_Dataset_Specification_By_PkArgs = {
+  id: Scalars['String']['input'];
+};
+
+
+/** mutation root */
+export type Mutation_RootDelete_Modelcatalog_Dataset_Specification_PresentationArgs = {
+  where: Modelcatalog_Dataset_Specification_Presentation_Bool_Exp;
+};
+
+
+/** mutation root */
+export type Mutation_RootDelete_Modelcatalog_Dataset_Specification_Presentation_By_PkArgs = {
+  dataset_specification_id: Scalars['String']['input'];
+  presentation_id: Scalars['String']['input'];
+};
+
+
+/** mutation root */
+export type Mutation_RootDelete_Modelcatalog_Diagram_PartArgs = {
+  where: Modelcatalog_Diagram_Part_Bool_Exp;
+};
+
+
+/** mutation root */
+export type Mutation_RootDelete_Modelcatalog_Diagram_Part_By_PkArgs = {
+  causal_diagram_id: Scalars['String']['input'];
+  part_id: Scalars['String']['input'];
+};
+
+
+/** mutation root */
+export type Mutation_RootDelete_Modelcatalog_GridArgs = {
+  where: Modelcatalog_Grid_Bool_Exp;
+};
+
+
+/** mutation root */
+export type Mutation_RootDelete_Modelcatalog_Grid_By_PkArgs = {
+  id: Scalars['String']['input'];
+};
+
+
+/** mutation root */
+export type Mutation_RootDelete_Modelcatalog_ImageArgs = {
+  where: Modelcatalog_Image_Bool_Exp;
+};
+
+
+/** mutation root */
+export type Mutation_RootDelete_Modelcatalog_Image_By_PkArgs = {
+  id: Scalars['String']['input'];
+};
+
+
+/** mutation root */
+export type Mutation_RootDelete_Modelcatalog_InterventionArgs = {
+  where: Modelcatalog_Intervention_Bool_Exp;
+};
+
+
+/** mutation root */
+export type Mutation_RootDelete_Modelcatalog_Intervention_By_PkArgs = {
+  id: Scalars['String']['input'];
+};
+
+
+/** mutation root */
+export type Mutation_RootDelete_Modelcatalog_Model_CategoryArgs = {
+  where: Modelcatalog_Model_Category_Bool_Exp;
+};
+
+
+/** mutation root */
+export type Mutation_RootDelete_Modelcatalog_Model_Category_By_PkArgs = {
+  id: Scalars['String']['input'];
+};
+
+
+/** mutation root */
+export type Mutation_RootDelete_Modelcatalog_ParameterArgs = {
+  where: Modelcatalog_Parameter_Bool_Exp;
+};
+
+
+/** mutation root */
+export type Mutation_RootDelete_Modelcatalog_Parameter_Adjusts_VariableArgs = {
+  where: Modelcatalog_Parameter_Adjusts_Variable_Bool_Exp;
+};
+
+
+/** mutation root */
+export type Mutation_RootDelete_Modelcatalog_Parameter_Adjusts_Variable_By_PkArgs = {
+  parameter_id: Scalars['String']['input'];
+  variable_id: Scalars['String']['input'];
+};
+
+
+/** mutation root */
+export type Mutation_RootDelete_Modelcatalog_Parameter_By_PkArgs = {
+  id: Scalars['String']['input'];
+};
+
+
+/** mutation root */
+export type Mutation_RootDelete_Modelcatalog_Parameter_InterventionArgs = {
+  where: Modelcatalog_Parameter_Intervention_Bool_Exp;
+};
+
+
+/** mutation root */
+export type Mutation_RootDelete_Modelcatalog_Parameter_Intervention_By_PkArgs = {
+  intervention_id: Scalars['String']['input'];
+  parameter_id: Scalars['String']['input'];
+};
+
+
+/** mutation root */
+export type Mutation_RootDelete_Modelcatalog_PersonArgs = {
+  where: Modelcatalog_Person_Bool_Exp;
+};
+
+
+/** mutation root */
+export type Mutation_RootDelete_Modelcatalog_Person_By_PkArgs = {
+  id: Scalars['String']['input'];
+};
+
+
+/** mutation root */
+export type Mutation_RootDelete_Modelcatalog_ProcessArgs = {
+  where: Modelcatalog_Process_Bool_Exp;
+};
+
+
+/** mutation root */
+export type Mutation_RootDelete_Modelcatalog_Process_By_PkArgs = {
+  id: Scalars['String']['input'];
+};
+
+
+/** mutation root */
+export type Mutation_RootDelete_Modelcatalog_RegionArgs = {
+  where: Modelcatalog_Region_Bool_Exp;
+};
+
+
+/** mutation root */
+export type Mutation_RootDelete_Modelcatalog_Region_By_PkArgs = {
+  id: Scalars['String']['input'];
+};
+
+
+/** mutation root */
+export type Mutation_RootDelete_Modelcatalog_SoftwareArgs = {
+  where: Modelcatalog_Software_Bool_Exp;
+};
+
+
+/** mutation root */
+export type Mutation_RootDelete_Modelcatalog_Software_AuthorArgs = {
+  where: Modelcatalog_Software_Author_Bool_Exp;
+};
+
+
+/** mutation root */
+export type Mutation_RootDelete_Modelcatalog_Software_Author_By_PkArgs = {
+  person_id: Scalars['String']['input'];
+  software_id: Scalars['String']['input'];
+};
+
+
+/** mutation root */
+export type Mutation_RootDelete_Modelcatalog_Software_By_PkArgs = {
+  id: Scalars['String']['input'];
+};
+
+
+/** mutation root */
+export type Mutation_RootDelete_Modelcatalog_Software_CategoryArgs = {
+  where: Modelcatalog_Software_Category_Bool_Exp;
+};
+
+
+/** mutation root */
+export type Mutation_RootDelete_Modelcatalog_Software_Category_By_PkArgs = {
+  category_id: Scalars['String']['input'];
+  software_id: Scalars['String']['input'];
+};
+
+
+/** mutation root */
+export type Mutation_RootDelete_Modelcatalog_Software_VersionArgs = {
+  where: Modelcatalog_Software_Version_Bool_Exp;
+};
+
+
+/** mutation root */
+export type Mutation_RootDelete_Modelcatalog_Software_Version_By_PkArgs = {
+  id: Scalars['String']['input'];
+};
+
+
+/** mutation root */
+export type Mutation_RootDelete_Modelcatalog_Software_Version_CategoryArgs = {
+  where: Modelcatalog_Software_Version_Category_Bool_Exp;
+};
+
+
+/** mutation root */
+export type Mutation_RootDelete_Modelcatalog_Software_Version_Category_By_PkArgs = {
+  category_id: Scalars['String']['input'];
+  software_version_id: Scalars['String']['input'];
+};
+
+
+/** mutation root */
+export type Mutation_RootDelete_Modelcatalog_Software_Version_GridArgs = {
+  where: Modelcatalog_Software_Version_Grid_Bool_Exp;
+};
+
+
+/** mutation root */
+export type Mutation_RootDelete_Modelcatalog_Software_Version_Grid_By_PkArgs = {
+  grid_id: Scalars['String']['input'];
+  software_version_id: Scalars['String']['input'];
+};
+
+
+/** mutation root */
+export type Mutation_RootDelete_Modelcatalog_Software_Version_ImageArgs = {
+  where: Modelcatalog_Software_Version_Image_Bool_Exp;
+};
+
+
+/** mutation root */
+export type Mutation_RootDelete_Modelcatalog_Software_Version_Image_By_PkArgs = {
+  image_id: Scalars['String']['input'];
+  software_version_id: Scalars['String']['input'];
+};
+
+
+/** mutation root */
+export type Mutation_RootDelete_Modelcatalog_Software_Version_Input_VariableArgs = {
+  where: Modelcatalog_Software_Version_Input_Variable_Bool_Exp;
+};
+
+
+/** mutation root */
+export type Mutation_RootDelete_Modelcatalog_Software_Version_Input_Variable_By_PkArgs = {
+  software_version_id: Scalars['String']['input'];
+  variable_id: Scalars['String']['input'];
+};
+
+
+/** mutation root */
+export type Mutation_RootDelete_Modelcatalog_Software_Version_Output_VariableArgs = {
+  where: Modelcatalog_Software_Version_Output_Variable_Bool_Exp;
+};
+
+
+/** mutation root */
+export type Mutation_RootDelete_Modelcatalog_Software_Version_Output_Variable_By_PkArgs = {
+  software_version_id: Scalars['String']['input'];
+  variable_id: Scalars['String']['input'];
+};
+
+
+/** mutation root */
+export type Mutation_RootDelete_Modelcatalog_Software_Version_ProcessArgs = {
+  where: Modelcatalog_Software_Version_Process_Bool_Exp;
+};
+
+
+/** mutation root */
+export type Mutation_RootDelete_Modelcatalog_Software_Version_Process_By_PkArgs = {
+  process_id: Scalars['String']['input'];
+  software_version_id: Scalars['String']['input'];
+};
+
+
+/** mutation root */
+export type Mutation_RootDelete_Modelcatalog_Standard_VariableArgs = {
+  where: Modelcatalog_Standard_Variable_Bool_Exp;
+};
+
+
+/** mutation root */
+export type Mutation_RootDelete_Modelcatalog_Standard_Variable_By_PkArgs = {
+  id: Scalars['String']['input'];
+};
+
+
+/** mutation root */
+export type Mutation_RootDelete_Modelcatalog_Time_IntervalArgs = {
+  where: Modelcatalog_Time_Interval_Bool_Exp;
+};
+
+
+/** mutation root */
+export type Mutation_RootDelete_Modelcatalog_Time_Interval_By_PkArgs = {
+  id: Scalars['String']['input'];
+};
+
+
+/** mutation root */
+export type Mutation_RootDelete_Modelcatalog_UnitArgs = {
+  where: Modelcatalog_Unit_Bool_Exp;
+};
+
+
+/** mutation root */
+export type Mutation_RootDelete_Modelcatalog_Unit_By_PkArgs = {
+  id: Scalars['String']['input'];
+};
+
+
+/** mutation root */
+export type Mutation_RootDelete_Modelcatalog_Variable_PresentationArgs = {
+  where: Modelcatalog_Variable_Presentation_Bool_Exp;
+};
+
+
+/** mutation root */
+export type Mutation_RootDelete_Modelcatalog_Variable_Presentation_By_PkArgs = {
+  id: Scalars['String']['input'];
+};
+
+
+/** mutation root */
+export type Mutation_RootDelete_Modelcatalog_Version_AuthorArgs = {
+  where: Modelcatalog_Version_Author_Bool_Exp;
+};
+
+
+/** mutation root */
+export type Mutation_RootDelete_Modelcatalog_Version_Author_By_PkArgs = {
+  person_id: Scalars['String']['input'];
+  software_version_id: Scalars['String']['input'];
 };
 
 
@@ -5425,20 +13457,6 @@ export type Mutation_RootInsert_Intervention_OneArgs = {
 
 
 /** mutation root */
-export type Mutation_RootInsert_ModelArgs = {
-  objects: Array<Model_Insert_Input>;
-  on_conflict?: InputMaybe<Model_On_Conflict>;
-};
-
-
-/** mutation root */
-export type Mutation_RootInsert_Model_InputArgs = {
-  objects: Array<Model_Input_Insert_Input>;
-  on_conflict?: InputMaybe<Model_Input_On_Conflict>;
-};
-
-
-/** mutation root */
 export type Mutation_RootInsert_Model_Input_Fixed_BindingArgs = {
   objects: Array<Model_Input_Fixed_Binding_Insert_Input>;
   on_conflict?: InputMaybe<Model_Input_Fixed_Binding_On_Conflict>;
@@ -5449,13 +13467,6 @@ export type Mutation_RootInsert_Model_Input_Fixed_BindingArgs = {
 export type Mutation_RootInsert_Model_Input_Fixed_Binding_OneArgs = {
   object: Model_Input_Fixed_Binding_Insert_Input;
   on_conflict?: InputMaybe<Model_Input_Fixed_Binding_On_Conflict>;
-};
-
-
-/** mutation root */
-export type Mutation_RootInsert_Model_Input_OneArgs = {
-  object: Model_Input_Insert_Input;
-  on_conflict?: InputMaybe<Model_Input_On_Conflict>;
 };
 
 
@@ -5488,37 +13499,562 @@ export type Mutation_RootInsert_Model_Io_Variable_OneArgs = {
 
 
 /** mutation root */
-export type Mutation_RootInsert_Model_OneArgs = {
-  object: Model_Insert_Input;
-  on_conflict?: InputMaybe<Model_On_Conflict>;
+export type Mutation_RootInsert_Modelcatalog_Causal_DiagramArgs = {
+  objects: Array<Modelcatalog_Causal_Diagram_Insert_Input>;
+  on_conflict?: InputMaybe<Modelcatalog_Causal_Diagram_On_Conflict>;
 };
 
 
 /** mutation root */
-export type Mutation_RootInsert_Model_OutputArgs = {
-  objects: Array<Model_Output_Insert_Input>;
-  on_conflict?: InputMaybe<Model_Output_On_Conflict>;
+export type Mutation_RootInsert_Modelcatalog_Causal_Diagram_OneArgs = {
+  object: Modelcatalog_Causal_Diagram_Insert_Input;
+  on_conflict?: InputMaybe<Modelcatalog_Causal_Diagram_On_Conflict>;
 };
 
 
 /** mutation root */
-export type Mutation_RootInsert_Model_Output_OneArgs = {
-  object: Model_Output_Insert_Input;
-  on_conflict?: InputMaybe<Model_Output_On_Conflict>;
+export type Mutation_RootInsert_Modelcatalog_ConfigurationArgs = {
+  objects: Array<Modelcatalog_Configuration_Insert_Input>;
+  on_conflict?: InputMaybe<Modelcatalog_Configuration_On_Conflict>;
 };
 
 
 /** mutation root */
-export type Mutation_RootInsert_Model_ParameterArgs = {
-  objects: Array<Model_Parameter_Insert_Input>;
-  on_conflict?: InputMaybe<Model_Parameter_On_Conflict>;
+export type Mutation_RootInsert_Modelcatalog_Configuration_AuthorArgs = {
+  objects: Array<Modelcatalog_Configuration_Author_Insert_Input>;
+  on_conflict?: InputMaybe<Modelcatalog_Configuration_Author_On_Conflict>;
 };
 
 
 /** mutation root */
-export type Mutation_RootInsert_Model_Parameter_OneArgs = {
-  object: Model_Parameter_Insert_Input;
-  on_conflict?: InputMaybe<Model_Parameter_On_Conflict>;
+export type Mutation_RootInsert_Modelcatalog_Configuration_Author_OneArgs = {
+  object: Modelcatalog_Configuration_Author_Insert_Input;
+  on_conflict?: InputMaybe<Modelcatalog_Configuration_Author_On_Conflict>;
+};
+
+
+/** mutation root */
+export type Mutation_RootInsert_Modelcatalog_Configuration_Calibrated_VariableArgs = {
+  objects: Array<Modelcatalog_Configuration_Calibrated_Variable_Insert_Input>;
+  on_conflict?: InputMaybe<Modelcatalog_Configuration_Calibrated_Variable_On_Conflict>;
+};
+
+
+/** mutation root */
+export type Mutation_RootInsert_Modelcatalog_Configuration_Calibrated_Variable_OneArgs = {
+  object: Modelcatalog_Configuration_Calibrated_Variable_Insert_Input;
+  on_conflict?: InputMaybe<Modelcatalog_Configuration_Calibrated_Variable_On_Conflict>;
+};
+
+
+/** mutation root */
+export type Mutation_RootInsert_Modelcatalog_Configuration_Calibration_TargetArgs = {
+  objects: Array<Modelcatalog_Configuration_Calibration_Target_Insert_Input>;
+  on_conflict?: InputMaybe<Modelcatalog_Configuration_Calibration_Target_On_Conflict>;
+};
+
+
+/** mutation root */
+export type Mutation_RootInsert_Modelcatalog_Configuration_Calibration_Target_OneArgs = {
+  object: Modelcatalog_Configuration_Calibration_Target_Insert_Input;
+  on_conflict?: InputMaybe<Modelcatalog_Configuration_Calibration_Target_On_Conflict>;
+};
+
+
+/** mutation root */
+export type Mutation_RootInsert_Modelcatalog_Configuration_CategoryArgs = {
+  objects: Array<Modelcatalog_Configuration_Category_Insert_Input>;
+  on_conflict?: InputMaybe<Modelcatalog_Configuration_Category_On_Conflict>;
+};
+
+
+/** mutation root */
+export type Mutation_RootInsert_Modelcatalog_Configuration_Category_OneArgs = {
+  object: Modelcatalog_Configuration_Category_Insert_Input;
+  on_conflict?: InputMaybe<Modelcatalog_Configuration_Category_On_Conflict>;
+};
+
+
+/** mutation root */
+export type Mutation_RootInsert_Modelcatalog_Configuration_Causal_DiagramArgs = {
+  objects: Array<Modelcatalog_Configuration_Causal_Diagram_Insert_Input>;
+  on_conflict?: InputMaybe<Modelcatalog_Configuration_Causal_Diagram_On_Conflict>;
+};
+
+
+/** mutation root */
+export type Mutation_RootInsert_Modelcatalog_Configuration_Causal_Diagram_OneArgs = {
+  object: Modelcatalog_Configuration_Causal_Diagram_Insert_Input;
+  on_conflict?: InputMaybe<Modelcatalog_Configuration_Causal_Diagram_On_Conflict>;
+};
+
+
+/** mutation root */
+export type Mutation_RootInsert_Modelcatalog_Configuration_InputArgs = {
+  objects: Array<Modelcatalog_Configuration_Input_Insert_Input>;
+  on_conflict?: InputMaybe<Modelcatalog_Configuration_Input_On_Conflict>;
+};
+
+
+/** mutation root */
+export type Mutation_RootInsert_Modelcatalog_Configuration_Input_OneArgs = {
+  object: Modelcatalog_Configuration_Input_Insert_Input;
+  on_conflict?: InputMaybe<Modelcatalog_Configuration_Input_On_Conflict>;
+};
+
+
+/** mutation root */
+export type Mutation_RootInsert_Modelcatalog_Configuration_OneArgs = {
+  object: Modelcatalog_Configuration_Insert_Input;
+  on_conflict?: InputMaybe<Modelcatalog_Configuration_On_Conflict>;
+};
+
+
+/** mutation root */
+export type Mutation_RootInsert_Modelcatalog_Configuration_OutputArgs = {
+  objects: Array<Modelcatalog_Configuration_Output_Insert_Input>;
+  on_conflict?: InputMaybe<Modelcatalog_Configuration_Output_On_Conflict>;
+};
+
+
+/** mutation root */
+export type Mutation_RootInsert_Modelcatalog_Configuration_Output_OneArgs = {
+  object: Modelcatalog_Configuration_Output_Insert_Input;
+  on_conflict?: InputMaybe<Modelcatalog_Configuration_Output_On_Conflict>;
+};
+
+
+/** mutation root */
+export type Mutation_RootInsert_Modelcatalog_Configuration_ParameterArgs = {
+  objects: Array<Modelcatalog_Configuration_Parameter_Insert_Input>;
+  on_conflict?: InputMaybe<Modelcatalog_Configuration_Parameter_On_Conflict>;
+};
+
+
+/** mutation root */
+export type Mutation_RootInsert_Modelcatalog_Configuration_Parameter_OneArgs = {
+  object: Modelcatalog_Configuration_Parameter_Insert_Input;
+  on_conflict?: InputMaybe<Modelcatalog_Configuration_Parameter_On_Conflict>;
+};
+
+
+/** mutation root */
+export type Mutation_RootInsert_Modelcatalog_Configuration_RegionArgs = {
+  objects: Array<Modelcatalog_Configuration_Region_Insert_Input>;
+  on_conflict?: InputMaybe<Modelcatalog_Configuration_Region_On_Conflict>;
+};
+
+
+/** mutation root */
+export type Mutation_RootInsert_Modelcatalog_Configuration_Region_OneArgs = {
+  object: Modelcatalog_Configuration_Region_Insert_Input;
+  on_conflict?: InputMaybe<Modelcatalog_Configuration_Region_On_Conflict>;
+};
+
+
+/** mutation root */
+export type Mutation_RootInsert_Modelcatalog_Configuration_Time_IntervalArgs = {
+  objects: Array<Modelcatalog_Configuration_Time_Interval_Insert_Input>;
+  on_conflict?: InputMaybe<Modelcatalog_Configuration_Time_Interval_On_Conflict>;
+};
+
+
+/** mutation root */
+export type Mutation_RootInsert_Modelcatalog_Configuration_Time_Interval_OneArgs = {
+  object: Modelcatalog_Configuration_Time_Interval_Insert_Input;
+  on_conflict?: InputMaybe<Modelcatalog_Configuration_Time_Interval_On_Conflict>;
+};
+
+
+/** mutation root */
+export type Mutation_RootInsert_Modelcatalog_Dataset_SpecificationArgs = {
+  objects: Array<Modelcatalog_Dataset_Specification_Insert_Input>;
+  on_conflict?: InputMaybe<Modelcatalog_Dataset_Specification_On_Conflict>;
+};
+
+
+/** mutation root */
+export type Mutation_RootInsert_Modelcatalog_Dataset_Specification_OneArgs = {
+  object: Modelcatalog_Dataset_Specification_Insert_Input;
+  on_conflict?: InputMaybe<Modelcatalog_Dataset_Specification_On_Conflict>;
+};
+
+
+/** mutation root */
+export type Mutation_RootInsert_Modelcatalog_Dataset_Specification_PresentationArgs = {
+  objects: Array<Modelcatalog_Dataset_Specification_Presentation_Insert_Input>;
+  on_conflict?: InputMaybe<Modelcatalog_Dataset_Specification_Presentation_On_Conflict>;
+};
+
+
+/** mutation root */
+export type Mutation_RootInsert_Modelcatalog_Dataset_Specification_Presentation_OneArgs = {
+  object: Modelcatalog_Dataset_Specification_Presentation_Insert_Input;
+  on_conflict?: InputMaybe<Modelcatalog_Dataset_Specification_Presentation_On_Conflict>;
+};
+
+
+/** mutation root */
+export type Mutation_RootInsert_Modelcatalog_Diagram_PartArgs = {
+  objects: Array<Modelcatalog_Diagram_Part_Insert_Input>;
+  on_conflict?: InputMaybe<Modelcatalog_Diagram_Part_On_Conflict>;
+};
+
+
+/** mutation root */
+export type Mutation_RootInsert_Modelcatalog_Diagram_Part_OneArgs = {
+  object: Modelcatalog_Diagram_Part_Insert_Input;
+  on_conflict?: InputMaybe<Modelcatalog_Diagram_Part_On_Conflict>;
+};
+
+
+/** mutation root */
+export type Mutation_RootInsert_Modelcatalog_GridArgs = {
+  objects: Array<Modelcatalog_Grid_Insert_Input>;
+  on_conflict?: InputMaybe<Modelcatalog_Grid_On_Conflict>;
+};
+
+
+/** mutation root */
+export type Mutation_RootInsert_Modelcatalog_Grid_OneArgs = {
+  object: Modelcatalog_Grid_Insert_Input;
+  on_conflict?: InputMaybe<Modelcatalog_Grid_On_Conflict>;
+};
+
+
+/** mutation root */
+export type Mutation_RootInsert_Modelcatalog_ImageArgs = {
+  objects: Array<Modelcatalog_Image_Insert_Input>;
+  on_conflict?: InputMaybe<Modelcatalog_Image_On_Conflict>;
+};
+
+
+/** mutation root */
+export type Mutation_RootInsert_Modelcatalog_Image_OneArgs = {
+  object: Modelcatalog_Image_Insert_Input;
+  on_conflict?: InputMaybe<Modelcatalog_Image_On_Conflict>;
+};
+
+
+/** mutation root */
+export type Mutation_RootInsert_Modelcatalog_InterventionArgs = {
+  objects: Array<Modelcatalog_Intervention_Insert_Input>;
+  on_conflict?: InputMaybe<Modelcatalog_Intervention_On_Conflict>;
+};
+
+
+/** mutation root */
+export type Mutation_RootInsert_Modelcatalog_Intervention_OneArgs = {
+  object: Modelcatalog_Intervention_Insert_Input;
+  on_conflict?: InputMaybe<Modelcatalog_Intervention_On_Conflict>;
+};
+
+
+/** mutation root */
+export type Mutation_RootInsert_Modelcatalog_Model_CategoryArgs = {
+  objects: Array<Modelcatalog_Model_Category_Insert_Input>;
+  on_conflict?: InputMaybe<Modelcatalog_Model_Category_On_Conflict>;
+};
+
+
+/** mutation root */
+export type Mutation_RootInsert_Modelcatalog_Model_Category_OneArgs = {
+  object: Modelcatalog_Model_Category_Insert_Input;
+  on_conflict?: InputMaybe<Modelcatalog_Model_Category_On_Conflict>;
+};
+
+
+/** mutation root */
+export type Mutation_RootInsert_Modelcatalog_ParameterArgs = {
+  objects: Array<Modelcatalog_Parameter_Insert_Input>;
+  on_conflict?: InputMaybe<Modelcatalog_Parameter_On_Conflict>;
+};
+
+
+/** mutation root */
+export type Mutation_RootInsert_Modelcatalog_Parameter_Adjusts_VariableArgs = {
+  objects: Array<Modelcatalog_Parameter_Adjusts_Variable_Insert_Input>;
+  on_conflict?: InputMaybe<Modelcatalog_Parameter_Adjusts_Variable_On_Conflict>;
+};
+
+
+/** mutation root */
+export type Mutation_RootInsert_Modelcatalog_Parameter_Adjusts_Variable_OneArgs = {
+  object: Modelcatalog_Parameter_Adjusts_Variable_Insert_Input;
+  on_conflict?: InputMaybe<Modelcatalog_Parameter_Adjusts_Variable_On_Conflict>;
+};
+
+
+/** mutation root */
+export type Mutation_RootInsert_Modelcatalog_Parameter_InterventionArgs = {
+  objects: Array<Modelcatalog_Parameter_Intervention_Insert_Input>;
+  on_conflict?: InputMaybe<Modelcatalog_Parameter_Intervention_On_Conflict>;
+};
+
+
+/** mutation root */
+export type Mutation_RootInsert_Modelcatalog_Parameter_Intervention_OneArgs = {
+  object: Modelcatalog_Parameter_Intervention_Insert_Input;
+  on_conflict?: InputMaybe<Modelcatalog_Parameter_Intervention_On_Conflict>;
+};
+
+
+/** mutation root */
+export type Mutation_RootInsert_Modelcatalog_Parameter_OneArgs = {
+  object: Modelcatalog_Parameter_Insert_Input;
+  on_conflict?: InputMaybe<Modelcatalog_Parameter_On_Conflict>;
+};
+
+
+/** mutation root */
+export type Mutation_RootInsert_Modelcatalog_PersonArgs = {
+  objects: Array<Modelcatalog_Person_Insert_Input>;
+  on_conflict?: InputMaybe<Modelcatalog_Person_On_Conflict>;
+};
+
+
+/** mutation root */
+export type Mutation_RootInsert_Modelcatalog_Person_OneArgs = {
+  object: Modelcatalog_Person_Insert_Input;
+  on_conflict?: InputMaybe<Modelcatalog_Person_On_Conflict>;
+};
+
+
+/** mutation root */
+export type Mutation_RootInsert_Modelcatalog_ProcessArgs = {
+  objects: Array<Modelcatalog_Process_Insert_Input>;
+  on_conflict?: InputMaybe<Modelcatalog_Process_On_Conflict>;
+};
+
+
+/** mutation root */
+export type Mutation_RootInsert_Modelcatalog_Process_OneArgs = {
+  object: Modelcatalog_Process_Insert_Input;
+  on_conflict?: InputMaybe<Modelcatalog_Process_On_Conflict>;
+};
+
+
+/** mutation root */
+export type Mutation_RootInsert_Modelcatalog_RegionArgs = {
+  objects: Array<Modelcatalog_Region_Insert_Input>;
+  on_conflict?: InputMaybe<Modelcatalog_Region_On_Conflict>;
+};
+
+
+/** mutation root */
+export type Mutation_RootInsert_Modelcatalog_Region_OneArgs = {
+  object: Modelcatalog_Region_Insert_Input;
+  on_conflict?: InputMaybe<Modelcatalog_Region_On_Conflict>;
+};
+
+
+/** mutation root */
+export type Mutation_RootInsert_Modelcatalog_SoftwareArgs = {
+  objects: Array<Modelcatalog_Software_Insert_Input>;
+  on_conflict?: InputMaybe<Modelcatalog_Software_On_Conflict>;
+};
+
+
+/** mutation root */
+export type Mutation_RootInsert_Modelcatalog_Software_AuthorArgs = {
+  objects: Array<Modelcatalog_Software_Author_Insert_Input>;
+  on_conflict?: InputMaybe<Modelcatalog_Software_Author_On_Conflict>;
+};
+
+
+/** mutation root */
+export type Mutation_RootInsert_Modelcatalog_Software_Author_OneArgs = {
+  object: Modelcatalog_Software_Author_Insert_Input;
+  on_conflict?: InputMaybe<Modelcatalog_Software_Author_On_Conflict>;
+};
+
+
+/** mutation root */
+export type Mutation_RootInsert_Modelcatalog_Software_CategoryArgs = {
+  objects: Array<Modelcatalog_Software_Category_Insert_Input>;
+  on_conflict?: InputMaybe<Modelcatalog_Software_Category_On_Conflict>;
+};
+
+
+/** mutation root */
+export type Mutation_RootInsert_Modelcatalog_Software_Category_OneArgs = {
+  object: Modelcatalog_Software_Category_Insert_Input;
+  on_conflict?: InputMaybe<Modelcatalog_Software_Category_On_Conflict>;
+};
+
+
+/** mutation root */
+export type Mutation_RootInsert_Modelcatalog_Software_OneArgs = {
+  object: Modelcatalog_Software_Insert_Input;
+  on_conflict?: InputMaybe<Modelcatalog_Software_On_Conflict>;
+};
+
+
+/** mutation root */
+export type Mutation_RootInsert_Modelcatalog_Software_VersionArgs = {
+  objects: Array<Modelcatalog_Software_Version_Insert_Input>;
+  on_conflict?: InputMaybe<Modelcatalog_Software_Version_On_Conflict>;
+};
+
+
+/** mutation root */
+export type Mutation_RootInsert_Modelcatalog_Software_Version_CategoryArgs = {
+  objects: Array<Modelcatalog_Software_Version_Category_Insert_Input>;
+  on_conflict?: InputMaybe<Modelcatalog_Software_Version_Category_On_Conflict>;
+};
+
+
+/** mutation root */
+export type Mutation_RootInsert_Modelcatalog_Software_Version_Category_OneArgs = {
+  object: Modelcatalog_Software_Version_Category_Insert_Input;
+  on_conflict?: InputMaybe<Modelcatalog_Software_Version_Category_On_Conflict>;
+};
+
+
+/** mutation root */
+export type Mutation_RootInsert_Modelcatalog_Software_Version_GridArgs = {
+  objects: Array<Modelcatalog_Software_Version_Grid_Insert_Input>;
+  on_conflict?: InputMaybe<Modelcatalog_Software_Version_Grid_On_Conflict>;
+};
+
+
+/** mutation root */
+export type Mutation_RootInsert_Modelcatalog_Software_Version_Grid_OneArgs = {
+  object: Modelcatalog_Software_Version_Grid_Insert_Input;
+  on_conflict?: InputMaybe<Modelcatalog_Software_Version_Grid_On_Conflict>;
+};
+
+
+/** mutation root */
+export type Mutation_RootInsert_Modelcatalog_Software_Version_ImageArgs = {
+  objects: Array<Modelcatalog_Software_Version_Image_Insert_Input>;
+  on_conflict?: InputMaybe<Modelcatalog_Software_Version_Image_On_Conflict>;
+};
+
+
+/** mutation root */
+export type Mutation_RootInsert_Modelcatalog_Software_Version_Image_OneArgs = {
+  object: Modelcatalog_Software_Version_Image_Insert_Input;
+  on_conflict?: InputMaybe<Modelcatalog_Software_Version_Image_On_Conflict>;
+};
+
+
+/** mutation root */
+export type Mutation_RootInsert_Modelcatalog_Software_Version_Input_VariableArgs = {
+  objects: Array<Modelcatalog_Software_Version_Input_Variable_Insert_Input>;
+  on_conflict?: InputMaybe<Modelcatalog_Software_Version_Input_Variable_On_Conflict>;
+};
+
+
+/** mutation root */
+export type Mutation_RootInsert_Modelcatalog_Software_Version_Input_Variable_OneArgs = {
+  object: Modelcatalog_Software_Version_Input_Variable_Insert_Input;
+  on_conflict?: InputMaybe<Modelcatalog_Software_Version_Input_Variable_On_Conflict>;
+};
+
+
+/** mutation root */
+export type Mutation_RootInsert_Modelcatalog_Software_Version_OneArgs = {
+  object: Modelcatalog_Software_Version_Insert_Input;
+  on_conflict?: InputMaybe<Modelcatalog_Software_Version_On_Conflict>;
+};
+
+
+/** mutation root */
+export type Mutation_RootInsert_Modelcatalog_Software_Version_Output_VariableArgs = {
+  objects: Array<Modelcatalog_Software_Version_Output_Variable_Insert_Input>;
+  on_conflict?: InputMaybe<Modelcatalog_Software_Version_Output_Variable_On_Conflict>;
+};
+
+
+/** mutation root */
+export type Mutation_RootInsert_Modelcatalog_Software_Version_Output_Variable_OneArgs = {
+  object: Modelcatalog_Software_Version_Output_Variable_Insert_Input;
+  on_conflict?: InputMaybe<Modelcatalog_Software_Version_Output_Variable_On_Conflict>;
+};
+
+
+/** mutation root */
+export type Mutation_RootInsert_Modelcatalog_Software_Version_ProcessArgs = {
+  objects: Array<Modelcatalog_Software_Version_Process_Insert_Input>;
+  on_conflict?: InputMaybe<Modelcatalog_Software_Version_Process_On_Conflict>;
+};
+
+
+/** mutation root */
+export type Mutation_RootInsert_Modelcatalog_Software_Version_Process_OneArgs = {
+  object: Modelcatalog_Software_Version_Process_Insert_Input;
+  on_conflict?: InputMaybe<Modelcatalog_Software_Version_Process_On_Conflict>;
+};
+
+
+/** mutation root */
+export type Mutation_RootInsert_Modelcatalog_Standard_VariableArgs = {
+  objects: Array<Modelcatalog_Standard_Variable_Insert_Input>;
+  on_conflict?: InputMaybe<Modelcatalog_Standard_Variable_On_Conflict>;
+};
+
+
+/** mutation root */
+export type Mutation_RootInsert_Modelcatalog_Standard_Variable_OneArgs = {
+  object: Modelcatalog_Standard_Variable_Insert_Input;
+  on_conflict?: InputMaybe<Modelcatalog_Standard_Variable_On_Conflict>;
+};
+
+
+/** mutation root */
+export type Mutation_RootInsert_Modelcatalog_Time_IntervalArgs = {
+  objects: Array<Modelcatalog_Time_Interval_Insert_Input>;
+  on_conflict?: InputMaybe<Modelcatalog_Time_Interval_On_Conflict>;
+};
+
+
+/** mutation root */
+export type Mutation_RootInsert_Modelcatalog_Time_Interval_OneArgs = {
+  object: Modelcatalog_Time_Interval_Insert_Input;
+  on_conflict?: InputMaybe<Modelcatalog_Time_Interval_On_Conflict>;
+};
+
+
+/** mutation root */
+export type Mutation_RootInsert_Modelcatalog_UnitArgs = {
+  objects: Array<Modelcatalog_Unit_Insert_Input>;
+  on_conflict?: InputMaybe<Modelcatalog_Unit_On_Conflict>;
+};
+
+
+/** mutation root */
+export type Mutation_RootInsert_Modelcatalog_Unit_OneArgs = {
+  object: Modelcatalog_Unit_Insert_Input;
+  on_conflict?: InputMaybe<Modelcatalog_Unit_On_Conflict>;
+};
+
+
+/** mutation root */
+export type Mutation_RootInsert_Modelcatalog_Variable_PresentationArgs = {
+  objects: Array<Modelcatalog_Variable_Presentation_Insert_Input>;
+  on_conflict?: InputMaybe<Modelcatalog_Variable_Presentation_On_Conflict>;
+};
+
+
+/** mutation root */
+export type Mutation_RootInsert_Modelcatalog_Variable_Presentation_OneArgs = {
+  object: Modelcatalog_Variable_Presentation_Insert_Input;
+  on_conflict?: InputMaybe<Modelcatalog_Variable_Presentation_On_Conflict>;
+};
+
+
+/** mutation root */
+export type Mutation_RootInsert_Modelcatalog_Version_AuthorArgs = {
+  objects: Array<Modelcatalog_Version_Author_Insert_Input>;
+  on_conflict?: InputMaybe<Modelcatalog_Version_Author_On_Conflict>;
+};
+
+
+/** mutation root */
+export type Mutation_RootInsert_Modelcatalog_Version_Author_OneArgs = {
+  object: Modelcatalog_Version_Author_Insert_Input;
+  on_conflict?: InputMaybe<Modelcatalog_Version_Author_On_Conflict>;
 };
 
 
@@ -6021,36 +14557,6 @@ export type Mutation_RootUpdate_Intervention_ManyArgs = {
 
 
 /** mutation root */
-export type Mutation_RootUpdate_ModelArgs = {
-  _set?: InputMaybe<Model_Set_Input>;
-  where: Model_Bool_Exp;
-};
-
-
-/** mutation root */
-export type Mutation_RootUpdate_Model_By_PkArgs = {
-  _set?: InputMaybe<Model_Set_Input>;
-  pk_columns: Model_Pk_Columns_Input;
-};
-
-
-/** mutation root */
-export type Mutation_RootUpdate_Model_InputArgs = {
-  _inc?: InputMaybe<Model_Input_Inc_Input>;
-  _set?: InputMaybe<Model_Input_Set_Input>;
-  where: Model_Input_Bool_Exp;
-};
-
-
-/** mutation root */
-export type Mutation_RootUpdate_Model_Input_By_PkArgs = {
-  _inc?: InputMaybe<Model_Input_Inc_Input>;
-  _set?: InputMaybe<Model_Input_Set_Input>;
-  pk_columns: Model_Input_Pk_Columns_Input;
-};
-
-
-/** mutation root */
 export type Mutation_RootUpdate_Model_Input_Fixed_BindingArgs = {
   _set?: InputMaybe<Model_Input_Fixed_Binding_Set_Input>;
   where: Model_Input_Fixed_Binding_Bool_Exp;
@@ -6067,12 +14573,6 @@ export type Mutation_RootUpdate_Model_Input_Fixed_Binding_By_PkArgs = {
 /** mutation root */
 export type Mutation_RootUpdate_Model_Input_Fixed_Binding_ManyArgs = {
   updates: Array<Model_Input_Fixed_Binding_Updates>;
-};
-
-
-/** mutation root */
-export type Mutation_RootUpdate_Model_Input_ManyArgs = {
-  updates: Array<Model_Input_Updates>;
 };
 
 
@@ -6117,52 +14617,806 @@ export type Mutation_RootUpdate_Model_Io_Variable_ManyArgs = {
 
 
 /** mutation root */
-export type Mutation_RootUpdate_Model_ManyArgs = {
-  updates: Array<Model_Updates>;
+export type Mutation_RootUpdate_Modelcatalog_Causal_DiagramArgs = {
+  _set?: InputMaybe<Modelcatalog_Causal_Diagram_Set_Input>;
+  where: Modelcatalog_Causal_Diagram_Bool_Exp;
 };
 
 
 /** mutation root */
-export type Mutation_RootUpdate_Model_OutputArgs = {
-  _inc?: InputMaybe<Model_Output_Inc_Input>;
-  _set?: InputMaybe<Model_Output_Set_Input>;
-  where: Model_Output_Bool_Exp;
+export type Mutation_RootUpdate_Modelcatalog_Causal_Diagram_By_PkArgs = {
+  _set?: InputMaybe<Modelcatalog_Causal_Diagram_Set_Input>;
+  pk_columns: Modelcatalog_Causal_Diagram_Pk_Columns_Input;
 };
 
 
 /** mutation root */
-export type Mutation_RootUpdate_Model_Output_By_PkArgs = {
-  _inc?: InputMaybe<Model_Output_Inc_Input>;
-  _set?: InputMaybe<Model_Output_Set_Input>;
-  pk_columns: Model_Output_Pk_Columns_Input;
+export type Mutation_RootUpdate_Modelcatalog_Causal_Diagram_ManyArgs = {
+  updates: Array<Modelcatalog_Causal_Diagram_Updates>;
 };
 
 
 /** mutation root */
-export type Mutation_RootUpdate_Model_Output_ManyArgs = {
-  updates: Array<Model_Output_Updates>;
+export type Mutation_RootUpdate_Modelcatalog_ConfigurationArgs = {
+  _set?: InputMaybe<Modelcatalog_Configuration_Set_Input>;
+  where: Modelcatalog_Configuration_Bool_Exp;
 };
 
 
 /** mutation root */
-export type Mutation_RootUpdate_Model_ParameterArgs = {
-  _inc?: InputMaybe<Model_Parameter_Inc_Input>;
-  _set?: InputMaybe<Model_Parameter_Set_Input>;
-  where: Model_Parameter_Bool_Exp;
+export type Mutation_RootUpdate_Modelcatalog_Configuration_AuthorArgs = {
+  _set?: InputMaybe<Modelcatalog_Configuration_Author_Set_Input>;
+  where: Modelcatalog_Configuration_Author_Bool_Exp;
 };
 
 
 /** mutation root */
-export type Mutation_RootUpdate_Model_Parameter_By_PkArgs = {
-  _inc?: InputMaybe<Model_Parameter_Inc_Input>;
-  _set?: InputMaybe<Model_Parameter_Set_Input>;
-  pk_columns: Model_Parameter_Pk_Columns_Input;
+export type Mutation_RootUpdate_Modelcatalog_Configuration_Author_By_PkArgs = {
+  _set?: InputMaybe<Modelcatalog_Configuration_Author_Set_Input>;
+  pk_columns: Modelcatalog_Configuration_Author_Pk_Columns_Input;
 };
 
 
 /** mutation root */
-export type Mutation_RootUpdate_Model_Parameter_ManyArgs = {
-  updates: Array<Model_Parameter_Updates>;
+export type Mutation_RootUpdate_Modelcatalog_Configuration_Author_ManyArgs = {
+  updates: Array<Modelcatalog_Configuration_Author_Updates>;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Configuration_By_PkArgs = {
+  _set?: InputMaybe<Modelcatalog_Configuration_Set_Input>;
+  pk_columns: Modelcatalog_Configuration_Pk_Columns_Input;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Configuration_Calibrated_VariableArgs = {
+  _set?: InputMaybe<Modelcatalog_Configuration_Calibrated_Variable_Set_Input>;
+  where: Modelcatalog_Configuration_Calibrated_Variable_Bool_Exp;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Configuration_Calibrated_Variable_By_PkArgs = {
+  _set?: InputMaybe<Modelcatalog_Configuration_Calibrated_Variable_Set_Input>;
+  pk_columns: Modelcatalog_Configuration_Calibrated_Variable_Pk_Columns_Input;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Configuration_Calibrated_Variable_ManyArgs = {
+  updates: Array<Modelcatalog_Configuration_Calibrated_Variable_Updates>;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Configuration_Calibration_TargetArgs = {
+  _set?: InputMaybe<Modelcatalog_Configuration_Calibration_Target_Set_Input>;
+  where: Modelcatalog_Configuration_Calibration_Target_Bool_Exp;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Configuration_Calibration_Target_By_PkArgs = {
+  _set?: InputMaybe<Modelcatalog_Configuration_Calibration_Target_Set_Input>;
+  pk_columns: Modelcatalog_Configuration_Calibration_Target_Pk_Columns_Input;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Configuration_Calibration_Target_ManyArgs = {
+  updates: Array<Modelcatalog_Configuration_Calibration_Target_Updates>;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Configuration_CategoryArgs = {
+  _set?: InputMaybe<Modelcatalog_Configuration_Category_Set_Input>;
+  where: Modelcatalog_Configuration_Category_Bool_Exp;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Configuration_Category_By_PkArgs = {
+  _set?: InputMaybe<Modelcatalog_Configuration_Category_Set_Input>;
+  pk_columns: Modelcatalog_Configuration_Category_Pk_Columns_Input;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Configuration_Category_ManyArgs = {
+  updates: Array<Modelcatalog_Configuration_Category_Updates>;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Configuration_Causal_DiagramArgs = {
+  _set?: InputMaybe<Modelcatalog_Configuration_Causal_Diagram_Set_Input>;
+  where: Modelcatalog_Configuration_Causal_Diagram_Bool_Exp;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Configuration_Causal_Diagram_By_PkArgs = {
+  _set?: InputMaybe<Modelcatalog_Configuration_Causal_Diagram_Set_Input>;
+  pk_columns: Modelcatalog_Configuration_Causal_Diagram_Pk_Columns_Input;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Configuration_Causal_Diagram_ManyArgs = {
+  updates: Array<Modelcatalog_Configuration_Causal_Diagram_Updates>;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Configuration_InputArgs = {
+  _set?: InputMaybe<Modelcatalog_Configuration_Input_Set_Input>;
+  where: Modelcatalog_Configuration_Input_Bool_Exp;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Configuration_Input_By_PkArgs = {
+  _set?: InputMaybe<Modelcatalog_Configuration_Input_Set_Input>;
+  pk_columns: Modelcatalog_Configuration_Input_Pk_Columns_Input;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Configuration_Input_ManyArgs = {
+  updates: Array<Modelcatalog_Configuration_Input_Updates>;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Configuration_ManyArgs = {
+  updates: Array<Modelcatalog_Configuration_Updates>;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Configuration_OutputArgs = {
+  _set?: InputMaybe<Modelcatalog_Configuration_Output_Set_Input>;
+  where: Modelcatalog_Configuration_Output_Bool_Exp;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Configuration_Output_By_PkArgs = {
+  _set?: InputMaybe<Modelcatalog_Configuration_Output_Set_Input>;
+  pk_columns: Modelcatalog_Configuration_Output_Pk_Columns_Input;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Configuration_Output_ManyArgs = {
+  updates: Array<Modelcatalog_Configuration_Output_Updates>;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Configuration_ParameterArgs = {
+  _set?: InputMaybe<Modelcatalog_Configuration_Parameter_Set_Input>;
+  where: Modelcatalog_Configuration_Parameter_Bool_Exp;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Configuration_Parameter_By_PkArgs = {
+  _set?: InputMaybe<Modelcatalog_Configuration_Parameter_Set_Input>;
+  pk_columns: Modelcatalog_Configuration_Parameter_Pk_Columns_Input;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Configuration_Parameter_ManyArgs = {
+  updates: Array<Modelcatalog_Configuration_Parameter_Updates>;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Configuration_RegionArgs = {
+  _set?: InputMaybe<Modelcatalog_Configuration_Region_Set_Input>;
+  where: Modelcatalog_Configuration_Region_Bool_Exp;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Configuration_Region_By_PkArgs = {
+  _set?: InputMaybe<Modelcatalog_Configuration_Region_Set_Input>;
+  pk_columns: Modelcatalog_Configuration_Region_Pk_Columns_Input;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Configuration_Region_ManyArgs = {
+  updates: Array<Modelcatalog_Configuration_Region_Updates>;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Configuration_Time_IntervalArgs = {
+  _set?: InputMaybe<Modelcatalog_Configuration_Time_Interval_Set_Input>;
+  where: Modelcatalog_Configuration_Time_Interval_Bool_Exp;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Configuration_Time_Interval_By_PkArgs = {
+  _set?: InputMaybe<Modelcatalog_Configuration_Time_Interval_Set_Input>;
+  pk_columns: Modelcatalog_Configuration_Time_Interval_Pk_Columns_Input;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Configuration_Time_Interval_ManyArgs = {
+  updates: Array<Modelcatalog_Configuration_Time_Interval_Updates>;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Dataset_SpecificationArgs = {
+  _inc?: InputMaybe<Modelcatalog_Dataset_Specification_Inc_Input>;
+  _set?: InputMaybe<Modelcatalog_Dataset_Specification_Set_Input>;
+  where: Modelcatalog_Dataset_Specification_Bool_Exp;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Dataset_Specification_By_PkArgs = {
+  _inc?: InputMaybe<Modelcatalog_Dataset_Specification_Inc_Input>;
+  _set?: InputMaybe<Modelcatalog_Dataset_Specification_Set_Input>;
+  pk_columns: Modelcatalog_Dataset_Specification_Pk_Columns_Input;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Dataset_Specification_ManyArgs = {
+  updates: Array<Modelcatalog_Dataset_Specification_Updates>;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Dataset_Specification_PresentationArgs = {
+  _set?: InputMaybe<Modelcatalog_Dataset_Specification_Presentation_Set_Input>;
+  where: Modelcatalog_Dataset_Specification_Presentation_Bool_Exp;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Dataset_Specification_Presentation_By_PkArgs = {
+  _set?: InputMaybe<Modelcatalog_Dataset_Specification_Presentation_Set_Input>;
+  pk_columns: Modelcatalog_Dataset_Specification_Presentation_Pk_Columns_Input;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Dataset_Specification_Presentation_ManyArgs = {
+  updates: Array<Modelcatalog_Dataset_Specification_Presentation_Updates>;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Diagram_PartArgs = {
+  _set?: InputMaybe<Modelcatalog_Diagram_Part_Set_Input>;
+  where: Modelcatalog_Diagram_Part_Bool_Exp;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Diagram_Part_By_PkArgs = {
+  _set?: InputMaybe<Modelcatalog_Diagram_Part_Set_Input>;
+  pk_columns: Modelcatalog_Diagram_Part_Pk_Columns_Input;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Diagram_Part_ManyArgs = {
+  updates: Array<Modelcatalog_Diagram_Part_Updates>;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_GridArgs = {
+  _set?: InputMaybe<Modelcatalog_Grid_Set_Input>;
+  where: Modelcatalog_Grid_Bool_Exp;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Grid_By_PkArgs = {
+  _set?: InputMaybe<Modelcatalog_Grid_Set_Input>;
+  pk_columns: Modelcatalog_Grid_Pk_Columns_Input;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Grid_ManyArgs = {
+  updates: Array<Modelcatalog_Grid_Updates>;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_ImageArgs = {
+  _set?: InputMaybe<Modelcatalog_Image_Set_Input>;
+  where: Modelcatalog_Image_Bool_Exp;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Image_By_PkArgs = {
+  _set?: InputMaybe<Modelcatalog_Image_Set_Input>;
+  pk_columns: Modelcatalog_Image_Pk_Columns_Input;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Image_ManyArgs = {
+  updates: Array<Modelcatalog_Image_Updates>;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_InterventionArgs = {
+  _set?: InputMaybe<Modelcatalog_Intervention_Set_Input>;
+  where: Modelcatalog_Intervention_Bool_Exp;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Intervention_By_PkArgs = {
+  _set?: InputMaybe<Modelcatalog_Intervention_Set_Input>;
+  pk_columns: Modelcatalog_Intervention_Pk_Columns_Input;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Intervention_ManyArgs = {
+  updates: Array<Modelcatalog_Intervention_Updates>;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Model_CategoryArgs = {
+  _set?: InputMaybe<Modelcatalog_Model_Category_Set_Input>;
+  where: Modelcatalog_Model_Category_Bool_Exp;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Model_Category_By_PkArgs = {
+  _set?: InputMaybe<Modelcatalog_Model_Category_Set_Input>;
+  pk_columns: Modelcatalog_Model_Category_Pk_Columns_Input;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Model_Category_ManyArgs = {
+  updates: Array<Modelcatalog_Model_Category_Updates>;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_ParameterArgs = {
+  _inc?: InputMaybe<Modelcatalog_Parameter_Inc_Input>;
+  _set?: InputMaybe<Modelcatalog_Parameter_Set_Input>;
+  where: Modelcatalog_Parameter_Bool_Exp;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Parameter_Adjusts_VariableArgs = {
+  _set?: InputMaybe<Modelcatalog_Parameter_Adjusts_Variable_Set_Input>;
+  where: Modelcatalog_Parameter_Adjusts_Variable_Bool_Exp;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Parameter_Adjusts_Variable_By_PkArgs = {
+  _set?: InputMaybe<Modelcatalog_Parameter_Adjusts_Variable_Set_Input>;
+  pk_columns: Modelcatalog_Parameter_Adjusts_Variable_Pk_Columns_Input;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Parameter_Adjusts_Variable_ManyArgs = {
+  updates: Array<Modelcatalog_Parameter_Adjusts_Variable_Updates>;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Parameter_By_PkArgs = {
+  _inc?: InputMaybe<Modelcatalog_Parameter_Inc_Input>;
+  _set?: InputMaybe<Modelcatalog_Parameter_Set_Input>;
+  pk_columns: Modelcatalog_Parameter_Pk_Columns_Input;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Parameter_InterventionArgs = {
+  _set?: InputMaybe<Modelcatalog_Parameter_Intervention_Set_Input>;
+  where: Modelcatalog_Parameter_Intervention_Bool_Exp;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Parameter_Intervention_By_PkArgs = {
+  _set?: InputMaybe<Modelcatalog_Parameter_Intervention_Set_Input>;
+  pk_columns: Modelcatalog_Parameter_Intervention_Pk_Columns_Input;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Parameter_Intervention_ManyArgs = {
+  updates: Array<Modelcatalog_Parameter_Intervention_Updates>;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Parameter_ManyArgs = {
+  updates: Array<Modelcatalog_Parameter_Updates>;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_PersonArgs = {
+  _set?: InputMaybe<Modelcatalog_Person_Set_Input>;
+  where: Modelcatalog_Person_Bool_Exp;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Person_By_PkArgs = {
+  _set?: InputMaybe<Modelcatalog_Person_Set_Input>;
+  pk_columns: Modelcatalog_Person_Pk_Columns_Input;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Person_ManyArgs = {
+  updates: Array<Modelcatalog_Person_Updates>;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_ProcessArgs = {
+  _set?: InputMaybe<Modelcatalog_Process_Set_Input>;
+  where: Modelcatalog_Process_Bool_Exp;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Process_By_PkArgs = {
+  _set?: InputMaybe<Modelcatalog_Process_Set_Input>;
+  pk_columns: Modelcatalog_Process_Pk_Columns_Input;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Process_ManyArgs = {
+  updates: Array<Modelcatalog_Process_Updates>;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_RegionArgs = {
+  _set?: InputMaybe<Modelcatalog_Region_Set_Input>;
+  where: Modelcatalog_Region_Bool_Exp;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Region_By_PkArgs = {
+  _set?: InputMaybe<Modelcatalog_Region_Set_Input>;
+  pk_columns: Modelcatalog_Region_Pk_Columns_Input;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Region_ManyArgs = {
+  updates: Array<Modelcatalog_Region_Updates>;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_SoftwareArgs = {
+  _set?: InputMaybe<Modelcatalog_Software_Set_Input>;
+  where: Modelcatalog_Software_Bool_Exp;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Software_AuthorArgs = {
+  _set?: InputMaybe<Modelcatalog_Software_Author_Set_Input>;
+  where: Modelcatalog_Software_Author_Bool_Exp;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Software_Author_By_PkArgs = {
+  _set?: InputMaybe<Modelcatalog_Software_Author_Set_Input>;
+  pk_columns: Modelcatalog_Software_Author_Pk_Columns_Input;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Software_Author_ManyArgs = {
+  updates: Array<Modelcatalog_Software_Author_Updates>;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Software_By_PkArgs = {
+  _set?: InputMaybe<Modelcatalog_Software_Set_Input>;
+  pk_columns: Modelcatalog_Software_Pk_Columns_Input;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Software_CategoryArgs = {
+  _set?: InputMaybe<Modelcatalog_Software_Category_Set_Input>;
+  where: Modelcatalog_Software_Category_Bool_Exp;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Software_Category_By_PkArgs = {
+  _set?: InputMaybe<Modelcatalog_Software_Category_Set_Input>;
+  pk_columns: Modelcatalog_Software_Category_Pk_Columns_Input;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Software_Category_ManyArgs = {
+  updates: Array<Modelcatalog_Software_Category_Updates>;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Software_ManyArgs = {
+  updates: Array<Modelcatalog_Software_Updates>;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Software_VersionArgs = {
+  _set?: InputMaybe<Modelcatalog_Software_Version_Set_Input>;
+  where: Modelcatalog_Software_Version_Bool_Exp;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Software_Version_By_PkArgs = {
+  _set?: InputMaybe<Modelcatalog_Software_Version_Set_Input>;
+  pk_columns: Modelcatalog_Software_Version_Pk_Columns_Input;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Software_Version_CategoryArgs = {
+  _set?: InputMaybe<Modelcatalog_Software_Version_Category_Set_Input>;
+  where: Modelcatalog_Software_Version_Category_Bool_Exp;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Software_Version_Category_By_PkArgs = {
+  _set?: InputMaybe<Modelcatalog_Software_Version_Category_Set_Input>;
+  pk_columns: Modelcatalog_Software_Version_Category_Pk_Columns_Input;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Software_Version_Category_ManyArgs = {
+  updates: Array<Modelcatalog_Software_Version_Category_Updates>;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Software_Version_GridArgs = {
+  _set?: InputMaybe<Modelcatalog_Software_Version_Grid_Set_Input>;
+  where: Modelcatalog_Software_Version_Grid_Bool_Exp;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Software_Version_Grid_By_PkArgs = {
+  _set?: InputMaybe<Modelcatalog_Software_Version_Grid_Set_Input>;
+  pk_columns: Modelcatalog_Software_Version_Grid_Pk_Columns_Input;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Software_Version_Grid_ManyArgs = {
+  updates: Array<Modelcatalog_Software_Version_Grid_Updates>;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Software_Version_ImageArgs = {
+  _set?: InputMaybe<Modelcatalog_Software_Version_Image_Set_Input>;
+  where: Modelcatalog_Software_Version_Image_Bool_Exp;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Software_Version_Image_By_PkArgs = {
+  _set?: InputMaybe<Modelcatalog_Software_Version_Image_Set_Input>;
+  pk_columns: Modelcatalog_Software_Version_Image_Pk_Columns_Input;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Software_Version_Image_ManyArgs = {
+  updates: Array<Modelcatalog_Software_Version_Image_Updates>;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Software_Version_Input_VariableArgs = {
+  _set?: InputMaybe<Modelcatalog_Software_Version_Input_Variable_Set_Input>;
+  where: Modelcatalog_Software_Version_Input_Variable_Bool_Exp;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Software_Version_Input_Variable_By_PkArgs = {
+  _set?: InputMaybe<Modelcatalog_Software_Version_Input_Variable_Set_Input>;
+  pk_columns: Modelcatalog_Software_Version_Input_Variable_Pk_Columns_Input;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Software_Version_Input_Variable_ManyArgs = {
+  updates: Array<Modelcatalog_Software_Version_Input_Variable_Updates>;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Software_Version_ManyArgs = {
+  updates: Array<Modelcatalog_Software_Version_Updates>;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Software_Version_Output_VariableArgs = {
+  _set?: InputMaybe<Modelcatalog_Software_Version_Output_Variable_Set_Input>;
+  where: Modelcatalog_Software_Version_Output_Variable_Bool_Exp;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Software_Version_Output_Variable_By_PkArgs = {
+  _set?: InputMaybe<Modelcatalog_Software_Version_Output_Variable_Set_Input>;
+  pk_columns: Modelcatalog_Software_Version_Output_Variable_Pk_Columns_Input;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Software_Version_Output_Variable_ManyArgs = {
+  updates: Array<Modelcatalog_Software_Version_Output_Variable_Updates>;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Software_Version_ProcessArgs = {
+  _set?: InputMaybe<Modelcatalog_Software_Version_Process_Set_Input>;
+  where: Modelcatalog_Software_Version_Process_Bool_Exp;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Software_Version_Process_By_PkArgs = {
+  _set?: InputMaybe<Modelcatalog_Software_Version_Process_Set_Input>;
+  pk_columns: Modelcatalog_Software_Version_Process_Pk_Columns_Input;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Software_Version_Process_ManyArgs = {
+  updates: Array<Modelcatalog_Software_Version_Process_Updates>;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Standard_VariableArgs = {
+  _set?: InputMaybe<Modelcatalog_Standard_Variable_Set_Input>;
+  where: Modelcatalog_Standard_Variable_Bool_Exp;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Standard_Variable_By_PkArgs = {
+  _set?: InputMaybe<Modelcatalog_Standard_Variable_Set_Input>;
+  pk_columns: Modelcatalog_Standard_Variable_Pk_Columns_Input;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Standard_Variable_ManyArgs = {
+  updates: Array<Modelcatalog_Standard_Variable_Updates>;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Time_IntervalArgs = {
+  _set?: InputMaybe<Modelcatalog_Time_Interval_Set_Input>;
+  where: Modelcatalog_Time_Interval_Bool_Exp;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Time_Interval_By_PkArgs = {
+  _set?: InputMaybe<Modelcatalog_Time_Interval_Set_Input>;
+  pk_columns: Modelcatalog_Time_Interval_Pk_Columns_Input;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Time_Interval_ManyArgs = {
+  updates: Array<Modelcatalog_Time_Interval_Updates>;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_UnitArgs = {
+  _set?: InputMaybe<Modelcatalog_Unit_Set_Input>;
+  where: Modelcatalog_Unit_Bool_Exp;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Unit_By_PkArgs = {
+  _set?: InputMaybe<Modelcatalog_Unit_Set_Input>;
+  pk_columns: Modelcatalog_Unit_Pk_Columns_Input;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Unit_ManyArgs = {
+  updates: Array<Modelcatalog_Unit_Updates>;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Variable_PresentationArgs = {
+  _set?: InputMaybe<Modelcatalog_Variable_Presentation_Set_Input>;
+  where: Modelcatalog_Variable_Presentation_Bool_Exp;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Variable_Presentation_By_PkArgs = {
+  _set?: InputMaybe<Modelcatalog_Variable_Presentation_Set_Input>;
+  pk_columns: Modelcatalog_Variable_Presentation_Pk_Columns_Input;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Variable_Presentation_ManyArgs = {
+  updates: Array<Modelcatalog_Variable_Presentation_Updates>;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Version_AuthorArgs = {
+  _set?: InputMaybe<Modelcatalog_Version_Author_Set_Input>;
+  where: Modelcatalog_Version_Author_Bool_Exp;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Version_Author_By_PkArgs = {
+  _set?: InputMaybe<Modelcatalog_Version_Author_Set_Input>;
+  pk_columns: Modelcatalog_Version_Author_Pk_Columns_Input;
+};
+
+
+/** mutation root */
+export type Mutation_RootUpdate_Modelcatalog_Version_Author_ManyArgs = {
+  updates: Array<Modelcatalog_Version_Author_Updates>;
 };
 
 
@@ -7550,18 +16804,6 @@ export type Query_Root = {
   intervention_aggregate: Intervention_Aggregate;
   /** fetch data from the table: "intervention" using primary key columns */
   intervention_by_pk?: Maybe<Intervention>;
-  /** fetch data from the table: "model" */
-  model: Array<Model>;
-  /** fetch aggregated fields from the table: "model" */
-  model_aggregate: Model_Aggregate;
-  /** fetch data from the table: "model" using primary key columns */
-  model_by_pk?: Maybe<Model>;
-  /** fetch data from the table: "model_input" */
-  model_input: Array<Model_Input>;
-  /** fetch aggregated fields from the table: "model_input" */
-  model_input_aggregate: Model_Input_Aggregate;
-  /** fetch data from the table: "model_input" using primary key columns */
-  model_input_by_pk?: Maybe<Model_Input>;
   /** fetch data from the table: "model_input_fixed_binding" */
   model_input_fixed_binding: Array<Model_Input_Fixed_Binding>;
   /** fetch aggregated fields from the table: "model_input_fixed_binding" */
@@ -7580,18 +16822,246 @@ export type Query_Root = {
   model_io_variable_aggregate: Model_Io_Variable_Aggregate;
   /** fetch data from the table: "model_io_variable" using primary key columns */
   model_io_variable_by_pk?: Maybe<Model_Io_Variable>;
-  /** fetch data from the table: "model_output" */
-  model_output: Array<Model_Output>;
-  /** fetch aggregated fields from the table: "model_output" */
-  model_output_aggregate: Model_Output_Aggregate;
-  /** fetch data from the table: "model_output" using primary key columns */
-  model_output_by_pk?: Maybe<Model_Output>;
-  /** fetch data from the table: "model_parameter" */
-  model_parameter: Array<Model_Parameter>;
-  /** fetch aggregated fields from the table: "model_parameter" */
-  model_parameter_aggregate: Model_Parameter_Aggregate;
-  /** fetch data from the table: "model_parameter" using primary key columns */
-  model_parameter_by_pk?: Maybe<Model_Parameter>;
+  /** fetch data from the table: "modelcatalog_causal_diagram" */
+  modelcatalog_causal_diagram: Array<Modelcatalog_Causal_Diagram>;
+  /** fetch aggregated fields from the table: "modelcatalog_causal_diagram" */
+  modelcatalog_causal_diagram_aggregate: Modelcatalog_Causal_Diagram_Aggregate;
+  /** fetch data from the table: "modelcatalog_causal_diagram" using primary key columns */
+  modelcatalog_causal_diagram_by_pk?: Maybe<Modelcatalog_Causal_Diagram>;
+  /** fetch data from the table: "modelcatalog_configuration" */
+  modelcatalog_configuration: Array<Modelcatalog_Configuration>;
+  /** fetch aggregated fields from the table: "modelcatalog_configuration" */
+  modelcatalog_configuration_aggregate: Modelcatalog_Configuration_Aggregate;
+  /** fetch data from the table: "modelcatalog_configuration_author" */
+  modelcatalog_configuration_author: Array<Modelcatalog_Configuration_Author>;
+  /** fetch aggregated fields from the table: "modelcatalog_configuration_author" */
+  modelcatalog_configuration_author_aggregate: Modelcatalog_Configuration_Author_Aggregate;
+  /** fetch data from the table: "modelcatalog_configuration_author" using primary key columns */
+  modelcatalog_configuration_author_by_pk?: Maybe<Modelcatalog_Configuration_Author>;
+  /** fetch data from the table: "modelcatalog_configuration" using primary key columns */
+  modelcatalog_configuration_by_pk?: Maybe<Modelcatalog_Configuration>;
+  /** fetch data from the table: "modelcatalog_configuration_calibrated_variable" */
+  modelcatalog_configuration_calibrated_variable: Array<Modelcatalog_Configuration_Calibrated_Variable>;
+  /** fetch aggregated fields from the table: "modelcatalog_configuration_calibrated_variable" */
+  modelcatalog_configuration_calibrated_variable_aggregate: Modelcatalog_Configuration_Calibrated_Variable_Aggregate;
+  /** fetch data from the table: "modelcatalog_configuration_calibrated_variable" using primary key columns */
+  modelcatalog_configuration_calibrated_variable_by_pk?: Maybe<Modelcatalog_Configuration_Calibrated_Variable>;
+  /** fetch data from the table: "modelcatalog_configuration_calibration_target" */
+  modelcatalog_configuration_calibration_target: Array<Modelcatalog_Configuration_Calibration_Target>;
+  /** fetch aggregated fields from the table: "modelcatalog_configuration_calibration_target" */
+  modelcatalog_configuration_calibration_target_aggregate: Modelcatalog_Configuration_Calibration_Target_Aggregate;
+  /** fetch data from the table: "modelcatalog_configuration_calibration_target" using primary key columns */
+  modelcatalog_configuration_calibration_target_by_pk?: Maybe<Modelcatalog_Configuration_Calibration_Target>;
+  /** fetch data from the table: "modelcatalog_configuration_category" */
+  modelcatalog_configuration_category: Array<Modelcatalog_Configuration_Category>;
+  /** fetch aggregated fields from the table: "modelcatalog_configuration_category" */
+  modelcatalog_configuration_category_aggregate: Modelcatalog_Configuration_Category_Aggregate;
+  /** fetch data from the table: "modelcatalog_configuration_category" using primary key columns */
+  modelcatalog_configuration_category_by_pk?: Maybe<Modelcatalog_Configuration_Category>;
+  /** fetch data from the table: "modelcatalog_configuration_causal_diagram" */
+  modelcatalog_configuration_causal_diagram: Array<Modelcatalog_Configuration_Causal_Diagram>;
+  /** fetch aggregated fields from the table: "modelcatalog_configuration_causal_diagram" */
+  modelcatalog_configuration_causal_diagram_aggregate: Modelcatalog_Configuration_Causal_Diagram_Aggregate;
+  /** fetch data from the table: "modelcatalog_configuration_causal_diagram" using primary key columns */
+  modelcatalog_configuration_causal_diagram_by_pk?: Maybe<Modelcatalog_Configuration_Causal_Diagram>;
+  /** fetch data from the table: "modelcatalog_configuration_input" */
+  modelcatalog_configuration_input: Array<Modelcatalog_Configuration_Input>;
+  /** fetch aggregated fields from the table: "modelcatalog_configuration_input" */
+  modelcatalog_configuration_input_aggregate: Modelcatalog_Configuration_Input_Aggregate;
+  /** fetch data from the table: "modelcatalog_configuration_input" using primary key columns */
+  modelcatalog_configuration_input_by_pk?: Maybe<Modelcatalog_Configuration_Input>;
+  /** fetch data from the table: "modelcatalog_configuration_output" */
+  modelcatalog_configuration_output: Array<Modelcatalog_Configuration_Output>;
+  /** fetch aggregated fields from the table: "modelcatalog_configuration_output" */
+  modelcatalog_configuration_output_aggregate: Modelcatalog_Configuration_Output_Aggregate;
+  /** fetch data from the table: "modelcatalog_configuration_output" using primary key columns */
+  modelcatalog_configuration_output_by_pk?: Maybe<Modelcatalog_Configuration_Output>;
+  /** fetch data from the table: "modelcatalog_configuration_parameter" */
+  modelcatalog_configuration_parameter: Array<Modelcatalog_Configuration_Parameter>;
+  /** fetch aggregated fields from the table: "modelcatalog_configuration_parameter" */
+  modelcatalog_configuration_parameter_aggregate: Modelcatalog_Configuration_Parameter_Aggregate;
+  /** fetch data from the table: "modelcatalog_configuration_parameter" using primary key columns */
+  modelcatalog_configuration_parameter_by_pk?: Maybe<Modelcatalog_Configuration_Parameter>;
+  /** fetch data from the table: "modelcatalog_configuration_region" */
+  modelcatalog_configuration_region: Array<Modelcatalog_Configuration_Region>;
+  /** fetch aggregated fields from the table: "modelcatalog_configuration_region" */
+  modelcatalog_configuration_region_aggregate: Modelcatalog_Configuration_Region_Aggregate;
+  /** fetch data from the table: "modelcatalog_configuration_region" using primary key columns */
+  modelcatalog_configuration_region_by_pk?: Maybe<Modelcatalog_Configuration_Region>;
+  /** fetch data from the table: "modelcatalog_configuration_time_interval" */
+  modelcatalog_configuration_time_interval: Array<Modelcatalog_Configuration_Time_Interval>;
+  /** fetch aggregated fields from the table: "modelcatalog_configuration_time_interval" */
+  modelcatalog_configuration_time_interval_aggregate: Modelcatalog_Configuration_Time_Interval_Aggregate;
+  /** fetch data from the table: "modelcatalog_configuration_time_interval" using primary key columns */
+  modelcatalog_configuration_time_interval_by_pk?: Maybe<Modelcatalog_Configuration_Time_Interval>;
+  /** fetch data from the table: "modelcatalog_dataset_specification" */
+  modelcatalog_dataset_specification: Array<Modelcatalog_Dataset_Specification>;
+  /** fetch aggregated fields from the table: "modelcatalog_dataset_specification" */
+  modelcatalog_dataset_specification_aggregate: Modelcatalog_Dataset_Specification_Aggregate;
+  /** fetch data from the table: "modelcatalog_dataset_specification" using primary key columns */
+  modelcatalog_dataset_specification_by_pk?: Maybe<Modelcatalog_Dataset_Specification>;
+  /** fetch data from the table: "modelcatalog_dataset_specification_presentation" */
+  modelcatalog_dataset_specification_presentation: Array<Modelcatalog_Dataset_Specification_Presentation>;
+  /** fetch aggregated fields from the table: "modelcatalog_dataset_specification_presentation" */
+  modelcatalog_dataset_specification_presentation_aggregate: Modelcatalog_Dataset_Specification_Presentation_Aggregate;
+  /** fetch data from the table: "modelcatalog_dataset_specification_presentation" using primary key columns */
+  modelcatalog_dataset_specification_presentation_by_pk?: Maybe<Modelcatalog_Dataset_Specification_Presentation>;
+  /** fetch data from the table: "modelcatalog_diagram_part" */
+  modelcatalog_diagram_part: Array<Modelcatalog_Diagram_Part>;
+  /** fetch aggregated fields from the table: "modelcatalog_diagram_part" */
+  modelcatalog_diagram_part_aggregate: Modelcatalog_Diagram_Part_Aggregate;
+  /** fetch data from the table: "modelcatalog_diagram_part" using primary key columns */
+  modelcatalog_diagram_part_by_pk?: Maybe<Modelcatalog_Diagram_Part>;
+  /** fetch data from the table: "modelcatalog_grid" */
+  modelcatalog_grid: Array<Modelcatalog_Grid>;
+  /** fetch aggregated fields from the table: "modelcatalog_grid" */
+  modelcatalog_grid_aggregate: Modelcatalog_Grid_Aggregate;
+  /** fetch data from the table: "modelcatalog_grid" using primary key columns */
+  modelcatalog_grid_by_pk?: Maybe<Modelcatalog_Grid>;
+  /** fetch data from the table: "modelcatalog_image" */
+  modelcatalog_image: Array<Modelcatalog_Image>;
+  /** fetch aggregated fields from the table: "modelcatalog_image" */
+  modelcatalog_image_aggregate: Modelcatalog_Image_Aggregate;
+  /** fetch data from the table: "modelcatalog_image" using primary key columns */
+  modelcatalog_image_by_pk?: Maybe<Modelcatalog_Image>;
+  /** fetch data from the table: "modelcatalog_intervention" */
+  modelcatalog_intervention: Array<Modelcatalog_Intervention>;
+  /** fetch aggregated fields from the table: "modelcatalog_intervention" */
+  modelcatalog_intervention_aggregate: Modelcatalog_Intervention_Aggregate;
+  /** fetch data from the table: "modelcatalog_intervention" using primary key columns */
+  modelcatalog_intervention_by_pk?: Maybe<Modelcatalog_Intervention>;
+  /** fetch data from the table: "modelcatalog_model_category" */
+  modelcatalog_model_category: Array<Modelcatalog_Model_Category>;
+  /** fetch aggregated fields from the table: "modelcatalog_model_category" */
+  modelcatalog_model_category_aggregate: Modelcatalog_Model_Category_Aggregate;
+  /** fetch data from the table: "modelcatalog_model_category" using primary key columns */
+  modelcatalog_model_category_by_pk?: Maybe<Modelcatalog_Model_Category>;
+  /** fetch data from the table: "modelcatalog_parameter" */
+  modelcatalog_parameter: Array<Modelcatalog_Parameter>;
+  /** fetch data from the table: "modelcatalog_parameter_adjusts_variable" */
+  modelcatalog_parameter_adjusts_variable: Array<Modelcatalog_Parameter_Adjusts_Variable>;
+  /** fetch aggregated fields from the table: "modelcatalog_parameter_adjusts_variable" */
+  modelcatalog_parameter_adjusts_variable_aggregate: Modelcatalog_Parameter_Adjusts_Variable_Aggregate;
+  /** fetch data from the table: "modelcatalog_parameter_adjusts_variable" using primary key columns */
+  modelcatalog_parameter_adjusts_variable_by_pk?: Maybe<Modelcatalog_Parameter_Adjusts_Variable>;
+  /** fetch aggregated fields from the table: "modelcatalog_parameter" */
+  modelcatalog_parameter_aggregate: Modelcatalog_Parameter_Aggregate;
+  /** fetch data from the table: "modelcatalog_parameter" using primary key columns */
+  modelcatalog_parameter_by_pk?: Maybe<Modelcatalog_Parameter>;
+  /** fetch data from the table: "modelcatalog_parameter_intervention" */
+  modelcatalog_parameter_intervention: Array<Modelcatalog_Parameter_Intervention>;
+  /** fetch aggregated fields from the table: "modelcatalog_parameter_intervention" */
+  modelcatalog_parameter_intervention_aggregate: Modelcatalog_Parameter_Intervention_Aggregate;
+  /** fetch data from the table: "modelcatalog_parameter_intervention" using primary key columns */
+  modelcatalog_parameter_intervention_by_pk?: Maybe<Modelcatalog_Parameter_Intervention>;
+  /** fetch data from the table: "modelcatalog_person" */
+  modelcatalog_person: Array<Modelcatalog_Person>;
+  /** fetch aggregated fields from the table: "modelcatalog_person" */
+  modelcatalog_person_aggregate: Modelcatalog_Person_Aggregate;
+  /** fetch data from the table: "modelcatalog_person" using primary key columns */
+  modelcatalog_person_by_pk?: Maybe<Modelcatalog_Person>;
+  /** fetch data from the table: "modelcatalog_process" */
+  modelcatalog_process: Array<Modelcatalog_Process>;
+  /** fetch aggregated fields from the table: "modelcatalog_process" */
+  modelcatalog_process_aggregate: Modelcatalog_Process_Aggregate;
+  /** fetch data from the table: "modelcatalog_process" using primary key columns */
+  modelcatalog_process_by_pk?: Maybe<Modelcatalog_Process>;
+  /** fetch data from the table: "modelcatalog_region" */
+  modelcatalog_region: Array<Modelcatalog_Region>;
+  /** fetch aggregated fields from the table: "modelcatalog_region" */
+  modelcatalog_region_aggregate: Modelcatalog_Region_Aggregate;
+  /** fetch data from the table: "modelcatalog_region" using primary key columns */
+  modelcatalog_region_by_pk?: Maybe<Modelcatalog_Region>;
+  /** fetch data from the table: "modelcatalog_software" */
+  modelcatalog_software: Array<Modelcatalog_Software>;
+  /** fetch aggregated fields from the table: "modelcatalog_software" */
+  modelcatalog_software_aggregate: Modelcatalog_Software_Aggregate;
+  /** fetch data from the table: "modelcatalog_software_author" */
+  modelcatalog_software_author: Array<Modelcatalog_Software_Author>;
+  /** fetch aggregated fields from the table: "modelcatalog_software_author" */
+  modelcatalog_software_author_aggregate: Modelcatalog_Software_Author_Aggregate;
+  /** fetch data from the table: "modelcatalog_software_author" using primary key columns */
+  modelcatalog_software_author_by_pk?: Maybe<Modelcatalog_Software_Author>;
+  /** fetch data from the table: "modelcatalog_software" using primary key columns */
+  modelcatalog_software_by_pk?: Maybe<Modelcatalog_Software>;
+  /** fetch data from the table: "modelcatalog_software_category" */
+  modelcatalog_software_category: Array<Modelcatalog_Software_Category>;
+  /** fetch aggregated fields from the table: "modelcatalog_software_category" */
+  modelcatalog_software_category_aggregate: Modelcatalog_Software_Category_Aggregate;
+  /** fetch data from the table: "modelcatalog_software_category" using primary key columns */
+  modelcatalog_software_category_by_pk?: Maybe<Modelcatalog_Software_Category>;
+  /** fetch data from the table: "modelcatalog_software_version" */
+  modelcatalog_software_version: Array<Modelcatalog_Software_Version>;
+  /** fetch aggregated fields from the table: "modelcatalog_software_version" */
+  modelcatalog_software_version_aggregate: Modelcatalog_Software_Version_Aggregate;
+  /** fetch data from the table: "modelcatalog_software_version" using primary key columns */
+  modelcatalog_software_version_by_pk?: Maybe<Modelcatalog_Software_Version>;
+  /** fetch data from the table: "modelcatalog_software_version_category" */
+  modelcatalog_software_version_category: Array<Modelcatalog_Software_Version_Category>;
+  /** fetch aggregated fields from the table: "modelcatalog_software_version_category" */
+  modelcatalog_software_version_category_aggregate: Modelcatalog_Software_Version_Category_Aggregate;
+  /** fetch data from the table: "modelcatalog_software_version_category" using primary key columns */
+  modelcatalog_software_version_category_by_pk?: Maybe<Modelcatalog_Software_Version_Category>;
+  /** fetch data from the table: "modelcatalog_software_version_grid" */
+  modelcatalog_software_version_grid: Array<Modelcatalog_Software_Version_Grid>;
+  /** fetch aggregated fields from the table: "modelcatalog_software_version_grid" */
+  modelcatalog_software_version_grid_aggregate: Modelcatalog_Software_Version_Grid_Aggregate;
+  /** fetch data from the table: "modelcatalog_software_version_grid" using primary key columns */
+  modelcatalog_software_version_grid_by_pk?: Maybe<Modelcatalog_Software_Version_Grid>;
+  /** fetch data from the table: "modelcatalog_software_version_image" */
+  modelcatalog_software_version_image: Array<Modelcatalog_Software_Version_Image>;
+  /** fetch aggregated fields from the table: "modelcatalog_software_version_image" */
+  modelcatalog_software_version_image_aggregate: Modelcatalog_Software_Version_Image_Aggregate;
+  /** fetch data from the table: "modelcatalog_software_version_image" using primary key columns */
+  modelcatalog_software_version_image_by_pk?: Maybe<Modelcatalog_Software_Version_Image>;
+  /** fetch data from the table: "modelcatalog_software_version_input_variable" */
+  modelcatalog_software_version_input_variable: Array<Modelcatalog_Software_Version_Input_Variable>;
+  /** fetch aggregated fields from the table: "modelcatalog_software_version_input_variable" */
+  modelcatalog_software_version_input_variable_aggregate: Modelcatalog_Software_Version_Input_Variable_Aggregate;
+  /** fetch data from the table: "modelcatalog_software_version_input_variable" using primary key columns */
+  modelcatalog_software_version_input_variable_by_pk?: Maybe<Modelcatalog_Software_Version_Input_Variable>;
+  /** fetch data from the table: "modelcatalog_software_version_output_variable" */
+  modelcatalog_software_version_output_variable: Array<Modelcatalog_Software_Version_Output_Variable>;
+  /** fetch aggregated fields from the table: "modelcatalog_software_version_output_variable" */
+  modelcatalog_software_version_output_variable_aggregate: Modelcatalog_Software_Version_Output_Variable_Aggregate;
+  /** fetch data from the table: "modelcatalog_software_version_output_variable" using primary key columns */
+  modelcatalog_software_version_output_variable_by_pk?: Maybe<Modelcatalog_Software_Version_Output_Variable>;
+  /** fetch data from the table: "modelcatalog_software_version_process" */
+  modelcatalog_software_version_process: Array<Modelcatalog_Software_Version_Process>;
+  /** fetch aggregated fields from the table: "modelcatalog_software_version_process" */
+  modelcatalog_software_version_process_aggregate: Modelcatalog_Software_Version_Process_Aggregate;
+  /** fetch data from the table: "modelcatalog_software_version_process" using primary key columns */
+  modelcatalog_software_version_process_by_pk?: Maybe<Modelcatalog_Software_Version_Process>;
+  /** fetch data from the table: "modelcatalog_standard_variable" */
+  modelcatalog_standard_variable: Array<Modelcatalog_Standard_Variable>;
+  /** fetch aggregated fields from the table: "modelcatalog_standard_variable" */
+  modelcatalog_standard_variable_aggregate: Modelcatalog_Standard_Variable_Aggregate;
+  /** fetch data from the table: "modelcatalog_standard_variable" using primary key columns */
+  modelcatalog_standard_variable_by_pk?: Maybe<Modelcatalog_Standard_Variable>;
+  /** fetch data from the table: "modelcatalog_time_interval" */
+  modelcatalog_time_interval: Array<Modelcatalog_Time_Interval>;
+  /** fetch aggregated fields from the table: "modelcatalog_time_interval" */
+  modelcatalog_time_interval_aggregate: Modelcatalog_Time_Interval_Aggregate;
+  /** fetch data from the table: "modelcatalog_time_interval" using primary key columns */
+  modelcatalog_time_interval_by_pk?: Maybe<Modelcatalog_Time_Interval>;
+  /** fetch data from the table: "modelcatalog_unit" */
+  modelcatalog_unit: Array<Modelcatalog_Unit>;
+  /** fetch aggregated fields from the table: "modelcatalog_unit" */
+  modelcatalog_unit_aggregate: Modelcatalog_Unit_Aggregate;
+  /** fetch data from the table: "modelcatalog_unit" using primary key columns */
+  modelcatalog_unit_by_pk?: Maybe<Modelcatalog_Unit>;
+  /** fetch data from the table: "modelcatalog_variable_presentation" */
+  modelcatalog_variable_presentation: Array<Modelcatalog_Variable_Presentation>;
+  /** fetch aggregated fields from the table: "modelcatalog_variable_presentation" */
+  modelcatalog_variable_presentation_aggregate: Modelcatalog_Variable_Presentation_Aggregate;
+  /** fetch data from the table: "modelcatalog_variable_presentation" using primary key columns */
+  modelcatalog_variable_presentation_by_pk?: Maybe<Modelcatalog_Variable_Presentation>;
+  /** fetch data from the table: "modelcatalog_version_author" */
+  modelcatalog_version_author: Array<Modelcatalog_Version_Author>;
+  /** fetch aggregated fields from the table: "modelcatalog_version_author" */
+  modelcatalog_version_author_aggregate: Modelcatalog_Version_Author_Aggregate;
+  /** fetch data from the table: "modelcatalog_version_author" using primary key columns */
+  modelcatalog_version_author_by_pk?: Maybe<Modelcatalog_Version_Author>;
   /** fetch data from the table: "problem_statement" */
   problem_statement: Array<Problem_Statement>;
   /** fetch aggregated fields from the table: "problem_statement" */
@@ -7967,53 +17437,6 @@ export type Query_RootIntervention_By_PkArgs = {
 };
 
 
-export type Query_RootModelArgs = {
-  distinct_on?: InputMaybe<Array<Model_Select_Column>>;
-  limit?: InputMaybe<Scalars['Int']['input']>;
-  offset?: InputMaybe<Scalars['Int']['input']>;
-  order_by?: InputMaybe<Array<Model_Order_By>>;
-  where?: InputMaybe<Model_Bool_Exp>;
-};
-
-
-export type Query_RootModel_AggregateArgs = {
-  distinct_on?: InputMaybe<Array<Model_Select_Column>>;
-  limit?: InputMaybe<Scalars['Int']['input']>;
-  offset?: InputMaybe<Scalars['Int']['input']>;
-  order_by?: InputMaybe<Array<Model_Order_By>>;
-  where?: InputMaybe<Model_Bool_Exp>;
-};
-
-
-export type Query_RootModel_By_PkArgs = {
-  id: Scalars['String']['input'];
-};
-
-
-export type Query_RootModel_InputArgs = {
-  distinct_on?: InputMaybe<Array<Model_Input_Select_Column>>;
-  limit?: InputMaybe<Scalars['Int']['input']>;
-  offset?: InputMaybe<Scalars['Int']['input']>;
-  order_by?: InputMaybe<Array<Model_Input_Order_By>>;
-  where?: InputMaybe<Model_Input_Bool_Exp>;
-};
-
-
-export type Query_RootModel_Input_AggregateArgs = {
-  distinct_on?: InputMaybe<Array<Model_Input_Select_Column>>;
-  limit?: InputMaybe<Scalars['Int']['input']>;
-  offset?: InputMaybe<Scalars['Int']['input']>;
-  order_by?: InputMaybe<Array<Model_Input_Order_By>>;
-  where?: InputMaybe<Model_Input_Bool_Exp>;
-};
-
-
-export type Query_RootModel_Input_By_PkArgs = {
-  model_id: Scalars['String']['input'];
-  model_io_id: Scalars['String']['input'];
-};
-
-
 export type Query_RootModel_Input_Fixed_BindingArgs = {
   distinct_on?: InputMaybe<Array<Model_Input_Fixed_Binding_Select_Column>>;
   limit?: InputMaybe<Scalars['Int']['input']>;
@@ -8085,50 +17508,946 @@ export type Query_RootModel_Io_Variable_By_PkArgs = {
 };
 
 
-export type Query_RootModel_OutputArgs = {
-  distinct_on?: InputMaybe<Array<Model_Output_Select_Column>>;
+export type Query_RootModelcatalog_Causal_DiagramArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Causal_Diagram_Select_Column>>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
-  order_by?: InputMaybe<Array<Model_Output_Order_By>>;
-  where?: InputMaybe<Model_Output_Bool_Exp>;
+  order_by?: InputMaybe<Array<Modelcatalog_Causal_Diagram_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Causal_Diagram_Bool_Exp>;
 };
 
 
-export type Query_RootModel_Output_AggregateArgs = {
-  distinct_on?: InputMaybe<Array<Model_Output_Select_Column>>;
+export type Query_RootModelcatalog_Causal_Diagram_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Causal_Diagram_Select_Column>>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
-  order_by?: InputMaybe<Array<Model_Output_Order_By>>;
-  where?: InputMaybe<Model_Output_Bool_Exp>;
+  order_by?: InputMaybe<Array<Modelcatalog_Causal_Diagram_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Causal_Diagram_Bool_Exp>;
 };
 
 
-export type Query_RootModel_Output_By_PkArgs = {
-  model_id: Scalars['String']['input'];
-  model_io_id: Scalars['String']['input'];
-};
-
-
-export type Query_RootModel_ParameterArgs = {
-  distinct_on?: InputMaybe<Array<Model_Parameter_Select_Column>>;
-  limit?: InputMaybe<Scalars['Int']['input']>;
-  offset?: InputMaybe<Scalars['Int']['input']>;
-  order_by?: InputMaybe<Array<Model_Parameter_Order_By>>;
-  where?: InputMaybe<Model_Parameter_Bool_Exp>;
-};
-
-
-export type Query_RootModel_Parameter_AggregateArgs = {
-  distinct_on?: InputMaybe<Array<Model_Parameter_Select_Column>>;
-  limit?: InputMaybe<Scalars['Int']['input']>;
-  offset?: InputMaybe<Scalars['Int']['input']>;
-  order_by?: InputMaybe<Array<Model_Parameter_Order_By>>;
-  where?: InputMaybe<Model_Parameter_Bool_Exp>;
-};
-
-
-export type Query_RootModel_Parameter_By_PkArgs = {
+export type Query_RootModelcatalog_Causal_Diagram_By_PkArgs = {
   id: Scalars['String']['input'];
+};
+
+
+export type Query_RootModelcatalog_ConfigurationArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Configuration_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Configuration_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Configuration_Bool_Exp>;
+};
+
+
+export type Query_RootModelcatalog_Configuration_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Configuration_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Configuration_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Configuration_Bool_Exp>;
+};
+
+
+export type Query_RootModelcatalog_Configuration_AuthorArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Configuration_Author_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Configuration_Author_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Configuration_Author_Bool_Exp>;
+};
+
+
+export type Query_RootModelcatalog_Configuration_Author_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Configuration_Author_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Configuration_Author_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Configuration_Author_Bool_Exp>;
+};
+
+
+export type Query_RootModelcatalog_Configuration_Author_By_PkArgs = {
+  configuration_id: Scalars['String']['input'];
+  person_id: Scalars['String']['input'];
+};
+
+
+export type Query_RootModelcatalog_Configuration_By_PkArgs = {
+  id: Scalars['String']['input'];
+};
+
+
+export type Query_RootModelcatalog_Configuration_Calibrated_VariableArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Configuration_Calibrated_Variable_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Configuration_Calibrated_Variable_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Configuration_Calibrated_Variable_Bool_Exp>;
+};
+
+
+export type Query_RootModelcatalog_Configuration_Calibrated_Variable_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Configuration_Calibrated_Variable_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Configuration_Calibrated_Variable_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Configuration_Calibrated_Variable_Bool_Exp>;
+};
+
+
+export type Query_RootModelcatalog_Configuration_Calibrated_Variable_By_PkArgs = {
+  configuration_id: Scalars['String']['input'];
+  variable_id: Scalars['String']['input'];
+};
+
+
+export type Query_RootModelcatalog_Configuration_Calibration_TargetArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Configuration_Calibration_Target_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Configuration_Calibration_Target_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Configuration_Calibration_Target_Bool_Exp>;
+};
+
+
+export type Query_RootModelcatalog_Configuration_Calibration_Target_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Configuration_Calibration_Target_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Configuration_Calibration_Target_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Configuration_Calibration_Target_Bool_Exp>;
+};
+
+
+export type Query_RootModelcatalog_Configuration_Calibration_Target_By_PkArgs = {
+  configuration_id: Scalars['String']['input'];
+  variable_id: Scalars['String']['input'];
+};
+
+
+export type Query_RootModelcatalog_Configuration_CategoryArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Configuration_Category_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Configuration_Category_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Configuration_Category_Bool_Exp>;
+};
+
+
+export type Query_RootModelcatalog_Configuration_Category_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Configuration_Category_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Configuration_Category_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Configuration_Category_Bool_Exp>;
+};
+
+
+export type Query_RootModelcatalog_Configuration_Category_By_PkArgs = {
+  category_id: Scalars['String']['input'];
+  configuration_id: Scalars['String']['input'];
+};
+
+
+export type Query_RootModelcatalog_Configuration_Causal_DiagramArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Configuration_Causal_Diagram_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Configuration_Causal_Diagram_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Configuration_Causal_Diagram_Bool_Exp>;
+};
+
+
+export type Query_RootModelcatalog_Configuration_Causal_Diagram_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Configuration_Causal_Diagram_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Configuration_Causal_Diagram_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Configuration_Causal_Diagram_Bool_Exp>;
+};
+
+
+export type Query_RootModelcatalog_Configuration_Causal_Diagram_By_PkArgs = {
+  causal_diagram_id: Scalars['String']['input'];
+  configuration_id: Scalars['String']['input'];
+};
+
+
+export type Query_RootModelcatalog_Configuration_InputArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Configuration_Input_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Configuration_Input_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Configuration_Input_Bool_Exp>;
+};
+
+
+export type Query_RootModelcatalog_Configuration_Input_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Configuration_Input_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Configuration_Input_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Configuration_Input_Bool_Exp>;
+};
+
+
+export type Query_RootModelcatalog_Configuration_Input_By_PkArgs = {
+  configuration_id: Scalars['String']['input'];
+  input_id: Scalars['String']['input'];
+};
+
+
+export type Query_RootModelcatalog_Configuration_OutputArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Configuration_Output_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Configuration_Output_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Configuration_Output_Bool_Exp>;
+};
+
+
+export type Query_RootModelcatalog_Configuration_Output_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Configuration_Output_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Configuration_Output_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Configuration_Output_Bool_Exp>;
+};
+
+
+export type Query_RootModelcatalog_Configuration_Output_By_PkArgs = {
+  configuration_id: Scalars['String']['input'];
+  output_id: Scalars['String']['input'];
+};
+
+
+export type Query_RootModelcatalog_Configuration_ParameterArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Configuration_Parameter_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Configuration_Parameter_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Configuration_Parameter_Bool_Exp>;
+};
+
+
+export type Query_RootModelcatalog_Configuration_Parameter_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Configuration_Parameter_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Configuration_Parameter_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Configuration_Parameter_Bool_Exp>;
+};
+
+
+export type Query_RootModelcatalog_Configuration_Parameter_By_PkArgs = {
+  configuration_id: Scalars['String']['input'];
+  parameter_id: Scalars['String']['input'];
+};
+
+
+export type Query_RootModelcatalog_Configuration_RegionArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Configuration_Region_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Configuration_Region_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Configuration_Region_Bool_Exp>;
+};
+
+
+export type Query_RootModelcatalog_Configuration_Region_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Configuration_Region_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Configuration_Region_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Configuration_Region_Bool_Exp>;
+};
+
+
+export type Query_RootModelcatalog_Configuration_Region_By_PkArgs = {
+  configuration_id: Scalars['String']['input'];
+  region_id: Scalars['String']['input'];
+};
+
+
+export type Query_RootModelcatalog_Configuration_Time_IntervalArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Configuration_Time_Interval_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Configuration_Time_Interval_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Configuration_Time_Interval_Bool_Exp>;
+};
+
+
+export type Query_RootModelcatalog_Configuration_Time_Interval_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Configuration_Time_Interval_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Configuration_Time_Interval_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Configuration_Time_Interval_Bool_Exp>;
+};
+
+
+export type Query_RootModelcatalog_Configuration_Time_Interval_By_PkArgs = {
+  configuration_id: Scalars['String']['input'];
+  time_interval_id: Scalars['String']['input'];
+};
+
+
+export type Query_RootModelcatalog_Dataset_SpecificationArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Dataset_Specification_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Dataset_Specification_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Dataset_Specification_Bool_Exp>;
+};
+
+
+export type Query_RootModelcatalog_Dataset_Specification_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Dataset_Specification_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Dataset_Specification_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Dataset_Specification_Bool_Exp>;
+};
+
+
+export type Query_RootModelcatalog_Dataset_Specification_By_PkArgs = {
+  id: Scalars['String']['input'];
+};
+
+
+export type Query_RootModelcatalog_Dataset_Specification_PresentationArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Dataset_Specification_Presentation_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Dataset_Specification_Presentation_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Dataset_Specification_Presentation_Bool_Exp>;
+};
+
+
+export type Query_RootModelcatalog_Dataset_Specification_Presentation_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Dataset_Specification_Presentation_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Dataset_Specification_Presentation_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Dataset_Specification_Presentation_Bool_Exp>;
+};
+
+
+export type Query_RootModelcatalog_Dataset_Specification_Presentation_By_PkArgs = {
+  dataset_specification_id: Scalars['String']['input'];
+  presentation_id: Scalars['String']['input'];
+};
+
+
+export type Query_RootModelcatalog_Diagram_PartArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Diagram_Part_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Diagram_Part_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Diagram_Part_Bool_Exp>;
+};
+
+
+export type Query_RootModelcatalog_Diagram_Part_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Diagram_Part_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Diagram_Part_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Diagram_Part_Bool_Exp>;
+};
+
+
+export type Query_RootModelcatalog_Diagram_Part_By_PkArgs = {
+  causal_diagram_id: Scalars['String']['input'];
+  part_id: Scalars['String']['input'];
+};
+
+
+export type Query_RootModelcatalog_GridArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Grid_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Grid_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Grid_Bool_Exp>;
+};
+
+
+export type Query_RootModelcatalog_Grid_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Grid_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Grid_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Grid_Bool_Exp>;
+};
+
+
+export type Query_RootModelcatalog_Grid_By_PkArgs = {
+  id: Scalars['String']['input'];
+};
+
+
+export type Query_RootModelcatalog_ImageArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Image_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Image_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Image_Bool_Exp>;
+};
+
+
+export type Query_RootModelcatalog_Image_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Image_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Image_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Image_Bool_Exp>;
+};
+
+
+export type Query_RootModelcatalog_Image_By_PkArgs = {
+  id: Scalars['String']['input'];
+};
+
+
+export type Query_RootModelcatalog_InterventionArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Intervention_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Intervention_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Intervention_Bool_Exp>;
+};
+
+
+export type Query_RootModelcatalog_Intervention_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Intervention_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Intervention_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Intervention_Bool_Exp>;
+};
+
+
+export type Query_RootModelcatalog_Intervention_By_PkArgs = {
+  id: Scalars['String']['input'];
+};
+
+
+export type Query_RootModelcatalog_Model_CategoryArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Model_Category_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Model_Category_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Model_Category_Bool_Exp>;
+};
+
+
+export type Query_RootModelcatalog_Model_Category_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Model_Category_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Model_Category_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Model_Category_Bool_Exp>;
+};
+
+
+export type Query_RootModelcatalog_Model_Category_By_PkArgs = {
+  id: Scalars['String']['input'];
+};
+
+
+export type Query_RootModelcatalog_ParameterArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Parameter_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Parameter_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Parameter_Bool_Exp>;
+};
+
+
+export type Query_RootModelcatalog_Parameter_Adjusts_VariableArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Parameter_Adjusts_Variable_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Parameter_Adjusts_Variable_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Parameter_Adjusts_Variable_Bool_Exp>;
+};
+
+
+export type Query_RootModelcatalog_Parameter_Adjusts_Variable_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Parameter_Adjusts_Variable_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Parameter_Adjusts_Variable_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Parameter_Adjusts_Variable_Bool_Exp>;
+};
+
+
+export type Query_RootModelcatalog_Parameter_Adjusts_Variable_By_PkArgs = {
+  parameter_id: Scalars['String']['input'];
+  variable_id: Scalars['String']['input'];
+};
+
+
+export type Query_RootModelcatalog_Parameter_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Parameter_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Parameter_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Parameter_Bool_Exp>;
+};
+
+
+export type Query_RootModelcatalog_Parameter_By_PkArgs = {
+  id: Scalars['String']['input'];
+};
+
+
+export type Query_RootModelcatalog_Parameter_InterventionArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Parameter_Intervention_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Parameter_Intervention_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Parameter_Intervention_Bool_Exp>;
+};
+
+
+export type Query_RootModelcatalog_Parameter_Intervention_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Parameter_Intervention_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Parameter_Intervention_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Parameter_Intervention_Bool_Exp>;
+};
+
+
+export type Query_RootModelcatalog_Parameter_Intervention_By_PkArgs = {
+  intervention_id: Scalars['String']['input'];
+  parameter_id: Scalars['String']['input'];
+};
+
+
+export type Query_RootModelcatalog_PersonArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Person_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Person_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Person_Bool_Exp>;
+};
+
+
+export type Query_RootModelcatalog_Person_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Person_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Person_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Person_Bool_Exp>;
+};
+
+
+export type Query_RootModelcatalog_Person_By_PkArgs = {
+  id: Scalars['String']['input'];
+};
+
+
+export type Query_RootModelcatalog_ProcessArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Process_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Process_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Process_Bool_Exp>;
+};
+
+
+export type Query_RootModelcatalog_Process_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Process_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Process_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Process_Bool_Exp>;
+};
+
+
+export type Query_RootModelcatalog_Process_By_PkArgs = {
+  id: Scalars['String']['input'];
+};
+
+
+export type Query_RootModelcatalog_RegionArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Region_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Region_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Region_Bool_Exp>;
+};
+
+
+export type Query_RootModelcatalog_Region_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Region_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Region_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Region_Bool_Exp>;
+};
+
+
+export type Query_RootModelcatalog_Region_By_PkArgs = {
+  id: Scalars['String']['input'];
+};
+
+
+export type Query_RootModelcatalog_SoftwareArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Software_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Software_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Software_Bool_Exp>;
+};
+
+
+export type Query_RootModelcatalog_Software_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Software_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Software_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Software_Bool_Exp>;
+};
+
+
+export type Query_RootModelcatalog_Software_AuthorArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Software_Author_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Software_Author_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Software_Author_Bool_Exp>;
+};
+
+
+export type Query_RootModelcatalog_Software_Author_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Software_Author_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Software_Author_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Software_Author_Bool_Exp>;
+};
+
+
+export type Query_RootModelcatalog_Software_Author_By_PkArgs = {
+  person_id: Scalars['String']['input'];
+  software_id: Scalars['String']['input'];
+};
+
+
+export type Query_RootModelcatalog_Software_By_PkArgs = {
+  id: Scalars['String']['input'];
+};
+
+
+export type Query_RootModelcatalog_Software_CategoryArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Software_Category_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Software_Category_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Software_Category_Bool_Exp>;
+};
+
+
+export type Query_RootModelcatalog_Software_Category_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Software_Category_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Software_Category_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Software_Category_Bool_Exp>;
+};
+
+
+export type Query_RootModelcatalog_Software_Category_By_PkArgs = {
+  category_id: Scalars['String']['input'];
+  software_id: Scalars['String']['input'];
+};
+
+
+export type Query_RootModelcatalog_Software_VersionArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Software_Version_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Software_Version_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Software_Version_Bool_Exp>;
+};
+
+
+export type Query_RootModelcatalog_Software_Version_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Software_Version_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Software_Version_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Software_Version_Bool_Exp>;
+};
+
+
+export type Query_RootModelcatalog_Software_Version_By_PkArgs = {
+  id: Scalars['String']['input'];
+};
+
+
+export type Query_RootModelcatalog_Software_Version_CategoryArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Software_Version_Category_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Software_Version_Category_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Software_Version_Category_Bool_Exp>;
+};
+
+
+export type Query_RootModelcatalog_Software_Version_Category_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Software_Version_Category_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Software_Version_Category_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Software_Version_Category_Bool_Exp>;
+};
+
+
+export type Query_RootModelcatalog_Software_Version_Category_By_PkArgs = {
+  category_id: Scalars['String']['input'];
+  software_version_id: Scalars['String']['input'];
+};
+
+
+export type Query_RootModelcatalog_Software_Version_GridArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Software_Version_Grid_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Software_Version_Grid_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Software_Version_Grid_Bool_Exp>;
+};
+
+
+export type Query_RootModelcatalog_Software_Version_Grid_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Software_Version_Grid_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Software_Version_Grid_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Software_Version_Grid_Bool_Exp>;
+};
+
+
+export type Query_RootModelcatalog_Software_Version_Grid_By_PkArgs = {
+  grid_id: Scalars['String']['input'];
+  software_version_id: Scalars['String']['input'];
+};
+
+
+export type Query_RootModelcatalog_Software_Version_ImageArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Software_Version_Image_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Software_Version_Image_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Software_Version_Image_Bool_Exp>;
+};
+
+
+export type Query_RootModelcatalog_Software_Version_Image_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Software_Version_Image_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Software_Version_Image_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Software_Version_Image_Bool_Exp>;
+};
+
+
+export type Query_RootModelcatalog_Software_Version_Image_By_PkArgs = {
+  image_id: Scalars['String']['input'];
+  software_version_id: Scalars['String']['input'];
+};
+
+
+export type Query_RootModelcatalog_Software_Version_Input_VariableArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Software_Version_Input_Variable_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Software_Version_Input_Variable_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Software_Version_Input_Variable_Bool_Exp>;
+};
+
+
+export type Query_RootModelcatalog_Software_Version_Input_Variable_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Software_Version_Input_Variable_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Software_Version_Input_Variable_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Software_Version_Input_Variable_Bool_Exp>;
+};
+
+
+export type Query_RootModelcatalog_Software_Version_Input_Variable_By_PkArgs = {
+  software_version_id: Scalars['String']['input'];
+  variable_id: Scalars['String']['input'];
+};
+
+
+export type Query_RootModelcatalog_Software_Version_Output_VariableArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Software_Version_Output_Variable_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Software_Version_Output_Variable_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Software_Version_Output_Variable_Bool_Exp>;
+};
+
+
+export type Query_RootModelcatalog_Software_Version_Output_Variable_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Software_Version_Output_Variable_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Software_Version_Output_Variable_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Software_Version_Output_Variable_Bool_Exp>;
+};
+
+
+export type Query_RootModelcatalog_Software_Version_Output_Variable_By_PkArgs = {
+  software_version_id: Scalars['String']['input'];
+  variable_id: Scalars['String']['input'];
+};
+
+
+export type Query_RootModelcatalog_Software_Version_ProcessArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Software_Version_Process_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Software_Version_Process_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Software_Version_Process_Bool_Exp>;
+};
+
+
+export type Query_RootModelcatalog_Software_Version_Process_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Software_Version_Process_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Software_Version_Process_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Software_Version_Process_Bool_Exp>;
+};
+
+
+export type Query_RootModelcatalog_Software_Version_Process_By_PkArgs = {
+  process_id: Scalars['String']['input'];
+  software_version_id: Scalars['String']['input'];
+};
+
+
+export type Query_RootModelcatalog_Standard_VariableArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Standard_Variable_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Standard_Variable_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Standard_Variable_Bool_Exp>;
+};
+
+
+export type Query_RootModelcatalog_Standard_Variable_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Standard_Variable_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Standard_Variable_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Standard_Variable_Bool_Exp>;
+};
+
+
+export type Query_RootModelcatalog_Standard_Variable_By_PkArgs = {
+  id: Scalars['String']['input'];
+};
+
+
+export type Query_RootModelcatalog_Time_IntervalArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Time_Interval_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Time_Interval_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Time_Interval_Bool_Exp>;
+};
+
+
+export type Query_RootModelcatalog_Time_Interval_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Time_Interval_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Time_Interval_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Time_Interval_Bool_Exp>;
+};
+
+
+export type Query_RootModelcatalog_Time_Interval_By_PkArgs = {
+  id: Scalars['String']['input'];
+};
+
+
+export type Query_RootModelcatalog_UnitArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Unit_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Unit_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Unit_Bool_Exp>;
+};
+
+
+export type Query_RootModelcatalog_Unit_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Unit_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Unit_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Unit_Bool_Exp>;
+};
+
+
+export type Query_RootModelcatalog_Unit_By_PkArgs = {
+  id: Scalars['String']['input'];
+};
+
+
+export type Query_RootModelcatalog_Variable_PresentationArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Variable_Presentation_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Variable_Presentation_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Variable_Presentation_Bool_Exp>;
+};
+
+
+export type Query_RootModelcatalog_Variable_Presentation_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Variable_Presentation_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Variable_Presentation_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Variable_Presentation_Bool_Exp>;
+};
+
+
+export type Query_RootModelcatalog_Variable_Presentation_By_PkArgs = {
+  id: Scalars['String']['input'];
+};
+
+
+export type Query_RootModelcatalog_Version_AuthorArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Version_Author_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Version_Author_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Version_Author_Bool_Exp>;
+};
+
+
+export type Query_RootModelcatalog_Version_Author_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Version_Author_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Version_Author_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Version_Author_Bool_Exp>;
+};
+
+
+export type Query_RootModelcatalog_Version_Author_By_PkArgs = {
+  person_id: Scalars['String']['input'];
+  software_version_id: Scalars['String']['input'];
 };
 
 
@@ -10159,18 +20478,6 @@ export type Subscription_Root = {
   intervention_aggregate: Intervention_Aggregate;
   /** fetch data from the table: "intervention" using primary key columns */
   intervention_by_pk?: Maybe<Intervention>;
-  /** fetch data from the table: "model" */
-  model: Array<Model>;
-  /** fetch aggregated fields from the table: "model" */
-  model_aggregate: Model_Aggregate;
-  /** fetch data from the table: "model" using primary key columns */
-  model_by_pk?: Maybe<Model>;
-  /** fetch data from the table: "model_input" */
-  model_input: Array<Model_Input>;
-  /** fetch aggregated fields from the table: "model_input" */
-  model_input_aggregate: Model_Input_Aggregate;
-  /** fetch data from the table: "model_input" using primary key columns */
-  model_input_by_pk?: Maybe<Model_Input>;
   /** fetch data from the table: "model_input_fixed_binding" */
   model_input_fixed_binding: Array<Model_Input_Fixed_Binding>;
   /** fetch aggregated fields from the table: "model_input_fixed_binding" */
@@ -10189,18 +20496,246 @@ export type Subscription_Root = {
   model_io_variable_aggregate: Model_Io_Variable_Aggregate;
   /** fetch data from the table: "model_io_variable" using primary key columns */
   model_io_variable_by_pk?: Maybe<Model_Io_Variable>;
-  /** fetch data from the table: "model_output" */
-  model_output: Array<Model_Output>;
-  /** fetch aggregated fields from the table: "model_output" */
-  model_output_aggregate: Model_Output_Aggregate;
-  /** fetch data from the table: "model_output" using primary key columns */
-  model_output_by_pk?: Maybe<Model_Output>;
-  /** fetch data from the table: "model_parameter" */
-  model_parameter: Array<Model_Parameter>;
-  /** fetch aggregated fields from the table: "model_parameter" */
-  model_parameter_aggregate: Model_Parameter_Aggregate;
-  /** fetch data from the table: "model_parameter" using primary key columns */
-  model_parameter_by_pk?: Maybe<Model_Parameter>;
+  /** fetch data from the table: "modelcatalog_causal_diagram" */
+  modelcatalog_causal_diagram: Array<Modelcatalog_Causal_Diagram>;
+  /** fetch aggregated fields from the table: "modelcatalog_causal_diagram" */
+  modelcatalog_causal_diagram_aggregate: Modelcatalog_Causal_Diagram_Aggregate;
+  /** fetch data from the table: "modelcatalog_causal_diagram" using primary key columns */
+  modelcatalog_causal_diagram_by_pk?: Maybe<Modelcatalog_Causal_Diagram>;
+  /** fetch data from the table: "modelcatalog_configuration" */
+  modelcatalog_configuration: Array<Modelcatalog_Configuration>;
+  /** fetch aggregated fields from the table: "modelcatalog_configuration" */
+  modelcatalog_configuration_aggregate: Modelcatalog_Configuration_Aggregate;
+  /** fetch data from the table: "modelcatalog_configuration_author" */
+  modelcatalog_configuration_author: Array<Modelcatalog_Configuration_Author>;
+  /** fetch aggregated fields from the table: "modelcatalog_configuration_author" */
+  modelcatalog_configuration_author_aggregate: Modelcatalog_Configuration_Author_Aggregate;
+  /** fetch data from the table: "modelcatalog_configuration_author" using primary key columns */
+  modelcatalog_configuration_author_by_pk?: Maybe<Modelcatalog_Configuration_Author>;
+  /** fetch data from the table: "modelcatalog_configuration" using primary key columns */
+  modelcatalog_configuration_by_pk?: Maybe<Modelcatalog_Configuration>;
+  /** fetch data from the table: "modelcatalog_configuration_calibrated_variable" */
+  modelcatalog_configuration_calibrated_variable: Array<Modelcatalog_Configuration_Calibrated_Variable>;
+  /** fetch aggregated fields from the table: "modelcatalog_configuration_calibrated_variable" */
+  modelcatalog_configuration_calibrated_variable_aggregate: Modelcatalog_Configuration_Calibrated_Variable_Aggregate;
+  /** fetch data from the table: "modelcatalog_configuration_calibrated_variable" using primary key columns */
+  modelcatalog_configuration_calibrated_variable_by_pk?: Maybe<Modelcatalog_Configuration_Calibrated_Variable>;
+  /** fetch data from the table: "modelcatalog_configuration_calibration_target" */
+  modelcatalog_configuration_calibration_target: Array<Modelcatalog_Configuration_Calibration_Target>;
+  /** fetch aggregated fields from the table: "modelcatalog_configuration_calibration_target" */
+  modelcatalog_configuration_calibration_target_aggregate: Modelcatalog_Configuration_Calibration_Target_Aggregate;
+  /** fetch data from the table: "modelcatalog_configuration_calibration_target" using primary key columns */
+  modelcatalog_configuration_calibration_target_by_pk?: Maybe<Modelcatalog_Configuration_Calibration_Target>;
+  /** fetch data from the table: "modelcatalog_configuration_category" */
+  modelcatalog_configuration_category: Array<Modelcatalog_Configuration_Category>;
+  /** fetch aggregated fields from the table: "modelcatalog_configuration_category" */
+  modelcatalog_configuration_category_aggregate: Modelcatalog_Configuration_Category_Aggregate;
+  /** fetch data from the table: "modelcatalog_configuration_category" using primary key columns */
+  modelcatalog_configuration_category_by_pk?: Maybe<Modelcatalog_Configuration_Category>;
+  /** fetch data from the table: "modelcatalog_configuration_causal_diagram" */
+  modelcatalog_configuration_causal_diagram: Array<Modelcatalog_Configuration_Causal_Diagram>;
+  /** fetch aggregated fields from the table: "modelcatalog_configuration_causal_diagram" */
+  modelcatalog_configuration_causal_diagram_aggregate: Modelcatalog_Configuration_Causal_Diagram_Aggregate;
+  /** fetch data from the table: "modelcatalog_configuration_causal_diagram" using primary key columns */
+  modelcatalog_configuration_causal_diagram_by_pk?: Maybe<Modelcatalog_Configuration_Causal_Diagram>;
+  /** fetch data from the table: "modelcatalog_configuration_input" */
+  modelcatalog_configuration_input: Array<Modelcatalog_Configuration_Input>;
+  /** fetch aggregated fields from the table: "modelcatalog_configuration_input" */
+  modelcatalog_configuration_input_aggregate: Modelcatalog_Configuration_Input_Aggregate;
+  /** fetch data from the table: "modelcatalog_configuration_input" using primary key columns */
+  modelcatalog_configuration_input_by_pk?: Maybe<Modelcatalog_Configuration_Input>;
+  /** fetch data from the table: "modelcatalog_configuration_output" */
+  modelcatalog_configuration_output: Array<Modelcatalog_Configuration_Output>;
+  /** fetch aggregated fields from the table: "modelcatalog_configuration_output" */
+  modelcatalog_configuration_output_aggregate: Modelcatalog_Configuration_Output_Aggregate;
+  /** fetch data from the table: "modelcatalog_configuration_output" using primary key columns */
+  modelcatalog_configuration_output_by_pk?: Maybe<Modelcatalog_Configuration_Output>;
+  /** fetch data from the table: "modelcatalog_configuration_parameter" */
+  modelcatalog_configuration_parameter: Array<Modelcatalog_Configuration_Parameter>;
+  /** fetch aggregated fields from the table: "modelcatalog_configuration_parameter" */
+  modelcatalog_configuration_parameter_aggregate: Modelcatalog_Configuration_Parameter_Aggregate;
+  /** fetch data from the table: "modelcatalog_configuration_parameter" using primary key columns */
+  modelcatalog_configuration_parameter_by_pk?: Maybe<Modelcatalog_Configuration_Parameter>;
+  /** fetch data from the table: "modelcatalog_configuration_region" */
+  modelcatalog_configuration_region: Array<Modelcatalog_Configuration_Region>;
+  /** fetch aggregated fields from the table: "modelcatalog_configuration_region" */
+  modelcatalog_configuration_region_aggregate: Modelcatalog_Configuration_Region_Aggregate;
+  /** fetch data from the table: "modelcatalog_configuration_region" using primary key columns */
+  modelcatalog_configuration_region_by_pk?: Maybe<Modelcatalog_Configuration_Region>;
+  /** fetch data from the table: "modelcatalog_configuration_time_interval" */
+  modelcatalog_configuration_time_interval: Array<Modelcatalog_Configuration_Time_Interval>;
+  /** fetch aggregated fields from the table: "modelcatalog_configuration_time_interval" */
+  modelcatalog_configuration_time_interval_aggregate: Modelcatalog_Configuration_Time_Interval_Aggregate;
+  /** fetch data from the table: "modelcatalog_configuration_time_interval" using primary key columns */
+  modelcatalog_configuration_time_interval_by_pk?: Maybe<Modelcatalog_Configuration_Time_Interval>;
+  /** fetch data from the table: "modelcatalog_dataset_specification" */
+  modelcatalog_dataset_specification: Array<Modelcatalog_Dataset_Specification>;
+  /** fetch aggregated fields from the table: "modelcatalog_dataset_specification" */
+  modelcatalog_dataset_specification_aggregate: Modelcatalog_Dataset_Specification_Aggregate;
+  /** fetch data from the table: "modelcatalog_dataset_specification" using primary key columns */
+  modelcatalog_dataset_specification_by_pk?: Maybe<Modelcatalog_Dataset_Specification>;
+  /** fetch data from the table: "modelcatalog_dataset_specification_presentation" */
+  modelcatalog_dataset_specification_presentation: Array<Modelcatalog_Dataset_Specification_Presentation>;
+  /** fetch aggregated fields from the table: "modelcatalog_dataset_specification_presentation" */
+  modelcatalog_dataset_specification_presentation_aggregate: Modelcatalog_Dataset_Specification_Presentation_Aggregate;
+  /** fetch data from the table: "modelcatalog_dataset_specification_presentation" using primary key columns */
+  modelcatalog_dataset_specification_presentation_by_pk?: Maybe<Modelcatalog_Dataset_Specification_Presentation>;
+  /** fetch data from the table: "modelcatalog_diagram_part" */
+  modelcatalog_diagram_part: Array<Modelcatalog_Diagram_Part>;
+  /** fetch aggregated fields from the table: "modelcatalog_diagram_part" */
+  modelcatalog_diagram_part_aggregate: Modelcatalog_Diagram_Part_Aggregate;
+  /** fetch data from the table: "modelcatalog_diagram_part" using primary key columns */
+  modelcatalog_diagram_part_by_pk?: Maybe<Modelcatalog_Diagram_Part>;
+  /** fetch data from the table: "modelcatalog_grid" */
+  modelcatalog_grid: Array<Modelcatalog_Grid>;
+  /** fetch aggregated fields from the table: "modelcatalog_grid" */
+  modelcatalog_grid_aggregate: Modelcatalog_Grid_Aggregate;
+  /** fetch data from the table: "modelcatalog_grid" using primary key columns */
+  modelcatalog_grid_by_pk?: Maybe<Modelcatalog_Grid>;
+  /** fetch data from the table: "modelcatalog_image" */
+  modelcatalog_image: Array<Modelcatalog_Image>;
+  /** fetch aggregated fields from the table: "modelcatalog_image" */
+  modelcatalog_image_aggregate: Modelcatalog_Image_Aggregate;
+  /** fetch data from the table: "modelcatalog_image" using primary key columns */
+  modelcatalog_image_by_pk?: Maybe<Modelcatalog_Image>;
+  /** fetch data from the table: "modelcatalog_intervention" */
+  modelcatalog_intervention: Array<Modelcatalog_Intervention>;
+  /** fetch aggregated fields from the table: "modelcatalog_intervention" */
+  modelcatalog_intervention_aggregate: Modelcatalog_Intervention_Aggregate;
+  /** fetch data from the table: "modelcatalog_intervention" using primary key columns */
+  modelcatalog_intervention_by_pk?: Maybe<Modelcatalog_Intervention>;
+  /** fetch data from the table: "modelcatalog_model_category" */
+  modelcatalog_model_category: Array<Modelcatalog_Model_Category>;
+  /** fetch aggregated fields from the table: "modelcatalog_model_category" */
+  modelcatalog_model_category_aggregate: Modelcatalog_Model_Category_Aggregate;
+  /** fetch data from the table: "modelcatalog_model_category" using primary key columns */
+  modelcatalog_model_category_by_pk?: Maybe<Modelcatalog_Model_Category>;
+  /** fetch data from the table: "modelcatalog_parameter" */
+  modelcatalog_parameter: Array<Modelcatalog_Parameter>;
+  /** fetch data from the table: "modelcatalog_parameter_adjusts_variable" */
+  modelcatalog_parameter_adjusts_variable: Array<Modelcatalog_Parameter_Adjusts_Variable>;
+  /** fetch aggregated fields from the table: "modelcatalog_parameter_adjusts_variable" */
+  modelcatalog_parameter_adjusts_variable_aggregate: Modelcatalog_Parameter_Adjusts_Variable_Aggregate;
+  /** fetch data from the table: "modelcatalog_parameter_adjusts_variable" using primary key columns */
+  modelcatalog_parameter_adjusts_variable_by_pk?: Maybe<Modelcatalog_Parameter_Adjusts_Variable>;
+  /** fetch aggregated fields from the table: "modelcatalog_parameter" */
+  modelcatalog_parameter_aggregate: Modelcatalog_Parameter_Aggregate;
+  /** fetch data from the table: "modelcatalog_parameter" using primary key columns */
+  modelcatalog_parameter_by_pk?: Maybe<Modelcatalog_Parameter>;
+  /** fetch data from the table: "modelcatalog_parameter_intervention" */
+  modelcatalog_parameter_intervention: Array<Modelcatalog_Parameter_Intervention>;
+  /** fetch aggregated fields from the table: "modelcatalog_parameter_intervention" */
+  modelcatalog_parameter_intervention_aggregate: Modelcatalog_Parameter_Intervention_Aggregate;
+  /** fetch data from the table: "modelcatalog_parameter_intervention" using primary key columns */
+  modelcatalog_parameter_intervention_by_pk?: Maybe<Modelcatalog_Parameter_Intervention>;
+  /** fetch data from the table: "modelcatalog_person" */
+  modelcatalog_person: Array<Modelcatalog_Person>;
+  /** fetch aggregated fields from the table: "modelcatalog_person" */
+  modelcatalog_person_aggregate: Modelcatalog_Person_Aggregate;
+  /** fetch data from the table: "modelcatalog_person" using primary key columns */
+  modelcatalog_person_by_pk?: Maybe<Modelcatalog_Person>;
+  /** fetch data from the table: "modelcatalog_process" */
+  modelcatalog_process: Array<Modelcatalog_Process>;
+  /** fetch aggregated fields from the table: "modelcatalog_process" */
+  modelcatalog_process_aggregate: Modelcatalog_Process_Aggregate;
+  /** fetch data from the table: "modelcatalog_process" using primary key columns */
+  modelcatalog_process_by_pk?: Maybe<Modelcatalog_Process>;
+  /** fetch data from the table: "modelcatalog_region" */
+  modelcatalog_region: Array<Modelcatalog_Region>;
+  /** fetch aggregated fields from the table: "modelcatalog_region" */
+  modelcatalog_region_aggregate: Modelcatalog_Region_Aggregate;
+  /** fetch data from the table: "modelcatalog_region" using primary key columns */
+  modelcatalog_region_by_pk?: Maybe<Modelcatalog_Region>;
+  /** fetch data from the table: "modelcatalog_software" */
+  modelcatalog_software: Array<Modelcatalog_Software>;
+  /** fetch aggregated fields from the table: "modelcatalog_software" */
+  modelcatalog_software_aggregate: Modelcatalog_Software_Aggregate;
+  /** fetch data from the table: "modelcatalog_software_author" */
+  modelcatalog_software_author: Array<Modelcatalog_Software_Author>;
+  /** fetch aggregated fields from the table: "modelcatalog_software_author" */
+  modelcatalog_software_author_aggregate: Modelcatalog_Software_Author_Aggregate;
+  /** fetch data from the table: "modelcatalog_software_author" using primary key columns */
+  modelcatalog_software_author_by_pk?: Maybe<Modelcatalog_Software_Author>;
+  /** fetch data from the table: "modelcatalog_software" using primary key columns */
+  modelcatalog_software_by_pk?: Maybe<Modelcatalog_Software>;
+  /** fetch data from the table: "modelcatalog_software_category" */
+  modelcatalog_software_category: Array<Modelcatalog_Software_Category>;
+  /** fetch aggregated fields from the table: "modelcatalog_software_category" */
+  modelcatalog_software_category_aggregate: Modelcatalog_Software_Category_Aggregate;
+  /** fetch data from the table: "modelcatalog_software_category" using primary key columns */
+  modelcatalog_software_category_by_pk?: Maybe<Modelcatalog_Software_Category>;
+  /** fetch data from the table: "modelcatalog_software_version" */
+  modelcatalog_software_version: Array<Modelcatalog_Software_Version>;
+  /** fetch aggregated fields from the table: "modelcatalog_software_version" */
+  modelcatalog_software_version_aggregate: Modelcatalog_Software_Version_Aggregate;
+  /** fetch data from the table: "modelcatalog_software_version" using primary key columns */
+  modelcatalog_software_version_by_pk?: Maybe<Modelcatalog_Software_Version>;
+  /** fetch data from the table: "modelcatalog_software_version_category" */
+  modelcatalog_software_version_category: Array<Modelcatalog_Software_Version_Category>;
+  /** fetch aggregated fields from the table: "modelcatalog_software_version_category" */
+  modelcatalog_software_version_category_aggregate: Modelcatalog_Software_Version_Category_Aggregate;
+  /** fetch data from the table: "modelcatalog_software_version_category" using primary key columns */
+  modelcatalog_software_version_category_by_pk?: Maybe<Modelcatalog_Software_Version_Category>;
+  /** fetch data from the table: "modelcatalog_software_version_grid" */
+  modelcatalog_software_version_grid: Array<Modelcatalog_Software_Version_Grid>;
+  /** fetch aggregated fields from the table: "modelcatalog_software_version_grid" */
+  modelcatalog_software_version_grid_aggregate: Modelcatalog_Software_Version_Grid_Aggregate;
+  /** fetch data from the table: "modelcatalog_software_version_grid" using primary key columns */
+  modelcatalog_software_version_grid_by_pk?: Maybe<Modelcatalog_Software_Version_Grid>;
+  /** fetch data from the table: "modelcatalog_software_version_image" */
+  modelcatalog_software_version_image: Array<Modelcatalog_Software_Version_Image>;
+  /** fetch aggregated fields from the table: "modelcatalog_software_version_image" */
+  modelcatalog_software_version_image_aggregate: Modelcatalog_Software_Version_Image_Aggregate;
+  /** fetch data from the table: "modelcatalog_software_version_image" using primary key columns */
+  modelcatalog_software_version_image_by_pk?: Maybe<Modelcatalog_Software_Version_Image>;
+  /** fetch data from the table: "modelcatalog_software_version_input_variable" */
+  modelcatalog_software_version_input_variable: Array<Modelcatalog_Software_Version_Input_Variable>;
+  /** fetch aggregated fields from the table: "modelcatalog_software_version_input_variable" */
+  modelcatalog_software_version_input_variable_aggregate: Modelcatalog_Software_Version_Input_Variable_Aggregate;
+  /** fetch data from the table: "modelcatalog_software_version_input_variable" using primary key columns */
+  modelcatalog_software_version_input_variable_by_pk?: Maybe<Modelcatalog_Software_Version_Input_Variable>;
+  /** fetch data from the table: "modelcatalog_software_version_output_variable" */
+  modelcatalog_software_version_output_variable: Array<Modelcatalog_Software_Version_Output_Variable>;
+  /** fetch aggregated fields from the table: "modelcatalog_software_version_output_variable" */
+  modelcatalog_software_version_output_variable_aggregate: Modelcatalog_Software_Version_Output_Variable_Aggregate;
+  /** fetch data from the table: "modelcatalog_software_version_output_variable" using primary key columns */
+  modelcatalog_software_version_output_variable_by_pk?: Maybe<Modelcatalog_Software_Version_Output_Variable>;
+  /** fetch data from the table: "modelcatalog_software_version_process" */
+  modelcatalog_software_version_process: Array<Modelcatalog_Software_Version_Process>;
+  /** fetch aggregated fields from the table: "modelcatalog_software_version_process" */
+  modelcatalog_software_version_process_aggregate: Modelcatalog_Software_Version_Process_Aggregate;
+  /** fetch data from the table: "modelcatalog_software_version_process" using primary key columns */
+  modelcatalog_software_version_process_by_pk?: Maybe<Modelcatalog_Software_Version_Process>;
+  /** fetch data from the table: "modelcatalog_standard_variable" */
+  modelcatalog_standard_variable: Array<Modelcatalog_Standard_Variable>;
+  /** fetch aggregated fields from the table: "modelcatalog_standard_variable" */
+  modelcatalog_standard_variable_aggregate: Modelcatalog_Standard_Variable_Aggregate;
+  /** fetch data from the table: "modelcatalog_standard_variable" using primary key columns */
+  modelcatalog_standard_variable_by_pk?: Maybe<Modelcatalog_Standard_Variable>;
+  /** fetch data from the table: "modelcatalog_time_interval" */
+  modelcatalog_time_interval: Array<Modelcatalog_Time_Interval>;
+  /** fetch aggregated fields from the table: "modelcatalog_time_interval" */
+  modelcatalog_time_interval_aggregate: Modelcatalog_Time_Interval_Aggregate;
+  /** fetch data from the table: "modelcatalog_time_interval" using primary key columns */
+  modelcatalog_time_interval_by_pk?: Maybe<Modelcatalog_Time_Interval>;
+  /** fetch data from the table: "modelcatalog_unit" */
+  modelcatalog_unit: Array<Modelcatalog_Unit>;
+  /** fetch aggregated fields from the table: "modelcatalog_unit" */
+  modelcatalog_unit_aggregate: Modelcatalog_Unit_Aggregate;
+  /** fetch data from the table: "modelcatalog_unit" using primary key columns */
+  modelcatalog_unit_by_pk?: Maybe<Modelcatalog_Unit>;
+  /** fetch data from the table: "modelcatalog_variable_presentation" */
+  modelcatalog_variable_presentation: Array<Modelcatalog_Variable_Presentation>;
+  /** fetch aggregated fields from the table: "modelcatalog_variable_presentation" */
+  modelcatalog_variable_presentation_aggregate: Modelcatalog_Variable_Presentation_Aggregate;
+  /** fetch data from the table: "modelcatalog_variable_presentation" using primary key columns */
+  modelcatalog_variable_presentation_by_pk?: Maybe<Modelcatalog_Variable_Presentation>;
+  /** fetch data from the table: "modelcatalog_version_author" */
+  modelcatalog_version_author: Array<Modelcatalog_Version_Author>;
+  /** fetch aggregated fields from the table: "modelcatalog_version_author" */
+  modelcatalog_version_author_aggregate: Modelcatalog_Version_Author_Aggregate;
+  /** fetch data from the table: "modelcatalog_version_author" using primary key columns */
+  modelcatalog_version_author_by_pk?: Maybe<Modelcatalog_Version_Author>;
   /** fetch data from the table: "problem_statement" */
   problem_statement: Array<Problem_Statement>;
   /** fetch aggregated fields from the table: "problem_statement" */
@@ -10576,53 +21111,6 @@ export type Subscription_RootIntervention_By_PkArgs = {
 };
 
 
-export type Subscription_RootModelArgs = {
-  distinct_on?: InputMaybe<Array<Model_Select_Column>>;
-  limit?: InputMaybe<Scalars['Int']['input']>;
-  offset?: InputMaybe<Scalars['Int']['input']>;
-  order_by?: InputMaybe<Array<Model_Order_By>>;
-  where?: InputMaybe<Model_Bool_Exp>;
-};
-
-
-export type Subscription_RootModel_AggregateArgs = {
-  distinct_on?: InputMaybe<Array<Model_Select_Column>>;
-  limit?: InputMaybe<Scalars['Int']['input']>;
-  offset?: InputMaybe<Scalars['Int']['input']>;
-  order_by?: InputMaybe<Array<Model_Order_By>>;
-  where?: InputMaybe<Model_Bool_Exp>;
-};
-
-
-export type Subscription_RootModel_By_PkArgs = {
-  id: Scalars['String']['input'];
-};
-
-
-export type Subscription_RootModel_InputArgs = {
-  distinct_on?: InputMaybe<Array<Model_Input_Select_Column>>;
-  limit?: InputMaybe<Scalars['Int']['input']>;
-  offset?: InputMaybe<Scalars['Int']['input']>;
-  order_by?: InputMaybe<Array<Model_Input_Order_By>>;
-  where?: InputMaybe<Model_Input_Bool_Exp>;
-};
-
-
-export type Subscription_RootModel_Input_AggregateArgs = {
-  distinct_on?: InputMaybe<Array<Model_Input_Select_Column>>;
-  limit?: InputMaybe<Scalars['Int']['input']>;
-  offset?: InputMaybe<Scalars['Int']['input']>;
-  order_by?: InputMaybe<Array<Model_Input_Order_By>>;
-  where?: InputMaybe<Model_Input_Bool_Exp>;
-};
-
-
-export type Subscription_RootModel_Input_By_PkArgs = {
-  model_id: Scalars['String']['input'];
-  model_io_id: Scalars['String']['input'];
-};
-
-
 export type Subscription_RootModel_Input_Fixed_BindingArgs = {
   distinct_on?: InputMaybe<Array<Model_Input_Fixed_Binding_Select_Column>>;
   limit?: InputMaybe<Scalars['Int']['input']>;
@@ -10694,50 +21182,946 @@ export type Subscription_RootModel_Io_Variable_By_PkArgs = {
 };
 
 
-export type Subscription_RootModel_OutputArgs = {
-  distinct_on?: InputMaybe<Array<Model_Output_Select_Column>>;
+export type Subscription_RootModelcatalog_Causal_DiagramArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Causal_Diagram_Select_Column>>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
-  order_by?: InputMaybe<Array<Model_Output_Order_By>>;
-  where?: InputMaybe<Model_Output_Bool_Exp>;
+  order_by?: InputMaybe<Array<Modelcatalog_Causal_Diagram_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Causal_Diagram_Bool_Exp>;
 };
 
 
-export type Subscription_RootModel_Output_AggregateArgs = {
-  distinct_on?: InputMaybe<Array<Model_Output_Select_Column>>;
+export type Subscription_RootModelcatalog_Causal_Diagram_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Causal_Diagram_Select_Column>>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
-  order_by?: InputMaybe<Array<Model_Output_Order_By>>;
-  where?: InputMaybe<Model_Output_Bool_Exp>;
+  order_by?: InputMaybe<Array<Modelcatalog_Causal_Diagram_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Causal_Diagram_Bool_Exp>;
 };
 
 
-export type Subscription_RootModel_Output_By_PkArgs = {
-  model_id: Scalars['String']['input'];
-  model_io_id: Scalars['String']['input'];
-};
-
-
-export type Subscription_RootModel_ParameterArgs = {
-  distinct_on?: InputMaybe<Array<Model_Parameter_Select_Column>>;
-  limit?: InputMaybe<Scalars['Int']['input']>;
-  offset?: InputMaybe<Scalars['Int']['input']>;
-  order_by?: InputMaybe<Array<Model_Parameter_Order_By>>;
-  where?: InputMaybe<Model_Parameter_Bool_Exp>;
-};
-
-
-export type Subscription_RootModel_Parameter_AggregateArgs = {
-  distinct_on?: InputMaybe<Array<Model_Parameter_Select_Column>>;
-  limit?: InputMaybe<Scalars['Int']['input']>;
-  offset?: InputMaybe<Scalars['Int']['input']>;
-  order_by?: InputMaybe<Array<Model_Parameter_Order_By>>;
-  where?: InputMaybe<Model_Parameter_Bool_Exp>;
-};
-
-
-export type Subscription_RootModel_Parameter_By_PkArgs = {
+export type Subscription_RootModelcatalog_Causal_Diagram_By_PkArgs = {
   id: Scalars['String']['input'];
+};
+
+
+export type Subscription_RootModelcatalog_ConfigurationArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Configuration_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Configuration_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Configuration_Bool_Exp>;
+};
+
+
+export type Subscription_RootModelcatalog_Configuration_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Configuration_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Configuration_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Configuration_Bool_Exp>;
+};
+
+
+export type Subscription_RootModelcatalog_Configuration_AuthorArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Configuration_Author_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Configuration_Author_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Configuration_Author_Bool_Exp>;
+};
+
+
+export type Subscription_RootModelcatalog_Configuration_Author_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Configuration_Author_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Configuration_Author_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Configuration_Author_Bool_Exp>;
+};
+
+
+export type Subscription_RootModelcatalog_Configuration_Author_By_PkArgs = {
+  configuration_id: Scalars['String']['input'];
+  person_id: Scalars['String']['input'];
+};
+
+
+export type Subscription_RootModelcatalog_Configuration_By_PkArgs = {
+  id: Scalars['String']['input'];
+};
+
+
+export type Subscription_RootModelcatalog_Configuration_Calibrated_VariableArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Configuration_Calibrated_Variable_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Configuration_Calibrated_Variable_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Configuration_Calibrated_Variable_Bool_Exp>;
+};
+
+
+export type Subscription_RootModelcatalog_Configuration_Calibrated_Variable_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Configuration_Calibrated_Variable_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Configuration_Calibrated_Variable_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Configuration_Calibrated_Variable_Bool_Exp>;
+};
+
+
+export type Subscription_RootModelcatalog_Configuration_Calibrated_Variable_By_PkArgs = {
+  configuration_id: Scalars['String']['input'];
+  variable_id: Scalars['String']['input'];
+};
+
+
+export type Subscription_RootModelcatalog_Configuration_Calibration_TargetArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Configuration_Calibration_Target_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Configuration_Calibration_Target_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Configuration_Calibration_Target_Bool_Exp>;
+};
+
+
+export type Subscription_RootModelcatalog_Configuration_Calibration_Target_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Configuration_Calibration_Target_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Configuration_Calibration_Target_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Configuration_Calibration_Target_Bool_Exp>;
+};
+
+
+export type Subscription_RootModelcatalog_Configuration_Calibration_Target_By_PkArgs = {
+  configuration_id: Scalars['String']['input'];
+  variable_id: Scalars['String']['input'];
+};
+
+
+export type Subscription_RootModelcatalog_Configuration_CategoryArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Configuration_Category_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Configuration_Category_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Configuration_Category_Bool_Exp>;
+};
+
+
+export type Subscription_RootModelcatalog_Configuration_Category_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Configuration_Category_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Configuration_Category_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Configuration_Category_Bool_Exp>;
+};
+
+
+export type Subscription_RootModelcatalog_Configuration_Category_By_PkArgs = {
+  category_id: Scalars['String']['input'];
+  configuration_id: Scalars['String']['input'];
+};
+
+
+export type Subscription_RootModelcatalog_Configuration_Causal_DiagramArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Configuration_Causal_Diagram_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Configuration_Causal_Diagram_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Configuration_Causal_Diagram_Bool_Exp>;
+};
+
+
+export type Subscription_RootModelcatalog_Configuration_Causal_Diagram_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Configuration_Causal_Diagram_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Configuration_Causal_Diagram_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Configuration_Causal_Diagram_Bool_Exp>;
+};
+
+
+export type Subscription_RootModelcatalog_Configuration_Causal_Diagram_By_PkArgs = {
+  causal_diagram_id: Scalars['String']['input'];
+  configuration_id: Scalars['String']['input'];
+};
+
+
+export type Subscription_RootModelcatalog_Configuration_InputArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Configuration_Input_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Configuration_Input_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Configuration_Input_Bool_Exp>;
+};
+
+
+export type Subscription_RootModelcatalog_Configuration_Input_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Configuration_Input_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Configuration_Input_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Configuration_Input_Bool_Exp>;
+};
+
+
+export type Subscription_RootModelcatalog_Configuration_Input_By_PkArgs = {
+  configuration_id: Scalars['String']['input'];
+  input_id: Scalars['String']['input'];
+};
+
+
+export type Subscription_RootModelcatalog_Configuration_OutputArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Configuration_Output_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Configuration_Output_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Configuration_Output_Bool_Exp>;
+};
+
+
+export type Subscription_RootModelcatalog_Configuration_Output_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Configuration_Output_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Configuration_Output_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Configuration_Output_Bool_Exp>;
+};
+
+
+export type Subscription_RootModelcatalog_Configuration_Output_By_PkArgs = {
+  configuration_id: Scalars['String']['input'];
+  output_id: Scalars['String']['input'];
+};
+
+
+export type Subscription_RootModelcatalog_Configuration_ParameterArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Configuration_Parameter_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Configuration_Parameter_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Configuration_Parameter_Bool_Exp>;
+};
+
+
+export type Subscription_RootModelcatalog_Configuration_Parameter_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Configuration_Parameter_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Configuration_Parameter_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Configuration_Parameter_Bool_Exp>;
+};
+
+
+export type Subscription_RootModelcatalog_Configuration_Parameter_By_PkArgs = {
+  configuration_id: Scalars['String']['input'];
+  parameter_id: Scalars['String']['input'];
+};
+
+
+export type Subscription_RootModelcatalog_Configuration_RegionArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Configuration_Region_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Configuration_Region_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Configuration_Region_Bool_Exp>;
+};
+
+
+export type Subscription_RootModelcatalog_Configuration_Region_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Configuration_Region_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Configuration_Region_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Configuration_Region_Bool_Exp>;
+};
+
+
+export type Subscription_RootModelcatalog_Configuration_Region_By_PkArgs = {
+  configuration_id: Scalars['String']['input'];
+  region_id: Scalars['String']['input'];
+};
+
+
+export type Subscription_RootModelcatalog_Configuration_Time_IntervalArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Configuration_Time_Interval_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Configuration_Time_Interval_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Configuration_Time_Interval_Bool_Exp>;
+};
+
+
+export type Subscription_RootModelcatalog_Configuration_Time_Interval_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Configuration_Time_Interval_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Configuration_Time_Interval_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Configuration_Time_Interval_Bool_Exp>;
+};
+
+
+export type Subscription_RootModelcatalog_Configuration_Time_Interval_By_PkArgs = {
+  configuration_id: Scalars['String']['input'];
+  time_interval_id: Scalars['String']['input'];
+};
+
+
+export type Subscription_RootModelcatalog_Dataset_SpecificationArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Dataset_Specification_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Dataset_Specification_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Dataset_Specification_Bool_Exp>;
+};
+
+
+export type Subscription_RootModelcatalog_Dataset_Specification_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Dataset_Specification_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Dataset_Specification_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Dataset_Specification_Bool_Exp>;
+};
+
+
+export type Subscription_RootModelcatalog_Dataset_Specification_By_PkArgs = {
+  id: Scalars['String']['input'];
+};
+
+
+export type Subscription_RootModelcatalog_Dataset_Specification_PresentationArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Dataset_Specification_Presentation_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Dataset_Specification_Presentation_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Dataset_Specification_Presentation_Bool_Exp>;
+};
+
+
+export type Subscription_RootModelcatalog_Dataset_Specification_Presentation_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Dataset_Specification_Presentation_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Dataset_Specification_Presentation_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Dataset_Specification_Presentation_Bool_Exp>;
+};
+
+
+export type Subscription_RootModelcatalog_Dataset_Specification_Presentation_By_PkArgs = {
+  dataset_specification_id: Scalars['String']['input'];
+  presentation_id: Scalars['String']['input'];
+};
+
+
+export type Subscription_RootModelcatalog_Diagram_PartArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Diagram_Part_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Diagram_Part_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Diagram_Part_Bool_Exp>;
+};
+
+
+export type Subscription_RootModelcatalog_Diagram_Part_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Diagram_Part_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Diagram_Part_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Diagram_Part_Bool_Exp>;
+};
+
+
+export type Subscription_RootModelcatalog_Diagram_Part_By_PkArgs = {
+  causal_diagram_id: Scalars['String']['input'];
+  part_id: Scalars['String']['input'];
+};
+
+
+export type Subscription_RootModelcatalog_GridArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Grid_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Grid_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Grid_Bool_Exp>;
+};
+
+
+export type Subscription_RootModelcatalog_Grid_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Grid_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Grid_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Grid_Bool_Exp>;
+};
+
+
+export type Subscription_RootModelcatalog_Grid_By_PkArgs = {
+  id: Scalars['String']['input'];
+};
+
+
+export type Subscription_RootModelcatalog_ImageArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Image_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Image_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Image_Bool_Exp>;
+};
+
+
+export type Subscription_RootModelcatalog_Image_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Image_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Image_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Image_Bool_Exp>;
+};
+
+
+export type Subscription_RootModelcatalog_Image_By_PkArgs = {
+  id: Scalars['String']['input'];
+};
+
+
+export type Subscription_RootModelcatalog_InterventionArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Intervention_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Intervention_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Intervention_Bool_Exp>;
+};
+
+
+export type Subscription_RootModelcatalog_Intervention_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Intervention_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Intervention_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Intervention_Bool_Exp>;
+};
+
+
+export type Subscription_RootModelcatalog_Intervention_By_PkArgs = {
+  id: Scalars['String']['input'];
+};
+
+
+export type Subscription_RootModelcatalog_Model_CategoryArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Model_Category_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Model_Category_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Model_Category_Bool_Exp>;
+};
+
+
+export type Subscription_RootModelcatalog_Model_Category_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Model_Category_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Model_Category_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Model_Category_Bool_Exp>;
+};
+
+
+export type Subscription_RootModelcatalog_Model_Category_By_PkArgs = {
+  id: Scalars['String']['input'];
+};
+
+
+export type Subscription_RootModelcatalog_ParameterArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Parameter_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Parameter_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Parameter_Bool_Exp>;
+};
+
+
+export type Subscription_RootModelcatalog_Parameter_Adjusts_VariableArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Parameter_Adjusts_Variable_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Parameter_Adjusts_Variable_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Parameter_Adjusts_Variable_Bool_Exp>;
+};
+
+
+export type Subscription_RootModelcatalog_Parameter_Adjusts_Variable_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Parameter_Adjusts_Variable_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Parameter_Adjusts_Variable_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Parameter_Adjusts_Variable_Bool_Exp>;
+};
+
+
+export type Subscription_RootModelcatalog_Parameter_Adjusts_Variable_By_PkArgs = {
+  parameter_id: Scalars['String']['input'];
+  variable_id: Scalars['String']['input'];
+};
+
+
+export type Subscription_RootModelcatalog_Parameter_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Parameter_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Parameter_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Parameter_Bool_Exp>;
+};
+
+
+export type Subscription_RootModelcatalog_Parameter_By_PkArgs = {
+  id: Scalars['String']['input'];
+};
+
+
+export type Subscription_RootModelcatalog_Parameter_InterventionArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Parameter_Intervention_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Parameter_Intervention_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Parameter_Intervention_Bool_Exp>;
+};
+
+
+export type Subscription_RootModelcatalog_Parameter_Intervention_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Parameter_Intervention_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Parameter_Intervention_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Parameter_Intervention_Bool_Exp>;
+};
+
+
+export type Subscription_RootModelcatalog_Parameter_Intervention_By_PkArgs = {
+  intervention_id: Scalars['String']['input'];
+  parameter_id: Scalars['String']['input'];
+};
+
+
+export type Subscription_RootModelcatalog_PersonArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Person_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Person_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Person_Bool_Exp>;
+};
+
+
+export type Subscription_RootModelcatalog_Person_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Person_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Person_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Person_Bool_Exp>;
+};
+
+
+export type Subscription_RootModelcatalog_Person_By_PkArgs = {
+  id: Scalars['String']['input'];
+};
+
+
+export type Subscription_RootModelcatalog_ProcessArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Process_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Process_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Process_Bool_Exp>;
+};
+
+
+export type Subscription_RootModelcatalog_Process_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Process_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Process_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Process_Bool_Exp>;
+};
+
+
+export type Subscription_RootModelcatalog_Process_By_PkArgs = {
+  id: Scalars['String']['input'];
+};
+
+
+export type Subscription_RootModelcatalog_RegionArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Region_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Region_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Region_Bool_Exp>;
+};
+
+
+export type Subscription_RootModelcatalog_Region_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Region_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Region_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Region_Bool_Exp>;
+};
+
+
+export type Subscription_RootModelcatalog_Region_By_PkArgs = {
+  id: Scalars['String']['input'];
+};
+
+
+export type Subscription_RootModelcatalog_SoftwareArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Software_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Software_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Software_Bool_Exp>;
+};
+
+
+export type Subscription_RootModelcatalog_Software_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Software_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Software_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Software_Bool_Exp>;
+};
+
+
+export type Subscription_RootModelcatalog_Software_AuthorArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Software_Author_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Software_Author_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Software_Author_Bool_Exp>;
+};
+
+
+export type Subscription_RootModelcatalog_Software_Author_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Software_Author_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Software_Author_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Software_Author_Bool_Exp>;
+};
+
+
+export type Subscription_RootModelcatalog_Software_Author_By_PkArgs = {
+  person_id: Scalars['String']['input'];
+  software_id: Scalars['String']['input'];
+};
+
+
+export type Subscription_RootModelcatalog_Software_By_PkArgs = {
+  id: Scalars['String']['input'];
+};
+
+
+export type Subscription_RootModelcatalog_Software_CategoryArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Software_Category_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Software_Category_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Software_Category_Bool_Exp>;
+};
+
+
+export type Subscription_RootModelcatalog_Software_Category_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Software_Category_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Software_Category_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Software_Category_Bool_Exp>;
+};
+
+
+export type Subscription_RootModelcatalog_Software_Category_By_PkArgs = {
+  category_id: Scalars['String']['input'];
+  software_id: Scalars['String']['input'];
+};
+
+
+export type Subscription_RootModelcatalog_Software_VersionArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Software_Version_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Software_Version_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Software_Version_Bool_Exp>;
+};
+
+
+export type Subscription_RootModelcatalog_Software_Version_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Software_Version_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Software_Version_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Software_Version_Bool_Exp>;
+};
+
+
+export type Subscription_RootModelcatalog_Software_Version_By_PkArgs = {
+  id: Scalars['String']['input'];
+};
+
+
+export type Subscription_RootModelcatalog_Software_Version_CategoryArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Software_Version_Category_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Software_Version_Category_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Software_Version_Category_Bool_Exp>;
+};
+
+
+export type Subscription_RootModelcatalog_Software_Version_Category_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Software_Version_Category_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Software_Version_Category_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Software_Version_Category_Bool_Exp>;
+};
+
+
+export type Subscription_RootModelcatalog_Software_Version_Category_By_PkArgs = {
+  category_id: Scalars['String']['input'];
+  software_version_id: Scalars['String']['input'];
+};
+
+
+export type Subscription_RootModelcatalog_Software_Version_GridArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Software_Version_Grid_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Software_Version_Grid_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Software_Version_Grid_Bool_Exp>;
+};
+
+
+export type Subscription_RootModelcatalog_Software_Version_Grid_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Software_Version_Grid_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Software_Version_Grid_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Software_Version_Grid_Bool_Exp>;
+};
+
+
+export type Subscription_RootModelcatalog_Software_Version_Grid_By_PkArgs = {
+  grid_id: Scalars['String']['input'];
+  software_version_id: Scalars['String']['input'];
+};
+
+
+export type Subscription_RootModelcatalog_Software_Version_ImageArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Software_Version_Image_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Software_Version_Image_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Software_Version_Image_Bool_Exp>;
+};
+
+
+export type Subscription_RootModelcatalog_Software_Version_Image_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Software_Version_Image_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Software_Version_Image_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Software_Version_Image_Bool_Exp>;
+};
+
+
+export type Subscription_RootModelcatalog_Software_Version_Image_By_PkArgs = {
+  image_id: Scalars['String']['input'];
+  software_version_id: Scalars['String']['input'];
+};
+
+
+export type Subscription_RootModelcatalog_Software_Version_Input_VariableArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Software_Version_Input_Variable_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Software_Version_Input_Variable_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Software_Version_Input_Variable_Bool_Exp>;
+};
+
+
+export type Subscription_RootModelcatalog_Software_Version_Input_Variable_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Software_Version_Input_Variable_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Software_Version_Input_Variable_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Software_Version_Input_Variable_Bool_Exp>;
+};
+
+
+export type Subscription_RootModelcatalog_Software_Version_Input_Variable_By_PkArgs = {
+  software_version_id: Scalars['String']['input'];
+  variable_id: Scalars['String']['input'];
+};
+
+
+export type Subscription_RootModelcatalog_Software_Version_Output_VariableArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Software_Version_Output_Variable_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Software_Version_Output_Variable_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Software_Version_Output_Variable_Bool_Exp>;
+};
+
+
+export type Subscription_RootModelcatalog_Software_Version_Output_Variable_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Software_Version_Output_Variable_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Software_Version_Output_Variable_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Software_Version_Output_Variable_Bool_Exp>;
+};
+
+
+export type Subscription_RootModelcatalog_Software_Version_Output_Variable_By_PkArgs = {
+  software_version_id: Scalars['String']['input'];
+  variable_id: Scalars['String']['input'];
+};
+
+
+export type Subscription_RootModelcatalog_Software_Version_ProcessArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Software_Version_Process_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Software_Version_Process_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Software_Version_Process_Bool_Exp>;
+};
+
+
+export type Subscription_RootModelcatalog_Software_Version_Process_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Software_Version_Process_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Software_Version_Process_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Software_Version_Process_Bool_Exp>;
+};
+
+
+export type Subscription_RootModelcatalog_Software_Version_Process_By_PkArgs = {
+  process_id: Scalars['String']['input'];
+  software_version_id: Scalars['String']['input'];
+};
+
+
+export type Subscription_RootModelcatalog_Standard_VariableArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Standard_Variable_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Standard_Variable_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Standard_Variable_Bool_Exp>;
+};
+
+
+export type Subscription_RootModelcatalog_Standard_Variable_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Standard_Variable_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Standard_Variable_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Standard_Variable_Bool_Exp>;
+};
+
+
+export type Subscription_RootModelcatalog_Standard_Variable_By_PkArgs = {
+  id: Scalars['String']['input'];
+};
+
+
+export type Subscription_RootModelcatalog_Time_IntervalArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Time_Interval_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Time_Interval_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Time_Interval_Bool_Exp>;
+};
+
+
+export type Subscription_RootModelcatalog_Time_Interval_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Time_Interval_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Time_Interval_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Time_Interval_Bool_Exp>;
+};
+
+
+export type Subscription_RootModelcatalog_Time_Interval_By_PkArgs = {
+  id: Scalars['String']['input'];
+};
+
+
+export type Subscription_RootModelcatalog_UnitArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Unit_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Unit_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Unit_Bool_Exp>;
+};
+
+
+export type Subscription_RootModelcatalog_Unit_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Unit_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Unit_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Unit_Bool_Exp>;
+};
+
+
+export type Subscription_RootModelcatalog_Unit_By_PkArgs = {
+  id: Scalars['String']['input'];
+};
+
+
+export type Subscription_RootModelcatalog_Variable_PresentationArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Variable_Presentation_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Variable_Presentation_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Variable_Presentation_Bool_Exp>;
+};
+
+
+export type Subscription_RootModelcatalog_Variable_Presentation_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Variable_Presentation_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Variable_Presentation_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Variable_Presentation_Bool_Exp>;
+};
+
+
+export type Subscription_RootModelcatalog_Variable_Presentation_By_PkArgs = {
+  id: Scalars['String']['input'];
+};
+
+
+export type Subscription_RootModelcatalog_Version_AuthorArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Version_Author_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Version_Author_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Version_Author_Bool_Exp>;
+};
+
+
+export type Subscription_RootModelcatalog_Version_Author_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Modelcatalog_Version_Author_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Modelcatalog_Version_Author_Order_By>>;
+  where?: InputMaybe<Modelcatalog_Version_Author_Bool_Exp>;
+};
+
+
+export type Subscription_RootModelcatalog_Version_Author_By_PkArgs = {
+  person_id: Scalars['String']['input'];
+  software_version_id: Scalars['String']['input'];
 };
 
 
@@ -12452,9 +23836,10 @@ export type Thread_Model = {
   /** An aggregate relationship */
   executions_aggregate: Thread_Model_Execution_Aggregate;
   id: Scalars['uuid']['output'];
+  model_id?: Maybe<Scalars['String']['output']>;
   /** An object relationship */
-  model: Model;
-  model_id: Scalars['String']['output'];
+  modelcatalog_configuration?: Maybe<Modelcatalog_Configuration>;
+  modelcatalog_configuration_id?: Maybe<Scalars['String']['output']>;
   /** An array relationship */
   parameter_bindings: Array<Thread_Model_Parameter>;
   /** An aggregate relationship */
@@ -12589,8 +23974,9 @@ export type Thread_Model_Bool_Exp = {
   execution_summary?: InputMaybe<Thread_Model_Execution_Summary_Bool_Exp>;
   executions?: InputMaybe<Thread_Model_Execution_Bool_Exp>;
   id?: InputMaybe<Uuid_Comparison_Exp>;
-  model?: InputMaybe<Model_Bool_Exp>;
   model_id?: InputMaybe<String_Comparison_Exp>;
+  modelcatalog_configuration?: InputMaybe<Modelcatalog_Configuration_Bool_Exp>;
+  modelcatalog_configuration_id?: InputMaybe<String_Comparison_Exp>;
   parameter_bindings?: InputMaybe<Thread_Model_Parameter_Bool_Exp>;
   thread?: InputMaybe<Thread_Bool_Exp>;
   thread_id?: InputMaybe<String_Comparison_Exp>;
@@ -13338,8 +24724,9 @@ export type Thread_Model_Insert_Input = {
   execution_summary?: InputMaybe<Thread_Model_Execution_Summary_Arr_Rel_Insert_Input>;
   executions?: InputMaybe<Thread_Model_Execution_Arr_Rel_Insert_Input>;
   id?: InputMaybe<Scalars['uuid']['input']>;
-  model?: InputMaybe<Model_Obj_Rel_Insert_Input>;
   model_id?: InputMaybe<Scalars['String']['input']>;
+  modelcatalog_configuration?: InputMaybe<Modelcatalog_Configuration_Obj_Rel_Insert_Input>;
+  modelcatalog_configuration_id?: InputMaybe<Scalars['String']['input']>;
   parameter_bindings?: InputMaybe<Thread_Model_Parameter_Arr_Rel_Insert_Input>;
   thread?: InputMaybe<Thread_Obj_Rel_Insert_Input>;
   thread_id?: InputMaybe<Scalars['String']['input']>;
@@ -13525,6 +24912,7 @@ export type Thread_Model_Max_Fields = {
   __typename?: 'thread_model_max_fields';
   id?: Maybe<Scalars['uuid']['output']>;
   model_id?: Maybe<Scalars['String']['output']>;
+  modelcatalog_configuration_id?: Maybe<Scalars['String']['output']>;
   thread_id?: Maybe<Scalars['String']['output']>;
 };
 
@@ -13532,6 +24920,7 @@ export type Thread_Model_Max_Fields = {
 export type Thread_Model_Max_Order_By = {
   id?: InputMaybe<Order_By>;
   model_id?: InputMaybe<Order_By>;
+  modelcatalog_configuration_id?: InputMaybe<Order_By>;
   thread_id?: InputMaybe<Order_By>;
 };
 
@@ -13540,6 +24929,7 @@ export type Thread_Model_Min_Fields = {
   __typename?: 'thread_model_min_fields';
   id?: Maybe<Scalars['uuid']['output']>;
   model_id?: Maybe<Scalars['String']['output']>;
+  modelcatalog_configuration_id?: Maybe<Scalars['String']['output']>;
   thread_id?: Maybe<Scalars['String']['output']>;
 };
 
@@ -13547,6 +24937,7 @@ export type Thread_Model_Min_Fields = {
 export type Thread_Model_Min_Order_By = {
   id?: InputMaybe<Order_By>;
   model_id?: InputMaybe<Order_By>;
+  modelcatalog_configuration_id?: InputMaybe<Order_By>;
   thread_id?: InputMaybe<Order_By>;
 };
 
@@ -13579,8 +24970,9 @@ export type Thread_Model_Order_By = {
   execution_summary_aggregate?: InputMaybe<Thread_Model_Execution_Summary_Aggregate_Order_By>;
   executions_aggregate?: InputMaybe<Thread_Model_Execution_Aggregate_Order_By>;
   id?: InputMaybe<Order_By>;
-  model?: InputMaybe<Model_Order_By>;
   model_id?: InputMaybe<Order_By>;
+  modelcatalog_configuration?: InputMaybe<Modelcatalog_Configuration_Order_By>;
+  modelcatalog_configuration_id?: InputMaybe<Order_By>;
   parameter_bindings_aggregate?: InputMaybe<Thread_Model_Parameter_Aggregate_Order_By>;
   thread?: InputMaybe<Thread_Order_By>;
   thread_id?: InputMaybe<Order_By>;
@@ -13589,9 +24981,9 @@ export type Thread_Model_Order_By = {
 /** columns and relationships of "thread_model_parameter" */
 export type Thread_Model_Parameter = {
   __typename?: 'thread_model_parameter';
-  /** An object relationship */
-  model_parameter: Model_Parameter;
   model_parameter_id: Scalars['String']['output'];
+  /** An object relationship */
+  modelcatalog_parameter: Modelcatalog_Parameter;
   parameter_value: Scalars['String']['output'];
   /** An object relationship */
   thread_model: Thread_Model;
@@ -13639,8 +25031,8 @@ export type Thread_Model_Parameter_Bool_Exp = {
   _and?: InputMaybe<Array<Thread_Model_Parameter_Bool_Exp>>;
   _not?: InputMaybe<Thread_Model_Parameter_Bool_Exp>;
   _or?: InputMaybe<Array<Thread_Model_Parameter_Bool_Exp>>;
-  model_parameter?: InputMaybe<Model_Parameter_Bool_Exp>;
   model_parameter_id?: InputMaybe<String_Comparison_Exp>;
+  modelcatalog_parameter?: InputMaybe<Modelcatalog_Parameter_Bool_Exp>;
   parameter_value?: InputMaybe<String_Comparison_Exp>;
   thread_model?: InputMaybe<Thread_Model_Bool_Exp>;
   thread_model_id?: InputMaybe<Uuid_Comparison_Exp>;
@@ -13654,8 +25046,8 @@ export enum Thread_Model_Parameter_Constraint {
 
 /** input type for inserting data into table "thread_model_parameter" */
 export type Thread_Model_Parameter_Insert_Input = {
-  model_parameter?: InputMaybe<Model_Parameter_Obj_Rel_Insert_Input>;
   model_parameter_id?: InputMaybe<Scalars['String']['input']>;
+  modelcatalog_parameter?: InputMaybe<Modelcatalog_Parameter_Obj_Rel_Insert_Input>;
   parameter_value?: InputMaybe<Scalars['String']['input']>;
   thread_model?: InputMaybe<Thread_Model_Obj_Rel_Insert_Input>;
   thread_model_id?: InputMaybe<Scalars['uuid']['input']>;
@@ -13709,8 +25101,8 @@ export type Thread_Model_Parameter_On_Conflict = {
 
 /** Ordering options when selecting data from "thread_model_parameter". */
 export type Thread_Model_Parameter_Order_By = {
-  model_parameter?: InputMaybe<Model_Parameter_Order_By>;
   model_parameter_id?: InputMaybe<Order_By>;
+  modelcatalog_parameter?: InputMaybe<Modelcatalog_Parameter_Order_By>;
   parameter_value?: InputMaybe<Order_By>;
   thread_model?: InputMaybe<Thread_Model_Order_By>;
   thread_model_id?: InputMaybe<Order_By>;
@@ -13768,6 +25160,8 @@ export enum Thread_Model_Select_Column {
   /** column name */
   ModelId = 'model_id',
   /** column name */
+  ModelcatalogConfigurationId = 'modelcatalog_configuration_id',
+  /** column name */
   ThreadId = 'thread_id'
 }
 
@@ -13775,6 +25169,7 @@ export enum Thread_Model_Select_Column {
 export type Thread_Model_Set_Input = {
   id?: InputMaybe<Scalars['uuid']['input']>;
   model_id?: InputMaybe<Scalars['String']['input']>;
+  modelcatalog_configuration_id?: InputMaybe<Scalars['String']['input']>;
   thread_id?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -13784,6 +25179,8 @@ export enum Thread_Model_Update_Column {
   Id = 'id',
   /** column name */
   ModelId = 'model_id',
+  /** column name */
+  ModelcatalogConfigurationId = 'modelcatalog_configuration_id',
   /** column name */
   ThreadId = 'thread_id'
 }
