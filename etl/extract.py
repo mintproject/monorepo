@@ -827,6 +827,317 @@ def extract_model_configuration_setups(ds: Graph) -> List[Dict[str, Any]]:
     }
 
 
+def extract_configurations(ds: Graph) -> tuple:
+    """Extract both ModelConfiguration and ModelConfigurationSetup entities into a unified format.
+
+    Returns a unified list of entity dicts where:
+    - Configuration entities have model_configuration_id=None (no parent)
+    - Setup entities have model_configuration_id=<parent_config_uri> (self-FK)
+    - All entities have the superset of columns from both types
+    - Fields not applicable to a type are set to None
+
+    Also returns merged junction link dictionaries:
+    - input_links, output_links, parameter_links, author_links, category_links (from both types)
+    - causal_diagram_links, time_interval_links, region_links (Configuration only)
+    - calibrated_variable_links, calibration_target_links (Setup only)
+    """
+    # --- Extract ModelConfiguration entities ---
+    config_query = f"""
+    PREFIX sd: <{config.SD}>
+    PREFIX sdm: <{config.SDM}>
+    PREFIX rdfs: <{config.RDFS}>
+
+    SELECT DISTINCT ?id ?label ?description ?keywords ?usage_notes
+                    ?has_component_location ?has_implementation_script_location
+                    ?has_software_image ?has_model_result_table
+    WHERE {{
+        ?id a <{config.TYPE_MODEL_CONFIGURATION}> .
+        OPTIONAL {{ ?id rdfs:label ?label }}
+        OPTIONAL {{ ?id sd:description ?description }}
+        OPTIONAL {{ ?id sd:keywords ?keywords }}
+        OPTIONAL {{ ?id sd:hasUsageNotes ?usage_notes }}
+        OPTIONAL {{ ?id sd:hasComponentLocation ?has_component_location }}
+        OPTIONAL {{ ?id sd:hasImplementationScriptLocation ?has_implementation_script_location }}
+        OPTIONAL {{ ?id sd:hasSoftwareImage ?has_software_image }}
+        OPTIONAL {{ ?id sdm:hasModelResultTable ?has_model_result_table }}
+    }}
+    """
+
+    configurations = []
+    for row in ds.query(config_query):
+        entity = {
+            'id': str(row.id),
+            'label': str(row.label) if row.label else None,
+            'description': str(row.description) if row.description else None,
+            'keywords': str(row.keywords) if row.keywords else None,
+            'usage_notes': str(row.usage_notes) if row.usage_notes else None,
+            'has_component_location': str(row.has_component_location) if row.has_component_location else None,
+            'has_implementation_script_location': str(row.has_implementation_script_location) if row.has_implementation_script_location else None,
+            'has_software_image': str(row.has_software_image) if row.has_software_image else None,
+            'has_model_result_table': str(row.has_model_result_table) if row.has_model_result_table else None,
+            'has_region': None,
+            'calibration_interval': None,
+            'calibration_method': None,
+            'parameter_assignment_method': None,
+            'valid_until': None,
+            'model_configuration_id': None,  # Configuration entities have no parent
+        }
+        configurations.append(entity)
+
+    # --- Extract ModelConfigurationSetup entities ---
+    setup_query = f"""
+    PREFIX sd: <{config.SD}>
+    PREFIX sdm: <{config.SDM}>
+    PREFIX rdfs: <{config.RDFS}>
+
+    SELECT DISTINCT ?id ?label ?description ?has_component_location
+                    ?has_implementation_script_location ?has_software_image
+                    ?has_region ?calibration_interval
+                    ?calibration_method ?parameter_assignment_method ?valid_until
+    WHERE {{
+        ?id a <{config.TYPE_MODEL_CONFIGURATION_SETUP}> .
+        OPTIONAL {{ ?id rdfs:label ?label }}
+        OPTIONAL {{ ?id sd:description ?description }}
+        OPTIONAL {{ ?id sd:hasComponentLocation ?has_component_location }}
+        OPTIONAL {{ ?id sd:hasImplementationScriptLocation ?has_implementation_script_location }}
+        OPTIONAL {{ ?id sd:hasSoftwareImage ?has_software_image }}
+        OPTIONAL {{ ?id sdm:hasRegion ?has_region }}
+        OPTIONAL {{ ?id sdm:calibrationInterval ?calibration_interval }}
+        OPTIONAL {{ ?id sdm:calibrationMethod ?calibration_method }}
+        OPTIONAL {{ ?id sdm:parameterAssignmentMethod ?parameter_assignment_method }}
+        OPTIONAL {{ ?id sdm:validUntil ?valid_until }}
+    }}
+    """
+
+    setups = []
+    for row in ds.query(setup_query):
+        entity = {
+            'id': str(row.id),
+            'label': str(row.label) if row.label else None,
+            'description': str(row.description) if row.description else None,
+            'keywords': None,
+            'usage_notes': None,
+            'has_component_location': str(row.has_component_location) if row.has_component_location else None,
+            'has_implementation_script_location': str(row.has_implementation_script_location) if row.has_implementation_script_location else None,
+            'has_software_image': str(row.has_software_image) if row.has_software_image else None,
+            'has_model_result_table': None,
+            'has_region': str(row.has_region) if row.has_region else None,
+            'calibration_interval': str(row.calibration_interval) if row.calibration_interval else None,
+            'calibration_method': str(row.calibration_method) if row.calibration_method else None,
+            'parameter_assignment_method': str(row.parameter_assignment_method) if row.parameter_assignment_method else None,
+            'valid_until': str(row.valid_until) if row.valid_until else None,
+            'model_configuration_id': None,  # Will be populated from setup-to-config links below
+        }
+        setups.append(entity)
+
+    # --- Extract setup-to-config parent links and populate model_configuration_id ---
+    setup_parent_query = f"""
+    PREFIX sd: <{config.SD}>
+
+    SELECT DISTINCT ?configuration ?setup
+    WHERE {{
+        ?configuration a <{config.TYPE_MODEL_CONFIGURATION}> .
+        ?configuration sd:hasSetup ?setup .
+    }}
+    """
+
+    setup_to_config = {}
+    for row in ds.query(setup_parent_query):
+        setup_id = str(row.setup)
+        config_id = str(row.configuration)
+        setup_to_config[setup_id] = config_id
+
+    for setup in setups:
+        setup['model_configuration_id'] = setup_to_config.get(setup['id'])
+
+    # --- Extract author_id (single-valued) for configurations ---
+    config_author_query = f"""
+    PREFIX sd: <{config.SD}>
+
+    SELECT DISTINCT ?configuration ?author
+    WHERE {{
+        ?configuration a <{config.TYPE_MODEL_CONFIGURATION}> .
+        ?configuration sd:author ?author .
+    }}
+    """
+
+    config_author_first = {}
+    for row in ds.query(config_author_query):
+        cfg_id = str(row.configuration)
+        if cfg_id not in config_author_first:
+            config_author_first[cfg_id] = str(row.author)
+
+    for entity in configurations:
+        entity['author_id'] = config_author_first.get(entity['id'])
+
+    # Setup entities don't have a single-valued author_id column (author is junction-only)
+    for entity in setups:
+        entity['author_id'] = None
+
+    # --- Build unified entity list ---
+    all_entities = configurations + setups
+
+    # --- Extract junction links for configurations ---
+    config_input_links = {}
+    for row in ds.query(f"""
+    PREFIX sd: <{config.SD}>
+    SELECT DISTINCT ?configuration ?input
+    WHERE {{ ?configuration a <{config.TYPE_MODEL_CONFIGURATION}> . ?configuration sd:hasInput ?input . }}
+    """):
+        cid = str(row.configuration)
+        config_input_links.setdefault(cid, []).append(str(row.input))
+
+    config_output_links = {}
+    for row in ds.query(f"""
+    PREFIX sd: <{config.SD}>
+    SELECT DISTINCT ?configuration ?output
+    WHERE {{ ?configuration a <{config.TYPE_MODEL_CONFIGURATION}> . ?configuration sd:hasOutput ?output . }}
+    """):
+        cid = str(row.configuration)
+        config_output_links.setdefault(cid, []).append(str(row.output))
+
+    config_parameter_links = {}
+    for row in ds.query(f"""
+    PREFIX sd: <{config.SD}>
+    SELECT DISTINCT ?configuration ?parameter
+    WHERE {{ ?configuration a <{config.TYPE_MODEL_CONFIGURATION}> . ?configuration sd:hasParameter ?parameter . }}
+    """):
+        cid = str(row.configuration)
+        config_parameter_links.setdefault(cid, []).append(str(row.parameter))
+
+    config_author_links = {}
+    for row in ds.query(f"""
+    PREFIX sd: <{config.SD}>
+    SELECT DISTINCT ?configuration ?author
+    WHERE {{ ?configuration a <{config.TYPE_MODEL_CONFIGURATION}> . ?configuration sd:author ?author . }}
+    """):
+        cid = str(row.configuration)
+        config_author_links.setdefault(cid, []).append(str(row.author))
+
+    config_category_links = {}
+    for row in ds.query(f"""
+    PREFIX sdm: <{config.SDM}>
+    SELECT DISTINCT ?mc ?category
+    WHERE {{ ?mc a <{config.TYPE_MODEL_CONFIGURATION}> . ?mc sdm:hasModelCategory ?category . }}
+    """):
+        cid = str(row.mc)
+        config_category_links.setdefault(cid, []).append(str(row.category))
+
+    causal_diagram_links = {}
+    for row in ds.query(f"""
+    PREFIX sdm: <{config.SDM}>
+    SELECT DISTINCT ?configuration ?diagram
+    WHERE {{ ?configuration a <{config.TYPE_MODEL_CONFIGURATION}> . ?configuration sdm:hasCausalDiagram ?diagram . }}
+    """):
+        cid = str(row.configuration)
+        causal_diagram_links.setdefault(cid, []).append(str(row.diagram))
+
+    time_interval_links = {}
+    for row in ds.query(f"""
+    PREFIX sdm: <{config.SDM}>
+    SELECT DISTINCT ?configuration ?time_interval
+    WHERE {{ ?configuration a <{config.TYPE_MODEL_CONFIGURATION}> . ?configuration sdm:hasOutputTimeInterval ?time_interval . }}
+    """):
+        cid = str(row.configuration)
+        time_interval_links.setdefault(cid, []).append(str(row.time_interval))
+
+    region_links = {}
+    for row in ds.query(f"""
+    PREFIX sdm: <{config.SDM}>
+    SELECT DISTINCT ?configuration ?region
+    WHERE {{ ?configuration a <{config.TYPE_MODEL_CONFIGURATION}> . ?configuration sdm:hasRegion ?region . }}
+    """):
+        cid = str(row.configuration)
+        region_links.setdefault(cid, []).append(str(row.region))
+
+    # --- Extract junction links for setups ---
+    setup_input_links = {}
+    for row in ds.query(f"""
+    PREFIX sd: <{config.SD}>
+    SELECT DISTINCT ?setup ?input
+    WHERE {{ ?setup a <{config.TYPE_MODEL_CONFIGURATION_SETUP}> . ?setup sd:hasInput ?input . }}
+    """):
+        sid = str(row.setup)
+        setup_input_links.setdefault(sid, []).append(str(row.input))
+
+    setup_output_links = {}
+    for row in ds.query(f"""
+    PREFIX sd: <{config.SD}>
+    SELECT DISTINCT ?setup ?output
+    WHERE {{ ?setup a <{config.TYPE_MODEL_CONFIGURATION_SETUP}> . ?setup sd:hasOutput ?output . }}
+    """):
+        sid = str(row.setup)
+        setup_output_links.setdefault(sid, []).append(str(row.output))
+
+    setup_parameter_links = {}
+    for row in ds.query(f"""
+    PREFIX sd: <{config.SD}>
+    SELECT DISTINCT ?setup ?parameter
+    WHERE {{ ?setup a <{config.TYPE_MODEL_CONFIGURATION_SETUP}> . ?setup sd:hasParameter ?parameter . }}
+    """):
+        sid = str(row.setup)
+        setup_parameter_links.setdefault(sid, []).append(str(row.parameter))
+
+    setup_author_links = {}
+    for row in ds.query(f"""
+    PREFIX sd: <{config.SD}>
+    SELECT DISTINCT ?setup ?author
+    WHERE {{ ?setup a <{config.TYPE_MODEL_CONFIGURATION_SETUP}> . ?setup sd:author ?author . }}
+    """):
+        sid = str(row.setup)
+        setup_author_links.setdefault(sid, []).append(str(row.author))
+
+    setup_category_links = {}
+    for row in ds.query(f"""
+    PREFIX sdm: <{config.SDM}>
+    SELECT DISTINCT ?setup ?category
+    WHERE {{ ?setup a <{config.TYPE_MODEL_CONFIGURATION_SETUP}> . ?setup sdm:hasModelCategory ?category . }}
+    """):
+        sid = str(row.setup)
+        setup_category_links.setdefault(sid, []).append(str(row.category))
+
+    calibrated_variable_links = {}
+    for row in ds.query(f"""
+    PREFIX sdm: <{config.SDM}>
+    SELECT DISTINCT ?setup ?variable
+    WHERE {{ ?setup a <{config.TYPE_MODEL_CONFIGURATION_SETUP}> . ?setup sdm:calibratedVariable ?variable . }}
+    """):
+        sid = str(row.setup)
+        calibrated_variable_links.setdefault(sid, []).append(str(row.variable))
+
+    calibration_target_links = {}
+    for row in ds.query(f"""
+    PREFIX sdm: <{config.SDM}>
+    SELECT DISTINCT ?setup ?variable
+    WHERE {{ ?setup a <{config.TYPE_MODEL_CONFIGURATION_SETUP}> . ?setup sdm:calibrationTargetVariable ?variable . }}
+    """):
+        sid = str(row.setup)
+        calibration_target_links.setdefault(sid, []).append(str(row.variable))
+
+    # --- Merge junction links (configs + setups into unified dicts keyed by entity id) ---
+    input_links = {**config_input_links, **setup_input_links}
+    output_links = {**config_output_links, **setup_output_links}
+    parameter_links = {**config_parameter_links, **setup_parameter_links}
+    author_links = {**config_author_links, **setup_author_links}
+    category_links = {**config_category_links, **setup_category_links}
+
+    print(f"Extracted {len(configurations)} ModelConfiguration entities and {len(setups)} ModelConfigurationSetup entities")
+    print(f"  Unified into {len(all_entities)} configuration rows")
+
+    return all_entities, {
+        'input_links': input_links,
+        'output_links': output_links,
+        'parameter_links': parameter_links,
+        'author_links': author_links,
+        'category_links': category_links,
+        'causal_diagram_links': causal_diagram_links,
+        'time_interval_links': time_interval_links,
+        'region_links': region_links,
+        'calibrated_variable_links': calibrated_variable_links,
+        'calibration_target_links': calibration_target_links,
+    }
+
+
 def extract_dataset_specifications(ds: Graph) -> tuple:
     """Extract DatasetSpecification entities and hasPresentation links."""
     query = f"""
@@ -1388,6 +1699,9 @@ def extract_all(trig_path: str) -> Dict[str, Any]:
     # Extract original entities
     software, version_links, software_author_links, software_category_links = extract_software(ds)
     software_versions, version_link_dicts = extract_software_versions(ds)
+    # Unified extraction replaces separate extract_model_configurations/extract_model_configuration_setups calls
+    configurations, configuration_link_dicts = extract_configurations(ds)
+    # Keep legacy extractions for backward-compatible links structure used by transform.py
     model_configurations, config_link_dicts = extract_model_configurations(ds)
     model_configuration_setups, setup_link_dicts = extract_model_configuration_setups(ds)
     dataset_specifications, dsi_presentation_links = extract_dataset_specifications(ds)
@@ -1411,7 +1725,10 @@ def extract_all(trig_path: str) -> Dict[str, Any]:
     diagnose_junction_sparsity(ds)
 
     return {
-        # Original entities
+        # Unified configuration entities (D-09: ModelConfiguration + ModelConfigurationSetup merged)
+        'configurations': configurations,
+        'configuration_links': configuration_link_dicts,
+        # Original entities (kept for transform backward compatibility)
         'software': software,
         'software_versions': software_versions,
         'model_configurations': model_configurations,
