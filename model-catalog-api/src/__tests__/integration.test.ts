@@ -172,7 +172,7 @@ describe('getById setup with nested data', () => {
   it('returns setup with inputs (junction), parameters (junction), and author (FK)', async () => {
     mockQuery.mockResolvedValueOnce({
       data: {
-        modelcatalog_model_configuration_setup_by_pk: {
+        modelcatalog_configuration_by_pk: {
           id: 'https://w3id.org/okn/i/mint/setup1',
           label: 'Test Setup',
           description: 'A test setup',
@@ -186,7 +186,7 @@ describe('getById setup with nested data', () => {
           parameter_assignment_method: null,
           valid_until: null,
           model_configuration_id: null,
-          model_configuration: { id: 'https://w3id.org/okn/i/mint/cfg1', label: 'Config 1' },
+          parent_configuration: { id: 'https://w3id.org/okn/i/mint/cfg1', label: 'Config 1' },
           author: { id: 'https://w3id.org/okn/i/mint/person1', label: 'Dr. Smith' },
           inputs: [
             { input: { id: 'https://w3id.org/okn/i/mint/spec1', label: 'precip', description: null, has_format: null, has_dimensionality: null, position: 1 } },
@@ -425,7 +425,7 @@ describe('Custom handler plain-ID resolution', () => {
   it('custom_configurationsetups_id_get prepends idPrefix for plain ID', async () => {
     mockQuery.mockResolvedValueOnce({
       data: {
-        modelcatalog_model_configuration_setup_by_pk: {
+        modelcatalog_configuration_by_pk: {
           id: 'https://w3id.org/okn/i/mint/hand_v6',
           label: 'hand_v6',
         },
@@ -446,7 +446,7 @@ describe('Custom handler plain-ID resolution', () => {
     const fullUri = 'https://w3id.org/okn/i/mint/hand_v6'
     mockQuery.mockResolvedValueOnce({
       data: {
-        modelcatalog_model_configuration_setup_by_pk: {
+        modelcatalog_configuration_by_pk: {
           id: fullUri,
           label: 'hand_v6',
         },

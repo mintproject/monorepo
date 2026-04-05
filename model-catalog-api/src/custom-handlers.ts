@@ -50,7 +50,7 @@ const SETUP_FIELDS = `
   author_id calibration_interval calibration_method parameter_assignment_method valid_until
   model_configuration_id
   author { id label }
-  model_configuration {
+  parent_configuration {
     id label description
     software_version { id label }
   }
@@ -91,7 +91,7 @@ const CONFIGURATION_FIELDS = `
     person { id label }
   }
   software_version { id label description }
-  setups {
+  child_configurations {
     id label description
     parameters { parameter { id label } }
     inputs { input { id label } }
@@ -307,9 +307,9 @@ async function custom_modelconfigurationsetups_variable_get(req: any, reply: any
 
   const queryStr = `
     query CustomSetupsVariable {
-      modelcatalog_model_configuration_setup(limit: 500 offset: 0) {
+      modelcatalog_configuration(limit: 500 offset: 0) {
         id label description
-        model_configuration { id label }
+        parent_configuration { id label }
         inputs { input { id label } }
         outputs { output { id label } }
       }
@@ -319,7 +319,7 @@ async function custom_modelconfigurationsetups_variable_get(req: any, reply: any
   try {
     const result = await readClient.query({ query: gql`${queryStr}` })
     const data = result.data as Record<string, unknown>
-    let rows = (data['modelcatalog_model_configuration_setup'] ?? []) as Record<string, unknown>[]
+    let rows = (data['modelcatalog_configuration'] ?? []) as Record<string, unknown>[]
 
     if (label) {
       const lbl = label.toLowerCase()
@@ -350,7 +350,7 @@ async function custom_configurationsetups_id_get(req: any, reply: any) {
 
   const queryStr = `
     query CustomConfigurationSetupById($id: String!) {
-      modelcatalog_model_configuration_setup_by_pk(id: $id) {
+      modelcatalog_configuration_by_pk(id: $id) {
         ${SETUP_FIELDS}
       }
     }
@@ -359,7 +359,7 @@ async function custom_configurationsetups_id_get(req: any, reply: any) {
   try {
     const result = await readClient.query({ query: gql`${queryStr}`, variables: { id: fullId } })
     const data = result.data as Record<string, unknown>
-    const row = data['modelcatalog_model_configuration_setup_by_pk'] as Record<string, unknown> | null
+    const row = data['modelcatalog_configuration_by_pk'] as Record<string, unknown> | null
     if (!row) { reply.code(404).send({ error: 'Not found' }); return }
     reply.code(200).send(transformRow(row, resourceConfig))
   } catch (err: any) {
@@ -378,7 +378,7 @@ async function custom_modelconfigurationsetups_id_get(req: any, reply: any) {
 
   const queryStr = `
     query CustomModelConfigurationSetupById($id: String!) {
-      modelcatalog_model_configuration_setup_by_pk(id: $id) {
+      modelcatalog_configuration_by_pk(id: $id) {
         ${SETUP_FIELDS}
       }
     }
@@ -387,7 +387,7 @@ async function custom_modelconfigurationsetups_id_get(req: any, reply: any) {
   try {
     const result = await readClient.query({ query: gql`${queryStr}`, variables: { id: fullId } })
     const data = result.data as Record<string, unknown>
-    const row = data['modelcatalog_model_configuration_setup_by_pk'] as Record<string, unknown> | null
+    const row = data['modelcatalog_configuration_by_pk'] as Record<string, unknown> | null
     if (!row) { reply.code(404).send({ error: 'Not found' }); return }
     reply.code(200).send(transformRow(row, resourceConfig))
   } catch (err: any) {
@@ -406,7 +406,7 @@ async function custom_modelconfigurations_id_get(req: any, reply: any) {
 
   const queryStr = `
     query CustomModelConfigurationById($id: String!) {
-      modelcatalog_model_configuration_by_pk(id: $id) {
+      modelcatalog_configuration_by_pk(id: $id) {
         ${CONFIGURATION_FIELDS}
       }
     }
@@ -415,7 +415,7 @@ async function custom_modelconfigurations_id_get(req: any, reply: any) {
   try {
     const result = await readClient.query({ query: gql`${queryStr}`, variables: { id: fullId } })
     const data = result.data as Record<string, unknown>
-    const row = data['modelcatalog_model_configuration_by_pk'] as Record<string, unknown> | null
+    const row = data['modelcatalog_configuration_by_pk'] as Record<string, unknown> | null
     if (!row) { reply.code(404).send({ error: 'Not found' }); return }
     reply.code(200).send(transformRow(row, resourceConfig))
   } catch (err: any) {
@@ -558,7 +558,7 @@ async function custom_configuration_id_inputs_get(req: any, reply: any) {
 
   const queryStr = `
     query CustomConfigurationInputs($id: String!) {
-      modelcatalog_model_configuration_by_pk(id: $id) {
+      modelcatalog_configuration_by_pk(id: $id) {
         inputs {
           input { id label description has_format has_dimensionality position }
         }
@@ -569,7 +569,7 @@ async function custom_configuration_id_inputs_get(req: any, reply: any) {
   try {
     const result = await readClient.query({ query: gql`${queryStr}`, variables: { id: fullId } })
     const data = result.data as Record<string, unknown>
-    const cfg = data['modelcatalog_model_configuration_by_pk'] as { inputs?: Record<string, unknown>[] } | null
+    const cfg = data['modelcatalog_configuration_by_pk'] as { inputs?: Record<string, unknown>[] } | null
     if (!cfg) { reply.code(404).send({ error: 'Configuration not found' }); return }
     // Unwrap junction rows to get the actual dataset_specification entities
     const rows = ((cfg.inputs ?? []) as any[]).map((j: any) => j.input).filter(Boolean) as Record<string, unknown>[]

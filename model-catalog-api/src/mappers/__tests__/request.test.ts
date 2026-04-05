@@ -132,8 +132,8 @@ describe('default type assignment via resourceConfig.typeUri', () => {
   it('modelconfigurations has hasuraTable !== modelcatalog_software -- type must NOT be assigned', () => {
     const config = getResourceConfig('modelconfigurations')!;
     expect(config.hasuraTable).not.toBe('modelcatalog_software');
-    // Specifically it uses modelcatalog_model_configuration which has no type column
-    expect(config.hasuraTable).toBe('modelcatalog_model_configuration');
+    // Specifically it uses modelcatalog_configuration which has no type column
+    expect(config.hasuraTable).toBe('modelcatalog_configuration');
   });
 
   it('softwareversions has hasuraTable !== modelcatalog_software -- type must NOT be assigned', () => {
