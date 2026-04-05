@@ -17,7 +17,7 @@ export interface RelationshipConfig {
    * Relationship name inside the junction row that points to the target entity.
    * Only set when junctionTable is present.
    * e.g. for 'authors' -> modelcatalog_software_author -> person, junctionRelName = 'person'
-   * e.g. for 'inputs' -> modelcatalog_setup_input -> input, junctionRelName = 'input'
+   * e.g. for 'inputs' -> modelcatalog_configuration_input -> input, junctionRelName = 'input'
    */
   junctionRelName?: string;
   /** FK column name in the junction table pointing back to the parent entity. Required when junctionTable is set. */
@@ -170,7 +170,7 @@ export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
   },
 
   modelconfigurations: {
-    hasuraTable: 'modelcatalog_model_configuration',
+    hasuraTable: 'modelcatalog_configuration',
     typeUri: 'https://w3id.org/okn/o/sdm#ModelConfiguration',
     typeName: 'ModelConfiguration',
     typeArray: ['ModelConfiguration'],
@@ -195,7 +195,7 @@ export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
         targetResource: 'persons',
       },
       hasSetup: {
-        hasuraRelName: 'setups',
+        hasuraRelName: 'child_configurations',
         type: 'array',
         targetResource: 'modelconfigurationsetups',
       },
@@ -250,23 +250,23 @@ export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
       hasModelCategory: {
         hasuraRelName: 'categories',
         type: 'array',
-        junctionTable: 'modelcatalog_modelconfiguration_category',
+        junctionTable: 'modelcatalog_configuration_category',
         junctionRelName: 'category',
-        parentFkColumn: 'model_configuration_id',
+        parentFkColumn: 'configuration_id',
         targetResource: 'modelcategorys',
       },
     },
   },
 
   modelconfigurationsetups: {
-    hasuraTable: 'modelcatalog_model_configuration_setup',
+    hasuraTable: 'modelcatalog_configuration',
     typeUri: 'https://w3id.org/okn/o/sdm#ModelConfigurationSetup',
     typeName: 'ModelConfigurationSetup',
     typeArray: ['ModelConfigurationSetup'],
     idPrefix: ID_PREFIX,
     relationships: {
       modelConfiguration: {
-        hasuraRelName: 'model_configuration',
+        hasuraRelName: 'parent_configuration',
         type: 'object',
         targetResource: 'modelconfigurations',
       },
@@ -278,57 +278,57 @@ export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
       authors: {
         hasuraRelName: 'authors',
         type: 'array',
-        junctionTable: 'modelcatalog_setup_author',
+        junctionTable: 'modelcatalog_configuration_author',
         junctionRelName: 'person',
-        parentFkColumn: 'setup_id',
+        parentFkColumn: 'configuration_id',
         targetResource: 'persons',
       },
       hasInput: {
         hasuraRelName: 'inputs',
         type: 'array',
-        junctionTable: 'modelcatalog_setup_input',
+        junctionTable: 'modelcatalog_configuration_input',
         junctionRelName: 'input',
-        parentFkColumn: 'setup_id',
+        parentFkColumn: 'configuration_id',
         targetResource: 'datasetspecifications',
       },
       hasOutput: {
         hasuraRelName: 'outputs',
         type: 'array',
-        junctionTable: 'modelcatalog_setup_output',
+        junctionTable: 'modelcatalog_configuration_output',
         junctionRelName: 'output',
-        parentFkColumn: 'setup_id',
+        parentFkColumn: 'configuration_id',
         targetResource: 'datasetspecifications',
       },
       hasParameter: {
         hasuraRelName: 'parameters',
         type: 'array',
-        junctionTable: 'modelcatalog_setup_parameter',
+        junctionTable: 'modelcatalog_configuration_parameter',
         junctionRelName: 'parameter',
-        parentFkColumn: 'setup_id',
+        parentFkColumn: 'configuration_id',
         targetResource: 'parameters',
       },
       calibratedVariable: {
         hasuraRelName: 'calibrated_variables',
         type: 'array',
-        junctionTable: 'modelcatalog_setup_calibrated_variable',
+        junctionTable: 'modelcatalog_configuration_calibrated_variable',
         junctionRelName: 'variable',
-        parentFkColumn: 'setup_id',
+        parentFkColumn: 'configuration_id',
         targetResource: 'variablepresentations',
       },
       calibrationTargetVariable: {
         hasuraRelName: 'calibration_targets',
         type: 'array',
-        junctionTable: 'modelcatalog_setup_calibration_target',
+        junctionTable: 'modelcatalog_configuration_calibration_target',
         junctionRelName: 'variable',
-        parentFkColumn: 'setup_id',
+        parentFkColumn: 'configuration_id',
         targetResource: 'variablepresentations',
       },
       hasModelCategory: {
         hasuraRelName: 'categories',
         type: 'array',
-        junctionTable: 'modelcatalog_modelconfigurationsetup_category',
+        junctionTable: 'modelcatalog_configuration_category',
         junctionRelName: 'category',
-        parentFkColumn: 'model_configuration_setup_id',
+        parentFkColumn: 'configuration_id',
         targetResource: 'modelcategorys',
       },
     },
@@ -336,14 +336,14 @@ export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
 
   // Alias: configurationsetups maps to the same table as modelconfigurationsetups
   configurationsetups: {
-    hasuraTable: 'modelcatalog_model_configuration_setup',
+    hasuraTable: 'modelcatalog_configuration',
     typeUri: 'https://w3id.org/okn/o/sd#ConfigurationSetup',
     typeName: 'ConfigurationSetup',
     typeArray: ['ConfigurationSetup'],
     idPrefix: ID_PREFIX,
     relationships: {
       modelConfiguration: {
-        hasuraRelName: 'model_configuration',
+        hasuraRelName: 'parent_configuration',
         type: 'object',
         targetResource: 'modelconfigurations',
       },
@@ -355,49 +355,49 @@ export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
       authors: {
         hasuraRelName: 'authors',
         type: 'array',
-        junctionTable: 'modelcatalog_setup_author',
+        junctionTable: 'modelcatalog_configuration_author',
         junctionRelName: 'person',
-        parentFkColumn: 'setup_id',
+        parentFkColumn: 'configuration_id',
         targetResource: 'persons',
       },
       hasInput: {
         hasuraRelName: 'inputs',
         type: 'array',
-        junctionTable: 'modelcatalog_setup_input',
+        junctionTable: 'modelcatalog_configuration_input',
         junctionRelName: 'input',
-        parentFkColumn: 'setup_id',
+        parentFkColumn: 'configuration_id',
         targetResource: 'datasetspecifications',
       },
       hasOutput: {
         hasuraRelName: 'outputs',
         type: 'array',
-        junctionTable: 'modelcatalog_setup_output',
+        junctionTable: 'modelcatalog_configuration_output',
         junctionRelName: 'output',
-        parentFkColumn: 'setup_id',
+        parentFkColumn: 'configuration_id',
         targetResource: 'datasetspecifications',
       },
       hasParameter: {
         hasuraRelName: 'parameters',
         type: 'array',
-        junctionTable: 'modelcatalog_setup_parameter',
+        junctionTable: 'modelcatalog_configuration_parameter',
         junctionRelName: 'parameter',
-        parentFkColumn: 'setup_id',
+        parentFkColumn: 'configuration_id',
         targetResource: 'parameters',
       },
       calibratedVariable: {
         hasuraRelName: 'calibrated_variables',
         type: 'array',
-        junctionTable: 'modelcatalog_setup_calibrated_variable',
+        junctionTable: 'modelcatalog_configuration_calibrated_variable',
         junctionRelName: 'variable',
-        parentFkColumn: 'setup_id',
+        parentFkColumn: 'configuration_id',
         targetResource: 'variablepresentations',
       },
       calibrationTargetVariable: {
         hasuraRelName: 'calibration_targets',
         type: 'array',
-        junctionTable: 'modelcatalog_setup_calibration_target',
+        junctionTable: 'modelcatalog_configuration_calibration_target',
         junctionRelName: 'variable',
-        parentFkColumn: 'setup_id',
+        parentFkColumn: 'configuration_id',
         targetResource: 'variablepresentations',
       },
     },
