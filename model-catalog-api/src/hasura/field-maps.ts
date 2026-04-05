@@ -72,7 +72,7 @@ categories {
   //          author_id
   // Object relationships: software -> modelcatalog_software
   //                       author   -> modelcatalog_person
-  // Array relationships (direct): configurations -> modelcatalog_model_configuration
+  // Array relationships (direct): configurations -> modelcatalog_configuration
   // Array relationships (junction):
   //   categories        -> modelcatalog_software_version_category -> category
   //   processes         -> modelcatalog_software_version_process -> process
@@ -156,25 +156,32 @@ authors {
 `.trim(),
 
   // =========================================================================
-  // modelcatalog_model_configuration
-  // Columns: id, software_version_id, label, description, keywords,
+  // modelcatalog_configuration (unified table for ModelConfiguration and ModelConfigurationSetup)
+  // Columns from config: id, software_version_id, label, description, keywords,
   //          usage_notes, has_component_location, has_implementation_script_location,
   //          has_software_image, has_model_result_table, author_id
+  // Columns from setup: model_configuration_id, has_region, calibration_interval,
+  //          calibration_method, parameter_assignment_method, valid_until
   // Object relationships: software_version -> modelcatalog_software_version
   //                       author           -> modelcatalog_person
-  // Array relationships (direct): setups -> modelcatalog_model_configuration_setup
+  //                       parent_configuration -> modelcatalog_configuration (self-referential)
+  // Array relationships (direct): child_configurations -> modelcatalog_configuration (self-referential)
   // Array relationships (junction):
-  //   inputs          -> modelcatalog_configuration_input -> input (dataset_specification)
-  //   outputs         -> modelcatalog_configuration_output -> output (dataset_specification)
-  //   parameters      -> modelcatalog_configuration_parameter -> parameter
-  //   causal_diagrams -> modelcatalog_configuration_causal_diagram -> causal_diagram
-  //   time_intervals  -> modelcatalog_configuration_time_interval -> time_interval
-  //   regions         -> modelcatalog_configuration_region -> region
-  //   authors         -> modelcatalog_configuration_author -> person
+  //   inputs               -> modelcatalog_configuration_input -> input (dataset_specification)
+  //   outputs              -> modelcatalog_configuration_output -> output (dataset_specification)
+  //   parameters           -> modelcatalog_configuration_parameter -> parameter
+  //   causal_diagrams      -> modelcatalog_configuration_causal_diagram -> causal_diagram
+  //   time_intervals       -> modelcatalog_configuration_time_interval -> time_interval
+  //   regions              -> modelcatalog_configuration_region -> region
+  //   authors              -> modelcatalog_configuration_author -> person
+  //   calibrated_variables -> modelcatalog_configuration_calibrated_variable -> variable
+  //   calibration_targets  -> modelcatalog_configuration_calibration_target -> variable
+  //   categories           -> modelcatalog_configuration_category -> category
   // =========================================================================
-  modelcatalog_model_configuration: `
+  modelcatalog_configuration: `
 id
 software_version_id
+model_configuration_id
 label
 description
 keywords
@@ -183,7 +190,12 @@ has_component_location
 has_implementation_script_location
 has_software_image
 has_model_result_table
+has_region
 author_id
+calibration_interval
+calibration_method
+parameter_assignment_method
+valid_until
 software_version {
   id
   label
@@ -192,7 +204,11 @@ author {
   id
   label
 }
-setups {
+parent_configuration {
+  id
+  label
+}
+child_configurations {
   id
   label
   description
@@ -252,93 +268,6 @@ regions {
     id
     label
     description
-  }
-}
-authors {
-  person {
-    id
-    label
-  }
-}
-categories {
-  category {
-    id
-    label
-  }
-}
-`.trim(),
-
-  // =========================================================================
-  // modelcatalog_model_configuration_setup
-  // Columns: id, model_configuration_id, label, description,
-  //          has_component_location, has_implementation_script_location,
-  //          has_software_image, has_region, author_id, calibration_interval,
-  //          calibration_method, parameter_assignment_method, valid_until
-  // Object relationships: model_configuration -> modelcatalog_model_configuration
-  //                       author              -> modelcatalog_person
-  // Array relationships (junction):
-  //   inputs               -> modelcatalog_setup_input -> input (dataset_specification)
-  //   outputs              -> modelcatalog_setup_output -> output (dataset_specification)
-  //   parameters           -> modelcatalog_setup_parameter -> parameter
-  //   authors              -> modelcatalog_setup_author -> person
-  //   calibrated_variables -> modelcatalog_setup_calibrated_variable -> variable
-  //   calibration_targets  -> modelcatalog_setup_calibration_target -> variable
-  // =========================================================================
-  modelcatalog_model_configuration_setup: `
-id
-model_configuration_id
-label
-description
-has_component_location
-has_implementation_script_location
-has_software_image
-has_region
-author_id
-calibration_interval
-calibration_method
-parameter_assignment_method
-valid_until
-model_configuration {
-  id
-  label
-}
-author {
-  id
-  label
-}
-inputs {
-  input {
-    id
-    label
-    description
-    has_format
-    has_dimensionality
-    position
-  }
-}
-outputs {
-  output {
-    id
-    label
-    description
-    has_format
-    has_dimensionality
-    position
-  }
-}
-parameters {
-  parameter {
-    id
-    label
-    description
-    has_data_type
-    has_default_value
-    has_minimum_accepted_value
-    has_maximum_accepted_value
-    has_fixed_value
-    has_accepted_values
-    position
-    parameter_type
   }
 }
 authors {
