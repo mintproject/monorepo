@@ -1,7 +1,3 @@
-mutation new_models ($objects: [model_insert_input!]!) {
-    insert_model (objects: $objects) {
-        returning {
-            id
-        }
-    }
-}
+# This mutation is no longer used.
+# thread_model rows are now created directly with modelcatalog_configuration_id FK.
+# Kept as placeholder to avoid import errors during transition.

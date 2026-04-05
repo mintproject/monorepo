@@ -65,7 +65,6 @@ import deleteThreadModelExecutionsGQL from "./queries/execution/delete-thread-mo
 
 import getModelGQL from "./queries/model/get.graphql";
 import deleteModelGQL from "./queries/model/delete.graphql";
-import insertModelGQL from "./queries/model/new.graphql";
 
 import getModelOutputGQL from "./queries/model_output/get.graphql";
 import getThreadModelGQL from "./queries/thread_model/get.graphql";
@@ -111,7 +110,6 @@ interface CatalogModelSetup {
 import { Md5 } from "ts-md5";
 import {
     Execution_Result_Insert_Input,
-    Model_Insert_Input,
     Resource_Constraint,
     Resource_Update_Column,
     Thread_Model_Execution_Summary_Insert_Input,
@@ -258,7 +256,7 @@ export const getModel = async (modelid: string): Promise<Model> => {
                 console.log("ERROR");
                 console.log(result);
             } else {
-                const model = result.data.model_by_pk;
+                const model = result.data.modelcatalog_configuration_by_pk;
                 if (model) {
                     return modelFromGQL(model);
                 }
@@ -1019,7 +1017,7 @@ export const setThreadModels = (
     const APOLLO_CLIENT = GraphQL.instance(KeycloakAdapter.getUser());
     const threadmodelsobj = models.map((model) => {
         return {
-            model_id: model.id,
+            modelcatalog_configuration_id: model.id,
             thread_id: thread.id
         };
     });
@@ -1139,7 +1137,7 @@ export const getModelOutputsByModelId = async (modelId: string): Promise<ModelOu
                 console.log("ERROR");
                 console.log(result);
             } else {
-                const model = result.data.model_by_pk;
+                const model = result.data.modelcatalog_configuration_by_pk;
                 if (model) {
                     return model.outputs;
                 }
@@ -1259,12 +1257,3 @@ export const getProblemStatements = async (
     }
 };
 
-export const insertModel = (models: Model_Insert_Input[]) => {
-    const APOLLO_CLIENT = GraphQL.instance(KeycloakAdapter.getUser());
-    return APOLLO_CLIENT.mutate({
-        mutation: insertModelGQL,
-        variables: {
-            objects: models
-        }
-    });
-};

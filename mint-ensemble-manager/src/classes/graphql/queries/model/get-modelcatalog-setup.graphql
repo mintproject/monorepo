@@ -1,10 +1,13 @@
+# Both configurations and setups now use the unified modelcatalog_configuration table.
+# This query is identical to get-modelcatalog-configuration.graphql.
 query get_modelcatalog_setup($id: String!) {
-  modelcatalog_model_configuration_setup_by_pk(id: $id) {
+  modelcatalog_configuration_by_pk(id: $id) {
     id
     label
     description
     has_software_image
     has_component_location
+    model_configuration_id
     parameters {
       parameter {
         id

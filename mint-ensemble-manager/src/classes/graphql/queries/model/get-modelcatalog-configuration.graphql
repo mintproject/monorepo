@@ -1,10 +1,11 @@
 query get_modelcatalog_configuration($id: String!) {
-  modelcatalog_model_configuration_by_pk(id: $id) {
+  modelcatalog_configuration_by_pk(id: $id) {
     id
     label
     description
     has_component_location
     has_software_image
+    model_configuration_id
     parameters {
       parameter {
         id
