@@ -104,8 +104,9 @@ SELECT
 FROM modelcatalog_model_configuration_setup;
 
 -- STEP 4: Create indexes on FK columns
-CREATE INDEX idx_mc_config_sv ON modelcatalog_configuration(software_version_id);
-CREATE INDEX idx_mc_config_parent ON modelcatalog_configuration(model_configuration_id);
-CREATE INDEX idx_mc_config_author ON modelcatalog_configuration(author_id);
+-- Use unique names to avoid collision with existing indexes on old tables
+CREATE INDEX idx_mc_configuration_sv ON modelcatalog_configuration(software_version_id);
+CREATE INDEX idx_mc_configuration_parent ON modelcatalog_configuration(model_configuration_id);
+CREATE INDEX idx_mc_configuration_author ON modelcatalog_configuration(author_id);
 
 COMMIT;

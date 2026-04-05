@@ -184,7 +184,14 @@ ALTER TABLE modelcatalog_configuration_calibration_target
 -- SECTION 5: Drop old entity tables (data already migrated in migration 10000)
 -- ============================================================================
 
--- Drop modelcatalog_model_configuration_setup first (has no remaining dependents)
+-- Drop FK constraints from execution and thread_model that reference the old tables
+-- (these will be re-added pointing to modelcatalog_configuration in migration 12000)
+ALTER TABLE execution DROP CONSTRAINT IF EXISTS execution_modelcatalog_setup_id_fkey;
+ALTER TABLE execution DROP CONSTRAINT IF EXISTS execution_modelcatalog_configuration_id_fkey;
+ALTER TABLE thread_model DROP CONSTRAINT IF EXISTS thread_model_modelcatalog_setup_id_fkey;
+ALTER TABLE thread_model DROP CONSTRAINT IF EXISTS thread_model_modelcatalog_configuration_id_fkey;
+
+-- Drop modelcatalog_model_configuration_setup first
 DROP TABLE modelcatalog_model_configuration_setup;
 
 -- Drop modelcatalog_model_configuration (setup table gone, no remaining dependents)
