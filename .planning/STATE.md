@@ -4,7 +4,7 @@ milestone: v2.0
 milestone_name: milestone
 status: verifying
 stopped_at: Completed 09-04-PLAN.md
-last_updated: "2026-04-05T19:47:36.815Z"
+last_updated: "2026-04-05T20:05:00.000Z"
 last_activity: 2026-04-05
 progress:
   total_phases: 9
@@ -168,9 +168,10 @@ None — v2.0 milestone complete.
 | 260328-p5m | Fix parameters junction integration test - POST returns 400 due to missing label column | 2026-03-28 | 4ab6cbe | Needs Review | [260328-p5m-fix-parameters-junction-integration-test](./quick/260328-p5m-fix-parameters-junction-integration-test/) |
 | 260328-q36 | Add junction integration tests for softwareversions/hasInputVariable and modelconfigurationsetups/calibratedVariable | 2026-03-28 | a7ccc32 | Complete | [260328-q36-add-junction-integration-tests-for-stand](./quick/260328-q36-add-junction-integration-tests-for-stand/) |
 | 260328-r01 | Variable migration analysis: TriG/Fuseki to Hasura | 2026-03-28 | a21ed7b | Complete | [260328-r01-analyze-variables-hasura-vs-trig-fuseki](./quick/260328-r01-analyze-variables-hasura-vs-trig-fuseki/) |
+| 260405-nrv | Fix GraphQL query referencing old model table - neutralize cacheModelsFromCatalog | 2026-04-05 | 9c8aad8 | Complete | [260405-nrv-fix-graphql-query-referencing-old-model-](./quick/260405-nrv-fix-graphql-query-referencing-old-model-/) |
 
 ## Session Continuity
 
-Last session: 2026-04-05T19:38:51.514Z
-Stopped at: Completed 09-04-PLAN.md
+Last session: 2026-04-05T20:05:00.000Z
+Stopped at: Completed quick-260405-nrv
 Resume file: None
