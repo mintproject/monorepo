@@ -24,7 +24,6 @@ import {
     getThread,
     getThreadV2,
     getTotalConfigurations,
-    insertModel,
     setThreadData,
     setThreadModels,
     setThreadParameters
@@ -34,7 +33,6 @@ import { fetchMintConfig } from "@/classes/mint/mint-functions";
 import { KeycloakAdapter } from "@/config/keycloak-adapter";
 import { GraphQL } from "@/config/graphql";
 import getModelcatalogSetupGQL from "@/classes/graphql/queries/model/get-modelcatalog-setup.graphql";
-import { modelConfigurationSetupToGraphQL } from "@/classes/mint/model-catalog-graphql-adapter";
 import { createResponse } from "./util";
 
 // ./api-v1/services/threadsService.js
@@ -143,13 +141,12 @@ const threadsService: ThreadsService = {
             variables: { id: modelW3Id },
             fetchPolicy: "no-cache"
         });
-        const catalogSetup = setupResult.data?.modelcatalog_model_configuration_setup_by_pk;
+        const catalogSetup = setupResult.data?.modelcatalog_configuration_by_pk;
         if (!catalogSetup) {
             throw new Error(`Model configuration setup not found for id: ${modelW3Id}`);
         }
         const model = catalogSetup;
-        const modelInsertInput = modelConfigurationSetupToGraphQL(catalogSetup);
-        await insertModel([modelInsertInput]);
+        // Create thread_model row directly with modelcatalog_configuration_id FK
         await setThreadModels([{ id: modelW3Id }], "Added models", thread);
 
         thread = await getThread(thread.id);

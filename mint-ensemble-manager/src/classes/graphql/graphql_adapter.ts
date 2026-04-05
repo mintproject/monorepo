@@ -388,7 +388,7 @@ export const threadFromGQL = (thread: any) => {
     });
 
     thread["thread_models"].forEach((tm: any) => {
-        const m = tm["model"];
+        const m = tm["modelcatalog_configuration"];
         const model: Model = modelFromGQL(m);
 
         fbthread.models[model.id] = model;
@@ -492,21 +492,22 @@ export const datasliceFromGQL = (d: any) => {
     } as Dataslice;
 };
 
-export const modelFromGQL = (m: any) => {
-    m = Object.assign({}, m);
-    m.input_files = (m["inputs"] as any[]).map((input) => {
-        return modelIOFromGQL(input);
-    });
-    delete m["inputs"];
-    m.output_files = (m["outputs"] as any[]).map((output) => {
-        return modelIOFromGQL(output);
-    });
-    delete m["outputs"];
-    m.input_parameters = (m["parameters"] as any[]).map((parameter) => {
-        return modelParameterFromGQL(parameter);
-    });
-    delete m["parameters"];
-    return m;
+export const modelFromGQL = (config: any): Model => {
+    return {
+        id: config.id,
+        name: config.label || config.id,
+        description: config.description || "",
+        category: "",
+        region_name: "",
+        model_configuration: config.model_configuration_id || null,
+        software_image: config.has_software_image || "",
+        code_url: config.has_component_location || "",
+        input_files: (config.inputs || []).map((row: any) => modelIOFromCatalogGQL(row.input)),
+        output_files: (config.outputs || []).map((row: any) => modelIOFromCatalogGQL(row.output)),
+        input_parameters: (config.parameters || []).map((row: any) =>
+            modelParameterFromCatalogGQL(row.parameter)
+        )
+    } as Model;
 };
 
 export const modelIOFromGQL = (model_io: any) => {
@@ -532,6 +533,37 @@ export const modelIOFromGQL = (model_io: any) => {
             return v["id"];
         })
     } as ModelIO;
+};
+
+// Maps a catalog input/output from the unified modelcatalog_configuration junction shape
+// (no nested model_io wrapper; flat fields from modelcatalog_dataset_specification)
+export const modelIOFromCatalogGQL = (io: any): ModelIO => {
+    return {
+        id: io.id,
+        name: io.label || io.id,
+        type: "",
+        format: io.has_format || "",
+        value: null,
+        position: io.position || 0,
+        variables: []
+    } as ModelIO;
+};
+
+// Maps a catalog parameter from the unified modelcatalog_configuration junction shape
+export const modelParameterFromCatalogGQL = (p: any): ModelParameter => {
+    return {
+        id: p.id,
+        name: p.label || p.id,
+        type: p.parameter_type || p.has_data_type || "",
+        description: p.description || "",
+        min: p.has_minimum_accepted_value || "",
+        max: p.has_maximum_accepted_value || "",
+        unit: "",
+        default: p.has_default_value || "",
+        value: p.has_fixed_value || "",
+        accepted_values: Array.isArray(p.has_accepted_values) ? p.has_accepted_values : [],
+        position: p.position || 0
+    } as ModelParameter;
 };
 
 export const modelParameterFromGQL = (p: any) => {

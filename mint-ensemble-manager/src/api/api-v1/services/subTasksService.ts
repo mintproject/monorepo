@@ -1,7 +1,6 @@
 import { Thread, ThreadInfo, Execution, ModelParameter } from "@/classes/mint/mint-types";
 import {
     addThread,
-    insertModel,
     getModel,
     getTask,
     getThread,
@@ -17,13 +16,7 @@ import {
     BadRequestError
 } from "@/classes/common/errors";
 import problemStatementsService from "./problemStatementsService";
-import {
-    convertApiUrlToW3Id,
-    modelConfigurationSetupToGraphQL,
-    modelConfigurationToGraphQL,
-    CatalogDatasetSpec
-} from "@/classes/mint/model-catalog-graphql-adapter";
-import { Model_Insert_Input } from "@/classes/graphql/types";
+import { convertApiUrlToW3Id } from "@/classes/mint/model-catalog-graphql-adapter";
 import {
     AddDataRequest,
     AddParametersRequest,
@@ -37,7 +30,6 @@ import { MockExecutionService } from "@/classes/common/__tests__/mocks/MockExecu
 import { ExecutionCreation } from "@/classes/common/ExecutionCreation";
 import { GraphQL } from "@/config/graphql";
 import getModelcatalogConfigurationGQL from "@/classes/graphql/queries/model/get-modelcatalog-configuration.graphql";
-import getModelcatalogSetupGQL from "@/classes/graphql/queries/model/get-modelcatalog-setup.graphql";
 import {
     getThread as getThreadV2,
     checkVariableExistsById as checkVariableExistsByIdV2,
@@ -270,34 +262,17 @@ const subTasksService: SubTasksService = {
         const apolloClient = GraphQL.instanceUsingAccessToken(access_token);
         for (const modelId of modelIds) {
             const w3Id = convertApiUrlToW3Id(modelId);
-            if (!(await getModel(w3Id))) {
-                let modelConfigurationGraphQL: Model_Insert_Input;
-                try {
-                    const configResult = await apolloClient.query({
-                        query: getModelcatalogConfigurationGQL,
-                        variables: { id: w3Id },
-                        fetchPolicy: "no-cache"
-                    });
-                    const catalogConfig = configResult.data?.modelcatalog_model_configuration_by_pk;
-                    if (catalogConfig) {
-                        modelConfigurationGraphQL = modelConfigurationToGraphQL(catalogConfig);
-                    } else {
-                        throw new Error("Not found as configuration");
-                    }
-                } catch (error) {
-                    const setupResult = await apolloClient.query({
-                        query: getModelcatalogSetupGQL,
-                        variables: { id: w3Id },
-                        fetchPolicy: "no-cache"
-                    });
-                    const catalogSetup = setupResult.data?.modelcatalog_model_configuration_setup_by_pk;
-                    if (!catalogSetup) {
-                        throw new NotFoundError(`Model configuration not found for id: ${w3Id}`);
-                    }
-                    modelConfigurationGraphQL = modelConfigurationSetupToGraphQL(catalogSetup);
-                }
-                await insertModel([modelConfigurationGraphQL]);
+            // Verify the modelcatalog_configuration exists before linking
+            const configResult = await apolloClient.query({
+                query: getModelcatalogConfigurationGQL,
+                variables: { id: w3Id },
+                fetchPolicy: "no-cache"
+            });
+            const catalogConfig = configResult.data?.modelcatalog_configuration_by_pk;
+            if (!catalogConfig) {
+                throw new NotFoundError(`Model configuration not found for id: ${w3Id}`);
             }
+            // Create thread_model row directly with modelcatalog_configuration_id FK
             await setThreadModels([{ id: w3Id }], "Added models", subtask);
         }
         return await getThread(subtaskId);
