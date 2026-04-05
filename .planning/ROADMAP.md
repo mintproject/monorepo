@@ -105,10 +105,10 @@ Plans:
 **Goal:** Consolidate modelcatalog_model_configuration and modelcatalog_model_configuration_setup into a unified modelcatalog_configuration table, merge overlapping junction tables, migrate thread_model/execution FKs to reference the unified table, drop the legacy public.model table, and update all dependent code (API resource registry, ETL pipeline, ensemble manager).
 **Requirements**: D-01 through D-09 (from CONTEXT.md)
 **Depends on:** Phase 8
-**Plans:** 2/4 plans executed
+**Plans:** 3/4 plans executed
 
 Plans:
-- [ ] 09-01-PLAN.md — SQL migrations (table merge, junction consolidation, thread_model FK migration) + Hasura metadata
+- [x] 09-01-PLAN.md — SQL migrations (table merge, junction consolidation, thread_model FK migration) + Hasura metadata
 - [x] 09-02-PLAN.md — Model-catalog-api resource registry and field-maps update
 - [x] 09-03-PLAN.md — ETL pipeline update for unified table
 - [ ] 09-04-PLAN.md — Ensemble manager GraphQL queries, adapter removal, service layer rewrite

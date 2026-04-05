@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 09-03-PLAN.md
-last_updated: "2026-04-05T19:20:06.872Z"
+stopped_at: Completed 09-01-PLAN.md
+last_updated: "2026-04-05T19:20:54.883Z"
 last_activity: 2026-04-05
 progress:
   total_phases: 9
   completed_phases: 5
   total_plans: 33
-  completed_plans: 31
+  completed_plans: 32
   percent: 100
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 ## Current Position
 
 Phase: 09 (merge-modelconfiguration-setup-tables-and-migrate-thread-model-relationships) — EXECUTING
-Plan: 3 of 4
+Plan: 4 of 4
 Milestone v2.0: COMPLETE (shipped 2026-03-15)
 Status: Ready to execute
 Last activity: 2026-04-05
@@ -62,6 +62,7 @@ Progress: [████████████] 100% — v2.0 shipped
 | Phase 05-variable-migration-analysis-trig-fuseki-to-hasura P03 | 3 | 1 tasks | 2 files |
 | Phase 09-merge-modelconfiguration-setup-tables-and-migrate-thread-model-relationships P02 | 5 | 2 tasks | 2 files |
 | Phase 09-merge-modelconfiguration-setup-tables-and-migrate-thread-model-relationships P03 | 8 | 2 tasks | 3 files |
+| Phase 09-merge-modelconfiguration-setup-tables-and-migrate-thread-model-relationships P01 | 8 | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -124,6 +125,8 @@ Recent decisions affecting current work:
 - [Phase 09]: All three resource entries (modelconfigurations, modelconfigurationsetups, configurationsetups) point to modelcatalog_configuration; hasSetup uses child_configurations and modelConfiguration uses parent_configuration for self-referential relationships
 - [Phase 09-03]: extract_configurations() merges both entity types into unified list with self-FK populated at extract time from hasSetup links
 - [Phase 09-03]: setup_* junction tables removed from ETL; data flows through unified configuration_* tables with configuration_id FK
+- [Phase 09]: Three-migration split: table creation (10000), junction consolidation (11000), FK backfill and public.model drop (12000)
+- [Phase 09]: self-FK model_configuration_id as discriminator: NULL=Configuration, non-NULL=Setup rows in unified modelcatalog_configuration table
 
 ### Roadmap Evolution
 
@@ -165,6 +168,6 @@ None — v2.0 milestone complete.
 
 ## Session Continuity
 
-Last session: 2026-04-05T19:20:06.869Z
-Stopped at: Completed 09-03-PLAN.md
+Last session: 2026-04-05T19:20:54.880Z
+Stopped at: Completed 09-01-PLAN.md
 Resume file: None
