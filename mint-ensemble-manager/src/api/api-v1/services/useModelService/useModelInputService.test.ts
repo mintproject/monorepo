@@ -264,8 +264,7 @@ describe("useModelInputService", () => {
 
     it("should get data bindings by model id", async () => {
         mockApolloClient.query
-            .mockResolvedValueOnce({ data: { modelcatalog_model_configuration_by_pk: null } })
-            .mockResolvedValueOnce({ data: { modelcatalog_model_configuration_setup_by_pk: mockCatalogSetup } });
+            .mockResolvedValueOnce({ data: { modelcatalog_configuration_by_pk: mockCatalogSetup } });
 
         const bindings = await useModelInputService.getDataBindingsByModelId(data.model_id);
         expect(bindings).toHaveLength(4);
@@ -273,8 +272,7 @@ describe("useModelInputService", () => {
 
     it("should throw NotFoundError when model is not found", async () => {
         mockApolloClient.query
-            .mockResolvedValueOnce({ data: { modelcatalog_model_configuration_by_pk: null } })
-            .mockResolvedValueOnce({ data: { modelcatalog_model_configuration_setup_by_pk: null } });
+            .mockResolvedValueOnce({ data: { modelcatalog_configuration_by_pk: null } });
 
         await expect(useModelInputService.getDataBindingsByModelId("invalid-id")).rejects.toThrow(
             NotFoundError

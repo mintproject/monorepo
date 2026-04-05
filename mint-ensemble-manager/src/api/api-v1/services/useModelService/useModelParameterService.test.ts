@@ -159,8 +159,7 @@ describe("useModelParameterService", () => {
 
     it("should get model parameters by model id", async () => {
         mockApolloClient.query
-            .mockResolvedValueOnce({ data: { modelcatalog_model_configuration_by_pk: null } }) // config not found
-            .mockResolvedValueOnce({ data: { modelcatalog_model_configuration_setup_by_pk: mockCatalogSetup } }); // setup found
+            .mockResolvedValueOnce({ data: { modelcatalog_configuration_by_pk: mockCatalogSetup } });
 
         const parameters = await useModelParameterService.getModelParametersByModelId(
             bindingRequest.model_id
@@ -174,8 +173,7 @@ describe("useModelParameterService", () => {
 
     it("should throw NotFoundError when model is not found", async () => {
         mockApolloClient.query
-            .mockResolvedValueOnce({ data: { modelcatalog_model_configuration_by_pk: null } })
-            .mockResolvedValueOnce({ data: { modelcatalog_model_configuration_setup_by_pk: null } });
+            .mockResolvedValueOnce({ data: { modelcatalog_configuration_by_pk: null } });
 
         await expect(
             useModelParameterService.getModelParametersByModelId("invalid-id")
@@ -228,8 +226,7 @@ describe("useModelParameterService", () => {
 
     it("should set parameter bindings successfully", async () => {
         mockApolloClient.query
-            .mockResolvedValueOnce({ data: { modelcatalog_model_configuration_by_pk: null } })
-            .mockResolvedValueOnce({ data: { modelcatalog_model_configuration_setup_by_pk: mockCatalogSetup } });
+            .mockResolvedValueOnce({ data: { modelcatalog_configuration_by_pk: mockCatalogSetup } });
 
         const subtaskCopy = JSON.parse(JSON.stringify(subtask));
         await useModelParameterService.setParameterBindings(bindingRequest, subtaskCopy);
