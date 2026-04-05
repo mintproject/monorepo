@@ -35,7 +35,7 @@ const executionsTapisService = {
             await executionCreation.prepareExecutions();
             // Find the thread model id for the given model id
             const threadModelId = threadResponse.thread_models.find(
-                (thread_model) => thread_model.model_id === threadmodel.model_id
+                (thread_model) => thread_model.modelcatalog_configuration_id === threadmodel.model_id
             )?.id;
             if (!threadModelId) {
                 throw new NotFoundError("Thread model not found");
