@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 05-03-PLAN.md (FK constraints from variable_presentation to standard_variable and unit)
-last_updated: "2026-03-29T13:02:16.177Z"
-last_activity: 2026-03-29
+stopped_at: Completed 09-02-PLAN.md
+last_updated: "2026-04-05T19:16:46.557Z"
+last_activity: 2026-04-05
 progress:
-  total_phases: 5
+  total_phases: 9
   completed_phases: 5
-  total_plans: 29
-  completed_plans: 29
+  total_plans: 33
+  completed_plans: 30
   percent: 100
 ---
 
@@ -21,15 +21,15 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-15)
 
 **Core value:** All model catalog data accessible through a single GraphQL endpoint, eliminating the Fuseki dependency while maintaining REST API compatibility.
-**Current focus:** Phase 05 — variable-migration-analysis-trig-fuseki-to-hasura
+**Current focus:** Phase 09 — merge-modelconfiguration-setup-tables-and-migrate-thread-model-relationships
 
 ## Current Position
 
-Phase: 05
-Plan: Not started
+Phase: 09 (merge-modelconfiguration-setup-tables-and-migrate-thread-model-relationships) — EXECUTING
+Plan: 2 of 4
 Milestone v2.0: COMPLETE (shipped 2026-03-15)
 Status: Ready to execute
-Last activity: 2026-03-29
+Last activity: 2026-04-05
 
 Progress: [████████████] 100% — v2.0 shipped
 
@@ -60,6 +60,7 @@ Progress: [████████████] 100% — v2.0 shipped
 | Phase 03-fix-nested-resource-creation-link-or-create-associated-resources-when-creating-parent-resource P02 | 1 | 2 tasks | 1 files |
 | Phase 05-variable-migration-analysis-trig-fuseki-to-hasura P01 | 2 | 2 tasks | 4 files |
 | Phase 05-variable-migration-analysis-trig-fuseki-to-hasura P03 | 3 | 1 tasks | 2 files |
+| Phase 09-merge-modelconfiguration-setup-tables-and-migrate-thread-model-relationships P02 | 5 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -119,6 +120,7 @@ Recent decisions affecting current work:
 - [Phase 05-variable-migration-analysis-trig-fuseki-to-hasura]: VP object_relationships declared without FK constraints - will activate after Plan 03 adds FK constraints
 - [Phase 05-variable-migration-analysis-trig-fuseki-to-hasura]: D-03 resolved: no modelcatalog_variable table created; 0 plain sd:Variable instances in TriG data confirmed
 - [Phase 05-variable-migration-analysis-trig-fuseki-to-hasura]: FK constraints use DEFERRABLE INITIALLY DEFERRED and ON DELETE SET NULL to support batch ETL loading
+- [Phase 09]: All three resource entries (modelconfigurations, modelconfigurationsetups, configurationsetups) point to modelcatalog_configuration; hasSetup uses child_configurations and modelConfiguration uses parent_configuration for self-referential relationships
 
 ### Roadmap Evolution
 
@@ -126,6 +128,10 @@ Recent decisions affecting current work:
 - Phase 2 added: Fix JWT signature verification error on POST endpoints
 - Phase 3 added: Fix nested resource creation - link or create associated resources when creating parent resource
 - Phase 5 added: Variable Migration Analysis: TriG/Fuseki to Hasura
+- Phase 6 added: Ensemble manager Tapis integration tests
+- Phase 7 added: Test coverage for model catalog migration - verify GraphQL adapter, service layer, and architecture changes
+- Phase 8 added: Remove Model Catalog API adapter functions (modelConfigurationToGraphQL, modelConfigurationSetupToGraphQL) - post-migration cleanup
+- Phase 9 added: Merge ModelConfiguration/Setup tables and migrate thread_model relationships
 
 ### Pending Todos
 
@@ -156,6 +162,6 @@ None — v2.0 milestone complete.
 
 ## Session Continuity
 
-Last session: 2026-03-29T12:54:10.980Z
-Stopped at: Completed 05-03-PLAN.md (FK constraints from variable_presentation to standard_variable and unit)
+Last session: 2026-04-05T19:16:46.554Z
+Stopped at: Completed 09-02-PLAN.md
 Resume file: None
