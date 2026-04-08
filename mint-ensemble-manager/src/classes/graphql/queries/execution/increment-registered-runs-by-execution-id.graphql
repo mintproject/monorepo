@@ -6,7 +6,7 @@ mutation increment_registered_runs_by_execution_id(
     update_thread_model_execution_summary(
         where: {
             thread_model: {
-                model_id: { _eq: $modelId }
+                modelcatalog_configuration_id: { _eq: $modelId }
                 executions: { execution_id: { _eq: $executionId } }
             }
         }

@@ -1,75 +1,79 @@
 query model_executions($modelTypes: [String!], $regionId: String!) {
-  model(where: {model_name: {_in: $modelTypes}}, order_by: {thread_models_aggregate: {count: desc}}) {
-    id
-    name
-    region_name
-    model_name
-    model_version
-    model_configuration
-    thread_models(order_by: {executions_aggregate: {count: desc}}, where: {thread: {task: {problem_statement: {region: {id: {_eq: $regionId}}}}}}) {
-      thread {
-        id
-        name
-        start_date
-        end_date
-        task {
+  execution(
+    where: {
+      thread_model_executions: {
+        thread_model: {
+          thread: {
+            task: {
+              problem_statement: {
+                region_id: { _eq: $regionId }
+              }
+            }
+          }
+        }
+      }
+      modelcatalog_configuration: {
+        label: { _in: $modelTypes }
+      }
+    }
+    distinct_on: modelcatalog_configuration_id
+  ) {
+    modelcatalog_configuration {
+      id
+      label
+      description
+      has_software_image
+      has_component_location
+    }
+    thread_model_executions {
+      thread_model {
+        thread {
           id
           name
-          region {
-            name
-          }
-          problem_statement {
+          start_date
+          end_date
+          task {
             id
             name
             region {
               name
             }
-          }
-        }
-      }
-      model {
-        parameters {
-          name
-          fixed_value
-        }
-        inputs {
-          model_io {
-            name
-            fixed_bindings {
-              resource {
+            problem_statement {
+              id
+              name
+              region {
                 name
-                url
               }
             }
           }
         }
-      }
-      data_bindings_aggregate {
-        nodes {
-          dataslice {
-            resources(where:{selected:{_eq: true}}) {
-              resource {
-                name
-                url
+        executions_aggregate {
+          aggregate {
+            count
+          }
+        }
+        parameter_bindings_aggregate {
+          nodes {
+            model_parameter {
+              name
+            }
+            parameter_value
+          }
+        }
+        data_bindings_aggregate {
+          nodes {
+            dataslice {
+              resources(where: { selected: { _eq: true } }) {
+                resource {
+                  name
+                  url
+                }
               }
             }
+            model_io {
+              name
+            }
           }
-          model_io {
-            name
-          }
-        }
-      }
-      parameter_bindings_aggregate {
-        nodes {
-          model_parameter {
-            name
-          }
-          parameter_value
-        }
-      }
-      executions_aggregate {
-        aggregate {
-          count
         }
       }
     }
