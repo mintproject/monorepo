@@ -12,11 +12,3 @@ export const convertApiUrlToW3Id = (url: string): string => {
     return W3_ID_URI_PREFIX + id;
 };
 
-/**
- * Converts a W3ID URI back to a Model Catalog REST API URL (string manipulation only, no REST call).
- * e.g. https://w3id.org/okn/i/mint/UUID -> https://api.models.mint.local/v1.8.0/modelconfigurations/UUID
- */
-export const convertW3IdToApiUrl = (w3Id: string, baseApiUrl: string, type: "modelconfigurations" | "modelconfigurationsetups" = "modelconfigurations"): string => {
-    const uuid = w3Id.replace(W3_ID_URI_PREFIX, "");
-    return `${baseApiUrl}/${type}/${uuid}`;
-};

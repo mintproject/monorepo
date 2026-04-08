@@ -32,7 +32,7 @@ import { getCreateEvent, uuidv4 } from "@/classes/graphql/graphql_adapter";
 import { fetchMintConfig } from "@/classes/mint/mint-functions";
 import { KeycloakAdapter } from "@/config/keycloak-adapter";
 import { GraphQL } from "@/config/graphql";
-import getModelcatalogSetupGQL from "@/classes/graphql/queries/model/get-modelcatalog-setup.graphql";
+import getModelcatalogConfigurationGQL from "@/classes/graphql/queries/model/get-modelcatalog-configuration.graphql";
 import { createResponse } from "./util";
 
 // ./api-v1/services/threadsService.js
@@ -137,7 +137,7 @@ const threadsService: ThreadsService = {
             KeycloakAdapter.getAccessToken ? KeycloakAdapter.getAccessToken() : ""
         );
         const setupResult = await apolloClient.query({
-            query: getModelcatalogSetupGQL,
+            query: getModelcatalogConfigurationGQL,
             variables: { id: modelW3Id },
             fetchPolicy: "no-cache"
         });

@@ -425,21 +425,6 @@ export const threadModelExecutionSummaryFromGQL = (tmex: any) => {
     } as ExecutionSummary;
 };
 
-export const threadModelsToGQL = (models: Model[], threadid: string) => {
-    return models.map((model) => {
-        return {
-            thread_id: threadid,
-            model: {
-                data: modelToGQL(model),
-                on_conflict: {
-                    constraint: "model_pkey",
-                    update_columns: ["name"]
-                }
-            }
-        };
-    });
-};
-
 export const getTotalConfigs = (model: Model, bindings: ModelIOBindings, thread: Thread) => {
     let totalconfigs = 1;
     model.input_files.map((io) => {
@@ -508,31 +493,6 @@ export const modelFromGQL = (config: any): Model => {
             modelParameterFromCatalogGQL(row.parameter)
         )
     } as Model;
-};
-
-export const modelIOFromGQL = (model_io: any) => {
-    const io = model_io["model_io"];
-    const fixed_ds =
-        io["fixed_bindings"] && io["fixed_bindings"].length > 0
-            ? ({
-                  id: io.id + "_fixed_dataset",
-                  name: io.name + "_fixed_dataset",
-                  resources: io["fixed_bindings"].map((res: any) => {
-                      return res["resource"];
-                  })
-              } as Dataslice)
-            : null;
-    return {
-        id: io["id"],
-        name: io["name"],
-        type: io["type"],
-        value: fixed_ds,
-        position: model_io["position"],
-        variables: io["variables"].map((varobj: any) => {
-            const v = varobj["variable"];
-            return v["id"];
-        })
-    } as ModelIO;
 };
 
 // Maps a catalog input/output from the unified modelcatalog_configuration junction shape
@@ -717,57 +677,6 @@ export const getCustomEvent = (event: string, notes: string) => {
     } as MintEvent;
 };
 
-const getNamespacedId = (namespace, id) => {
-    if (id.indexOf(namespace) == 0) return id;
-    return namespace + id;
-};
-
-export const modelToGQL = (m: Model) => {
-    const namespace = m.id.replace(/(^.*\/).*$/, "$1");
-    return {
-        id: m.id,
-        name: m.name,
-        category: m.category,
-        description: m.description,
-        region_name: m.region_name,
-        type: m.model_type,
-        model_configuration: getNamespacedId(namespace, m.model_configuration),
-        model_version: getNamespacedId(namespace, m.model_version),
-        model_name: getNamespacedId(namespace, m.model_name),
-        dimensionality: m.dimensionality,
-        parameter_assignment: m.parameter_assignment,
-        parameter_assignment_details: m.parameter_assignment_details,
-        calibration_target_variable: m.calibration_target_variable,
-        spatial_grid_resolution: m.spatial_grid_resolution,
-        spatial_grid_type: m.spatial_grid_type,
-        output_time_interval: m.output_time_interval,
-        code_url: m.code_url,
-        usage_notes: m.usage_notes,
-        software_image: m.software_image,
-        inputs: {
-            data: m.input_files.map((input) => modelInputOutputToGQL(input)),
-            on_conflict: {
-                constraint: "model_input_pkey",
-                update_columns: ["model_id"]
-            }
-        },
-        parameters: {
-            data: m.input_parameters.map((param) => modelParameterToGQL(param)),
-            on_conflict: {
-                constraint: "model_parameter_pkey",
-                update_columns: ["model_id"]
-            }
-        },
-        outputs: {
-            data: m.output_files.map((output) => modelInputOutputToGQL(output)),
-            on_conflict: {
-                constraint: "model_output_pkey",
-                update_columns: ["model_id"]
-            }
-        }
-    };
-};
-
 export const getAutoID = () => {
     const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
     let autoId = "";
@@ -779,89 +688,6 @@ export const getAutoID = () => {
 
 export const getMd5Hash = (str2hash) => {
     return crypto.createHash("md5").update(str2hash).digest("hex");
-};
-
-const getModelIOFixedBindings = (io) => {
-    const fixed_bindings_data = [];
-    if ("value" in io && "resources" in io["value"]) {
-        io["value"]["resources"].forEach((res: any) => {
-            if (!("name" in res)) res["name"] = res["url"].replace(/^.*\/(.*?)$/, "$1");
-            fixed_bindings_data.push({
-                resource: {
-                    data: {
-                        id: getMd5Hash(res["url"]),
-                        name: res["name"],
-                        url: res["url"]
-                    },
-                    on_conflict: {
-                        constraint: "resource_pkey",
-                        update_columns: ["name"]
-                    }
-                }
-            });
-        });
-    }
-    return {
-        data: fixed_bindings_data,
-        on_conflict: {
-            constraint: "model_input_bindings_pkey",
-            update_columns: ["resource_id"]
-        }
-    };
-};
-
-const getVariableData = (variableid) => {
-    return {
-        data: {
-            id: variableid
-        },
-        on_conflict: {
-            constraint: "variable_pkey",
-            update_columns: ["description"]
-        }
-    };
-};
-
-const modelIOToGQL = (io: any) => {
-    const fixed_bindings = getModelIOFixedBindings(io);
-    return {
-        id: io["id"],
-        name: io["name"],
-        type: io["type"],
-        format: io["format"],
-        fixed_bindings: fixed_bindings,
-        variables: {
-            data: io["variables"].map((v) => {
-                return {
-                    variable: getVariableData(v)
-                };
-            }),
-            on_conflict: {
-                constraint: "model_io_variable_pkey",
-                update_columns: ["variable_id"]
-            }
-        }
-    };
-};
-
-const modelInputOutputToGQL = (io: any) => {
-    return {
-        position: io["position"],
-        model_io: {
-            data: modelIOToGQL(io),
-            on_conflict: {
-                constraint: "model_io_pkey",
-                update_columns: ["id"]
-            }
-        }
-    };
-};
-
-const modelParameterToGQL = (input: ModelParameter) => {
-    if ("default" in input && input["default"]) input["default"] = input["default"] + "";
-    if ("value" in input && input["value"]) input["fixed_value"] = input["value"] + "";
-    delete input["value"];
-    return input;
 };
 
 const getModelDataBindings = (model, model_ensemble: ThreadModelMap) => {

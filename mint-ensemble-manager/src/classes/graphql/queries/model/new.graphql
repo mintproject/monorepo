@@ -1,3 +1,0 @@
-# This mutation is no longer used.
-# thread_model rows are now created directly with modelcatalog_configuration_id FK.
-# Kept as placeholder to avoid import errors during transition.
