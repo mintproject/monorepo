@@ -603,7 +603,7 @@ export const modelEnsembleFromGQL = (dbs: any[], pbs: any[]): ModelIOBindings =>
 export const executionToGQL = (ex: Execution): any => {
     const exobj = {
         id: ex.id,
-        model_id: ex.modelid,
+        modelcatalog_configuration_id: ex.modelid,
         status: ex.status,
         start_time: ex.start_time,
         execution_engine: ex.execution_engine,
@@ -640,7 +640,7 @@ export const executionToGQL = (ex: Execution): any => {
 export const executionFromGQL = (ex: any, emulator = false): Execution => {
     const exobj = {
         id: ex.id.replace(/\-/g, ""),
-        modelid: ex.model_id,
+        modelid: ex.modelcatalog_configuration_id,
         status: ex.status,
         start_time: new Date(ex.start_time),
         end_time: ex.end_time ? new Date(ex.end_time) : null,
