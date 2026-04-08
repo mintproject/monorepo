@@ -292,7 +292,6 @@
       - id
       - status
       - execution_engine
-      - model_id
       - modelcatalog_configuration_id
       - start_time
       - end_time
@@ -305,7 +304,6 @@
       - id
       - status
       - execution_engine
-      - model_id
       - modelcatalog_configuration_id
       - start_time
       - end_time
@@ -319,7 +317,6 @@
       - id
       - status
       - execution_engine
-      - model_id
       - modelcatalog_configuration_id
       - start_time
       - end_time
@@ -333,7 +330,6 @@
       columns:
       - run_progress
       - execution_engine
-      - model_id
       - modelcatalog_configuration_id
       - run_id
       - status
