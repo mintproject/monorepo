@@ -118,9 +118,9 @@ Plans:
 **Goal:** Update mint-ensemble-manager GraphQL queries and TypeScript adapters to use modelcatalog_configuration_id instead of dropped model_id/model table references, drop the old execution.model_id column, repoint binding FKs to modelcatalog tables, remove dead code, consolidate duplicate GraphQL files, add unit tests, and verify build succeeds.
 **Requirements**: D-01 through D-13 (from CONTEXT.md)
 **Depends on:** Phase 9
-**Plans:** 3 plans
+**Plans:** 2/3 plans executed
 
 Plans:
-- [ ] 10-00-PLAN.md — DB migrations: drop execution.model_id, repoint execution_data_binding FK
-- [ ] 10-01-PLAN.md — Fix breaking GraphQL queries + update execution adapter functions
+- [x] 10-00-PLAN.md — DB migrations: drop execution.model_id, repoint execution_data_binding FK
+- [x] 10-01-PLAN.md — Fix breaking GraphQL queries + update execution adapter functions
 - [ ] 10-02-PLAN.md — Dead code cleanup, file consolidation, unit tests, build verification

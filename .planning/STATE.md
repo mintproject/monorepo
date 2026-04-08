@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: milestone
-status: verifying
-stopped_at: Completed 09-04-PLAN.md
-last_updated: "2026-04-05T20:05:00.000Z"
-last_activity: 2026-04-05
+status: executing
+stopped_at: Completed 10-01-PLAN.md
+last_updated: "2026-04-08T01:26:06.559Z"
+last_activity: 2026-04-08
 progress:
-  total_phases: 9
+  total_phases: 10
   completed_phases: 6
-  total_plans: 33
-  completed_plans: 33
+  total_plans: 36
+  completed_plans: 35
   percent: 100
 ---
 
@@ -21,15 +21,15 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-15)
 
 **Core value:** All model catalog data accessible through a single GraphQL endpoint, eliminating the Fuseki dependency while maintaining REST API compatibility.
-**Current focus:** Phase 09 — merge-modelconfiguration-setup-tables-and-migrate-thread-model-relationships
+**Current focus:** Phase 10 — check-the-required-changes-on-mint-ensemble-manager-after-migration
 
 ## Current Position
 
-Phase: 09
-Plan: Not started
+Phase: 10 (check-the-required-changes-on-mint-ensemble-manager-after-migration) — EXECUTING
+Plan: 3 of 3
 Milestone v2.0: COMPLETE (shipped 2026-03-15)
-Status: Phase complete — ready for verification
-Last activity: 2026-04-05
+Status: Ready to execute
+Last activity: 2026-04-08
 
 Progress: [████████████] 100% — v2.0 shipped
 
@@ -64,6 +64,8 @@ Progress: [████████████] 100% — v2.0 shipped
 | Phase 09-merge-modelconfiguration-setup-tables-and-migrate-thread-model-relationships P03 | 8 | 2 tasks | 3 files |
 | Phase 09-merge-modelconfiguration-setup-tables-and-migrate-thread-model-relationships P01 | 8 | 2 tasks | 7 files |
 | Phase 09-merge-modelconfiguration-setup-tables-and-migrate-thread-model-relationships P04 | 25 | 3 tasks | 16 files |
+| Phase 10 P01 | 4 | 2 tasks | 5 files |
+| Phase 10-check-the-required-changes-on-mint-ensemble-manager-after-migration P00 | 3 | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -130,6 +132,9 @@ Recent decisions affecting current work:
 - [Phase 09]: self-FK model_configuration_id as discriminator: NULL=Configuration, non-NULL=Setup rows in unified modelcatalog_configuration table
 - [Phase 09]: modelIOFromCatalogGQL helper added alongside existing modelIOFromGQL to handle new catalog junction shape
 - [Phase 09]: CatalogDatasetSpec and CatalogModelConfiguration interfaces moved inline to service files after removal from adapter
+- [Phase 10]: model-executions query rewritten to start from execution table using modelcatalog_configuration relationship (dropped model table removed)
+- [Phase 10]: Delete-before-FK-add pattern used for execution_data_binding and execution_result because model_io_id is part of PK (cannot be nulled)
+- [Phase 10]: execution_result table included in FK repoint migration alongside execution_data_binding (both reference model_io)
 
 ### Roadmap Evolution
 
@@ -141,6 +146,7 @@ Recent decisions affecting current work:
 - Phase 7 added: Test coverage for model catalog migration - verify GraphQL adapter, service layer, and architecture changes
 - Phase 8 added: Remove Model Catalog API adapter functions (modelConfigurationToGraphQL, modelConfigurationSetupToGraphQL) - post-migration cleanup
 - Phase 9 added: Merge ModelConfiguration/Setup tables and migrate thread_model relationships
+- Phase 10 added: Check the required changes on mint-ensemble-manager after migration
 
 ### Pending Todos
 
@@ -172,6 +178,6 @@ None — v2.0 milestone complete.
 
 ## Session Continuity
 
-Last session: 2026-04-05T20:05:00.000Z
-Stopped at: Verified quick-260405-nrv
+Last session: 2026-04-08T01:25:45.782Z
+Stopped at: Completed 10-01-PLAN.md
 Resume file: None
