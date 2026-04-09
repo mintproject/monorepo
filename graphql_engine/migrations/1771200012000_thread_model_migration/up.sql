@@ -71,6 +71,23 @@ WHERE modelcatalog_configuration_id IS NULL
   AND modelcatalog_setup_id IS NOT NULL;
 
 -- ============================================================================
+-- SECTION 4b: Clean up invalid backfilled values
+-- Some public.model rows have empty or bare-prefix model_configuration values
+-- (e.g. 'https://w3id.org/okn/i/mint/') that don't exist in
+-- modelcatalog_configuration. NULL these out before adding FK constraints.
+-- ============================================================================
+
+UPDATE thread_model
+SET modelcatalog_configuration_id = NULL
+WHERE modelcatalog_configuration_id IS NOT NULL
+  AND modelcatalog_configuration_id NOT IN (SELECT id FROM modelcatalog_configuration);
+
+UPDATE execution
+SET modelcatalog_configuration_id = NULL
+WHERE modelcatalog_configuration_id IS NOT NULL
+  AND modelcatalog_configuration_id NOT IN (SELECT id FROM modelcatalog_configuration);
+
+-- ============================================================================
 -- SECTION 5: Add FK constraints to modelcatalog_configuration (unified table)
 -- ============================================================================
 
