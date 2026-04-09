@@ -570,20 +570,6 @@
     using:
       foreign_key_constraint_on: modelcatalog_dataset_specification_id
   array_relationships:
-  - name: execution_data_bindings
-    using:
-      foreign_key_constraint_on:
-        column: model_io_id
-        table:
-          name: execution_data_binding
-          schema: public
-  - name: execution_results
-    using:
-      foreign_key_constraint_on:
-        column: model_io_id
-        table:
-          name: execution_result
-          schema: public
   - name: fixed_bindings
     using:
       foreign_key_constraint_on:
