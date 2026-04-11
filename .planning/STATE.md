@@ -29,7 +29,7 @@ Phase: 10
 Plan: Not started
 Milestone v2.0: COMPLETE (shipped 2026-03-15)
 Status: Ready to execute
-Last activity: 2026-04-08
+Last activity: 2026-04-11 - Completed quick task 260411-hb5: Add filtering info and toggles (time, region, variables) to dataset selection view
 
 Progress: [████████████] 100% — v2.0 shipped
 
@@ -175,6 +175,7 @@ None — v2.0 milestone complete.
 | 260328-q36 | Add junction integration tests for softwareversions/hasInputVariable and modelconfigurationsetups/calibratedVariable | 2026-03-28 | a7ccc32 | Complete | [260328-q36-add-junction-integration-tests-for-stand](./quick/260328-q36-add-junction-integration-tests-for-stand/) |
 | 260328-r01 | Variable migration analysis: TriG/Fuseki to Hasura | 2026-03-28 | a21ed7b | Complete | [260328-r01-analyze-variables-hasura-vs-trig-fuseki](./quick/260328-r01-analyze-variables-hasura-vs-trig-fuseki/) |
 | 260405-nrv | Fix GraphQL query referencing old model table and threadFromGQL adapter | 2026-04-05 | f5c8875 | Verified | [260405-nrv-fix-graphql-query-referencing-old-model-](./quick/260405-nrv-fix-graphql-query-referencing-old-model-/) |
+| 260411-hb5 | Add filtering info and toggles (time, region, variables) to dataset selection view | 2026-04-11 | b89305a | Verified | [260411-hb5-add-filtering-info-and-toggles-time-regi](./quick/260411-hb5-add-filtering-info-and-toggles-time-regi/) |
 
 ## Session Continuity
 

@@ -3,7 +3,7 @@ phase: quick-260411-hb5
 plan: 01
 subsystem: ui/datacatalog
 tags: [filter-toggles, dataset-selection, ckan, lit-element]
-status: awaiting-human-verify
+status: complete
 key-files:
   modified:
     - ui/src/util/datacatalog/data-catalog-adapter.ts
@@ -20,7 +20,7 @@ decisions:
 
 **One-liner:** Filter-info panel with Time/Region/Variables toggles on Select datasets step, backed by optional region/dates/variables in the CKAN and Default catalog adapters.
 
-**Status:** Tasks 1 and 2 complete. Awaiting human verification (Task 3 checkpoint).
+**Status:** Complete. All 3 tasks finished. Task 3 human-verify checkpoint approved by user.
 
 ---
 
@@ -30,7 +30,7 @@ decisions:
 |------|------|--------|--------|
 | 1 | Make region optional in adapter + CKAN + Default | `6e5c7b3` | Complete |
 | 2 | Add filter info panel + toggles to thread-expansion-datasets | `b89305a` | Complete |
-| 3 | Human verification | — | **Pending** |
+| 3 | Human verification | — (checkpoint, no code commit) | **Approved** |
 
 ---
 
@@ -171,18 +171,6 @@ None.
 
 ---
 
-## Human Verification Pending
+## Human Verification — APPROVED
 
-Task 3 requires manual verification in a running browser. Steps:
-
-1. Run `yarn start` in `ui/` submodule and open MINT UI.
-2. Navigate to a modeling thread with models, required inputs, and a task region + date range set.
-3. Advance to "Select datasets" step.
-4. Confirm the "Active filters" panel is visible above dataset tables with Time, Region, Variables rows — all toggles ON by default.
-5. Toggle Variables OFF: expect more/different datasets; verify no `mint_standard_variables` filtering; open a dataset's resources to confirm they are also unfiltered.
-6. Toggle Time OFF: expect datasets outside the thread date range to appear; confirm no JS console errors.
-7. Toggle Region OFF: inspect Network tab `package_search` request body — confirm no `ext_bbox` field present.
-8. Re-enable all three: confirm dataset list returns to baseline.
-9. Confirm no console errors throughout toggle transitions.
-
-**Resume signal:** Type "approved" once all three toggles behave as described, or describe any issues.
+Task 3 was a `checkpoint:human-verify` gate. The user manually verified the filter panel and toggle behavior and approved the implementation. No issues were reported.
