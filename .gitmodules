@@ -7,6 +7,7 @@
 [submodule "mint-ensemble-manager"]
 	path = mint-ensemble-manager
 	url = https://github.com/mintproject/mint-ensemble-manager.git
+	branch = model-catalog-migration
 [submodule "mint-instances"]
 	path = mint-instances
 	url = https://github.com/mintproject/mint-instances.git
@@ -31,3 +32,6 @@
 [submodule "model-catalog-api"]
 	path = model-catalog-api
 	url = https://github.com/mintproject/model-catalog-api.git
+[submodule "model-catalog-ontology"]
+	path = model-catalog-ontology
+	url = https://github.com/mintproject/model-catalog-ontology.git
