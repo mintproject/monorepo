@@ -120,3 +120,47 @@
 |------|--------|---------|---------|--------|
 | 14:25 | Edited helm-charts/.gitignore | 3→4 lines | ~12 |
 | 14:25 | Session end: 1 writes across 1 files (.gitignore) | 1 reads | ~13 tok |
+| 14:26 | Edited .gitignore | 2→3 lines | ~15 |
+| 14:26 | Session end: 2 writes across 1 files (.gitignore) | 3 reads | ~445 tok |
+| 14:26 | Created .planning/todos/pending/2026-04-26-secure-dynamo-values-yaml-secrets.md | — | ~614 |
+| 14:27 | Edited .planning/STATE.md | 3→4 lines | ~98 |
+| 14:27 | Session end: 4 writes across 3 files (.gitignore, 2026-04-26-secure-dynamo-values-yaml-secrets.md, STATE.md) | 4 reads | ~5224 tok |
+
+## Session: 2026-04-26 14:28
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+
+## Session: 2026-04-26 14:28
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+
+## Session: 2026-04-26 14:52
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 14:54 | Edited mint-ensemble-manager/src/classes/graphql/queries/fragments/model-info.graphql | 8→9 lines | ~40 |
+| 14:54 | Edited mint-ensemble-manager/src/classes/graphql/queries/model/get-modelcatalog-configuration.graphql | 8→9 lines | ~33 |
+
+## Session: 2026-04-26 19:00
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 19:00 | Fix tapis exec error "Output file missing position" — added `position` to outputs.output GraphQL selections | model-info.graphql, get-modelcatalog-configuration.graphql | build passes | ~6k |
+| 14:57 | Edited mint-ensemble-manager/src/api/api-v1/paths/executionEngines/tapis.ts | modified catch() | ~138 |
+| 14:58 | Edited mint-ensemble-manager/src/api/api-v1/paths/executionEngines/tapis.ts | 4→5 lines | ~74 |
+| 19:05 | Add console.error to tapis route catch block (was silent on errors) | api-v1/paths/executionEngines/tapis.ts | build clean | ~3k |
+| 14:59 | Session end: 4 writes across 3 files (model-info.graphql, get-modelcatalog-configuration.graphql, tapis.ts) | 6 reads | ~8606 tok |
+| 15:00 | Session end: 4 writes across 3 files (model-info.graphql, get-modelcatalog-configuration.graphql, tapis.ts) | 6 reads | ~9026 tok |
+| 15:08 | Session end: 4 writes across 3 files (model-info.graphql, get-modelcatalog-configuration.graphql, tapis.ts) | 6 reads | ~9026 tok |
+
+## Session: 2026-04-26 15:09
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 15:14 | Edited mint-ensemble-manager/src/classes/tapis/adapters/TapisJobSubscriptionService.ts | added 1 import(s) | ~84 |
+| 15:14 | Edited mint-ensemble-manager/src/classes/tapis/adapters/TapisJobSubscriptionService.ts | added error handling | ~200 |
+| 15:14 | Edited mint-ensemble-manager/src/classes/tapis/adapters/TapisExecutionService.ts | added error handling | ~192 |
+| 19:15 | tapis exec subscribe 500 — wrap subscribe in errorDecoder + boundary logs | mint-ensemble-manager/src/classes/tapis/adapters/{TapisJobSubscriptionService.ts,TapisExecutionService.ts} | build green, 6/6 tests pass; ready to expose Tapis subscribe error body | ~9k |
+| 15:16 | Session end: 3 writes across 2 files (TapisJobSubscriptionService.ts, TapisExecutionService.ts) | 9 reads | ~7679 tok |

@@ -116,6 +116,61 @@
       "related_bugs": [],
       "occurrences": 1,
       "last_seen": "2026-04-26T18:06:28.398Z"
+    },
+    {
+      "id": "bug-008",
+      "timestamp": "2026-04-26T19:00:00.000Z",
+      "error_message": "Output file missing position: https://w3id.org/okn/i/mint/<id> — POST /v1/executionEngines/tapis throws",
+      "file": "mint-ensemble-manager/src/classes/graphql/queries/fragments/model-info.graphql, queries/model/get-modelcatalog-configuration.graphql",
+      "root_cause": "outputs.output sub-selection omitted the 'position' field while inputs.input selected it. modelIOFromCatalogGQL defaults missing position to 0 (`io.position || 0`); _getModelIODetails in ExecutionCreation.ts treats falsy position as missing (`if (!io.position) return null;`) and the caller throws 'Output file missing position'. Hasura column exists on modelcatalog_dataset_specification — the field was simply not requested.",
+      "fix": "Added `position` to the outputs.output selection set in both model-info.graphql fragment and get-modelcatalog-configuration.graphql query. Build passes (npm run build). After fix, outputs return their actual position and _getModelIODetails returns details instead of null.",
+      "tags": [
+        "graphql",
+        "hasura",
+        "ensemble-manager",
+        "tapis",
+        "execution",
+        "model-catalog",
+        "missing-field"
+      ],
+      "related_bugs": [
+        "bug-001",
+        "bug-005",
+        "bug-006"
+      ],
+      "occurrences": 1,
+      "last_seen": "2026-04-26T19:00:00.000Z"
+    },
+    {
+      "id": "bug-009",
+      "timestamp": "2026-04-26T19:05:00.000Z",
+      "error_message": "Server returned error JSON without writing anything to logs (silent failure on POST /v1/executionEngines/tapis)",
+      "file": "mint-ensemble-manager/src/api/api-v1/paths/executionEngines/tapis.ts",
+      "root_cause": "The catch block built a JSON error response but never called console.error / logger, so failures were invisible in stdout/pod logs.",
+      "fix": "Added console.error in both branches (HttpError vs unknown). Also narrowed the unknown error type before reading .message to satisfy TS strict mode.",
+      "tags": [
+        "logging",
+        "express",
+        "ensemble-manager",
+        "observability"
+      ],
+      "related_bugs": [
+        "bug-008"
+      ],
+      "occurrences": 1,
+      "last_seen": "2026-04-26T19:05:00.000Z"
+    },
+    {
+      "id": "bug-010",
+      "timestamp": "2026-04-26T19:15:00.000Z",
+      "error_message": "Error submitting single execution: [object Response] / status 500 on POST /v1/executionEngines/tapis (Tapis job UUID returned, then opaque 500)",
+      "file": "mint-ensemble-manager/src/classes/tapis/adapters/TapisJobSubscriptionService.ts, mint-ensemble-manager/src/classes/tapis/adapters/TapisExecutionService.ts",
+      "root_cause": "After submitJob succeeded (UUID logged), submitSingleExecution called subscriptionsClient.subscribe directly without errorDecoder. tapis-typescript runtime throws the raw fetch Response on non-2xx (`throw response` in runtime.ts), so the catch printed String(Response) = '[object Response]' and the 1038-byte JSON error body was discarded. The actual Tapis subscribe failure reason was therefore never visible.",
+      "fix": "Wrapped subscriptionsClient.subscribe(...) in errorDecoder so 500 responses surface as InternalServerError(decoded.message). Added a console.log before subscribe (jobUuid + delivery target URL) and a console.error inside the catch with the decoded message. Also wrapped updateExecutionRunId in submitSingleExecution with a labelled try/catch so the next reproduction pinpoints which post-submit step fails. Build green, tapis adapter tests 6/6 pass.",
+      "tags": ["tapis", "ensemble-manager", "subscribe", "error-decoding", "observability", "500"],
+      "related_bugs": ["bug-009"],
+      "occurrences": 1,
+      "last_seen": "2026-04-26T19:15:00.000Z"
     }
   ]
 }
