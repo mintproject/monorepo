@@ -8,12 +8,6 @@
 	path = mint-ensemble-manager
 	url = https://github.com/mintproject/mint-ensemble-manager.git
 	branch = model-catalog-migration
-[submodule "model-catalog-endpoint"]
-	path = model-catalog-endpoint
-	url = https://github.com/mintproject/model-catalog-endpoint.git
-[submodule "model-catalog-fastapi"]
-	path = model-catalog-fastapi
-	url = https://github.com/mintproject/model-catalog-fastapi.git
 [submodule "model-catalog-fetch-api-client"]
 	path = model-catalog-fetch-api-client
 	url = https://github.com/mintproject/model-catalog-fetch-api-client.git
