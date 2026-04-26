@@ -721,6 +721,30 @@ def transform_all(extracted_data: Dict[str, Any]) -> Dict[str, List[Dict[str, An
     valid_standard_variable_ids = {e['id'] for e in standard_variables}
     valid_unit_ids = {e['id'] for e in units}
 
+    # Null out variable_presentation FKs that reference missing entities.
+    # TriG sometimes carries sentinel URIs (e.g. .../mint/n/a) on sd:usesUnit /
+    # sd:hasStandardVariable that are never typed as Unit/StandardVariable, so the
+    # referenced row is never extracted and the FK insert blows up with
+    # ForeignKeyViolation on modelcatalog_variable_presentation. Coerce dangling
+    # references to NULL — the column is already nullable and FKs are ON DELETE SET NULL.
+    vp_unit_dropped = 0
+    vp_sv_dropped = 0
+    for vp in extracted_data['variable_presentations']:
+        unit_id = vp.get('uses_unit')
+        if unit_id and unit_id not in valid_unit_ids:
+            vp['uses_unit'] = None
+            vp_unit_dropped += 1
+        sv_id = vp.get('has_standard_variable')
+        if sv_id and sv_id not in valid_standard_variable_ids:
+            vp['has_standard_variable'] = None
+            vp_sv_dropped += 1
+    if vp_unit_dropped:
+        print(f"WARNING: nulled {vp_unit_dropped} variable_presentation.uses_unit "
+              f"references with no matching Unit row")
+    if vp_sv_dropped:
+        print(f"WARNING: nulled {vp_sv_dropped} variable_presentation.has_standard_variable "
+              f"references with no matching StandardVariable row")
+
     # Invert FK relationships
     transformed = invert_fk_relationships(extracted_data)
 
