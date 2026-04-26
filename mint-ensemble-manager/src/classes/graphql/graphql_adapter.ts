@@ -611,7 +611,7 @@ export const executionFromGQL = (ex: any, emulator = false): Execution => {
         results: {}
     } as Execution;
     ex.parameter_bindings.forEach((param: any) => {
-        exobj.bindings[emulator ? param.modelcatalog_parameter.name : param.model_parameter_id] =
+        exobj.bindings[emulator ? param.modelcatalog_parameter.label : param.model_parameter_id] =
             param.parameter_value;
     });
     ex.data_bindings.forEach((data: any) => {

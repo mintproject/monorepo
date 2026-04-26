@@ -55,7 +55,7 @@ query model_executions($modelTypes: [String!], $regionId: String!) {
         parameter_bindings_aggregate {
           nodes {
             modelcatalog_parameter {
-              name
+              label
             }
             parameter_value
           }

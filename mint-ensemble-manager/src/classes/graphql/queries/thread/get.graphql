@@ -57,7 +57,7 @@ query query_thread($id: String!) {
             parameter_bindings {
                 modelcatalog_parameter {
                     id
-                    name
+                    label
                 }
                 parameter_value
             }
