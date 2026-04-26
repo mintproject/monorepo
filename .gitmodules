@@ -14,9 +14,6 @@
 [submodule "ui"]
 	path = ui
 	url = https://github.com/mintproject/mint-ui-lit.git
-[submodule "wifire-k8s"]
-	path = wifire-k8s
-	url = https://github.com/mintproject/wifire-k8s.git
 [submodule "helm-charts"]
 	path = helm-charts
 	url = https://github.com/mintproject/mint.git
