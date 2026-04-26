@@ -13,7 +13,6 @@ import {
     ProblemStatementEvent,
     TaskEvent
 } from "@/classes/mint/mint-types";
-import { fetchModelFromCatalog } from "@/classes/mint/model-catalog-functions";
 import { queryDatasetDetails } from "@/classes/mint/data-catalog-functions";
 import {
     addProblemStatement,
@@ -31,8 +30,9 @@ import {
 } from "@/classes/graphql/graphql_functions";
 import { getCreateEvent, uuidv4 } from "@/classes/graphql/graphql_adapter";
 import { fetchMintConfig } from "@/classes/mint/mint-functions";
-import { ModelConfigurationSetup } from "@mintproject/modelcatalog_client";
 import { KeycloakAdapter } from "@/config/keycloak-adapter";
+import { GraphQL } from "@/config/graphql";
+import getModelcatalogConfigurationGQL from "@/classes/graphql/queries/model/get-modelcatalog-configuration.graphql";
 import { createResponse } from "./util";
 
 // ./api-v1/services/threadsService.js
@@ -129,13 +129,25 @@ const threadsService: ThreadsService = {
         /*
         Set Thread Model
         */
-        const model: ModelConfigurationSetup = await fetchModelFromCatalog(
-            task.response_variables,
-            [],
-            desc.thread.modelid,
-            mint_prefs
+        const W3_ID_URI_PREFIX = "https://w3id.org/okn/i/mint/";
+        const modelW3Id = desc.thread.modelid.startsWith("https://w3id.org/")
+            ? desc.thread.modelid
+            : W3_ID_URI_PREFIX + desc.thread.modelid;
+        const apolloClient = GraphQL.instanceUsingAccessToken(
+            KeycloakAdapter.getAccessToken ? KeycloakAdapter.getAccessToken() : ""
         );
-        await setThreadModels([model], "Added models", thread);
+        const setupResult = await apolloClient.query({
+            query: getModelcatalogConfigurationGQL,
+            variables: { id: modelW3Id },
+            fetchPolicy: "no-cache"
+        });
+        const catalogSetup = setupResult.data?.modelcatalog_configuration_by_pk;
+        if (!catalogSetup) {
+            throw new Error(`Model configuration setup not found for id: ${modelW3Id}`);
+        }
+        const model = catalogSetup;
+        // Create thread_model row directly with modelcatalog_configuration_id FK
+        await setThreadModels([{ id: modelW3Id }], "Added models", thread);
 
         thread = await getThread(thread.id);
 
@@ -146,47 +158,42 @@ const threadsService: ThreadsService = {
         const model_ensembles = thread.model_ensembles;
 
         // Fetch dataset details from the Data Catalog
-        for (var i = 0; i < model.hasInput.length; i++) {
-            const input_file = model.hasInput[i];
-            if (!input_file.hasFixedResource || input_file.hasFixedResource.length == 0) {
-                // Only bind model inputs that don't have a fixed value defined
-                let datasetids = thread_desc.datasets[input_file.label[0]];
-                if (datasetids) {
-                    model_ensembles[model.id].bindings[input_file.id] = [];
+        // model.inputs is the new GraphQL shape: [{input: {id, label, ...}}]
+        const modelInputs = (model.inputs || []).map((row: any) => row.input);
+        for (var i = 0; i < modelInputs.length; i++) {
+            const input_file = modelInputs[i];
+            // New shape uses flat fields; no hasFixedResource in new schema so treat all as non-fixed
+            let datasetids = thread_desc.datasets[input_file.label];
+            if (datasetids) {
+                model_ensembles[modelW3Id].bindings[input_file.id] = [];
 
-                    if (!(datasetids instanceof Array)) datasetids = [datasetids];
-                    for (let j = 0; j < datasetids.length; j++) {
-                        const dsid = datasetids[j];
-                        const variables_arr = input_file.hasPresentation.map((pres) => {
-                            if (pres.hasStandardVariable)
-                                return pres.hasStandardVariable.map((sv) => sv.label);
-                        });
-                        let variables = flatten(variables_arr);
-                        variables = variables.filter((v) => v);
-                        const dataset: Dataset = await queryDatasetDetails(
-                            model.id,
-                            input_file.id,
-                            variables,
-                            dsid,
-                            thread.dates,
-                            region,
-                            mint_prefs
-                        );
-                        const sliceid = uuidv4();
-                        const dataslice = {
-                            id: sliceid,
-                            total_resources: dataset.resources.length,
-                            selected_resources: dataset.resources.filter((res) => res.selected)
-                                .length,
-                            resources: dataset.resources,
-                            time_period: thread.dates,
-                            name: dataset.name,
-                            dataset: dataset,
-                            resources_loaded: dataset.resources_loaded
-                        } as Dataslice;
-                        data[sliceid] = dataslice;
-                        model_ensembles[model.id].bindings[input_file.id].push(sliceid!);
-                    }
+                if (!(datasetids instanceof Array)) datasetids = [datasetids];
+                for (let j = 0; j < datasetids.length; j++) {
+                    const dsid = datasetids[j];
+                    // No hasPresentation in new shape; pass empty variables array
+                    const variables: string[] = [];
+                    const dataset: Dataset = await queryDatasetDetails(
+                        modelW3Id,
+                        input_file.id,
+                        variables,
+                        dsid,
+                        thread.dates,
+                        region,
+                        mint_prefs
+                    );
+                    const sliceid = uuidv4();
+                    const dataslice = {
+                        id: sliceid,
+                        total_resources: dataset.resources.length,
+                        selected_resources: dataset.resources.filter((res) => res.selected).length,
+                        resources: dataset.resources,
+                        time_period: thread.dates,
+                        name: dataset.name,
+                        dataset: dataset,
+                        resources_loaded: dataset.resources_loaded
+                    } as Dataslice;
+                    data[sliceid] = dataslice;
+                    model_ensembles[modelW3Id].bindings[input_file.id].push(sliceid!);
                 }
             }
         }
@@ -195,22 +202,33 @@ const threadsService: ThreadsService = {
 
         // Set Thread Parameters
         const execution_summary: IdMap<ExecutionSummary> = {};
-        for (var i = 0; i < model.hasParameter.length; i++) {
-            const input_parameter = model.hasParameter[i];
-            if (!input_parameter.hasFixedValue || input_parameter.hasFixedValue.length == 0) {
-                let value = thread_desc.parameters[input_parameter.label[0]];
-                if (!value) value = input_parameter.hasDefaultValue[0];
+        // model.parameters is the new GraphQL shape: [{parameter: {id, label, has_fixed_value, has_default_value, ...}}]
+        const modelParameters = (model.parameters || []).map((row: any) => row.parameter);
+        for (var i = 0; i < modelParameters.length; i++) {
+            const input_parameter = modelParameters[i];
+            // New shape uses flat scalar fields (not array-wrapped)
+            if (!input_parameter.has_fixed_value) {
+                let value = thread_desc.parameters[input_parameter.label];
+                if (!value) value = input_parameter.has_default_value;
                 if (!(value instanceof Array)) value = [value];
-                model_ensembles[model.id].bindings[input_parameter.id] = value;
+                model_ensembles[modelW3Id].bindings[input_parameter.id] = value;
             }
         }
-        // Get total number of configs to run
+        // Get total number of configs to run using a compatible shape
+        const modelForConfigs = {
+            id: modelW3Id,
+            hasInput: modelInputs.map((inp: any) => ({ id: inp.id, hasFixedResource: [] })),
+            hasParameter: modelParameters.map((p: any) => ({
+                id: p.id,
+                hasFixedValue: p.has_fixed_value ? [p.has_fixed_value] : []
+            }))
+        };
         const totalconfigs = getTotalConfigurations(
-            model,
-            model_ensembles[model.id].bindings,
+            modelForConfigs,
+            model_ensembles[modelW3Id].bindings,
             data
         );
-        execution_summary[model.id] = {
+        execution_summary[modelW3Id] = {
             total_runs: totalconfigs,
             submitted_runs: 0,
             failed_runs: 0,

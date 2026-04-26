@@ -2,16 +2,25 @@ import useModelParameterService from "./useModelParameterService";
 import { BadRequestError, NotFoundError } from "@/classes/common/errors";
 import { AddParametersRequest } from "../../paths/problemStatements/tasks/subtasks";
 import { Thread } from "@/classes/mint/mint-types";
-import {
-    fetchCustomModelConfigurationOrSetup,
-    convertApiUrlToW3Id
-} from "@/classes/mint/model-catalog-functions";
-import { ModelConfigurationSetup, Parameter } from "@mintproject/modelcatalog_client/dist";
+import { convertApiUrlToW3Id } from "@/classes/mint/model-catalog-graphql-adapter";
+import { GraphQL } from "@/config/graphql";
+import { KeycloakAdapter } from "@/config/keycloak-adapter";
 
 // Mocks
-jest.mock("@/classes/mint/model-catalog-functions", () => ({
-    fetchCustomModelConfigurationOrSetup: jest.fn(),
+jest.mock("@/classes/mint/model-catalog-graphql-adapter", () => ({
+    ...jest.requireActual("@/classes/mint/model-catalog-graphql-adapter"),
     convertApiUrlToW3Id: jest.fn()
+}));
+jest.mock("@/config/graphql", () => ({
+    GraphQL: {
+        instanceUsingAccessToken: jest.fn(),
+        instance: jest.fn()
+    }
+}));
+jest.mock("@/config/keycloak-adapter", () => ({
+    KeycloakAdapter: {
+        getUser: jest.fn()
+    }
 }));
 
 // Fixtures
@@ -90,83 +99,98 @@ const subtask: Thread = {
 
 const modelW3Id = "https://w3id.org/okn/i/mint/c07a6f98-6339-4033-84b0-6cd7daca6284";
 
+// GraphQL response shape: parameters = [{parameter: {id, has_fixed_value, ...}}]
+const mockCatalogSetup = {
+    id: bindingRequest.model_id,
+    parameters: [
+        { parameter: { id: "https://w3id.org/okn/i/mint/parameter1", has_fixed_value: null } },
+        { parameter: { id: "https://w3id.org/okn/i/mint/parameter2", has_fixed_value: null } }
+    ]
+};
+
+const mockCatalogSetupWithFixed = {
+    id: bindingRequest.model_id,
+    parameters: [
+        { parameter: { id: "https://w3id.org/okn/i/mint/parameter1", has_fixed_value: null } },
+        { parameter: { id: "https://w3id.org/okn/i/mint/parameter2", has_fixed_value: null } },
+        { parameter: { id: "https://w3id.org/okn/i/mint/parameter3", has_fixed_value: "fixed-value" } }
+    ]
+};
+
+const mockApolloClient = {
+    query: jest.fn()
+};
+
 describe("useModelParameterService", () => {
     beforeEach(() => {
         jest.clearAllMocks();
         (convertApiUrlToW3Id as jest.Mock).mockReturnValue(modelW3Id);
+        (GraphQL.instance as jest.Mock).mockReturnValue(mockApolloClient);
+        (GraphQL.instanceUsingAccessToken as jest.Mock).mockReturnValue(mockApolloClient);
+        (KeycloakAdapter.getUser as jest.Mock).mockReturnValue({ email: "test@test.com", uid: "1", region: "", graph: "" });
     });
 
     it("should check if parameter has fixed value", () => {
-        const parameterWithFixed = { id: "test", hasFixedValue: ["fixed-value"] } as Parameter;
-        const parameterWithoutFixed = { id: "test", hasFixedValue: [] } as Parameter;
+        const parameterWithFixed = { id: "test", has_fixed_value: "fixed-value" };
+        const parameterWithoutFixed = { id: "test", has_fixed_value: null };
 
         expect(useModelParameterService.hasParameterHasFixedValue(parameterWithFixed)).toBe(true);
-        expect(useModelParameterService.hasParameterHasFixedValue(parameterWithoutFixed)).toBe(
-            false
-        );
+        expect(useModelParameterService.hasParameterHasFixedValue(parameterWithoutFixed)).toBe(false);
     });
 
     it("should get model parameters excluding fixed values", async () => {
-        const modelConfigSetup = {
+        // ModelWithParameters shape (produced by catalogModelToModelWithParameters)
+        const modelWithParams = {
             id: bindingRequest.model_id,
             hasParameter: [
-                { id: "https://w3id.org/okn/i/mint/parameter1", hasFixedValue: [] },
-                { id: "https://w3id.org/okn/i/mint/parameter2", hasFixedValue: [] },
-                { id: "https://w3id.org/okn/i/mint/parameter3", hasFixedValue: ["fixed-value"] }
+                { id: "https://w3id.org/okn/i/mint/parameter1", has_fixed_value: null },
+                { id: "https://w3id.org/okn/i/mint/parameter2", has_fixed_value: null },
+                { id: "https://w3id.org/okn/i/mint/parameter3", has_fixed_value: "fixed-value" }
             ]
-        } as ModelConfigurationSetup;
+        };
 
-        const parameters = await useModelParameterService.getModelParameters(modelConfigSetup);
+        const parameters = await useModelParameterService.getModelParameters(modelWithParams);
         expect(parameters).toHaveLength(2);
-        expect(parameters.map((p: Parameter) => p.id)).toEqual([
+        expect(parameters.map((p) => p.id)).toEqual([
             "https://w3id.org/okn/i/mint/parameter1",
             "https://w3id.org/okn/i/mint/parameter2"
         ]);
     });
 
     it("should get model parameters by model id", async () => {
-        const modelConfigSetup = {
-            id: bindingRequest.model_id,
-            hasParameter: [
-                { id: "https://w3id.org/okn/i/mint/parameter1", hasFixedValue: [] },
-                { id: "https://w3id.org/okn/i/mint/parameter2", hasFixedValue: [] }
-            ]
-        } as ModelConfigurationSetup;
-
-        (fetchCustomModelConfigurationOrSetup as jest.Mock).mockResolvedValue(modelConfigSetup);
+        mockApolloClient.query
+            .mockResolvedValueOnce({ data: { modelcatalog_configuration_by_pk: mockCatalogSetup } });
 
         const parameters = await useModelParameterService.getModelParametersByModelId(
             bindingRequest.model_id
         );
         expect(parameters).toHaveLength(2);
-        expect(parameters.map((p: Parameter) => p.id)).toEqual([
+        expect(parameters.map((p) => p.id)).toEqual([
             "https://w3id.org/okn/i/mint/parameter1",
             "https://w3id.org/okn/i/mint/parameter2"
         ]);
     });
 
     it("should throw NotFoundError when model is not found", async () => {
-        (fetchCustomModelConfigurationOrSetup as jest.Mock).mockResolvedValue(null);
+        mockApolloClient.query
+            .mockResolvedValueOnce({ data: { modelcatalog_configuration_by_pk: null } });
+
         await expect(
             useModelParameterService.getModelParametersByModelId("invalid-id")
         ).rejects.toThrow(NotFoundError);
     });
 
     it("should match parameters correctly", async () => {
-        const modelConfigSetup = {
+        const modelWithParams = {
             id: bindingRequest.model_id,
             hasParameter: [
-                { id: "https://w3id.org/okn/i/mint/parameter1", hasFixedValue: [] },
-                { id: "https://w3id.org/okn/i/mint/parameter2", hasFixedValue: [] }
+                { id: "https://w3id.org/okn/i/mint/parameter1", has_fixed_value: null },
+                { id: "https://w3id.org/okn/i/mint/parameter2", has_fixed_value: null }
             ]
-        } as ModelConfigurationSetup;
+        };
 
         const subtaskCopy = JSON.parse(JSON.stringify(subtask));
-        await useModelParameterService.matchParameters(
-            modelConfigSetup,
-            bindingRequest,
-            subtaskCopy
-        );
+        await useModelParameterService.matchParameters(modelWithParams, bindingRequest, subtaskCopy);
 
         expect(
             subtaskCopy.model_ensembles[modelW3Id].bindings[
@@ -185,31 +209,24 @@ describe("useModelParameterService", () => {
             ...bindingRequest,
             parameters: bindingRequest.parameters.slice(0, 1) // Remove the second parameter
         };
-        const modelConfigSetup = {
+        const modelWithParams = {
             id: bindingRequest.model_id,
             hasParameter: [
-                { id: "https://w3id.org/okn/i/mint/parameter1", hasFixedValue: [] },
-                { id: "https://w3id.org/okn/i/mint/parameter2", hasFixedValue: [] }
+                { id: "https://w3id.org/okn/i/mint/parameter1", has_fixed_value: null },
+                { id: "https://w3id.org/okn/i/mint/parameter2", has_fixed_value: null }
             ]
-        } as ModelConfigurationSetup;
+        };
 
         const subtaskCopy = JSON.parse(JSON.stringify(subtask));
 
         await expect(
-            useModelParameterService.matchParameters(modelConfigSetup, incompleteData, subtaskCopy)
+            useModelParameterService.matchParameters(modelWithParams, incompleteData, subtaskCopy)
         ).rejects.toThrow(BadRequestError);
     });
 
     it("should set parameter bindings successfully", async () => {
-        const modelConfigSetup = {
-            id: bindingRequest.model_id,
-            hasParameter: [
-                { id: "https://w3id.org/okn/i/mint/parameter1", hasFixedValue: [] },
-                { id: "https://w3id.org/okn/i/mint/parameter2", hasFixedValue: [] }
-            ]
-        } as ModelConfigurationSetup;
-
-        (fetchCustomModelConfigurationOrSetup as jest.Mock).mockResolvedValue(modelConfigSetup);
+        mockApolloClient.query
+            .mockResolvedValueOnce({ data: { modelcatalog_configuration_by_pk: mockCatalogSetup } });
 
         const subtaskCopy = JSON.parse(JSON.stringify(subtask));
         await useModelParameterService.setParameterBindings(bindingRequest, subtaskCopy);

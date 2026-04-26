@@ -29,7 +29,7 @@ query query_thread($id: String!) {
         thread_models {
             id
             thread_id
-            model_id
+            modelcatalog_configuration_id
             executions {
                 execution {
                     id
@@ -43,7 +43,7 @@ query query_thread($id: String!) {
             execution_summary {
                 ...execution_summary_info
             }
-            model {
+            modelcatalog_configuration {
                 ...model_info
             }
             data_bindings {
@@ -55,9 +55,9 @@ query query_thread($id: String!) {
                 dataslice_id
             }
             parameter_bindings {
-                model_parameter {
+                modelcatalog_parameter {
                     id
-                    name
+                    label
                 }
                 parameter_value
             }

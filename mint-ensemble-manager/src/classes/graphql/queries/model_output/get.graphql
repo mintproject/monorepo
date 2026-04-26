@@ -1,18 +1,12 @@
 query query_model_output_by_model_id($id: String!) {
-    model_by_pk(id: $id) {
+    modelcatalog_configuration_by_pk(id: $id) {
         id
         outputs {
-            position
-            model_io {
+            output {
                 id
-                name
-                type
-                format
-                variables {
-                    variable {
-                        id
-                    }
-                }
+                label
+                has_format
+                description
             }
         }
     }

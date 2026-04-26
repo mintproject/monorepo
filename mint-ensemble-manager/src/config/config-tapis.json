@@ -1,6 +1,5 @@
 {
     "data_catalog_api": "http://datacatalog.mint.local",
-    "model_catalog_api": "http://api.models.mint.local/v1.8.0",
     "ensemble_manager_api": "http://localhost:3000/v1",
     "graphql": {
         "endpoint": "graphql.mint.local/v1/graphql",

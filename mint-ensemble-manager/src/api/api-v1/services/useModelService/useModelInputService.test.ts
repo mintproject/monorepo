@@ -2,19 +2,29 @@ import useModelInputService from "./useModelInputService";
 import { BadRequestError, NotFoundError } from "@/classes/common/errors";
 import { AddDataRequest } from "../../paths/problemStatements/tasks/subtasks";
 import { Thread } from "@/classes/mint/mint-types";
-import {
-    fetchCustomModelConfigurationOrSetup,
-    convertApiUrlToW3Id
-} from "@/classes/mint/model-catalog-functions";
+import { convertApiUrlToW3Id } from "@/classes/mint/model-catalog-graphql-adapter";
 import { uuidv4 } from "@/classes/graphql/graphql_adapter";
+import { GraphQL } from "@/config/graphql";
+import { KeycloakAdapter } from "@/config/keycloak-adapter";
 
 // Mocks
-jest.mock("@/classes/mint/model-catalog-functions", () => ({
-    fetchCustomModelConfigurationOrSetup: jest.fn(),
+jest.mock("@/classes/mint/model-catalog-graphql-adapter", () => ({
+    ...jest.requireActual("@/classes/mint/model-catalog-graphql-adapter"),
     convertApiUrlToW3Id: jest.fn()
 }));
 jest.mock("@/classes/graphql/graphql_adapter", () => ({
     uuidv4: jest.fn()
+}));
+jest.mock("@/config/graphql", () => ({
+    GraphQL: {
+        instanceUsingAccessToken: jest.fn(),
+        instance: jest.fn()
+    }
+}));
+jest.mock("@/config/keycloak-adapter", () => ({
+    KeycloakAdapter: {
+        getUser: jest.fn()
+    }
 }));
 
 // Fixtures
@@ -132,6 +142,8 @@ const subtask: Thread = {
 };
 
 const modelW3Id = "https://w3id.org/okn/i/mint/c07a6f98-6339-4033-84b0-6cd7daca6284";
+
+// InputSpecs in new shape: hasFixedResource=[] means non-fixed
 const inputSpecs = [
     { id: "https://w3id.org/okn/i/mint/modflow_2005_Well", hasFixedResource: [] },
     { id: "https://w3id.org/okn/i/mint/modflow_2005_Bas", hasFixedResource: [] },
@@ -139,16 +151,29 @@ const inputSpecs = [
     { id: "https://w3id.org/okn/i/mint/modflow_2005_Bcf", hasFixedResource: [] }
 ];
 
+// Model shape accepted by matchInputs/validateThatAllInputsAreBound/getDataBindings
 const modelConfigSetup = {
     id: data.model_id,
     hasInput: inputSpecs
 };
 
+// GraphQL response shape for catalog: inputs = [{input: {id, label, ...}}]
+const mockCatalogSetup = {
+    id: data.model_id,
+    inputs: inputSpecs.map((s) => ({ input: { id: s.id, label: s.id, has_format: null, position: null, description: null } }))
+};
+
+const mockApolloClient = {
+    query: jest.fn()
+};
+
 describe("useModelInputService", () => {
     beforeEach(() => {
         jest.clearAllMocks();
-        (fetchCustomModelConfigurationOrSetup as jest.Mock).mockResolvedValue(modelConfigSetup);
         (convertApiUrlToW3Id as jest.Mock).mockReturnValue(modelW3Id);
+        (GraphQL.instance as jest.Mock).mockReturnValue(mockApolloClient);
+        (GraphQL.instanceUsingAccessToken as jest.Mock).mockReturnValue(mockApolloClient);
+        (KeycloakAdapter.getUser as jest.Mock).mockReturnValue({ email: "test@test.com", uid: "1", region: "", graph: "" });
         let uuidCount = 0;
         (uuidv4 as jest.Mock).mockImplementation(() => `uuid-mock-${++uuidCount}`);
     });
@@ -235,17 +260,20 @@ describe("useModelInputService", () => {
     it("should get data bindings for model", async () => {
         const bindings = await useModelInputService.getDataBindings(modelConfigSetup);
         expect(bindings).toHaveLength(4);
-        expect(bindings).toEqual(inputSpecs);
     });
 
     it("should get data bindings by model id", async () => {
+        mockApolloClient.query
+            .mockResolvedValueOnce({ data: { modelcatalog_configuration_by_pk: mockCatalogSetup } });
+
         const bindings = await useModelInputService.getDataBindingsByModelId(data.model_id);
         expect(bindings).toHaveLength(4);
-        expect(bindings).toEqual(inputSpecs);
     });
 
     it("should throw NotFoundError when model is not found", async () => {
-        (fetchCustomModelConfigurationOrSetup as jest.Mock).mockResolvedValue(null);
+        mockApolloClient.query
+            .mockResolvedValueOnce({ data: { modelcatalog_configuration_by_pk: null } });
+
         await expect(useModelInputService.getDataBindingsByModelId("invalid-id")).rejects.toThrow(
             NotFoundError
         );

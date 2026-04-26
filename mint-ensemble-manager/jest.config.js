@@ -7,6 +7,7 @@
 const config = {
     coverageProvider: "v8",
     testRegex: [".*\\.test\\.ts$"],
+    testPathIgnorePatterns: ["\\.integration\\.test\\.ts$"],
     transform: {
         "\\.(gql|graphql)$": "@graphql-tools/jest-transform",
         ".*": "babel-jest"
