@@ -150,7 +150,7 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
-None.
+- [config] Centralize execution config in ensemble-manager, UI fetches via API — `.planning/todos/pending/2026-04-26-centralize-execution-config-in-ensemble-manager-ui-fetches-v.md`
 
 ### Blockers/Concerns
 
