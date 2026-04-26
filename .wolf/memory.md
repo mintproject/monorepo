@@ -103,3 +103,20 @@
 |------|--------|---------|---------|--------|
 | 14:15 | Created .gitmodules | — | ~347 |
 | 14:15 | Session end: 1 writes across 1 files (.gitmodules) | 3 reads | ~904 tok |
+| 14:16 | Session end: 1 writes across 1 files (.gitmodules) | 3 reads | ~904 tok |
+
+## Session: 2026-04-26 14:17
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 14:18 | Edited .gitignore | 1→2 lines | ~8 |
+| 14:18 | Session end: 1 writes across 1 files (.gitignore) | 1 reads | ~191 tok |
+| 14:18 | Session end: 1 writes across 1 files (.gitignore) | 1 reads | ~191 tok |
+| 14:23 | Session end: 1 writes across 1 files (.gitignore) | 1 reads | ~191 tok |
+
+## Session: 2026-04-26 14:25
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 14:25 | Edited helm-charts/.gitignore | 3→4 lines | ~12 |
+| 14:25 | Session end: 1 writes across 1 files (.gitignore) | 1 reads | ~13 tok |

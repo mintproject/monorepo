@@ -1,7 +1,7 @@
 # anatomy.md
 
-> Auto-maintained by OpenWolf. Last scanned: 2026-04-26T18:15:12.974Z
-> Files: 516 tracked | Anatomy hits: 0 | Misses: 0
+> Auto-maintained by OpenWolf. Last scanned: 2026-04-26T18:25:09.246Z
+> Files: 517 tracked | Anatomy hits: 0 | Misses: 0
 
 ## ../../.claude/
 
@@ -10,7 +10,7 @@
 ## ./
 
 - `.DS_Store` (~2731 tok)
-- `.gitignore` — Git ignore rules (~183 tok)
+- `.gitignore` — Git ignore rules (~188 tok)
 - `.gitmodules` (~347 tok)
 - `CLAUDE.md` — OpenWolf (~1158 tok)
 - `README.md` — Project documentation (~1310 tok)
@@ -846,6 +846,7 @@
 
 ## helm-charts/
 
+- `.gitignore` — Git ignore rules (~175 tok)
 - `dynamo-values.yaml` (~418 tok)
 
 ## mint-ensemble-manager/src/classes/graphql/

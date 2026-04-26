@@ -2,14 +2,14 @@
   "version": 1,
   "created_at": "2026-04-12T21:31:41.062Z",
   "lifetime": {
-    "total_tokens_estimated": 91525,
-    "total_reads": 116,
-    "total_writes": 46,
-    "total_sessions": 13,
-    "anatomy_hits": 33,
-    "anatomy_misses": 79,
-    "repeated_reads_blocked": 71,
-    "estimated_savings_vs_bare_cli": 102510
+    "total_tokens_estimated": 93015,
+    "total_reads": 123,
+    "total_writes": 51,
+    "total_sessions": 15,
+    "anatomy_hits": 38,
+    "anatomy_misses": 81,
+    "repeated_reads_blocked": 73,
+    "estimated_savings_vs_bare_cli": 103510
   },
   "sessions": [
     {
@@ -1188,6 +1188,158 @@
         "writes_count": 1,
         "repeated_reads_blocked": 2,
         "anatomy_lookups": 2
+      }
+    },
+    {
+      "id": "session-2026-04-26-1411",
+      "started": "2026-04-26T18:11:05.248Z",
+      "ended": "2026-04-26T18:16:54.013Z",
+      "reads": [
+        {
+          "file": "/Users/mosorio/repos/mint/graphql_engine/metadata/tables.yaml",
+          "tokens_estimated": 0,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/classes/graphql/queries/emulator/thread-executions.graphql",
+          "tokens_estimated": 194,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/.gitmodules",
+          "tokens_estimated": 338,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        }
+      ],
+      "writes": [
+        {
+          "file": "/Users/mosorio/repos/mint/.gitmodules",
+          "tokens_estimated": 372,
+          "action": "create"
+        }
+      ],
+      "totals": {
+        "input_tokens_estimated": 532,
+        "output_tokens_estimated": 372,
+        "reads_count": 3,
+        "writes_count": 1,
+        "repeated_reads_blocked": 2,
+        "anatomy_lookups": 2
+      }
+    },
+    {
+      "id": "session-2026-04-26-1417",
+      "started": "2026-04-26T18:17:37.992Z",
+      "ended": "2026-04-26T18:18:17.764Z",
+      "reads": [
+        {
+          "file": "/Users/mosorio/repos/mint/.gitignore",
+          "tokens_estimated": 183,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        }
+      ],
+      "writes": [
+        {
+          "file": "/Users/mosorio/repos/mint/.gitignore",
+          "tokens_estimated": 8,
+          "action": "edit"
+        }
+      ],
+      "totals": {
+        "input_tokens_estimated": 183,
+        "output_tokens_estimated": 8,
+        "reads_count": 1,
+        "writes_count": 1,
+        "repeated_reads_blocked": 0,
+        "anatomy_lookups": 1
+      }
+    },
+    {
+      "id": "session-2026-04-26-1417",
+      "started": "2026-04-26T18:17:37.992Z",
+      "ended": "2026-04-26T18:18:18.568Z",
+      "reads": [
+        {
+          "file": "/Users/mosorio/repos/mint/.gitignore",
+          "tokens_estimated": 183,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        }
+      ],
+      "writes": [
+        {
+          "file": "/Users/mosorio/repos/mint/.gitignore",
+          "tokens_estimated": 8,
+          "action": "edit"
+        }
+      ],
+      "totals": {
+        "input_tokens_estimated": 183,
+        "output_tokens_estimated": 8,
+        "reads_count": 1,
+        "writes_count": 1,
+        "repeated_reads_blocked": 0,
+        "anatomy_lookups": 1
+      }
+    },
+    {
+      "id": "session-2026-04-26-1417",
+      "started": "2026-04-26T18:17:37.992Z",
+      "ended": "2026-04-26T18:23:26.502Z",
+      "reads": [
+        {
+          "file": "/Users/mosorio/repos/mint/.gitignore",
+          "tokens_estimated": 183,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        }
+      ],
+      "writes": [
+        {
+          "file": "/Users/mosorio/repos/mint/.gitignore",
+          "tokens_estimated": 8,
+          "action": "edit"
+        }
+      ],
+      "totals": {
+        "input_tokens_estimated": 183,
+        "output_tokens_estimated": 8,
+        "reads_count": 1,
+        "writes_count": 1,
+        "repeated_reads_blocked": 0,
+        "anatomy_lookups": 1
+      }
+    },
+    {
+      "id": "session-2026-04-26-1425",
+      "started": "2026-04-26T18:25:07.149Z",
+      "ended": "2026-04-26T18:25:28.629Z",
+      "reads": [
+        {
+          "file": "/Users/mosorio/.claude/get-shit-done/workflows/add-todo.md",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        }
+      ],
+      "writes": [
+        {
+          "file": "/Users/mosorio/repos/mint/helm-charts/.gitignore",
+          "tokens_estimated": 13,
+          "action": "edit"
+        }
+      ],
+      "totals": {
+        "input_tokens_estimated": 0,
+        "output_tokens_estimated": 13,
+        "reads_count": 1,
+        "writes_count": 1,
+        "repeated_reads_blocked": 0,
+        "anatomy_lookups": 0
       }
     }
   ],
