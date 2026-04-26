@@ -2,14 +2,14 @@
   "version": 1,
   "created_at": "2026-04-12T21:31:41.062Z",
   "lifetime": {
-    "total_tokens_estimated": 832782,
-    "total_reads": 514,
-    "total_writes": 294,
+    "total_tokens_estimated": 833149,
+    "total_reads": 515,
+    "total_writes": 295,
     "total_sessions": 44,
-    "anatomy_hits": 164,
+    "anatomy_hits": 165,
     "anatomy_misses": 346,
     "repeated_reads_blocked": 220,
-    "estimated_savings_vs_bare_cli": 344279
+    "estimated_savings_vs_bare_cli": 344479
   },
   "sessions": [
     {
@@ -6008,6 +6008,34 @@
         "writes_count": 9,
         "repeated_reads_blocked": 0,
         "anatomy_lookups": 7
+      }
+    },
+    {
+      "id": "session-2026-04-26-1937",
+      "started": "2026-04-26T23:37:28.371Z",
+      "ended": "2026-04-26T23:42:45.219Z",
+      "reads": [
+        {
+          "file": "/Users/mosorio/repos/mint/.gitmodules",
+          "tokens_estimated": 347,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        }
+      ],
+      "writes": [
+        {
+          "file": "/Users/mosorio/repos/mint/.gitmodules",
+          "tokens_estimated": 20,
+          "action": "edit"
+        }
+      ],
+      "totals": {
+        "input_tokens_estimated": 347,
+        "output_tokens_estimated": 20,
+        "reads_count": 1,
+        "writes_count": 1,
+        "repeated_reads_blocked": 0,
+        "anatomy_lookups": 1
       }
     }
   ],

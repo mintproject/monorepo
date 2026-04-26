@@ -1,6 +1,6 @@
 # anatomy.md
 
-> Auto-maintained by OpenWolf. Last scanned: 2026-04-26T23:30:21.374Z
+> Auto-maintained by OpenWolf. Last scanned: 2026-04-26T23:42:37.300Z
 > Files: 545 tracked | Anatomy hits: 0 | Misses: 0
 
 ## ../../../../tmp/
@@ -24,7 +24,7 @@
 
 - `.DS_Store` (~2731 tok)
 - `.gitignore` — Git ignore rules (~195 tok)
-- `.gitmodules` (~347 tok)
+- `.gitmodules` (~285 tok)
 - `CLAUDE.md` — OpenWolf (~1158 tok)
 - `README.md` — Project documentation (~1310 tok)
 
