@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "bugs": [
+    {
+      "id": "bug-001",
+      "timestamp": "2026-04-26T00:00:00Z",
+      "error_message": "Apollo: field 'model' not found in type: 'thread_model' — POST /v1/executionsLocal returns 500",
+      "file": "mint-ensemble-manager/src/classes/graphql/queries/thread/get.graphql (and related query files)",
+      "root_cause": "DYNAMO v2.0 Phase 09 migration renamed the 'model' object relationship on thread_model to 'modelcatalog_configuration'. The old 'model' relationship no longer exists in Hasura. Any GraphQL query/fragment selecting 'thread_models { model { ... } }' is rejected at runtime by Hasura with 'field not found'. The fix was to replace all 'model { ...model_info }' selections inside thread_models with 'modelcatalog_configuration { ...model_info }' and update threadFromGQL in graphql_adapter.ts to read tm['modelcatalog_configuration'] instead of tm['model'].",
+      "fix": "Applied in Phase 09-04, commit d4f835d: replaced model relationship with modelcatalog_configuration in all .graphql files and graphql_adapter.ts. Verified clean: npm run build succeeds, npm test passes 60/60.",
+      "tags": ["apollo", "graphql", "hasura", "thread_model", "migration", "dynamo-v2", "ensemble-manager"],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-26"
+    }
+  ]
+}
