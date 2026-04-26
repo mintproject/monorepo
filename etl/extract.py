@@ -1648,13 +1648,15 @@ def extract_standard_variables(ds: Graph) -> List[Dict[str, Any]]:
 
 
 def extract_units(ds: Graph) -> List[Dict[str, Any]]:
-    """Extract Unit entities typed as qudt:Unit (D-02, D-09)."""
+    """Extract Unit entities typed as qudt:Unit or sd:Unit (D-02, D-09)."""
     query = f"""
     PREFIX rdfs: <{config.RDFS}>
 
     SELECT DISTINCT ?id ?label
     WHERE {{
-        ?id a <{config.TYPE_UNIT}> .
+        {{ ?id a <{config.TYPE_UNIT}> }}
+        UNION
+        {{ ?id a <{config.SD}Unit> }}
         OPTIONAL {{ ?id rdfs:label ?label }}
     }}
     """
