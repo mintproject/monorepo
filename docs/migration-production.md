@@ -73,17 +73,23 @@ kubectl scale deployment mint-ui -n $NAMESPACE --replicas=0
 # Hasura stays UP for migrations + reads
 ```
 
-## Step 4: Fetch latest TriG snapshot
+## Step 4: Validate vetted TriG snapshot
 
-Pull current model-catalog dump from prod Fuseki endpoint. ETL reads this file.
+Prod uses the pre-vetted snapshot at `backups/dynamo-2025-04-08-v2.trig`. md5 is pinned — same bytes as the local dry-run. Do NOT swap in a fresh download mid-window without a new round of local testing.
 
 ```bash
-TRIG_DATE=$(date +%Y-%m-%d)
-wget -c https://endpoint.models.mint.tacc.utexas.edu/modelcatalog/data \
-  -O model-catalog-endpoint/data/dynamo-${TRIG_DATE}.trig
+TRIG_PATH=backups/dynamo-2025-04-08-v2.trig
+EXPECTED_MD5=d20aae3db73111e6c1b7bcf7ae812e89
 
-ls -lh model-catalog-endpoint/data/dynamo-${TRIG_DATE}.trig   # verify non-zero (~24M)
+ls -lh "$TRIG_PATH"   # ~24M
+
+# Linux: md5sum; macOS: md5 -q
+GOT_MD5=$(md5sum "$TRIG_PATH" 2>/dev/null | awk '{print $1}' || md5 -q "$TRIG_PATH")
+[[ "$GOT_MD5" == "$EXPECTED_MD5" ]] || { echo "md5 mismatch: $GOT_MD5"; exit 1; }
+echo "md5 OK"
 ```
+
+If you must roll forward to a newer dump, re-run the local test recipe (`docs/migration-testing.md`) against the new file first, then update the pinned md5 here.
 
 ## Step 5: Run ETL against production
 
@@ -99,10 +105,10 @@ kubectl port-forward -n $NAMESPACE svc/mint-hasura-db 5432:5432 &
 PF_PID=$!
 sleep 3
 
-# Run ETL with prod credentials (use trig fetched in Step 4)
+# Run ETL with prod credentials (use vetted trig validated in Step 4)
 DB_NAME=hasura DB_USER=hasura DB_PASSWORD="$HASURA_PWD" \
   python3 etl/run.py \
-  --trig-path model-catalog-endpoint/data/dynamo-${TRIG_DATE}.trig
+  --trig-path backups/dynamo-2025-04-08-v2.trig
 
 kill $PF_PID
 ```

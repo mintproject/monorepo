@@ -15,10 +15,16 @@ set -euo pipefail
 #   --dry-run        Echo destructive commands; do not execute.
 #   --yes            Skip pauses (DANGEROUS — only for replays of a verified run).
 #   --namespace NS   k8s namespace (default: mint).
-#   --trig-url URL   Override Fuseki dump URL.
+#   --trig-path PATH Override TriG file (default: backups/dynamo-2025-04-08-v2.trig).
+#   --trig-md5 HEX   Override expected md5 (default: known-good v2 hash).
+#   --fetch          Re-download TriG from Fuseki before validating md5.
+#   --trig-url URL   Override Fuseki dump URL (only used with --fetch).
 #
 # Pre-reqs: kubectl context = TACC prod, hasura CLI, python3 + etl/requirements.txt,
 # maintenance window arranged (writers will be scaled to 0 in Step 3).
+#
+# TriG policy: prod uses the vetted snapshot at backups/dynamo-2025-04-08-v2.trig
+# (md5 d20aae3db73111e6c1b7bcf7ae812e89). Step 4 hard-fails if md5 differs.
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
@@ -28,11 +34,15 @@ START_FROM=1
 DRY_RUN=0
 ASSUME_YES=0
 TRIG_URL="https://endpoint.models.mint.tacc.utexas.edu/modelcatalog/data"
-TRIG_DATE="$(date +%Y-%m-%d)"
 TS="$(date +%Y%m%d-%H%M%S)"
 PRE_ETL_MIGRATION="1771200011000"
+FETCH_TRIG=0
 
-TRIG_PATH="$REPO_ROOT/model-catalog-endpoint/data/dynamo-${TRIG_DATE}.trig"
+# Vetted prod snapshot — pinned md5 ensures the file matches what was tested
+# locally during the migration dry-runs. Override with --trig-path / --trig-md5
+# only if intentionally rolling forward to a newer dump.
+TRIG_PATH="$REPO_ROOT/backups/dynamo-2025-04-08-v2.trig"
+EXPECTED_MD5="d20aae3db73111e6c1b7bcf7ae812e89"
 BACKUP_PATH="$REPO_ROOT/backups/prod-backup-${TS}.sql"
 
 # ---- arg parse --------------------------------------------------------------
@@ -42,6 +52,9 @@ while [[ $# -gt 0 ]]; do
     --dry-run)    DRY_RUN=1; shift ;;
     --yes)        ASSUME_YES=1; shift ;;
     --namespace)  NAMESPACE="$2"; shift 2 ;;
+    --trig-path)  TRIG_PATH="$2"; shift 2 ;;
+    --trig-md5)   EXPECTED_MD5="$2"; shift 2 ;;
+    --fetch)      FETCH_TRIG=1; shift ;;
     --trig-url)   TRIG_URL="$2"; shift 2 ;;
     -h|--help)    sed -n '1,30p' "$0"; exit 0 ;;
     *) echo "unknown arg: $1" >&2; exit 2 ;;
@@ -129,14 +142,36 @@ if should_run 3; then
 fi
 
 # ---------------------------------------------------------------------------
-# Step 4: Fetch latest TriG
+# Step 4: Validate vetted TriG snapshot (md5 pin)
 # ---------------------------------------------------------------------------
 if should_run 4; then
-  log "Step 4: Fetch latest TriG snapshot"
+  log "Step 4: Validate TriG md5 = $EXPECTED_MD5"
   mkdir -p "$(dirname "$TRIG_PATH")"
-  run "wget -c '$TRIG_URL' -O '$TRIG_PATH'"
+
+  if [[ $FETCH_TRIG -eq 1 ]]; then
+    log "  --fetch: re-downloading from $TRIG_URL"
+    run "wget -c '$TRIG_URL' -O '$TRIG_PATH'"
+  fi
+
+  [[ -f "$TRIG_PATH" ]] || fail "trig file missing: $TRIG_PATH"
   run "ls -lh '$TRIG_PATH'"
-  pause "confirm trig size ~24M"
+
+  if [[ $DRY_RUN -eq 1 ]]; then
+    echo "DRY: md5 '$TRIG_PATH' (expected $EXPECTED_MD5)"
+  else
+    if command -v md5sum >/dev/null; then
+      GOT_MD5="$(md5sum "$TRIG_PATH" | awk '{print $1}')"
+    else
+      GOT_MD5="$(md5 -q "$TRIG_PATH")"
+    fi
+    echo "got md5:      $GOT_MD5"
+    echo "expected md5: $EXPECTED_MD5"
+    [[ "$GOT_MD5" == "$EXPECTED_MD5" ]] || \
+      fail "md5 mismatch — refuse to ETL with unverified TriG"
+    echo "md5 OK"
+  fi
+
+  pause "confirm trig path + md5 match expected"
 fi
 
 # ---------------------------------------------------------------------------
