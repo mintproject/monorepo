@@ -8,9 +8,6 @@
 	path = mint-ensemble-manager
 	url = https://github.com/mintproject/mint-ensemble-manager.git
 	branch = model-catalog-migration
-[submodule "mint-instances"]
-	path = mint-instances
-	url = https://github.com/mintproject/mint-instances.git
 [submodule "model-catalog-endpoint"]
 	path = model-catalog-endpoint
 	url = https://github.com/mintproject/model-catalog-endpoint.git
