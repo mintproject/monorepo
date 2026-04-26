@@ -58,9 +58,14 @@ export default function () {
             return res.status(202).json(response);
         } catch (error) {
             if (error instanceof HttpError) {
+                console.error(
+                    `POST /executionEngines/tapis failed (${error.statusCode}): ${error.message}`
+                );
                 res.status(error.statusCode).json({ error: error.message });
             } else {
-                res.status(500).json({ error: error.message });
+                const message = error instanceof Error ? error.message : String(error);
+                console.error("POST /executionEngines/tapis failed:", error);
+                res.status(500).json({ error: message });
             }
         }
     });
