@@ -164,3 +164,81 @@
 | 15:14 | Edited mint-ensemble-manager/src/classes/tapis/adapters/TapisExecutionService.ts | added error handling | ~192 |
 | 19:15 | tapis exec subscribe 500 — wrap subscribe in errorDecoder + boundary logs | mint-ensemble-manager/src/classes/tapis/adapters/{TapisJobSubscriptionService.ts,TapisExecutionService.ts} | build green, 6/6 tests pass; ready to expose Tapis subscribe error body | ~9k |
 | 15:16 | Session end: 3 writes across 2 files (TapisJobSubscriptionService.ts, TapisExecutionService.ts) | 9 reads | ~7679 tok |
+| 15:17 | Session end: 3 writes across 2 files (TapisJobSubscriptionService.ts, TapisExecutionService.ts) | 9 reads | ~7679 tok |
+
+## Session: 2026-04-26 15:18
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+
+## Session: 2026-04-26 15:18
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 15:24 | Created docs/debug-tapis-execution.md | — | ~1118 |
+| 15:24 | Session end: 1 writes across 1 files (debug-tapis-execution.md) | 7 reads | ~7667 tok |
+| 15:25 | Edited mint-ensemble-manager/src/classes/graphql/queries/execution/handle-failed-connection-ensemble.graphql | modified delete_thread_model_execution_summary() | ~56 |
+| 15:27 | Session end: 2 writes across 2 files (debug-tapis-execution.md, handle-failed-connection-ensemble.graphql) | 7 reads | ~7869 tok |
+
+## Session: 2026-04-26 15:28
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 15:31 | Created mint-ensemble-manager/src/classes/tapis/adapters/__tests__/TapisJobSubscriptionService.test.ts | — | ~566 |
+| 15:32 | Edited mint-ensemble-manager/src/classes/tapis/adapters/TapisJobSubscriptionService.ts | added optional chaining | ~99 |
+| 15:33 | Edited mint-ensemble-manager/src/classes/mint/mint-types.ts | expanded (+7 lines) | ~156 |
+| 15:33 | Edited helm-charts/charts/mint/templates/ensemble-manager-config.yaml | 5→8 lines | ~122 |
+| 15:33 | Edited helm-charts/dynamo-values.yaml | expanded (+6 lines) | ~149 |
+| 15:33 | Edited mint-ensemble-manager/src/config/config.json | 1→2 lines | ~26 |
+
+## Session: 2026-04-26 15:37
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+
+## Session: 2026-04-26 15:37
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+
+## Session: 2026-04-26 15:38
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+
+| 15:42 | bug-012: Tapis subscribe rejected ensemble-manager.mint.local webhook URL (NTFLIB_DLVRY_ADDR_NOT_URL); added tapis_webhook_base_url override + helm wiring + tests + dev value pointing at webhook.site | TapisJobSubscriptionService.ts, mint-types.ts, TapisJobSubscriptionService.test.ts, ensemble-manager-config.yaml, dynamo-values.yaml, config.json | build green, 10/10 tapis tests pass | ~9k |
+| 15:43 | Created ../../../../tmp/q.json | — | ~111 |
+| 15:46 | Created ../../../../tmp/q.json | — | ~62 |
+| 15:47 | Created ../../../../tmp/q.json | — | ~100 |
+| 15:51 | Session end: 3 writes across 1 files (q.json) | 9 reads | ~6742 tok |
+| 15:52 | Created ../../../../tmp/q.json | — | ~271 |
+| 15:52 | Session end: 4 writes across 1 files (q.json) | 9 reads | ~7013 tok |
+| 15:53 | Created ../../../../tmp/q.json | — | ~64 |
+| 15:53 | Session end: 5 writes across 1 files (q.json) | 9 reads | ~7077 tok |
+| 15:55 | Created ../../../../tmp/q.json | — | ~75 |
+| 15:55 | Created ../../../../tmp/q.json | — | ~50 |
+| 15:59 | Session end: 7 writes across 1 files (q.json) | 9 reads | ~7202 tok |
+| 16:00 | Session end: 7 writes across 1 files (q.json) | 9 reads | ~7202 tok |
+| 16:04 | Edited docs/debug-tapis-execution.md | expanded (+16 lines) | ~651 |
+| 16:04 | Edited docs/debug-tapis-execution.md | modified hq() | ~366 |
+| 16:05 | Edited docs/debug-tapis-execution.md | modified mutation() | ~763 |
+| 16:05 | Session end: 10 writes across 2 files (q.json, debug-tapis-execution.md) | 9 reads | ~9109 tok |
+
+## Session: 2026-04-26 16:08
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 16:14 | Edited .planning/ROADMAP.md | expanded (+55 lines) | ~1259 |
+
+## Session: 2026-04-26 16:16
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 16:17 | Edited .planning/STATE.md | 1→2 lines | ~51 |
+| 16:17 | Edited .planning/STATE.md | 2→2 lines | ~8 |
+
+## Session: 2026-04-26 16:17
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 16:30 | Added Phase 11 (simplify ensemble manager + UI, kill thread_model_execution junction) | .planning/ROADMAP.md, .planning/STATE.md, .planning/phases/11-simplify-ensemble-manager-and-ui-execution-model-kill-thread/ | Phase entry inserted, dir created, not planned | ~3k |

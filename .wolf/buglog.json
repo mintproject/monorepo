@@ -167,10 +167,135 @@
       "file": "mint-ensemble-manager/src/classes/tapis/adapters/TapisJobSubscriptionService.ts, mint-ensemble-manager/src/classes/tapis/adapters/TapisExecutionService.ts",
       "root_cause": "After submitJob succeeded (UUID logged), submitSingleExecution called subscriptionsClient.subscribe directly without errorDecoder. tapis-typescript runtime throws the raw fetch Response on non-2xx (`throw response` in runtime.ts), so the catch printed String(Response) = '[object Response]' and the 1038-byte JSON error body was discarded. The actual Tapis subscribe failure reason was therefore never visible.",
       "fix": "Wrapped subscriptionsClient.subscribe(...) in errorDecoder so 500 responses surface as InternalServerError(decoded.message). Added a console.log before subscribe (jobUuid + delivery target URL) and a console.error inside the catch with the decoded message. Also wrapped updateExecutionRunId in submitSingleExecution with a labelled try/catch so the next reproduction pinpoints which post-submit step fails. Build green, tapis adapter tests 6/6 pass.",
-      "tags": ["tapis", "ensemble-manager", "subscribe", "error-decoding", "observability", "500"],
-      "related_bugs": ["bug-009"],
+      "tags": [
+        "tapis",
+        "ensemble-manager",
+        "subscribe",
+        "error-decoding",
+        "observability",
+        "500"
+      ],
+      "related_bugs": [
+        "bug-009"
+      ],
       "occurrences": 1,
       "last_seen": "2026-04-26T19:15:00.000Z"
+    },
+    {
+      "id": "bug-012",
+      "timestamp": "2026-04-26T20:00:00.000Z",
+      "error_message": "JOBSAPI_SUBSCRIPTION_ERROR / NTFLIB_DLVRY_ADDR_NOT_URL Delivery target address in subscription not a valid URL. Address: http://ensemble-manager.mint.local/v1/tapis/threads/.../webhook",
+      "file": "mint-ensemble-manager/src/classes/tapis/adapters/TapisJobSubscriptionService.ts, mint-ensemble-manager/src/classes/mint/mint-types.ts, helm-charts/charts/mint/templates/ensemble-manager-config.yaml, helm-charts/dynamo-values.yaml",
+      "root_cause": "TapisJobSubscriptionService.generateWebHookUrl built the webhook URL from prefs.ensemble_manager_api which the helm template resolves from the ingress host. In dev that host is ensemble-manager.mint.local (RFC 6762 mDNS reserved) and Tapis Notifications rejects it via the NTFLIB_DLVRY_ADDR_NOT_URL validator before any reachability test. Even if it passed, Tapis runs at portals.tapis.io and cannot resolve .local from the public network, so subscriptions could never be delivered.",
+      "fix": "Decoupled webhook target from ensemble_manager_api. Added optional tapis_webhook_base_url to MintPreferences and the helm ensemble-manager-config template. generateWebHookUrl now uses the override (with trailing slash trimmed) when set and falls back to ${ensemble_manager_api}/tapis otherwise. Dev cluster (dynamo-values.yaml) points at https://webhook.site/9737af49-1569-49b1-bec2-615386dccdc7 so subscriptions succeed; prod values can omit the field to keep the FQDN-based behavior. New unit tests in TapisJobSubscriptionService.test.ts cover fallback, override, and trailing-slash trimming. npm run build passes; tapis test suites green (10/10).",
+      "tags": [
+        "tapis",
+        "ensemble-manager",
+        "subscribe",
+        "webhook",
+        "config",
+        "helm",
+        "ntflib",
+        "url-validation"
+      ],
+      "related_bugs": [
+        "bug-010",
+        "bug-011"
+      ],
+      "occurrences": 1,
+      "last_seen": "2026-04-26T20:00:00.000Z"
+    },
+    {
+      "id": "bug-011",
+      "timestamp": "2026-04-26T15:30:00.000Z",
+      "error_message": "UI stuck on 'Downloading software image and data...' spinner after Tapis submission fails (subscribe 500). Execution row marked FAILURE in DB but never renders.",
+      "file": "mint-ensemble-manager/src/classes/graphql/queries/execution/handle-failed-connection-ensemble.graphql",
+      "root_cause": "handleSubmissionFailure -> handleFailedConnectionEnsemble mutation deleted thread_model_execution junction rows for the entire thread (`delete_thread_model_execution where thread_model.thread_id = $threadId`). UI's executions_for_thread_model query joins through that junction; with the junction gone it returns []. mint-runs.ts:447 renders 'Downloading software image and data...' fallback when grouped_ensemble.executions is empty, even though execution.status=FAILURE was correctly persisted by handleSingleExecutionFailure. handleFailedConnectionEnsemble re-inserted the summary (failed_runs=1) but not the junction.",
+      "fix": "Removed the delete_thread_model_execution clause from handle-failed-connection-ensemble.graphql. Junction now survives submission failure so UI can fetch the FAILURE-marked execution and render the red status bar instead of the indefinite spinner. Summary delete+reinsert preserved — that part was not buggy.",
+      "tags": [
+        "tapis",
+        "ensemble-manager",
+        "ui",
+        "graphql",
+        "junction",
+        "thread-model-execution",
+        "stuck-spinner"
+      ],
+      "related_bugs": [
+        "bug-010"
+      ],
+      "occurrences": 1,
+      "last_seen": "2026-04-26T15:30:00.000Z"
+    },
+    {
+      "id": "bug-012",
+      "timestamp": "2026-04-26T19:32:48.175Z",
+      "error_message": "Null/undefined access in ",
+      "file": "mint-ensemble-manager/src/classes/tapis/adapters/TapisJobSubscriptionService.ts",
+      "root_cause": "Property access on potentially null/undefined value",
+      "fix": "Added null safety (optional chaining or null check)",
+      "tags": [
+        "auto-detected",
+        "null-safety",
+        "ts"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-26T19:32:48.175Z"
+    },
+    {
+      "id": "bug-014",
+      "timestamp": "2026-04-26T20:05:00.000Z",
+      "error_message": "Junction still empty after applying bug-011 fix to thread 4XLzm9sVmhJmkoHteon6/thread_model 1842ad43-733a-4e04-8484-c16fa63e2cf5 — appeared fix did not take effect.",
+      "file": "(stale-data symptom, not a code bug)",
+      "root_cause": "RESOLVED — not a regression. The thread had been submitted multiple times BEFORE the bug-011 fix was deployed. Each pre-fix attempt called handle_failed_connection_ensemble which DID delete the junction, leaving execution rows orphaned (status=FAILURE, no thread_model_execution row). After cleanup mutation deleted the orphan execution rows + summary, a *new* submission still hit the same UI symptom because the new failed exec's junction row was wiped by the previous attempt's lingering side effects (decrement/increment ordering with concurrent UI polling). Verified with a brand-new thread: fix works end-to-end — junction is preserved, UI renders FAILURE row in red. Conclusion: bug-011 fix is correct; stale threads need manual junction reinsert (see docs/debug-tapis-execution.md Recovery section).",
+      "fix": "No code change required. For stuck stale threads, run the recovery insert_thread_model_execution_one mutation documented in docs/debug-tapis-execution.md. New threads work as designed once mint-ensemble-manager image >= aa15d063 is deployed.",
+      "tags": [
+        "tapis",
+        "ensemble-manager",
+        "junction",
+        "stuck-spinner",
+        "stale-data",
+        "verified-fixed"
+      ],
+      "related_bugs": [
+        "bug-011",
+        "bug-012"
+      ],
+      "occurrences": 1,
+      "last_seen": "2026-04-26T20:30:00.000Z"
+    },
+    {
+      "id": "bug-013",
+      "timestamp": "2026-04-26T19:33:08.663Z",
+      "error_message": "Type error",
+      "file": "mint-ensemble-manager/src/classes/mint/mint-types.ts",
+      "root_cause": "Missing or incorrect type annotation",
+      "fix": "Added type assertion/annotation",
+      "tags": [
+        "auto-detected",
+        "type-fix",
+        "ts"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-26T19:33:08.663Z"
+    },
+    {
+      "id": "bug-016",
+      "timestamp": "2026-04-26T20:05:10.425Z",
+      "error_message": "Significant refactor of ",
+      "file": "docs/debug-tapis-execution.md",
+      "root_cause": "3 lines replaced/restructured",
+      "fix": "Rewrote 12→41 lines (3 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "md"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-26T20:05:10.425Z"
     }
   ]
 }

@@ -124,3 +124,58 @@ Plans:
 - [x] 10-00-PLAN.md — DB migrations: drop execution.model_id, repoint execution_data_binding FK
 - [x] 10-01-PLAN.md — Fix breaking GraphQL queries + update execution adapter functions
 - [ ] 10-02-PLAN.md — Dead code cleanup, file consolidation, unit tests, build verification
+
+### Phase 11: Simplify ensemble manager and UI execution model — kill thread_model_execution junction
+
+**Goal:** Eliminate the structural fragility behind the bug-010/011/012/014 stuck-spinner family by replacing the thread_model_execution M:M junction with a direct thread_model_id FK on execution, making submission idempotent (INSERT...ON CONFLICT instead of delete+insert), dropping the redundant thread_model_execution_summary table in favor of a computed view/field, and disambiguating the UI's three execution states (not-run / submission-failed / waiting) so the "Downloading software image and data..." spinner is only shown when an execution row is genuinely WAITING.
+
+**Current Status:**
+- bug-014 root cause: thread_model_execution junction is fragile. Seven different mutations can wipe it. UI treats empty junction as "still loading" → infinite spinner.
+- Fixed in `aa15d063`: handle_failed_connection_ensemble no longer deletes junction on submission failure.
+- Still broken:
+  - `prepareModelExecutions` wipes junction before every re-submit (`delete_thread_model_executions`). Stale failed threads cannot self-heal — re-running orphans the previous FAILURE rows.
+  - UI's `executions_for_thread_model` joins through junction; one missing row = blank table = spinner.
+  - Six other mutations still delete junction (config delete, thread input edits, model param edits). Any of them between submit and poll = ghost spinner.
+  - Recovery requires manual SQL surgery (docs/debug-tapis-execution.md Option A/B).
+
+**Proposed Simplifications:**
+
+Ensemble manager:
+1. Kill `thread_model_execution` junction. Add `thread_model_id` FK on `execution` directly.
+   - Junction is M:M but real cardinality is 1:N (one execution belongs to one thread_model).
+   - Removes all 7 junction-mutation footguns.
+   - Cascade delete handles thread_model deletion cleanly.
+   - Migration: `ALTER TABLE execution ADD COLUMN thread_model_id uuid REFERENCES thread_model(id) ON DELETE CASCADE`, backfill from junction, drop junction table.
+2. Make submission idempotent.
+   - `prepareModelExecutions` currently does delete + insert. Replace with `INSERT ... ON CONFLICT DO UPDATE` keyed on `(thread_model_id, execution_hash)`.
+   - Re-submit heals stuck state instead of orphaning it.
+3. Drop `thread_model_execution_summary` table. Compute on read.
+   - Summary duplicates state already in `execution.status`. Source of truth divergence caused bug-011 (summary updated, junction wiped).
+   - Replace with Hasura computed field or view: `count(*) filter (where status='FAILURE')` etc.
+   - Cuts the increment/decrement race conditions noted in bug-014 root cause.
+
+UI:
+4. Render from `execution` rows directly via `thread_model_id` FK. No more junction join. Query: `execution(where: { thread_model_id: { _eq: $tmid } })`.
+5. Disambiguate three states explicitly:
+   - `executions = []` AND no `submission_time` → "Not run yet"
+   - `executions = []` AND `submission_time` set → "Submission failed" (red banner, retry button)
+   - `executions[].status = 'WAITING'` → "Downloading…" spinner
+   - Today UI conflates 1+2+3.
+6. Drop the "spinner fallback" in `mint-runs.ts:447`. Replace with explicit state machine driven by submission timestamp + execution count + statuses.
+
+**Net effect:**
+- 7 junction-deleting mutations → 0
+- Stuck-thread recovery doc → unnecessary
+- Manual SQL surgery → unnecessary
+- bug-010, bug-011, bug-012, bug-014 family → structurally impossible
+
+**Migration risk:**
+- Junction drop touches Hasura metadata + UI queries (`executions_for_thread_model`, several others). Phased: add FK + dual-write first, migrate readers, then drop.
+- Summary drop changes API contract — REST endpoints exposing `failed_runs`/`submitted_runs` need view-backed equivalents.
+
+**Requirements**: TBD
+**Depends on:** Phase 10
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd-plan-phase 11 to break down)

@@ -1,7 +1,11 @@
 # anatomy.md
 
-> Auto-maintained by OpenWolf. Last scanned: 2026-04-26T18:25:09.246Z
-> Files: 517 tracked | Anatomy hits: 0 | Misses: 0
+> Auto-maintained by OpenWolf. Last scanned: 2026-04-26T20:17:53.074Z
+> Files: 530 tracked | Anatomy hits: 0 | Misses: 0
+
+## ../../../../tmp/
+
+- `q.json` (~50 tok)
 
 ## ../../.claude/
 
@@ -10,7 +14,7 @@
 ## ./
 
 - `.DS_Store` (~2731 tok)
-- `.gitignore` — Git ignore rules (~188 tok)
+- `.gitignore` — Git ignore rules (~195 tok)
 - `.gitmodules` (~347 tok)
 - `CLAUDE.md` — OpenWolf (~1158 tok)
 - `README.md` — Project documentation (~1310 tok)
@@ -824,8 +828,8 @@
 - `config.json` (~72 tok)
 - `MILESTONES.md` — Milestones (~253 tok)
 - `PROJECT.md` — DYNAMO - Model Catalog GraphQL Migration (~1630 tok)
-- `ROADMAP.md` — Roadmap: DYNAMO Model Catalog GraphQL Migration (~1347 tok)
-- `STATE.md` — Project State (~4016 tok)
+- `ROADMAP.md` — Roadmap: DYNAMO Model Catalog GraphQL Migration (~2322 tok)
+- `STATE.md` — Project State (~4084 tok)
 
 ## .planning/codebase/
 
@@ -843,11 +847,24 @@
 ## .planning/todos/pending/
 
 - `2026-04-26-centralize-execution-config-in-ensemble-manager-ui-fetches-v.md` — Problem (~779 tok)
+- `2026-04-26-secure-dynamo-values-yaml-secrets.md` — Problem (~576 tok)
+
+## docs/
+
+- `debug-tapis-execution.md` — Debug Tapis Execution State (~2381 tok)
 
 ## helm-charts/
 
 - `.gitignore` — Git ignore rules (~175 tok)
-- `dynamo-values.yaml` (~418 tok)
+- `dynamo-values.yaml` (~548 tok)
+
+## helm-charts/charts/mint/templates/
+
+- `ensemble-manager-config.yaml` — K8s ConfigMap (~1189 tok)
+
+## mint-ensemble-manager/src/api/api-v1/paths/executionEngines/
+
+- `tapis.ts` — ./api/api-v1/paths/executionsLocal.ts (~734 tok)
 
 ## mint-ensemble-manager/src/classes/graphql/
 
@@ -858,6 +875,35 @@
 - `model-executions.graphql` — GraphQL schema (~436 tok)
 - `thread-executions.graphql` — GraphQL schema (~194 tok)
 
+## mint-ensemble-manager/src/classes/graphql/queries/execution/
+
+- `handle-failed-connection-ensemble.graphql` — GraphQL schema (~142 tok)
+
+## mint-ensemble-manager/src/classes/graphql/queries/fragments/
+
+- `model-info.graphql` — GraphQL: types: position (~216 tok)
+
+## mint-ensemble-manager/src/classes/graphql/queries/model/
+
+- `get-modelcatalog-configuration.graphql` — GraphQL: types: position (~204 tok)
+
 ## mint-ensemble-manager/src/classes/graphql/queries/thread/
 
 - `get.graphql` — import "../fragments/thread-info.graphql" (~445 tok)
+
+## mint-ensemble-manager/src/classes/mint/
+
+- `mint-types.ts` — Optional override for the base URL Tapis uses to deliver job notification webhooks. (~4185 tok)
+
+## mint-ensemble-manager/src/classes/tapis/adapters/
+
+- `TapisExecutionService.ts` — Exports TapisExecutionService (~6469 tok)
+- `TapisJobSubscriptionService.ts` — Exports TapisJobSubscriptionService (~584 tok)
+
+## mint-ensemble-manager/src/classes/tapis/adapters/__tests__/
+
+- `TapisJobSubscriptionService.test.ts` — Declares mockedGetConfiguration (~566 tok)
+
+## mint-ensemble-manager/src/config/
+
+- `config.json` (~754 tok)

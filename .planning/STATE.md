@@ -7,7 +7,7 @@ stopped_at: "Completed quick-260426-fk5: Apollo model field fix verified, buglog
 last_updated: "2026-04-26T15:30:00.000Z"
 last_activity: "2026-04-26 - Executed quick task 260426-fk5: Verified Apollo model field fix, 60/60 tests pass, bug-001 logged"
 progress:
-  total_phases: 10
+  total_phases: 11
   completed_phases: 7
   total_plans: 36
   completed_plans: 36
@@ -147,10 +147,12 @@ Recent decisions affecting current work:
 - Phase 8 added: Remove Model Catalog API adapter functions (modelConfigurationToGraphQL, modelConfigurationSetupToGraphQL) - post-migration cleanup
 - Phase 9 added: Merge ModelConfiguration/Setup tables and migrate thread_model relationships
 - Phase 10 added: Check the required changes on mint-ensemble-manager after migration
+- Phase 11 added: Simplify ensemble manager and UI execution model — kill thread_model_execution junction
 
 ### Pending Todos
 
 - [config] Centralize execution config in ensemble-manager, UI fetches via API — `.planning/todos/pending/2026-04-26-centralize-execution-config-in-ensemble-manager-ui-fetches-v.md`
+- [deployment] Secure dynamo-values.yaml secrets — avoid committing plaintext credentials — `.planning/todos/pending/2026-04-26-secure-dynamo-values-yaml-secrets.md`
 
 ### Blockers/Concerns
 
