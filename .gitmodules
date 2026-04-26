@@ -25,4 +25,4 @@
 	url = https://github.com/mintproject/model-catalog-api.git
 [submodule "model-catalog-ontology"]
 	path = model-catalog-ontology
-	url = https://github.com/mintproject/model-catalog-ontology.git
+	url = https://github.com/mintproject/Mint-ModelCatalog-Ontology.git
