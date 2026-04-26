@@ -31,7 +31,11 @@ kubectl delete statefulset mint-hasura-db -n $NAMESPACE
 kubectl delete pvc data-mint-hasura-db-0 -n $NAMESPACE
 
 # Recreate the statefulset and PVC from helm
-helm upgrade mint ./helm-charts/charts/mint -n $NAMESPACE --reuse-values
+# NOTE: do NOT use --reuse-values — local values.yaml has changed
+# (data-catalog disabled, tapis_webhook_base_url, dynamo-values.yaml).
+# Pass the values file(s) you actually want applied:
+helm upgrade mint ./helm-charts/charts/mint -n $NAMESPACE \
+  -f ./helm-charts/charts/mint/values.yaml
 
 # Wait for the new database pod to be ready
 kubectl rollout status statefulset/mint-hasura-db -n $NAMESPACE --timeout=120s
@@ -41,7 +45,7 @@ kubectl rollout status statefulset/mint-hasura-db -n $NAMESPACE --timeout=120s
 
 ```bash
 # Wait a few seconds for postgres to initialize, then restore
-cat production-backup.sql | kubectl exec -i -n $NAMESPACE mint-hasura-db-0 -- psql -U hasura -d hasura
+cat backups/production-backup.sql | kubectl exec -i -n $NAMESPACE mint-hasura-db-0 -- psql -U hasura -d hasura
 ```
 
 ## Step 4: Apply Migrations (schema + table merge only)
@@ -70,8 +74,20 @@ kubectl exec -n $NAMESPACE $POD -- bash -c \
 Populates `modelcatalog_configuration` and related tables so FK constraints in the next step can succeed.
 
 ```bash
-kubectl port-forward svc/mint-hasura-db 5432:5432
-python3 etl/run.py --trig-path model-catalog-endpoint/data/model-catalog.trig --clear
+# Get hasura DB password from k8s secret
+HASURA_PWD=$(kubectl get secret -n $NAMESPACE mint-hasura-secrets \
+  -o jsonpath='{.data.password}' | base64 -d)
+
+# Port-forward in background
+kubectl port-forward -n $NAMESPACE svc/mint-hasura-db 5432:5432 &
+PF_PID=$!
+sleep 3
+
+# ETL defaults are postgres/postgres/postgres — override for hasura DB
+DB_NAME=hasura DB_USER=hasura DB_PASSWORD="$HASURA_PWD" \
+  python3 etl/run.py --trig-path model-catalog-endpoint/data/model-catalog.trig --clear
+
+kill $PF_PID
 ```
 
 ## Step 6: Apply Remaining Migrations (FK backfill + Phase 10)
