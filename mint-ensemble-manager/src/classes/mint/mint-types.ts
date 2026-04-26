@@ -78,6 +78,13 @@ export interface MintPreferences {
     };
 
     ensemble_manager_api: string;
+    /**
+     * Optional override for the base URL Tapis uses to deliver job notification webhooks.
+     * When unset, falls back to `${ensemble_manager_api}/tapis`. Use this in dev clusters
+     * whose ingress hostnames are not publicly resolvable (e.g. *.local) to point Tapis at
+     * a publicly reachable target such as https://webhook.site/<uuid>.
+     */
+    tapis_webhook_base_url?: string;
     ingestion_api: string;
     visualization_url: string;
     execution_engine?: "wings" | "localex" | "tapis";

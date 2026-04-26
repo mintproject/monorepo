@@ -15,6 +15,7 @@
         "secret_access_key": "CHANGEME"
     },
     "ensemble_manager_api": "http://localhost:3000/v1",
+    "tapis_webhook_base_url": "",
     "graphql": {
         "endpoint": "graphql.mint.local/v1/graphql",
         "enable_ssl": false,
