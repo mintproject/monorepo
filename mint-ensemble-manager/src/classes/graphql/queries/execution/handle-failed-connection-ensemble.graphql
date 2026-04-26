@@ -8,9 +8,6 @@ mutation handle_failed_connection_ensemble(
     ) {
         affected_rows
     }
-    delete_thread_model_execution(where: { thread_model: { thread_id: { _eq: $threadId } } }) {
-        affected_rows
-    }
     insert_thread_model_execution_summary(objects: $summaries) {
         returning {
             thread_model_id
