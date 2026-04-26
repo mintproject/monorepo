@@ -35,6 +35,7 @@ query get_modelcatalog_configuration($id: String!) {
         id
         label
         has_format
+        position
         description
       }
     }
