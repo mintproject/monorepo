@@ -1,0 +1,37 @@
+[2026-04-12T21:32:04.596Z] [INFO] Scheduled task: Full anatomy rescan (0 */6 * * *)
+[2026-04-12T21:32:04.597Z] [INFO] Scheduled task: Consolidate old memory (0 2 * * *)
+[2026-04-12T21:32:04.597Z] [INFO] Scheduled task: Token audit report (0 0 * * 1)
+[2026-04-12T21:32:04.597Z] [INFO] Scheduled task: Cerebrum reflection (0 3 * * 0)
+[2026-04-12T21:32:04.597Z] [INFO] Scheduled task: AI suggestions (0 4 * * 1)
+[2026-04-12T21:32:04.598Z] [INFO] File watcher started on .wolf/
+[2026-04-12T21:32:04.598Z] [INFO] OpenWolf daemon started
+[2026-04-12T21:32:04.599Z] [INFO] Dashboard server listening on port 18791
+[2026-04-12T21:32:33.682Z] [INFO] WebSocket client connected
+[2026-04-12T22:00:00.160Z] [INFO] Executing task: Full anatomy rescan
+[2026-04-12T22:00:00.322Z] [INFO] Task Full anatomy rescan completed in 161ms
+[2026-04-13T04:00:00.537Z] [INFO] Executing task: Full anatomy rescan
+[2026-04-13T04:00:00.695Z] [INFO] Task Full anatomy rescan completed in 158ms
+[2026-04-13T04:00:00.695Z] [INFO] Executing task: Token audit report
+[2026-04-13T04:00:00.700Z] [INFO] Task Token audit report completed in 5ms
+[2026-04-13T06:00:00.053Z] [INFO] Executing task: Consolidate old memory
+[2026-04-13T06:00:00.062Z] [INFO] Task Consolidate old memory completed in 8ms
+[2026-04-13T08:00:00.019Z] [INFO] Executing task: AI suggestions
+[2026-04-13T08:00:39.147Z] [INFO] Task AI suggestions completed in 39128ms
+[2026-04-13T10:00:00.251Z] [INFO] Executing task: Full anatomy rescan
+[2026-04-13T10:00:00.405Z] [INFO] Task Full anatomy rescan completed in 154ms
+[2026-04-13T16:00:00.605Z] [INFO] Executing task: Full anatomy rescan
+[2026-04-13T16:00:00.761Z] [INFO] Task Full anatomy rescan completed in 156ms
+[2026-04-13T22:00:00.981Z] [INFO] Executing task: Full anatomy rescan
+[2026-04-13T22:00:01.139Z] [INFO] Task Full anatomy rescan completed in 158ms
+[2026-04-14T04:00:00.079Z] [INFO] Executing task: Full anatomy rescan
+[2026-04-14T04:00:00.241Z] [INFO] Task Full anatomy rescan completed in 162ms
+[2026-04-14T06:00:00.621Z] [INFO] Executing task: Consolidate old memory
+[2026-04-14T06:00:00.630Z] [INFO] Task Consolidate old memory completed in 8ms
+[2026-04-14T10:00:00.032Z] [INFO] Executing task: Full anatomy rescan
+[2026-04-14T10:00:00.179Z] [INFO] Task Full anatomy rescan completed in 147ms
+[2026-04-14T16:00:00.864Z] [INFO] Executing task: Full anatomy rescan
+[2026-04-14T16:00:01.019Z] [INFO] Task Full anatomy rescan completed in 156ms
+[2026-04-14T22:00:00.489Z] [INFO] Executing task: Full anatomy rescan
+[2026-04-14T22:00:00.648Z] [INFO] Task Full anatomy rescan completed in 159ms
+[2026-04-15T04:00:00.579Z] [INFO] Executing task: Full anatomy rescan
+[2026-04-15T04:00:00.729Z] [INFO] Task Full anatomy rescan completed in 150ms

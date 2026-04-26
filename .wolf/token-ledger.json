@@ -1,0 +1,1200 @@
+{
+  "version": 1,
+  "created_at": "2026-04-12T21:31:41.062Z",
+  "lifetime": {
+    "total_tokens_estimated": 91525,
+    "total_reads": 116,
+    "total_writes": 46,
+    "total_sessions": 13,
+    "anatomy_hits": 33,
+    "anatomy_misses": 79,
+    "repeated_reads_blocked": 71,
+    "estimated_savings_vs_bare_cli": 102510
+  },
+  "sessions": [
+    {
+      "id": "session-2026-04-13-0400",
+      "started": "2026-04-13T08:00:00.825Z",
+      "ended": "2026-04-13T08:00:38.885Z",
+      "reads": [
+        {
+          "file": "/Users/mosorio/repos/mint/.planning/STATE.md",
+          "tokens_estimated": 3910,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/.planning/ROADMAP.md",
+          "tokens_estimated": 1347,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/.planning/quick/260411-hb5-add-filtering-info-and-toggles-time-regi/260411-hb5-SUMMARY.md",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/.planning/quick/260411-nis-ui-has-outdated-query-looking-model-id-o/260411-nis-SUMMARY.md",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        }
+      ],
+      "writes": [],
+      "totals": {
+        "input_tokens_estimated": 5257,
+        "output_tokens_estimated": 0,
+        "reads_count": 4,
+        "writes_count": 0,
+        "repeated_reads_blocked": 0,
+        "anatomy_lookups": 2
+      }
+    },
+    {
+      "id": "session-2026-04-26-1102",
+      "started": "2026-04-26T15:02:44.432Z",
+      "ended": "2026-04-26T15:04:05.298Z",
+      "reads": [
+        {
+          "file": "/Users/mosorio/repos/mint/.claude/settings.json",
+          "tokens_estimated": 441,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/.claude/settings.json",
+          "tokens_estimated": 441,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        }
+      ],
+      "writes": [
+        {
+          "file": "/Users/mosorio/.claude/settings.json",
+          "tokens_estimated": 64,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/.claude/settings.json",
+          "tokens_estimated": 33,
+          "action": "edit"
+        }
+      ],
+      "totals": {
+        "input_tokens_estimated": 882,
+        "output_tokens_estimated": 97,
+        "reads_count": 2,
+        "writes_count": 2,
+        "repeated_reads_blocked": 0,
+        "anatomy_lookups": 2
+      }
+    },
+    {
+      "id": "session-2026-04-26-1102",
+      "started": "2026-04-26T15:02:44.432Z",
+      "ended": "2026-04-26T15:04:25.190Z",
+      "reads": [
+        {
+          "file": "/Users/mosorio/repos/mint/.claude/settings.json",
+          "tokens_estimated": 441,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/.claude/settings.json",
+          "tokens_estimated": 441,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        }
+      ],
+      "writes": [
+        {
+          "file": "/Users/mosorio/.claude/settings.json",
+          "tokens_estimated": 64,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/.claude/settings.json",
+          "tokens_estimated": 33,
+          "action": "edit"
+        }
+      ],
+      "totals": {
+        "input_tokens_estimated": 882,
+        "output_tokens_estimated": 97,
+        "reads_count": 2,
+        "writes_count": 2,
+        "repeated_reads_blocked": 0,
+        "anatomy_lookups": 2
+      }
+    },
+    {
+      "id": "session-2026-04-26-1102",
+      "started": "2026-04-26T15:02:44.432Z",
+      "ended": "2026-04-26T15:07:16.955Z",
+      "reads": [
+        {
+          "file": "/Users/mosorio/repos/mint/.claude/settings.json",
+          "tokens_estimated": 441,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/.claude/settings.json",
+          "tokens_estimated": 441,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/helm-charts/dynamo-values.yaml",
+          "tokens_estimated": 387,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/helm-charts/charts/mint/templates/ensemble-manager-config.yaml",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        }
+      ],
+      "writes": [
+        {
+          "file": "/Users/mosorio/.claude/settings.json",
+          "tokens_estimated": 64,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/.claude/settings.json",
+          "tokens_estimated": 33,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/helm-charts/dynamo-values.yaml",
+          "tokens_estimated": 387,
+          "action": "create"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/helm-charts/dynamo-values.yaml",
+          "tokens_estimated": 24,
+          "action": "edit"
+        }
+      ],
+      "totals": {
+        "input_tokens_estimated": 1269,
+        "output_tokens_estimated": 508,
+        "reads_count": 4,
+        "writes_count": 4,
+        "repeated_reads_blocked": 1,
+        "anatomy_lookups": 2
+      }
+    },
+    {
+      "id": "session-2026-04-26-1102",
+      "started": "2026-04-26T15:02:44.432Z",
+      "ended": "2026-04-26T15:10:26.570Z",
+      "reads": [
+        {
+          "file": "/Users/mosorio/repos/mint/.claude/settings.json",
+          "tokens_estimated": 441,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/.claude/settings.json",
+          "tokens_estimated": 441,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/helm-charts/dynamo-values.yaml",
+          "tokens_estimated": 387,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/helm-charts/charts/mint/templates/ensemble-manager-config.yaml",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        }
+      ],
+      "writes": [
+        {
+          "file": "/Users/mosorio/.claude/settings.json",
+          "tokens_estimated": 64,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/.claude/settings.json",
+          "tokens_estimated": 33,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/helm-charts/dynamo-values.yaml",
+          "tokens_estimated": 387,
+          "action": "create"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/helm-charts/dynamo-values.yaml",
+          "tokens_estimated": 24,
+          "action": "edit"
+        }
+      ],
+      "totals": {
+        "input_tokens_estimated": 1269,
+        "output_tokens_estimated": 508,
+        "reads_count": 4,
+        "writes_count": 4,
+        "repeated_reads_blocked": 1,
+        "anatomy_lookups": 2
+      }
+    },
+    {
+      "id": "session-2026-04-26-1111",
+      "started": "2026-04-26T15:11:29.052Z",
+      "ended": "2026-04-26T15:14:54.768Z",
+      "reads": [
+        {
+          "file": "/Users/mosorio/.claude/get-shit-done/workflows/quick.md",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/.planning/STATE.md",
+          "tokens_estimated": 3910,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/classes/graphql/queries/emulator/model-executions.graphql",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/classes/graphql/graphql_adapter.ts",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/api/api-v1/services/executionsLocalService.ts",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/classes/common/__tests__/mocks/getThreadMock.ts",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/classes/graphql/graphql_functions.ts",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/helm-charts/dynamo-values.yaml",
+          "tokens_estimated": 382,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/classes/mint/mint-local-functions.ts",
+          "tokens_estimated": 0,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        }
+      ],
+      "writes": [
+        {
+          "file": "/Users/mosorio/repos/mint/helm-charts/dynamo-values.yaml",
+          "tokens_estimated": 65,
+          "action": "edit"
+        }
+      ],
+      "totals": {
+        "input_tokens_estimated": 4292,
+        "output_tokens_estimated": 65,
+        "reads_count": 9,
+        "writes_count": 1,
+        "repeated_reads_blocked": 1,
+        "anatomy_lookups": 2
+      }
+    },
+    {
+      "id": "session-2026-04-26-1111",
+      "started": "2026-04-26T15:11:29.052Z",
+      "ended": "2026-04-26T15:29:03.738Z",
+      "reads": [
+        {
+          "file": "/Users/mosorio/.claude/get-shit-done/workflows/quick.md",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/.planning/STATE.md",
+          "tokens_estimated": 3964,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/classes/graphql/queries/emulator/model-executions.graphql",
+          "tokens_estimated": 0,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/classes/graphql/graphql_adapter.ts",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/api/api-v1/services/executionsLocalService.ts",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/classes/common/__tests__/mocks/getThreadMock.ts",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/classes/graphql/graphql_functions.ts",
+          "tokens_estimated": 0,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/helm-charts/dynamo-values.yaml",
+          "tokens_estimated": 382,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/classes/mint/mint-local-functions.ts",
+          "tokens_estimated": 0,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/graphql_engine/metadata/tables.yaml",
+          "tokens_estimated": 0,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/classes/graphql/queries/execution/increment-registered-runs-by-execution-id.graphql",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/classes/graphql/graphql_functions_v2.ts",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/classes/graphql/types.ts",
+          "tokens_estimated": 0,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/classes/graphql/gql.ts",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/classes/graphql/graphql.ts",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/.planning/quick/260405-nrv-fix-graphql-query-referencing-old-model-/260405-nrv-PLAN.md",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/.claude/worktrees/agent-a1fd0c86/.planning/phases/09-merge-modelconfiguration-setup-tables-and-migrate-thread-model-relationships/09-04-SUMMARY.md",
+          "tokens_estimated": 2342,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/api/api-v1/paths/problemStatements/tasks/subtasks/executions/index.ts",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/api/api-v1/paths/problemStatements/tasks/subtasks/index.ts",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/api/api-v1/services/subTasksService.ts",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/classes/mint/mint-functions.ts",
+          "tokens_estimated": 0,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/api/api-v1/services/executionsTapisService.ts",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/api/api-v1/paths/executionsLocal.ts",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/.planning/quick/260426-fk5-fix-apollo-field-model-not-found-in-type/260426-fk5-PLAN.md",
+          "tokens_estimated": 2790,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/.planning/quick/260426-fk5-fix-apollo-field-model-not-found-in-type/260426-fk5-SUMMARY.md",
+          "tokens_estimated": 1240,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        }
+      ],
+      "writes": [
+        {
+          "file": "/Users/mosorio/repos/mint/helm-charts/dynamo-values.yaml",
+          "tokens_estimated": 65,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/.planning/quick/260426-fk5-fix-apollo-field-model-not-found-in-type/260426-fk5-PLAN.md",
+          "tokens_estimated": 3188,
+          "action": "create"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/.planning/STATE.md",
+          "tokens_estimated": 4521,
+          "action": "create"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/.planning/quick/260426-fk5-fix-apollo-field-model-not-found-in-type/260426-fk5-SUMMARY.md",
+          "tokens_estimated": 1417,
+          "action": "create"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/.planning/STATE.md",
+          "tokens_estimated": 74,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/.planning/STATE.md",
+          "tokens_estimated": 72,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/.planning/STATE.md",
+          "tokens_estimated": 41,
+          "action": "edit"
+        }
+      ],
+      "totals": {
+        "input_tokens_estimated": 10718,
+        "output_tokens_estimated": 9378,
+        "reads_count": 25,
+        "writes_count": 7,
+        "repeated_reads_blocked": 20,
+        "anatomy_lookups": 5
+      }
+    },
+    {
+      "id": "session-2026-04-26-1111",
+      "started": "2026-04-26T15:11:29.052Z",
+      "ended": "2026-04-26T17:31:22.650Z",
+      "reads": [
+        {
+          "file": "/Users/mosorio/.claude/get-shit-done/workflows/quick.md",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/.planning/STATE.md",
+          "tokens_estimated": 3964,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/classes/graphql/queries/emulator/model-executions.graphql",
+          "tokens_estimated": 0,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/classes/graphql/graphql_adapter.ts",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/api/api-v1/services/executionsLocalService.ts",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/classes/common/__tests__/mocks/getThreadMock.ts",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/classes/graphql/graphql_functions.ts",
+          "tokens_estimated": 0,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/helm-charts/dynamo-values.yaml",
+          "tokens_estimated": 382,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/classes/mint/mint-local-functions.ts",
+          "tokens_estimated": 0,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/graphql_engine/metadata/tables.yaml",
+          "tokens_estimated": 0,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/classes/graphql/queries/execution/increment-registered-runs-by-execution-id.graphql",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/classes/graphql/graphql_functions_v2.ts",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/classes/graphql/types.ts",
+          "tokens_estimated": 0,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/classes/graphql/gql.ts",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/classes/graphql/graphql.ts",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/.planning/quick/260405-nrv-fix-graphql-query-referencing-old-model-/260405-nrv-PLAN.md",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/.claude/worktrees/agent-a1fd0c86/.planning/phases/09-merge-modelconfiguration-setup-tables-and-migrate-thread-model-relationships/09-04-SUMMARY.md",
+          "tokens_estimated": 2342,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/api/api-v1/paths/problemStatements/tasks/subtasks/executions/index.ts",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/api/api-v1/paths/problemStatements/tasks/subtasks/index.ts",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/api/api-v1/services/subTasksService.ts",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/classes/mint/mint-functions.ts",
+          "tokens_estimated": 0,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/api/api-v1/services/executionsTapisService.ts",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/api/api-v1/paths/executionsLocal.ts",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/.planning/quick/260426-fk5-fix-apollo-field-model-not-found-in-type/260426-fk5-PLAN.md",
+          "tokens_estimated": 2790,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/.planning/quick/260426-fk5-fix-apollo-field-model-not-found-in-type/260426-fk5-SUMMARY.md",
+          "tokens_estimated": 1240,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        }
+      ],
+      "writes": [
+        {
+          "file": "/Users/mosorio/repos/mint/helm-charts/dynamo-values.yaml",
+          "tokens_estimated": 65,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/.planning/quick/260426-fk5-fix-apollo-field-model-not-found-in-type/260426-fk5-PLAN.md",
+          "tokens_estimated": 3188,
+          "action": "create"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/.planning/STATE.md",
+          "tokens_estimated": 4521,
+          "action": "create"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/.planning/quick/260426-fk5-fix-apollo-field-model-not-found-in-type/260426-fk5-SUMMARY.md",
+          "tokens_estimated": 1417,
+          "action": "create"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/.planning/STATE.md",
+          "tokens_estimated": 74,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/.planning/STATE.md",
+          "tokens_estimated": 72,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/.planning/STATE.md",
+          "tokens_estimated": 41,
+          "action": "edit"
+        }
+      ],
+      "totals": {
+        "input_tokens_estimated": 10718,
+        "output_tokens_estimated": 9378,
+        "reads_count": 25,
+        "writes_count": 7,
+        "repeated_reads_blocked": 20,
+        "anatomy_lookups": 5
+      }
+    },
+    {
+      "id": "session-2026-04-26-1111",
+      "started": "2026-04-26T15:11:29.052Z",
+      "ended": "2026-04-26T17:41:13.361Z",
+      "reads": [
+        {
+          "file": "/Users/mosorio/.claude/get-shit-done/workflows/quick.md",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/.planning/STATE.md",
+          "tokens_estimated": 3964,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/classes/graphql/queries/emulator/model-executions.graphql",
+          "tokens_estimated": 0,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/classes/graphql/graphql_adapter.ts",
+          "tokens_estimated": 0,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/api/api-v1/services/executionsLocalService.ts",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/classes/common/__tests__/mocks/getThreadMock.ts",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/classes/graphql/graphql_functions.ts",
+          "tokens_estimated": 0,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/helm-charts/dynamo-values.yaml",
+          "tokens_estimated": 382,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/classes/mint/mint-local-functions.ts",
+          "tokens_estimated": 0,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/graphql_engine/metadata/tables.yaml",
+          "tokens_estimated": 0,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/classes/graphql/queries/execution/increment-registered-runs-by-execution-id.graphql",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/classes/graphql/graphql_functions_v2.ts",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/classes/graphql/types.ts",
+          "tokens_estimated": 0,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/classes/graphql/gql.ts",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/classes/graphql/graphql.ts",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/.planning/quick/260405-nrv-fix-graphql-query-referencing-old-model-/260405-nrv-PLAN.md",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/.claude/worktrees/agent-a1fd0c86/.planning/phases/09-merge-modelconfiguration-setup-tables-and-migrate-thread-model-relationships/09-04-SUMMARY.md",
+          "tokens_estimated": 2342,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/api/api-v1/paths/problemStatements/tasks/subtasks/executions/index.ts",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/api/api-v1/paths/problemStatements/tasks/subtasks/index.ts",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/api/api-v1/services/subTasksService.ts",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/classes/mint/mint-functions.ts",
+          "tokens_estimated": 0,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/api/api-v1/services/executionsTapisService.ts",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/api/api-v1/paths/executionsLocal.ts",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/.planning/quick/260426-fk5-fix-apollo-field-model-not-found-in-type/260426-fk5-PLAN.md",
+          "tokens_estimated": 2790,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/.planning/quick/260426-fk5-fix-apollo-field-model-not-found-in-type/260426-fk5-SUMMARY.md",
+          "tokens_estimated": 1240,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/classes/graphql/queries/thread/get.graphql",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/classes/graphql/queries/emulator/thread-executions.graphql",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        }
+      ],
+      "writes": [
+        {
+          "file": "/Users/mosorio/repos/mint/helm-charts/dynamo-values.yaml",
+          "tokens_estimated": 65,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/.planning/quick/260426-fk5-fix-apollo-field-model-not-found-in-type/260426-fk5-PLAN.md",
+          "tokens_estimated": 3188,
+          "action": "create"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/.planning/STATE.md",
+          "tokens_estimated": 4521,
+          "action": "create"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/.planning/quick/260426-fk5-fix-apollo-field-model-not-found-in-type/260426-fk5-SUMMARY.md",
+          "tokens_estimated": 1417,
+          "action": "create"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/.planning/STATE.md",
+          "tokens_estimated": 74,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/.planning/STATE.md",
+          "tokens_estimated": 72,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/.planning/STATE.md",
+          "tokens_estimated": 41,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/classes/graphql/queries/thread/get.graphql",
+          "tokens_estimated": 53,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/classes/graphql/queries/emulator/model-executions.graphql",
+          "tokens_estimated": 51,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/classes/graphql/queries/emulator/thread-executions.graphql",
+          "tokens_estimated": 40,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/classes/graphql/graphql_adapter.ts",
+          "tokens_estimated": 71,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/classes/graphql/graphql_adapter.ts",
+          "tokens_estimated": 38,
+          "action": "edit"
+        }
+      ],
+      "totals": {
+        "input_tokens_estimated": 10718,
+        "output_tokens_estimated": 9631,
+        "reads_count": 27,
+        "writes_count": 12,
+        "repeated_reads_blocked": 24,
+        "anatomy_lookups": 5
+      }
+    },
+    {
+      "id": "session-2026-04-26-1342",
+      "started": "2026-04-26T17:42:28.917Z",
+      "ended": "2026-04-26T17:45:01.643Z",
+      "reads": [
+        {
+          "file": "/Users/mosorio/.claude/get-shit-done/workflows/update.md",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        }
+      ],
+      "writes": [],
+      "totals": {
+        "input_tokens_estimated": 0,
+        "output_tokens_estimated": 0,
+        "reads_count": 1,
+        "writes_count": 0,
+        "repeated_reads_blocked": 0,
+        "anatomy_lookups": 0
+      }
+    },
+    {
+      "id": "session-2026-04-26-1342",
+      "started": "2026-04-26T17:42:28.917Z",
+      "ended": "2026-04-26T17:45:43.652Z",
+      "reads": [
+        {
+          "file": "/Users/mosorio/.claude/get-shit-done/workflows/update.md",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/.planning/STATE.md",
+          "tokens_estimated": 3972,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        }
+      ],
+      "writes": [
+        {
+          "file": "/Users/mosorio/repos/mint/.planning/todos/pending/2026-04-26-centralize-execution-config-in-ensemble-manager-ui-fetches-v.md",
+          "tokens_estimated": 890,
+          "action": "create"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/.planning/STATE.md",
+          "tokens_estimated": 58,
+          "action": "edit"
+        }
+      ],
+      "totals": {
+        "input_tokens_estimated": 3972,
+        "output_tokens_estimated": 948,
+        "reads_count": 2,
+        "writes_count": 2,
+        "repeated_reads_blocked": 0,
+        "anatomy_lookups": 1
+      }
+    },
+    {
+      "id": "session-2026-04-26-1342",
+      "started": "2026-04-26T17:42:28.917Z",
+      "ended": "2026-04-26T18:05:36.494Z",
+      "reads": [
+        {
+          "file": "/Users/mosorio/.claude/get-shit-done/workflows/update.md",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/.planning/STATE.md",
+          "tokens_estimated": 3972,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/graphql_engine/metadata/tables.yaml",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        }
+      ],
+      "writes": [
+        {
+          "file": "/Users/mosorio/repos/mint/.planning/todos/pending/2026-04-26-centralize-execution-config-in-ensemble-manager-ui-fetches-v.md",
+          "tokens_estimated": 890,
+          "action": "create"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/.planning/STATE.md",
+          "tokens_estimated": 58,
+          "action": "edit"
+        }
+      ],
+      "totals": {
+        "input_tokens_estimated": 3972,
+        "output_tokens_estimated": 948,
+        "reads_count": 3,
+        "writes_count": 2,
+        "repeated_reads_blocked": 0,
+        "anatomy_lookups": 1
+      }
+    },
+    {
+      "id": "session-2026-04-26-1342",
+      "started": "2026-04-26T17:42:28.917Z",
+      "ended": "2026-04-26T18:05:52.339Z",
+      "reads": [
+        {
+          "file": "/Users/mosorio/.claude/get-shit-done/workflows/update.md",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/.planning/STATE.md",
+          "tokens_estimated": 3972,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/graphql_engine/metadata/tables.yaml",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        }
+      ],
+      "writes": [
+        {
+          "file": "/Users/mosorio/repos/mint/.planning/todos/pending/2026-04-26-centralize-execution-config-in-ensemble-manager-ui-fetches-v.md",
+          "tokens_estimated": 890,
+          "action": "create"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/.planning/STATE.md",
+          "tokens_estimated": 58,
+          "action": "edit"
+        }
+      ],
+      "totals": {
+        "input_tokens_estimated": 3972,
+        "output_tokens_estimated": 948,
+        "reads_count": 3,
+        "writes_count": 2,
+        "repeated_reads_blocked": 0,
+        "anatomy_lookups": 1
+      }
+    },
+    {
+      "id": "session-2026-04-26-1411",
+      "started": "2026-04-26T18:11:05.248Z",
+      "ended": "2026-04-26T18:12:15.373Z",
+      "reads": [
+        {
+          "file": "/Users/mosorio/repos/mint/graphql_engine/metadata/tables.yaml",
+          "tokens_estimated": 0,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/classes/graphql/queries/emulator/thread-executions.graphql",
+          "tokens_estimated": 194,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        }
+      ],
+      "writes": [],
+      "totals": {
+        "input_tokens_estimated": 194,
+        "output_tokens_estimated": 0,
+        "reads_count": 2,
+        "writes_count": 0,
+        "repeated_reads_blocked": 2,
+        "anatomy_lookups": 1
+      }
+    },
+    {
+      "id": "session-2026-04-26-1411",
+      "started": "2026-04-26T18:11:05.248Z",
+      "ended": "2026-04-26T18:15:23.726Z",
+      "reads": [
+        {
+          "file": "/Users/mosorio/repos/mint/graphql_engine/metadata/tables.yaml",
+          "tokens_estimated": 0,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/classes/graphql/queries/emulator/thread-executions.graphql",
+          "tokens_estimated": 194,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/.gitmodules",
+          "tokens_estimated": 338,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        }
+      ],
+      "writes": [
+        {
+          "file": "/Users/mosorio/repos/mint/.gitmodules",
+          "tokens_estimated": 372,
+          "action": "create"
+        }
+      ],
+      "totals": {
+        "input_tokens_estimated": 532,
+        "output_tokens_estimated": 372,
+        "reads_count": 3,
+        "writes_count": 1,
+        "repeated_reads_blocked": 2,
+        "anatomy_lookups": 2
+      }
+    }
+  ],
+  "daemon_usage": [],
+  "waste_flags": [],
+  "optimization_report": {
+    "last_generated": "2026-04-13T04:00:00.700Z",
+    "patterns": []
+  }
+}

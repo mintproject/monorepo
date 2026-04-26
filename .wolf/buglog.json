@@ -36,6 +36,86 @@
       "related_bugs": [],
       "occurrences": 1,
       "last_seen": "2026-04-26T15:27:35.545Z"
+    },
+    {
+      "id": "bug-003",
+      "timestamp": "2026-04-26T17:40:07.323Z",
+      "error_message": "Wrong reference: model_parameter should be modelcatalog_parameter",
+      "file": "mint-ensemble-manager/src/classes/graphql/graphql_adapter.ts",
+      "root_cause": "Used \"model_parameter\" instead of \"modelcatalog_parameter\"",
+      "fix": "Changed model_parameter → modelcatalog_parameter",
+      "tags": [
+        "auto-detected",
+        "wrong-reference",
+        "ts"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-26T17:40:07.323Z"
+    },
+    {
+      "id": "bug-004",
+      "timestamp": "2026-04-26T17:45:30.900Z",
+      "error_message": "Wrong reference: None should be config",
+      "file": ".planning/STATE.md",
+      "root_cause": "Used \"None\" instead of \"config\"",
+      "fix": "Changed None → config",
+      "tags": [
+        "auto-detected",
+        "wrong-reference",
+        "md"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-26T17:45:30.900Z"
+    },
+    {
+      "id": "bug-005",
+      "timestamp": "2026-04-26T18:06:21.673Z",
+      "error_message": "Wrong reference: name should be label",
+      "file": "mint-ensemble-manager/src/classes/graphql/queries/emulator/model-executions.graphql",
+      "root_cause": "Used \"name\" instead of \"label\"",
+      "fix": "Changed name → label",
+      "tags": [
+        "auto-detected",
+        "wrong-reference",
+        "graphql"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-26T18:06:21.673Z"
+    },
+    {
+      "id": "bug-006",
+      "timestamp": "2026-04-26T18:06:24.579Z",
+      "error_message": "Wrong reference: name should be label",
+      "file": "mint-ensemble-manager/src/classes/graphql/queries/emulator/thread-executions.graphql",
+      "root_cause": "Used \"name\" instead of \"label\"",
+      "fix": "Changed name → label",
+      "tags": [
+        "auto-detected",
+        "wrong-reference",
+        "graphql"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-26T18:06:24.579Z"
+    },
+    {
+      "id": "bug-007",
+      "timestamp": "2026-04-26T18:06:28.398Z",
+      "error_message": "Wrong reference: name should be label",
+      "file": "mint-ensemble-manager/src/classes/graphql/graphql_adapter.ts",
+      "root_cause": "Used \"name\" instead of \"label\"",
+      "fix": "Changed name → label",
+      "tags": [
+        "auto-detected",
+        "wrong-reference",
+        "ts"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-26T18:06:28.398Z"
     }
   ]
 }
