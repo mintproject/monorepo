@@ -1,5 +1,6 @@
 import { Jobs } from "@tapis/tapis-typescript";
 import { getConfiguration } from "@/classes/mint/mint-functions";
+import errorDecoder from "@/classes/tapis/utils/errorDecoder";
 
 export class TapisJobSubscriptionService {
     constructor(private subscriptionsClient: Jobs.SubscriptionsApi) {}
@@ -23,10 +24,24 @@ export class TapisJobSubscriptionService {
     }
 
     async submit(jobUuid: string, request: Jobs.ReqSubscribe) {
-        return await this.subscriptionsClient.subscribe({
-            jobUuid: jobUuid,
-            reqSubscribe: request
-        });
+        console.log(
+            `Subscribing to job ${jobUuid} with delivery target(s):`,
+            request.deliveryTargets?.map((t) => t.deliveryAddress)
+        );
+        try {
+            return await errorDecoder(() =>
+                this.subscriptionsClient.subscribe({
+                    jobUuid: jobUuid,
+                    reqSubscribe: request
+                })
+            );
+        } catch (error) {
+            console.error(
+                `Tapis subscribe failed for job ${jobUuid}:`,
+                error instanceof Error ? error.message : String(error)
+            );
+            throw error;
+        }
     }
 
     static generateWebHookUrl(threadId: string, executionId: string) {

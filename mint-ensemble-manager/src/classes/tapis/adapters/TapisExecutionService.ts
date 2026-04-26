@@ -151,7 +151,15 @@ export class TapisExecutionService implements IExecutionService {
         console.log("Job request", JSON.stringify(jobRequest));
         const jobId = await this.submitJob(jobRequest);
 
-        await updateExecutionRunId(seed.execution.id, jobId);
+        try {
+            await updateExecutionRunId(seed.execution.id, jobId);
+        } catch (error) {
+            console.error(
+                `updateExecutionRunId failed for execution ${seed.execution.id} (jobId ${jobId}):`,
+                error instanceof Error ? error.message : String(error)
+            );
+            throw error;
+        }
 
         const subscription = TapisJobSubscriptionService.createRequest(seed.execution.id, threadId);
         await this.jobSubscriptionService.submit(jobId, subscription);
