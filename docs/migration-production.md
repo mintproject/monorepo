@@ -16,18 +16,58 @@ Apply migrations 1771200012000–1771200014000 + ETL backfill against production
 
 `scripts/run-migration-prod.sh` automates every step below with a mandatory operator pause between each one. Use it instead of running the bash blocks by hand.
 
+### Inputs you must verify before launching
+
+| Item                | Value                                                           |
+|---------------------|-----------------------------------------------------------------|
+| TriG file (default) | `backups/dynamo-2025-04-08-v2.trig`                             |
+| Expected md5        | `d20aae3db73111e6c1b7bcf7ae812e89`                              |
+| kubectl context     | TACC production                                                 |
+| Namespace           | `mint`                                                          |
+
+Confirm md5 locally before invoking the script (sanity check — script also validates internally and aborts on mismatch):
+
 ```bash
-# full interactive run (prompts at each gate)
-./scripts/run-migration-prod.sh
-
-# resume mid-run after fixing a failure (e.g. start at Step 6)
-./scripts/run-migration-prod.sh --start-from 6
-
-# dry-run: echo destructive commands without executing
-./scripts/run-migration-prod.sh --dry-run --yes
+# Linux
+md5sum backups/dynamo-2025-04-08-v2.trig
+# macOS
+md5 -q backups/dynamo-2025-04-08-v2.trig
+# expect: d20aae3db73111e6c1b7bcf7ae812e89
 ```
 
-Flags: `--start-from N`, `--dry-run`, `--yes` (skip pauses — replay only), `--namespace NS`, `--trig-url URL`. Script prints current kubectl context first and waits for confirmation before any destructive op. Backup written to `backups/prod-backup-<timestamp>.sql`; TriG fetched to `model-catalog-endpoint/data/dynamo-<date>.trig`.
+### Run
+
+```bash
+# full interactive run — defaults already point at the vetted v2 snapshot
+./scripts/run-migration-prod.sh
+```
+
+The script will:
+
+1. Print current kubectl context and pause for confirmation.
+2. Take a full DB dump to `backups/prod-backup-<timestamp>.sql`.
+3. Pause after each of the 9 numbered steps. Press Enter to continue, Ctrl-C to abort.
+4. Hard-fail in Step 4 if the TriG md5 does not equal `d20aae3db73111e6c1b7bcf7ae812e89`.
+
+### Common flag combinations
+
+```bash
+# resume mid-run after fixing a failure (e.g. restart at Step 6)
+./scripts/run-migration-prod.sh --start-from 6
+
+# dry-run: echo destructive commands without executing anything
+./scripts/run-migration-prod.sh --dry-run --yes
+
+# roll forward to a freshly-downloaded TriG (re-validate locally first!)
+./scripts/run-migration-prod.sh --fetch \
+  --trig-path backups/dynamo-<new-date>.trig \
+  --trig-md5 <new-md5>
+
+# point at a different namespace
+./scripts/run-migration-prod.sh --namespace mint-staging
+```
+
+All flags: `--start-from N`, `--dry-run`, `--yes` (skip pauses — replay only), `--namespace NS`, `--trig-path PATH`, `--trig-md5 HEX`, `--fetch`, `--trig-url URL`.
 
 The numbered steps below are the manual fallback and the source of truth for what the script executes.
 
