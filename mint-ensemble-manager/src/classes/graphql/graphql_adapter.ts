@@ -552,10 +552,10 @@ export const modelEnsembleFromGQL = (dbs: any[], pbs: any[]): ModelIOBindings =>
         bindings[db["model_io"]["id"]] = binding;
     });
     pbs.forEach((pb) => {
-        let binding = bindings[pb["model_parameter"]["id"]];
+        let binding = bindings[pb["modelcatalog_parameter"]["id"]];
         if (!binding) binding = [];
         binding.push(pb["parameter_value"]);
-        bindings[pb["model_parameter"]["id"]] = binding;
+        bindings[pb["modelcatalog_parameter"]["id"]] = binding;
     });
     return bindings;
 };
@@ -611,7 +611,7 @@ export const executionFromGQL = (ex: any, emulator = false): Execution => {
         results: {}
     } as Execution;
     ex.parameter_bindings.forEach((param: any) => {
-        exobj.bindings[emulator ? param.model_parameter.name : param.model_parameter_id] =
+        exobj.bindings[emulator ? param.modelcatalog_parameter.name : param.model_parameter_id] =
             param.parameter_value;
     });
     ex.data_bindings.forEach((data: any) => {
