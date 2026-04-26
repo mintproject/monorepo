@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 10-00-PLAN.md
-last_updated: "2026-04-08T01:36:28.966Z"
-last_activity: 2026-04-08
+stopped_at: "Planning quick-260426-fk5: Apollo model field fix verification"
+last_updated: "2026-04-26T00:00:00.000Z"
+last_activity: "2026-04-26 - Planning quick task 260426-fk5: Verify Apollo 'model' field fix in ensemble manager"
 progress:
   total_phases: 10
   completed_phases: 7
@@ -29,7 +29,7 @@ Phase: 10
 Plan: Not started
 Milestone v2.0: COMPLETE (shipped 2026-03-15)
 Status: Ready to execute
-Last activity: 2026-04-11 - Completed quick task 260411-hb5: Add filtering info and toggles (time, region, variables) to dataset selection view
+Last activity: 2026-04-26 - Planning quick task 260426-fk5: Verify Apollo model field fix in ensemble manager
 
 Progress: [████████████] 100% — v2.0 shipped
 
@@ -176,9 +176,11 @@ None — v2.0 milestone complete.
 | 260328-r01 | Variable migration analysis: TriG/Fuseki to Hasura | 2026-03-28 | a21ed7b | Complete | [260328-r01-analyze-variables-hasura-vs-trig-fuseki](./quick/260328-r01-analyze-variables-hasura-vs-trig-fuseki/) |
 | 260405-nrv | Fix GraphQL query referencing old model table and threadFromGQL adapter | 2026-04-05 | f5c8875 | Verified | [260405-nrv-fix-graphql-query-referencing-old-model-](./quick/260405-nrv-fix-graphql-query-referencing-old-model-/) |
 | 260411-hb5 | Add filtering info and toggles (time, region, variables) to dataset selection view | 2026-04-11 | b89305a | Verified | [260411-hb5-add-filtering-info-and-toggles-time-regi](./quick/260411-hb5-add-filtering-info-and-toggles-time-regi/) |
+| 260411-nis | Fix UI GraphQL fragments selecting dropped execution.model_id column | 2026-04-11 | 43e4b00 | Needs Review | [260411-nis-ui-has-outdated-query-looking-model-id-o](./quick/260411-nis-ui-has-outdated-query-looking-model-id-o/) |
+| 260426-fk5 | Verify Apollo 'model' field fix in ensemble manager (POST /v1/executionsLocal 500) | 2026-04-26 | — | In Progress | [260426-fk5-fix-apollo-field-model-not-found-in-type](./quick/260426-fk5-fix-apollo-field-model-not-found-in-type/) |
 
 ## Session Continuity
 
-Last session: 2026-04-08T01:26:11.794Z
-Stopped at: Completed 10-00-PLAN.md
+Last session: 2026-04-26T00:00:00.000Z
+Stopped at: Planning quick-260426-fk5: Apollo model field fix verification
 Resume file: None
