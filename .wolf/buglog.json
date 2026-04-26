@@ -296,6 +296,108 @@
       "related_bugs": [],
       "occurrences": 1,
       "last_seen": "2026-04-26T20:05:10.425Z"
+    },
+    {
+      "id": "bug-017",
+      "timestamp": "2026-04-26T21:43:44.992Z",
+      "error_message": "Significant refactor of ",
+      "file": ".planning/phases/11-simplify-ensemble-manager-and-ui-execution-model-kill-thread/11-UI-SPEC.md",
+      "root_cause": "4 lines replaced/restructured",
+      "fix": "Rewrote 6→6 lines (4 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "md"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-26T21:43:44.992Z"
+    },
+    {
+      "id": "bug-018",
+      "timestamp": "2026-04-26T22:42:32.981Z",
+      "error_message": "Significant refactor of ",
+      "file": "docs/migration-production.md",
+      "root_cause": "3 lines replaced/restructured",
+      "fix": "Rewrote 21→33 lines (3 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "md"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-26T22:42:32.981Z"
+    },
+    {
+      "id": "bug-019",
+      "timestamp": "2026-04-26T23:00:53.858Z",
+      "error_message": "Significant refactor of ",
+      "file": "scripts/run-migration-prod.sh",
+      "root_cause": "2 lines replaced/restructured",
+      "fix": "Rewrote 20→27 lines (2 removed) | Also: # Step 4: Fetch latest TriG; log \"Step 4: Fetch latest TriG snapshot\"",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "sh"
+      ],
+      "related_bugs": [],
+      "occurrences": 2,
+      "last_seen": "2026-04-26T23:01:04.733Z"
+    },
+    {
+      "id": "bug-020",
+      "timestamp": "2026-04-26T23:01:44.681Z",
+      "error_message": "Significant refactor of ",
+      "file": "docs/migration-production.md",
+      "root_cause": "6 lines replaced/restructured",
+      "fix": "Rewrote 11→17 lines (6 removed) | Also: # full interactive run (prompts at each gate); # resume mid-run after fixing a failure (e.g. star",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "md"
+      ],
+      "related_bugs": [],
+      "occurrences": 2,
+      "last_seen": "2026-04-26T23:05:49.578Z"
+    },
+    {
+      "id": "bug-021",
+      "timestamp": "2026-04-26T23:10:00.000Z",
+      "error_message": "psycopg2.errors.ForeignKeyViolation: insert or update on table \"modelcatalog_variable_presentation\" violates foreign key constraint \"fk_vp_unit\". Key (uses_unit)=(https://w3id.org/okn/i/mint/n/a) is not present in table \"modelcatalog_unit\".",
+      "file": "etl/transform.py",
+      "root_cause": "TriG backup carries sentinel sd:usesUnit <https://w3id.org/okn/i/mint/n/a> on VariablePresentation rows, but n/a is never typed as sd:Unit / qudt:Unit. extract_units only collects entities with the Unit type, so sentinel is absent from modelcatalog_unit. ETL forwarded raw uses_unit to load and FK fk_vp_unit (1771200006000) rejected the insert. Same hazard for has_standard_variable.",
+      "fix": "After valid_unit_ids and valid_standard_variable_ids built in transform_data(), iterate variable_presentations and null uses_unit / has_standard_variable when referenced id not in valid set. Both columns nullable, FKs ON DELETE SET NULL — dropping dangling refs is safe. WARNING printed with count of nulled rows.",
+      "tags": [
+        "etl",
+        "transform",
+        "foreign-key",
+        "variable-presentation",
+        "uses-unit",
+        "has-standard-variable",
+        "sentinel",
+        "data-quality",
+        "migration"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-26T23:10:00.000Z"
+    },
+    {
+      "id": "bug-022",
+      "timestamp": "2026-04-26T23:30:16.461Z",
+      "error_message": "Wrong reference: 7299c139f47caa3d3aa310fbff4bbd00875f8726 should be fcbb36a604a07bb6f6233a70a60f45137fb9f27d",
+      "file": "../github.com/In-For-Disaster-Analytics/dynamo/shared/values.yaml",
+      "root_cause": "Used \"7299c139f47caa3d3aa310fbff4bbd00875f8726\" instead of \"fcbb36a604a07bb6f6233a70a60f45137fb9f27d\"",
+      "fix": "Changed 7299c139f47caa3d3aa310fbff4bbd00875f8726 → fcbb36a604a07bb6f6233a70a60f45137fb9f27d",
+      "tags": [
+        "auto-detected",
+        "wrong-reference",
+        "yaml"
+      ],
+      "related_bugs": [],
+      "occurrences": 2,
+      "last_seen": "2026-04-26T23:30:21.385Z"
     }
   ]
 }

@@ -242,3 +242,167 @@
 | Time | Action | File(s) | Outcome | ~Tokens |
 |------|--------|---------|---------|--------|
 | 16:30 | Added Phase 11 (simplify ensemble manager + UI, kill thread_model_execution junction) | .planning/ROADMAP.md, .planning/STATE.md, .planning/phases/11-simplify-ensemble-manager-and-ui-execution-model-kill-thread/ | Phase entry inserted, dir created, not planned | ~3k |
+
+## Session: 2026-04-26 16:23
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 16:25 | Created .planning/phases/11-simplify-ensemble-manager-and-ui-execution-model-kill-thread/11-CONTEXT.md | — | ~5127 |
+| 16:26 | Created .planning/phases/11-simplify-ensemble-manager-and-ui-execution-model-kill-thread/11-DISCUSSION-LOG.md | — | ~2035 |
+| 16:26 | discuss-phase 11: junction kill + idempotent submission decisions captured | 11-CONTEXT.md, 11-DISCUSSION-LOG.md | 7 areas locked, ready for plan-phase | ~12k |
+| 16:26 | Session end: 2 writes across 2 files (11-CONTEXT.md, 11-DISCUSSION-LOG.md) | 1 reads | ~7673 tok |
+
+## Session: 2026-04-26 16:28
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 16:31 | Created docs/migration-production.md | — | ~1718 |
+| 16:31 | Session end: 1 writes across 1 files (migration-production.md) | 2 reads | ~1840 tok |
+| 16:33 | Session end: 1 writes across 1 files (migration-production.md) | 4 reads | ~6646 tok |
+| 16:33 | Edited docs/migration-testing.md | 2→6 lines | ~90 |
+| 16:33 | Edited docs/migration-testing.md | expanded (+12 lines) | ~137 |
+| 16:33 | Session end: 3 writes across 2 files (migration-production.md, migration-testing.md) | 4 reads | ~6890 tok |
+| 16:33 | Session end: 3 writes across 2 files (migration-production.md, migration-testing.md) | 4 reads | ~6890 tok |
+| 16:38 | Created .planning/phases/11-simplify-ensemble-manager-and-ui-execution-model-kill-thread/11-UI-SPEC.md | — | ~3781 |
+| 17:43 | Edited .planning/phases/11-simplify-ensemble-manager-and-ui-execution-model-kill-thread/11-UI-SPEC.md | 8→9 lines | ~50 |
+| 17:43 | Edited .planning/phases/11-simplify-ensemble-manager-and-ui-execution-model-kill-thread/11-UI-SPEC.md | 6→6 lines | ~117 |
+| 17:43 | Edited .planning/phases/11-simplify-ensemble-manager-and-ui-execution-model-kill-thread/11-UI-SPEC.md | weight() → phase() | ~183 |
+| 17:44 | Edited .planning/phases/11-simplify-ensemble-manager-and-ui-execution-model-kill-thread/11-UI-SPEC.md | 6→7 lines | ~142 |
+| 17:44 | Session end: 8 writes across 3 files (migration-production.md, migration-testing.md, 11-UI-SPEC.md) | 12 reads | ~16986 tok |
+
+## Session: 2026-04-26 18:17
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+
+## Session: 2026-04-26 18:27
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+
+## Session: 2026-04-26 18:30
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+
+## Session: 2026-04-26 18:30
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 18:30 | Created scripts/test-migration-local.sh | — | ~1498 |
+| 18:30 | Session end: 1 writes across 1 files (test-migration-local.sh) | 0 reads | ~1605 tok |
+| 18:31 | Session end: 1 writes across 1 files (test-migration-local.sh) | 7 reads | ~20687 tok |
+
+## Session: 2026-04-26 18:34
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 18:35 | Edited ../../.ssh/config | 6→9 lines | ~65 |
+| 18:35 | Edited ../../.ssh/config | 5→8 lines | ~55 |
+| 18:35 | Session end: 2 writes across 1 files (config) | 1 reads | ~128 tok |
+| 18:37 | Session end: 2 writes across 1 files (config) | 1 reads | ~128 tok |
+| 18:38 | Created .planning/phases/11-simplify-ensemble-manager-and-ui-execution-model-kill-thread/11-RESEARCH.md | — | ~13387 |
+
+## Session: 2026-04-26 18:40
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 18:42 | Edited docs/migration-production.md | expanded (+12 lines) | ~270 |
+
+## Session: 2026-04-26 18:42
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 18:44 | Edited docs/migration-production.md | 5 → 6 | ~15 |
+| 18:44 | Edited docs/migration-production.md | 3→3 lines | ~71 |
+| 18:44 | Edited docs/migration-production.md | 7 → 8 | ~5 |
+| 18:44 | Edited docs/migration-production.md | 8 → 9 | ~7 |
+| 18:44 | Edited docs/migration-production.md | inline fix | ~13 |
+| 18:44 | Edited docs/migration-production.md | inline fix | ~8 |
+| 18:44 | Added Step 4 fetch-trig (wget snapshot), renumbered Steps 5–9 | docs/migration-production.md | done | ~50 |
+| 18:45 | Session end: 6 writes across 1 files (migration-production.md) | 1 reads | ~127 tok |
+| 18:46 | Session end: 6 writes across 1 files (migration-production.md) | 1 reads | ~127 tok |
+| 18:49 | Session end: 6 writes across 1 files (migration-production.md) | 1 reads | ~127 tok |
+| 18:38 | Phase 11 research: junction drop, view DDL, callsite inventory (28 files), hash-as-UUID finding | .planning/phases/11-.../11-RESEARCH.md | completed | ~8000 tok |
+| 18:50 | Session end: 6 writes across 1 files (migration-production.md) | 2 reads | ~127 tok |
+| 18:51 | Created scripts/run-migration-prod.sh | — | ~2579 |
+| 18:53 | Wrote prod migration runner with per-step pauses | scripts/run-migration-prod.sh | done | ~250 |
+| 18:54 | Session end: 7 writes across 2 files (migration-production.md, run-migration-prod.sh) | 3 reads | ~4388 tok |
+| 18:54 | Created .planning/phases/11-simplify-ensemble-manager-and-ui-execution-model-kill-thread/11-VALIDATION.md | — | ~915 |
+| 18:55 | Edited docs/migration-production.md | expanded (+21 lines) | ~323 |
+| 18:56 | Linked runner script as recommended path | docs/migration-production.md | done | ~30 |
+| 18:56 | Session end: 9 writes across 3 files (migration-production.md, run-migration-prod.sh, 11-VALIDATION.md) | 4 reads | ~7428 tok |
+| 18:56 | Session end: 9 writes across 3 files (migration-production.md, run-migration-prod.sh, 11-VALIDATION.md) | 4 reads | ~7428 tok |
+| 18:57 | Session end: 9 writes across 3 files (migration-production.md, run-migration-prod.sh, 11-VALIDATION.md) | 4 reads | ~7428 tok |
+
+## Session: 2026-04-26 18:59
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 19:00 | Edited scripts/run-migration-prod.sh | expanded (+6 lines) | ~180 |
+| 19:00 | Edited etl/transform.py | expanded (+24 lines) | ~437 |
+| 19:00 | Edited scripts/run-migration-prod.sh | expanded (+7 lines) | ~293 |
+| 19:01 | Edited scripts/run-migration-prod.sh | expanded (+22 lines) | ~282 |
+| 19:01 | Edited docs/migration-production.md | zero() → recipe() | ~202 |
+| 19:01 | Edited docs/migration-production.md | 4→4 lines | ~53 |
+| 19:01 | Pin TriG to v2 + md5 validate (script + doc) | scripts/run-migration-prod.sh, docs/migration-production.md | done | ~80 |
+| 19:02 | Session end: 6 writes across 3 files (run-migration-prod.sh, transform.py, migration-production.md) | 5 reads | ~4098 tok |
+| 19:02 | Session end: 6 writes across 3 files (run-migration-prod.sh, transform.py, migration-production.md) | 5 reads | ~4098 tok |
+| 19:02 | Session end: 6 writes across 3 files (run-migration-prod.sh, transform.py, migration-production.md) | 5 reads | ~4098 tok |
+| 19:04 | Session end: 6 writes across 3 files (run-migration-prod.sh, transform.py, migration-production.md) | 8 reads | ~25092 tok |
+| 19:05 | Edited docs/migration-production.md | modified script() | ~620 |
+| 19:07 | Documented "How to run" with v2 trig + md5 example | docs/migration-production.md | done | ~30 |
+| 19:07 | Session end: 7 writes across 3 files (run-migration-prod.sh, transform.py, migration-production.md) | 23 reads | ~36996 tok |
+| 19:07 | Session end: 7 writes across 3 files (run-migration-prod.sh, transform.py, migration-production.md) | 23 reads | ~36996 tok |
+| 19:08 | Session end: 7 writes across 3 files (run-migration-prod.sh, transform.py, migration-production.md) | 23 reads | ~36996 tok |
+
+## Session: 2026-04-26 19:10
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+
+## Session: 2026-04-26 19:10
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+
+## Session: 2026-04-26 19:14
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 19:18 | Edited helm-charts/charts/mint/Chart.yaml | inline fix | ~6 |
+| 19:18 | Session end: 1 writes across 1 files (Chart.yaml) | 2 reads | ~6 tok |
+| 19:20 | Session end: 1 writes across 1 files (Chart.yaml) | 2 reads | ~6 tok |
+| 19:20 | Session end: 1 writes across 1 files (Chart.yaml) | 2 reads | ~6 tok |
+| 19:21 | Session end: 1 writes across 1 files (Chart.yaml) | 2 reads | ~6 tok |
+| 19:22 | Edited ../github.com/In-For-Disaster-Analytics/dynamo/shared/Chart.yaml | 6→6 lines | ~40 |
+| 19:23 | Session end: 2 writes across 1 files (Chart.yaml) | 3 reads | ~46 tok |
+| 19:23 | Created .planning/phases/11-simplify-ensemble-manager-and-ui-execution-model-kill-thread/11-PATTERNS.md | — | ~10806 |
+| 19:25 | Session end: 3 writes across 2 files (Chart.yaml, 11-PATTERNS.md) | 8 reads | ~42747 tok |
+| 19:25 | Edited ../github.com/In-For-Disaster-Analytics/dynamo/shared/values.yaml | removed 18 lines | ~14 |
+| 19:25 | Edited ../github.com/In-For-Disaster-Analytics/dynamo/shared/values.yaml | 5→6 lines | ~53 |
+| 19:26 | Session end: 5 writes across 3 files (Chart.yaml, 11-PATTERNS.md, values.yaml) | 11 reads | ~50078 tok |
+| 19:27 | Session end: 5 writes across 3 files (Chart.yaml, 11-PATTERNS.md, values.yaml) | 11 reads | ~50078 tok |
+| 19:29 | Edited ../github.com/In-For-Disaster-Analytics/dynamo/shared/values.yaml | 4→6 lines | ~47 |
+| 19:29 | Edited ../github.com/In-For-Disaster-Analytics/dynamo/shared/values.yaml | 3→5 lines | ~36 |
+| 19:29 | Session end: 7 writes across 3 files (Chart.yaml, 11-PATTERNS.md, values.yaml) | 11 reads | ~50161 tok |
+| 19:30 | Edited ../github.com/In-For-Disaster-Analytics/dynamo/shared/values.yaml | inline fix | ~16 |
+| 19:30 | Edited ../github.com/In-For-Disaster-Analytics/dynamo/shared/values.yaml | inline fix | ~16 |
+| 19:30 | Session end: 9 writes across 3 files (Chart.yaml, 11-PATTERNS.md, values.yaml) | 11 reads | ~50193 tok |
+| 19:31 | Session end: 9 writes across 3 files (Chart.yaml, 11-PATTERNS.md, values.yaml) | 11 reads | ~50193 tok |
+| 19:32 | Session end: 9 writes across 3 files (Chart.yaml, 11-PATTERNS.md, values.yaml) | 11 reads | ~50193 tok |
+
+## Session: 2026-04-26 19:33
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+
+## Session: 2026-04-26 19:35
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+
+## Session: 2026-04-26 19:37
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|

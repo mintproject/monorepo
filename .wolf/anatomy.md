@@ -1,7 +1,7 @@
 # anatomy.md
 
-> Auto-maintained by OpenWolf. Last scanned: 2026-04-26T20:17:53.074Z
-> Files: 530 tracked | Anatomy hits: 0 | Misses: 0
+> Auto-maintained by OpenWolf. Last scanned: 2026-04-26T23:30:21.374Z
+> Files: 545 tracked | Anatomy hits: 0 | Misses: 0
 
 ## ../../../../tmp/
 
@@ -10,6 +10,15 @@
 ## ../../.claude/
 
 - `settings.json` (~758 tok)
+
+## ../../.ssh/
+
+- `config` (~708 tok)
+
+## ../github.com/In-For-Disaster-Analytics/dynamo/shared/
+
+- `Chart.yaml` (~62 tok)
+- `values.yaml` (~1639 tok)
 
 ## ./
 
@@ -839,6 +848,15 @@
 - `INTEGRATIONS.md` — External Integrations (~2086 tok)
 - `STACK.md` — Technology Stack (~1082 tok)
 
+## .planning/phases/11-simplify-ensemble-manager-and-ui-execution-model-kill-thread/
+
+- `11-CONTEXT.md` — Phase 11: Simplify ensemble manager and UI execution model — kill thread_model_execution junction - (~4806 tok)
+- `11-DISCUSSION-LOG.md` — Phase 11: Simplify ensemble manager and UI execution model — kill thread_model_execution junction - (~1908 tok)
+- `11-PATTERNS.md` — Phase 11: Simplify Ensemble Manager and UI Execution Model — Pattern Map (~10130 tok)
+- `11-RESEARCH.md` — Phase 11: Simplify Ensemble Manager and UI Execution Model — Research (~12550 tok)
+- `11-UI-SPEC.md` — Phase 11 — UI Design Contract (~3638 tok)
+- `11-VALIDATION.md` — Phase 11 — Validation Strategy (~858 tok)
+
 ## .planning/quick/260426-fk5-fix-apollo-field-model-not-found-in-type/
 
 - `260426-fk5-PLAN.md` — Must return ZERO files (any .graphql that selects bare 'model' field inside thread_model/thread_mode (~2790 tok)
@@ -852,11 +870,21 @@
 ## docs/
 
 - `debug-tapis-execution.md` — Debug Tapis Execution State (~2381 tok)
+- `migration-production.md` — Production: DYNAMO Migration Runbook (~2388 tok)
+- `migration-testing.md` — Testing Hasura Migration Locally with Production Backup (~1072 tok)
+
+## etl/
+
+- `transform.py` — deduplicate_by_id, ensure_labels, invert_fk_relationships, build_extended_junction_tables (~11800 tok)
 
 ## helm-charts/
 
 - `.gitignore` — Git ignore rules (~175 tok)
 - `dynamo-values.yaml` (~548 tok)
+
+## helm-charts/charts/mint/
+
+- `Chart.yaml` (~355 tok)
 
 ## helm-charts/charts/mint/templates/
 
@@ -907,3 +935,8 @@
 ## mint-ensemble-manager/src/config/
 
 - `config.json` (~754 tok)
+
+## scripts/
+
+- `run-migration-prod.sh` (~2963 tok)
+- `test-migration-local.sh` (~1498 tok)
