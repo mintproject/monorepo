@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 11 context gathered
-last_updated: "2026-04-26T20:26:15.034Z"
+stopped_at: Phase 12 context gathered
+last_updated: "2026-04-27T00:00:00.000Z"
 last_activity: "2026-04-26 - Completed quick task 260426-fk5: Fix Apollo field 'model' not found in type 'thread_model' in mint-ensemble-manager"
 progress:
   total_phases: 10
@@ -148,6 +148,7 @@ Recent decisions affecting current work:
 - Phase 9 added: Merge ModelConfiguration/Setup tables and migrate thread_model relationships
 - Phase 10 added: Check the required changes on mint-ensemble-manager after migration
 - Phase 11 added: Simplify ensemble manager and UI execution model — kill thread_model_execution junction
+- Phase 12 added: Support optional `hasInput` on model configuration (catalog + UI + ensemble manager)
 
 ### Pending Todos
 
