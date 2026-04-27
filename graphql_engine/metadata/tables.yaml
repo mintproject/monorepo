@@ -577,14 +577,6 @@
         table:
           name: model_input_fixed_binding
           schema: public
-
-  - name: thread_model_ios
-    using:
-      foreign_key_constraint_on:
-        column: model_io_id
-        table:
-          name: thread_model_io
-          schema: public
   - name: variables
     using:
       foreign_key_constraint_on:
@@ -2112,7 +2104,7 @@
   - name: dataslice
     using:
       foreign_key_constraint_on: dataslice_id
-  - name: model_io
+  - name: modelcatalog_dataset_specification
     using:
       foreign_key_constraint_on: model_io_id
   - name: thread_model
@@ -2943,6 +2935,13 @@
         column: modelcatalog_dataset_specification_id
         table:
           name: model_io
+          schema: public
+  - name: thread_model_ios
+    using:
+      foreign_key_constraint_on:
+        column: model_io_id
+        table:
+          name: thread_model_io
           schema: public
   - name: configuration_inputs
     using:
