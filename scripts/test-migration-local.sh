@@ -47,7 +47,7 @@ echo "Namespace:    $NAMESPACE"
 # ---------------------------------------------------------------------------
 log "Step 2: Reset local Hasura DB"
 
-kubectl scale deployment mint-hasura -n "$NAMESPACE" --replicas=0
+kubectl patch deployment mint-hasura -n "$NAMESPACE" --type=merge -p '{"spec":{"replicas":0}}'
 kubectl delete statefulset mint-hasura-db -n "$NAMESPACE" --ignore-not-found
 kubectl delete pvc data-mint-hasura-db-0 -n "$NAMESPACE" --ignore-not-found
 
@@ -79,7 +79,7 @@ kubectl exec -i -n "$NAMESPACE" mint-hasura-db-0 -- \
 # Step 4: Apply migrations through PRE_ETL_MIGRATION
 # ---------------------------------------------------------------------------
 log "Step 4: Bring hasura up + apply migrations to $PRE_ETL_MIGRATION"
-kubectl scale deployment mint-hasura -n "$NAMESPACE" --replicas=1
+kubectl patch deployment mint-hasura -n "$NAMESPACE" --type=merge -p '{"spec":{"replicas":1}}'
 kubectl rollout status deployment/mint-hasura -n "$NAMESPACE" --timeout=180s
 
 POD="$(kubectl get pod -n "$NAMESPACE" -l app=mint-hasura \
