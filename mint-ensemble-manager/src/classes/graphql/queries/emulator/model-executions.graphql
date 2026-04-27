@@ -71,7 +71,7 @@ query model_executions($modelTypes: [String!], $regionId: String!) {
               }
             }
             model_io: modelcatalog_dataset_specification {
-              name
+              name: label
             }
           }
         }

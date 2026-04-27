@@ -49,8 +49,8 @@ query query_thread($id: String!) {
             data_bindings {
                 model_io: modelcatalog_dataset_specification {
                     id
-                    name
-                    format
+                    name: label
+                    format: has_format
                 }
                 dataslice_id
             }
