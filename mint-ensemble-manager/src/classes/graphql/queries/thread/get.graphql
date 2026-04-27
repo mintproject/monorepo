@@ -47,7 +47,7 @@ query query_thread($id: String!) {
                 ...model_info
             }
             data_bindings {
-                model_io {
+                model_io: modelcatalog_dataset_specification {
                     id
                     name
                     format

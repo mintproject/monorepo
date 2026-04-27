@@ -15,7 +15,7 @@ query thread_executions($threadId: uuid!) {
             parameter_value
           }
           data_bindings {
-            model_io {
+            model_io: modelcatalog_dataset_specification {
               name
             }
             resource {
