@@ -179,3 +179,18 @@ UI:
 
 Plans:
 - [ ] TBD (run /gsd-plan-phase 11 to break down)
+
+### Phase 12: Support optional `hasInput` on model configuration (catalog + UI + ensemble manager)
+
+**Goal:** Allow a model configuration's `hasInput` to be marked optional. Model catalog stores the flag (`is_optional` boolean on `modelcatalog_configuration_input`), UI displays and edits it, ensemble manager respects it during Tapis submission (skip-when-missing instead of fail).
+
+**Requirements**: D-01 through D-23 (from 12-CONTEXT.md)
+**Depends on:** Phase 11
+**Plans:** 5 plans
+
+Plans:
+- [ ] 12-01-PLAN.md — SQL migration (ADD COLUMN is_optional) + Hasura metadata apply [Wave 1, blocking checkpoint]
+- [ ] 12-02-PLAN.md — model-catalog-api: resource-registry junctionColumns + field-maps + service.ts + openapi.yaml [Wave 2]
+- [ ] 12-03-PLAN.md — mint-ensemble-manager: ModelIO interface + GraphQL fragments + modelIOFromCatalogGQL + codegen [Wave 2]
+- [ ] 12-04-PLAN.md — TapisJobService skip-when-optional logic + unit tests + fixtures [Wave 3]
+- [ ] 12-05-PLAN.md — UI configure editor: checkbox (edit) + badge (read) + getResources round-trip [Wave 3]
