@@ -1,17 +1,17 @@
 ---
 gsd_state_version: 1.0
 milestone: v2.0
-milestone_name: milestone
+milestone_name: DYNAMO Model Catalog GraphQL Migration
 status: executing
-stopped_at: Phase 11 context gathered
-last_updated: "2026-04-28T01:21:22.908Z"
-last_activity: 2026-04-28 -- Phase 12 planning complete
+stopped_at: Phase 12 Plan 01 Task 3 — awaiting hasura migrate/metadata apply
+last_updated: "2026-04-28T01:28:00Z"
+last_activity: 2026-04-28 -- Phase 12 Plan 01 Tasks 1+2 complete; checkpoint at Task 3
 progress:
-  total_phases: 11
-  completed_phases: 6
-  total_plans: 39
-  completed_plans: 34
-  percent: 87
+  total_phases: 12
+  completed_phases: 7
+  total_plans: 41
+  completed_plans: 36
+  percent: 88
 ---
 
 # Project State
@@ -21,15 +21,15 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-15)
 
 **Core value:** All model catalog data accessible through a single GraphQL endpoint, eliminating the Fuseki dependency while maintaining REST API compatibility.
-**Current focus:** Phase 10 — check-the-required-changes-on-mint-ensemble-manager-after-migration
+**Current focus:** Phase 12 — model-catalog-configuration-file-input-tapis-compatibility
 
 ## Current Position
 
-Phase: 10
-Plan: Not started
+Phase: 12 (model-catalog-configuration-file-input-tapis-compatibility) — EXECUTING
+Plan: 1 of 5
 Milestone v2.0: COMPLETE (shipped 2026-03-15)
-Status: Ready to execute
-Last activity: 2026-04-28 -- Phase 12 planning complete
+Status: Executing Phase 12
+Last activity: 2026-04-28 -- Phase 12 execution started
 
 Progress: [████████████] 100% — v2.0 shipped
 
@@ -184,6 +184,6 @@ None — v2.0 milestone complete.
 
 ## Session Continuity
 
-Last session: 2026-04-26T20:26:15.030Z
-Stopped at: Phase 11 context gathered
-Resume file: .planning/phases/11-simplify-ensemble-manager-and-ui-execution-model-kill-thread/11-CONTEXT.md
+Last session: 2026-04-28T01:28:00Z
+Stopped at: Phase 12 Plan 01 Task 3 — checkpoint:human-action — run `hasura migrate apply && hasura metadata apply` in graphql_engine/
+Resume file: .planning/phases/12-model-catalog-configuration-file-input-tapis-compatibility/12-01-SUMMARY.md

@@ -189,7 +189,7 @@ Plans:
 **Plans:** 5 plans
 
 Plans:
-- [ ] 12-01-PLAN.md — SQL migration (ADD COLUMN is_optional) + Hasura metadata apply [Wave 1, blocking checkpoint]
+- [~] 12-01-PLAN.md — SQL migration (ADD COLUMN is_optional) + Hasura metadata apply [Wave 1, blocking checkpoint] — Tasks 1-2 committed; awaiting hasura apply (Task 3)
 - [ ] 12-02-PLAN.md — model-catalog-api: resource-registry junctionColumns + field-maps + service.ts + openapi.yaml [Wave 2]
 - [ ] 12-03-PLAN.md — mint-ensemble-manager: ModelIO interface + GraphQL fragments + modelIOFromCatalogGQL + codegen [Wave 2]
 - [ ] 12-04-PLAN.md — TapisJobService skip-when-optional logic + unit tests + fixtures [Wave 3]
