@@ -186,11 +186,11 @@ Plans:
 
 **Requirements**: D-01 through D-23 (from 12-CONTEXT.md)
 **Depends on:** Phase 11
-**Plans:** 2/5 plans executed
+**Plans:** 3/5 plans executed
 
 Plans:
 - [~] 12-01-PLAN.md — SQL migration (ADD COLUMN is_optional) + Hasura metadata apply [Wave 1, blocking checkpoint] — Tasks 1-2 committed; awaiting hasura apply (Task 3)
 - [x] 12-02-PLAN.md — model-catalog-api: resource-registry junctionColumns + field-maps + service.ts + openapi.yaml [Wave 2]
-- [ ] 12-03-PLAN.md — mint-ensemble-manager: ModelIO interface + GraphQL fragments + modelIOFromCatalogGQL + codegen [Wave 2]
+- [x] 12-03-PLAN.md — mint-ensemble-manager: ModelIO interface + GraphQL fragments + modelIOFromCatalogGQL + codegen [Wave 2]
 - [ ] 12-04-PLAN.md — TapisJobService skip-when-optional logic + unit tests + fixtures [Wave 3]
 - [ ] 12-05-PLAN.md — UI configure editor: checkbox (edit) + badge (read) + getResources round-trip [Wave 3]
