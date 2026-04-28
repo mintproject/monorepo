@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: DYNAMO Model Catalog GraphQL Migration
 status: executing
-stopped_at: Phase 12 Plan 01 Task 3 — awaiting hasura migrate/metadata apply
-last_updated: "2026-04-28T01:28:00Z"
-last_activity: 2026-04-28 -- Phase 12 Plan 01 Tasks 1+2 complete; checkpoint at Task 3
+stopped_at: "Phase 12 Plan 01 Task 3 — checkpoint:human-action — run `hasura migrate apply && hasura metadata apply` in graphql_engine/"
+last_updated: "2026-04-28T01:41:53.143Z"
+last_activity: 2026-04-28
 progress:
   total_phases: 12
   completed_phases: 7
   total_plans: 41
-  completed_plans: 36
-  percent: 88
+  completed_plans: 37
+  percent: 90
 ---
 
 # Project State
@@ -26,12 +26,12 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 ## Current Position
 
 Phase: 12 (model-catalog-configuration-file-input-tapis-compatibility) — EXECUTING
-Plan: 1 of 5
+Plan: 2 of 5
 Milestone v2.0: COMPLETE (shipped 2026-03-15)
-Status: Executing Phase 12
-Last activity: 2026-04-28 -- Phase 12 execution started
+Status: Ready to execute
+Last activity: 2026-04-28
 
-Progress: [████████████] 100% — v2.0 shipped
+Progress: [█████████░] 90%
 
 ## Performance Metrics
 
@@ -184,6 +184,6 @@ None — v2.0 milestone complete.
 
 ## Session Continuity
 
-Last session: 2026-04-28T01:28:00Z
+Last session: 2026-04-28T01:41:53.135Z
 Stopped at: Phase 12 Plan 01 Task 3 — checkpoint:human-action — run `hasura migrate apply && hasura metadata apply` in graphql_engine/
-Resume file: .planning/phases/12-model-catalog-configuration-file-input-tapis-compatibility/12-01-SUMMARY.md
+Resume file: None

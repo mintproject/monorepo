@@ -186,7 +186,7 @@ Plans:
 
 **Requirements**: D-01 through D-23 (from 12-CONTEXT.md)
 **Depends on:** Phase 11
-**Plans:** 5 plans
+**Plans:** 1/5 plans executed
 
 Plans:
 - [~] 12-01-PLAN.md — SQL migration (ADD COLUMN is_optional) + Hasura metadata apply [Wave 1, blocking checkpoint] — Tasks 1-2 committed; awaiting hasura apply (Task 3)

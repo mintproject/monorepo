@@ -1,19 +1,21 @@
 ---
 phase: 12-model-catalog-configuration-file-input-tapis-compatibility
 plan: "01"
-subsystem: graphql_engine
+subsystem: database
 tags:
   - hasura
   - migration
   - schema
   - permissions
+  - postgresql
 dependency_graph:
   requires: []
   provides:
     - "is_optional column on modelcatalog_configuration_input (BOOLEAN NOT NULL DEFAULT FALSE)"
-    - "Hasura insert + anonymous select permissions for is_optional"
+    - "Hasura insert + anonymous select + user select permissions for is_optional"
+    - "Migration applied to dev Kubernetes cluster (namespace: mint)"
   affects:
-    - "Wave 2 codegen (mint-ensemble-manager types.ts)"
+    - "Wave 2 codegen (model-catalog-api, mint-ensemble-manager types)"
     - "model-catalog-api field-maps.ts and resource-registry.ts (Wave 2)"
 tech_stack:
   added: []
@@ -35,9 +37,9 @@ decisions:
   - "D-05: insert (user anchor) + select (user anchor + anonymous inline) permissions; no update_permissions"
   - "D-11/D-12: ETL untouched — DB DEFAULT FALSE is sole ETL mechanism"
 metrics:
-  duration: "~2 minutes (Tasks 1-2 complete; Task 3 awaiting human apply)"
-  completed_date: "2026-04-28 (partial — awaiting Hasura apply)"
-  tasks_completed: 2
+  duration: "~35 minutes"
+  completed_date: "2026-04-27"
+  tasks_completed: 3
   tasks_total: 3
   files_created: 2
   files_modified: 1
@@ -45,62 +47,107 @@ metrics:
 
 # Phase 12 Plan 01: SQL Migration + Hasura Metadata for is_optional Summary
 
-**One-liner:** Added `is_optional BOOLEAN NOT NULL DEFAULT FALSE` to `modelcatalog_configuration_input` junction table with Hasura permissions for both user and anonymous roles.
+**BOOLEAN NOT NULL DEFAULT FALSE column added to `modelcatalog_configuration_input` junction table with Hasura GraphQL exposure confirmed live — existing rows default to `false`, field queryable by both anonymous and user roles**
 
-## What Was Built
+## Performance
 
-Tasks 1 and 2 are complete. Task 3 (apply migration + metadata to live Hasura) is paused at a human-action checkpoint awaiting user confirmation of target environment.
+- **Duration:** ~35 min (Tasks 1-2 automated; Task 3 applied by orchestrator to dev k8s cluster)
+- **Started:** 2026-04-27T ~01:00Z
+- **Completed:** 2026-04-27T ~01:35Z
+- **Tasks:** 3 of 3
+- **Files modified:** 3
 
-### Task 1: SQL Migration Files
+## Accomplishments
 
-Created migration directory `graphql_engine/migrations/1771200016000_modelcatalog_configuration_input_is_optional/` with:
+- SQL migration `1771200016000_modelcatalog_configuration_input_is_optional` written and applied: `ALTER TABLE modelcatalog_configuration_input ADD COLUMN is_optional BOOLEAN NOT NULL DEFAULT FALSE`
+- Hasura `tables.yaml` updated: `is_optional` in the `&id007` insert/user-select anchor and in the anonymous role's explicit inline column list
+- Migration and metadata applied to dev Kubernetes cluster; GraphQL probe confirmed field is live and existing rows correctly default to `false`
 
-- `up.sql`: `ALTER TABLE modelcatalog_configuration_input ADD COLUMN is_optional BOOLEAN NOT NULL DEFAULT FALSE` wrapped in `BEGIN;/COMMIT;`
-- `down.sql`: `ALTER TABLE modelcatalog_configuration_input DROP COLUMN is_optional` wrapped in `BEGIN;/COMMIT;`
+## Task Commits
 
-Key properties: NOT NULL DEFAULT FALSE means existing junction rows backfill to FALSE automatically via the ALTER TABLE default clause. No separate UPDATE needed (D-04). PK `(configuration_id, input_id)` unchanged.
+1. **Task 1: Write SQL migration files** - superproject `2e6c611` / graphql_engine `ba3e3df` (feat)
+2. **Task 2: Update Hasura tables.yaml** - superproject `bc4fd4c` / graphql_engine `2653623` (feat)
+3. **Task 3: Apply migration and metadata** - applied by orchestrator via `kubectl exec` against pod `mint-hasura-69f57b579-hxwb2`; no code commit (live environment action)
 
-### Task 2: Hasura tables.yaml Metadata Update
+**Plan metadata (checkpoint commit):** `026638f` (docs: complete SQL migration + metadata tasks)
 
-Updated `graphql_engine/metadata/tables.yaml` `modelcatalog_configuration_input` section:
+## Apply Evidence
 
-- Added `is_optional` to the `&id007` anchor used by `insert_permissions` (user role)
-- Added `is_optional` to the anonymous role's inline `select_permissions` column list
-- The `user` role `select_permissions` (`*id007`) picks up `is_optional` automatically via the anchor
-- No `update_permissions` block added (junction table pattern: insert+delete only)
-- No new roles added (D-05 honored)
+Migration applied to dev cluster (`mint` namespace, pod `mint-hasura-69f57b579-hxwb2`):
 
-### Task 3: Pending — Hasura Apply
-
-Blocked at `checkpoint:human-action`. Commands to run:
-
-```bash
-cd graphql_engine
-hasura migrate apply --database-name default
-hasura metadata apply
+```
+hasura migrate apply:   {"level":"info","msg":"migrations applied"}
+hasura metadata apply:  {"level":"info","msg":"Metadata applied"}
+hasura metadata reload: {"level":"info","msg":"Metadata reloaded"}
+                        {"level":"info","msg":"Metadata is consistent"}
 ```
 
-Verification query (psql):
-```sql
-SELECT column_name, data_type, column_default, is_nullable
-FROM information_schema.columns
-WHERE table_name = 'modelcatalog_configuration_input'
-AND column_name = 'is_optional';
+Column confirmed in PostgreSQL `information_schema.columns`:
+
+```
+ column_name | data_type | column_default | is_nullable
+-------------+-----------+----------------+-------------
+ is_optional | boolean   | false          | NO
 ```
 
-Expected: `column_name=is_optional, data_type=boolean, column_default=false, is_nullable=NO`
+GraphQL field confirmed live (admin query via `kubectl exec` into Hasura pod):
+
+```json
+{
+  "data": {
+    "modelcatalog_configuration_input": [
+      {
+        "configuration_id": "https://w3id.org/okn/i/mint/f74c9f41-...",
+        "input_id": "https://w3id.org/okn/i/mint/2c8d5622-...",
+        "is_optional": false
+      }
+    ]
+  }
+}
+```
+
+Existing rows correctly default to `false`.
+
+## Files Created/Modified
+
+- `graphql_engine/migrations/1771200016000_modelcatalog_configuration_input_is_optional/up.sql` — ADD COLUMN migration (BEGIN/COMMIT wrapped)
+- `graphql_engine/migrations/1771200016000_modelcatalog_configuration_input_is_optional/down.sql` — DROP COLUMN rollback
+- `graphql_engine/metadata/tables.yaml` — `is_optional` added to `&id007` anchor (insert + user select) and anonymous inline select list
+
+## Decisions Made
+
+- Column placed on junction table `modelcatalog_configuration_input` only, not on `modelcatalog_dataset_specification` (D-02): a configuration input may be optional in one configuration but required in another — the flag belongs on the relationship row.
+- `NOT NULL DEFAULT FALSE` chosen over nullable: avoids three-valued logic in consumers; existing rows silently default to non-optional (D-04).
+- ETL files (`etl/extract.py`, `etl/transform.py`) left untouched — the DB DEFAULT handles historical and future ETL-inserted rows without code change (D-11, D-12).
+- No `update_permissions` added for the junction table, consistent with the project-wide insert+delete-only pattern for junction tables (D-05).
 
 ## Deviations from Plan
 
-None — plan executed exactly as written.
+None — plan executed exactly as written. Task 3 was a `checkpoint:human-action` task (apply to live Hasura); it was performed by the orchestrator via `kubectl exec`, matching acceptance criteria.
+
+## Deployment Scope
+
+Migration has been applied to the **dev Kubernetes cluster only** (`mint` namespace). Staging and production environments require a separate `hasura migrate apply && hasura metadata apply` run when promoted. Hasura tracks applied migrations by version number — repeated runs will skip already-applied migrations safely.
 
 ## Threat Flags
 
-None — change is purely additive. Existing role grants extended only (no new roles, no new trust boundaries). T-12-01 and T-12-02 mitigations verified: anonymous role select is inline list only (not anchored to insert columns beyond what's listed), no update_permissions added.
+None — change is purely additive. Existing role grants extended only (no new roles, no new trust boundaries). T-12-01 and T-12-02 mitigations verified: anonymous role select is inline list only (not anchored to insert columns beyond what is listed), no `update_permissions` added.
 
 ## Known Stubs
 
 None — this plan creates DB-layer artifacts only. No application code with hardcoded values.
+
+## Issues Encountered
+
+None.
+
+## User Setup Required
+
+None — migration was applied automatically to dev cluster by the orchestrator.
+
+## Next Phase Readiness
+
+Wave 2 (Plan 12-02) can proceed: `is_optional` is live in the GraphQL schema. Running `npm run codegen` in `model-catalog-api/` will generate updated TypeScript types that include the field. No blockers.
 
 ## Self-Check
 
@@ -116,5 +163,14 @@ None — this plan creates DB-layer artifacts only. No application code with har
 - Superproject Task 1: 2e6c611
 - Submodule graphql_engine Task 2: 2653623
 - Superproject Task 2: bc4fd4c
+- Checkpoint metadata commit: 026638f
+
+### GraphQL Probe
+
+Live query against `mint-hasura-69f57b579-hxwb2` returned `is_optional: false` for an existing row — field is exposed and functional.
 
 ## Self-Check: PASSED
+
+---
+*Phase: 12-model-catalog-configuration-file-input-tapis-compatibility*
+*Completed: 2026-04-27*
