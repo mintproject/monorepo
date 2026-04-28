@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "timestamp": "2026-04-28T12:19:39.592Z",
+  "timestamp": "2026-04-28T23:07:49.819Z",
   "phase": "12",
   "phase_name": "model-catalog-configuration-file-input-tapis-compatibility",
   "phase_dir": ".planning/phases/12-model-catalog-configuration-file-input-tapis-compatibility",
@@ -14,29 +14,37 @@
     {"id": "12-02", "name": "model-catalog-api is_optional round-trip", "status": "done", "summary": "12-02-SUMMARY.md"},
     {"id": "12-03", "name": "ensemble-manager adapter wires is_optional into ModelIO", "status": "done", "summary": "12-03-SUMMARY.md"},
     {"id": "12-04", "name": "TapisJobService skip-when-optional logic", "status": "done", "summary": "12-04-SUMMARY.md"},
-    {"id": "12-05-task-1", "name": "Add isOptional checkbox + badge to model-configuration.ts (DatasetSpecification)", "status": "done", "commit": "942ad36 (ui), 0b34444 (super)"},
-    {"id": "12-05-task-2", "name": "Mirror checkbox + badge in model-configuration-setup.ts", "status": "done", "commit": "6ac722b (ui), 0b34444 (super)"}
+    {"id": "12-05-task-1", "name": "Add isOptional checkbox + badge to model-configuration.ts (DatasetSpecification)", "status": "done", "commit": "942ad36 (ui)"},
+    {"id": "12-05-task-2", "name": "Mirror checkbox + badge in model-configuration-setup.ts", "status": "done", "commit": "6ac722b (ui)"},
+    {"id": "12-05-fix-ci-trigger", "name": "Widen branches glob + SAFE_BRANCH sanitization in docker-publish.yml", "status": "done", "commit": "e0547dd (ui)"},
+    {"id": "12-05-fix-trivy", "name": "continue-on-error on Trivy security scan", "status": "done", "commit": "9a4459e (ui)"},
+    {"id": "12-05-fix-sdk-strip", "name": "Monkey-patch DatasetSpecificationToJSON/FromJSON in SDK to preserve isOptional", "status": "done", "commit": "d8caed2 (ui)"},
+    {"id": "12-05-move-toggle", "name": "Move isOptional toggle from DSpec dialog to inline row checkbox in Configuration view", "status": "done", "commit": "854fa75 (ui)", "rationale": "isOptional lives on configuration<->dspec junction, not DSpec entity. PUT /datasetspecifications/{id} cannot persist it; junction only writes via PUT /modelconfigurations/{id} nested junction path."}
   ],
   "remaining_tasks": [
-    {"id": "12-05-task-3", "name": "Visual UI verification of optional checkbox + badge in dev cluster", "status": "blocked", "blocked_by": "human_visual_verification + image_build_pending"},
+    {"id": "12-05-debug-junction-write", "name": "Verify ModelConfiguration PUT actually flips junction is_optional in Hasura", "status": "blocked", "context": "PUT /modelconfigurations/{id} returned HTTP 200 with hasInput[].isOptional:true in body; user reports DB row not updated. Need to (a) query Hasura junction directly post-PUT, (b) trace mappers/response.ts:98-106 junction traversal to confirm is_optional is hoisted onto returned hasInput items, (c) check if API service.ts:251 update() junction insert actually fires for ModelConfiguration (vs being skipped). Also possible: helm hadn't rolled out 854fa75 image when test ran -- old UI was still hitting /datasetspecifications PUT path."},
+    {"id": "12-05-task-3", "name": "Visual UI verification of optional checkbox + badge in dev cluster after 854fa75 rolls out", "status": "blocked", "blocked_by": "human_visual_verification + image_pull_required"},
     {"id": "12-05-finalize", "name": "Write 12-05-SUMMARY.md, update STATE.md, run roadmap.update-plan-progress 12 12-05 complete", "status": "blocked", "blocked_by": "12-05-task-3"},
     {"id": "phase-verify", "name": "Run code-review gate, regression gate, schema-drift gate, gsd-verifier, mark phase complete via phase.complete 12", "status": "not_started"}
   ],
   "blockers": [
-    {"description": "Plan 12-05 awaiting human visual verification of optional checkbox + badge in UI", "type": "human_action", "workaround": "Reach via dev cluster after helm upgrade pulls new ui image"},
-    {"description": "ui workflow runs (.github/workflows/docker-publish.yml on gsd/phase-12-is-optional) may still need to complete and produce mintproject/mint-ui-lit:e0547dd... image before helm pulls it", "type": "external", "workaround": "Confirm via gh run list --branch gsd/phase-12-is-optional in ui submodule before helm upgrade"}
+    {"description": "Junction row modelcatalog_configuration_input.is_optional did NOT flip to true after PUT /modelconfigurations/{id} that included hasInput[].isOptional:true. PUT returned HTTP 200 but Hasura console shows is_optional=false. Root cause not yet identified.", "type": "technical", "workaround": "Possible: helm not yet rolled to 854fa75 ui image, or response.ts junction traversal drops is_optional cosmetically while write succeeded -- needs direct Hasura query to confirm. Possible: service.ts:251 update() not firing junction insert for this configuration (skipping branch unknown)."},
+    {"description": "Plan 12-05 awaiting human visual verification of optional checkbox + badge in UI", "type": "human_action", "workaround": "Reach via dev cluster after helm upgrade pulls 854fa75 ui image"}
   ],
   "human_actions_pending": [
-    {"action": "Wait for ui docker-publish workflow on gsd/phase-12-is-optional to push image mintproject/mint-ui-lit:e0547dd3f3f922db355a35ec67b979a721b7db6a", "context": "helm-charts/dynamo-values.yaml pinned to that SHA", "blocking": true},
-    {"action": "helm upgrade dev cluster with helm-charts/dynamo-values.yaml so new ui image rolls out", "context": "Required to visually verify 12-05 in browser", "blocking": true},
-    {"action": "Visually verify: open Configuration configure editor, toggle Optional on a File input, save, reload, confirm badge persists and PUT body contains isOptional", "context": "Plan 12-05 task 3 acceptance", "blocking": true},
+    {"action": "Wait for ui docker-publish workflow run 25082085184 on gsd/phase-12-is-optional to complete and push image mintproject/mint-ui-lit:854fa751ad5d949ba59e692854930cab03ad70b9", "context": "helm-charts/dynamo-values.yaml pinned to that SHA", "blocking": true},
+    {"action": "helm upgrade dev cluster with helm-charts/dynamo-values.yaml so 854fa75 ui image rolls out", "context": "Required to retest junction-write fix end-to-end", "blocking": true},
+    {"action": "Visually re-verify: open ModelConfiguration editor, toggle inline 'optional' checkbox on input row, click Save Configuration, confirm PUT /modelconfigurations body has hasInput[].isOptional, then query Hasura modelcatalog_configuration_input row to confirm is_optional flipped", "context": "Plan 12-05 task 3 acceptance + junction-write verification", "blocking": true},
+    {"action": "If junction still not updated: investigate (a) response.ts mapper junction traversal, (b) service.ts update() junction-insert path for hasInput, (c) actual Hasura mutation that fires (enable verbose logging on model-catalog-api pod)", "context": "Root cause for blocker #1", "blocking": true},
     {"action": "After approval: continue executor agent (or re-spawn) to write 12-05-SUMMARY.md and update STATE/ROADMAP", "context": "Plan 12-05 finalization", "blocking": false},
     {"action": "Apply migration 1771200016000 to staging + prod Hasura when promoting (dev only is applied today)", "context": "Documented in 12-01-SUMMARY.md", "blocking": false}
   ],
   "decisions": [
-    {"decision": "Move all phase 12 feature work off main onto gsd/phase-12-is-optional in superproject AND every modified submodule (graphql_engine, model-catalog-api, mint-ensemble-manager, ui, helm-charts)", "rationale": "User correction mid-session: never commit features on main. Cerebrum updated 2026-04-27.", "phase": "12"},
+    {"decision": "Move isOptional toggle from DSpec edit dialog to inline row checkbox", "rationale": "isOptional is a junction column on modelcatalog_configuration_input (config<->dspec binding), not a property of the DSpec entity. PUT /datasetspecifications/{id} cannot persist it: API has no configuration context to pick which junction row to update. The junction column only writes via the parent ModelConfiguration nested-write path (resource-registry.ts:215 junctionColumns + service.ts:251 update() delete-then-insert). Forcing the user to save via Configuration triggers the right code path.", "phase": "12"},
+    {"decision": "Monkey-patch SDK DatasetSpecificationToJSON/FromJSON/FromJSONTyped instead of regenerating @mintproject/modelcatalog_client", "rationale": "Generated v1.8.0 client strips isOptional. Patching via src/model-catalog-api/sdk-patches.ts wired from model-catalog-api.ts is fast and unblocks dev. Long-term fix is to publish a new SDK release (prompt drafted and copied to clipboard for the modelcatalog_client repo).", "phase": "12"},
+    {"decision": "Move all phase 12 feature work off main onto gsd/phase-12-is-optional in superproject AND every modified submodule", "rationale": "User correction mid-session: never commit features on main. Cerebrum updated 2026-04-27.", "phase": "12"},
     {"decision": "Pin ui image by full commit SHA, not branch tag", "rationale": "Docker tag spec forbids '/'; branch name has slash. SHA is unambiguous and immutable.", "phase": "12"},
-    {"decision": "Widen ui docker-publish.yml push trigger from '*' to '**' and sanitize SAFE_BRANCH (replace / with -)", "rationale": "'*' glob does not match slashed branch names — original workflow never triggered for gsd/* branches.", "phase": "12"},
+    {"decision": "Widen ui docker-publish.yml push trigger from '*' to '**' and sanitize SAFE_BRANCH (replace / with -)", "rationale": "'*' glob does not match slashed branch names -- original workflow never triggered for gsd/* branches.", "phase": "12"},
     {"decision": "continue-on-error: true on Trivy security scan job", "rationale": "Existing dependabot vulns were failing the workflow and blocking image publish. User explicitly requested allow-fail.", "phase": "12"}
   ],
   "uncommitted_files": [
@@ -47,15 +55,17 @@
     ".wolf/hooks/_session.json",
     ".wolf/memory.md",
     ".wolf/token-ledger.json",
-    "helm-charts/dynamo-values.yaml (gitignored inside helm-charts repo — local override only)"
+    "helm-charts/dynamo-values.yaml (gitignored inside helm-charts repo -- local override only, currently pinned to 854fa751ad5d949ba59e692854930cab03ad70b9)"
   ],
   "infrastructure": {
     "k8s_cluster": "dev (namespace=mint)",
-    "hasura_pod": "mint-hasura-69f57b579-hxwb2 (was current at apply time; pod name may change after redeploy)",
-    "migration_applied": "1771200016000_modelcatalog_configuration_input_is_optional applied + metadata reloaded; column verified live: is_optional boolean NOT NULL DEFAULT false",
-    "ui_image_target": "mintproject/mint-ui-lit:e0547dd3f3f922db355a35ec67b979a721b7db6a",
-    "helm_values": "helm-charts/dynamo-values.yaml — components.ui.image.tag set to e0547dd... pullPolicy=Always"
+    "hasura": "modelcatalog_configuration_input.is_optional boolean NOT NULL DEFAULT false LIVE; metadata exposes it under both anonymous and user roles. Verified via psql + GraphQL probe.",
+    "migration_applied": "1771200016000_modelcatalog_configuration_input_is_optional applied + metadata reloaded (dev only). Staging/prod pending.",
+    "ui_image_target": "mintproject/mint-ui-lit:854fa751ad5d949ba59e692854930cab03ad70b9",
+    "ui_image_built_pushed": "Confirmed published for d8caed2 (run 25081338313 SUCCESS). 854fa75 build run 25082085184 in progress at pause time.",
+    "helm_values": "helm-charts/dynamo-values.yaml -- components.ui.image.tag set to 854fa751ad5d949ba59e692854930cab03ad70b9 pullPolicy=Always (gitignored inside helm-charts; local override only).",
+    "submodule_branches": "All on gsd/phase-12-is-optional: super, graphql_engine, model-catalog-api, mint-ensemble-manager, ui, helm-charts."
   },
-  "next_action": "1) In ui submodule, run `gh run list --branch gsd/phase-12-is-optional --limit 5` to confirm docker-publish succeeded and image was pushed. 2) `helm upgrade mint helm-charts/charts/<chart> -f helm-charts/dynamo-values.yaml -n mint` (or equivalent) to roll new ui pod. 3) Visually verify checkbox + badge in browser. 4) Re-invoke /gsd-execute-phase 12 to finalize 12-05 SUMMARY and run phase verification.",
-  "context_notes": "Phase 12 feature work was committed to main initially; mid-session user corrected and we moved everything to gsd/phase-12-is-optional via update-ref + symbolic-ref (preserved working tree). 4/5 plans complete with SUMMARY.md, STATE.md, ROADMAP.md updates landed. Plan 12-05 code is committed but final verification + SUMMARY pending. CI workflow had two latent bugs (slash branch glob, slash docker tag) — both fixed. Trivy allow-fail. helm tag pinned to ui SHA e0547dd."
+  "next_action": "1) Confirm ui run 25082085184 (or successor) succeeded in pushing image 854fa751ad5d949ba59e692854930cab03ad70b9 via `cd ui && gh run list --branch gsd/phase-12-is-optional --limit 5`. 2) helm upgrade dev cluster with helm-charts/dynamo-values.yaml. 3) In browser, open ModelConfiguration editor, toggle inline 'optional' checkbox on a hasInput row, click Save Configuration. 4) DevTools Network: confirm PUT /modelconfigurations/{id} body has hasInput[].isOptional. 5) Direct Hasura query: SELECT configuration_id, input_id, is_optional FROM modelcatalog_configuration_input WHERE configuration_id LIKE '%7c2c8d5f-322b-4c1c-8a85-2c49580eadde%' -- expect is_optional=true. 6) If junction still false: read /Users/mosorio/repos/mint/model-catalog-api/src/mappers/response.ts:98-106 (junction traversal) AND /Users/mosorio/repos/mint/model-catalog-api/src/service.ts:251-358 (update path) to identify why is_optional drops between body and DB. Add a debug log in service.ts update() junctionParts construction to confirm the hasInput branch fires with the expected items array (camelKey 'isOptional' → snake colName 'is_optional'). 7) If pass: write 12-05-SUMMARY.md, run roadmap.update-plan-progress 12 12-05 complete, then phase verification.",
+  "context_notes": "Three sequential bug fixes landed this session on plan 12-05: (a) SDK strips isOptional in PUT body (fixed via sdk-patches.ts monkey-patch, commit d8caed2); (b) UI was firing PUT /datasetspecifications which cannot reach junction (fixed by moving toggle to inline row checkbox, commit 854fa75 -- forces save via parent ModelConfiguration PUT); (c) STILL OUTSTANDING: PUT /modelconfigurations/{id} returns HTTP 200 with hasInput[].isOptional:true in body but Hasura junction row stays is_optional=false. Two hypotheses remain: (i) helm hadn't rolled the new ui image so the test ran the old UI which fired DSpec PUT only -- helm upgrade + retest will resolve; (ii) API path (response.ts mapper or service.ts update()) silently drops is_optional during the junction insert. Verify (i) first by helm upgrade + retest. If still broken, dig into model-catalog-api code path. The CI workflow correctly fired and built each new commit (verified runs 25054108075 success for e0547dd, 25081338313 success for d8caed2, 25082085184 in progress for 854fa75). All 4 prior phase plans (12-01..12-04) complete with SUMMARY.md committed; only 12-05 finalize + phase verification remain."
 }
