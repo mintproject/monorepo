@@ -29,7 +29,7 @@ Phase: 12 (model-catalog-configuration-file-input-tapis-compatibility) — EXECU
 Plan: 5 of 5
 Milestone v2.0: COMPLETE (shipped 2026-03-15)
 Status: Ready to execute
-Last activity: 2026-04-28
+Last activity: 2026-04-28 - Completed quick task 260427-vbh: ui docker-publish.yml SAFE_BRANCH sanitization
 
 Progress: [██████████] 98%
 
@@ -183,6 +183,7 @@ None — v2.0 milestone complete.
 | 260411-hb5 | Add filtering info and toggles (time, region, variables) to dataset selection view | 2026-04-11 | b89305a | Verified | [260411-hb5-add-filtering-info-and-toggles-time-regi](./quick/260411-hb5-add-filtering-info-and-toggles-time-regi/) |
 | 260411-nis | Fix UI GraphQL fragments selecting dropped execution.model_id column | 2026-04-11 | 43e4b00 | Needs Review | [260411-nis-ui-has-outdated-query-looking-model-id-o](./quick/260411-nis-ui-has-outdated-query-looking-model-id-o/) |
 | 260426-fk5 | Fix Apollo field 'model' not found in type 'thread_model' in mint-ensemble-manager | 2026-04-26 | 7661979 | Complete | [260426-fk5-fix-apollo-field-model-not-found-in-type](./quick/260426-fk5-fix-apollo-field-model-not-found-in-type/) |
+| 260427-vbh | Modify ui docker-publish.yml to use docker/build-push-action with sanitized branch name | 2026-04-28 | b70cdb7 | Complete | [260427-vbh-modify-ui-github-workflows-docker-publis](./quick/260427-vbh-modify-ui-github-workflows-docker-publis/) |
 
 ## Session Continuity
 
