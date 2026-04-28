@@ -1,0 +1,61 @@
+{
+  "version": "1.0",
+  "timestamp": "2026-04-28T12:19:39.592Z",
+  "phase": "12",
+  "phase_name": "model-catalog-configuration-file-input-tapis-compatibility",
+  "phase_dir": ".planning/phases/12-model-catalog-configuration-file-input-tapis-compatibility",
+  "plan": "12-05",
+  "task": 3,
+  "total_tasks": 3,
+  "status": "paused",
+  "branch": "gsd/phase-12-is-optional",
+  "completed_tasks": [
+    {"id": "12-01", "name": "Migration + Hasura metadata for is_optional", "status": "done", "summary": "12-01-SUMMARY.md", "applied_to": "dev k8s cluster (mint namespace)"},
+    {"id": "12-02", "name": "model-catalog-api is_optional round-trip", "status": "done", "summary": "12-02-SUMMARY.md"},
+    {"id": "12-03", "name": "ensemble-manager adapter wires is_optional into ModelIO", "status": "done", "summary": "12-03-SUMMARY.md"},
+    {"id": "12-04", "name": "TapisJobService skip-when-optional logic", "status": "done", "summary": "12-04-SUMMARY.md"},
+    {"id": "12-05-task-1", "name": "Add isOptional checkbox + badge to model-configuration.ts (DatasetSpecification)", "status": "done", "commit": "942ad36 (ui), 0b34444 (super)"},
+    {"id": "12-05-task-2", "name": "Mirror checkbox + badge in model-configuration-setup.ts", "status": "done", "commit": "6ac722b (ui), 0b34444 (super)"}
+  ],
+  "remaining_tasks": [
+    {"id": "12-05-task-3", "name": "Visual UI verification of optional checkbox + badge in dev cluster", "status": "blocked", "blocked_by": "human_visual_verification + image_build_pending"},
+    {"id": "12-05-finalize", "name": "Write 12-05-SUMMARY.md, update STATE.md, run roadmap.update-plan-progress 12 12-05 complete", "status": "blocked", "blocked_by": "12-05-task-3"},
+    {"id": "phase-verify", "name": "Run code-review gate, regression gate, schema-drift gate, gsd-verifier, mark phase complete via phase.complete 12", "status": "not_started"}
+  ],
+  "blockers": [
+    {"description": "Plan 12-05 awaiting human visual verification of optional checkbox + badge in UI", "type": "human_action", "workaround": "Reach via dev cluster after helm upgrade pulls new ui image"},
+    {"description": "ui workflow runs (.github/workflows/docker-publish.yml on gsd/phase-12-is-optional) may still need to complete and produce mintproject/mint-ui-lit:e0547dd... image before helm pulls it", "type": "external", "workaround": "Confirm via gh run list --branch gsd/phase-12-is-optional in ui submodule before helm upgrade"}
+  ],
+  "human_actions_pending": [
+    {"action": "Wait for ui docker-publish workflow on gsd/phase-12-is-optional to push image mintproject/mint-ui-lit:e0547dd3f3f922db355a35ec67b979a721b7db6a", "context": "helm-charts/dynamo-values.yaml pinned to that SHA", "blocking": true},
+    {"action": "helm upgrade dev cluster with helm-charts/dynamo-values.yaml so new ui image rolls out", "context": "Required to visually verify 12-05 in browser", "blocking": true},
+    {"action": "Visually verify: open Configuration configure editor, toggle Optional on a File input, save, reload, confirm badge persists and PUT body contains isOptional", "context": "Plan 12-05 task 3 acceptance", "blocking": true},
+    {"action": "After approval: continue executor agent (or re-spawn) to write 12-05-SUMMARY.md and update STATE/ROADMAP", "context": "Plan 12-05 finalization", "blocking": false},
+    {"action": "Apply migration 1771200016000 to staging + prod Hasura when promoting (dev only is applied today)", "context": "Documented in 12-01-SUMMARY.md", "blocking": false}
+  ],
+  "decisions": [
+    {"decision": "Move all phase 12 feature work off main onto gsd/phase-12-is-optional in superproject AND every modified submodule (graphql_engine, model-catalog-api, mint-ensemble-manager, ui, helm-charts)", "rationale": "User correction mid-session: never commit features on main. Cerebrum updated 2026-04-27.", "phase": "12"},
+    {"decision": "Pin ui image by full commit SHA, not branch tag", "rationale": "Docker tag spec forbids '/'; branch name has slash. SHA is unambiguous and immutable.", "phase": "12"},
+    {"decision": "Widen ui docker-publish.yml push trigger from '*' to '**' and sanitize SAFE_BRANCH (replace / with -)", "rationale": "'*' glob does not match slashed branch names — original workflow never triggered for gsd/* branches.", "phase": "12"},
+    {"decision": "continue-on-error: true on Trivy security scan job", "rationale": "Existing dependabot vulns were failing the workflow and blocking image publish. User explicitly requested allow-fail.", "phase": "12"}
+  ],
+  "uncommitted_files": [
+    ".planning/config.json",
+    ".wolf/anatomy.md",
+    ".wolf/buglog.json",
+    ".wolf/cerebrum.md",
+    ".wolf/hooks/_session.json",
+    ".wolf/memory.md",
+    ".wolf/token-ledger.json",
+    "helm-charts/dynamo-values.yaml (gitignored inside helm-charts repo — local override only)"
+  ],
+  "infrastructure": {
+    "k8s_cluster": "dev (namespace=mint)",
+    "hasura_pod": "mint-hasura-69f57b579-hxwb2 (was current at apply time; pod name may change after redeploy)",
+    "migration_applied": "1771200016000_modelcatalog_configuration_input_is_optional applied + metadata reloaded; column verified live: is_optional boolean NOT NULL DEFAULT false",
+    "ui_image_target": "mintproject/mint-ui-lit:e0547dd3f3f922db355a35ec67b979a721b7db6a",
+    "helm_values": "helm-charts/dynamo-values.yaml — components.ui.image.tag set to e0547dd... pullPolicy=Always"
+  },
+  "next_action": "1) In ui submodule, run `gh run list --branch gsd/phase-12-is-optional --limit 5` to confirm docker-publish succeeded and image was pushed. 2) `helm upgrade mint helm-charts/charts/<chart> -f helm-charts/dynamo-values.yaml -n mint` (or equivalent) to roll new ui pod. 3) Visually verify checkbox + badge in browser. 4) Re-invoke /gsd-execute-phase 12 to finalize 12-05 SUMMARY and run phase verification.",
+  "context_notes": "Phase 12 feature work was committed to main initially; mid-session user corrected and we moved everything to gsd/phase-12-is-optional via update-ref + symbolic-ref (preserved working tree). 4/5 plans complete with SUMMARY.md, STATE.md, ROADMAP.md updates landed. Plan 12-05 code is committed but final verification + SUMMARY pending. CI workflow had two latent bugs (slash branch glob, slash docker tag) — both fixed. Trivy allow-fail. helm tag pinned to ui SHA e0547dd."
+}
