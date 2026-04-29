@@ -2,14 +2,14 @@
   "version": 1,
   "created_at": "2026-04-12T21:31:41.062Z",
   "lifetime": {
-    "total_tokens_estimated": 3340533,
-    "total_reads": 863,
-    "total_writes": 653,
+    "total_tokens_estimated": 3370449,
+    "total_reads": 880,
+    "total_writes": 695,
     "total_sessions": 71,
-    "anatomy_hits": 319,
-    "anatomy_misses": 540,
+    "anatomy_hits": 329,
+    "anatomy_misses": 547,
     "repeated_reads_blocked": 326,
-    "estimated_savings_vs_bare_cli": 843094
+    "estimated_savings_vs_bare_cli": 845094
   },
   "sessions": [
     {
@@ -11207,6 +11207,453 @@
         "writes_count": 6,
         "repeated_reads_blocked": 0,
         "anatomy_lookups": 4
+      }
+    },
+    {
+      "id": "session-2026-04-29-2122",
+      "started": "2026-04-29T01:22:41.167Z",
+      "ended": "2026-04-29T01:23:04.494Z",
+      "reads": [],
+      "writes": [
+        {
+          "file": "/Users/mosorio/repos/mint/.planning/phases/12-model-catalog-configuration-file-input-tapis-compatibility/.continue-here.md",
+          "tokens_estimated": 1366,
+          "action": "create"
+        }
+      ],
+      "totals": {
+        "input_tokens_estimated": 0,
+        "output_tokens_estimated": 1366,
+        "reads_count": 0,
+        "writes_count": 1,
+        "repeated_reads_blocked": 0,
+        "anatomy_lookups": 0
+      }
+    },
+    {
+      "id": "session-2026-04-29-2122",
+      "started": "2026-04-29T01:22:41.167Z",
+      "ended": "2026-04-29T01:28:04.296Z",
+      "reads": [
+        {
+          "file": "/Users/mosorio/repos/mint/graphql_engine/.github/workflows/docker-publish.yml",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/.github/workflows/docker-publish.yml",
+          "tokens_estimated": 2077,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        }
+      ],
+      "writes": [
+        {
+          "file": "/Users/mosorio/repos/mint/.planning/phases/12-model-catalog-configuration-file-input-tapis-compatibility/.continue-here.md",
+          "tokens_estimated": 1366,
+          "action": "create"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/.github/workflows/docker-publish.yml",
+          "tokens_estimated": 29,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/graphql_engine/.github/workflows/docker-publish.yml",
+          "tokens_estimated": 22,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/graphql_engine/.github/workflows/docker-publish.yml",
+          "tokens_estimated": 150,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/graphql_engine/.github/workflows/docker-publish.yml",
+          "tokens_estimated": 54,
+          "action": "edit"
+        }
+      ],
+      "totals": {
+        "input_tokens_estimated": 2077,
+        "output_tokens_estimated": 1621,
+        "reads_count": 2,
+        "writes_count": 5,
+        "repeated_reads_blocked": 0,
+        "anatomy_lookups": 1
+      }
+    },
+    {
+      "id": "session-2026-04-29-2122",
+      "started": "2026-04-29T01:22:41.167Z",
+      "ended": "2026-04-29T01:31:15.358Z",
+      "reads": [
+        {
+          "file": "/Users/mosorio/repos/mint/graphql_engine/.github/workflows/docker-publish.yml",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/.github/workflows/docker-publish.yml",
+          "tokens_estimated": 2077,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        }
+      ],
+      "writes": [
+        {
+          "file": "/Users/mosorio/repos/mint/.planning/phases/12-model-catalog-configuration-file-input-tapis-compatibility/.continue-here.md",
+          "tokens_estimated": 1366,
+          "action": "create"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/.github/workflows/docker-publish.yml",
+          "tokens_estimated": 29,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/graphql_engine/.github/workflows/docker-publish.yml",
+          "tokens_estimated": 22,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/graphql_engine/.github/workflows/docker-publish.yml",
+          "tokens_estimated": 150,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/graphql_engine/.github/workflows/docker-publish.yml",
+          "tokens_estimated": 54,
+          "action": "edit"
+        }
+      ],
+      "totals": {
+        "input_tokens_estimated": 2077,
+        "output_tokens_estimated": 1621,
+        "reads_count": 2,
+        "writes_count": 5,
+        "repeated_reads_blocked": 0,
+        "anatomy_lookups": 1
+      }
+    },
+    {
+      "id": "session-2026-04-29-2122",
+      "started": "2026-04-29T01:22:41.167Z",
+      "ended": "2026-04-29T01:38:36.956Z",
+      "reads": [
+        {
+          "file": "/Users/mosorio/repos/mint/graphql_engine/.github/workflows/docker-publish.yml",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/.github/workflows/docker-publish.yml",
+          "tokens_estimated": 2077,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        }
+      ],
+      "writes": [
+        {
+          "file": "/Users/mosorio/repos/mint/.planning/phases/12-model-catalog-configuration-file-input-tapis-compatibility/.continue-here.md",
+          "tokens_estimated": 1366,
+          "action": "create"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/.github/workflows/docker-publish.yml",
+          "tokens_estimated": 29,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/graphql_engine/.github/workflows/docker-publish.yml",
+          "tokens_estimated": 22,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/graphql_engine/.github/workflows/docker-publish.yml",
+          "tokens_estimated": 150,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/graphql_engine/.github/workflows/docker-publish.yml",
+          "tokens_estimated": 54,
+          "action": "edit"
+        }
+      ],
+      "totals": {
+        "input_tokens_estimated": 2077,
+        "output_tokens_estimated": 1621,
+        "reads_count": 2,
+        "writes_count": 5,
+        "repeated_reads_blocked": 0,
+        "anatomy_lookups": 1
+      }
+    },
+    {
+      "id": "session-2026-04-29-2122",
+      "started": "2026-04-29T01:22:41.167Z",
+      "ended": "2026-04-29T01:38:51.600Z",
+      "reads": [
+        {
+          "file": "/Users/mosorio/repos/mint/graphql_engine/.github/workflows/docker-publish.yml",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/.github/workflows/docker-publish.yml",
+          "tokens_estimated": 2077,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        }
+      ],
+      "writes": [
+        {
+          "file": "/Users/mosorio/repos/mint/.planning/phases/12-model-catalog-configuration-file-input-tapis-compatibility/.continue-here.md",
+          "tokens_estimated": 1366,
+          "action": "create"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/.github/workflows/docker-publish.yml",
+          "tokens_estimated": 29,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/graphql_engine/.github/workflows/docker-publish.yml",
+          "tokens_estimated": 22,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/graphql_engine/.github/workflows/docker-publish.yml",
+          "tokens_estimated": 150,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/graphql_engine/.github/workflows/docker-publish.yml",
+          "tokens_estimated": 54,
+          "action": "edit"
+        }
+      ],
+      "totals": {
+        "input_tokens_estimated": 2077,
+        "output_tokens_estimated": 1621,
+        "reads_count": 2,
+        "writes_count": 5,
+        "repeated_reads_blocked": 0,
+        "anatomy_lookups": 1
+      }
+    },
+    {
+      "id": "session-2026-04-29-2122",
+      "started": "2026-04-29T01:22:41.167Z",
+      "ended": "2026-04-29T02:17:00.437Z",
+      "reads": [
+        {
+          "file": "/Users/mosorio/repos/mint/graphql_engine/.github/workflows/docker-publish.yml",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/.github/workflows/docker-publish.yml",
+          "tokens_estimated": 2077,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/helm-charts/dynamo-values.yaml",
+          "tokens_estimated": 609,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        }
+      ],
+      "writes": [
+        {
+          "file": "/Users/mosorio/repos/mint/.planning/phases/12-model-catalog-configuration-file-input-tapis-compatibility/.continue-here.md",
+          "tokens_estimated": 1366,
+          "action": "create"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/.github/workflows/docker-publish.yml",
+          "tokens_estimated": 29,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/graphql_engine/.github/workflows/docker-publish.yml",
+          "tokens_estimated": 22,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/graphql_engine/.github/workflows/docker-publish.yml",
+          "tokens_estimated": 150,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/graphql_engine/.github/workflows/docker-publish.yml",
+          "tokens_estimated": 54,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/api/api-v1/paths/problemStatements/tasks/subtasks/executions/index.ts",
+          "tokens_estimated": 243,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/helm-charts/dynamo-values.yaml",
+          "tokens_estimated": 36,
+          "action": "edit"
+        }
+      ],
+      "totals": {
+        "input_tokens_estimated": 2686,
+        "output_tokens_estimated": 1900,
+        "reads_count": 3,
+        "writes_count": 7,
+        "repeated_reads_blocked": 0,
+        "anatomy_lookups": 2
+      }
+    },
+    {
+      "id": "session-2026-04-29-2122",
+      "started": "2026-04-29T01:22:41.167Z",
+      "ended": "2026-04-29T02:19:44.748Z",
+      "reads": [
+        {
+          "file": "/Users/mosorio/repos/mint/graphql_engine/.github/workflows/docker-publish.yml",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/.github/workflows/docker-publish.yml",
+          "tokens_estimated": 2077,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/helm-charts/dynamo-values.yaml",
+          "tokens_estimated": 609,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        }
+      ],
+      "writes": [
+        {
+          "file": "/Users/mosorio/repos/mint/.planning/phases/12-model-catalog-configuration-file-input-tapis-compatibility/.continue-here.md",
+          "tokens_estimated": 1366,
+          "action": "create"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/.github/workflows/docker-publish.yml",
+          "tokens_estimated": 29,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/graphql_engine/.github/workflows/docker-publish.yml",
+          "tokens_estimated": 22,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/graphql_engine/.github/workflows/docker-publish.yml",
+          "tokens_estimated": 150,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/graphql_engine/.github/workflows/docker-publish.yml",
+          "tokens_estimated": 54,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/api/api-v1/paths/problemStatements/tasks/subtasks/executions/index.ts",
+          "tokens_estimated": 243,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/helm-charts/dynamo-values.yaml",
+          "tokens_estimated": 36,
+          "action": "edit"
+        }
+      ],
+      "totals": {
+        "input_tokens_estimated": 2686,
+        "output_tokens_estimated": 1900,
+        "reads_count": 3,
+        "writes_count": 7,
+        "repeated_reads_blocked": 0,
+        "anatomy_lookups": 2
+      }
+    },
+    {
+      "id": "session-2026-04-29-2122",
+      "started": "2026-04-29T01:22:41.167Z",
+      "ended": "2026-04-29T02:22:11.304Z",
+      "reads": [
+        {
+          "file": "/Users/mosorio/repos/mint/graphql_engine/.github/workflows/docker-publish.yml",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/.github/workflows/docker-publish.yml",
+          "tokens_estimated": 2077,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/helm-charts/dynamo-values.yaml",
+          "tokens_estimated": 609,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        }
+      ],
+      "writes": [
+        {
+          "file": "/Users/mosorio/repos/mint/.planning/phases/12-model-catalog-configuration-file-input-tapis-compatibility/.continue-here.md",
+          "tokens_estimated": 1366,
+          "action": "create"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/.github/workflows/docker-publish.yml",
+          "tokens_estimated": 29,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/graphql_engine/.github/workflows/docker-publish.yml",
+          "tokens_estimated": 22,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/graphql_engine/.github/workflows/docker-publish.yml",
+          "tokens_estimated": 150,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/graphql_engine/.github/workflows/docker-publish.yml",
+          "tokens_estimated": 54,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/api/api-v1/paths/problemStatements/tasks/subtasks/executions/index.ts",
+          "tokens_estimated": 243,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/helm-charts/dynamo-values.yaml",
+          "tokens_estimated": 36,
+          "action": "edit"
+        }
+      ],
+      "totals": {
+        "input_tokens_estimated": 2686,
+        "output_tokens_estimated": 1900,
+        "reads_count": 3,
+        "writes_count": 7,
+        "repeated_reads_blocked": 0,
+        "anatomy_lookups": 2
       }
     }
   ],

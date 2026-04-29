@@ -1,7 +1,7 @@
 # anatomy.md
 
-> Auto-maintained by OpenWolf. Last scanned: 2026-04-29T01:22:47.485Z
-> Files: 596 tracked | Anatomy hits: 0 | Misses: 0
+> Auto-maintained by OpenWolf. Last scanned: 2026-04-29T02:15:56.704Z
+> Files: 598 tracked | Anatomy hits: 0 | Misses: 0
 
 ## ../../../../tmp/
 
@@ -900,6 +900,10 @@
 
 - `transform.py` — deduplicate_by_id, ensure_labels, invert_fk_relationships, build_extended_junction_tables (~11800 tok)
 
+## graphql_engine/.github/workflows/
+
+- `docker-publish.yml` — CI: hasura (~976 tok)
+
 ## graphql_engine/metadata/
 
 - `tables.yaml` (~27561 tok)
@@ -917,7 +921,7 @@
 ## helm-charts/
 
 - `.gitignore` — Git ignore rules (~175 tok)
-- `dynamo-values.yaml` (~609 tok)
+- `dynamo-values.yaml` (~614 tok)
 
 ## helm-charts/charts/mint/
 
@@ -930,11 +934,15 @@
 
 ## mint-ensemble-manager/.github/workflows/
 
-- `docker-publish.yml` — CI: build image amd64 (~2077 tok)
+- `docker-publish.yml` — CI: build image amd64 (~2078 tok)
 
 ## mint-ensemble-manager/src/api/api-v1/paths/executionEngines/
 
 - `tapis.ts` — ./api/api-v1/paths/executionsLocal.ts (~734 tok)
+
+## mint-ensemble-manager/src/api/api-v1/paths/problemStatements/tasks/subtasks/executions/
+
+- `index.ts` — API routes: GET, POST (2 endpoints) (~3355 tok)
 
 ## mint-ensemble-manager/src/classes/graphql/
 

@@ -999,6 +999,22 @@
       "related_bugs": [],
       "occurrences": 1,
       "last_seen": "2026-04-29T00:18:31.524Z"
+    },
+    {
+      "id": "bug-060",
+      "timestamp": "2026-04-29T01:40:02.876Z",
+      "error_message": "Type error",
+      "file": "mint-ensemble-manager/src/api/api-v1/paths/problemStatements/tasks/subtasks/executions/index.ts",
+      "root_cause": "Missing or incorrect type annotation",
+      "fix": "Added type assertion/annotation",
+      "tags": [
+        "auto-detected",
+        "type-fix",
+        "ts"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-29T01:40:02.876Z"
     }
   ]
 }
