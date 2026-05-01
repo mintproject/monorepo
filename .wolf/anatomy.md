@@ -1,7 +1,7 @@
 # anatomy.md
 
-> Auto-maintained by OpenWolf. Last scanned: 2026-04-26T23:42:37.300Z
-> Files: 545 tracked | Anatomy hits: 0 | Misses: 0
+> Auto-maintained by OpenWolf. Last scanned: 2026-04-29T02:15:56.704Z
+> Files: 598 tracked | Anatomy hits: 0 | Misses: 0
 
 ## ../../../../tmp/
 
@@ -18,7 +18,7 @@
 ## ../github.com/In-For-Disaster-Analytics/dynamo/shared/
 
 - `Chart.yaml` (~62 tok)
-- `values.yaml` (~1639 tok)
+- `values.yaml` (~1520 tok)
 
 ## ./
 
@@ -834,11 +834,12 @@
 
 ## .planning/
 
-- `config.json` (~72 tok)
+- `config.json` (~229 tok)
+- `HANDOFF.json` — Declares override (~2800 tok)
 - `MILESTONES.md` — Milestones (~253 tok)
 - `PROJECT.md` — DYNAMO - Model Catalog GraphQL Migration (~1630 tok)
-- `ROADMAP.md` — Roadmap: DYNAMO Model Catalog GraphQL Migration (~2322 tok)
-- `STATE.md` — Project State (~4084 tok)
+- `ROADMAP.md` — Roadmap: DYNAMO Model Catalog GraphQL Migration (~2601 tok)
+- `STATE.md` — Project State (~4174 tok)
 
 ## .planning/codebase/
 
@@ -857,15 +858,37 @@
 - `11-UI-SPEC.md` — Phase 11 — UI Design Contract (~3638 tok)
 - `11-VALIDATION.md` — Phase 11 — Validation Strategy (~858 tok)
 
+## .planning/phases/12-model-catalog-configuration-file-input-tapis-compatibility/
+
+- `.continue-here.md` — Required Reading (in order) (~1195 tok)
+- `12-01-PLAN.md` — SELECT column_name, data_type, column_default, is_nullable (~3540 tok)
+- `12-01-SUMMARY.md` — Phase 12 Plan 01: SQL Migration + Hasura Metadata for is_optional Summary (~1930 tok)
+- `12-02-PLAN.md` — Extra scalar columns stored on the junction row itself (beyond the two FK columns). (~6093 tok)
+- `12-02-SUMMARY.md` — Phase 12 Plan 02: is_optional Round-Trip Through v2 REST API Summary (~1526 tok)
+- `12-03-PLAN.md` — Declares has (~4659 tok)
+- `12-03-SUMMARY.md` — Phase 12 Plan 03: is_optional Flow from Hasura to ModelIO Summary (~1490 tok)
+- `12-04-PLAN.md` — Declares jobInputs (~5194 tok)
+- `12-04-SUMMARY.md` — Phase 12 Plan 04: Optional Input Skip Logic in TapisJobService Summary (~1716 tok)
+- `12-05-PLAN.md` — Declares is (~3759 tok)
+- `12-CONTEXT.md` — Phase 12: Model Catalog Configuration File Input — Tapis Compatibility - Context (~4343 tok)
+- `12-DISCUSSION-LOG.md` — Phase 12: Model Catalog Configuration File Input — Tapis Compatibility - Discussion Log (~1398 tok)
+- `12-PATTERNS.md` — Phase 12: Support optional `hasInput` on model configuration - Pattern Map (~7248 tok)
+
 ## .planning/quick/260426-fk5-fix-apollo-field-model-not-found-in-type/
 
 - `260426-fk5-PLAN.md` — Must return ZERO files (any .graphql that selects bare 'model' field inside thread_model/thread_mode (~2790 tok)
 - `260426-fk5-SUMMARY.md` — Quick Task 260426-fk5: Verify Apollo Model Field Fix Summary (~1240 tok)
 
+## .planning/quick/260427-vbh-modify-ui-github-workflows-docker-publis/
+
+- `260427-vbh-PLAN.md` — Trust Boundaries (~1244 tok)
+- `260427-vbh-SUMMARY.md` — Quick Task 260427-vbh: Modify UI GitHub Workflows Docker Publish Summary (~484 tok)
+
 ## .planning/todos/pending/
 
 - `2026-04-26-centralize-execution-config-in-ensemble-manager-ui-fetches-v.md` — Problem (~779 tok)
 - `2026-04-26-secure-dynamo-values-yaml-secrets.md` — Problem (~576 tok)
+- `2026-04-28-widen-ensemble-manager-graphql-engine-ci-branches.md` — Problem (~531 tok)
 
 ## docs/
 
@@ -877,10 +900,28 @@
 
 - `transform.py` — deduplicate_by_id, ensure_labels, invert_fk_relationships, build_extended_junction_tables (~11800 tok)
 
+## graphql_engine/.github/workflows/
+
+- `docker-publish.yml` — CI: hasura (~976 tok)
+
+## graphql_engine/metadata/
+
+- `tables.yaml` (~27561 tok)
+
+## graphql_engine/migrations/1771200015000_thread_model_io_fk/
+
+- `down.sql` (~95 tok)
+- `up.sql` (~456 tok)
+
+## graphql_engine/migrations/1771200016000_modelcatalog_configuration_input_is_optional/
+
+- `down.sql` (~24 tok)
+- `up.sql` (~32 tok)
+
 ## helm-charts/
 
 - `.gitignore` — Git ignore rules (~175 tok)
-- `dynamo-values.yaml` (~548 tok)
+- `dynamo-values.yaml` (~614 tok)
 
 ## helm-charts/charts/mint/
 
@@ -889,19 +930,29 @@
 ## helm-charts/charts/mint/templates/
 
 - `ensemble-manager-config.yaml` — K8s ConfigMap (~1189 tok)
+- `model-catalog.yaml` — K8s Service (~734 tok)
+
+## mint-ensemble-manager/.github/workflows/
+
+- `docker-publish.yml` — CI: build image amd64 (~2078 tok)
 
 ## mint-ensemble-manager/src/api/api-v1/paths/executionEngines/
 
 - `tapis.ts` — ./api/api-v1/paths/executionsLocal.ts (~734 tok)
 
+## mint-ensemble-manager/src/api/api-v1/paths/problemStatements/tasks/subtasks/executions/
+
+- `index.ts` — API routes: GET, POST (2 endpoints) (~3355 tok)
+
 ## mint-ensemble-manager/src/classes/graphql/
 
-- `graphql_adapter.ts` — Exports uuidv4, fromTimestampIntegerToString, fromTimestampIntegerToReadableString, fromTimestampInt (~8316 tok)
+- `graphql_adapter.test.ts` — Declares makeExecution (~939 tok)
+- `graphql_adapter.ts` — Exports uuidv4, fromTimestampIntegerToString, fromTimestampIntegerToReadableString, fromTimestampInt (~8372 tok)
 
 ## mint-ensemble-manager/src/classes/graphql/queries/emulator/
 
-- `model-executions.graphql` — GraphQL schema (~436 tok)
-- `thread-executions.graphql` — GraphQL schema (~194 tok)
+- `model-executions.graphql` — GraphQL schema (~448 tok)
+- `thread-executions.graphql` — GraphQL schema (~206 tok)
 
 ## mint-ensemble-manager/src/classes/graphql/queries/execution/
 
@@ -909,34 +960,105 @@
 
 ## mint-ensemble-manager/src/classes/graphql/queries/fragments/
 
-- `model-info.graphql` — GraphQL: types: position (~216 tok)
+- `model-info.graphql` — GraphQL: types: position (~222 tok)
 
 ## mint-ensemble-manager/src/classes/graphql/queries/model/
 
-- `get-modelcatalog-configuration.graphql` — GraphQL: types: position (~204 tok)
+- `get-modelcatalog-configuration.graphql` — GraphQL: types: position (~209 tok)
 
 ## mint-ensemble-manager/src/classes/graphql/queries/thread/
 
-- `get.graphql` — import "../fragments/thread-info.graphql" (~445 tok)
+- `get.graphql` — import "../fragments/thread-info.graphql" (~459 tok)
 
 ## mint-ensemble-manager/src/classes/mint/
 
-- `mint-types.ts` — Optional override for the base URL Tapis uses to deliver job notification webhooks. (~4185 tok)
+- `mint-types.ts` — Optional override for the base URL Tapis uses to deliver job notification webhooks. (~4193 tok)
 
 ## mint-ensemble-manager/src/classes/tapis/adapters/
 
 - `TapisExecutionService.ts` — Exports TapisExecutionService (~6469 tok)
+- `TapisJobService.ts` — Exports TapisJobService; createJobFileInputsFromSeed skips optional inputs (is_optional=true) when no datasets bound (~1438 tok)
 - `TapisJobSubscriptionService.ts` — Exports TapisJobSubscriptionService (~584 tok)
 
 ## mint-ensemble-manager/src/classes/tapis/adapters/__tests__/
 
 - `TapisJobSubscriptionService.test.ts` — Declares mockedGetConfiguration (~566 tok)
 
+## mint-ensemble-manager/src/classes/tapis/adapters/tests/
+
+- `jobs.test.ts` — Declares jobService (~768 tok)
+
+## mint-ensemble-manager/src/classes/tapis/adapters/tests/fixtures/
+
+- `app.ts` — Exports appWithOptionalInput, appWithUnknownRequiredInput (~2045 tok)
+- `model.ts` — Declares baseModel (~3630 tok)
+
 ## mint-ensemble-manager/src/config/
 
 - `config.json` (~754 tok)
 
+## model-catalog-api/
+
+- `openapi.yaml` (~151030 tok)
+
+## model-catalog-api/.github/workflows/
+
+- `ci.yml` — CI: CI (~551 tok)
+
+## model-catalog-api/src/
+
+- `service.ts` — Generic CRUD service for all 46 API resource types. (~5819 tok)
+
+## model-catalog-api/src/hasura/
+
+- `field-maps.ts` — GraphQL field selection strings for each Hasura modelcatalog entity table. (~3888 tok)
+
+## model-catalog-api/src/mappers/
+
+- `request.ts` — Request mapper: transforms v1.8.0 API request bodies to Hasura insert/update format. (~2624 tok)
+- `resource-registry.ts` — Resource registry: maps API resource path segments to Hasura table metadata, (~9040 tok)
+- `response.ts` — Response mapper: transforms Hasura query results to v1.8.0 API response format. (~1807 tok)
+
+## model-catalog-api/src/mappers/__tests__/
+
+- `request.test.ts` — ============================================================================ (~4925 tok)
+- `response.test.ts` — ============================================================================ (~3890 tok)
+
+## model-catalog-fetch-api-client/
+
+- `package.json` — Node.js package manifest (~132 tok)
+
+## model-catalog-fetch-api-client/src/models/
+
+- `DatasetSpecification.ts` — Model Catalog (~2508 tok)
+
 ## scripts/
 
 - `run-migration-prod.sh` (~2963 tok)
-- `test-migration-local.sh` (~1498 tok)
+- `test-migration-devel.sh` (~1572 tok)
+- `test-migration-local.sh` (~1514 tok)
+
+## ui/.github/workflows/
+
+- `docker-publish.yml` — CI: ui (~1128 tok)
+
+## ui/src/model-catalog-api/
+
+- `model-catalog-api.ts` — Exports ModelCatalogApi (~832 tok)
+- `sdk-patches.ts` — Patch the SDK's models index so internal API call sites use the patched (~392 tok)
+
+## ui/src/model-catalog-api/custom-apis/
+
+- `model-configuration-setup.ts` — Override get to restore isOptional on hasInput items from the raw API response. (~1408 tok)
+- `model-configuration.ts` — Override get to restore isOptional on hasInput items from the raw API response. (~1047 tok)
+
+## ui/src/queries/thread/
+
+- `get-subscription.graphql` — import "../fragments/thread-info.graphql" (~454 tok)
+- `get.graphql` — import "../fragments/thread-info.graphql" (~637 tok)
+
+## ui/src/screens/models/configure/resources/
+
+- `dataset-specification.ts` — Exports ModelCatalogDatasetSpecification (~4810 tok)
+- `model-configuration-setup.ts` — Exports ModelCatalogModelConfigurationSetup (~11275 tok)
+- `model-configuration.ts` — Exports ModelCatalogModelConfiguration (~10725 tok)

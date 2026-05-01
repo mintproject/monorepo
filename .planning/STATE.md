@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 11 context gathered
-last_updated: "2026-04-26T20:26:15.034Z"
-last_activity: "2026-04-26 - Completed quick task 260426-fk5: Fix Apollo field 'model' not found in type 'thread_model' in mint-ensemble-manager"
+stopped_at: context exhaustion at 76% (2026-04-28)
+last_updated: "2026-04-28T23:51:30.174Z"
+last_activity: "2026-04-28 - Completed quick task 260427-vbh: ui docker-publish.yml SAFE_BRANCH sanitization"
 progress:
-  total_phases: 10
+  total_phases: 11
   completed_phases: 6
-  total_plans: 34
-  completed_plans: 34
-  percent: 100
+  total_plans: 39
+  completed_plans: 38
+  percent: 97
 ---
 
 # Project State
@@ -21,17 +21,17 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-15)
 
 **Core value:** All model catalog data accessible through a single GraphQL endpoint, eliminating the Fuseki dependency while maintaining REST API compatibility.
-**Current focus:** Phase 10 — check-the-required-changes-on-mint-ensemble-manager-after-migration
+**Current focus:** Phase 12 — model-catalog-configuration-file-input-tapis-compatibility
 
 ## Current Position
 
-Phase: 10
-Plan: Not started
+Phase: 12 (model-catalog-configuration-file-input-tapis-compatibility) — EXECUTING
+Plan: 5 of 5
 Milestone v2.0: COMPLETE (shipped 2026-03-15)
 Status: Ready to execute
-Last activity: 2026-04-26 - Completed quick task 260426-fk5: Fix Apollo field 'model' not found in type 'thread_model' in mint-ensemble-manager
+Last activity: 2026-04-28 - Completed quick task 260427-vbh: ui docker-publish.yml SAFE_BRANCH sanitization
 
-Progress: [████████████] 100% — v2.0 shipped
+Progress: [██████████] 98%
 
 ## Performance Metrics
 
@@ -66,6 +66,7 @@ Progress: [████████████] 100% — v2.0 shipped
 | Phase 09-merge-modelconfiguration-setup-tables-and-migrate-thread-model-relationships P04 | 25 | 3 tasks | 16 files |
 | Phase 10 P01 | 4 | 2 tasks | 5 files |
 | Phase 10-check-the-required-changes-on-mint-ensemble-manager-after-migration P00 | 3 | 2 tasks | 5 files |
+| Phase 12 P04 | 15 | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -135,6 +136,7 @@ Recent decisions affecting current work:
 - [Phase 10]: model-executions query rewritten to start from execution table using modelcatalog_configuration relationship (dropped model table removed)
 - [Phase 10]: Delete-before-FK-add pattern used for execution_data_binding and execution_result because model_io_id is part of PK (cannot be nulled)
 - [Phase 10]: execution_result table included in FK repoint migration alongside execution_data_binding (both reference model_io)
+- [Phase ?]: Used console.info instead of logger.info in TapisJobService skip branch (no logger in tapis adapter layer)
 
 ### Roadmap Evolution
 
@@ -148,6 +150,7 @@ Recent decisions affecting current work:
 - Phase 9 added: Merge ModelConfiguration/Setup tables and migrate thread_model relationships
 - Phase 10 added: Check the required changes on mint-ensemble-manager after migration
 - Phase 11 added: Simplify ensemble manager and UI execution model — kill thread_model_execution junction
+- Phase 12 added: Support optional `hasInput` on model configuration (catalog + UI + ensemble manager)
 
 ### Pending Todos
 
@@ -180,9 +183,10 @@ None — v2.0 milestone complete.
 | 260411-hb5 | Add filtering info and toggles (time, region, variables) to dataset selection view | 2026-04-11 | b89305a | Verified | [260411-hb5-add-filtering-info-and-toggles-time-regi](./quick/260411-hb5-add-filtering-info-and-toggles-time-regi/) |
 | 260411-nis | Fix UI GraphQL fragments selecting dropped execution.model_id column | 2026-04-11 | 43e4b00 | Needs Review | [260411-nis-ui-has-outdated-query-looking-model-id-o](./quick/260411-nis-ui-has-outdated-query-looking-model-id-o/) |
 | 260426-fk5 | Fix Apollo field 'model' not found in type 'thread_model' in mint-ensemble-manager | 2026-04-26 | 7661979 | Complete | [260426-fk5-fix-apollo-field-model-not-found-in-type](./quick/260426-fk5-fix-apollo-field-model-not-found-in-type/) |
+| 260427-vbh | Modify ui docker-publish.yml to use docker/build-push-action with sanitized branch name | 2026-04-28 | b70cdb7 | Complete | [260427-vbh-modify-ui-github-workflows-docker-publis](./quick/260427-vbh-modify-ui-github-workflows-docker-publis/) |
 
 ## Session Continuity
 
-Last session: 2026-04-26T20:26:15.030Z
-Stopped at: Phase 11 context gathered
-Resume file: .planning/phases/11-simplify-ensemble-manager-and-ui-execution-model-kill-thread/11-CONTEXT.md
+Last session: 2026-04-28T23:51:30.168Z
+Stopped at: context exhaustion at 76% (2026-04-28)
+Resume file: None

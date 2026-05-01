@@ -398,6 +398,623 @@
       "related_bugs": [],
       "occurrences": 2,
       "last_seen": "2026-04-26T23:30:21.385Z"
+    },
+    {
+      "id": "bug-023",
+      "timestamp": "2026-04-27T00:09:40.430Z",
+      "error_message": "Significant refactor of ",
+      "file": "../github.com/In-For-Disaster-Analytics/dynamo/shared/values.yaml",
+      "root_cause": "17 lines replaced/restructured",
+      "fix": "Rewrote 19→4 lines (17 removed) | Also: enabled: true; ingress:",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "yaml"
+      ],
+      "related_bugs": [],
+      "occurrences": 2,
+      "last_seen": "2026-04-27T00:11:45.194Z"
+    },
+    {
+      "id": "bug-024",
+      "timestamp": "2026-04-27T01:26:00.493Z",
+      "error_message": "Significant refactor of ",
+      "file": "graphql_engine/metadata/tables.yaml",
+      "root_cause": "2 lines replaced/restructured",
+      "fix": "Rewrote 16→8 lines (2 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "yaml"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-27T01:26:00.493Z"
+    },
+    {
+      "id": "bug-025",
+      "timestamp": "2026-04-27T01:52:08.727Z",
+      "error_message": "Significant refactor of ",
+      "file": "ui/src/queries/thread/get-subscription.graphql",
+      "root_cause": "2 lines replaced/restructured",
+      "fix": "Rewrote 7→7 lines (2 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "graphql"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-27T01:52:08.727Z"
+    },
+    {
+      "id": "bug-026",
+      "timestamp": "2026-04-27T02:41:54.939Z",
+      "error_message": "Wrong reference: model_io should be modelcatalog_dataset_specification",
+      "file": "mint-ensemble-manager/src/classes/graphql/queries/emulator/model-executions.graphql",
+      "root_cause": "Used \"model_io\" instead of \"modelcatalog_dataset_specification\"",
+      "fix": "Changed model_io → modelcatalog_dataset_specification",
+      "tags": [
+        "auto-detected",
+        "wrong-reference",
+        "graphql"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-27T02:41:54.939Z"
+    },
+    {
+      "id": "bug-027",
+      "timestamp": "2026-04-27T21:38:43.816Z",
+      "error_message": "Incorrect value in code",
+      "file": ".planning/STATE.md",
+      "root_cause": "Had \"2026-04-26T20:26:15.034Z\"",
+      "fix": "Changed to \"2026-04-27T00:00:00.000Z\"",
+      "tags": [
+        "auto-detected",
+        "wrong-value",
+        "md"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-27T21:38:43.816Z"
+    },
+    {
+      "id": "bug-028",
+      "timestamp": "2026-04-28T01:29:38.590Z",
+      "error_message": "Significant refactor of ",
+      "file": ".planning/STATE.md",
+      "root_cause": "3 lines replaced/restructured",
+      "fix": "Rewrote 3→3 lines (3 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "md"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-28T01:29:38.590Z"
+    },
+    {
+      "id": "bug-029",
+      "timestamp": "2026-04-28T01:45:13.347Z",
+      "error_message": "Null/undefined access in ",
+      "file": "model-catalog-api/src/service.ts",
+      "root_cause": "Property access on potentially null/undefined value",
+      "fix": "Added null safety (optional chaining or null check)",
+      "tags": [
+        "auto-detected",
+        "null-safety",
+        "ts"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-28T01:45:13.347Z"
+    },
+    {
+      "id": "bug-030",
+      "timestamp": "2026-04-28T01:45:19.044Z",
+      "error_message": "Null/undefined access in ",
+      "file": "model-catalog-api/src/mappers/request.ts",
+      "root_cause": "Property access on potentially null/undefined value",
+      "fix": "Added null safety (optional chaining or null check)",
+      "tags": [
+        "auto-detected",
+        "null-safety",
+        "ts"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-28T01:45:19.044Z"
+    },
+    {
+      "id": "bug-031",
+      "timestamp": "2026-04-28T01:50:40.891Z",
+      "error_message": "Type error",
+      "file": "mint-ensemble-manager/src/classes/graphql/graphql_adapter.test.ts",
+      "root_cause": "Missing or incorrect type annotation",
+      "fix": "Added type assertion/annotation",
+      "tags": [
+        "auto-detected",
+        "type-fix",
+        "ts"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-28T01:50:40.891Z"
+    },
+    {
+      "id": "bug-032",
+      "timestamp": "2026-04-28T01:51:07.066Z",
+      "error_message": "Null/undefined access in ",
+      "file": "mint-ensemble-manager/src/classes/graphql/graphql_adapter.ts",
+      "root_cause": "Property access on potentially null/undefined value",
+      "fix": "Added null safety (optional chaining or null check)",
+      "tags": [
+        "auto-detected",
+        "null-safety",
+        "ts"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-28T01:51:07.066Z"
+    },
+    {
+      "id": "bug-033",
+      "timestamp": "2026-04-28T01:54:43.414Z",
+      "error_message": "Type error",
+      "file": "mint-ensemble-manager/src/classes/tapis/adapters/tests/fixtures/app.ts",
+      "root_cause": "Missing or incorrect type annotation",
+      "fix": "Added type assertion/annotation",
+      "tags": [
+        "auto-detected",
+        "type-fix",
+        "ts"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-28T01:54:43.414Z"
+    },
+    {
+      "id": "bug-034",
+      "timestamp": "2026-04-28T01:55:04.380Z",
+      "error_message": "Type error",
+      "file": "mint-ensemble-manager/src/classes/tapis/adapters/tests/fixtures/model.ts",
+      "root_cause": "Missing or incorrect type annotation",
+      "fix": "Added type assertion/annotation",
+      "tags": [
+        "auto-detected",
+        "type-fix",
+        "ts"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-28T01:55:04.380Z"
+    },
+    {
+      "id": "bug-035",
+      "timestamp": "2026-04-28T01:55:20.948Z",
+      "error_message": "Significant refactor of ",
+      "file": "mint-ensemble-manager/src/classes/tapis/adapters/tests/jobs.test.ts",
+      "root_cause": "2 lines replaced/restructured",
+      "fix": "Rewrote 19→77 lines (2 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "ts"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-28T01:55:20.948Z"
+    },
+    {
+      "id": "bug-036",
+      "timestamp": "2026-04-28T02:03:50.618Z",
+      "error_message": "Type error",
+      "file": "ui/src/screens/models/configure/resources/dataset-specification.ts",
+      "root_cause": "Missing or incorrect type annotation",
+      "fix": "Added type assertion/annotation | Also: ${(r as any).isOptional; ? html`<span style=\"font-size: 0.75em; background: #e8e8e8;  | Also: <label style=\"font-size: 0.85em; display: flex; align-items:; <input type=\"checkbox\" | Also: const result = DatasetSpecificationFromJSON(jsonRes);; (result as any).isOptional = this._editingIsOptional;",
+      "tags": [
+        "auto-detected",
+        "type-fix",
+        "ts"
+      ],
+      "related_bugs": [],
+      "occurrences": 4,
+      "last_seen": "2026-04-28T02:04:17.387Z"
+    },
+    {
+      "id": "bug-037",
+      "timestamp": "2026-04-28T02:06:25.831Z",
+      "error_message": "Null/undefined access in ",
+      "file": "ui/src/model-catalog-api/custom-apis/model-configuration.ts",
+      "root_cause": "Property access on potentially null/undefined value",
+      "fix": "Added null safety (optional chaining or null check) | Also: // getResources() returns hasInput items with isOptional pre; hasInput: this._inputDSInput.getResources().map((ds: any) =>",
+      "tags": [
+        "auto-detected",
+        "null-safety",
+        "ts"
+      ],
+      "related_bugs": [],
+      "occurrences": 2,
+      "last_seen": "2026-04-28T02:07:31.042Z"
+    },
+    {
+      "id": "bug-038",
+      "timestamp": "2026-04-28T02:06:40.696Z",
+      "error_message": "Null/undefined access in ",
+      "file": "ui/src/model-catalog-api/custom-apis/model-configuration-setup.ts",
+      "root_cause": "Property access on potentially null/undefined value",
+      "fix": "Added null safety (optional chaining or null check) | Also: // getResources() returns hasInput items with isOptional pre; hasInput: this._inputDSInput.getResources().map((ds: any) =>",
+      "tags": [
+        "auto-detected",
+        "null-safety",
+        "ts"
+      ],
+      "related_bugs": [],
+      "occurrences": 2,
+      "last_seen": "2026-04-28T02:07:38.137Z"
+    },
+    {
+      "id": "bug-039",
+      "timestamp": "2026-04-28T02:09:41.516Z",
+      "error_message": "Type error",
+      "file": "ui/src/screens/models/configure/resources/model-configuration.ts",
+      "root_cause": "Missing or incorrect type annotation",
+      "fix": "Added type assertion/annotation | Also: <div style=\"font-size: 0.8em; color: #666; margin-bottom: 4p",
+      "tags": [
+        "auto-detected",
+        "type-fix",
+        "ts"
+      ],
+      "related_bugs": [],
+      "occurrences": 2,
+      "last_seen": "2026-04-28T02:09:46.750Z"
+    },
+    {
+      "id": "bug-040",
+      "timestamp": "2026-04-28T02:10:02.097Z",
+      "error_message": "Type error",
+      "file": "ui/src/screens/models/configure/resources/model-configuration-setup.ts",
+      "root_cause": "Missing or incorrect type annotation",
+      "fix": "Added type assertion/annotation | Also: <div style=\"font-size: 0.8em; color: #666; margin-bottom: 4p",
+      "tags": [
+        "auto-detected",
+        "type-fix",
+        "ts"
+      ],
+      "related_bugs": [],
+      "occurrences": 2,
+      "last_seen": "2026-04-28T02:10:06.725Z"
+    },
+    {
+      "id": "bug-041",
+      "timestamp": "2026-04-28T02:29:08.869Z",
+      "error_message": "Wrong reference: 6ac722b7011c70be32ddc1cbecd7bd384d50d47a should be 9a4459e31ea9c6355414f1097d86f1e84bfe365f",
+      "file": "helm-charts/dynamo-values.yaml",
+      "root_cause": "Used \"6ac722b7011c70be32ddc1cbecd7bd384d50d47a\" instead of \"9a4459e31ea9c6355414f1097d86f1e84bfe365f\"",
+      "fix": "Changed 6ac722b7011c70be32ddc1cbecd7bd384d50d47a → 9a4459e31ea9c6355414f1097d86f1e84bfe365f",
+      "tags": [
+        "auto-detected",
+        "wrong-reference",
+        "yaml"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-28T02:29:08.869Z"
+    },
+    {
+      "id": "bug-042",
+      "timestamp": "2026-04-28T12:18:52.020Z",
+      "error_message": "Wrong reference: 9a4459e31ea9c6355414f1097d86f1e84bfe365f should be e0547dd3f3f922db355a35ec67b979a721b7db6a",
+      "file": "helm-charts/dynamo-values.yaml",
+      "root_cause": "Used \"9a4459e31ea9c6355414f1097d86f1e84bfe365f\" instead of \"e0547dd3f3f922db355a35ec67b979a721b7db6a\"",
+      "fix": "Changed 9a4459e31ea9c6355414f1097d86f1e84bfe365f → e0547dd3f3f922db355a35ec67b979a721b7db6a",
+      "tags": [
+        "auto-detected",
+        "wrong-reference",
+        "yaml"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-28T12:18:52.020Z"
+    },
+    {
+      "id": "bug-043",
+      "timestamp": "2026-04-28T22:37:40.788Z",
+      "error_message": "Missing import: ./sdk-patches",
+      "file": "ui/src/model-catalog-api/model-catalog-api.ts",
+      "root_cause": "Module(s) not imported: ./sdk-patches",
+      "fix": "Added import(s) for ./sdk-patches",
+      "tags": [
+        "auto-detected",
+        "missing-import",
+        "ts"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-28T22:37:40.788Z"
+    },
+    {
+      "id": "bug-044",
+      "timestamp": "2026-04-28T22:42:25.977Z",
+      "error_message": "Wrong reference: e0547dd3f3f922db355a35ec67b979a721b7db6a should be d8caed2b9296eeac3dabc6ed977c08f66426ec34",
+      "file": "helm-charts/dynamo-values.yaml",
+      "root_cause": "Used \"e0547dd3f3f922db355a35ec67b979a721b7db6a\" instead of \"d8caed2b9296eeac3dabc6ed977c08f66426ec34\"",
+      "fix": "Changed e0547dd3f3f922db355a35ec67b979a721b7db6a → d8caed2b9296eeac3dabc6ed977c08f66426ec34",
+      "tags": [
+        "auto-detected",
+        "wrong-reference",
+        "yaml"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-28T22:42:25.977Z"
+    },
+    {
+      "id": "bug-045",
+      "timestamp": "2026-04-28T22:55:16.378Z",
+      "error_message": "Incorrect value in code",
+      "file": "model-catalog-fetch-api-client/src/models/DatasetSpecification.ts",
+      "root_cause": "Had 'id'",
+      "fix": "Changed to 'isOptional'",
+      "tags": [
+        "auto-detected",
+        "wrong-value",
+        "ts"
+      ],
+      "related_bugs": [],
+      "occurrences": 2,
+      "last_seen": "2026-04-28T22:55:23.649Z"
+    },
+    {
+      "id": "bug-046",
+      "timestamp": "2026-04-28T22:57:22.233Z",
+      "error_message": "Incorrect value in code",
+      "file": "model-catalog-fetch-api-client/package.json",
+      "root_cause": "Had \"8.0.3-alpha.8\"",
+      "fix": "Changed to \"8.0.3-alpha.9\"",
+      "tags": [
+        "auto-detected",
+        "wrong-value",
+        "json"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-28T22:57:22.233Z"
+    },
+    {
+      "id": "bug-047",
+      "timestamp": "2026-04-28T23:00:06.592Z",
+      "error_message": "Significant refactor of ",
+      "file": "ui/src/screens/models/configure/resources/dataset-specification.ts",
+      "root_cause": "3 lines replaced/restructured",
+      "fix": "Rewrote 4→12 lines (3 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "ts"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-28T23:00:06.592Z"
+    },
+    {
+      "id": "bug-048",
+      "timestamp": "2026-04-28T23:01:06.551Z",
+      "error_message": "Wrong reference: d8caed2b9296eeac3dabc6ed977c08f66426ec34 should be 854fa751ad5d949ba59e692854930cab03ad70b9",
+      "file": "helm-charts/dynamo-values.yaml",
+      "root_cause": "Used \"d8caed2b9296eeac3dabc6ed977c08f66426ec34\" instead of \"854fa751ad5d949ba59e692854930cab03ad70b9\"",
+      "fix": "Changed d8caed2b9296eeac3dabc6ed977c08f66426ec34 → 854fa751ad5d949ba59e692854930cab03ad70b9",
+      "tags": [
+        "auto-detected",
+        "wrong-reference",
+        "yaml"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-28T23:01:06.551Z"
+    },
+    {
+      "id": "bug-049",
+      "timestamp": "2026-04-28T23:34:53.509Z",
+      "error_message": "Significant refactor of ",
+      "file": "model-catalog-api/src/mappers/response.ts",
+      "root_cause": "3 lines replaced/restructured",
+      "fix": "Rewrote 11→21 lines (3 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "ts"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-28T23:34:53.509Z"
+    },
+    {
+      "id": "bug-050",
+      "timestamp": "2026-04-28T23:42:23.787Z",
+      "error_message": "Incorrect value in code",
+      "file": ".planning/HANDOFF.json",
+      "root_cause": "Had \"2026-04-28T23:07:49.819Z\"",
+      "fix": "Changed to \"2026-04-28T23:35:00.000Z\"",
+      "tags": [
+        "auto-detected",
+        "wrong-value",
+        "json"
+      ],
+      "related_bugs": [],
+      "occurrences": 3,
+      "last_seen": "2026-04-28T23:46:13.916Z"
+    },
+    {
+      "id": "bug-051",
+      "timestamp": "2026-04-28T23:59:04.036Z",
+      "error_message": "Type error",
+      "file": "ui/src/screens/models/configure/resources/dataset-specification.ts",
+      "root_cause": "Missing or incorrect type annotation",
+      "fix": "Added type assertion/annotation",
+      "tags": [
+        "auto-detected",
+        "type-fix",
+        "ts"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-28T23:59:04.036Z"
+    },
+    {
+      "id": "bug-12-05-junction-array-wrap",
+      "timestamp": "2026-04-28T20:11:00Z",
+      "error_message": "isOptional checkbox always shows checked after page refresh, even when modelcatalog_configuration_input.is_optional=false in DB",
+      "file": "model-catalog-api/src/mappers/response.ts",
+      "root_cause": "Junction column hoist (commit 9bcbecd) wrapped the scalar in a single-element array (out[snakeToCamel(colName)] = [val]), mirroring v1.8.0's array-wrapped object property convention. That convention is for relationships/objects. is_optional is a plain bool. UI render does !!(r as any).isOptional. Any array (including [false]) is truthy in JS, so !![false] === true and the checkbox always renders checked.",
+      "fix": "Emit out[snakeToCamel(colName)] = val (scalar) at response.ts:115. Added response.test.ts assertions for false/true scalar emission and null omission. SDK FromJSONTyped monkey-patch already handles scalars correctly.",
+      "tags": [
+        "mca",
+        "response-mapper",
+        "junction-column",
+        "phase-12",
+        "isOptional",
+        "array-truthy-trap"
+      ],
+      "related_bugs": [
+        "bug-12-05-junction-overlay"
+      ],
+      "occurrences": 1,
+      "last_seen": "2026-04-28T20:11:00Z"
+    },
+    {
+      "id": "bug-12-05-junction-overlay",
+      "timestamp": "2026-04-28T00:00:00Z",
+      "error_message": "isOptional checkbox in ModelConfiguration editor never reflects DB state; UI checkbox always unchecked even when modelcatalog_configuration_input.is_optional=true.",
+      "file": "ui/src/screens/models/configure/resources/dataset-specification.ts",
+      "root_cause": "ModelCatalogResource.setResources() in resource.ts:1419-1473 calls resourceApi.get(id) per row, storing the per-id GET response in _loadedResources[id]. Render (resource.ts:479,513) and getResources() (resource.ts:1642) both read from _loadedResources, NOT from the inline _resources array passed in. For DatasetSpecification, GET /datasetspecifications/{id} returns the entity scalars only — isOptional lives on the modelcatalog_configuration_input junction (configuration<->dspec binding) and is hoisted only by the parent GET /modelconfigurations/{id} response mapper. The lazy refetch wipes isOptional from the row used by render+save.",
+      "fix": "In ModelCatalogDatasetSpecification, override setResources() to capture inline isOptional per-id into a _junctionOverlay map, override requestUpdate() to merge the overlay onto _loadedResources[id] when the entity GET resolves with isOptional undefined, and update the checkbox @change handler to keep _junctionOverlay in sync with user toggles.",
+      "tags": [
+        "ui",
+        "lit-element",
+        "lazy-fetch",
+        "junction-column",
+        "phase-12",
+        "isOptional",
+        "dataset-specification"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-28T00:00:00Z"
+    },
+    {
+      "id": "bug-053",
+      "timestamp": "2026-04-29T00:01:15.170Z",
+      "error_message": "Wrong reference: 854fa751ad5d949ba59e692854930cab03ad70b9 should be 6a04cf469e49a4081e76fb320b2c21eb89ab5ee0",
+      "file": "helm-charts/dynamo-values.yaml",
+      "root_cause": "Used \"854fa751ad5d949ba59e692854930cab03ad70b9\" instead of \"6a04cf469e49a4081e76fb320b2c21eb89ab5ee0\"",
+      "fix": "Changed 854fa751ad5d949ba59e692854930cab03ad70b9 → 6a04cf469e49a4081e76fb320b2c21eb89ab5ee0",
+      "tags": [
+        "auto-detected",
+        "wrong-reference",
+        "yaml"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-29T00:01:15.170Z"
+    },
+    {
+      "id": "bug-054",
+      "timestamp": "2026-04-29T00:10:53.852Z",
+      "error_message": "Type error",
+      "file": "model-catalog-api/src/mappers/response.ts",
+      "root_cause": "Missing or incorrect type annotation",
+      "fix": "Added type assertion/annotation",
+      "tags": [
+        "auto-detected",
+        "type-fix",
+        "ts"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-29T00:10:53.852Z"
+    },
+    {
+      "id": "bug-055",
+      "timestamp": "2026-04-29T00:11:48.633Z",
+      "error_message": "Type error",
+      "file": "model-catalog-api/src/mappers/__tests__/response.test.ts",
+      "root_cause": "Missing or incorrect type annotation",
+      "fix": "Added type assertion/annotation",
+      "tags": [
+        "auto-detected",
+        "type-fix",
+        "ts"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-29T00:11:48.633Z"
+    },
+    {
+      "id": "bug-056",
+      "timestamp": "2026-04-29T00:12:13.252Z",
+      "error_message": "Wrong reference: 9bcbecdd44f7c4385d3c28ccab8105def9c357cb should be 213bc6c9130e049a673adc847613fb0e87952568",
+      "file": "helm-charts/dynamo-values.yaml",
+      "root_cause": "Used \"9bcbecdd44f7c4385d3c28ccab8105def9c357cb\" instead of \"213bc6c9130e049a673adc847613fb0e87952568\"",
+      "fix": "Changed 9bcbecdd44f7c4385d3c28ccab8105def9c357cb → 213bc6c9130e049a673adc847613fb0e87952568",
+      "tags": [
+        "auto-detected",
+        "wrong-reference",
+        "yaml"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-29T00:12:13.252Z"
+    },
+    {
+      "id": "bug-058",
+      "timestamp": "2026-04-29T00:18:11.808Z",
+      "error_message": "Significant refactor of ",
+      "file": "ui/src/screens/models/configure/resources/dataset-specification.ts",
+      "root_cause": "2 lines replaced/restructured",
+      "fix": "Rewrote 13→17 lines (2 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "ts"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-29T00:18:11.808Z"
+    },
+    {
+      "id": "bug-059",
+      "timestamp": "2026-04-29T00:18:31.524Z",
+      "error_message": "Wrong reference: 6a04cf469e49a4081e76fb320b2c21eb89ab5ee0 should be c1fa149ab1a799c59a0e505705789c60862c7bd9",
+      "file": "helm-charts/dynamo-values.yaml",
+      "root_cause": "Used \"6a04cf469e49a4081e76fb320b2c21eb89ab5ee0\" instead of \"c1fa149ab1a799c59a0e505705789c60862c7bd9\"",
+      "fix": "Changed 6a04cf469e49a4081e76fb320b2c21eb89ab5ee0 → c1fa149ab1a799c59a0e505705789c60862c7bd9",
+      "tags": [
+        "auto-detected",
+        "wrong-reference",
+        "yaml"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-29T00:18:31.524Z"
+    },
+    {
+      "id": "bug-060",
+      "timestamp": "2026-04-29T01:40:02.876Z",
+      "error_message": "Type error",
+      "file": "mint-ensemble-manager/src/api/api-v1/paths/problemStatements/tasks/subtasks/executions/index.ts",
+      "root_cause": "Missing or incorrect type annotation",
+      "fix": "Added type assertion/annotation",
+      "tags": [
+        "auto-detected",
+        "type-fix",
+        "ts"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-29T01:40:02.876Z"
     }
   ]
 }
