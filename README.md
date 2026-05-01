@@ -1,5 +1,18 @@
 # MINT - Model INTegration
 
+## Submodule Status
+
+| Submodule | Build | Last Commit |
+|-----------|-------|-------------|
+| [model-catalog-api](https://github.com/mintproject/model-catalog-api) | [![CI](https://github.com/mintproject/model-catalog-api/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/mintproject/model-catalog-api/actions/workflows/ci.yml) | ![Last Commit](https://img.shields.io/github/last-commit/mintproject/model-catalog-api/main) |
+| [mint-ensemble-manager](https://github.com/mintproject/mint-ensemble-manager) | [![Build](https://github.com/mintproject/mint-ensemble-manager/actions/workflows/docker-publish.yml/badge.svg?branch=master)](https://github.com/mintproject/mint-ensemble-manager/actions/workflows/docker-publish.yml) | ![Last Commit](https://img.shields.io/github/last-commit/mintproject/mint-ensemble-manager/master) |
+| [mint-ui-lit](https://github.com/mintproject/mint-ui-lit) | [![UI](https://github.com/mintproject/mint-ui-lit/actions/workflows/docker-publish.yml/badge.svg?branch=master)](https://github.com/mintproject/mint-ui-lit/actions/workflows/docker-publish.yml) | ![Last Commit](https://img.shields.io/github/last-commit/mintproject/mint-ui-lit/master) |
+| [graphql_engine](https://github.com/mintproject/graphql_engine) | [![Hasura](https://github.com/mintproject/graphql_engine/actions/workflows/docker-publish.yml/badge.svg?branch=master)](https://github.com/mintproject/graphql_engine/actions/workflows/docker-publish.yml) | ![Last Commit](https://img.shields.io/github/last-commit/mintproject/graphql_engine/master) |
+| [helm-charts (mint)](https://github.com/mintproject/mint) | [![Lint and Test Charts](https://github.com/mintproject/mint/actions/workflows/linter.yaml/badge.svg?branch=main)](https://github.com/mintproject/mint/actions/workflows/linter.yaml) [![Helm Docs](https://github.com/mintproject/mint/actions/workflows/docs.yaml/badge.svg?branch=main)](https://github.com/mintproject/mint/actions/workflows/docs.yaml) | ![Last Commit](https://img.shields.io/github/last-commit/mintproject/mint/main) |
+| [MINT_USERGUIDE](https://github.com/mintproject/MINT_USERGUIDE) | [![Pages](https://github.com/mintproject/MINT_USERGUIDE/actions/workflows/pages/pages-build-deployment/badge.svg?branch=master)](https://github.com/mintproject/MINT_USERGUIDE/actions/workflows/pages/pages-build-deployment) | ![Last Commit](https://img.shields.io/github/last-commit/mintproject/MINT_USERGUIDE/master) |
+| [model-catalog-fetch-api-client](https://github.com/mintproject/model-catalog-fetch-api-client) | _no CI_ | ![Last Commit](https://img.shields.io/github/last-commit/mintproject/model-catalog-fetch-api-client/main) |
+| [Mint-ModelCatalog-Ontology](https://github.com/mintproject/Mint-ModelCatalog-Ontology) | _no CI_ | ![Last Commit](https://img.shields.io/github/last-commit/mintproject/Mint-ModelCatalog-Ontology/master) |
+
 MINT is a scientific modeling platform that enables researchers to discover, configure, and execute computational models. It provides a unified catalog of models, datasets, and variables, allowing scientists to set up and run model ensembles for complex scenarios such as climate impact analysis, hydrology, and agriculture.
 
 ## Goals
