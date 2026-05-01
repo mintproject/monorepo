@@ -1,4 +1,4 @@
-FROM node:19-alpine
+FROM node:24-alpine
 
 # # Install cwltool
 # RUN apk add --update \

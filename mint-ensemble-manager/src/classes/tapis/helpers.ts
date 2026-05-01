@@ -109,7 +109,7 @@ export function getInputsParameters(model: Model, bindings: InputBindings, regio
             parameters[ip.id] = value.toString();
         }
         // HACK: Replace region geojson
-        if (parameters[ip.id].match(/__region_geojson:(.+)/)) {
+        if (parameters[ip.id]?.match(/__region_geojson:(.+)/)) {
             const region_geojson = _getRegionGeoJson(region);
             parameters[ip.id] = region_geojson;
         }

@@ -80,6 +80,7 @@ export class TapisExecutionService implements IExecutionService {
         threadId: string,
         threadModelId: string
     ): Promise<SubmissionResult> {
+        this.seeds = [];
         try {
             const app = await this.loadTapisApp(component);
             console.log("Submitting executions", executions);
