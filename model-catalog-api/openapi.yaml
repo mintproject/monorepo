@@ -14028,6 +14028,13 @@ components:
             type: integer
           nullable: true
           type: array
+        isOptional:
+          description: >-
+            When true, this input is optional for the configuration.
+            Ensemble manager will skip it during Tapis job submission if no dataset
+            is bound, rather than failing with an error.
+          nullable: true
+          type: boolean
         id:
           description: identifier
           nullable: false

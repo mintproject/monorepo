@@ -321,4 +321,41 @@ describe('buildJunctionInserts', () => {
     expect(personData).toHaveProperty('first_name', 'John');
     expect(personData).toHaveProperty('last_name', 'Doe');
   });
+
+  it('Test 10: spreads is_optional=true from isOptional onto configuration_input junction row (D-21)', () => {
+    const configConfig = getResourceConfig('modelconfigurations')!;
+    const body = {
+      hasInput: [
+        { id: 'https://w3id.org/okn/i/mint/SomeDataset', isOptional: true }
+      ],
+    };
+    const result = buildJunctionInserts(body, configConfig);
+    const inputs = result['inputs'] as Record<string, unknown>;
+    expect(inputs).toHaveProperty('data');
+    const data = inputs['data'] as Record<string, unknown>[];
+    expect(data).toHaveLength(1);
+    const junctionRow = data[0] as Record<string, unknown>;
+    // is_optional lives on the outer junction row (modelcatalog_configuration_input),
+    // NOT inside junctionRow['input']['data']. Verify it is at the top level:
+    expect(junctionRow).toHaveProperty('is_optional', true);
+    // Nested entity data should NOT have is_optional:
+    const nestedData = (junctionRow['input'] as Record<string, unknown>)['data'] as Record<string, unknown>;
+    expect(nestedData).not.toHaveProperty('is_optional');
+  });
+
+  it('Test 11: omits is_optional from junction row when isOptional is absent in request body (D-22)', () => {
+    const configConfig = getResourceConfig('modelconfigurations')!;
+    const body = {
+      hasInput: [
+        { id: 'https://w3id.org/okn/i/mint/SomeDataset' }
+      ],
+    };
+    const result = buildJunctionInserts(body, configConfig);
+    const inputs = result['inputs'] as Record<string, unknown>;
+    const data = inputs['data'] as Record<string, unknown>[];
+    const junctionRow = data[0] as Record<string, unknown>;
+    // When isOptional is not provided, the key should be absent (not defaulted to false)
+    // so that Postgres applies its own column default:
+    expect(junctionRow).not.toHaveProperty('is_optional');
+  });
 });

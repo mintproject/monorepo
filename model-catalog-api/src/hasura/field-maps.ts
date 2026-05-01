@@ -214,6 +214,7 @@ child_configurations {
   description
 }
 inputs {
+  is_optional
   input {
     id
     label

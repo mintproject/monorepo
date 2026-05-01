@@ -196,10 +196,16 @@ export function buildJunctionInserts(
           nestedData['id'] = `${ID_PREFIX}${randomUUID()}`;
         }
 
+        // Build set of camelCase keys that belong to the junction row itself (not the nested entity)
+        const junctionCamelKeys = new Set(
+          relConfig.junctionColumns ? Object.values(relConfig.junctionColumns) : []
+        );
+
         // Copy scalar fields from nested object (camelCase -> snake_case)
-        // Skip 'id' (already handled), 'type' (not stored)
+        // Skip 'id' (already handled), 'type' (not stored), and junction-row-level fields
         for (const [key, value] of Object.entries(item)) {
           if (key === 'id' || key === 'type') continue;
+          if (junctionCamelKeys.has(key)) continue; // junction column — goes on outer row, not nested entity
           const snakeKey = camelToSnake(key);
           const unwrapped = Array.isArray(value)
             ? value.length === 1
@@ -213,7 +219,7 @@ export function buildJunctionInserts(
           }
         }
 
-        return {
+        const junctionRow: Record<string, unknown> = {
           [relConfig.junctionRelName!]: {
             data: nestedData,
             on_conflict: {
@@ -222,6 +228,12 @@ export function buildJunctionInserts(
             },
           },
         };
+        if (relConfig.junctionColumns) {
+          for (const [colName, camelKey] of Object.entries(relConfig.junctionColumns)) {
+            if (item[camelKey] !== undefined) junctionRow[colName] = item[camelKey];
+          }
+        }
+        return junctionRow;
       }),
       on_conflict: {
         constraint: `${relConfig.junctionTable}_pkey`,

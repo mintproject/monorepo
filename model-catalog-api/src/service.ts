@@ -304,10 +304,16 @@ class CatalogServiceImpl {
         const targetId = rawItemId
           ? rawItemId.startsWith('https://') ? rawItemId : `${ID_PREFIX}${rawItemId}`
           : `${ID_PREFIX}${randomUUID()}`
-        return {
+        const row: Record<string, unknown> = {
           [relConfig.parentFkColumn!]: fullId,
           [targetFkColumn]: targetId,
         }
+        if (relConfig.junctionColumns) {
+          for (const [colName, camelKey] of Object.entries(relConfig.junctionColumns)) {
+            if (item[camelKey] !== undefined) row[colName] = item[camelKey]
+          }
+        }
+        return row
       })
 
       const juncSuffix2 = relConfig.junctionTable.replace('modelcatalog_', '')

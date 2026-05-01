@@ -24,6 +24,12 @@ export interface RelationshipConfig {
   parentFkColumn?: string;
   /** The API resource name of the target type (for nested transforms) */
   targetResource: string;
+  /**
+   * Extra scalar columns stored on the junction row itself (beyond the two FK columns).
+   * Used by the PUT path in service.ts to pass per-row extra data.
+   * Map from junction column name (snake_case) to the corresponding camelCase key in the request body item.
+   */
+  junctionColumns?: Record<string, string>;
 }
 
 export interface ResourceConfig {
@@ -206,6 +212,7 @@ export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
         junctionRelName: 'input',
         parentFkColumn: 'configuration_id',
         targetResource: 'datasetspecifications',
+        junctionColumns: { is_optional: 'isOptional' },
       },
       hasOutput: {
         hasuraRelName: 'outputs',
@@ -290,6 +297,7 @@ export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
         junctionRelName: 'input',
         parentFkColumn: 'configuration_id',
         targetResource: 'datasetspecifications',
+        junctionColumns: { is_optional: 'isOptional' },
       },
       hasOutput: {
         hasuraRelName: 'outputs',
@@ -367,6 +375,7 @@ export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
         junctionRelName: 'input',
         parentFkColumn: 'configuration_id',
         targetResource: 'datasetspecifications',
+        junctionColumns: { is_optional: 'isOptional' },
       },
       hasOutput: {
         hasuraRelName: 'outputs',

@@ -194,6 +194,60 @@ describe('transformRow - nested related objects', () => {
   });
 });
 
+describe('transformRow - junction column hoist (D-21 round-trip)', () => {
+  const configurationConfig = RESOURCE_REGISTRY['modelconfigurations']!;
+
+  it('hoists is_optional from junction row onto nested DSpec as scalar (not array)', () => {
+    const row = {
+      id: 'https://w3id.org/okn/i/mint/Cfg1',
+      label: 'Cfg1',
+      // GraphQL traversal: configuration -> inputs[] (junction rows) -> input (DSpec)
+      inputs: [
+        {
+          is_optional: false,
+          input: {
+            id: 'https://w3id.org/okn/i/mint/Dspec1',
+            label: 'Dspec1',
+          },
+        },
+        {
+          is_optional: true,
+          input: {
+            id: 'https://w3id.org/okn/i/mint/Dspec2',
+            label: 'Dspec2',
+          },
+        },
+      ],
+    };
+    const result = transformRow(row, configurationConfig);
+    const hasInput = result['hasInput'] as Array<Record<string, unknown>>;
+
+    expect(Array.isArray(hasInput)).toBe(true);
+    expect(hasInput).toHaveLength(2);
+
+    // Junction column hoisted as scalar — array wrapping makes UI coerce
+    // !![false] to true on refresh and the checkbox lies.
+    expect(hasInput[0]!['isOptional']).toBe(false);
+    expect(hasInput[1]!['isOptional']).toBe(true);
+    expect(Array.isArray(hasInput[0]!['isOptional'])).toBe(false);
+  });
+
+  it('omits isOptional when junction column is null', () => {
+    const row = {
+      id: 'https://w3id.org/okn/i/mint/Cfg1',
+      inputs: [
+        {
+          is_optional: null,
+          input: { id: 'https://w3id.org/okn/i/mint/Dspec1' },
+        },
+      ],
+    };
+    const result = transformRow(row, configurationConfig);
+    const hasInput = result['hasInput'] as Array<Record<string, unknown>>;
+    expect(hasInput[0]).not.toHaveProperty('isOptional');
+  });
+});
+
 describe('transformList', () => {
   it('maps transformRow over an array of rows', () => {
     const rows = [

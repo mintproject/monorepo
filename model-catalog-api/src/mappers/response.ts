@@ -98,14 +98,27 @@ export function transformRow(
           // If this relationship goes through a junction table, each item is a junction row.
           // The actual target entity is nested under junctionRelName inside the junction row.
           const junctionRelName = relConfig.junctionRelName;
+          const junctionColumnNames = relConfig.junctionColumns
+            ? Object.keys(relConfig.junctionColumns)
+            : [];
           const transformed = relArray
             .map((item) => {
-              // Junction traversal: extract the nested target entity if junctionRelName is set
-              // and the nested entity exists as a key in the junction row.
               const targetRow = (junctionRelName && item[junctionRelName] != null)
                 ? item[junctionRelName] as Record<string, unknown>
                 : item;
-              return transformRow(targetRow, targetConfig, depth + 1);
+              const out = transformRow(targetRow, targetConfig, depth + 1);
+              // Hoist junction-row scalar columns (e.g. is_optional) onto the
+              // transformed nested entity so they survive junction traversal.
+              // Emit as scalar (not array): these are junction column values like
+              // bool/text, not v1.8.0-style array-wrapped object properties. Array
+              // wrapping makes the UI coerce !![false] -> true on refresh.
+              for (const colName of junctionColumnNames) {
+                const val = item[colName];
+                if (val !== null && val !== undefined) {
+                  out[snakeToCamel(colName)] = val;
+                }
+              }
+              return out;
             })
             .filter((item) => item['id'] !== null && item['id'] !== undefined);
           if (transformed.length > 0) {
