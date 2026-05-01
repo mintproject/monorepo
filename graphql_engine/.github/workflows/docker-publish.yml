@@ -3,7 +3,7 @@ name: hasura
 on:
   push:
     branches:
-      - "*"
+      - "**"
     tags:
       - v*
   pull_request:
@@ -33,6 +33,12 @@ jobs:
 
       - uses: actions/checkout@v4
 
+      - name: Compute sanitized branch tag
+        run: |
+          SAFE_BRANCH="${GITHUB_REF_NAME}"
+          # Docker tag spec forbids '/'; replace with '-' so slash-containing branches build
+          echo "SAFE_BRANCH=${SAFE_BRANCH//\//-}" >> $GITHUB_ENV
+
       - name: Create environment variable with the commit id
         run: |
           echo "DOCKER_TAG=${GITHUB_SHA}" >> $GITHUB_ENV
@@ -60,7 +66,7 @@ jobs:
         with:
           push: true
           context: .
-          tags: ${{ env.DOCKER_IMAGE_REPOSITORY }}/${{ env.DOCKER_IMAGE_NAME }}:${{ steps.branch-name.outputs.current_branch }}, ${{ env.DOCKER_IMAGE_REPOSITORY }}/${{ env.DOCKER_IMAGE_NAME }}:${{ env.DOCKER_TAG }}
+          tags: ${{ env.DOCKER_IMAGE_REPOSITORY }}/${{ env.DOCKER_IMAGE_NAME }}:${{ env.SAFE_BRANCH }}, ${{ env.DOCKER_IMAGE_REPOSITORY }}/${{ env.DOCKER_IMAGE_NAME }}:${{ env.DOCKER_TAG }}
           file: ${{ env.DOCKER_FILE}}
           platforms: linux/amd64,linux/arm64
 
