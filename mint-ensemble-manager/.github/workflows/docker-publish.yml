@@ -3,7 +3,7 @@ name: build image amd64
 on:
     push:
         branches:
-            - "*"
+            - "**"
         tags:
             - "*"
     pull_request:

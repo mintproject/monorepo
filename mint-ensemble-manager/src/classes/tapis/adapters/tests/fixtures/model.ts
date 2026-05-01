@@ -1,4 +1,6 @@
-export default {
+import { Model } from "@/classes/mint/mint-types";
+
+const baseModel = {
     id: "https://w3id.org/okn/i/mint/modflow_2005_BartonSprings_avg",
     name: "MODFLOW 2005 model setup calibrated for the Barton Springs region. Files for average conditions have been pre-selected",
     description:
@@ -270,3 +272,21 @@ export default {
         }
     ]
 };
+
+export default baseModel;
+
+export const modelWithOptionalInput: Model = {
+    ...(baseModel as unknown as Model),
+    input_files: [
+        {
+            id: "https://w3id.org/okn/i/mint/optional-ds",
+            name: "optional_file",
+            type: "",
+            format: "",
+            value: null,
+            position: 0,
+            variables: [],
+            is_optional: true
+        }
+    ]
+} as unknown as Model;

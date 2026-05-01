@@ -1,4 +1,4 @@
-import { executionToGQL, executionFromGQL } from "@/classes/graphql/graphql_adapter";
+import { executionToGQL, executionFromGQL, modelIOFromCatalogGQL } from "@/classes/graphql/graphql_adapter";
 import { Execution } from "@/classes/mint/mint-types";
 
 const makeExecution = (overrides: Partial<Execution> = {}): Execution => ({
@@ -35,6 +35,26 @@ describe("executionToGQL", () => {
         expect(result.execution_engine).toBe("tapis");
         expect(result.run_id).toBe("run-xyz");
         expect(result.id).toBe("exec-001");
+    });
+});
+
+describe("modelIOFromCatalogGQL", () => {
+    it("reads is_optional=true from junction row", () => {
+        const row = {
+            input: { id: "ds-1", label: "DS One", has_format: "", position: 1 },
+            is_optional: true
+        };
+        const result = modelIOFromCatalogGQL(row);
+        expect(result.is_optional).toBe(true);
+        expect(result.id).toBe("ds-1");
+    });
+
+    it("defaults is_optional to false when absent from junction row", () => {
+        const row = {
+            input: { id: "ds-2", label: "DS Two", has_format: "", position: 2 }
+        };
+        const result = modelIOFromCatalogGQL(row);
+        expect(result.is_optional).toBe(false);
     });
 });
 

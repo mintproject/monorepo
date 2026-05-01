@@ -114,6 +114,15 @@ export class TapisJobService {
                 }
 
                 const datasets = seed.datasets[modelInput.id] || [];
+
+                if (datasets.length === 0 && modelInput.is_optional) {
+                    // Skip optional input — no datasets bound, safe to omit from Tapis submission
+                    console.info(
+                        `Skipping optional input ${modelInput.name} — no datasets bound`
+                    );
+                    return [];
+                }
+
                 return datasets.map(
                     (dataset: DataResource) =>
                         ({

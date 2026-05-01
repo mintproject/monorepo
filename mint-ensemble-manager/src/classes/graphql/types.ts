@@ -921,7 +921,6 @@ export type Execution = {
   end_time?: Maybe<Scalars['timestamp']['output']>;
   execution_engine?: Maybe<Scalars['String']['output']>;
   id: Scalars['uuid']['output'];
-  model_id?: Maybe<Scalars['String']['output']>;
   /** An object relationship */
   modelcatalog_configuration?: Maybe<Modelcatalog_Configuration>;
   modelcatalog_configuration_id?: Maybe<Scalars['String']['output']>;
@@ -1095,7 +1094,6 @@ export type Execution_Bool_Exp = {
   end_time?: InputMaybe<Timestamp_Comparison_Exp>;
   execution_engine?: InputMaybe<String_Comparison_Exp>;
   id?: InputMaybe<Uuid_Comparison_Exp>;
-  model_id?: InputMaybe<String_Comparison_Exp>;
   modelcatalog_configuration?: InputMaybe<Modelcatalog_Configuration_Bool_Exp>;
   modelcatalog_configuration_id?: InputMaybe<String_Comparison_Exp>;
   parameter_bindings?: InputMaybe<Execution_Parameter_Binding_Bool_Exp>;
@@ -1120,7 +1118,7 @@ export type Execution_Data_Binding = {
   execution: Execution;
   execution_id: Scalars['uuid']['output'];
   /** An object relationship */
-  model_io: Model_Io;
+  model_io: Modelcatalog_Dataset_Specification;
   model_io_id: Scalars['String']['output'];
   /** An object relationship */
   resource: Resource;
@@ -1170,7 +1168,7 @@ export type Execution_Data_Binding_Bool_Exp = {
   _or?: InputMaybe<Array<Execution_Data_Binding_Bool_Exp>>;
   execution?: InputMaybe<Execution_Bool_Exp>;
   execution_id?: InputMaybe<Uuid_Comparison_Exp>;
-  model_io?: InputMaybe<Model_Io_Bool_Exp>;
+  model_io?: InputMaybe<Modelcatalog_Dataset_Specification_Bool_Exp>;
   model_io_id?: InputMaybe<String_Comparison_Exp>;
   resource?: InputMaybe<Resource_Bool_Exp>;
   resource_id?: InputMaybe<String_Comparison_Exp>;
@@ -1186,7 +1184,7 @@ export enum Execution_Data_Binding_Constraint {
 export type Execution_Data_Binding_Insert_Input = {
   execution?: InputMaybe<Execution_Obj_Rel_Insert_Input>;
   execution_id?: InputMaybe<Scalars['uuid']['input']>;
-  model_io?: InputMaybe<Model_Io_Obj_Rel_Insert_Input>;
+  model_io?: InputMaybe<Modelcatalog_Dataset_Specification_Obj_Rel_Insert_Input>;
   model_io_id?: InputMaybe<Scalars['String']['input']>;
   resource?: InputMaybe<Resource_Obj_Rel_Insert_Input>;
   resource_id?: InputMaybe<Scalars['String']['input']>;
@@ -1242,7 +1240,7 @@ export type Execution_Data_Binding_On_Conflict = {
 export type Execution_Data_Binding_Order_By = {
   execution?: InputMaybe<Execution_Order_By>;
   execution_id?: InputMaybe<Order_By>;
-  model_io?: InputMaybe<Model_Io_Order_By>;
+  model_io?: InputMaybe<Modelcatalog_Dataset_Specification_Order_By>;
   model_io_id?: InputMaybe<Order_By>;
   resource?: InputMaybe<Resource_Order_By>;
   resource_id?: InputMaybe<Order_By>;
@@ -1299,7 +1297,6 @@ export type Execution_Insert_Input = {
   end_time?: InputMaybe<Scalars['timestamp']['input']>;
   execution_engine?: InputMaybe<Scalars['String']['input']>;
   id?: InputMaybe<Scalars['uuid']['input']>;
-  model_id?: InputMaybe<Scalars['String']['input']>;
   modelcatalog_configuration?: InputMaybe<Modelcatalog_Configuration_Obj_Rel_Insert_Input>;
   modelcatalog_configuration_id?: InputMaybe<Scalars['String']['input']>;
   parameter_bindings?: InputMaybe<Execution_Parameter_Binding_Arr_Rel_Insert_Input>;
@@ -1317,7 +1314,6 @@ export type Execution_Max_Fields = {
   end_time?: Maybe<Scalars['timestamp']['output']>;
   execution_engine?: Maybe<Scalars['String']['output']>;
   id?: Maybe<Scalars['uuid']['output']>;
-  model_id?: Maybe<Scalars['String']['output']>;
   modelcatalog_configuration_id?: Maybe<Scalars['String']['output']>;
   run_id?: Maybe<Scalars['String']['output']>;
   run_progress?: Maybe<Scalars['float8']['output']>;
@@ -1330,7 +1326,6 @@ export type Execution_Max_Order_By = {
   end_time?: InputMaybe<Order_By>;
   execution_engine?: InputMaybe<Order_By>;
   id?: InputMaybe<Order_By>;
-  model_id?: InputMaybe<Order_By>;
   modelcatalog_configuration_id?: InputMaybe<Order_By>;
   run_id?: InputMaybe<Order_By>;
   run_progress?: InputMaybe<Order_By>;
@@ -1344,7 +1339,6 @@ export type Execution_Min_Fields = {
   end_time?: Maybe<Scalars['timestamp']['output']>;
   execution_engine?: Maybe<Scalars['String']['output']>;
   id?: Maybe<Scalars['uuid']['output']>;
-  model_id?: Maybe<Scalars['String']['output']>;
   modelcatalog_configuration_id?: Maybe<Scalars['String']['output']>;
   run_id?: Maybe<Scalars['String']['output']>;
   run_progress?: Maybe<Scalars['float8']['output']>;
@@ -1357,7 +1351,6 @@ export type Execution_Min_Order_By = {
   end_time?: InputMaybe<Order_By>;
   execution_engine?: InputMaybe<Order_By>;
   id?: InputMaybe<Order_By>;
-  model_id?: InputMaybe<Order_By>;
   modelcatalog_configuration_id?: InputMaybe<Order_By>;
   run_id?: InputMaybe<Order_By>;
   run_progress?: InputMaybe<Order_By>;
@@ -1394,7 +1387,6 @@ export type Execution_Order_By = {
   end_time?: InputMaybe<Order_By>;
   execution_engine?: InputMaybe<Order_By>;
   id?: InputMaybe<Order_By>;
-  model_id?: InputMaybe<Order_By>;
   modelcatalog_configuration?: InputMaybe<Modelcatalog_Configuration_Order_By>;
   modelcatalog_configuration_id?: InputMaybe<Order_By>;
   parameter_bindings_aggregate?: InputMaybe<Execution_Parameter_Binding_Aggregate_Order_By>;
@@ -1588,7 +1580,7 @@ export type Execution_Result = {
   execution_id: Scalars['uuid']['output'];
   model_io_id: Scalars['String']['output'];
   /** An object relationship */
-  model_output: Model_Io;
+  model_output: Modelcatalog_Dataset_Specification;
   /** An object relationship */
   resource: Resource;
   resource_id: Scalars['String']['output'];
@@ -1638,7 +1630,7 @@ export type Execution_Result_Bool_Exp = {
   execution?: InputMaybe<Execution_Bool_Exp>;
   execution_id?: InputMaybe<Uuid_Comparison_Exp>;
   model_io_id?: InputMaybe<String_Comparison_Exp>;
-  model_output?: InputMaybe<Model_Io_Bool_Exp>;
+  model_output?: InputMaybe<Modelcatalog_Dataset_Specification_Bool_Exp>;
   resource?: InputMaybe<Resource_Bool_Exp>;
   resource_id?: InputMaybe<String_Comparison_Exp>;
 };
@@ -1654,7 +1646,7 @@ export type Execution_Result_Insert_Input = {
   execution?: InputMaybe<Execution_Obj_Rel_Insert_Input>;
   execution_id?: InputMaybe<Scalars['uuid']['input']>;
   model_io_id?: InputMaybe<Scalars['String']['input']>;
-  model_output?: InputMaybe<Model_Io_Obj_Rel_Insert_Input>;
+  model_output?: InputMaybe<Modelcatalog_Dataset_Specification_Obj_Rel_Insert_Input>;
   resource?: InputMaybe<Resource_Obj_Rel_Insert_Input>;
   resource_id?: InputMaybe<Scalars['String']['input']>;
 };
@@ -1710,7 +1702,7 @@ export type Execution_Result_Order_By = {
   execution?: InputMaybe<Execution_Order_By>;
   execution_id?: InputMaybe<Order_By>;
   model_io_id?: InputMaybe<Order_By>;
-  model_output?: InputMaybe<Model_Io_Order_By>;
+  model_output?: InputMaybe<Modelcatalog_Dataset_Specification_Order_By>;
   resource?: InputMaybe<Resource_Order_By>;
   resource_id?: InputMaybe<Order_By>;
 };
@@ -1764,8 +1756,6 @@ export enum Execution_Select_Column {
   /** column name */
   Id = 'id',
   /** column name */
-  ModelId = 'model_id',
-  /** column name */
   ModelcatalogConfigurationId = 'modelcatalog_configuration_id',
   /** column name */
   RunId = 'run_id',
@@ -1782,7 +1772,6 @@ export type Execution_Set_Input = {
   end_time?: InputMaybe<Scalars['timestamp']['input']>;
   execution_engine?: InputMaybe<Scalars['String']['input']>;
   id?: InputMaybe<Scalars['uuid']['input']>;
-  model_id?: InputMaybe<Scalars['String']['input']>;
   modelcatalog_configuration_id?: InputMaybe<Scalars['String']['input']>;
   run_id?: InputMaybe<Scalars['String']['input']>;
   run_progress?: InputMaybe<Scalars['float8']['input']>;
@@ -1842,8 +1831,6 @@ export enum Execution_Update_Column {
   ExecutionEngine = 'execution_engine',
   /** column name */
   Id = 'id',
-  /** column name */
-  ModelId = 'model_id',
   /** column name */
   ModelcatalogConfigurationId = 'modelcatalog_configuration_id',
   /** column name */
@@ -2305,14 +2292,6 @@ export type Model_Io = {
   __typename?: 'model_io';
   description?: Maybe<Scalars['String']['output']>;
   /** An array relationship */
-  execution_data_bindings: Array<Execution_Data_Binding>;
-  /** An aggregate relationship */
-  execution_data_bindings_aggregate: Execution_Data_Binding_Aggregate;
-  /** An array relationship */
-  execution_results: Array<Execution_Result>;
-  /** An aggregate relationship */
-  execution_results_aggregate: Execution_Result_Aggregate;
-  /** An array relationship */
   fixed_bindings: Array<Model_Input_Fixed_Binding>;
   /** An aggregate relationship */
   fixed_bindings_aggregate: Model_Input_Fixed_Binding_Aggregate;
@@ -2322,55 +2301,11 @@ export type Model_Io = {
   modelcatalog_dataset_specification?: Maybe<Modelcatalog_Dataset_Specification>;
   modelcatalog_dataset_specification_id?: Maybe<Scalars['String']['output']>;
   name: Scalars['String']['output'];
-  /** An array relationship */
-  thread_model_ios: Array<Thread_Model_Io>;
-  /** An aggregate relationship */
-  thread_model_ios_aggregate: Thread_Model_Io_Aggregate;
   type?: Maybe<Scalars['String']['output']>;
   /** An array relationship */
   variables: Array<Model_Io_Variable>;
   /** An aggregate relationship */
   variables_aggregate: Model_Io_Variable_Aggregate;
-};
-
-
-/** columns and relationships of "model_io" */
-export type Model_IoExecution_Data_BindingsArgs = {
-  distinct_on?: InputMaybe<Array<Execution_Data_Binding_Select_Column>>;
-  limit?: InputMaybe<Scalars['Int']['input']>;
-  offset?: InputMaybe<Scalars['Int']['input']>;
-  order_by?: InputMaybe<Array<Execution_Data_Binding_Order_By>>;
-  where?: InputMaybe<Execution_Data_Binding_Bool_Exp>;
-};
-
-
-/** columns and relationships of "model_io" */
-export type Model_IoExecution_Data_Bindings_AggregateArgs = {
-  distinct_on?: InputMaybe<Array<Execution_Data_Binding_Select_Column>>;
-  limit?: InputMaybe<Scalars['Int']['input']>;
-  offset?: InputMaybe<Scalars['Int']['input']>;
-  order_by?: InputMaybe<Array<Execution_Data_Binding_Order_By>>;
-  where?: InputMaybe<Execution_Data_Binding_Bool_Exp>;
-};
-
-
-/** columns and relationships of "model_io" */
-export type Model_IoExecution_ResultsArgs = {
-  distinct_on?: InputMaybe<Array<Execution_Result_Select_Column>>;
-  limit?: InputMaybe<Scalars['Int']['input']>;
-  offset?: InputMaybe<Scalars['Int']['input']>;
-  order_by?: InputMaybe<Array<Execution_Result_Order_By>>;
-  where?: InputMaybe<Execution_Result_Bool_Exp>;
-};
-
-
-/** columns and relationships of "model_io" */
-export type Model_IoExecution_Results_AggregateArgs = {
-  distinct_on?: InputMaybe<Array<Execution_Result_Select_Column>>;
-  limit?: InputMaybe<Scalars['Int']['input']>;
-  offset?: InputMaybe<Scalars['Int']['input']>;
-  order_by?: InputMaybe<Array<Execution_Result_Order_By>>;
-  where?: InputMaybe<Execution_Result_Bool_Exp>;
 };
 
 
@@ -2391,26 +2326,6 @@ export type Model_IoFixed_Bindings_AggregateArgs = {
   offset?: InputMaybe<Scalars['Int']['input']>;
   order_by?: InputMaybe<Array<Model_Input_Fixed_Binding_Order_By>>;
   where?: InputMaybe<Model_Input_Fixed_Binding_Bool_Exp>;
-};
-
-
-/** columns and relationships of "model_io" */
-export type Model_IoThread_Model_IosArgs = {
-  distinct_on?: InputMaybe<Array<Thread_Model_Io_Select_Column>>;
-  limit?: InputMaybe<Scalars['Int']['input']>;
-  offset?: InputMaybe<Scalars['Int']['input']>;
-  order_by?: InputMaybe<Array<Thread_Model_Io_Order_By>>;
-  where?: InputMaybe<Thread_Model_Io_Bool_Exp>;
-};
-
-
-/** columns and relationships of "model_io" */
-export type Model_IoThread_Model_Ios_AggregateArgs = {
-  distinct_on?: InputMaybe<Array<Thread_Model_Io_Select_Column>>;
-  limit?: InputMaybe<Scalars['Int']['input']>;
-  offset?: InputMaybe<Scalars['Int']['input']>;
-  order_by?: InputMaybe<Array<Thread_Model_Io_Order_By>>;
-  where?: InputMaybe<Thread_Model_Io_Bool_Exp>;
 };
 
 
@@ -2475,15 +2390,12 @@ export type Model_Io_Bool_Exp = {
   _not?: InputMaybe<Model_Io_Bool_Exp>;
   _or?: InputMaybe<Array<Model_Io_Bool_Exp>>;
   description?: InputMaybe<String_Comparison_Exp>;
-  execution_data_bindings?: InputMaybe<Execution_Data_Binding_Bool_Exp>;
-  execution_results?: InputMaybe<Execution_Result_Bool_Exp>;
   fixed_bindings?: InputMaybe<Model_Input_Fixed_Binding_Bool_Exp>;
   format?: InputMaybe<String_Comparison_Exp>;
   id?: InputMaybe<String_Comparison_Exp>;
   modelcatalog_dataset_specification?: InputMaybe<Modelcatalog_Dataset_Specification_Bool_Exp>;
   modelcatalog_dataset_specification_id?: InputMaybe<String_Comparison_Exp>;
   name?: InputMaybe<String_Comparison_Exp>;
-  thread_model_ios?: InputMaybe<Thread_Model_Io_Bool_Exp>;
   type?: InputMaybe<String_Comparison_Exp>;
   variables?: InputMaybe<Model_Io_Variable_Bool_Exp>;
 };
@@ -2497,15 +2409,12 @@ export enum Model_Io_Constraint {
 /** input type for inserting data into table "model_io" */
 export type Model_Io_Insert_Input = {
   description?: InputMaybe<Scalars['String']['input']>;
-  execution_data_bindings?: InputMaybe<Execution_Data_Binding_Arr_Rel_Insert_Input>;
-  execution_results?: InputMaybe<Execution_Result_Arr_Rel_Insert_Input>;
   fixed_bindings?: InputMaybe<Model_Input_Fixed_Binding_Arr_Rel_Insert_Input>;
   format?: InputMaybe<Scalars['String']['input']>;
   id?: InputMaybe<Scalars['String']['input']>;
   modelcatalog_dataset_specification?: InputMaybe<Modelcatalog_Dataset_Specification_Obj_Rel_Insert_Input>;
   modelcatalog_dataset_specification_id?: InputMaybe<Scalars['String']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
-  thread_model_ios?: InputMaybe<Thread_Model_Io_Arr_Rel_Insert_Input>;
   type?: InputMaybe<Scalars['String']['input']>;
   variables?: InputMaybe<Model_Io_Variable_Arr_Rel_Insert_Input>;
 };
@@ -2578,15 +2487,12 @@ export type Model_Io_On_Conflict = {
 /** Ordering options when selecting data from "model_io". */
 export type Model_Io_Order_By = {
   description?: InputMaybe<Order_By>;
-  execution_data_bindings_aggregate?: InputMaybe<Execution_Data_Binding_Aggregate_Order_By>;
-  execution_results_aggregate?: InputMaybe<Execution_Result_Aggregate_Order_By>;
   fixed_bindings_aggregate?: InputMaybe<Model_Input_Fixed_Binding_Aggregate_Order_By>;
   format?: InputMaybe<Order_By>;
   id?: InputMaybe<Order_By>;
   modelcatalog_dataset_specification?: InputMaybe<Modelcatalog_Dataset_Specification_Order_By>;
   modelcatalog_dataset_specification_id?: InputMaybe<Order_By>;
   name?: InputMaybe<Order_By>;
-  thread_model_ios_aggregate?: InputMaybe<Thread_Model_Io_Aggregate_Order_By>;
   type?: InputMaybe<Order_By>;
   variables_aggregate?: InputMaybe<Model_Io_Variable_Aggregate_Order_By>;
 };
@@ -4191,6 +4097,7 @@ export type Modelcatalog_Configuration_Input = {
   /** An object relationship */
   input: Modelcatalog_Dataset_Specification;
   input_id: Scalars['String']['output'];
+  is_optional: Scalars['Boolean']['output'];
 };
 
 /** aggregated selection of "modelcatalog_configuration_input" */
@@ -4238,6 +4145,7 @@ export type Modelcatalog_Configuration_Input_Bool_Exp = {
   configuration_id?: InputMaybe<String_Comparison_Exp>;
   input?: InputMaybe<Modelcatalog_Dataset_Specification_Bool_Exp>;
   input_id?: InputMaybe<String_Comparison_Exp>;
+  is_optional?: InputMaybe<Boolean_Comparison_Exp>;
 };
 
 /** unique or primary key constraints on table "modelcatalog_configuration_input" */
@@ -4252,6 +4160,7 @@ export type Modelcatalog_Configuration_Input_Insert_Input = {
   configuration_id?: InputMaybe<Scalars['String']['input']>;
   input?: InputMaybe<Modelcatalog_Dataset_Specification_Obj_Rel_Insert_Input>;
   input_id?: InputMaybe<Scalars['String']['input']>;
+  is_optional?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
 /** aggregate max on columns */
@@ -4302,6 +4211,7 @@ export type Modelcatalog_Configuration_Input_Order_By = {
   configuration_id?: InputMaybe<Order_By>;
   input?: InputMaybe<Modelcatalog_Dataset_Specification_Order_By>;
   input_id?: InputMaybe<Order_By>;
+  is_optional?: InputMaybe<Order_By>;
 };
 
 /** primary key columns input for table: modelcatalog_configuration_input */
@@ -4315,13 +4225,16 @@ export enum Modelcatalog_Configuration_Input_Select_Column {
   /** column name */
   ConfigurationId = 'configuration_id',
   /** column name */
-  InputId = 'input_id'
+  InputId = 'input_id',
+  /** column name */
+  IsOptional = 'is_optional'
 }
 
 /** input type for updating data in table "modelcatalog_configuration_input" */
 export type Modelcatalog_Configuration_Input_Set_Input = {
   configuration_id?: InputMaybe<Scalars['String']['input']>;
   input_id?: InputMaybe<Scalars['String']['input']>;
+  is_optional?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
 /** update columns of table "modelcatalog_configuration_input" */
@@ -4329,7 +4242,9 @@ export enum Modelcatalog_Configuration_Input_Update_Column {
   /** column name */
   ConfigurationId = 'configuration_id',
   /** column name */
-  InputId = 'input_id'
+  InputId = 'input_id',
+  /** column name */
+  IsOptional = 'is_optional'
 }
 
 export type Modelcatalog_Configuration_Input_Updates = {
@@ -5278,6 +5193,10 @@ export type Modelcatalog_Dataset_Specification = {
   presentations: Array<Modelcatalog_Dataset_Specification_Presentation>;
   /** An aggregate relationship */
   presentations_aggregate: Modelcatalog_Dataset_Specification_Presentation_Aggregate;
+  /** An array relationship */
+  thread_model_ios: Array<Thread_Model_Io>;
+  /** An aggregate relationship */
+  thread_model_ios_aggregate: Thread_Model_Io_Aggregate;
 };
 
 
@@ -5360,6 +5279,26 @@ export type Modelcatalog_Dataset_SpecificationPresentations_AggregateArgs = {
   where?: InputMaybe<Modelcatalog_Dataset_Specification_Presentation_Bool_Exp>;
 };
 
+
+/** columns and relationships of "modelcatalog_dataset_specification" */
+export type Modelcatalog_Dataset_SpecificationThread_Model_IosArgs = {
+  distinct_on?: InputMaybe<Array<Thread_Model_Io_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Thread_Model_Io_Order_By>>;
+  where?: InputMaybe<Thread_Model_Io_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_dataset_specification" */
+export type Modelcatalog_Dataset_SpecificationThread_Model_Ios_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Thread_Model_Io_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Thread_Model_Io_Order_By>>;
+  where?: InputMaybe<Thread_Model_Io_Bool_Exp>;
+};
+
 /** aggregated selection of "modelcatalog_dataset_specification" */
 export type Modelcatalog_Dataset_Specification_Aggregate = {
   __typename?: 'modelcatalog_dataset_specification_aggregate';
@@ -5412,6 +5351,7 @@ export type Modelcatalog_Dataset_Specification_Bool_Exp = {
   model_ios?: InputMaybe<Model_Io_Bool_Exp>;
   position?: InputMaybe<Int_Comparison_Exp>;
   presentations?: InputMaybe<Modelcatalog_Dataset_Specification_Presentation_Bool_Exp>;
+  thread_model_ios?: InputMaybe<Thread_Model_Io_Bool_Exp>;
 };
 
 /** unique or primary key constraints on table "modelcatalog_dataset_specification" */
@@ -5438,6 +5378,7 @@ export type Modelcatalog_Dataset_Specification_Insert_Input = {
   model_ios?: InputMaybe<Model_Io_Arr_Rel_Insert_Input>;
   position?: InputMaybe<Scalars['Int']['input']>;
   presentations?: InputMaybe<Modelcatalog_Dataset_Specification_Presentation_Arr_Rel_Insert_Input>;
+  thread_model_ios?: InputMaybe<Thread_Model_Io_Arr_Rel_Insert_Input>;
 };
 
 /** aggregate max on columns */
@@ -5497,6 +5438,7 @@ export type Modelcatalog_Dataset_Specification_Order_By = {
   model_ios_aggregate?: InputMaybe<Model_Io_Aggregate_Order_By>;
   position?: InputMaybe<Order_By>;
   presentations_aggregate?: InputMaybe<Modelcatalog_Dataset_Specification_Presentation_Aggregate_Order_By>;
+  thread_model_ios_aggregate?: InputMaybe<Thread_Model_Io_Aggregate_Order_By>;
 };
 
 /** primary key columns input for table: modelcatalog_dataset_specification */
@@ -24737,9 +24679,9 @@ export type Thread_Model_Io = {
   /** An object relationship */
   dataslice: Dataslice;
   dataslice_id: Scalars['uuid']['output'];
-  /** An object relationship */
-  model_io: Model_Io;
   model_io_id: Scalars['String']['output'];
+  /** An object relationship */
+  modelcatalog_dataset_specification: Modelcatalog_Dataset_Specification;
   /** An object relationship */
   thread_model: Thread_Model;
   thread_model_id: Scalars['uuid']['output'];
@@ -24788,8 +24730,8 @@ export type Thread_Model_Io_Bool_Exp = {
   _or?: InputMaybe<Array<Thread_Model_Io_Bool_Exp>>;
   dataslice?: InputMaybe<Dataslice_Bool_Exp>;
   dataslice_id?: InputMaybe<Uuid_Comparison_Exp>;
-  model_io?: InputMaybe<Model_Io_Bool_Exp>;
   model_io_id?: InputMaybe<String_Comparison_Exp>;
+  modelcatalog_dataset_specification?: InputMaybe<Modelcatalog_Dataset_Specification_Bool_Exp>;
   thread_model?: InputMaybe<Thread_Model_Bool_Exp>;
   thread_model_id?: InputMaybe<Uuid_Comparison_Exp>;
 };
@@ -24804,8 +24746,8 @@ export enum Thread_Model_Io_Constraint {
 export type Thread_Model_Io_Insert_Input = {
   dataslice?: InputMaybe<Dataslice_Obj_Rel_Insert_Input>;
   dataslice_id?: InputMaybe<Scalars['uuid']['input']>;
-  model_io?: InputMaybe<Model_Io_Obj_Rel_Insert_Input>;
   model_io_id?: InputMaybe<Scalars['String']['input']>;
+  modelcatalog_dataset_specification?: InputMaybe<Modelcatalog_Dataset_Specification_Obj_Rel_Insert_Input>;
   thread_model?: InputMaybe<Thread_Model_Obj_Rel_Insert_Input>;
   thread_model_id?: InputMaybe<Scalars['uuid']['input']>;
 };
@@ -24860,8 +24802,8 @@ export type Thread_Model_Io_On_Conflict = {
 export type Thread_Model_Io_Order_By = {
   dataslice?: InputMaybe<Dataslice_Order_By>;
   dataslice_id?: InputMaybe<Order_By>;
-  model_io?: InputMaybe<Model_Io_Order_By>;
   model_io_id?: InputMaybe<Order_By>;
+  modelcatalog_dataset_specification?: InputMaybe<Modelcatalog_Dataset_Specification_Order_By>;
   thread_model?: InputMaybe<Thread_Model_Order_By>;
   thread_model_id?: InputMaybe<Order_By>;
 };

@@ -110,7 +110,12 @@ export const executionsRouter = (): Router => {
                                 // Map data bindings to execution bindings format
                                 const bindings: { [input: string]: string } = {};
                                 if (threadModel.data_bindings) {
-                                    for (const binding of threadModel.data_bindings) {
+                                    // Query aliases modelcatalog_dataset_specification as
+                                    // model_io; codegen schema type does not carry the alias.
+                                    for (const binding of threadModel.data_bindings as Array<{
+                                        model_io?: { name?: string | null } | null;
+                                        dataslice_id?: string | null;
+                                    }>) {
                                         if (binding.model_io?.name && binding.dataslice_id) {
                                             bindings[binding.model_io.name] = binding.dataslice_id;
                                         }

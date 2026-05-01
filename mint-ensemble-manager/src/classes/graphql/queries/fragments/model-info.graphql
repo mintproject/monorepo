@@ -6,6 +6,7 @@ fragment model_info on modelcatalog_configuration {
     has_software_image
     model_configuration_id
     inputs {
+        is_optional
         input {
             id
             label

@@ -487,17 +487,20 @@ export const modelFromGQL = (config: any): Model => {
         model_configuration: config.model_configuration_id || null,
         software_image: config.has_software_image || "",
         code_url: config.has_component_location || "",
-        input_files: (config.inputs || []).map((row: any) => modelIOFromCatalogGQL(row.input)),
-        output_files: (config.outputs || []).map((row: any) => modelIOFromCatalogGQL(row.output)),
+        input_files: (config.inputs || []).map((row: any) => modelIOFromCatalogGQL(row)),
+        output_files: (config.outputs || []).map((row: any) => modelIOFromCatalogGQL(row, 'output')),
         input_parameters: (config.parameters || []).map((row: any) =>
             modelParameterFromCatalogGQL(row.parameter)
         )
     } as Model;
 };
 
-// Maps a catalog input/output from the unified modelcatalog_configuration junction shape
-// (no nested model_io wrapper; flat fields from modelcatalog_dataset_specification)
-export const modelIOFromCatalogGQL = (io: any): ModelIO => {
+// Maps a catalog input/output junction row.
+// junctionRow has shape { input: {...}, is_optional: boolean } for inputs,
+// or { output: {...} } for outputs (is_optional not present on output junction).
+export const modelIOFromCatalogGQL = (junctionRow: any, entityKey?: string): ModelIO => {
+    const key = entityKey ?? 'input';
+    const io = junctionRow[key] ?? junctionRow;
     return {
         id: io.id,
         name: io.label || io.id,
@@ -505,7 +508,8 @@ export const modelIOFromCatalogGQL = (io: any): ModelIO => {
         format: io.has_format || "",
         value: null,
         position: io.position || 0,
-        variables: []
+        variables: [],
+        is_optional: junctionRow.is_optional ?? false,
     } as ModelIO;
 };
 

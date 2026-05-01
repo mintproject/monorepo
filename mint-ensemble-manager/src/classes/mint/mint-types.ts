@@ -335,6 +335,7 @@ export interface ModelIO extends IdNameObject {
     value?: Dataslice;
     position?: number;
     format?: string;
+    is_optional?: boolean;
 }
 
 export interface ModelOutput {

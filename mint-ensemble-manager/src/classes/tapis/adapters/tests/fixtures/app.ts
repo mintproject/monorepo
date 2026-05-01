@@ -1,6 +1,6 @@
 import { Apps } from "@tapis/tapis-typescript";
 
-export default {
+const baseApp = {
     id: "modflow-2005",
     version: "0.0.4",
     description: "Run an non-interactive script on TACC using docker.",
@@ -175,5 +175,41 @@ export default {
         icon: "jupyter",
         category: "Data Processing",
         queueFilter: ["development", "normal"]
+    }
+} as Apps.TapisApp;
+
+export default baseApp;
+
+export const appWithOptionalInput: Apps.TapisApp = {
+    ...baseApp,
+    jobAttributes: {
+        ...baseApp.jobAttributes,
+        fileInputs: [
+            {
+                name: "optional_file",
+                description: "An optional supplementary input file",
+                inputMode: "OPTIONAL",
+                autoMountLocal: true,
+                sourceUrl: null,
+                targetPath: "optional.dat"
+            }
+        ]
+    }
+} as Apps.TapisApp;
+
+export const appWithUnknownRequiredInput: Apps.TapisApp = {
+    ...baseApp,
+    jobAttributes: {
+        ...baseApp.jobAttributes,
+        fileInputs: [
+            {
+                name: "unknown_file",
+                description: "A required input file whose name is not registered in model.input_files",
+                inputMode: "REQUIRED",
+                autoMountLocal: true,
+                sourceUrl: null,
+                targetPath: "unknown.dat"
+            }
+        ]
     }
 } as Apps.TapisApp;
