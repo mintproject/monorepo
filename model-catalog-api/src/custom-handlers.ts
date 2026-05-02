@@ -17,6 +17,7 @@
 import { readClient, gql } from './hasura/client.js'
 import { transformRow, transformList } from './mappers/response.js'
 import { getResourceConfig } from './mappers/resource-registry.js'
+import { Apps } from '@tapis/tapis-typescript'
 
 // ---------------------------------------------------------------------------
 // Shared field selections for deep nested queries
@@ -592,7 +593,86 @@ async function user_login_post(_req: any, reply: any) {
 }
 
 // ---------------------------------------------------------------------------
-// Export all 13 handlers keyed by operationId
+// Tapis proxy endpoints (migrated from model-catalog-fastapi)
+// Uses @tapis/tapis-typescript SDK. Forwards the user's Bearer JWT as the
+// Tapis X-Tapis-Token via Configuration.apiKey.
+// ---------------------------------------------------------------------------
+function extractBearerToken(authHeader: string | undefined): string | null {
+  if (!authHeader) return null
+  const m = authHeader.match(/^Bearer\s+(.+)$/i)
+  return m ? m[1] : authHeader
+}
+
+function buildAppsApi(tenant: string, token: string): Apps.ApplicationsApi {
+  // SDK paths already include `/v3/...`, so basePath must not duplicate it.
+  const config = new Apps.Configuration({
+    basePath: `https://${tenant}.tapis.io`,
+    apiKey: () => token,
+  })
+  return new Apps.ApplicationsApi(config)
+}
+
+async function custom_tapis_apps_get(req: any, reply: any) {
+  const tenant = req.params?.tenant
+  if (!tenant) {
+    reply.code(400).send({ error: 'tenant path parameter required' })
+    return
+  }
+  const token = extractBearerToken(req.headers?.authorization)
+  if (!token) {
+    reply.code(401).send({ error: 'Authorization header required' })
+    return
+  }
+  try {
+    const api = buildAppsApi(tenant, token)
+    const resp = await api.getApps({})
+    const result = (resp.result ?? []) as Array<{ id?: string; version?: string }>
+    const apps = result.map((a) => ({ tenant, id: a.id, version: a.version }))
+    reply.code(200).send(apps)
+  } catch (err: any) {
+    const status = err?.status ?? err?.response?.status
+    req.log.error({ err, tenant }, 'Tapis apps list failed')
+    if (status) {
+      const body = await (err?.response?.text?.() ?? Promise.resolve(err?.message ?? ''))
+      reply.code(status).send({ error: 'Tapis error', details: body })
+      return
+    }
+    reply.code(502).send({ error: 'Bad gateway', details: err?.message })
+  }
+}
+
+async function custom_tapis_apps_id_get(req: any, reply: any) {
+  const tenant = req.params?.tenant
+  const appId = req.params?.app_id
+  const appVersion = req.params?.app_version
+  if (!tenant || !appId || !appVersion) {
+    reply.code(400).send({ error: 'tenant, app_id, app_version path parameters required' })
+    return
+  }
+  const token = extractBearerToken(req.headers?.authorization)
+  if (!token) {
+    reply.code(401).send({ error: 'Authorization header required' })
+    return
+  }
+  try {
+    const api = buildAppsApi(tenant, token)
+    const resp = await api.getApp({ appId, appVersion })
+    const app = (resp.result ?? {}) as Record<string, unknown>
+    reply.code(200).send({ tenant, ...app })
+  } catch (err: any) {
+    const status = err?.status ?? err?.response?.status
+    req.log.error({ err, tenant, appId, appVersion }, 'Tapis app get failed')
+    if (status) {
+      const body = await (err?.response?.text?.() ?? Promise.resolve(err?.message ?? ''))
+      reply.code(status).send({ error: 'Tapis error', details: body })
+      return
+    }
+    reply.code(502).send({ error: 'Bad gateway', details: err?.message })
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Export all handlers keyed by operationId
 // ---------------------------------------------------------------------------
 export const customHandlers: Record<string, (req: any, reply: any) => Promise<void>> = {
   custom_model_index_get,
@@ -607,5 +687,7 @@ export const customHandlers: Record<string, (req: any, reply: any) => Promise<vo
   custom_datasetspecifications_id_datatransformations_get,
   custom_datasetspecifications_get,
   custom_configuration_id_inputs_get,
+  custom_tapis_apps_get,
+  custom_tapis_apps_id_get,
   user_login_post,
 }

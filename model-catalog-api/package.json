@@ -20,6 +20,7 @@
     "@fastify/jwt": "^10.0.0",
     "@fastify/swagger": "^9.7.0",
     "@fastify/swagger-ui": "^5.2.5",
+    "@tapis/tapis-typescript": "^0.0.66",
     "fastify": "^5.7.4",
     "fastify-openapi-glue": "^4.10.2",
     "graphql": "^16.12.0"

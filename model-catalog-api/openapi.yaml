@@ -9372,6 +9372,76 @@ paths:
       tags:
         - DatasetSpecification
     x-oba-custom: true
+  /tapis/{tenant}/apps:
+    get:
+      operationId: custom_tapis_apps_get
+      description: List Tapis applications for the given tenant.
+      parameters:
+        - description: Tapis tenant identifier
+          explode: false
+          in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+          style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: "#/components/schemas/TapisApp"
+                type: array
+          description: Successful response - returns an array with the instances of TapisApp.
+      summary: List all instances of TapisApp
+      tags:
+        - TapisApp
+      security:
+        - BearerAuth: []
+    x-oba-custom: true
+  /tapis/{tenant}/apps/{app_id}/{app_version}:
+    get:
+      operationId: custom_tapis_apps_id_get
+      description: Get the details of a single Tapis application by id and version.
+      parameters:
+        - description: Tapis tenant identifier
+          explode: false
+          in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+          style: simple
+        - description: Tapis application id
+          explode: false
+          in: path
+          name: app_id
+          required: true
+          schema:
+            type: string
+          style: simple
+        - description: Tapis application version
+          explode: false
+          in: path
+          name: app_version
+          required: true
+          schema:
+            type: string
+          style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TapisApp"
+          description: Successful response - returns an instance of TapisApp.
+      summary: Get a single TapisApp by its id
+      tags:
+        - TapisApp
+      security:
+        - BearerAuth: []
+    x-oba-custom: true
 components:
   schemas:
     Intervention:
@@ -17564,6 +17634,73 @@ components:
         - $ref: "#/components/schemas/GeoCoordinates"
         - $ref: "#/components/schemas/GeoShape"
       title: Region_geo_inner
+    TapisApp:
+      description: Tapis application (proxied from Tapis v3 /apps endpoint).
+      type: object
+      properties:
+        tenant:
+          type: string
+        id:
+          type: string
+        version:
+          type: string
+        description:
+          type: string
+        owner:
+          type: string
+        enabled:
+          type: boolean
+        versionEnabled:
+          type: boolean
+        locked:
+          type: boolean
+        isPublic:
+          type: boolean
+        sharedWithUsers:
+          type: array
+          items:
+            type: string
+        runtime:
+          type: string
+        runtimeVersion:
+          type: string
+        runtimeOptions:
+          type: array
+          items:
+            type: string
+        containerImage:
+          type: string
+        jobType:
+          type: string
+        maxJobs:
+          type: integer
+        maxJobsPerUser:
+          type: integer
+        strictFileInputs:
+          type: boolean
+        jobAttributes:
+          type: object
+          additionalProperties: true
+        tags:
+          type: array
+          items:
+            type: string
+        notes:
+          type: object
+          additionalProperties: true
+        sharedAppCtx:
+          type: string
+        uuid:
+          type: string
+        deleted:
+          type: boolean
+        created:
+          type: string
+          format: date-time
+        updated:
+          type: string
+          format: date-time
+      title: TapisApp
   securitySchemes:
     BearerAuth:
       bearerFormat: JWT
