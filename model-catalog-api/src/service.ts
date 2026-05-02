@@ -209,13 +209,64 @@ class CatalogServiceImpl {
     const object = { ...input, ...junctionInserts }
 
     const tableSuffix = resourceConfig.hasuraTable.replace('modelcatalog_', '')
-    const mutationStr = `
-      mutation CreateMutation($object: modelcatalog_${tableSuffix}_insert_input!) {
-        insert_modelcatalog_${tableSuffix}_one(object: $object) {
-          id
+
+    // FK-on-child relationships: link existing child rows back to this newly created parent
+    // by setting the child's FK column. Multi-root mutation runs alongside the parent insert.
+    const parentId = input['id'] as string
+    const childFkParts: string[] = []
+    const childFkVarDecls: string[] = []
+    const childFkVariables: Record<string, unknown> = {}
+    for (const [apiFieldName, relConfig] of Object.entries(resourceConfig.relationships)) {
+      if (!relConfig.childFkColumn) continue
+      if (body[apiFieldName] === undefined) continue
+      const targetConfig = getResourceConfig(relConfig.targetResource)
+      if (!targetConfig?.hasuraTable) continue
+
+      const rawValue = body[apiFieldName]
+      const items = Array.isArray(rawValue) ? (rawValue as unknown[]) : []
+      const newIds = items
+        .map((item) => {
+          const rawId =
+            typeof item === 'string'
+              ? item
+              : ((item as Record<string, unknown>) || {})['id']
+          if (typeof rawId !== 'string' || !rawId) return null
+          return rawId.startsWith('https://') ? rawId : `${ID_PREFIX}${rawId}`
+        })
+        .filter((x): x is string => !!x)
+
+      if (newIds.length === 0) continue
+
+      const childSuffix = targetConfig.hasuraTable.replace('modelcatalog_', '')
+      const idsVar = `child_ids_${relConfig.hasuraRelName}`
+      childFkVariables[idsVar] = newIds
+      childFkVarDecls.push(`$${idsVar}: [String!]!`)
+      childFkParts.push(
+        `link_${relConfig.hasuraRelName}: update_modelcatalog_${childSuffix}(where: { id: { _in: $${idsVar} } }, _set: { ${relConfig.childFkColumn}: $parentId }) { affected_rows }`
+      )
+    }
+
+    let mutationStr: string
+    let mutationVariables: Record<string, unknown>
+    if (childFkParts.length === 0) {
+      mutationStr = `
+        mutation CreateMutation($object: modelcatalog_${tableSuffix}_insert_input!) {
+          insert_modelcatalog_${tableSuffix}_one(object: $object) {
+            id
+          }
         }
-      }
-    `
+      `
+      mutationVariables = { object }
+    } else {
+      const extraVarDecls = childFkVarDecls.length > 0 ? `, ${childFkVarDecls.join(', ')}` : ''
+      mutationStr = `
+        mutation CreateWithChildFks($object: modelcatalog_${tableSuffix}_insert_input!, $parentId: String!${extraVarDecls}) {
+          insert_modelcatalog_${tableSuffix}_one(object: $object) { id }
+          ${childFkParts.join('\n          ')}
+        }
+      `
+      mutationVariables = { object, parentId, ...childFkVariables }
+    }
 
     const authHeader = req.headers?.authorization
     if (!authHeader) {
@@ -227,7 +278,7 @@ class CatalogServiceImpl {
       const writeClient = getWriteClient(authHeader)
       const result = await writeClient.mutate({
         mutation: gql`${mutationStr}`,
-        variables: { object },
+        variables: mutationVariables,
       })
       const data = result.data as Record<string, unknown> | null
       const dataKey = `insert_modelcatalog_${tableSuffix}_one`
@@ -322,9 +373,52 @@ class CatalogServiceImpl {
       )
     }
 
-    // Build mutation string: simple _set if no junctions, multi-root otherwise (D-03)
+    // FK-on-child relationships: parent.has<X> where child row carries an FK column
+    // pointing back to the parent (one-to-many). We replicate junction "replace"
+    // semantics by clearing the FK on rows previously linked to this parent that
+    // are not in the new list, then setting the FK on the rows in the new list.
+    const childFkParts: string[] = []
+    const childFkVarDecls: string[] = []
+    for (const [apiFieldName, relConfig] of Object.entries(resourceConfig.relationships)) {
+      if (!relConfig.childFkColumn) continue
+      if (body[apiFieldName] === undefined) continue
+      const targetConfig = getResourceConfig(relConfig.targetResource)
+      if (!targetConfig?.hasuraTable) continue
+
+      const childSuffix = targetConfig.hasuraTable.replace('modelcatalog_', '')
+      const rawValue = body[apiFieldName]
+      const items = Array.isArray(rawValue) ? (rawValue as unknown[]) : []
+      const newIds = items
+        .map((item) => {
+          const rawId =
+            typeof item === 'string'
+              ? item
+              : ((item as Record<string, unknown>) || {})['id']
+          if (typeof rawId !== 'string' || !rawId) return null
+          return rawId.startsWith('https://') ? rawId : `${ID_PREFIX}${rawId}`
+        })
+        .filter((x): x is string => !!x)
+
+      const idsVar = `child_ids_${relConfig.hasuraRelName}`
+      variables[idsVar] = newIds
+      childFkVarDecls.push(`$${idsVar}: [String!]!`)
+
+      // Step 1: clear FK on rows previously linked to this parent that aren't in the new list
+      childFkParts.push(
+        `clear_${relConfig.hasuraRelName}: update_modelcatalog_${childSuffix}(where: { ${relConfig.childFkColumn}: { _eq: $id }, id: { _nin: $${idsVar} } }, _set: { ${relConfig.childFkColumn}: null }) { affected_rows }`
+      )
+
+      // Step 2: set FK on rows in the new list (only when non-empty -- _in: [] would still work but skip the no-op call)
+      if (newIds.length > 0) {
+        childFkParts.push(
+          `link_${relConfig.hasuraRelName}: update_modelcatalog_${childSuffix}(where: { id: { _in: $${idsVar} } }, _set: { ${relConfig.childFkColumn}: $id }) { affected_rows }`
+        )
+      }
+    }
+
+    // Build mutation string: simple _set if no junctions or child FK updates, multi-root otherwise (D-03)
     let mutationStr: string
-    if (junctionParts.length === 0) {
+    if (junctionParts.length === 0 && childFkParts.length === 0) {
       mutationStr = `
         mutation UpdateMutation($id: String!, $set: modelcatalog_${tableSuffix}_set_input!) {
           update_modelcatalog_${tableSuffix}_by_pk(pk_columns: { id: $id }, _set: $set) {
@@ -349,11 +443,13 @@ class CatalogServiceImpl {
         })
         .join(', ')
 
-      const extraVarDecls = juncVarDecls ? `, ${juncVarDecls}` : ''
+      const extraDecls = [juncVarDecls, childFkVarDecls.join(', ')].filter(Boolean).join(', ')
+      const extraVarDecls = extraDecls ? `, ${extraDecls}` : ''
+      const allParts = [...junctionParts, ...childFkParts]
       mutationStr = `
         mutation UpdateWithJunctions($id: String!, $set: modelcatalog_${tableSuffix}_set_input!${extraVarDecls}) {
           update_modelcatalog_${tableSuffix}_by_pk(pk_columns: { id: $id }, _set: $set) { id }
-          ${junctionParts.join('\n          ')}
+          ${allParts.join('\n          ')}
         }
       `
     }

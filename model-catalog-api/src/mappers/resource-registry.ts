@@ -22,6 +22,14 @@ export interface RelationshipConfig {
   junctionRelName?: string;
   /** FK column name in the junction table pointing back to the parent entity. Required when junctionTable is set. */
   parentFkColumn?: string;
+  /**
+   * FK column name on the child entity table pointing back to this parent (one-to-many FK relationships).
+   * Set on parent.relationships[X] when the relationship is materialized as a direct FK on the child row,
+   * not via a junction table. PUT/POST handler updates this FK to link/unlink child rows.
+   * Mutually exclusive with junctionTable.
+   * e.g. softwares.hasVersion: childFkColumn = 'software_id' (column on modelcatalog_software_version).
+   */
+  childFkColumn?: string;
   /** The API resource name of the target type (for nested transforms) */
   targetResource: string;
   /**
@@ -81,6 +89,7 @@ export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
       hasVersion: {
         hasuraRelName: 'versions',
         type: 'array',
+        childFkColumn: 'software_id',
         targetResource: 'softwareversions',
       },
       hasModelCategory: {
@@ -122,6 +131,7 @@ export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
       hasConfiguration: {
         hasuraRelName: 'configurations',
         type: 'array',
+        childFkColumn: 'software_version_id',
         targetResource: 'modelconfigurations',
       },
       hasModelCategory: {
@@ -203,6 +213,7 @@ export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
       hasSetup: {
         hasuraRelName: 'child_configurations',
         type: 'array',
+        childFkColumn: 'model_configuration_id',
         targetResource: 'modelconfigurationsetups',
       },
       hasInput: {
@@ -622,6 +633,7 @@ export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
       hasVersion: {
         hasuraRelName: 'versions',
         type: 'array',
+        childFkColumn: 'software_id',
         targetResource: 'softwareversions',
       },
       hasModelCategory: {
@@ -650,6 +662,7 @@ export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
       hasVersion: {
         hasuraRelName: 'versions',
         type: 'array',
+        childFkColumn: 'software_id',
         targetResource: 'softwareversions',
       },
       hasModelCategory: {
@@ -678,6 +691,7 @@ export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
       hasVersion: {
         hasuraRelName: 'versions',
         type: 'array',
+        childFkColumn: 'software_id',
         targetResource: 'softwareversions',
       },
       hasModelCategory: {
@@ -706,6 +720,7 @@ export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
       hasVersion: {
         hasuraRelName: 'versions',
         type: 'array',
+        childFkColumn: 'software_id',
         targetResource: 'softwareversions',
       },
       hasModelCategory: {
@@ -734,6 +749,7 @@ export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
       hasVersion: {
         hasuraRelName: 'versions',
         type: 'array',
+        childFkColumn: 'software_id',
         targetResource: 'softwareversions',
       },
       hasModelCategory: {
@@ -764,6 +780,7 @@ export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
       hasVersion: {
         hasuraRelName: 'versions',
         type: 'array',
+        childFkColumn: 'software_id',
         targetResource: 'softwareversions',
       },
       hasModelCategory: {
@@ -792,6 +809,7 @@ export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
       hasVersion: {
         hasuraRelName: 'versions',
         type: 'array',
+        childFkColumn: 'software_id',
         targetResource: 'softwareversions',
       },
       hasModelCategory: {
