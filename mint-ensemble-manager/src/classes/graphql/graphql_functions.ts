@@ -1124,6 +1124,34 @@ export const getRegionDetails = (regionid: string) => {
     });
 };
 
+interface HasuraConfigurationOutputEntry {
+    output?: {
+        id: string;
+        label?: string | null;
+        has_format?: string | null;
+    } | null;
+}
+
+export const mapHasuraOutputsToModelOutputs = (
+    outputs: HasuraConfigurationOutputEntry[] | null | undefined
+): ModelOutput[] => {
+    if (!Array.isArray(outputs)) return [];
+    return outputs
+        .filter(
+            (entry): entry is HasuraConfigurationOutputEntry & { output: NonNullable<HasuraConfigurationOutputEntry["output"]> } =>
+                !!entry && !!entry.output
+        )
+        .map((entry, index) => ({
+            position: index + 1,
+            model_io: {
+                id: entry.output.id,
+                name: entry.output.label ?? "",
+                format: entry.output.has_format ?? undefined,
+                variables: []
+            }
+        }));
+};
+
 export const getModelOutputsByModelId = async (modelId: string): Promise<ModelOutput[]> => {
     const APOLLO_CLIENT = GraphQL.instance(KeycloakAdapter.getUser());
     return APOLLO_CLIENT.query({
@@ -1136,18 +1164,15 @@ export const getModelOutputsByModelId = async (modelId: string): Promise<ModelOu
             if (!result || (result.errors && result.errors.length > 0)) {
                 console.log("ERROR");
                 console.log(result);
-            } else {
-                const model = result.data.modelcatalog_configuration_by_pk;
-                if (model) {
-                    return model.outputs;
-                }
+                return [];
             }
-            return null;
+            const model = result.data.modelcatalog_configuration_by_pk;
+            return mapHasuraOutputsToModelOutputs(model?.outputs);
         })
         .catch((e) => {
             console.log("ERROR");
             console.log(e);
-            return null;
+            return [];
         });
 };
 
