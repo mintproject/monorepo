@@ -503,3 +503,140 @@ describe('Custom handler plain-ID resolution', () => {
     expect(queryStr).not.toContain('model_configuration_id')
   })
 })
+
+// ---------------------------------------------------------------------------
+// FK-on-child relationships: parent.hasVersion / hasConfiguration / hasSetup
+// where the child carries an FK column pointing back to the parent.
+// ---------------------------------------------------------------------------
+describe('PUT model with hasVersion sets software_id on child rows', () => {
+  beforeEach(() => { mockQuery.mockReset(); mockMutate.mockReset() })
+
+  it('emits clear+link update_modelcatalog_software_version mutations with software_id', async () => {
+    mockMutate.mockResolvedValueOnce({ data: {} })
+    mockQuery.mockResolvedValueOnce({
+      data: {
+        modelcatalog_software_by_pk: {
+          id: 'https://w3id.org/okn/i/mint/MODEL-1',
+          label: 'M',
+          description: null,
+        },
+      },
+    })
+
+    const req = makeReq({
+      params: { id: 'MODEL-1' },
+      headers: { authorization: 'Bearer test' },
+      body: {
+        type: ['https://w3id.org/okn/o/sdm#Model'],
+        id: 'https://w3id.org/okn/i/mint/MODEL-1',
+        label: ['M'],
+        hasVersion: [{ id: 'https://w3id.org/okn/i/mint/V-1' }],
+      },
+    })
+    const reply = makeReply()
+    await (CatalogService as any).models_id_put(req, reply)
+
+    expect(mockMutate).toHaveBeenCalledOnce()
+    const args = mockMutate.mock.calls[0][0]
+    const m = typeof args.mutation === 'string' ? args.mutation : args.mutation?.loc?.source?.body ?? ''
+    expect(m).toContain('clear_versions: update_modelcatalog_software_version')
+    expect(m).toContain('link_versions: update_modelcatalog_software_version')
+    expect(m).toContain('software_id: { _eq: $id }')
+    expect(m).toContain('software_id: $id')
+    expect(args.variables.child_ids_versions).toEqual(['https://w3id.org/okn/i/mint/V-1'])
+    expect(args.variables.id).toBe('https://w3id.org/okn/i/mint/MODEL-1')
+  })
+
+  it('omits link branch when hasVersion is empty array (clear-only replace semantics)', async () => {
+    mockMutate.mockResolvedValueOnce({ data: {} })
+    mockQuery.mockResolvedValueOnce({
+      data: {
+        modelcatalog_software_by_pk: { id: 'https://w3id.org/okn/i/mint/MODEL-2', label: 'M2', description: null },
+      },
+    })
+
+    const req = makeReq({
+      params: { id: 'MODEL-2' },
+      headers: { authorization: 'Bearer test' },
+      body: {
+        type: ['https://w3id.org/okn/o/sdm#Model'],
+        id: 'https://w3id.org/okn/i/mint/MODEL-2',
+        label: ['M2'],
+        hasVersion: [],
+      },
+    })
+    const reply = makeReply()
+    await (CatalogService as any).models_id_put(req, reply)
+
+    const args = mockMutate.mock.calls[0][0]
+    const m = typeof args.mutation === 'string' ? args.mutation : args.mutation?.loc?.source?.body ?? ''
+    expect(m).toContain('clear_versions:')
+    expect(m).not.toContain('link_versions:')
+    expect(args.variables.child_ids_versions).toEqual([])
+  })
+
+  it('handles softwareversions.hasConfiguration -> software_version_id', async () => {
+    mockMutate.mockResolvedValueOnce({ data: {} })
+    mockQuery.mockResolvedValueOnce({
+      data: {
+        modelcatalog_software_version_by_pk: {
+          id: 'https://w3id.org/okn/i/mint/V-1',
+          label: 'v1',
+          description: null,
+        },
+      },
+    })
+
+    const req = makeReq({
+      params: { id: 'V-1' },
+      headers: { authorization: 'Bearer test' },
+      body: {
+        id: 'https://w3id.org/okn/i/mint/V-1',
+        label: ['v1'],
+        hasConfiguration: [{ id: 'https://w3id.org/okn/i/mint/CFG-1' }],
+      },
+    })
+    const reply = makeReply()
+    await (CatalogService as any).softwareversions_id_put(req, reply)
+
+    const args = mockMutate.mock.calls[0][0]
+    const m = typeof args.mutation === 'string' ? args.mutation : args.mutation?.loc?.source?.body ?? ''
+    expect(m).toContain('clear_configurations: update_modelcatalog_configuration')
+    expect(m).toContain('link_configurations: update_modelcatalog_configuration')
+    expect(m).toContain('software_version_id: { _eq: $id }')
+    expect(m).toContain('software_version_id: $id')
+  })
+})
+
+describe('POST software with hasVersion links existing version rows', () => {
+  beforeEach(() => { mockMutate.mockReset() })
+
+  it('emits insert + link_versions update with software_id = parentId', async () => {
+    mockMutate.mockResolvedValueOnce({
+      data: {
+        insert_modelcatalog_software_one: { id: 'https://w3id.org/okn/i/mint/NEW-1' },
+      },
+    })
+
+    const req = makeReq({
+      headers: { authorization: 'Bearer test' },
+      body: {
+        type: ['Software'],
+        id: 'https://w3id.org/okn/i/mint/NEW-1',
+        label: ['New'],
+        hasVersion: [{ id: 'https://w3id.org/okn/i/mint/V-99' }],
+      },
+    })
+    const reply = makeReply()
+    await (CatalogService as any).softwares_post(req, reply)
+
+    expect(mockMutate).toHaveBeenCalledOnce()
+    const args = mockMutate.mock.calls[0][0]
+    const m = typeof args.mutation === 'string' ? args.mutation : args.mutation?.loc?.source?.body ?? ''
+    expect(m).toContain('insert_modelcatalog_software_one')
+    expect(m).toContain('link_versions: update_modelcatalog_software_version')
+    expect(m).toContain('software_id: $parentId')
+    expect(args.variables.parentId).toBe('https://w3id.org/okn/i/mint/NEW-1')
+    expect(args.variables.child_ids_versions).toEqual(['https://w3id.org/okn/i/mint/V-99'])
+  })
+})
