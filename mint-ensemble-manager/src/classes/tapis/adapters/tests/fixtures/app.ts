@@ -213,3 +213,45 @@ export const appWithUnknownRequiredInput: Apps.TapisApp = {
         ]
     }
 } as Apps.TapisApp;
+
+export const appWithFixedInput: Apps.TapisApp = {
+    ...baseApp,
+    jobAttributes: {
+        ...baseApp.jobAttributes,
+        fileInputs: [
+            {
+                name: "Fixed Input",
+                description: "Locked by app, user cannot override",
+                inputMode: "FIXED",
+                autoMountLocal: true,
+                sourceUrl: "tapis://ls6/home/${apiUserId}/fixed-input.txt",
+                targetPath: "fixed.txt"
+            }
+        ]
+    }
+} as Apps.TapisApp;
+
+export const appWithMixedInputs: Apps.TapisApp = {
+    ...baseApp,
+    jobAttributes: {
+        ...baseApp.jobAttributes,
+        fileInputs: [
+            {
+                name: "optional_file",
+                description: "An optional supplementary input file",
+                inputMode: "OPTIONAL",
+                autoMountLocal: true,
+                sourceUrl: null,
+                targetPath: "optional.dat"
+            },
+            {
+                name: "Fixed Input",
+                description: "Locked by app, user cannot override",
+                inputMode: "FIXED",
+                autoMountLocal: true,
+                sourceUrl: "tapis://ls6/home/${apiUserId}/fixed-input.txt",
+                targetPath: "fixed.txt"
+            }
+        ]
+    }
+} as Apps.TapisApp;

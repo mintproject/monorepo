@@ -107,6 +107,13 @@ export class TapisJobService {
     ): Jobs.JobFileInput[] {
         const jobInputs =
             app.jobAttributes?.fileInputs?.flatMap((fileInput) => {
+                if (fileInput.inputMode === Apps.FileInputModeEnum.Fixed) {
+                    // FIXED inputs are locked by the app definition; Tapis injects
+                    // them from the app at submission. No model component input or
+                    // user-provided dataset is required.
+                    return [];
+                }
+
                 const modelInput = model.input_files.find((input) => input.name === fileInput.name);
 
                 if (!modelInput) {
