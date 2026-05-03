@@ -2,14 +2,14 @@
   "version": 1,
   "created_at": "2026-04-12T21:31:41.062Z",
   "lifetime": {
-    "total_tokens_estimated": 3370449,
-    "total_reads": 880,
-    "total_writes": 695,
-    "total_sessions": 71,
-    "anatomy_hits": 329,
-    "anatomy_misses": 547,
-    "repeated_reads_blocked": 326,
-    "estimated_savings_vs_bare_cli": 845094
+    "total_tokens_estimated": 3928056,
+    "total_reads": 1020,
+    "total_writes": 759,
+    "total_sessions": 88,
+    "anatomy_hits": 348,
+    "anatomy_misses": 668,
+    "repeated_reads_blocked": 414,
+    "estimated_savings_vs_bare_cli": 2156149
   },
   "sessions": [
     {
@@ -11654,6 +11654,1633 @@
         "writes_count": 7,
         "repeated_reads_blocked": 0,
         "anatomy_lookups": 2
+      }
+    },
+    {
+      "id": "session-2026-05-01-1640",
+      "started": "2026-05-01T20:40:36.738Z",
+      "ended": "2026-05-01T20:50:05.906Z",
+      "reads": [
+        {
+          "file": "/Users/mosorio/repos/mint/README.md",
+          "tokens_estimated": 1310,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        }
+      ],
+      "writes": [
+        {
+          "file": "/Users/mosorio/repos/mint/README.md",
+          "tokens_estimated": 840,
+          "action": "edit"
+        }
+      ],
+      "totals": {
+        "input_tokens_estimated": 1310,
+        "output_tokens_estimated": 840,
+        "reads_count": 1,
+        "writes_count": 1,
+        "repeated_reads_blocked": 0,
+        "anatomy_lookups": 1
+      }
+    },
+    {
+      "id": "session-2026-05-01-1650",
+      "started": "2026-05-01T20:50:33.881Z",
+      "ended": "2026-05-01T20:50:53.446Z",
+      "reads": [
+        {
+          "file": "/Users/mosorio/repos/mint/README.md",
+          "tokens_estimated": 2028,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        }
+      ],
+      "writes": [],
+      "totals": {
+        "input_tokens_estimated": 2028,
+        "output_tokens_estimated": 0,
+        "reads_count": 1,
+        "writes_count": 0,
+        "repeated_reads_blocked": 0,
+        "anatomy_lookups": 1
+      }
+    },
+    {
+      "id": "session-2026-05-01-1650",
+      "started": "2026-05-01T20:50:33.881Z",
+      "ended": "2026-05-01T20:55:11.543Z",
+      "reads": [
+        {
+          "file": "/Users/mosorio/repos/mint/README.md",
+          "tokens_estimated": 2028,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        }
+      ],
+      "writes": [],
+      "totals": {
+        "input_tokens_estimated": 2028,
+        "output_tokens_estimated": 0,
+        "reads_count": 1,
+        "writes_count": 0,
+        "repeated_reads_blocked": 0,
+        "anatomy_lookups": 1
+      }
+    },
+    {
+      "id": "session-2026-05-01-1701",
+      "started": "2026-05-01T21:01:18.163Z",
+      "ended": "2026-05-01T21:02:13.613Z",
+      "reads": [
+        {
+          "file": "/Users/mosorio/repos/mint/may-15-experiment/test_registered_apps.ipynb",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        }
+      ],
+      "writes": [],
+      "totals": {
+        "input_tokens_estimated": 0,
+        "output_tokens_estimated": 0,
+        "reads_count": 1,
+        "writes_count": 0,
+        "repeated_reads_blocked": 0,
+        "anatomy_lookups": 0
+      }
+    },
+    {
+      "id": "session-2026-05-01-1701",
+      "started": "2026-05-01T21:01:18.163Z",
+      "ended": "2026-05-01T21:03:42.321Z",
+      "reads": [
+        {
+          "file": "/Users/mosorio/repos/mint/may-15-experiment/test_registered_apps.ipynb",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        }
+      ],
+      "writes": [],
+      "totals": {
+        "input_tokens_estimated": 0,
+        "output_tokens_estimated": 0,
+        "reads_count": 1,
+        "writes_count": 0,
+        "repeated_reads_blocked": 0,
+        "anatomy_lookups": 0
+      }
+    },
+    {
+      "id": "session-2026-05-01-1701",
+      "started": "2026-05-01T21:01:18.163Z",
+      "ended": "2026-05-01T21:05:49.572Z",
+      "reads": [
+        {
+          "file": "/Users/mosorio/repos/mint/may-15-experiment/test_registered_apps.ipynb",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        }
+      ],
+      "writes": [],
+      "totals": {
+        "input_tokens_estimated": 0,
+        "output_tokens_estimated": 0,
+        "reads_count": 1,
+        "writes_count": 0,
+        "repeated_reads_blocked": 0,
+        "anatomy_lookups": 0
+      }
+    },
+    {
+      "id": "session-2026-05-01-1819",
+      "started": "2026-05-01T22:19:37.695Z",
+      "ended": "2026-05-01T22:23:02.283Z",
+      "reads": [
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/classes/tapis/adapters/TapisExecutionService.ts",
+          "tokens_estimated": 6469,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/classes/tapis/helpers.ts",
+          "tokens_estimated": 0,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/classes/localex/local-execution-functions.ts",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/classes/tapis/tests/helpers.test.ts",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        }
+      ],
+      "writes": [
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/classes/tapis/helpers.ts",
+          "tokens_estimated": 153,
+          "action": "edit"
+        }
+      ],
+      "totals": {
+        "input_tokens_estimated": 6469,
+        "output_tokens_estimated": 153,
+        "reads_count": 4,
+        "writes_count": 1,
+        "repeated_reads_blocked": 4,
+        "anatomy_lookups": 1
+      }
+    },
+    {
+      "id": "session-2026-05-01-1819",
+      "started": "2026-05-01T22:19:37.695Z",
+      "ended": "2026-05-01T22:36:29.180Z",
+      "reads": [
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/classes/tapis/adapters/TapisExecutionService.ts",
+          "tokens_estimated": 6476,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/classes/tapis/helpers.ts",
+          "tokens_estimated": 0,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/classes/localex/local-execution-functions.ts",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/classes/tapis/tests/helpers.test.ts",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/classes/tapis/fixtures/model.ts",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        }
+      ],
+      "writes": [
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/classes/tapis/helpers.ts",
+          "tokens_estimated": 153,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/classes/tapis/adapters/TapisExecutionService.ts",
+          "tokens_estimated": 70,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/classes/tapis/tests/helpers.test.ts",
+          "tokens_estimated": 668,
+          "action": "edit"
+        }
+      ],
+      "totals": {
+        "input_tokens_estimated": 6476,
+        "output_tokens_estimated": 891,
+        "reads_count": 5,
+        "writes_count": 3,
+        "repeated_reads_blocked": 5,
+        "anatomy_lookups": 1
+      }
+    },
+    {
+      "id": "session-2026-05-01-1844",
+      "started": "2026-05-01T22:44:38.888Z",
+      "ended": "2026-05-01T22:49:50.721Z",
+      "reads": [
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/classes/tapis/adapters/TapisJobService.ts",
+          "tokens_estimated": 1438,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/classes/tapis/adapters/TapisExecutionService.ts",
+          "tokens_estimated": 6476,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        }
+      ],
+      "writes": [
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/classes/tapis/adapters/TapisExecutionService.ts",
+          "tokens_estimated": 25,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/classes/tapis/adapters/TapisExecutionService.ts",
+          "tokens_estimated": 23,
+          "action": "edit"
+        }
+      ],
+      "totals": {
+        "input_tokens_estimated": 7914,
+        "output_tokens_estimated": 48,
+        "reads_count": 2,
+        "writes_count": 2,
+        "repeated_reads_blocked": 1,
+        "anatomy_lookups": 2
+      }
+    },
+    {
+      "id": "session-2026-05-01-1844",
+      "started": "2026-05-01T22:44:38.888Z",
+      "ended": "2026-05-01T22:52:54.822Z",
+      "reads": [
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/classes/tapis/adapters/TapisJobService.ts",
+          "tokens_estimated": 1438,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/classes/tapis/adapters/TapisExecutionService.ts",
+          "tokens_estimated": 6476,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/classes/localex/local-execution-types.ts",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/.planning/phases/12-04-SUMMARY.md",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        }
+      ],
+      "writes": [
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/classes/tapis/adapters/TapisExecutionService.ts",
+          "tokens_estimated": 25,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/classes/tapis/adapters/TapisExecutionService.ts",
+          "tokens_estimated": 23,
+          "action": "edit"
+        }
+      ],
+      "totals": {
+        "input_tokens_estimated": 7914,
+        "output_tokens_estimated": 48,
+        "reads_count": 4,
+        "writes_count": 2,
+        "repeated_reads_blocked": 1,
+        "anatomy_lookups": 2
+      }
+    },
+    {
+      "id": "session-2026-05-01-1859",
+      "started": "2026-05-01T22:59:57.103Z",
+      "ended": "2026-05-01T23:29:24.208Z",
+      "reads": [
+        {
+          "file": "/Users/mosorio/repos/mint/model-catalog-fastapi/src/openapi_server/apis/tapis_component_location.py",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/model-catalog-api/src/app.ts",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/model-catalog-api/src/custom-handlers.ts",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/model-catalog-fastapi/src/openapi_server/models/tapis_app.py",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/ui/src/model-catalog-api/user-catalog.ts",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/ui/node_modules/@mintproject/modelcatalog_client/dist/apis/TapisAppApi.js",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/ui/node_modules/@mintproject/modelcatalog_client/dist/models/TapisApp.js",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/model-catalog-api/openapi.yaml",
+          "tokens_estimated": 151030,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/model-catalog-api/src/service.ts",
+          "tokens_estimated": 5819,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        }
+      ],
+      "writes": [],
+      "totals": {
+        "input_tokens_estimated": 156849,
+        "output_tokens_estimated": 0,
+        "reads_count": 9,
+        "writes_count": 0,
+        "repeated_reads_blocked": 0,
+        "anatomy_lookups": 2
+      }
+    },
+    {
+      "id": "session-2026-05-01-1859",
+      "started": "2026-05-01T22:59:57.103Z",
+      "ended": "2026-05-01T23:39:31.224Z",
+      "reads": [
+        {
+          "file": "/Users/mosorio/repos/mint/model-catalog-fastapi/src/openapi_server/apis/tapis_component_location.py",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/model-catalog-api/src/app.ts",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/model-catalog-api/src/custom-handlers.ts",
+          "tokens_estimated": 0,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/model-catalog-fastapi/src/openapi_server/models/tapis_app.py",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/ui/src/model-catalog-api/user-catalog.ts",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/ui/node_modules/@mintproject/modelcatalog_client/dist/apis/TapisAppApi.js",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/ui/node_modules/@mintproject/modelcatalog_client/dist/models/TapisApp.js",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/model-catalog-api/openapi.yaml",
+          "tokens_estimated": 151604,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/model-catalog-api/src/service.ts",
+          "tokens_estimated": 5819,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/model-catalog-api/package.json",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/model-catalog-api/node_modules/@tapis/tapis-typescript/dist/index.d.ts",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/model-catalog-api/node_modules/@tapis/tapis-typescript-apps/dist/apis/ApplicationsApi.d.ts",
+          "tokens_estimated": 0,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/model-catalog-api/node_modules/@tapis/tapis-typescript-apps/dist/runtime.d.ts",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/model-catalog-api/src/index.ts",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/model-catalog-api/src/security.ts",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        }
+      ],
+      "writes": [
+        {
+          "file": "/Users/mosorio/repos/mint/model-catalog-api/openapi.yaml",
+          "tokens_estimated": 627,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/model-catalog-api/openapi.yaml",
+          "tokens_estimated": 482,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/model-catalog-api/src/custom-handlers.ts",
+          "tokens_estimated": 1217,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/model-catalog-api/src/custom-handlers.ts",
+          "tokens_estimated": 867,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/model-catalog-api/src/custom-handlers.ts",
+          "tokens_estimated": 67,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/model-catalog-api/src/custom-handlers.ts",
+          "tokens_estimated": 121,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/model-catalog-api/src/custom-handlers.ts",
+          "tokens_estimated": 90,
+          "action": "edit"
+        }
+      ],
+      "totals": {
+        "input_tokens_estimated": 157423,
+        "output_tokens_estimated": 3471,
+        "reads_count": 15,
+        "writes_count": 7,
+        "repeated_reads_blocked": 6,
+        "anatomy_lookups": 2
+      }
+    },
+    {
+      "id": "session-2026-05-01-1859",
+      "started": "2026-05-01T22:59:57.103Z",
+      "ended": "2026-05-01T23:40:09.362Z",
+      "reads": [
+        {
+          "file": "/Users/mosorio/repos/mint/model-catalog-fastapi/src/openapi_server/apis/tapis_component_location.py",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/model-catalog-api/src/app.ts",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/model-catalog-api/src/custom-handlers.ts",
+          "tokens_estimated": 0,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/model-catalog-fastapi/src/openapi_server/models/tapis_app.py",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/ui/src/model-catalog-api/user-catalog.ts",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/ui/node_modules/@mintproject/modelcatalog_client/dist/apis/TapisAppApi.js",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/ui/node_modules/@mintproject/modelcatalog_client/dist/models/TapisApp.js",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/model-catalog-api/openapi.yaml",
+          "tokens_estimated": 151604,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/model-catalog-api/src/service.ts",
+          "tokens_estimated": 5819,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/model-catalog-api/package.json",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/model-catalog-api/node_modules/@tapis/tapis-typescript/dist/index.d.ts",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/model-catalog-api/node_modules/@tapis/tapis-typescript-apps/dist/apis/ApplicationsApi.d.ts",
+          "tokens_estimated": 0,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/model-catalog-api/node_modules/@tapis/tapis-typescript-apps/dist/runtime.d.ts",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/model-catalog-api/src/index.ts",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/model-catalog-api/src/security.ts",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        }
+      ],
+      "writes": [
+        {
+          "file": "/Users/mosorio/repos/mint/model-catalog-api/openapi.yaml",
+          "tokens_estimated": 627,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/model-catalog-api/openapi.yaml",
+          "tokens_estimated": 482,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/model-catalog-api/src/custom-handlers.ts",
+          "tokens_estimated": 1217,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/model-catalog-api/src/custom-handlers.ts",
+          "tokens_estimated": 867,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/model-catalog-api/src/custom-handlers.ts",
+          "tokens_estimated": 67,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/model-catalog-api/src/custom-handlers.ts",
+          "tokens_estimated": 121,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/model-catalog-api/src/custom-handlers.ts",
+          "tokens_estimated": 90,
+          "action": "edit"
+        }
+      ],
+      "totals": {
+        "input_tokens_estimated": 157423,
+        "output_tokens_estimated": 3471,
+        "reads_count": 15,
+        "writes_count": 7,
+        "repeated_reads_blocked": 6,
+        "anatomy_lookups": 2
+      }
+    },
+    {
+      "id": "session-2026-05-01-1956",
+      "started": "2026-05-01T23:56:02.655Z",
+      "ended": "2026-05-02T00:08:02.003Z",
+      "reads": [
+        {
+          "file": "/Users/mosorio/repos/mint/ui/src/queries/execution/executions-for-thread-model.graphql",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/ui/src/screens/modeling/thread/mint-runs.ts",
+          "tokens_estimated": 0,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/ui/src/queries/fragments/execution-info.graphql",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/ui/src/screens/modeling/actions.ts",
+          "tokens_estimated": 0,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/ui/src/util/graphql_adapter.ts",
+          "tokens_estimated": 0,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/ui/src/screens/modeling/reducers.ts",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        }
+      ],
+      "writes": [],
+      "totals": {
+        "input_tokens_estimated": 0,
+        "output_tokens_estimated": 0,
+        "reads_count": 6,
+        "writes_count": 0,
+        "repeated_reads_blocked": 6,
+        "anatomy_lookups": 0
+      }
+    },
+    {
+      "id": "session-2026-05-01-1956",
+      "started": "2026-05-01T23:56:02.655Z",
+      "ended": "2026-05-02T00:08:46.290Z",
+      "reads": [
+        {
+          "file": "/Users/mosorio/repos/mint/ui/src/queries/execution/executions-for-thread-model.graphql",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/ui/src/screens/modeling/thread/mint-runs.ts",
+          "tokens_estimated": 0,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/ui/src/queries/fragments/execution-info.graphql",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/ui/src/screens/modeling/actions.ts",
+          "tokens_estimated": 0,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/ui/src/util/graphql_adapter.ts",
+          "tokens_estimated": 0,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/ui/src/screens/modeling/reducers.ts",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        }
+      ],
+      "writes": [],
+      "totals": {
+        "input_tokens_estimated": 0,
+        "output_tokens_estimated": 0,
+        "reads_count": 6,
+        "writes_count": 0,
+        "repeated_reads_blocked": 6,
+        "anatomy_lookups": 0
+      }
+    },
+    {
+      "id": "session-2026-05-01-1956",
+      "started": "2026-05-01T23:56:02.655Z",
+      "ended": "2026-05-02T00:11:49.803Z",
+      "reads": [
+        {
+          "file": "/Users/mosorio/repos/mint/ui/src/queries/execution/executions-for-thread-model.graphql",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/ui/src/screens/modeling/thread/mint-runs.ts",
+          "tokens_estimated": 0,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/ui/src/queries/fragments/execution-info.graphql",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/ui/src/screens/modeling/actions.ts",
+          "tokens_estimated": 0,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/ui/src/util/graphql_adapter.ts",
+          "tokens_estimated": 0,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/ui/src/screens/modeling/reducers.ts",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        }
+      ],
+      "writes": [
+        {
+          "file": "/Users/mosorio/repos/mint/ui/src/screens/modeling/thread/mint-runs.ts",
+          "tokens_estimated": 235,
+          "action": "edit"
+        }
+      ],
+      "totals": {
+        "input_tokens_estimated": 0,
+        "output_tokens_estimated": 235,
+        "reads_count": 6,
+        "writes_count": 1,
+        "repeated_reads_blocked": 6,
+        "anatomy_lookups": 0
+      }
+    },
+    {
+      "id": "session-2026-05-01-1956",
+      "started": "2026-05-01T23:56:02.655Z",
+      "ended": "2026-05-02T00:13:38.836Z",
+      "reads": [
+        {
+          "file": "/Users/mosorio/repos/mint/ui/src/queries/execution/executions-for-thread-model.graphql",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/ui/src/screens/modeling/thread/mint-runs.ts",
+          "tokens_estimated": 0,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/ui/src/queries/fragments/execution-info.graphql",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/ui/src/screens/modeling/actions.ts",
+          "tokens_estimated": 0,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/ui/src/util/graphql_adapter.ts",
+          "tokens_estimated": 0,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/ui/src/screens/modeling/reducers.ts",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        }
+      ],
+      "writes": [
+        {
+          "file": "/Users/mosorio/repos/mint/ui/src/screens/modeling/thread/mint-runs.ts",
+          "tokens_estimated": 235,
+          "action": "edit"
+        }
+      ],
+      "totals": {
+        "input_tokens_estimated": 0,
+        "output_tokens_estimated": 235,
+        "reads_count": 6,
+        "writes_count": 1,
+        "repeated_reads_blocked": 6,
+        "anatomy_lookups": 0
+      }
+    },
+    {
+      "id": "session-2026-05-01-1956",
+      "started": "2026-05-01T23:56:02.655Z",
+      "ended": "2026-05-02T00:14:32.963Z",
+      "reads": [
+        {
+          "file": "/Users/mosorio/repos/mint/ui/src/queries/execution/executions-for-thread-model.graphql",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/ui/src/screens/modeling/thread/mint-runs.ts",
+          "tokens_estimated": 0,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/ui/src/queries/fragments/execution-info.graphql",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/ui/src/screens/modeling/actions.ts",
+          "tokens_estimated": 0,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/ui/src/util/graphql_adapter.ts",
+          "tokens_estimated": 0,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/ui/src/screens/modeling/reducers.ts",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        }
+      ],
+      "writes": [
+        {
+          "file": "/Users/mosorio/repos/mint/ui/src/screens/modeling/thread/mint-runs.ts",
+          "tokens_estimated": 235,
+          "action": "edit"
+        }
+      ],
+      "totals": {
+        "input_tokens_estimated": 0,
+        "output_tokens_estimated": 235,
+        "reads_count": 6,
+        "writes_count": 1,
+        "repeated_reads_blocked": 6,
+        "anatomy_lookups": 0
+      }
+    },
+    {
+      "id": "session-2026-05-01-1956",
+      "started": "2026-05-01T23:56:02.655Z",
+      "ended": "2026-05-02T00:15:12.201Z",
+      "reads": [
+        {
+          "file": "/Users/mosorio/repos/mint/ui/src/queries/execution/executions-for-thread-model.graphql",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/ui/src/screens/modeling/thread/mint-runs.ts",
+          "tokens_estimated": 0,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/ui/src/queries/fragments/execution-info.graphql",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/ui/src/screens/modeling/actions.ts",
+          "tokens_estimated": 0,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/ui/src/util/graphql_adapter.ts",
+          "tokens_estimated": 0,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/ui/src/screens/modeling/reducers.ts",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        }
+      ],
+      "writes": [
+        {
+          "file": "/Users/mosorio/repos/mint/ui/src/screens/modeling/thread/mint-runs.ts",
+          "tokens_estimated": 235,
+          "action": "edit"
+        }
+      ],
+      "totals": {
+        "input_tokens_estimated": 0,
+        "output_tokens_estimated": 235,
+        "reads_count": 6,
+        "writes_count": 1,
+        "repeated_reads_blocked": 6,
+        "anatomy_lookups": 0
+      }
+    },
+    {
+      "id": "session-2026-05-01-1956",
+      "started": "2026-05-01T23:56:02.655Z",
+      "ended": "2026-05-02T00:15:50.842Z",
+      "reads": [
+        {
+          "file": "/Users/mosorio/repos/mint/ui/src/queries/execution/executions-for-thread-model.graphql",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/ui/src/screens/modeling/thread/mint-runs.ts",
+          "tokens_estimated": 0,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/ui/src/queries/fragments/execution-info.graphql",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/ui/src/screens/modeling/actions.ts",
+          "tokens_estimated": 0,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/ui/src/util/graphql_adapter.ts",
+          "tokens_estimated": 0,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/ui/src/screens/modeling/reducers.ts",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        }
+      ],
+      "writes": [
+        {
+          "file": "/Users/mosorio/repos/mint/ui/src/screens/modeling/thread/mint-runs.ts",
+          "tokens_estimated": 235,
+          "action": "edit"
+        }
+      ],
+      "totals": {
+        "input_tokens_estimated": 0,
+        "output_tokens_estimated": 235,
+        "reads_count": 6,
+        "writes_count": 1,
+        "repeated_reads_blocked": 6,
+        "anatomy_lookups": 0
+      }
+    },
+    {
+      "id": "session-2026-05-01-1956",
+      "started": "2026-05-01T23:56:02.655Z",
+      "ended": "2026-05-02T00:16:03.479Z",
+      "reads": [
+        {
+          "file": "/Users/mosorio/repos/mint/ui/src/queries/execution/executions-for-thread-model.graphql",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/ui/src/screens/modeling/thread/mint-runs.ts",
+          "tokens_estimated": 0,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/ui/src/queries/fragments/execution-info.graphql",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/ui/src/screens/modeling/actions.ts",
+          "tokens_estimated": 0,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/ui/src/util/graphql_adapter.ts",
+          "tokens_estimated": 0,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/ui/src/screens/modeling/reducers.ts",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        }
+      ],
+      "writes": [
+        {
+          "file": "/Users/mosorio/repos/mint/ui/src/screens/modeling/thread/mint-runs.ts",
+          "tokens_estimated": 235,
+          "action": "edit"
+        }
+      ],
+      "totals": {
+        "input_tokens_estimated": 0,
+        "output_tokens_estimated": 235,
+        "reads_count": 6,
+        "writes_count": 1,
+        "repeated_reads_blocked": 6,
+        "anatomy_lookups": 0
+      }
+    },
+    {
+      "id": "session-2026-05-01-1956",
+      "started": "2026-05-01T23:56:02.655Z",
+      "ended": "2026-05-02T00:19:18.754Z",
+      "reads": [
+        {
+          "file": "/Users/mosorio/repos/mint/ui/src/queries/execution/executions-for-thread-model.graphql",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/ui/src/screens/modeling/thread/mint-runs.ts",
+          "tokens_estimated": 0,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/ui/src/queries/fragments/execution-info.graphql",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/ui/src/screens/modeling/actions.ts",
+          "tokens_estimated": 0,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/ui/src/util/graphql_adapter.ts",
+          "tokens_estimated": 0,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/ui/src/screens/modeling/reducers.ts",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        }
+      ],
+      "writes": [
+        {
+          "file": "/Users/mosorio/repos/mint/ui/src/screens/modeling/thread/mint-runs.ts",
+          "tokens_estimated": 235,
+          "action": "edit"
+        }
+      ],
+      "totals": {
+        "input_tokens_estimated": 0,
+        "output_tokens_estimated": 235,
+        "reads_count": 6,
+        "writes_count": 1,
+        "repeated_reads_blocked": 6,
+        "anatomy_lookups": 0
+      }
+    },
+    {
+      "id": "session-2026-05-02-2053",
+      "started": "2026-05-02T00:53:58.108Z",
+      "ended": "2026-05-02T01:26:39.952Z",
+      "reads": [
+        {
+          "file": "/Users/mosorio/repos/mint/model-catalog-api/src/mappers/resource-registry.ts",
+          "tokens_estimated": 9040,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/model-catalog-api/src/hasura/field-maps.ts",
+          "tokens_estimated": 3888,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/model-catalog-api/src/__tests__/integration.test.ts",
+          "tokens_estimated": 0,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        }
+      ],
+      "writes": [
+        {
+          "file": "/tmp/pr2-body.md",
+          "tokens_estimated": 720,
+          "action": "create"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/model-catalog-api/src/mappers/resource-registry.ts",
+          "tokens_estimated": 211,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/model-catalog-api/src/mappers/resource-registry.ts",
+          "tokens_estimated": 136,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/model-catalog-api/src/mappers/resource-registry.ts",
+          "tokens_estimated": 55,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/model-catalog-api/src/mappers/resource-registry.ts",
+          "tokens_estimated": 57,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/model-catalog-api/src/mappers/resource-registry.ts",
+          "tokens_estimated": 48,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/model-catalog-api/src/service.ts",
+          "tokens_estimated": 1786,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/model-catalog-api/src/service.ts",
+          "tokens_estimated": 937,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/model-catalog-api/src/__tests__/integration.test.ts",
+          "tokens_estimated": 1628,
+          "action": "edit"
+        }
+      ],
+      "totals": {
+        "input_tokens_estimated": 12928,
+        "output_tokens_estimated": 5578,
+        "reads_count": 3,
+        "writes_count": 9,
+        "repeated_reads_blocked": 4,
+        "anatomy_lookups": 2
+      }
+    },
+    {
+      "id": "session-2026-05-02-2053",
+      "started": "2026-05-02T00:53:58.108Z",
+      "ended": "2026-05-02T01:27:55.192Z",
+      "reads": [
+        {
+          "file": "/Users/mosorio/repos/mint/model-catalog-api/src/mappers/resource-registry.ts",
+          "tokens_estimated": 9040,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/model-catalog-api/src/hasura/field-maps.ts",
+          "tokens_estimated": 3888,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/model-catalog-api/src/__tests__/integration.test.ts",
+          "tokens_estimated": 0,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        }
+      ],
+      "writes": [
+        {
+          "file": "/tmp/pr2-body.md",
+          "tokens_estimated": 720,
+          "action": "create"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/model-catalog-api/src/mappers/resource-registry.ts",
+          "tokens_estimated": 211,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/model-catalog-api/src/mappers/resource-registry.ts",
+          "tokens_estimated": 136,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/model-catalog-api/src/mappers/resource-registry.ts",
+          "tokens_estimated": 55,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/model-catalog-api/src/mappers/resource-registry.ts",
+          "tokens_estimated": 57,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/model-catalog-api/src/mappers/resource-registry.ts",
+          "tokens_estimated": 48,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/model-catalog-api/src/service.ts",
+          "tokens_estimated": 1786,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/model-catalog-api/src/service.ts",
+          "tokens_estimated": 937,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/model-catalog-api/src/__tests__/integration.test.ts",
+          "tokens_estimated": 1628,
+          "action": "edit"
+        }
+      ],
+      "totals": {
+        "input_tokens_estimated": 12928,
+        "output_tokens_estimated": 5578,
+        "reads_count": 3,
+        "writes_count": 9,
+        "repeated_reads_blocked": 4,
+        "anatomy_lookups": 2
+      }
+    },
+    {
+      "id": "session-2026-05-03-1152",
+      "started": "2026-05-03T15:52:19.006Z",
+      "ended": "2026-05-03T15:57:18.009Z",
+      "reads": [
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/classes/tapis/adapters/TapisJobService.ts",
+          "tokens_estimated": 0,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/classes/tapis/adapters/tests/fixtures/app.ts",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/node_modules/@tapis/tapis-typescript-apps/src/models/AppFileInput.ts",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/node_modules/@tapis/tapis-typescript-apps/src/models/FileInputModeEnum.ts",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/classes/tapis/adapters/tests/jobs.test.ts",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/classes/tapis/adapters/tests/fixtures/model.ts",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        }
+      ],
+      "writes": [
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/classes/tapis/adapters/tests/fixtures/app.ts",
+          "tokens_estimated": 517,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/classes/tapis/adapters/tests/jobs.test.ts",
+          "tokens_estimated": 71,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/classes/tapis/adapters/tests/jobs.test.ts",
+          "tokens_estimated": 336,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/classes/tapis/adapters/TapisJobService.ts",
+          "tokens_estimated": 197,
+          "action": "edit"
+        }
+      ],
+      "totals": {
+        "input_tokens_estimated": 0,
+        "output_tokens_estimated": 1121,
+        "reads_count": 6,
+        "writes_count": 4,
+        "repeated_reads_blocked": 1,
+        "anatomy_lookups": 0
+      }
+    },
+    {
+      "id": "session-2026-05-03-1152",
+      "started": "2026-05-03T15:52:19.006Z",
+      "ended": "2026-05-03T16:01:16.117Z",
+      "reads": [
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/classes/tapis/adapters/TapisJobService.ts",
+          "tokens_estimated": 0,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/classes/tapis/adapters/tests/fixtures/app.ts",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/node_modules/@tapis/tapis-typescript-apps/src/models/AppFileInput.ts",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/node_modules/@tapis/tapis-typescript-apps/src/models/FileInputModeEnum.ts",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/classes/tapis/adapters/tests/jobs.test.ts",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/classes/tapis/adapters/tests/fixtures/model.ts",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/dynamo/shared/values.yaml",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        }
+      ],
+      "writes": [
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/classes/tapis/adapters/tests/fixtures/app.ts",
+          "tokens_estimated": 517,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/classes/tapis/adapters/tests/jobs.test.ts",
+          "tokens_estimated": 71,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/classes/tapis/adapters/tests/jobs.test.ts",
+          "tokens_estimated": 336,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/classes/tapis/adapters/TapisJobService.ts",
+          "tokens_estimated": 197,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/dynamo/shared/values.yaml",
+          "tokens_estimated": 34,
+          "action": "edit"
+        }
+      ],
+      "totals": {
+        "input_tokens_estimated": 0,
+        "output_tokens_estimated": 1155,
+        "reads_count": 7,
+        "writes_count": 5,
+        "repeated_reads_blocked": 1,
+        "anatomy_lookups": 0
+      }
+    },
+    {
+      "id": "session-2026-05-03-1152",
+      "started": "2026-05-03T15:52:19.006Z",
+      "ended": "2026-05-03T20:04:01.142Z",
+      "reads": [
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/classes/tapis/adapters/TapisJobService.ts",
+          "tokens_estimated": 0,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/classes/tapis/adapters/tests/fixtures/app.ts",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/node_modules/@tapis/tapis-typescript-apps/src/models/AppFileInput.ts",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/node_modules/@tapis/tapis-typescript-apps/src/models/FileInputModeEnum.ts",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/classes/tapis/adapters/tests/jobs.test.ts",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/classes/tapis/adapters/tests/fixtures/model.ts",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/dynamo/shared/values.yaml",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        }
+      ],
+      "writes": [
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/classes/tapis/adapters/tests/fixtures/app.ts",
+          "tokens_estimated": 517,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/classes/tapis/adapters/tests/jobs.test.ts",
+          "tokens_estimated": 71,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/classes/tapis/adapters/tests/jobs.test.ts",
+          "tokens_estimated": 336,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/mint-ensemble-manager/src/classes/tapis/adapters/TapisJobService.ts",
+          "tokens_estimated": 197,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/dynamo/shared/values.yaml",
+          "tokens_estimated": 34,
+          "action": "edit"
+        }
+      ],
+      "totals": {
+        "input_tokens_estimated": 0,
+        "output_tokens_estimated": 1155,
+        "reads_count": 7,
+        "writes_count": 5,
+        "repeated_reads_blocked": 1,
+        "anatomy_lookups": 0
+      }
+    },
+    {
+      "id": "session-2026-05-03-1735",
+      "started": "2026-05-03T21:35:21.374Z",
+      "ended": "2026-05-03T21:36:28.036Z",
+      "reads": [],
+      "writes": [
+        {
+          "file": "/Users/mosorio/repos/mint/.claude/skills/update-helm-image-tags/update.sh",
+          "tokens_estimated": 702,
+          "action": "create"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/.claude/skills/update-helm-image-tags/update.sh",
+          "tokens_estimated": 61,
+          "action": "edit"
+        }
+      ],
+      "totals": {
+        "input_tokens_estimated": 0,
+        "output_tokens_estimated": 763,
+        "reads_count": 0,
+        "writes_count": 2,
+        "repeated_reads_blocked": 0,
+        "anatomy_lookups": 0
       }
     }
   ],

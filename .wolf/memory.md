@@ -4,452 +4,145 @@
 > Old sessions are consolidated by the daemon weekly.
 
 ## Session: 2026-04-12 17:33
-
-| Time | Action | File(s) | Outcome | ~Tokens |
-|------|--------|---------|---------|--------|
+> Consolidated session (0 actions)
 
 ## Session: 2026-04-12 17:53
-
-| Time | Action | File(s) | Outcome | ~Tokens |
-|------|--------|---------|---------|--------|
+> Consolidated session (0 actions)
 
 ## Session: 2026-04-13 04:00
-
-| Time | Action | File(s) | Outcome | ~Tokens |
-|------|--------|---------|---------|--------|
+> Consolidated session (0 actions)
 
 ## Session: 2026-04-26 10:49
-
-| Time | Action | File(s) | Outcome | ~Tokens |
-|------|--------|---------|---------|--------|
+> Consolidated session (0 actions)
 
 ## Session: 2026-04-26 10:51
-
-| Time | Action | File(s) | Outcome | ~Tokens |
-|------|--------|---------|---------|--------|
+> Consolidated session (0 actions)
 
 ## Session: 2026-04-26 10:52
-
-| Time | Action | File(s) | Outcome | ~Tokens |
-|------|--------|---------|---------|--------|
+> Consolidated session (0 actions)
 
 ## Session: 2026-04-26 10:56
-
-| Time | Action | File(s) | Outcome | ~Tokens |
-|------|--------|---------|---------|--------|
+> Consolidated session (0 actions)
 
 ## Session: 2026-04-26 10:57
-
-| Time | Action | File(s) | Outcome | ~Tokens |
-|------|--------|---------|---------|--------|
+> Consolidated session (0 actions)
 
 ## Session: 2026-04-26 11:02
-
-| Time | Action | File(s) | Outcome | ~Tokens |
-|------|--------|---------|---------|--------|
-| 11:03 | Edited ../../.claude/settings.json | expanded (+11 lines) | ~64 |
-| 11:03 | Edited ../../.claude/settings.json | 2→4 lines | ~33 |
-| 11:04 | Session end: 2 writes across 1 files (settings.json) | 2 reads | ~979 tok |
-| 11:04 | Session end: 2 writes across 1 files (settings.json) | 2 reads | ~979 tok |
-| 11:06 | Created helm-charts/dynamo-values.yaml | — | ~387 |
-| 11:07 | Edited helm-charts/dynamo-values.yaml | 2→3 lines | ~24 |
-| 11:07 | Session end: 4 writes across 2 files (settings.json, dynamo-values.yaml) | 4 reads | ~1777 tok |
-| 11:10 | Session end: 4 writes across 2 files (settings.json, dynamo-values.yaml) | 4 reads | ~1777 tok |
+> Consolidated session (8 actions)
 
 ## Session: 2026-04-26 11:11
-
-| Time | Action | File(s) | Outcome | ~Tokens |
-|------|--------|---------|---------|--------|
-| 11:14 | Edited helm-charts/dynamo-values.yaml | expanded (+7 lines) | ~65 |
-| 11:14 | Session end: 1 writes across 1 files (dynamo-values.yaml) | 9 reads | ~4357 tok |
-| 11:23 | Created .planning/quick/260426-fk5-fix-apollo-field-model-not-found-in-type/260426-fk5-PLAN.md | — | ~2976 |
-| 11:24 | Created .planning/STATE.md | — | ~4220 |
-| 15:30 | Verified fix for Apollo 'model' field bug (260426-fk5): all .graphql files use modelcatalog_configuration, build+tests pass 60/60 | mint-ensemble-manager/src, .wolf/buglog.json | VERIFIED | ~3000 |
-| 11:27 | Created .planning/quick/260426-fk5-fix-apollo-field-model-not-found-in-type/260426-fk5-SUMMARY.md | — | ~1322 |
-| 11:27 | Edited .planning/STATE.md | 3→3 lines | ~69 |
-| 11:28 | Edited .planning/STATE.md | inline fix | ~67 |
-| 11:28 | Edited .planning/STATE.md | inline fix | ~39 |
-| 11:29 | Session end: 7 writes across 4 files (dynamo-values.yaml, 260426-fk5-PLAN.md, STATE.md, 260426-fk5-SUMMARY.md) | 25 reads | ~20096 tok |
-| 13:31 | Session end: 7 writes across 4 files (dynamo-values.yaml, 260426-fk5-PLAN.md, STATE.md, 260426-fk5-SUMMARY.md) | 25 reads | ~20096 tok |
-| 13:39 | Edited mint-ensemble-manager/src/classes/graphql/queries/thread/get.graphql | 7→7 lines | ~50 |
-| 13:39 | Edited mint-ensemble-manager/src/classes/graphql/queries/emulator/model-executions.graphql | 8→8 lines | ~47 |
-| 13:39 | Edited mint-ensemble-manager/src/classes/graphql/queries/emulator/thread-executions.graphql | 6→6 lines | ~38 |
-| 13:40 | Edited mint-ensemble-manager/src/classes/graphql/graphql_adapter.ts | 6→6 lines | ~71 |
-| 13:40 | Edited mint-ensemble-manager/src/classes/graphql/graphql_adapter.ts | 2→2 lines | ~38 |
-| 13:41 | Session end: 12 writes across 8 files (dynamo-values.yaml, 260426-fk5-PLAN.md, STATE.md, 260426-fk5-SUMMARY.md, get.graphql) | 27 reads | ~20349 tok |
+> Consolidated session (17 actions)
 
 ## Session: 2026-04-26 13:42
-
-| Time | Action | File(s) | Outcome | ~Tokens |
-|------|--------|---------|---------|--------|
+> Consolidated session (0 actions)
 
 ## Session: 2026-04-26 13:42
-
-| Time | Action | File(s) | Outcome | ~Tokens |
-|------|--------|---------|---------|--------|
-| 13:45 | Created .planning/todos/pending/2026-04-26-centralize-execution-config-in-ensemble-manager-ui-fetches-v.md | — | ~831 |
-| 13:45 | Edited .planning/STATE.md | 3→3 lines | ~54 |
-| 13:45 | Session end: 2 writes across 2 files (2026-04-26-centralize-execution-config-in-ensemble-manager-ui-fetches-v.md, STATE.md) | 2 reads | ~4920 tok |
-| 14:05 | Session end: 2 writes across 2 files (2026-04-26-centralize-execution-config-in-ensemble-manager-ui-fetches-v.md, STATE.md) | 3 reads | ~4920 tok |
-| 14:05 | Session end: 2 writes across 2 files (2026-04-26-centralize-execution-config-in-ensemble-manager-ui-fetches-v.md, STATE.md) | 3 reads | ~4920 tok |
-| 14:06 | Edited mint-ensemble-manager/src/classes/graphql/queries/thread/get.graphql | 4→4 lines | ~29 |
-| 14:06 | Edited mint-ensemble-manager/src/classes/graphql/queries/emulator/model-executions.graphql | 3→3 lines | ~19 |
-| 14:06 | Edited mint-ensemble-manager/src/classes/graphql/queries/emulator/thread-executions.graphql | 3→3 lines | ~19 |
-| 14:06 | Edited mint-ensemble-manager/src/classes/graphql/graphql_adapter.ts | 2→2 lines | ~38 |
+> Consolidated session (9 actions)
 
 ## Session: 2026-04-26 14:11
-
-| Time | Action | File(s) | Outcome | ~Tokens |
-|------|--------|---------|---------|--------|
-| 14:15 | Created .gitmodules | — | ~347 |
-| 14:15 | Session end: 1 writes across 1 files (.gitmodules) | 3 reads | ~904 tok |
-| 14:16 | Session end: 1 writes across 1 files (.gitmodules) | 3 reads | ~904 tok |
+> Consolidated session (3 actions)
 
 ## Session: 2026-04-26 14:17
-
-| Time | Action | File(s) | Outcome | ~Tokens |
-|------|--------|---------|---------|--------|
-| 14:18 | Edited .gitignore | 1→2 lines | ~8 |
-| 14:18 | Session end: 1 writes across 1 files (.gitignore) | 1 reads | ~191 tok |
-| 14:18 | Session end: 1 writes across 1 files (.gitignore) | 1 reads | ~191 tok |
-| 14:23 | Session end: 1 writes across 1 files (.gitignore) | 1 reads | ~191 tok |
+> Consolidated session (4 actions)
 
 ## Session: 2026-04-26 14:25
-
-| Time | Action | File(s) | Outcome | ~Tokens |
-|------|--------|---------|---------|--------|
-| 14:25 | Edited helm-charts/.gitignore | 3→4 lines | ~12 |
-| 14:25 | Session end: 1 writes across 1 files (.gitignore) | 1 reads | ~13 tok |
-| 14:26 | Edited .gitignore | 2→3 lines | ~15 |
-| 14:26 | Session end: 2 writes across 1 files (.gitignore) | 3 reads | ~445 tok |
-| 14:26 | Created .planning/todos/pending/2026-04-26-secure-dynamo-values-yaml-secrets.md | — | ~614 |
-| 14:27 | Edited .planning/STATE.md | 3→4 lines | ~98 |
-| 14:27 | Session end: 4 writes across 3 files (.gitignore, 2026-04-26-secure-dynamo-values-yaml-secrets.md, STATE.md) | 4 reads | ~5224 tok |
+> Consolidated session (7 actions)
 
 ## Session: 2026-04-26 14:28
-
-| Time | Action | File(s) | Outcome | ~Tokens |
-|------|--------|---------|---------|--------|
+> Consolidated session (0 actions)
 
 ## Session: 2026-04-26 14:28
-
-| Time | Action | File(s) | Outcome | ~Tokens |
-|------|--------|---------|---------|--------|
+> Consolidated session (0 actions)
 
 ## Session: 2026-04-26 14:52
-
-| Time | Action | File(s) | Outcome | ~Tokens |
-|------|--------|---------|---------|--------|
-| 14:54 | Edited mint-ensemble-manager/src/classes/graphql/queries/fragments/model-info.graphql | 8→9 lines | ~40 |
-| 14:54 | Edited mint-ensemble-manager/src/classes/graphql/queries/model/get-modelcatalog-configuration.graphql | 8→9 lines | ~33 |
+> Consolidated session (2 actions)
 
 ## Session: 2026-04-26 19:00
-
-| Time | Action | File(s) | Outcome | ~Tokens |
-|------|--------|---------|---------|--------|
-| 19:00 | Fix tapis exec error "Output file missing position" — added `position` to outputs.output GraphQL selections | model-info.graphql, get-modelcatalog-configuration.graphql | build passes | ~6k |
-| 14:57 | Edited mint-ensemble-manager/src/api/api-v1/paths/executionEngines/tapis.ts | modified catch() | ~138 |
-| 14:58 | Edited mint-ensemble-manager/src/api/api-v1/paths/executionEngines/tapis.ts | 4→5 lines | ~74 |
-| 19:05 | Add console.error to tapis route catch block (was silent on errors) | api-v1/paths/executionEngines/tapis.ts | build clean | ~3k |
-| 14:59 | Session end: 4 writes across 3 files (model-info.graphql, get-modelcatalog-configuration.graphql, tapis.ts) | 6 reads | ~8606 tok |
-| 15:00 | Session end: 4 writes across 3 files (model-info.graphql, get-modelcatalog-configuration.graphql, tapis.ts) | 6 reads | ~9026 tok |
-| 15:08 | Session end: 4 writes across 3 files (model-info.graphql, get-modelcatalog-configuration.graphql, tapis.ts) | 6 reads | ~9026 tok |
+> Consolidated session (7 actions)
 
 ## Session: 2026-04-26 15:09
-
-| Time | Action | File(s) | Outcome | ~Tokens |
-|------|--------|---------|---------|--------|
-| 15:14 | Edited mint-ensemble-manager/src/classes/tapis/adapters/TapisJobSubscriptionService.ts | added 1 import(s) | ~84 |
-| 15:14 | Edited mint-ensemble-manager/src/classes/tapis/adapters/TapisJobSubscriptionService.ts | added error handling | ~200 |
-| 15:14 | Edited mint-ensemble-manager/src/classes/tapis/adapters/TapisExecutionService.ts | added error handling | ~192 |
-| 19:15 | tapis exec subscribe 500 — wrap subscribe in errorDecoder + boundary logs | mint-ensemble-manager/src/classes/tapis/adapters/{TapisJobSubscriptionService.ts,TapisExecutionService.ts} | build green, 6/6 tests pass; ready to expose Tapis subscribe error body | ~9k |
-| 15:16 | Session end: 3 writes across 2 files (TapisJobSubscriptionService.ts, TapisExecutionService.ts) | 9 reads | ~7679 tok |
-| 15:17 | Session end: 3 writes across 2 files (TapisJobSubscriptionService.ts, TapisExecutionService.ts) | 9 reads | ~7679 tok |
+> Consolidated session (6 actions)
 
 ## Session: 2026-04-26 15:18
-
-| Time | Action | File(s) | Outcome | ~Tokens |
-|------|--------|---------|---------|--------|
+> Consolidated session (0 actions)
 
 ## Session: 2026-04-26 15:18
-
-| Time | Action | File(s) | Outcome | ~Tokens |
-|------|--------|---------|---------|--------|
-| 15:24 | Created docs/debug-tapis-execution.md | — | ~1118 |
-| 15:24 | Session end: 1 writes across 1 files (debug-tapis-execution.md) | 7 reads | ~7667 tok |
-| 15:25 | Edited mint-ensemble-manager/src/classes/graphql/queries/execution/handle-failed-connection-ensemble.graphql | modified delete_thread_model_execution_summary() | ~56 |
-| 15:27 | Session end: 2 writes across 2 files (debug-tapis-execution.md, handle-failed-connection-ensemble.graphql) | 7 reads | ~7869 tok |
+> Consolidated session (4 actions)
 
 ## Session: 2026-04-26 15:28
-
-| Time | Action | File(s) | Outcome | ~Tokens |
-|------|--------|---------|---------|--------|
-| 15:31 | Created mint-ensemble-manager/src/classes/tapis/adapters/__tests__/TapisJobSubscriptionService.test.ts | — | ~566 |
-| 15:32 | Edited mint-ensemble-manager/src/classes/tapis/adapters/TapisJobSubscriptionService.ts | added optional chaining | ~99 |
-| 15:33 | Edited mint-ensemble-manager/src/classes/mint/mint-types.ts | expanded (+7 lines) | ~156 |
-| 15:33 | Edited helm-charts/charts/mint/templates/ensemble-manager-config.yaml | 5→8 lines | ~122 |
-| 15:33 | Edited helm-charts/dynamo-values.yaml | expanded (+6 lines) | ~149 |
-| 15:33 | Edited mint-ensemble-manager/src/config/config.json | 1→2 lines | ~26 |
+> Consolidated session (6 actions)
 
 ## Session: 2026-04-26 15:37
-
-| Time | Action | File(s) | Outcome | ~Tokens |
-|------|--------|---------|---------|--------|
+> Consolidated session (0 actions)
 
 ## Session: 2026-04-26 15:37
-
-| Time | Action | File(s) | Outcome | ~Tokens |
-|------|--------|---------|---------|--------|
+> Consolidated session (0 actions)
 
 ## Session: 2026-04-26 15:38
-
-| Time | Action | File(s) | Outcome | ~Tokens |
-|------|--------|---------|---------|--------|
-
-| 15:42 | bug-012: Tapis subscribe rejected ensemble-manager.mint.local webhook URL (NTFLIB_DLVRY_ADDR_NOT_URL); added tapis_webhook_base_url override + helm wiring + tests + dev value pointing at webhook.site | TapisJobSubscriptionService.ts, mint-types.ts, TapisJobSubscriptionService.test.ts, ensemble-manager-config.yaml, dynamo-values.yaml, config.json | build green, 10/10 tapis tests pass | ~9k |
-| 15:43 | Created ../../../../tmp/q.json | — | ~111 |
-| 15:46 | Created ../../../../tmp/q.json | — | ~62 |
-| 15:47 | Created ../../../../tmp/q.json | — | ~100 |
-| 15:51 | Session end: 3 writes across 1 files (q.json) | 9 reads | ~6742 tok |
-| 15:52 | Created ../../../../tmp/q.json | — | ~271 |
-| 15:52 | Session end: 4 writes across 1 files (q.json) | 9 reads | ~7013 tok |
-| 15:53 | Created ../../../../tmp/q.json | — | ~64 |
-| 15:53 | Session end: 5 writes across 1 files (q.json) | 9 reads | ~7077 tok |
-| 15:55 | Created ../../../../tmp/q.json | — | ~75 |
-| 15:55 | Created ../../../../tmp/q.json | — | ~50 |
-| 15:59 | Session end: 7 writes across 1 files (q.json) | 9 reads | ~7202 tok |
-| 16:00 | Session end: 7 writes across 1 files (q.json) | 9 reads | ~7202 tok |
-| 16:04 | Edited docs/debug-tapis-execution.md | expanded (+16 lines) | ~651 |
-| 16:04 | Edited docs/debug-tapis-execution.md | modified hq() | ~366 |
-| 16:05 | Edited docs/debug-tapis-execution.md | modified mutation() | ~763 |
-| 16:05 | Session end: 10 writes across 2 files (q.json, debug-tapis-execution.md) | 9 reads | ~9109 tok |
+> Consolidated session (17 actions)
 
 ## Session: 2026-04-26 16:08
-
-| Time | Action | File(s) | Outcome | ~Tokens |
-|------|--------|---------|---------|--------|
-| 16:14 | Edited .planning/ROADMAP.md | expanded (+55 lines) | ~1259 |
+> Consolidated session (1 actions)
 
 ## Session: 2026-04-26 16:16
-
-| Time | Action | File(s) | Outcome | ~Tokens |
-|------|--------|---------|---------|--------|
-| 16:17 | Edited .planning/STATE.md | 1→2 lines | ~51 |
-| 16:17 | Edited .planning/STATE.md | 2→2 lines | ~8 |
+> Consolidated session (2 actions)
 
 ## Session: 2026-04-26 16:17
-
-| Time | Action | File(s) | Outcome | ~Tokens |
-|------|--------|---------|---------|--------|
-| 16:30 | Added Phase 11 (simplify ensemble manager + UI, kill thread_model_execution junction) | .planning/ROADMAP.md, .planning/STATE.md, .planning/phases/11-simplify-ensemble-manager-and-ui-execution-model-kill-thread/ | Phase entry inserted, dir created, not planned | ~3k |
+> Consolidated session (1 actions)
 
 ## Session: 2026-04-26 16:23
-
-| Time | Action | File(s) | Outcome | ~Tokens |
-|------|--------|---------|---------|--------|
-| 16:25 | Created .planning/phases/11-simplify-ensemble-manager-and-ui-execution-model-kill-thread/11-CONTEXT.md | — | ~5127 |
-| 16:26 | Created .planning/phases/11-simplify-ensemble-manager-and-ui-execution-model-kill-thread/11-DISCUSSION-LOG.md | — | ~2035 |
-| 16:26 | discuss-phase 11: junction kill + idempotent submission decisions captured | 11-CONTEXT.md, 11-DISCUSSION-LOG.md | 7 areas locked, ready for plan-phase | ~12k |
-| 16:26 | Session end: 2 writes across 2 files (11-CONTEXT.md, 11-DISCUSSION-LOG.md) | 1 reads | ~7673 tok |
+> Consolidated session (4 actions)
 
 ## Session: 2026-04-26 16:28
-
-| Time | Action | File(s) | Outcome | ~Tokens |
-|------|--------|---------|---------|--------|
-| 16:31 | Created docs/migration-production.md | — | ~1718 |
-| 16:31 | Session end: 1 writes across 1 files (migration-production.md) | 2 reads | ~1840 tok |
-| 16:33 | Session end: 1 writes across 1 files (migration-production.md) | 4 reads | ~6646 tok |
-| 16:33 | Edited docs/migration-testing.md | 2→6 lines | ~90 |
-| 16:33 | Edited docs/migration-testing.md | expanded (+12 lines) | ~137 |
-| 16:33 | Session end: 3 writes across 2 files (migration-production.md, migration-testing.md) | 4 reads | ~6890 tok |
-| 16:33 | Session end: 3 writes across 2 files (migration-production.md, migration-testing.md) | 4 reads | ~6890 tok |
-| 16:38 | Created .planning/phases/11-simplify-ensemble-manager-and-ui-execution-model-kill-thread/11-UI-SPEC.md | — | ~3781 |
-| 17:43 | Edited .planning/phases/11-simplify-ensemble-manager-and-ui-execution-model-kill-thread/11-UI-SPEC.md | 8→9 lines | ~50 |
-| 17:43 | Edited .planning/phases/11-simplify-ensemble-manager-and-ui-execution-model-kill-thread/11-UI-SPEC.md | 6→6 lines | ~117 |
-| 17:43 | Edited .planning/phases/11-simplify-ensemble-manager-and-ui-execution-model-kill-thread/11-UI-SPEC.md | weight() → phase() | ~183 |
-| 17:44 | Edited .planning/phases/11-simplify-ensemble-manager-and-ui-execution-model-kill-thread/11-UI-SPEC.md | 6→7 lines | ~142 |
-| 17:44 | Session end: 8 writes across 3 files (migration-production.md, migration-testing.md, 11-UI-SPEC.md) | 12 reads | ~16986 tok |
+> Consolidated session (13 actions)
 
 ## Session: 2026-04-26 18:17
-
-| Time | Action | File(s) | Outcome | ~Tokens |
-|------|--------|---------|---------|--------|
+> Consolidated session (0 actions)
 
 ## Session: 2026-04-26 18:27
-
-| Time | Action | File(s) | Outcome | ~Tokens |
-|------|--------|---------|---------|--------|
+> Consolidated session (0 actions)
 
 ## Session: 2026-04-26 18:30
-
-| Time | Action | File(s) | Outcome | ~Tokens |
-|------|--------|---------|---------|--------|
+> Consolidated session (0 actions)
 
 ## Session: 2026-04-26 18:30
-
-| Time | Action | File(s) | Outcome | ~Tokens |
-|------|--------|---------|---------|--------|
-| 18:30 | Created scripts/test-migration-local.sh | — | ~1498 |
-| 18:30 | Session end: 1 writes across 1 files (test-migration-local.sh) | 0 reads | ~1605 tok |
-| 18:31 | Session end: 1 writes across 1 files (test-migration-local.sh) | 7 reads | ~20687 tok |
+> Consolidated session (3 actions)
 
 ## Session: 2026-04-26 18:34
-
-| Time | Action | File(s) | Outcome | ~Tokens |
-|------|--------|---------|---------|--------|
-| 18:35 | Edited ../../.ssh/config | 6→9 lines | ~65 |
-| 18:35 | Edited ../../.ssh/config | 5→8 lines | ~55 |
-| 18:35 | Session end: 2 writes across 1 files (config) | 1 reads | ~128 tok |
-| 18:37 | Session end: 2 writes across 1 files (config) | 1 reads | ~128 tok |
-| 18:38 | Created .planning/phases/11-simplify-ensemble-manager-and-ui-execution-model-kill-thread/11-RESEARCH.md | — | ~13387 |
+> Consolidated session (5 actions)
 
 ## Session: 2026-04-26 18:40
-
-| Time | Action | File(s) | Outcome | ~Tokens |
-|------|--------|---------|---------|--------|
-| 18:42 | Edited docs/migration-production.md | expanded (+12 lines) | ~270 |
+> Consolidated session (1 actions)
 
 ## Session: 2026-04-26 18:42
-
-| Time | Action | File(s) | Outcome | ~Tokens |
-|------|--------|---------|---------|--------|
-| 18:44 | Edited docs/migration-production.md | 5 → 6 | ~15 |
-| 18:44 | Edited docs/migration-production.md | 3→3 lines | ~71 |
-| 18:44 | Edited docs/migration-production.md | 7 → 8 | ~5 |
-| 18:44 | Edited docs/migration-production.md | 8 → 9 | ~7 |
-| 18:44 | Edited docs/migration-production.md | inline fix | ~13 |
-| 18:44 | Edited docs/migration-production.md | inline fix | ~8 |
-| 18:44 | Added Step 4 fetch-trig (wget snapshot), renumbered Steps 5–9 | docs/migration-production.md | done | ~50 |
-| 18:45 | Session end: 6 writes across 1 files (migration-production.md) | 1 reads | ~127 tok |
-| 18:46 | Session end: 6 writes across 1 files (migration-production.md) | 1 reads | ~127 tok |
-| 18:49 | Session end: 6 writes across 1 files (migration-production.md) | 1 reads | ~127 tok |
-| 18:38 | Phase 11 research: junction drop, view DDL, callsite inventory (28 files), hash-as-UUID finding | .planning/phases/11-.../11-RESEARCH.md | completed | ~8000 tok |
-| 18:50 | Session end: 6 writes across 1 files (migration-production.md) | 2 reads | ~127 tok |
-| 18:51 | Created scripts/run-migration-prod.sh | — | ~2579 |
-| 18:53 | Wrote prod migration runner with per-step pauses | scripts/run-migration-prod.sh | done | ~250 |
-| 18:54 | Session end: 7 writes across 2 files (migration-production.md, run-migration-prod.sh) | 3 reads | ~4388 tok |
-| 18:54 | Created .planning/phases/11-simplify-ensemble-manager-and-ui-execution-model-kill-thread/11-VALIDATION.md | — | ~915 |
-| 18:55 | Edited docs/migration-production.md | expanded (+21 lines) | ~323 |
-| 18:56 | Linked runner script as recommended path | docs/migration-production.md | done | ~30 |
-| 18:56 | Session end: 9 writes across 3 files (migration-production.md, run-migration-prod.sh, 11-VALIDATION.md) | 4 reads | ~7428 tok |
-| 18:56 | Session end: 9 writes across 3 files (migration-production.md, run-migration-prod.sh, 11-VALIDATION.md) | 4 reads | ~7428 tok |
-| 18:57 | Session end: 9 writes across 3 files (migration-production.md, run-migration-prod.sh, 11-VALIDATION.md) | 4 reads | ~7428 tok |
+> Consolidated session (21 actions)
 
 ## Session: 2026-04-26 18:59
-
-| Time | Action | File(s) | Outcome | ~Tokens |
-|------|--------|---------|---------|--------|
-| 19:00 | Edited scripts/run-migration-prod.sh | expanded (+6 lines) | ~180 |
-| 19:00 | Edited etl/transform.py | expanded (+24 lines) | ~437 |
-| 19:00 | Edited scripts/run-migration-prod.sh | expanded (+7 lines) | ~293 |
-| 19:01 | Edited scripts/run-migration-prod.sh | expanded (+22 lines) | ~282 |
-| 19:01 | Edited docs/migration-production.md | zero() → recipe() | ~202 |
-| 19:01 | Edited docs/migration-production.md | 4→4 lines | ~53 |
-| 19:01 | Pin TriG to v2 + md5 validate (script + doc) | scripts/run-migration-prod.sh, docs/migration-production.md | done | ~80 |
-| 19:02 | Session end: 6 writes across 3 files (run-migration-prod.sh, transform.py, migration-production.md) | 5 reads | ~4098 tok |
-| 19:02 | Session end: 6 writes across 3 files (run-migration-prod.sh, transform.py, migration-production.md) | 5 reads | ~4098 tok |
-| 19:02 | Session end: 6 writes across 3 files (run-migration-prod.sh, transform.py, migration-production.md) | 5 reads | ~4098 tok |
-| 19:04 | Session end: 6 writes across 3 files (run-migration-prod.sh, transform.py, migration-production.md) | 8 reads | ~25092 tok |
-| 19:05 | Edited docs/migration-production.md | modified script() | ~620 |
-| 19:07 | Documented "How to run" with v2 trig + md5 example | docs/migration-production.md | done | ~30 |
-| 19:07 | Session end: 7 writes across 3 files (run-migration-prod.sh, transform.py, migration-production.md) | 23 reads | ~36996 tok |
-| 19:07 | Session end: 7 writes across 3 files (run-migration-prod.sh, transform.py, migration-production.md) | 23 reads | ~36996 tok |
-| 19:08 | Session end: 7 writes across 3 files (run-migration-prod.sh, transform.py, migration-production.md) | 23 reads | ~36996 tok |
+> Consolidated session (16 actions)
 
 ## Session: 2026-04-26 19:10
-
-| Time | Action | File(s) | Outcome | ~Tokens |
-|------|--------|---------|---------|--------|
+> Consolidated session (0 actions)
 
 ## Session: 2026-04-26 19:10
-
-| Time | Action | File(s) | Outcome | ~Tokens |
-|------|--------|---------|---------|--------|
+> Consolidated session (0 actions)
 
 ## Session: 2026-04-26 19:14
-
-| Time | Action | File(s) | Outcome | ~Tokens |
-|------|--------|---------|---------|--------|
-| 19:18 | Edited helm-charts/charts/mint/Chart.yaml | inline fix | ~6 |
-| 19:18 | Session end: 1 writes across 1 files (Chart.yaml) | 2 reads | ~6 tok |
-| 19:20 | Session end: 1 writes across 1 files (Chart.yaml) | 2 reads | ~6 tok |
-| 19:20 | Session end: 1 writes across 1 files (Chart.yaml) | 2 reads | ~6 tok |
-| 19:21 | Session end: 1 writes across 1 files (Chart.yaml) | 2 reads | ~6 tok |
-| 19:22 | Edited ../github.com/In-For-Disaster-Analytics/dynamo/shared/Chart.yaml | 6→6 lines | ~40 |
-| 19:23 | Session end: 2 writes across 1 files (Chart.yaml) | 3 reads | ~46 tok |
-| 19:23 | Created .planning/phases/11-simplify-ensemble-manager-and-ui-execution-model-kill-thread/11-PATTERNS.md | — | ~10806 |
-| 19:25 | Session end: 3 writes across 2 files (Chart.yaml, 11-PATTERNS.md) | 8 reads | ~42747 tok |
-| 19:25 | Edited ../github.com/In-For-Disaster-Analytics/dynamo/shared/values.yaml | removed 18 lines | ~14 |
-| 19:25 | Edited ../github.com/In-For-Disaster-Analytics/dynamo/shared/values.yaml | 5→6 lines | ~53 |
-| 19:26 | Session end: 5 writes across 3 files (Chart.yaml, 11-PATTERNS.md, values.yaml) | 11 reads | ~50078 tok |
-| 19:27 | Session end: 5 writes across 3 files (Chart.yaml, 11-PATTERNS.md, values.yaml) | 11 reads | ~50078 tok |
-| 19:29 | Edited ../github.com/In-For-Disaster-Analytics/dynamo/shared/values.yaml | 4→6 lines | ~47 |
-| 19:29 | Edited ../github.com/In-For-Disaster-Analytics/dynamo/shared/values.yaml | 3→5 lines | ~36 |
-| 19:29 | Session end: 7 writes across 3 files (Chart.yaml, 11-PATTERNS.md, values.yaml) | 11 reads | ~50161 tok |
-| 19:30 | Edited ../github.com/In-For-Disaster-Analytics/dynamo/shared/values.yaml | inline fix | ~16 |
-| 19:30 | Edited ../github.com/In-For-Disaster-Analytics/dynamo/shared/values.yaml | inline fix | ~16 |
-| 19:30 | Session end: 9 writes across 3 files (Chart.yaml, 11-PATTERNS.md, values.yaml) | 11 reads | ~50193 tok |
-| 19:31 | Session end: 9 writes across 3 files (Chart.yaml, 11-PATTERNS.md, values.yaml) | 11 reads | ~50193 tok |
-| 19:32 | Session end: 9 writes across 3 files (Chart.yaml, 11-PATTERNS.md, values.yaml) | 11 reads | ~50193 tok |
+> Consolidated session (21 actions)
 
 ## Session: 2026-04-26 19:33
-
-| Time | Action | File(s) | Outcome | ~Tokens |
-|------|--------|---------|---------|--------|
+> Consolidated session (0 actions)
 
 ## Session: 2026-04-26 19:35
-
-| Time | Action | File(s) | Outcome | ~Tokens |
-|------|--------|---------|---------|--------|
+> Consolidated session (0 actions)
 
 ## Session: 2026-04-26 19:37
-
-| Time | Action | File(s) | Outcome | ~Tokens |
-|------|--------|---------|---------|--------|
-| 19:42 | Edited .gitmodules | inline fix | ~19 |
-| 19:42 | Session end: 1 writes across 1 files (.gitmodules) | 1 reads | ~367 tok |
-| 19:42 | Session end: 1 writes across 1 files (.gitmodules) | 1 reads | ~367 tok |
-| 19:43 | Session end: 1 writes across 1 files (.gitmodules) | 1 reads | ~367 tok |
-| 19:43 | Session end: 1 writes across 1 files (.gitmodules) | 1 reads | ~367 tok |
+> Consolidated session (5 actions)
 
 ## Session: 2026-04-26 19:58
-
-| Time | Action | File(s) | Outcome | ~Tokens |
-|------|--------|---------|---------|--------|
+> Consolidated session (0 actions)
 
 ## Session: 2026-04-26 19:58
-
-| Time | Action | File(s) | Outcome | ~Tokens |
-|------|--------|---------|---------|--------|
-| 20:03 | Edited helm-charts/charts/mint/templates/model-catalog.yaml | 6→5 lines | ~57 |
-| 20:03 | Edited helm-charts/charts/mint/Chart.yaml | inline fix | ~6 |
-| 20:04 | Session end: 2 writes across 2 files (model-catalog.yaml, Chart.yaml) | 2 reads | ~63 tok |
-| 20:04 | Session end: 2 writes across 2 files (model-catalog.yaml, Chart.yaml) | 2 reads | ~63 tok |
-| 20:05 | Session end: 2 writes across 2 files (model-catalog.yaml, Chart.yaml) | 2 reads | ~63 tok |
-| 20:06 | Edited ../github.com/In-For-Disaster-Analytics/dynamo/shared/Chart.yaml | 6→6 lines | ~40 |
-| 20:06 | Session end: 3 writes across 2 files (model-catalog.yaml, Chart.yaml) | 2 reads | ~103 tok |
-| 20:09 | Edited ../github.com/In-For-Disaster-Analytics/dynamo/shared/values.yaml | removed 19 lines | ~23 |
-| 20:09 | Session end: 4 writes across 3 files (model-catalog.yaml, Chart.yaml, values.yaml) | 3 reads | ~126 tok |
-| 20:10 | Session end: 4 writes across 3 files (model-catalog.yaml, Chart.yaml, values.yaml) | 3 reads | ~126 tok |
-| 20:11 | Session end: 4 writes across 3 files (model-catalog.yaml, Chart.yaml, values.yaml) | 3 reads | ~126 tok |
-| 20:11 | Edited ../github.com/In-For-Disaster-Analytics/dynamo/shared/values.yaml | removed 19 lines | ~23 |
-| 20:12 | Session end: 5 writes across 3 files (model-catalog.yaml, Chart.yaml, values.yaml) | 3 reads | ~149 tok |
-| 20:13 | Session end: 5 writes across 3 files (model-catalog.yaml, Chart.yaml, values.yaml) | 3 reads | ~149 tok |
-| 20:15 | Session end: 5 writes across 3 files (model-catalog.yaml, Chart.yaml, values.yaml) | 3 reads | ~149 tok |
-| 20:16 | Session end: 5 writes across 3 files (model-catalog.yaml, Chart.yaml, values.yaml) | 3 reads | ~149 tok |
-| 20:16 | Session end: 5 writes across 3 files (model-catalog.yaml, Chart.yaml, values.yaml) | 3 reads | ~149 tok |
-| 20:17 | Session end: 5 writes across 3 files (model-catalog.yaml, Chart.yaml, values.yaml) | 3 reads | ~149 tok |
-| 20:21 | Session end: 5 writes across 3 files (model-catalog.yaml, Chart.yaml, values.yaml) | 3 reads | ~149 tok |
-| 20:23 | Session end: 5 writes across 3 files (model-catalog.yaml, Chart.yaml, values.yaml) | 3 reads | ~149 tok |
-| 20:30 | Session end: 5 writes across 3 files (model-catalog.yaml, Chart.yaml, values.yaml) | 3 reads | ~149 tok |
-| 20:31 | Session end: 5 writes across 3 files (model-catalog.yaml, Chart.yaml, values.yaml) | 3 reads | ~149 tok |
-| 20:33 | Session end: 5 writes across 3 files (model-catalog.yaml, Chart.yaml, values.yaml) | 4 reads | ~1647 tok |
-| 20:36 | Session end: 5 writes across 3 files (model-catalog.yaml, Chart.yaml, values.yaml) | 4 reads | ~1647 tok |
-| 20:37 | Edited scripts/test-migration-local.sh | inline fix | ~26 |
-| 20:37 | Edited scripts/test-migration-local.sh | inline fix | ~26 |
-| 20:37 | Session end: 7 writes across 4 files (model-catalog.yaml, Chart.yaml, values.yaml, test-migration-local.sh) | 4 reads | ~1701 tok |
-| 20:38 | Session end: 7 writes across 4 files (model-catalog.yaml, Chart.yaml, values.yaml, test-migration-local.sh) | 4 reads | ~1701 tok |
-| 20:39 | Session end: 7 writes across 4 files (model-catalog.yaml, Chart.yaml, values.yaml, test-migration-local.sh) | 4 reads | ~1701 tok |
+> Consolidated session (29 actions)
 
 ## Session: 2026-04-27 20:50
 
@@ -786,3 +479,146 @@
 | 22:17 | Session end: 7 writes across 4 files (.continue-here.md, docker-publish.yml, index.ts, dynamo-values.yaml) | 3 reads | ~4586 tok |
 | 22:19 | Session end: 7 writes across 4 files (.continue-here.md, docker-publish.yml, index.ts, dynamo-values.yaml) | 3 reads | ~4586 tok |
 | 22:22 | Session end: 7 writes across 4 files (.continue-here.md, docker-publish.yml, index.ts, dynamo-values.yaml) | 3 reads | ~4586 tok |
+
+## Session: 2026-05-01 16:40
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 16:49 | Edited README.md | expanded (+13 lines) | ~784 |
+| $(date +%H:%M) | added submodule status badges to README | README.md | done | ~600 |
+| 16:50 | Session end: 1 writes across 1 files (README.md) | 1 reads | ~2150 tok |
+
+## Session: 2026-05-01 16:50
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+
+## Session: 2026-05-01 16:58
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+
+## Session: 2026-05-01 17:01
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+
+## Session: 2026-05-01 18:07
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+
+## Session: 2026-05-01 18:19
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 18:22 | Edited mint-ensemble-manager/src/classes/tapis/helpers.ts | added optional chaining | ~153 |
+| 18:23 | Session end: 1 writes across 1 files (helpers.ts) | 4 reads | ~6622 tok |
+| 18:24 | Edited mint-ensemble-manager/src/classes/tapis/adapters/TapisExecutionService.ts | 4→5 lines | ~70 |
+| 18:26 | Edited mint-ensemble-manager/src/classes/tapis/tests/helpers.test.ts | expanded (+32 lines) | ~668 |
+| 18:30 | Created PR #115 fix/tapis-empty-binding-crash on mint-ensemble-manager | helpers.ts + TapisExecutionService.ts + helpers.test.ts | tests 17/17, build green | ~80 |
+| 18:36 | Session end: 3 writes across 3 files (helpers.ts, TapisExecutionService.ts, helpers.test.ts) | 5 reads | ~7367 tok |
+
+## Session: 2026-05-01 18:44
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 18:49 | Edited mint-ensemble-manager/src/classes/tapis/adapters/TapisExecutionService.ts | inline fix | ~25 |
+| 18:49 | Edited mint-ensemble-manager/src/classes/tapis/adapters/TapisExecutionService.ts | inline fix | ~23 |
+| 18:49 | Session end: 2 writes across 1 files (TapisExecutionService.ts) | 2 reads | ~7962 tok |
+| 18:52 | Session end: 2 writes across 1 files (TapisExecutionService.ts) | 4 reads | ~7962 tok |
+
+## Session: 2026-05-01 18:59
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 22:50 | Diagnosed "Component input not found for Dataset File" — name drift Tapis fileInputs[].name vs model.input_files[].name | TapisJobService.ts:110 | workaround: renamed in Hasura; logged bug-065 + cerebrum DNR | ~5k |
+| 19:30 | Edited model-catalog-api/openapi.yaml | expanded (+70 lines) | ~627 |
+| 19:31 | Edited model-catalog-api/openapi.yaml | expanded (+67 lines) | ~482 |
+| 19:31 | Edited model-catalog-api/src/custom-handlers.ts | added error handling | ~1217 |
+| 19:33 | Edited model-catalog-api/src/custom-handlers.ts | modified extractBearerToken() | ~867 |
+| 19:33 | Edited model-catalog-api/src/custom-handlers.ts | added 1 import(s) | ~67 |
+| 19:33 | Edited model-catalog-api/src/custom-handlers.ts | modified extractBearerToken() | ~121 |
+| 19:38 | Edited model-catalog-api/src/custom-handlers.ts | modified buildAppsApi() | ~90 |
+| 19:40 | Migrated tapis endpoints to model-catalog-api (v2): /tapis/{tenant}/apps + /{id}/{ver} via @tapis/tapis-typescript SDK; created branch feat/support-tapis-app | openapi.yaml, src/custom-handlers.ts, package.json | tsc passes; smoke-tested 401 paths | ~3k |
+| 19:39 | Session end: 7 writes across 2 files (openapi.yaml, custom-handlers.ts) | 15 reads | ~160894 tok |
+| 19:40 | Session end: 7 writes across 2 files (openapi.yaml, custom-handlers.ts) | 15 reads | ~160894 tok |
+
+## Session: 2026-05-01 19:56
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 20:11 | Edited ui/src/screens/modeling/thread/mint-runs.ts | added nullish coalescing | ~235 |
+| 20:11 | mint-runs render throw on null pvalue.match — stuck spinner | ui/src/screens/modeling/thread/mint-runs.ts | fixed (quick-260501-spinner-null-match) | ~5k |
+| 20:11 | Session end: 1 writes across 1 files (mint-runs.ts) | 6 reads | ~235 tok |
+| 20:13 | Session end: 1 writes across 1 files (mint-runs.ts) | 6 reads | ~235 tok |
+| 20:14 | Session end: 1 writes across 1 files (mint-runs.ts) | 6 reads | ~235 tok |
+| 20:15 | Session end: 1 writes across 1 files (mint-runs.ts) | 6 reads | ~235 tok |
+| 20:15 | Session end: 1 writes across 1 files (mint-runs.ts) | 6 reads | ~235 tok |
+| 20:16 | Session end: 1 writes across 1 files (mint-runs.ts) | 6 reads | ~235 tok |
+| 20:19 | Session end: 1 writes across 1 files (mint-runs.ts) | 6 reads | ~235 tok |
+
+## Session: 2026-05-02 20:48
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+
+## Session: 2026-05-02 20:53
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 20:56 | Created ../../../../tmp/pr2-body.md | — | ~672 |
+| 21:00 | Edited model-catalog-api/src/mappers/resource-registry.ts | expanded (+8 lines) | ~211 |
+| 21:00 | Edited model-catalog-api/src/mappers/resource-registry.ts | 17→18 lines | ~136 |
+| 21:01 | Edited model-catalog-api/src/mappers/resource-registry.ts | 5→6 lines | ~55 |
+| 21:01 | Edited model-catalog-api/src/mappers/resource-registry.ts | 5→6 lines | ~57 |
+| 21:01 | Edited model-catalog-api/src/mappers/resource-registry.ts | 5→6 lines | ~48 |
+| 21:06 | Edited model-catalog-api/src/service.ts | added optional chaining | ~1786 |
+| 21:07 | Edited model-catalog-api/src/service.ts | added 6 condition(s) | ~937 |
+| 21:24 | Edited model-catalog-api/src/__tests__/integration.test.ts | expanded (+137 lines) | ~1628 |
+| 21:30 | Fix FK-on-child relationships (softwares.hasVersion, sv.hasConfiguration, mc.hasSetup) | resource-registry.ts, service.ts, integration.test.ts | green; 186/186 tests pass | ~3000 |
+| 21:26 | Session end: 9 writes across 4 files (pr2-body.md, resource-registry.ts, service.ts, integration.test.ts) | 3 reads | ~18506 tok |
+| 21:27 | Session end: 9 writes across 4 files (pr2-body.md, resource-registry.ts, service.ts, integration.test.ts) | 3 reads | ~18506 tok |
+
+## Session: 2026-05-03 03:00
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+
+## Session: 2026-05-03 11:49
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+
+## Session: 2026-05-03 11:51
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+
+## Session: 2026-05-03 11:52
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 11:55 | Edited mint-ensemble-manager/src/classes/tapis/adapters/tests/fixtures/app.ts | expanded (+42 lines) | ~517 |
+| 11:55 | Edited mint-ensemble-manager/src/classes/tapis/adapters/tests/jobs.test.ts | 3→8 lines | ~71 |
+| 11:55 | Edited mint-ensemble-manager/src/classes/tapis/adapters/tests/jobs.test.ts | expanded (+33 lines) | ~336 |
+| 11:56 | Edited mint-ensemble-manager/src/classes/tapis/adapters/TapisJobService.ts | added 1 condition(s) | ~197 |
+| 15:57 | fix(ensemble-manager): skip FIXED inputs in TapisJobService | TapisJobService.ts, jobs.test.ts, fixtures/app.ts | 6/6 tests pass, 19/19 tapis suite pass | ~3000 |
+| 11:57 | Session end: 4 writes across 3 files (app.ts, jobs.test.ts, TapisJobService.ts) | 6 reads | ~1121 tok |
+| 12:01 | Edited dynamo/shared/values.yaml | 5→5 lines | ~34 |
+| 12:01 | Session end: 5 writes across 4 files (app.ts, jobs.test.ts, TapisJobService.ts, values.yaml) | 7 reads | ~1155 tok |
+| 16:04 | Session end: 5 writes across 4 files (app.ts, jobs.test.ts, TapisJobService.ts, values.yaml) | 7 reads | ~1155 tok |
+
+## Session: 2026-05-03 17:24
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 17:35 | Created .claude/skills/update-helm-image-tags/SKILL.md | — | ~603 |
+
+## Session: 2026-05-03 17:35
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 17:35 | Created .claude/skills/update-helm-image-tags/update.sh | — | ~655 |
+| 17:36 | Edited .claude/skills/update-helm-image-tags/update.sh | 2→4 lines | ~57 |
+| 17:36 | Session end: 2 writes across 1 files (update.sh) | 0 reads | ~763 tok |
