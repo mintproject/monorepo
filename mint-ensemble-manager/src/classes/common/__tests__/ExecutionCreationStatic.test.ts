@@ -286,6 +286,63 @@ describe("ExecutionCreation", () => {
             expect(inputIds).toContain("file2");
             expect(modelEnsemble.bindings["file2"].length).toBe(1);
         });
+
+        it("should skip optional input with no binding and no value", () => {
+            modelInputs.push({
+                id: "optional1",
+                name: "Optional Input",
+                position: 2,
+                type: "file",
+                variables: [],
+                is_optional: true
+            });
+
+            const inputIds = ExecutionCreation.processInputFiles(
+                modelInputs,
+                modelEnsemble,
+                thread
+            );
+            expect(inputIds).not.toContain("optional1");
+            expect(modelEnsemble.bindings["optional1"]).toBeUndefined();
+        });
+
+        it("should keep optional input that has a user-provided binding", () => {
+            modelInputs.push({
+                id: "optional1",
+                name: "Optional Input",
+                position: 2,
+                type: "file",
+                variables: [],
+                is_optional: true
+            });
+            modelEnsemble.bindings["optional1"] = ["datasetType2"];
+
+            const inputIds = ExecutionCreation.processInputFiles(
+                modelInputs,
+                modelEnsemble,
+                thread
+            );
+            expect(inputIds).toContain("optional1");
+            expect(modelEnsemble.bindings["optional1"].length).toBe(2);
+        });
+
+        it("should keep required input with no binding (preserve existing behavior)", () => {
+            modelInputs.push({
+                id: "required1",
+                name: "Required Input",
+                position: 2,
+                type: "file",
+                variables: []
+            });
+
+            const inputIds = ExecutionCreation.processInputFiles(
+                modelInputs,
+                modelEnsemble,
+                thread
+            );
+            expect(inputIds).toContain("required1");
+            expect(modelEnsemble.bindings["required1"]).toBeUndefined();
+        });
     });
 
     describe("processInputParameterCollection", () => {

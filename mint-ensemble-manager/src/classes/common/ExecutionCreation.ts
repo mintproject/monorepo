@@ -334,6 +334,14 @@ export class ExecutionCreation {
     ): string[] {
         const inputIds = [];
         modelInputFiles.forEach((io) => {
+            // Optional inputs without a user binding or fixed value contribute no
+            // values to the cartesian product — including their id would push an
+            // undefined slot into cartProd and crash. Downstream Tapis/localex
+            // adapters tolerate the missing key.
+            if (io.is_optional && !io.value && !threadModel.bindings[io.id]) {
+                return;
+            }
+
             inputIds.push(io.id);
 
             if (!io.value) {
