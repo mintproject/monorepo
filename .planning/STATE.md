@@ -4,8 +4,8 @@ milestone: v2.0
 milestone_name: milestone
 status: executing
 stopped_at: context exhaustion at 76% (2026-04-28)
-last_updated: "2026-04-28T23:51:30.174Z"
-last_activity: "2026-04-28 - Completed quick task 260427-vbh: ui docker-publish.yml SAFE_BRANCH sanitization"
+last_updated: "2026-05-03T23:54:58.515Z"
+last_activity: "2026-05-03 - Completed quick task 260503-rnt: Apply optional-input warning fix to mint-datasets.ts"
 progress:
   total_phases: 11
   completed_phases: 6
@@ -29,7 +29,7 @@ Phase: 12 (model-catalog-configuration-file-input-tapis-compatibility) — EXECU
 Plan: 5 of 5
 Milestone v2.0: COMPLETE (shipped 2026-03-15)
 Status: Ready to execute
-Last activity: 2026-04-28 - Completed quick task 260427-vbh: ui docker-publish.yml SAFE_BRANCH sanitization
+Last activity: 2026-05-03 - Completed quick task 260503-rnt: Apply optional-input warning fix to mint-datasets.ts
 
 Progress: [██████████] 98%
 
@@ -156,6 +156,7 @@ Recent decisions affecting current work:
 
 - [config] Centralize execution config in ensemble-manager, UI fetches via API — `.planning/todos/pending/2026-04-26-centralize-execution-config-in-ensemble-manager-ui-fetches-v.md`
 - [deployment] Secure dynamo-values.yaml secrets — avoid committing plaintext credentials — `.planning/todos/pending/2026-04-26-secure-dynamo-values-yaml-secrets.md`
+- [ui] Apply optional-input warning fix to mint-datasets.ts — `.planning/todos/pending/2026-05-03-mint-datasets-optional-input-warning.md`
 
 ### Blockers/Concerns
 
@@ -184,6 +185,7 @@ None — v2.0 milestone complete.
 | 260411-nis | Fix UI GraphQL fragments selecting dropped execution.model_id column | 2026-04-11 | 43e4b00 | Needs Review | [260411-nis-ui-has-outdated-query-looking-model-id-o](./quick/260411-nis-ui-has-outdated-query-looking-model-id-o/) |
 | 260426-fk5 | Fix Apollo field 'model' not found in type 'thread_model' in mint-ensemble-manager | 2026-04-26 | 7661979 | Complete | [260426-fk5-fix-apollo-field-model-not-found-in-type](./quick/260426-fk5-fix-apollo-field-model-not-found-in-type/) |
 | 260427-vbh | Modify ui docker-publish.yml to use docker/build-push-action with sanitized branch name | 2026-04-28 | b70cdb7 | Complete | [260427-vbh-modify-ui-github-workflows-docker-publis](./quick/260427-vbh-modify-ui-github-workflows-docker-publis/) |
+| 260503-rnt | Apply optional-input warning fix to mint-datasets.ts | 2026-05-03 | e59bc80 | Complete | [260503-rnt-apply-optional-input-warning-fix-to-mint](./quick/260503-rnt-apply-optional-input-warning-fix-to-mint/) |
 
 ## Session Continuity
 
