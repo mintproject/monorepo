@@ -386,33 +386,20 @@ describe('URI-encoded ID decoding', () => {
 })
 
 // ---------------------------------------------------------------------------
-// Test 9: Plain UUID ID lookup - service prepends ID_PREFIX when id lacks https://
+// Test 9: Plain ID rejected — strict URI mode (bug-086)
+// service.ts treats {id} as opaque; plain shortname returns 400.
 // ---------------------------------------------------------------------------
 describe('getById with plain ID (no URI prefix)', () => {
   beforeEach(() => { mockQuery.mockReset() })
 
-  it('prepends ID_PREFIX when id does not start with https://', async () => {
-    mockQuery.mockResolvedValueOnce({
-      data: {
-        modelcatalog_software_by_pk: {
-          id: 'https://w3id.org/okn/i/mint/1bade4cb-d924-4253-bfa9-4c02b461396a',
-          label: 'TestSW',
-          description: null, keywords: null, license: null, website: null,
-          date_created: null, date_published: null, has_documentation: null,
-          has_download_url: null, has_purpose: null, author_id: null, type: null,
-          author: null, versions: [], authors: [],
-        },
-      },
-    })
-
+  it('returns 400 when id does not start with https:// (strict URI mode)', async () => {
     const req = makeReq({ params: { id: '1bade4cb-d924-4253-bfa9-4c02b461396a' } })
     const reply = makeReply()
     await (CatalogService as any).softwares_id_get(req, reply)
 
-    expect(reply._status).toBe(200)
-    expect(mockQuery).toHaveBeenCalledOnce()
-    const callArgs = mockQuery.mock.calls[0][0]
-    expect(callArgs.variables.id).toBe('https://w3id.org/okn/i/mint/1bade4cb-d924-4253-bfa9-4c02b461396a')
+    expect(reply._status).toBe(400)
+    expect(mockQuery).not.toHaveBeenCalled()
+    expect((reply._body as any)?.error).toContain('full URL-encoded URI')
   })
 })
 
@@ -524,7 +511,7 @@ describe('PUT model with hasVersion sets software_id on child rows', () => {
     })
 
     const req = makeReq({
-      params: { id: 'MODEL-1' },
+      params: { id: encodeURIComponent('https://w3id.org/okn/i/mint/MODEL-1') },
       headers: { authorization: 'Bearer test' },
       body: {
         type: ['https://w3id.org/okn/o/sdm#Model'],
@@ -556,7 +543,7 @@ describe('PUT model with hasVersion sets software_id on child rows', () => {
     })
 
     const req = makeReq({
-      params: { id: 'MODEL-2' },
+      params: { id: encodeURIComponent('https://w3id.org/okn/i/mint/MODEL-2') },
       headers: { authorization: 'Bearer test' },
       body: {
         type: ['https://w3id.org/okn/o/sdm#Model'],
@@ -588,7 +575,7 @@ describe('PUT model with hasVersion sets software_id on child rows', () => {
     })
 
     const req = makeReq({
-      params: { id: 'V-1' },
+      params: { id: encodeURIComponent('https://w3id.org/okn/i/mint/V-1') },
       headers: { authorization: 'Bearer test' },
       body: {
         id: 'https://w3id.org/okn/i/mint/V-1',

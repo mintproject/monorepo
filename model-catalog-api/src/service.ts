@@ -140,7 +140,14 @@ class CatalogServiceImpl {
     }
 
     const id = decodeURIComponent(req.params.id)
-    const fullId = id.startsWith('https://') ? id : `${resourceConfig.idPrefix}${id}`
+    if (!id.startsWith('https://') && !id.startsWith('http://')) {
+      reply.code(400).send({
+        error: 'Resource ID must be a full URL-encoded URI',
+        hint: `Got "${id}". Pass URL-encoded full URI, e.g. /${resource}/${encodeURIComponent(resourceConfig.idPrefix + id)}`,
+      })
+      return
+    }
+    const fullId = id
     const fields = getFieldSelection(resourceConfig.hasuraTable!)
 
     const tableSuffix = resourceConfig.hasuraTable.replace('modelcatalog_', '')
@@ -311,7 +318,14 @@ class CatalogServiceImpl {
     }
 
     const id = decodeURIComponent(req.params.id)
-    const fullId = id.startsWith('https://') ? id : `${resourceConfig.idPrefix}${id}`
+    if (!id.startsWith('https://') && !id.startsWith('http://')) {
+      reply.code(400).send({
+        error: 'Resource ID must be a full URL-encoded URI',
+        hint: `Got "${id}". Pass URL-encoded full URI, e.g. /${resource}/${encodeURIComponent(resourceConfig.idPrefix + id)}`,
+      })
+      return
+    }
+    const fullId = id
     const body = req.body || {}
     const input = toHasuraInput(body as Record<string, unknown>, resourceConfig)
 
@@ -507,7 +521,14 @@ class CatalogServiceImpl {
     }
 
     const id = decodeURIComponent(req.params.id)
-    const fullId = id.startsWith('https://') ? id : `${resourceConfig.idPrefix}${id}`
+    if (!id.startsWith('https://') && !id.startsWith('http://')) {
+      reply.code(400).send({
+        error: 'Resource ID must be a full URL-encoded URI',
+        hint: `Got "${id}". Pass URL-encoded full URI, e.g. /${resource}/${encodeURIComponent(resourceConfig.idPrefix + id)}`,
+      })
+      return
+    }
+    const fullId = id
     const tableSuffix = resourceConfig.hasuraTable.replace('modelcatalog_', '')
     const mutationStr = `
       mutation DeleteMutation($id: String!) {
