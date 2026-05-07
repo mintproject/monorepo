@@ -261,9 +261,11 @@ describe('buildJunctionInserts', () => {
     expect(targetData['id']).toBe('https://w3id.org/okn/i/mint/Economy');
   });
 
-  it('Test 4: prepends idPrefix to short IDs (no https prefix)', () => {
+  it('Test 4: passes caller-supplied IDs through unchanged (validation at service boundary)', () => {
+    // Bare shortnames are rejected upstream in service.ts; buildJunctionInserts
+    // trusts the input and does not reconstruct.
     const body = {
-      hasModelCategory: ['some-uuid'],
+      hasModelCategory: ['https://w3id.org/okn/i/mint/some-uuid'],
     };
     const result = buildJunctionInserts(body, modelsConfig);
     const data = (result['categories'] as Record<string, unknown>)['data'] as Record<string, unknown>[];

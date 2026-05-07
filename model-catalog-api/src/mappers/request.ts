@@ -187,14 +187,10 @@ export function buildJunctionInserts(
       data: items.map((item) => {
         const nestedData: Record<string, unknown> = {};
 
-        // Resolve ID: full URI passes through, short ID gets prefix prepended
+        // Caller-supplied IDs must be full URIs (validated upstream at the
+        // service boundary). Missing IDs auto-generate (D-02).
         const rawId = item['id'] as string | undefined;
-        if (rawId) {
-          nestedData['id'] = rawId.startsWith('https://') ? rawId : `${ID_PREFIX}${rawId}`;
-        } else {
-          // D-02: generate UUID if no ID provided
-          nestedData['id'] = `${ID_PREFIX}${randomUUID()}`;
-        }
+        nestedData['id'] = rawId ? rawId : `${ID_PREFIX}${randomUUID()}`;
 
         // Build set of camelCase keys that belong to the junction row itself (not the nested entity)
         const junctionCamelKeys = new Set(
