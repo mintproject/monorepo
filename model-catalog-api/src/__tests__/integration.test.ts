@@ -406,27 +406,17 @@ describe('getById with plain ID (no URI prefix)', () => {
 // ---------------------------------------------------------------------------
 // Test 10: Custom handler plain-ID resolution
 // ---------------------------------------------------------------------------
-describe('Custom handler plain-ID resolution', () => {
+describe('Custom handler URI strict mode', () => {
   beforeEach(() => { mockQuery.mockReset() })
 
-  it('custom_configurationsetups_id_get prepends idPrefix for plain ID', async () => {
-    mockQuery.mockResolvedValueOnce({
-      data: {
-        modelcatalog_configuration_by_pk: {
-          id: 'https://w3id.org/okn/i/mint/hand_v6',
-          label: 'hand_v6',
-        },
-      },
-    })
-
+  it('custom_configurationsetups_id_get returns 400 for plain ID (strict URI mode)', async () => {
     const req = makeReq({ params: { id: 'hand_v6' } })
     const reply = makeReply()
     await customHandlers.custom_configurationsetups_id_get(req, reply)
 
-    expect(reply._status).toBe(200)
-    expect(mockQuery).toHaveBeenCalledOnce()
-    const callArgs = mockQuery.mock.calls[0][0]
-    expect(callArgs.variables.id).toBe('https://w3id.org/okn/i/mint/hand_v6')
+    expect(reply._status).toBe(400)
+    expect(mockQuery).not.toHaveBeenCalled()
+    expect((reply._body as any)?.error).toContain('full URL-encoded URI')
   })
 
   it('custom_modelconfigurationsetups_id_get passes full URI unchanged', async () => {
@@ -450,25 +440,14 @@ describe('Custom handler plain-ID resolution', () => {
     expect(callArgs.variables.id).toBe(fullUri)
   })
 
-  it('custom_datasetspecifications_get prepends idPrefix for plain configurationid query param', async () => {
-    mockQuery.mockResolvedValueOnce({
-      data: {
-        modelcatalog_configuration_input: [
-          { input: { id: 'https://w3id.org/okn/i/mint/ds1', label: 'ds1', description: null, has_format: null, has_dimensionality: null, position: null } },
-        ],
-        modelcatalog_configuration_output: [],
-      },
-    })
-
-    const plainCfgId = 'some-config-uuid'
-    const req = makeReq({ query: { configurationid: plainCfgId } })
+  it('custom_datasetspecifications_get returns 400 for plain configurationid (strict URI mode)', async () => {
+    const req = makeReq({ query: { configurationid: 'some-config-uuid' } })
     const reply = makeReply()
     await customHandlers.custom_datasetspecifications_get(req, reply)
 
-    expect(reply._status).toBe(200)
-    expect(mockQuery).toHaveBeenCalledOnce()
-    const callArgs = mockQuery.mock.calls[0][0]
-    expect(callArgs.variables.cfgId).toBe('https://w3id.org/okn/i/mint/some-config-uuid')
+    expect(reply._status).toBe(400)
+    expect(mockQuery).not.toHaveBeenCalled()
+    expect((reply._body as any)?.error).toContain('full URL-encoded URI')
   })
 
   it('custom_datasetspecifications_get WHERE clause uses configuration_id not model_configuration_id', async () => {
@@ -479,7 +458,8 @@ describe('Custom handler plain-ID resolution', () => {
       },
     })
 
-    const req = makeReq({ query: { configurationid: 'some-config-uuid' } })
+    const cfgUri = 'https://w3id.org/okn/i/mint/some-config-uuid'
+    const req = makeReq({ query: { configurationid: encodeURIComponent(cfgUri) } })
     const reply = makeReply()
     await customHandlers.custom_datasetspecifications_get(req, reply)
 
@@ -488,6 +468,7 @@ describe('Custom handler plain-ID resolution', () => {
     const queryStr = typeof callArgs.query === 'string' ? callArgs.query : callArgs.query?.loc?.source?.body ?? ''
     expect(queryStr).toContain('configuration_id')
     expect(queryStr).not.toContain('model_configuration_id')
+    expect(callArgs.variables.cfgId).toBe(cfgUri)
   })
 })
 

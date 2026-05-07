@@ -18,6 +18,38 @@ import { customHandlers } from './custom-handlers.js'
 
 const ID_PREFIX = 'https://w3id.org/okn/i/mint/'
 
+/** A full resource URI must start with https:// or http://. */
+function isFullUri(id: string): boolean {
+  return id.startsWith('https://') || id.startsWith('http://')
+}
+
+/**
+ * Validate that every body-supplied relationship item ID is a full URI.
+ * Returns the first offending field/value if any are bare shortnames.
+ * Empty strings, missing IDs, and non-string IDs are skipped (handled
+ * elsewhere — e.g. junction inserts auto-generate URIs for new rows).
+ */
+function findBadBodyRelationshipId(
+  body: Record<string, unknown>,
+  resourceConfig: { relationships: Record<string, unknown> },
+): { field: string; got: string } | null {
+  for (const apiFieldName of Object.keys(resourceConfig.relationships)) {
+    const rawValue = body[apiFieldName]
+    if (rawValue === undefined) continue
+    const items = Array.isArray(rawValue) ? (rawValue as unknown[]) : []
+    for (const item of items) {
+      const rawId =
+        typeof item === 'string'
+          ? item
+          : ((item as Record<string, unknown>) || {})['id']
+      if (typeof rawId === 'string' && rawId !== '' && !isFullUri(rawId)) {
+        return { field: apiFieldName, got: rawId }
+      }
+    }
+  }
+  return null
+}
+
 
 /**
  * Build where clause for software subtype filtering.
@@ -193,6 +225,21 @@ class CatalogServiceImpl {
     }
 
     const body = req.body || {}
+    if (typeof body.id === 'string' && body.id !== '' && !isFullUri(body.id)) {
+      reply.code(400).send({
+        error: 'Resource ID must be a full URI',
+        hint: `Got "${body.id}". Pass full URI in body.id (https:// or http://).`,
+      })
+      return
+    }
+    const badRel = findBadBodyRelationshipId(body as Record<string, unknown>, resourceConfig as any)
+    if (badRel) {
+      reply.code(400).send({
+        error: `Bad body-supplied ID in relationship "${badRel.field}"`,
+        hint: `Got "${badRel.got}". Nested IDs must be full URIs (https:// or http://).`,
+      })
+      return
+    }
     const input = toHasuraInput(body as Record<string, unknown>, resourceConfig)
 
     // Only set the type column for resources stored in modelcatalog_software, which is the
@@ -238,7 +285,7 @@ class CatalogServiceImpl {
               ? item
               : ((item as Record<string, unknown>) || {})['id']
           if (typeof rawId !== 'string' || !rawId) return null
-          return rawId.startsWith('https://') ? rawId : `${ID_PREFIX}${rawId}`
+          return rawId
         })
         .filter((x): x is string => !!x)
 
@@ -327,6 +374,14 @@ class CatalogServiceImpl {
     }
     const fullId = id
     const body = req.body || {}
+    const badRel = findBadBodyRelationshipId(body as Record<string, unknown>, resourceConfig as any)
+    if (badRel) {
+      reply.code(400).send({
+        error: `Bad body-supplied ID in relationship "${badRel.field}"`,
+        hint: `Got "${badRel.got}". Nested IDs must be full URIs (https:// or http://).`,
+      })
+      return
+    }
     const input = toHasuraInput(body as Record<string, unknown>, resourceConfig)
 
     const tableSuffix = resourceConfig.hasuraTable.replace('modelcatalog_', '')
@@ -366,9 +421,7 @@ class CatalogServiceImpl {
 
       variables[varName] = items.map((item: Record<string, unknown>) => {
         const rawItemId = item['id'] as string | undefined
-        const targetId = rawItemId
-          ? rawItemId.startsWith('https://') ? rawItemId : `${ID_PREFIX}${rawItemId}`
-          : `${ID_PREFIX}${randomUUID()}`
+        const targetId = rawItemId ? rawItemId : `${ID_PREFIX}${randomUUID()}`
         const row: Record<string, unknown> = {
           [relConfig.parentFkColumn!]: fullId,
           [targetFkColumn]: targetId,
@@ -409,7 +462,7 @@ class CatalogServiceImpl {
               ? item
               : ((item as Record<string, unknown>) || {})['id']
           if (typeof rawId !== 'string' || !rawId) return null
-          return rawId.startsWith('https://') ? rawId : `${ID_PREFIX}${rawId}`
+          return rawId
         })
         .filter((x): x is string => !!x)
 

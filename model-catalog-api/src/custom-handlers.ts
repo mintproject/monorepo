@@ -14,10 +14,23 @@
  * - Decode URI-encoded {id} parameters with decodeURIComponent()
  */
 
-import { readClient, gql } from './hasura/client.js'
-import { transformRow, transformList } from './mappers/response.js'
-import { getResourceConfig } from './mappers/resource-registry.js'
-import { Apps } from '@tapis/tapis-typescript'
+import { readClient, gql } from './hasura/client.js';
+import { transformRow, transformList } from './mappers/response.js';
+import { getResourceConfig } from './mappers/resource-registry.js';
+import { Apps } from '@tapis/tapis-typescript';
+
+/**
+ * Reject IDs that are not full URIs (https:// or http://). Returns true when
+ * the id is acceptable; otherwise sends a 400 reply and returns false.
+ */
+function requireFullUri(reply: any, id: string): boolean {
+  if (id.startsWith('https://') || id.startsWith('http://')) return true;
+  reply.code(400).send({
+    error: 'Resource ID must be a full URL-encoded URI',
+    hint: `Got "${id}". Pass URL-encoded full URI.`,
+  });
+  return false;
+}
 
 // ---------------------------------------------------------------------------
 // Shared field selections for deep nested queries
@@ -43,7 +56,7 @@ const SOFTWARE_FIELDS = `
     input_variables { variable { id label } }
     output_variables { variable { id label } }
   }
-`
+`;
 
 const SETUP_FIELDS = `
   id label description
@@ -81,7 +94,7 @@ const SETUP_FIELDS = `
   calibration_targets {
     variable { id label }
   }
-`
+`;
 
 const CONFIGURATION_FIELDS = `
   id label description keywords usage_notes
@@ -124,35 +137,50 @@ const CONFIGURATION_FIELDS = `
   regions {
     region { id label description }
   }
-`
+`;
 
 // ---------------------------------------------------------------------------
 // 1. /custom/model/index (custom_model_index_get)
 // ---------------------------------------------------------------------------
 async function custom_model_index_get(req: any, reply: any) {
-  const resourceConfig = getResourceConfig('models')!
-  const { username: _username, label } = req.query || {}
+  const resourceConfig = getResourceConfig('models')!;
+  const { username: _username, label } = req.query || {};
 
-  const whereConditions: string[] = ['type: { _eq: "https://w3id.org/okn/o/sdm#Model" }']
-  const variables: Record<string, unknown> = {}
+  const whereConditions: string[] = [
+    'type: { _eq: "https://w3id.org/okn/o/sdm#Model" }',
+  ];
+  const variables: Record<string, unknown> = {};
 
-  if (label) { whereConditions.push('label: { _like: $label }'); variables['label'] = `%${label}%` }
+  if (label) {
+    whereConditions.push('label: { _like: $label }');
+    variables['label'] = `%${label}%`;
+  }
 
-  let varDecls = ''
-  if (label) varDecls += ', $label: String!'
-  if (varDecls.startsWith(', ')) varDecls = varDecls.slice(2)
-  const sigDecl = varDecls ? `(${varDecls})` : ''
+  let varDecls = '';
+  if (label) varDecls += ', $label: String!';
+  if (varDecls.startsWith(', ')) varDecls = varDecls.slice(2);
+  const sigDecl = varDecls ? `(${varDecls})` : '';
 
-  const queryStr = `query CustomModelIndex${sigDecl} { modelcatalog_software(where: { ${whereConditions.join(', ')} } limit: 200 offset: 0) { ${SOFTWARE_FIELDS} } }`
+  const queryStr = `query CustomModelIndex${sigDecl} { modelcatalog_software(where: { ${whereConditions.join(', ')} } limit: 200 offset: 0) { ${SOFTWARE_FIELDS} } }`;
 
   try {
-    const result = await readClient.query({ query: gql`${queryStr}`, variables })
-    const data = result.data as Record<string, unknown>
-    const rows = (data['modelcatalog_software'] ?? []) as Record<string, unknown>[]
-    reply.code(200).send(transformList(rows, resourceConfig))
+    const result = await readClient.query({
+      query: gql`
+        ${queryStr}
+      `,
+      variables,
+    });
+    const data = result.data as Record<string, unknown>;
+    const rows = (data['modelcatalog_software'] ?? []) as Record<
+      string,
+      unknown
+    >[];
+    reply.code(200).send(transformList(rows, resourceConfig));
   } catch (err: any) {
-    req.log.error({ err }, 'custom_model_index_get failed')
-    reply.code(500).send({ error: 'Internal server error', details: err?.message })
+    req.log.error({ err }, 'custom_model_index_get failed');
+    reply
+      .code(500)
+      .send({ error: 'Internal server error', details: err?.message });
   }
 }
 
@@ -160,8 +188,8 @@ async function custom_model_index_get(req: any, reply: any) {
 // 2. /custom/model/intervention (custom_model_intervention_get)
 // ---------------------------------------------------------------------------
 async function custom_model_intervention_get(req: any, reply: any) {
-  const resourceConfig = getResourceConfig('models')!
-  const { username: _username, label } = req.query || {}
+  const resourceConfig = getResourceConfig('models')!;
+  const { username: _username, label } = req.query || {};
 
   const queryStr = `
     query CustomModelIntervention {
@@ -180,38 +208,51 @@ async function custom_model_intervention_get(req: any, reply: any) {
         }
       }
     }
-  `
+  `;
 
   try {
-    const result = await readClient.query({ query: gql`${queryStr}` })
-    const data = result.data as Record<string, unknown>
-    let rows = (data['modelcatalog_software'] ?? []) as Record<string, unknown>[]
+    const result = await readClient.query({
+      query: gql`
+        ${queryStr}
+      `,
+    });
+    const data = result.data as Record<string, unknown>;
+    let rows = (data['modelcatalog_software'] ?? []) as Record<
+      string,
+      unknown
+    >[];
 
     rows = rows.filter((sw: any) => {
       for (const ver of sw.versions ?? []) {
         for (const cfg of ver.configurations ?? []) {
           for (const setup of cfg.setups ?? []) {
             for (const paramJunction of setup.parameters ?? []) {
-              const param = paramJunction.parameter
-              if (!param) continue
+              const param = paramJunction.parameter;
+              if (!param) continue;
               if ((param.interventions ?? []).length > 0) {
-                if (!label) return true
-                return (param.interventions as any[]).some((invJunction: any) => {
-                  const inv = invJunction.intervention
-                  return inv?.label?.toLowerCase().includes(label.toLowerCase())
-                })
+                if (!label) return true;
+                return (param.interventions as any[]).some(
+                  (invJunction: any) => {
+                    const inv = invJunction.intervention;
+                    return inv?.label
+                      ?.toLowerCase()
+                      .includes(label.toLowerCase());
+                  },
+                );
               }
             }
           }
         }
       }
-      return false
-    })
+      return false;
+    });
 
-    reply.code(200).send(transformList(rows, resourceConfig))
+    reply.code(200).send(transformList(rows, resourceConfig));
   } catch (err: any) {
-    req.log.error({ err }, 'custom_model_intervention_get failed')
-    reply.code(500).send({ error: 'Internal server error', details: err?.message })
+    req.log.error({ err }, 'custom_model_intervention_get failed');
+    reply
+      .code(500)
+      .send({ error: 'Internal server error', details: err?.message });
   }
 }
 
@@ -219,8 +260,8 @@ async function custom_model_intervention_get(req: any, reply: any) {
 // 3. /custom/model/region (custom_model_region_get)
 // ---------------------------------------------------------------------------
 async function custom_model_region_get(req: any, reply: any) {
-  const resourceConfig = getResourceConfig('models')!
-  const { username: _username, label } = req.query || {}
+  const resourceConfig = getResourceConfig('models')!;
+  const { username: _username, label } = req.query || {};
 
   const queryStr = `
     query CustomModelRegion {
@@ -230,32 +271,41 @@ async function custom_model_region_get(req: any, reply: any) {
         versions { id label configurations { id label regions { region { id label } } } }
       }
     }
-  `
+  `;
 
   try {
-    const result = await readClient.query({ query: gql`${queryStr}` })
-    const data = result.data as Record<string, unknown>
-    let rows = (data['modelcatalog_software'] ?? []) as Record<string, unknown>[]
+    const result = await readClient.query({
+      query: gql`
+        ${queryStr}
+      `,
+    });
+    const data = result.data as Record<string, unknown>;
+    let rows = (data['modelcatalog_software'] ?? []) as Record<
+      string,
+      unknown
+    >[];
 
     if (label) {
-      const lbl = label.toLowerCase()
+      const lbl = label.toLowerCase();
       rows = rows.filter((sw: any) => {
         for (const ver of sw.versions ?? []) {
           for (const cfg of ver.configurations ?? []) {
             for (const regionJunction of cfg.regions ?? []) {
-              const region = regionJunction.region
-              if (region?.label?.toLowerCase().includes(lbl)) return true
+              const region = regionJunction.region;
+              if (region?.label?.toLowerCase().includes(lbl)) return true;
             }
           }
         }
-        return false
-      })
+        return false;
+      });
     }
 
-    reply.code(200).send(transformList(rows, resourceConfig))
+    reply.code(200).send(transformList(rows, resourceConfig));
   } catch (err: any) {
-    req.log.error({ err }, 'custom_model_region_get failed')
-    reply.code(500).send({ error: 'Internal server error', details: err?.message })
+    req.log.error({ err }, 'custom_model_region_get failed');
+    reply
+      .code(500)
+      .send({ error: 'Internal server error', details: err?.message });
   }
 }
 
@@ -263,8 +313,8 @@ async function custom_model_region_get(req: any, reply: any) {
 // 4. /custom/models/variable (custom_models_variable_get)
 // ---------------------------------------------------------------------------
 async function custom_models_variable_get(req: any, reply: any) {
-  const resourceConfig = getResourceConfig('models')!
-  const { username: _username, label } = req.query || {}
+  const resourceConfig = getResourceConfig('models')!;
+  const { username: _username, label } = req.query || {};
 
   const queryStr = `
     query CustomModelsVariable {
@@ -274,37 +324,57 @@ async function custom_models_variable_get(req: any, reply: any) {
         versions { id label input_variables { variable { id label } } output_variables { variable { id label } } }
       }
     }
-  `
+  `;
 
   try {
-    const result = await readClient.query({ query: gql`${queryStr}` })
-    const data = result.data as Record<string, unknown>
-    let rows = (data['modelcatalog_software'] ?? []) as Record<string, unknown>[]
+    const result = await readClient.query({
+      query: gql`
+        ${queryStr}
+      `,
+    });
+    const data = result.data as Record<string, unknown>;
+    let rows = (data['modelcatalog_software'] ?? []) as Record<
+      string,
+      unknown
+    >[];
 
     if (label) {
-      const lbl = label.toLowerCase()
+      const lbl = label.toLowerCase();
       rows = rows.filter((sw: any) => {
         for (const ver of sw.versions ?? []) {
-          const allVarJunctions = [...(ver.input_variables ?? []), ...(ver.output_variables ?? [])]
-          if (allVarJunctions.some((vj: any) => vj.variable?.label?.toLowerCase().includes(lbl))) return true
+          const allVarJunctions = [
+            ...(ver.input_variables ?? []),
+            ...(ver.output_variables ?? []),
+          ];
+          if (
+            allVarJunctions.some((vj: any) =>
+              vj.variable?.label?.toLowerCase().includes(lbl),
+            )
+          )
+            return true;
         }
-        return false
-      })
+        return false;
+      });
     }
 
-    reply.code(200).send(transformList(rows, resourceConfig))
+    reply.code(200).send(transformList(rows, resourceConfig));
   } catch (err: any) {
-    req.log.error({ err }, 'custom_models_variable_get failed')
-    reply.code(500).send({ error: 'Internal server error', details: err?.message })
+    req.log.error({ err }, 'custom_models_variable_get failed');
+    reply
+      .code(500)
+      .send({ error: 'Internal server error', details: err?.message });
   }
 }
 
 // ---------------------------------------------------------------------------
 // 5. /custom/modelconfigurationsetups/variable (custom_modelconfigurationsetups_variable_get)
 // ---------------------------------------------------------------------------
-async function custom_modelconfigurationsetups_variable_get(req: any, reply: any) {
-  const resourceConfig = getResourceConfig('modelconfigurationsetups')!
-  const { username: _username, label } = req.query || {}
+async function custom_modelconfigurationsetups_variable_get(
+  req: any,
+  reply: any,
+) {
+  const resourceConfig = getResourceConfig('modelconfigurationsetups')!;
+  const { username: _username, label } = req.query || {};
 
   const queryStr = `
     query CustomSetupsVariable {
@@ -315,29 +385,44 @@ async function custom_modelconfigurationsetups_variable_get(req: any, reply: any
         outputs { output { id label } }
       }
     }
-  `
+  `;
 
   try {
-    const result = await readClient.query({ query: gql`${queryStr}` })
-    const data = result.data as Record<string, unknown>
-    let rows = (data['modelcatalog_configuration'] ?? []) as Record<string, unknown>[]
+    const result = await readClient.query({
+      query: gql`
+        ${queryStr}
+      `,
+    });
+    const data = result.data as Record<string, unknown>;
+    let rows = (data['modelcatalog_configuration'] ?? []) as Record<
+      string,
+      unknown
+    >[];
 
     if (label) {
-      const lbl = label.toLowerCase()
+      const lbl = label.toLowerCase();
       rows = rows.filter((setup: any) => {
-        const allJunctions = [...(setup.inputs ?? []), ...(setup.outputs ?? [])]
+        const allJunctions = [
+          ...(setup.inputs ?? []),
+          ...(setup.outputs ?? []),
+        ];
         for (const junction of allJunctions) {
-          const entity = junction.input ?? junction.output
-          if (entity?.label?.toLowerCase().includes(lbl)) return true
+          const entity = junction.input ?? junction.output;
+          if (entity?.label?.toLowerCase().includes(lbl)) return true;
         }
-        return false
-      })
+        return false;
+      });
     }
 
-    reply.code(200).send(transformList(rows, resourceConfig))
+    reply.code(200).send(transformList(rows, resourceConfig));
   } catch (err: any) {
-    req.log.error({ err }, 'custom_modelconfigurationsetups_variable_get failed')
-    reply.code(500).send({ error: 'Internal server error', details: err?.message })
+    req.log.error(
+      { err },
+      'custom_modelconfigurationsetups_variable_get failed',
+    );
+    reply
+      .code(500)
+      .send({ error: 'Internal server error', details: err?.message });
   }
 }
 
@@ -345,9 +430,10 @@ async function custom_modelconfigurationsetups_variable_get(req: any, reply: any
 // 6. /custom/configurationsetups/{id} (custom_configurationsetups_id_get)
 // ---------------------------------------------------------------------------
 async function custom_configurationsetups_id_get(req: any, reply: any) {
-  const resourceConfig = getResourceConfig('configurationsetups')!
-  const id = decodeURIComponent(req.params.id)
-  const fullId = id.startsWith('https://') ? id : `${resourceConfig.idPrefix}${id}`
+  const resourceConfig = getResourceConfig('configurationsetups')!;
+  const id = decodeURIComponent(req.params.id);
+  if (!requireFullUri(reply, id)) return;
+  const fullId = id;
 
   const queryStr = `
     query CustomConfigurationSetupById($id: String!) {
@@ -355,17 +441,30 @@ async function custom_configurationsetups_id_get(req: any, reply: any) {
         ${SETUP_FIELDS}
       }
     }
-  `
+  `;
 
   try {
-    const result = await readClient.query({ query: gql`${queryStr}`, variables: { id: fullId } })
-    const data = result.data as Record<string, unknown>
-    const row = data['modelcatalog_configuration_by_pk'] as Record<string, unknown> | null
-    if (!row) { reply.code(404).send({ error: 'Not found' }); return }
-    reply.code(200).send(transformRow(row, resourceConfig))
+    const result = await readClient.query({
+      query: gql`
+        ${queryStr}
+      `,
+      variables: { id: fullId },
+    });
+    const data = result.data as Record<string, unknown>;
+    const row = data['modelcatalog_configuration_by_pk'] as Record<
+      string,
+      unknown
+    > | null;
+    if (!row) {
+      reply.code(404).send({ error: 'Not found' });
+      return;
+    }
+    reply.code(200).send(transformRow(row, resourceConfig));
   } catch (err: any) {
-    req.log.error({ err }, 'custom_configurationsetups_id_get failed')
-    reply.code(500).send({ error: 'Internal server error', details: err?.message })
+    req.log.error({ err }, 'custom_configurationsetups_id_get failed');
+    reply
+      .code(500)
+      .send({ error: 'Internal server error', details: err?.message });
   }
 }
 
@@ -373,9 +472,10 @@ async function custom_configurationsetups_id_get(req: any, reply: any) {
 // 7. /custom/modelconfigurationsetups/{id} (custom_modelconfigurationsetups_id_get)
 // ---------------------------------------------------------------------------
 async function custom_modelconfigurationsetups_id_get(req: any, reply: any) {
-  const resourceConfig = getResourceConfig('modelconfigurationsetups')!
-  const id = decodeURIComponent(req.params.id)
-  const fullId = id.startsWith('https://') ? id : `${resourceConfig.idPrefix}${id}`
+  const resourceConfig = getResourceConfig('modelconfigurationsetups')!;
+  const id = decodeURIComponent(req.params.id);
+  if (!requireFullUri(reply, id)) return;
+  const fullId = id;
 
   const queryStr = `
     query CustomModelConfigurationSetupById($id: String!) {
@@ -383,17 +483,30 @@ async function custom_modelconfigurationsetups_id_get(req: any, reply: any) {
         ${SETUP_FIELDS}
       }
     }
-  `
+  `;
 
   try {
-    const result = await readClient.query({ query: gql`${queryStr}`, variables: { id: fullId } })
-    const data = result.data as Record<string, unknown>
-    const row = data['modelcatalog_configuration_by_pk'] as Record<string, unknown> | null
-    if (!row) { reply.code(404).send({ error: 'Not found' }); return }
-    reply.code(200).send(transformRow(row, resourceConfig))
+    const result = await readClient.query({
+      query: gql`
+        ${queryStr}
+      `,
+      variables: { id: fullId },
+    });
+    const data = result.data as Record<string, unknown>;
+    const row = data['modelcatalog_configuration_by_pk'] as Record<
+      string,
+      unknown
+    > | null;
+    if (!row) {
+      reply.code(404).send({ error: 'Not found' });
+      return;
+    }
+    reply.code(200).send(transformRow(row, resourceConfig));
   } catch (err: any) {
-    req.log.error({ err }, 'custom_modelconfigurationsetups_id_get failed')
-    reply.code(500).send({ error: 'Internal server error', details: err?.message })
+    req.log.error({ err }, 'custom_modelconfigurationsetups_id_get failed');
+    reply
+      .code(500)
+      .send({ error: 'Internal server error', details: err?.message });
   }
 }
 
@@ -401,9 +514,10 @@ async function custom_modelconfigurationsetups_id_get(req: any, reply: any) {
 // 8. /custom/modelconfigurations/{id} (custom_modelconfigurations_id_get)
 // ---------------------------------------------------------------------------
 async function custom_modelconfigurations_id_get(req: any, reply: any) {
-  const resourceConfig = getResourceConfig('modelconfigurations')!
-  const id = decodeURIComponent(req.params.id)
-  const fullId = id.startsWith('https://') ? id : `${resourceConfig.idPrefix}${id}`
+  const resourceConfig = getResourceConfig('modelconfigurations')!;
+  const id = decodeURIComponent(req.params.id);
+  if (!requireFullUri(reply, id)) return;
+  const fullId = id;
 
   const queryStr = `
     query CustomModelConfigurationById($id: String!) {
@@ -411,17 +525,30 @@ async function custom_modelconfigurations_id_get(req: any, reply: any) {
         ${CONFIGURATION_FIELDS}
       }
     }
-  `
+  `;
 
   try {
-    const result = await readClient.query({ query: gql`${queryStr}`, variables: { id: fullId } })
-    const data = result.data as Record<string, unknown>
-    const row = data['modelcatalog_configuration_by_pk'] as Record<string, unknown> | null
-    if (!row) { reply.code(404).send({ error: 'Not found' }); return }
-    reply.code(200).send(transformRow(row, resourceConfig))
+    const result = await readClient.query({
+      query: gql`
+        ${queryStr}
+      `,
+      variables: { id: fullId },
+    });
+    const data = result.data as Record<string, unknown>;
+    const row = data['modelcatalog_configuration_by_pk'] as Record<
+      string,
+      unknown
+    > | null;
+    if (!row) {
+      reply.code(404).send({ error: 'Not found' });
+      return;
+    }
+    reply.code(200).send(transformRow(row, resourceConfig));
   } catch (err: any) {
-    req.log.error({ err }, 'custom_modelconfigurations_id_get failed')
-    reply.code(500).send({ error: 'Internal server error', details: err?.message })
+    req.log.error({ err }, 'custom_modelconfigurations_id_get failed');
+    reply
+      .code(500)
+      .send({ error: 'Internal server error', details: err?.message });
   }
 }
 
@@ -430,8 +557,8 @@ async function custom_modelconfigurations_id_get(req: any, reply: any) {
 // NOTE: standardvariables table does not exist yet; search by variable presentation label instead.
 // ---------------------------------------------------------------------------
 async function custom_models_standard_variable_get(req: any, reply: any) {
-  const resourceConfig = getResourceConfig('models')!
-  const { username: _username, label } = req.query || {}
+  const resourceConfig = getResourceConfig('models')!;
+  const { username: _username, label } = req.query || {};
 
   const queryStr = `
     query CustomModelsStandardVariable {
@@ -441,28 +568,45 @@ async function custom_models_standard_variable_get(req: any, reply: any) {
         versions { id label input_variables { variable { id label } } output_variables { variable { id label } } }
       }
     }
-  `
+  `;
 
   try {
-    const result = await readClient.query({ query: gql`${queryStr}` })
-    const data = result.data as Record<string, unknown>
-    let rows = (data['modelcatalog_software'] ?? []) as Record<string, unknown>[]
+    const result = await readClient.query({
+      query: gql`
+        ${queryStr}
+      `,
+    });
+    const data = result.data as Record<string, unknown>;
+    let rows = (data['modelcatalog_software'] ?? []) as Record<
+      string,
+      unknown
+    >[];
 
     if (label) {
-      const lbl = label.toLowerCase()
+      const lbl = label.toLowerCase();
       rows = rows.filter((sw: any) => {
         for (const ver of sw.versions ?? []) {
-          const allVarJunctions = [...(ver.input_variables ?? []), ...(ver.output_variables ?? [])]
-          if (allVarJunctions.some((vj: any) => vj.variable?.label?.toLowerCase().includes(lbl))) return true
+          const allVarJunctions = [
+            ...(ver.input_variables ?? []),
+            ...(ver.output_variables ?? []),
+          ];
+          if (
+            allVarJunctions.some((vj: any) =>
+              vj.variable?.label?.toLowerCase().includes(lbl),
+            )
+          )
+            return true;
         }
-        return false
-      })
+        return false;
+      });
     }
 
-    reply.code(200).send(transformList(rows, resourceConfig))
+    reply.code(200).send(transformList(rows, resourceConfig));
   } catch (err: any) {
-    req.log.error({ err }, 'custom_models_standard_variable_get failed')
-    reply.code(500).send({ error: 'Internal server error', details: err?.message })
+    req.log.error({ err }, 'custom_models_standard_variable_get failed');
+    reply
+      .code(500)
+      .send({ error: 'Internal server error', details: err?.message });
   }
 }
 
@@ -472,22 +616,25 @@ async function custom_models_standard_variable_get(req: any, reply: any) {
 // No dedicated datatransformations table exists in the PostgreSQL schema.
 // Returns empty array, consistent with null-table resource type behavior.
 // ---------------------------------------------------------------------------
-async function custom_datasetspecifications_id_datatransformations_get(_req: any, reply: any) {
-  reply.code(200).send([])
+async function custom_datasetspecifications_id_datatransformations_get(
+  _req: any,
+  reply: any,
+) {
+  reply.code(200).send([]);
 }
 
 // ---------------------------------------------------------------------------
 // 11. /custom/datasetspecifications (custom_datasetspecifications_get)
 // ---------------------------------------------------------------------------
 async function custom_datasetspecifications_get(req: any, reply: any) {
-  const resourceConfig = getResourceConfig('datasetspecifications')!
-  const { username: _username, configurationid } = req.query || {}
+  const resourceConfig = getResourceConfig('datasetspecifications')!;
+  const { username: _username, configurationid } = req.query || {};
 
   if (configurationid) {
-    const cfgId = decodeURIComponent(configurationid)
-    const mcConfig = getResourceConfig('modelconfigurations')!
-    const fullCfgId = cfgId.startsWith('https://') ? cfgId : `${mcConfig.idPrefix}${cfgId}`
-    const innerVars: Record<string, unknown> = { cfgId: fullCfgId }
+    const cfgId = decodeURIComponent(configurationid);
+    if (!requireFullUri(reply, cfgId)) return;
+    const fullCfgId = cfgId;
+    const innerVars: Record<string, unknown> = { cfgId: fullCfgId };
 
     // Query junction tables directly; relationship names on junction rows are `input` and `output`
     const cfgQuery = `
@@ -499,35 +646,51 @@ async function custom_datasetspecifications_get(req: any, reply: any) {
           output { id label description has_format has_dimensionality position }
         }
       }
-    `
+    `;
 
     try {
-      const result = await readClient.query({ query: gql`${cfgQuery}`, variables: innerVars })
-      const cfgData = result.data as Record<string, unknown>
-      const inputSpecs = ((cfgData['modelcatalog_configuration_input'] ?? []) as any[])
-        .map((r: any) => r.input).filter(Boolean) as Record<string, unknown>[]
-      const outputSpecs = ((cfgData['modelcatalog_configuration_output'] ?? []) as any[])
-        .map((r: any) => r.output).filter(Boolean) as Record<string, unknown>[]
+      const result = await readClient.query({
+        query: gql`
+          ${cfgQuery}
+        `,
+        variables: innerVars,
+      });
+      const cfgData = result.data as Record<string, unknown>;
+      const inputSpecs = (
+        (cfgData['modelcatalog_configuration_input'] ?? []) as any[]
+      )
+        .map((r: any) => r.input)
+        .filter(Boolean) as Record<string, unknown>[];
+      const outputSpecs = (
+        (cfgData['modelcatalog_configuration_output'] ?? []) as any[]
+      )
+        .map((r: any) => r.output)
+        .filter(Boolean) as Record<string, unknown>[];
 
-      const seen = new Set<string>()
+      const seen = new Set<string>();
       const allSpecs = [...inputSpecs, ...outputSpecs].filter((spec: any) => {
-        if (seen.has(spec.id)) return false
-        seen.add(spec.id)
-        return true
-      })
-      reply.code(200).send(transformList(allSpecs, resourceConfig))
+        if (seen.has(spec.id)) return false;
+        seen.add(spec.id);
+        return true;
+      });
+      reply.code(200).send(transformList(allSpecs, resourceConfig));
     } catch (err: any) {
-      req.log.error({ err }, 'custom_datasetspecifications_get (configurationid) failed')
-      reply.code(500).send({ error: 'Internal server error', details: err?.message })
+      req.log.error(
+        { err },
+        'custom_datasetspecifications_get (configurationid) failed',
+      );
+      reply
+        .code(500)
+        .send({ error: 'Internal server error', details: err?.message });
     }
-    return
+    return;
   }
 
-  const { page = 1, per_page = 25 } = req.query || {}
-  const limit = parseInt(String(per_page), 10) || 25
-  const offset = (parseInt(String(page), 10) - 1) * limit || 0
+  const { page = 1, per_page = 25 } = req.query || {};
+  const limit = parseInt(String(per_page), 10) || 25;
+  const offset = (parseInt(String(page), 10) - 1) * limit || 0;
 
-  const variables: Record<string, unknown> = { limit, offset }
+  const variables: Record<string, unknown> = { limit, offset };
 
   const listQuery = `
     query CustomDatasetSpecifications($limit: Int!, $offset: Int!) {
@@ -535,16 +698,26 @@ async function custom_datasetspecifications_get(req: any, reply: any) {
         id label description has_format has_dimensionality position
       }
     }
-  `
+  `;
 
   try {
-    const result = await readClient.query({ query: gql`${listQuery}`, variables })
-    const data = result.data as Record<string, unknown>
-    const rows = (data['modelcatalog_dataset_specification'] ?? []) as Record<string, unknown>[]
-    reply.code(200).send(transformList(rows, resourceConfig))
+    const result = await readClient.query({
+      query: gql`
+        ${listQuery}
+      `,
+      variables,
+    });
+    const data = result.data as Record<string, unknown>;
+    const rows = (data['modelcatalog_dataset_specification'] ?? []) as Record<
+      string,
+      unknown
+    >[];
+    reply.code(200).send(transformList(rows, resourceConfig));
   } catch (err: any) {
-    req.log.error({ err }, 'custom_datasetspecifications_get failed')
-    reply.code(500).send({ error: 'Internal server error', details: err?.message })
+    req.log.error({ err }, 'custom_datasetspecifications_get failed');
+    reply
+      .code(500)
+      .send({ error: 'Internal server error', details: err?.message });
   }
 }
 
@@ -552,10 +725,10 @@ async function custom_datasetspecifications_get(req: any, reply: any) {
 // 12. /custom/configuration/{id}/inputs (custom_configuration_id_inputs_get)
 // ---------------------------------------------------------------------------
 async function custom_configuration_id_inputs_get(req: any, reply: any) {
-  const resourceConfig = getResourceConfig('datasetspecifications')!
-  const id = decodeURIComponent(req.params.id)
-  const mcConfig = getResourceConfig('modelconfigurations')!
-  const fullId = id.startsWith('https://') ? id : `${mcConfig.idPrefix}${id}`
+  const resourceConfig = getResourceConfig('datasetspecifications')!;
+  const id = decodeURIComponent(req.params.id);
+  if (!requireFullUri(reply, id)) return;
+  const fullId = id;
 
   const queryStr = `
     query CustomConfigurationInputs($id: String!) {
@@ -565,19 +738,33 @@ async function custom_configuration_id_inputs_get(req: any, reply: any) {
         }
       }
     }
-  `
+  `;
 
   try {
-    const result = await readClient.query({ query: gql`${queryStr}`, variables: { id: fullId } })
-    const data = result.data as Record<string, unknown>
-    const cfg = data['modelcatalog_configuration_by_pk'] as { inputs?: Record<string, unknown>[] } | null
-    if (!cfg) { reply.code(404).send({ error: 'Configuration not found' }); return }
+    const result = await readClient.query({
+      query: gql`
+        ${queryStr}
+      `,
+      variables: { id: fullId },
+    });
+    const data = result.data as Record<string, unknown>;
+    const cfg = data['modelcatalog_configuration_by_pk'] as {
+      inputs?: Record<string, unknown>[];
+    } | null;
+    if (!cfg) {
+      reply.code(404).send({ error: 'Configuration not found' });
+      return;
+    }
     // Unwrap junction rows to get the actual dataset_specification entities
-    const rows = ((cfg.inputs ?? []) as any[]).map((j: any) => j.input).filter(Boolean) as Record<string, unknown>[]
-    reply.code(200).send(transformList(rows, resourceConfig))
+    const rows = ((cfg.inputs ?? []) as any[])
+      .map((j: any) => j.input)
+      .filter(Boolean) as Record<string, unknown>[];
+    reply.code(200).send(transformList(rows, resourceConfig));
   } catch (err: any) {
-    req.log.error({ err }, 'custom_configuration_id_inputs_get failed')
-    reply.code(500).send({ error: 'Internal server error', details: err?.message })
+    req.log.error({ err }, 'custom_configuration_id_inputs_get failed');
+    reply
+      .code(500)
+      .send({ error: 'Internal server error', details: err?.message });
   }
 }
 
@@ -588,8 +775,9 @@ async function custom_configuration_id_inputs_get(req: any, reply: any) {
 async function user_login_post(_req: any, reply: any) {
   reply.code(501).send({
     error: 'Login endpoint not implemented',
-    message: 'Authenticate directly with the Keycloak auth server to obtain a JWT token.',
-  })
+    message:
+      'Authenticate directly with the Keycloak auth server to obtain a JWT token.',
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -598,9 +786,9 @@ async function user_login_post(_req: any, reply: any) {
 // Tapis X-Tapis-Token via Configuration.apiKey.
 // ---------------------------------------------------------------------------
 function extractBearerToken(authHeader: string | undefined): string | null {
-  if (!authHeader) return null
-  const m = authHeader.match(/^Bearer\s+(.+)$/i)
-  return m ? m[1] : authHeader
+  if (!authHeader) return null;
+  const m = authHeader.match(/^Bearer\s+(.+)$/i);
+  return m ? m[1] : authHeader;
 }
 
 function buildAppsApi(tenant: string, token: string): Apps.ApplicationsApi {
@@ -608,73 +796,83 @@ function buildAppsApi(tenant: string, token: string): Apps.ApplicationsApi {
   const config = new Apps.Configuration({
     basePath: `https://${tenant}.tapis.io`,
     apiKey: () => token,
-  })
-  return new Apps.ApplicationsApi(config)
+  });
+  return new Apps.ApplicationsApi(config);
 }
 
 async function custom_tapis_apps_get(req: any, reply: any) {
-  const tenant = req.params?.tenant
+  const tenant = req.params?.tenant;
   if (!tenant) {
-    reply.code(400).send({ error: 'tenant path parameter required' })
-    return
+    reply.code(400).send({ error: 'tenant path parameter required' });
+    return;
   }
-  const token = extractBearerToken(req.headers?.authorization)
+  const token = extractBearerToken(req.headers?.authorization);
   if (!token) {
-    reply.code(401).send({ error: 'Authorization header required' })
-    return
+    reply.code(401).send({ error: 'Authorization header required' });
+    return;
   }
   try {
-    const api = buildAppsApi(tenant, token)
-    const resp = await api.getApps({})
-    const result = (resp.result ?? []) as Array<{ id?: string; version?: string }>
-    const apps = result.map((a) => ({ tenant, id: a.id, version: a.version }))
-    reply.code(200).send(apps)
+    const api = buildAppsApi(tenant, token);
+    const resp = await api.getApps({});
+    const result = (resp.result ?? []) as Array<{
+      id?: string;
+      version?: string;
+    }>;
+    const apps = result.map((a) => ({ tenant, id: a.id, version: a.version }));
+    reply.code(200).send(apps);
   } catch (err: any) {
-    const status = err?.status ?? err?.response?.status
-    req.log.error({ err, tenant }, 'Tapis apps list failed')
+    const status = err?.status ?? err?.response?.status;
+    req.log.error({ err, tenant }, 'Tapis apps list failed');
     if (status) {
-      const body = await (err?.response?.text?.() ?? Promise.resolve(err?.message ?? ''))
-      reply.code(status).send({ error: 'Tapis error', details: body })
-      return
+      const body = await (err?.response?.text?.() ??
+        Promise.resolve(err?.message ?? ''));
+      reply.code(status).send({ error: 'Tapis error', details: body });
+      return;
     }
-    reply.code(502).send({ error: 'Bad gateway', details: err?.message })
+    reply.code(502).send({ error: 'Bad gateway', details: err?.message });
   }
 }
 
 async function custom_tapis_apps_id_get(req: any, reply: any) {
-  const tenant = req.params?.tenant
-  const appId = req.params?.app_id
-  const appVersion = req.params?.app_version
+  const tenant = req.params?.tenant;
+  const appId = req.params?.app_id;
+  const appVersion = req.params?.app_version;
   if (!tenant || !appId || !appVersion) {
-    reply.code(400).send({ error: 'tenant, app_id, app_version path parameters required' })
-    return
+    reply
+      .code(400)
+      .send({ error: 'tenant, app_id, app_version path parameters required' });
+    return;
   }
-  const token = extractBearerToken(req.headers?.authorization)
+  const token = extractBearerToken(req.headers?.authorization);
   if (!token) {
-    reply.code(401).send({ error: 'Authorization header required' })
-    return
+    reply.code(401).send({ error: 'Authorization header required' });
+    return;
   }
   try {
-    const api = buildAppsApi(tenant, token)
-    const resp = await api.getApp({ appId, appVersion })
-    const app = (resp.result ?? {}) as Record<string, unknown>
-    reply.code(200).send({ tenant, ...app })
+    const api = buildAppsApi(tenant, token);
+    const resp = await api.getApp({ appId, appVersion });
+    const app = (resp.result ?? {}) as Record<string, unknown>;
+    reply.code(200).send({ tenant, ...app });
   } catch (err: any) {
-    const status = err?.status ?? err?.response?.status
-    req.log.error({ err, tenant, appId, appVersion }, 'Tapis app get failed')
+    const status = err?.status ?? err?.response?.status;
+    req.log.error({ err, tenant, appId, appVersion }, 'Tapis app get failed');
     if (status) {
-      const body = await (err?.response?.text?.() ?? Promise.resolve(err?.message ?? ''))
-      reply.code(status).send({ error: 'Tapis error', details: body })
-      return
+      const body = await (err?.response?.text?.() ??
+        Promise.resolve(err?.message ?? ''));
+      reply.code(status).send({ error: 'Tapis error', details: body });
+      return;
     }
-    reply.code(502).send({ error: 'Bad gateway', details: err?.message })
+    reply.code(502).send({ error: 'Bad gateway', details: err?.message });
   }
 }
 
 // ---------------------------------------------------------------------------
 // Export all handlers keyed by operationId
 // ---------------------------------------------------------------------------
-export const customHandlers: Record<string, (req: any, reply: any) => Promise<void>> = {
+export const customHandlers: Record<
+  string,
+  (req: any, reply: any) => Promise<void>
+> = {
   custom_model_index_get,
   custom_model_intervention_get,
   custom_model_region_get,
@@ -690,4 +888,4 @@ export const customHandlers: Record<string, (req: any, reply: any) => Promise<vo
   custom_tapis_apps_get,
   custom_tapis_apps_id_get,
   user_login_post,
-}
+};
