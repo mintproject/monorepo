@@ -58,3 +58,33 @@
 [2026-05-03T10:00:00.816Z] [INFO] Task Full anatomy rescan completed in 154ms
 [2026-05-03T16:00:00.763Z] [INFO] Executing task: Full anatomy rescan
 [2026-05-03T16:00:00.940Z] [INFO] Task Full anatomy rescan completed in 177ms
+[2026-05-03T22:36:59.835Z] [INFO] Scheduled task: Full anatomy rescan (0 */6 * * *)
+[2026-05-03T22:36:59.840Z] [INFO] Scheduled task: Consolidate old memory (0 2 * * *)
+[2026-05-03T22:36:59.840Z] [INFO] Scheduled task: Token audit report (0 0 * * 1)
+[2026-05-03T22:36:59.840Z] [INFO] Scheduled task: Cerebrum reflection (0 3 * * 0)
+[2026-05-03T22:36:59.840Z] [INFO] Scheduled task: AI suggestions (0 4 * * 1)
+[2026-05-03T22:36:59.841Z] [INFO] File watcher started on .wolf/
+[2026-05-03T22:36:59.842Z] [INFO] OpenWolf daemon started
+[2026-05-03T22:36:59.843Z] [INFO] Dashboard server listening on port 18791
+[2026-05-03T22:37:00.201Z] [INFO] WebSocket client connected
+[2026-05-04T00:40:21.443Z] [INFO] WebSocket client connected
+[2026-05-04T08:00:00.052Z] [INFO] Executing task: AI suggestions
+[2026-05-04T08:02:33.936Z] [ERROR] Task AI suggestions failed (attempt 1): claude -p failed: spawnSync /bin/sh ETIMEDOUT
+[2026-05-04T10:00:00.098Z] [INFO] Executing task: Full anatomy rescan
+[2026-05-04T10:00:00.276Z] [INFO] Task Full anatomy rescan completed in 177ms
+[2026-05-04T16:00:00.578Z] [INFO] Executing task: Full anatomy rescan
+[2026-05-04T16:00:00.748Z] [INFO] Task Full anatomy rescan completed in 170ms
+[2026-05-04T22:00:00.446Z] [INFO] Executing task: Full anatomy rescan
+[2026-05-04T22:00:00.612Z] [INFO] Task Full anatomy rescan completed in 166ms
+[2026-05-05T04:00:00.083Z] [INFO] Executing task: Full anatomy rescan
+[2026-05-05T04:00:00.252Z] [INFO] Task Full anatomy rescan completed in 169ms
+[2026-05-06T04:00:00.844Z] [INFO] Executing task: Full anatomy rescan
+[2026-05-06T04:00:01.047Z] [INFO] Task Full anatomy rescan completed in 203ms
+[2026-05-06T06:00:00.755Z] [INFO] Executing task: Consolidate old memory
+[2026-05-06T06:00:00.773Z] [INFO] Task Consolidate old memory completed in 17ms
+[2026-05-06T10:00:00.935Z] [INFO] Executing task: Full anatomy rescan
+[2026-05-06T10:00:01.105Z] [INFO] Task Full anatomy rescan completed in 170ms
+[2026-05-07T16:00:00.322Z] [INFO] Executing task: Full anatomy rescan
+[2026-05-07T16:00:00.502Z] [INFO] Task Full anatomy rescan completed in 180ms
+[2026-05-07T22:00:00.582Z] [INFO] Executing task: Full anatomy rescan
+[2026-05-07T22:00:00.742Z] [INFO] Task Full anatomy rescan completed in 159ms

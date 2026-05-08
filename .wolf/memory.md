@@ -3,6 +3,8 @@
 > Chronological action log. Hooks and AI append to this file automatically.
 > Old sessions are consolidated by the daemon weekly.
 
+| 00:00 | Added optional-input visual distinction (grey info icon + (optional) label) to mint-datasets.ts render section | ui/src/screens/modeling/thread/mint-datasets.ts | committed bb5b947 in ui submodule, e59bc80 pointer bump in outer repo | ~1200 |
+
 ## Session: 2026-04-12 17:33
 > Consolidated session (0 actions)
 
@@ -28,25 +30,25 @@
 > Consolidated session (0 actions)
 
 ## Session: 2026-04-26 11:02
-> Consolidated session (8 actions)
+> Consolidated session (0 actions)
 
 ## Session: 2026-04-26 11:11
-> Consolidated session (17 actions)
+> Consolidated session (0 actions)
 
 ## Session: 2026-04-26 13:42
 > Consolidated session (0 actions)
 
 ## Session: 2026-04-26 13:42
-> Consolidated session (9 actions)
+> Consolidated session (0 actions)
 
 ## Session: 2026-04-26 14:11
-> Consolidated session (3 actions)
+> Consolidated session (0 actions)
 
 ## Session: 2026-04-26 14:17
-> Consolidated session (4 actions)
+> Consolidated session (0 actions)
 
 ## Session: 2026-04-26 14:25
-> Consolidated session (7 actions)
+> Consolidated session (0 actions)
 
 ## Session: 2026-04-26 14:28
 > Consolidated session (0 actions)
@@ -55,22 +57,22 @@
 > Consolidated session (0 actions)
 
 ## Session: 2026-04-26 14:52
-> Consolidated session (2 actions)
+> Consolidated session (0 actions)
 
 ## Session: 2026-04-26 19:00
-> Consolidated session (7 actions)
+> Consolidated session (0 actions)
 
 ## Session: 2026-04-26 15:09
-> Consolidated session (6 actions)
+> Consolidated session (0 actions)
 
 ## Session: 2026-04-26 15:18
 > Consolidated session (0 actions)
 
 ## Session: 2026-04-26 15:18
-> Consolidated session (4 actions)
+> Consolidated session (0 actions)
 
 ## Session: 2026-04-26 15:28
-> Consolidated session (6 actions)
+> Consolidated session (0 actions)
 
 ## Session: 2026-04-26 15:37
 > Consolidated session (0 actions)
@@ -79,22 +81,22 @@
 > Consolidated session (0 actions)
 
 ## Session: 2026-04-26 15:38
-> Consolidated session (17 actions)
+> Consolidated session (0 actions)
 
 ## Session: 2026-04-26 16:08
-> Consolidated session (1 actions)
+> Consolidated session (0 actions)
 
 ## Session: 2026-04-26 16:16
-> Consolidated session (2 actions)
+> Consolidated session (0 actions)
 
 ## Session: 2026-04-26 16:17
-> Consolidated session (1 actions)
+> Consolidated session (0 actions)
 
 ## Session: 2026-04-26 16:23
-> Consolidated session (4 actions)
+> Consolidated session (0 actions)
 
 ## Session: 2026-04-26 16:28
-> Consolidated session (13 actions)
+> Consolidated session (0 actions)
 
 ## Session: 2026-04-26 18:17
 > Consolidated session (0 actions)
@@ -106,19 +108,19 @@
 > Consolidated session (0 actions)
 
 ## Session: 2026-04-26 18:30
-> Consolidated session (3 actions)
+> Consolidated session (0 actions)
 
 ## Session: 2026-04-26 18:34
-> Consolidated session (5 actions)
+> Consolidated session (0 actions)
 
 ## Session: 2026-04-26 18:40
-> Consolidated session (1 actions)
+> Consolidated session (0 actions)
 
 ## Session: 2026-04-26 18:42
-> Consolidated session (21 actions)
+> Consolidated session (0 actions)
 
 ## Session: 2026-04-26 18:59
-> Consolidated session (16 actions)
+> Consolidated session (0 actions)
 
 ## Session: 2026-04-26 19:10
 > Consolidated session (0 actions)
@@ -127,7 +129,7 @@
 > Consolidated session (0 actions)
 
 ## Session: 2026-04-26 19:14
-> Consolidated session (21 actions)
+> Consolidated session (0 actions)
 
 ## Session: 2026-04-26 19:33
 > Consolidated session (0 actions)
@@ -136,349 +138,88 @@
 > Consolidated session (0 actions)
 
 ## Session: 2026-04-26 19:37
-> Consolidated session (5 actions)
+> Consolidated session (0 actions)
 
 ## Session: 2026-04-26 19:58
 > Consolidated session (0 actions)
 
 ## Session: 2026-04-26 19:58
-> Consolidated session (29 actions)
+> Consolidated session (0 actions)
 
 ## Session: 2026-04-27 20:50
-
-| Time | Action | File(s) | Outcome | ~Tokens |
-|------|--------|---------|---------|--------|
+> Consolidated session (0 actions)
 
 ## Session: 2026-04-27 21:01
-
-| Time | Action | File(s) | Outcome | ~Tokens |
-|------|--------|---------|---------|--------|
+> Consolidated session (0 actions)
 
 ## Session: 2026-04-27 21:01
-
-| Time | Action | File(s) | Outcome | ~Tokens |
-|------|--------|---------|---------|--------|
+> Consolidated session (0 actions)
 
 ## Session: 2026-04-27 21:02
-
-| Time | Action | File(s) | Outcome | ~Tokens |
-|------|--------|---------|---------|--------|
+> Consolidated session (0 actions)
 
 ## Session: 2026-04-27 21:11
-
-| Time | Action | File(s) | Outcome | ~Tokens |
-|------|--------|---------|---------|--------|
-| 21:14 | Created graphql_engine/migrations/1771200015000_thread_model_io_fk/up.sql | — | ~456 |
-| 21:14 | Created graphql_engine/migrations/1771200015000_thread_model_io_fk/down.sql | — | ~95 |
-| 21:14 | Session end: 2 writes across 2 files (up.sql, down.sql) | 0 reads | ~591 tok |
-| 21:15 | Session end: 2 writes across 2 files (up.sql, down.sql) | 0 reads | ~591 tok |
-| 21:15 | Session end: 2 writes across 2 files (up.sql, down.sql) | 0 reads | ~591 tok |
-| 21:26 | Edited graphql_engine/metadata/tables.yaml | reduced (-8 lines) | ~57 |
-| 21:26 | Edited graphql_engine/metadata/tables.yaml | 12→12 lines | ~94 |
-| 21:26 | Edited graphql_engine/metadata/tables.yaml | expanded (+7 lines) | ~135 |
-| 21:26 | Session end: 5 writes across 3 files (up.sql, down.sql, tables.yaml) | 1 reads | ~877 tok |
-| 21:26 | Session end: 5 writes across 3 files (up.sql, down.sql, tables.yaml) | 1 reads | ~877 tok |
+> Consolidated session (10 actions)
 
 ## Session: 2026-04-27 21:33
-
-| Time | Action | File(s) | Outcome | ~Tokens |
-|------|--------|---------|---------|--------|
-| 21:35 | Created scripts/test-migration-devel.sh | — | ~1572 |
-| 21:35 | Session end: 1 writes across 1 files (test-migration-devel.sh) | 0 reads | ~1684 tok |
-| 21:35 | Session end: 1 writes across 1 files (test-migration-devel.sh) | 0 reads | ~1684 tok |
+> Consolidated session (3 actions)
 
 ## Session: 2026-04-27 21:43
-
-| Time | Action | File(s) | Outcome | ~Tokens |
-|------|--------|---------|---------|--------|
+> Consolidated session (0 actions)
 
 ## Session: 2026-04-27 21:43
-
-| Time | Action | File(s) | Outcome | ~Tokens |
-|------|--------|---------|---------|--------|
-| 21:52 | Edited ui/src/queries/thread/get.graphql | 7→7 lines | ~53 |
-| 21:52 | Edited ui/src/queries/thread/get-subscription.graphql | 7→7 lines | ~38 |
-| 21:52 | Edited ui/src/queries/thread/get.graphql | 7→7 lines | ~55 |
-| 21:52 | Edited ui/src/queries/thread/get-subscription.graphql | 7→7 lines | ~40 |
-| 21:52 | Session end: 4 writes across 2 files (get.graphql, get-subscription.graphql) | 3 reads | ~198 tok |
+> Consolidated session (5 actions)
 
 ## Session: 2026-04-27 21:56
-
-| Time | Action | File(s) | Outcome | ~Tokens |
-|------|--------|---------|---------|--------|
+> Consolidated session (0 actions)
 
 ## Session: 2026-04-27 22:27
-
-| Time | Action | File(s) | Outcome | ~Tokens |
-|------|--------|---------|---------|--------|
-| 22:28 | Edited mint-ensemble-manager/.github/workflows/docker-publish.yml | 5→10 lines | ~148 |
-| 22:28 | Session end: 1 writes across 1 files (docker-publish.yml) | 1 reads | ~148 tok |
-| 22:29 | Session end: 1 writes across 1 files (docker-publish.yml) | 1 reads | ~148 tok |
-| 22:41 | Edited mint-ensemble-manager/src/classes/graphql/queries/thread/get.graphql | 8→8 lines | ~58 |
-| 22:41 | Edited mint-ensemble-manager/src/classes/graphql/queries/emulator/model-executions.graphql | 3→3 lines | ~22 |
-| 22:41 | Edited mint-ensemble-manager/src/classes/graphql/queries/emulator/thread-executions.graphql | 9→9 lines | ~52 |
-| 22:42 | Edited mint-ensemble-manager/src/classes/graphql/queries/thread/get.graphql | 8→8 lines | ~61 |
-| 22:42 | Edited mint-ensemble-manager/src/classes/graphql/queries/emulator/model-executions.graphql | 3→3 lines | ~25 |
-| 22:42 | Edited mint-ensemble-manager/src/classes/graphql/queries/emulator/thread-executions.graphql | 9→9 lines | ~55 |
-| 22:42 | Session end: 7 writes across 4 files (docker-publish.yml, get.graphql, model-executions.graphql, thread-executions.graphql) | 5 reads | ~29064 tok |
-| 22:43 | Session end: 7 writes across 4 files (docker-publish.yml, get.graphql, model-executions.graphql, thread-executions.graphql) | 5 reads | ~29064 tok |
-| 08:40 | Edited mint-ensemble-manager/src/classes/graphql/queries/thread/get.graphql | 5→5 lines | ~47 |
-| 08:40 | Edited mint-ensemble-manager/src/classes/graphql/queries/emulator/model-executions.graphql | 3→3 lines | ~27 |
-| 08:40 | Edited mint-ensemble-manager/src/classes/graphql/queries/emulator/thread-executions.graphql | 3→3 lines | ~27 |
-| 08:40 | Session end: 10 writes across 4 files (docker-publish.yml, get.graphql, model-executions.graphql, thread-executions.graphql) | 5 reads | ~29170 tok |
-| 08:41 | Session end: 10 writes across 4 files (docker-publish.yml, get.graphql, model-executions.graphql, thread-executions.graphql) | 5 reads | ~29170 tok |
+> Consolidated session (16 actions)
 
 ## Session: 2026-04-27 17:05
-
-| Time | Action | File(s) | Outcome | ~Tokens |
-|------|--------|---------|---------|--------|
-| 17:12 | Edited .planning/ROADMAP.md | expanded (+24 lines) | ~387 |
-| 17:13 | Edited .planning/STATE.md | 1→2 lines | ~56 |
-| 17:14 | Added Phase 12 to roadmap (optional hasInput support) | .planning/ROADMAP.md, .planning/STATE.md, .planning/phases/12-*/ | success | ~2k |
-| 17:14 | Session end: 2 writes across 2 files (ROADMAP.md, STATE.md) | 3 reads | ~6880 tok |
+> Consolidated session (4 actions)
 
 ## Session: 2026-04-27 17:14
-
-| Time | Action | File(s) | Outcome | ~Tokens |
-|------|--------|---------|---------|--------|
+> Consolidated session (0 actions)
 
 ## Session: 2026-04-27 17:25
-
-| Time | Action | File(s) | Outcome | ~Tokens |
-|------|--------|---------|---------|--------|
-| 17:37 | Created .planning/phases/12-model-catalog-configuration-file-input-tapis-compatibility/12-CONTEXT.md | — | ~4633 |
-| 17:37 | Created .planning/phases/12-model-catalog-configuration-file-input-tapis-compatibility/12-DISCUSSION-LOG.md | — | ~1492 |
-| 17:38 | Edited .planning/STATE.md | 2→2 lines | ~21 |
-| 17:39 | Session end: 3 writes across 3 files (12-CONTEXT.md, 12-DISCUSSION-LOG.md, STATE.md) | 16 reads | ~44090 tok |
+> Consolidated session (4 actions)
 
 ## Session: 2026-04-27 17:39
-
-| Time | Action | File(s) | Outcome | ~Tokens |
-|------|--------|---------|---------|--------|
-| 17:51 | Created .planning/phases/12-model-catalog-configuration-file-input-tapis-compatibility/12-PATTERNS.md | — | ~7731 |
-| 19:17 | Created .planning/phases/12-model-catalog-configuration-file-input-tapis-compatibility/12-01-PLAN.md | — | ~3451 |
-| 19:28 | Created .planning/phases/12-model-catalog-configuration-file-input-tapis-compatibility/12-02-PLAN.md | — | ~4324 |
-| 19:36 | Created .planning/phases/12-model-catalog-configuration-file-input-tapis-compatibility/12-03-PLAN.md | — | ~4059 |
-| 19:43 | Created .planning/phases/12-model-catalog-configuration-file-input-tapis-compatibility/12-04-PLAN.md | — | ~4693 |
-| 19:46 | Created .planning/phases/12-model-catalog-configuration-file-input-tapis-compatibility/12-05-PLAN.md | — | ~4009 |
-| 19:47 | Created .planning/ROADMAP.md | — | ~2760 |
-| 19:53 | Created .planning/phases/12-model-catalog-configuration-file-input-tapis-compatibility/12-01-PLAN.md | — | ~3776 |
+> Consolidated session (8 actions)
 
 ## Session: 2026-04-28 20:25
-
-| Time | Action | File(s) | Outcome | ~Tokens |
-|------|--------|---------|---------|--------|
-| 20:30 | Created .planning/config.json | — | ~229 |
-| 20:30 | gsd-settings: configure full workflow (yolo preserved) | .planning/config.json | ok | ~3k |
-| 20:30 | Session end: 1 writes across 1 files (config.json) | 4 reads | ~301 tok |
-| 20:35 | Created .planning/phases/12-model-catalog-configuration-file-input-tapis-compatibility/12-02-PLAN.md | — | ~6499 |
-| 20:36 | Created .planning/phases/12-model-catalog-configuration-file-input-tapis-compatibility/12-03-PLAN.md | — | ~4970 |
-| 20:38 | Created .planning/phases/12-model-catalog-configuration-file-input-tapis-compatibility/12-04-PLAN.md | — | ~5541 |
-| 21:23 | Session end: 4 writes across 4 files (config.json, 12-02-PLAN.md, 12-03-PLAN.md, 12-04-PLAN.md) | 18 reads | ~55948 tok |
+> Consolidated session (7 actions)
 
 ## Session: 2026-04-28 21:23
-
-| Time | Action | File(s) | Outcome | ~Tokens |
-|------|--------|---------|---------|--------|
-| 21:27 | Created graphql_engine/migrations/1771200016000_modelcatalog_configuration_input_is_optional/up.sql | — | ~32 |
-| 21:27 | Created graphql_engine/migrations/1771200016000_modelcatalog_configuration_input_is_optional/down.sql | — | ~24 |
-| 21:27 | Edited graphql_engine/metadata/tables.yaml | 24→26 lines | ~142 |
-| 21:28 | Created .planning/phases/12-model-catalog-configuration-file-input-tapis-compatibility/12-01-SUMMARY.md | — | ~1319 |
-| 21:29 | Edited .planning/STATE.md | 15→15 lines | ~114 |
-| 21:29 | Edited .planning/STATE.md | 3→3 lines | ~75 |
-| 21:29 | Edited .planning/ROADMAP.md | inline fix | ~45 |
-| 21:41 | Created .planning/phases/12-model-catalog-configuration-file-input-tapis-compatibility/12-01-SUMMARY.md | — | ~2059 |
-| 21:43 | Edited model-catalog-api/src/mappers/resource-registry.ts | expanded (+6 lines) | ~121 |
-| 21:43 | Edited model-catalog-api/src/mappers/resource-registry.ts | 25→26 lines | ~256 |
-| 21:44 | Edited model-catalog-api/src/mappers/resource-registry.ts | 33→34 lines | ~323 |
-| 21:44 | Edited model-catalog-api/src/mappers/resource-registry.ts | 34→35 lines | ~340 |
-| 21:45 | Edited model-catalog-api/src/hasura/field-maps.ts | 10→11 lines | ~35 |
-| 21:45 | Edited model-catalog-api/src/service.ts | added 2 condition(s) | ~198 |
-| 21:45 | Edited model-catalog-api/src/mappers/request.ts | added 2 condition(s) | ~157 |
-| 21:46 | Edited model-catalog-api/src/mappers/__tests__/request.test.ts | expanded (+37 lines) | ~720 |
-| 21:46 | Edited model-catalog-api/src/mappers/request.ts | added 1 condition(s) | ~194 |
-| 21:46 | Edited model-catalog-api/openapi.yaml | expanded (+7 lines) | ~229 |
-| 21:48 | Created .planning/phases/12-model-catalog-configuration-file-input-tapis-compatibility/12-02-SUMMARY.md | — | ~1628 |
-| 21:48 | Executed 12-02-PLAN.md: added junctionColumns to resource-registry.ts + hasInput entries, is_optional to field-maps.ts, service.ts PUT path, request.ts CREATE path (incl. bug fix for nested entity contamination), Tests 10+11, openapi.yaml isOptional field | model-catalog-api/src/mappers/resource-registry.ts, field-maps.ts, service.ts, request.ts, request.test.ts, openapi.yaml | 174 tests pass, TypeScript clean, 4 tasks committed on gsd/phase-12-is-optional | ~4000 |
-| 21:50 | Edited mint-ensemble-manager/src/classes/mint/mint-types.ts | 7→8 lines | ~54 |
-| 21:50 | Edited mint-ensemble-manager/src/classes/graphql/queries/fragments/model-info.graphql | 9→10 lines | ~44 |
-| 21:50 | Edited mint-ensemble-manager/src/classes/graphql/queries/model/get-modelcatalog-configuration.graphql | 9→10 lines | ~38 |
-| 21:50 | Edited mint-ensemble-manager/src/classes/graphql/graphql_adapter.test.ts | inline fix | ~31 |
-| 21:50 | Edited mint-ensemble-manager/src/classes/graphql/graphql_adapter.test.ts | expanded (+20 lines) | ~209 |
-| 21:50 | Edited mint-ensemble-manager/src/classes/graphql/graphql_adapter.ts | 2→2 lines | ~55 |
-| 21:51 | Edited mint-ensemble-manager/src/classes/graphql/graphql_adapter.ts | added nullish coalescing | ~187 |
-| 21:52 | Created .planning/phases/12-model-catalog-configuration-file-input-tapis-compatibility/12-03-SUMMARY.md | — | ~1589 |
-| 21:53 | Executed 12-03-PLAN: is_optional flow from Hasura to ModelIO | mint-types.ts, graphql_adapter.ts, graphql_adapter.test.ts, model-info.graphql, get-modelcatalog-configuration.graphql, types.ts | TDD RED/GREEN pass, 65 tests green, codegen OK | ~4000 |
-| 21:54 | Edited mint-ensemble-manager/src/classes/tapis/adapters/tests/fixtures/app.ts | 3→3 lines | ~19 |
-| 21:54 | Edited mint-ensemble-manager/src/classes/tapis/adapters/tests/fixtures/app.ts | expanded (+36 lines) | ~294 |
-| 21:54 | Edited mint-ensemble-manager/src/classes/tapis/adapters/tests/fixtures/model.ts | added 1 import(s) | ~21 |
-| 21:55 | Edited mint-ensemble-manager/src/classes/tapis/adapters/tests/fixtures/model.ts | expanded (+18 lines) | ~149 |
-| 21:55 | Edited mint-ensemble-manager/src/classes/tapis/adapters/tests/jobs.test.ts | expanded (+58 lines) | ~767 |
-| 21:56 | Edited mint-ensemble-manager/src/classes/tapis/adapters/TapisJobService.ts | added 1 condition(s) | ~205 |
-| 21:58 | Created .planning/phases/12-model-catalog-configuration-file-input-tapis-compatibility/12-04-SUMMARY.md | — | ~1831 |
-| 21:59 | Executed plan 12-04: skip-when-optional in TapisJobService + 3 unit tests | TapisJobService.ts, fixtures/app.ts, fixtures/model.ts, jobs.test.ts | 68 tests pass, commits cd03a4f 1332d30 ae54172 108d7da | ~2000 |
-| 22:03 | Edited ui/src/screens/models/configure/resources/dataset-specification.ts | 6→7 lines | ~118 |
-| 22:03 | Edited ui/src/screens/models/configure/resources/dataset-specification.ts | modified _editResource() | ~98 |
-| 22:03 | Edited ui/src/screens/models/configure/resources/dataset-specification.ts | modified _createResource() | ~90 |
-| 22:04 | Edited ui/src/screens/models/configure/resources/dataset-specification.ts | modified _renderRow() | ~156 |
-| 22:04 | Edited ui/src/screens/models/configure/resources/dataset-specification.ts | expanded (+7 lines) | ~268 |
-| 22:04 | Edited ui/src/screens/models/configure/resources/dataset-specification.ts | 8→10 lines | ~112 |
-| 22:06 | Edited ui/src/model-catalog-api/custom-apis/model-configuration.ts | added optional chaining | ~656 |
-| 22:06 | Edited ui/src/model-catalog-api/custom-apis/model-configuration-setup.ts | added optional chaining | ~657 |
-| 22:06 | Edited ui/src/model-catalog-api/custom-apis/model-configuration.ts | 5→4 lines | ~34 |
-| 22:07 | Edited ui/src/model-catalog-api/custom-apis/model-configuration-setup.ts | 5→4 lines | ~35 |
-| 22:07 | Edited ui/src/model-catalog-api/custom-apis/model-configuration.ts | modified if() | ~93 |
-| 22:07 | Edited ui/src/model-catalog-api/custom-apis/model-configuration-setup.ts | modified if() | ~97 |
-| 22:07 | Edited ui/src/screens/models/configure/resources/model-configuration.ts | added nullish coalescing | ~62 |
-| 22:07 | Edited ui/src/screens/models/configure/resources/model-configuration-setup.ts | added nullish coalescing | ~62 |
-| 22:08 | Edited ui/src/screens/models/configure/resources/model-configuration.ts | 3→4 lines | ~74 |
-| 22:08 | Edited ui/src/screens/models/configure/resources/model-configuration-setup.ts | 3→4 lines | ~75 |
-| 22:09 | Edited ui/src/screens/models/configure/resources/model-configuration.ts | 9→10 lines | ~112 |
-| 22:09 | Edited ui/src/screens/models/configure/resources/model-configuration.ts | 8→9 lines | ~110 |
-| 22:10 | Edited ui/src/screens/models/configure/resources/model-configuration-setup.ts | modified scrollUp() | ~113 |
-| 22:10 | Edited ui/src/screens/models/configure/resources/model-configuration-setup.ts | modified _getResourceFromFullForm() | ~110 |
-| 22:27 | Edited helm-charts/dynamo-values.yaml | 5→8 lines | ~63 |
-| 22:27 | Session end: 55 writes across 28 files (up.sql, down.sql, tables.yaml, 12-01-SUMMARY.md, STATE.md) | 45 reads | ~293814 tok |
-| 22:28 | Edited ui/.github/workflows/docker-publish.yml | 9→10 lines | ~66 |
-| 22:29 | Edited helm-charts/dynamo-values.yaml | inline fix | ~15 |
-| 22:30 | Edited ui/.github/workflows/docker-publish.yml | 7→7 lines | ~22 |
-| 22:30 | Edited ui/.github/workflows/docker-publish.yml | 3→6 lines | ~106 |
-| 22:30 | Edited ui/.github/workflows/docker-publish.yml | inline fix | ~54 |
+> Consolidated session (64 actions)
 
 ## Session: 2026-04-28 22:31
-
-| Time | Action | File(s) | Outcome | ~Tokens |
-|------|--------|---------|---------|--------|
-| 22:34 | Created .planning/quick/260427-vbh-modify-ui-github-workflows-docker-publis/260427-vbh-PLAN.md | — | ~1327 |
-| 22:36 | Created .planning/quick/260427-vbh-modify-ui-github-workflows-docker-publis/260427-vbh-SUMMARY.md | — | ~517 |
-| 22:37 | Edited .planning/STATE.md | 3→4 lines | ~142 |
-| 22:37 | Edited .planning/STATE.md | inline fix | ~29 |
-| 22:38 | /gsd-quick 260427-vbh: ui docker-publish.yml SAFE_BRANCH | .planning/quick/260427-vbh-...; ui/.github/workflows/docker-publish.yml | ui e0547dd + super b70cdb7 + docs de89017 | ~3k |
-| 22:38 | Session end: 4 writes across 3 files (260427-vbh-PLAN.md, 260427-vbh-SUMMARY.md, STATE.md) | 4 reads | ~8662 tok |
-| 08:18 | Edited helm-charts/dynamo-values.yaml | inline fix | ~15 |
-| 08:19 | Session end: 5 writes across 4 files (260427-vbh-PLAN.md, 260427-vbh-SUMMARY.md, STATE.md, dynamo-values.yaml) | 4 reads | ~8677 tok |
-| 08:20 | Created .planning/HANDOFF.json | — | ~1805 |
-| 08:21 | Created .planning/phases/12-model-catalog-configuration-file-input-tapis-compatibility/.continue-here.md | — | ~2627 |
-| 08:21 | Session end: 7 writes across 6 files (260427-vbh-PLAN.md, 260427-vbh-SUMMARY.md, STATE.md, dynamo-values.yaml, HANDOFF.json) | 5 reads | ~13297 tok |
+> Consolidated session (11 actions)
 
 ## Session: 2026-04-28 08:56
-
-| Time | Action | File(s) | Outcome | ~Tokens |
-|------|--------|---------|---------|--------|
+> Consolidated session (0 actions)
 
 ## Session: 2026-04-28 18:36
-
-| Time | Action | File(s) | Outcome | ~Tokens |
-|------|--------|---------|---------|--------|
-| 18:37 | Created ui/src/model-catalog-api/sdk-patches.ts | — | ~307 |
-| 18:37 | Created ui/src/model-catalog-api/sdk-patches.ts | — | ~392 |
-| 18:37 | Edited ui/src/model-catalog-api/model-catalog-api.ts | added 1 import(s) | ~60 |
-| 18:42 | Edited helm-charts/dynamo-values.yaml | inline fix | ~15 |
-| 18:42 | Session end: 4 writes across 3 files (sdk-patches.ts, model-catalog-api.ts, dynamo-values.yaml) | 3 reads | ~151804 tok |
-| 18:47 | Session end: 4 writes across 3 files (sdk-patches.ts, model-catalog-api.ts, dynamo-values.yaml) | 3 reads | ~151804 tok |
-| 18:48 | Session end: 4 writes across 3 files (sdk-patches.ts, model-catalog-api.ts, dynamo-values.yaml) | 3 reads | ~151804 tok |
-| 18:48 | Session end: 4 writes across 3 files (sdk-patches.ts, model-catalog-api.ts, dynamo-values.yaml) | 4 reads | ~151804 tok |
-| 18:51 | Edited model-catalog-fetch-api-client/src/models/DatasetSpecification.ts | expanded (+6 lines) | ~196 |
-| 18:51 | Session end: 5 writes across 4 files (sdk-patches.ts, model-catalog-api.ts, dynamo-values.yaml, DatasetSpecification.ts) | 4 reads | ~152000 tok |
-| 18:55 | Edited model-catalog-fetch-api-client/src/models/DatasetSpecification.ts | 2→3 lines | ~64 |
-| 18:55 | Edited model-catalog-fetch-api-client/src/models/DatasetSpecification.ts | 2→3 lines | ~29 |
-| 18:56 | Session end: 7 writes across 4 files (sdk-patches.ts, model-catalog-api.ts, dynamo-values.yaml, DatasetSpecification.ts) | 6 reads | ~154717 tok |
-| 18:57 | Edited model-catalog-fetch-api-client/package.json | inline fix | ~9 |
-| 18:59 | Edited ui/src/screens/models/configure/resources/dataset-specification.ts | removed 8 lines | ~17 |
-| 18:59 | Edited ui/src/screens/models/configure/resources/dataset-specification.ts | — | ~0 |
-| 18:59 | Edited ui/src/screens/models/configure/resources/dataset-specification.ts | 4→3 lines | ~46 |
-| 18:59 | Edited ui/src/screens/models/configure/resources/dataset-specification.ts | modified _createResource() | ~25 |
-| 18:59 | Edited ui/src/screens/models/configure/resources/dataset-specification.ts | 3→2 lines | ~24 |
-| 19:00 | Edited ui/src/screens/models/configure/resources/dataset-specification.ts | expanded (+8 lines) | ~161 |
-| 19:00 | Edited ui/src/screens/models/configure/resources/model-configuration.ts | inline fix | ~50 |
-| 19:00 | Edited ui/src/screens/models/configure/resources/model-configuration-setup.ts | inline fix | ~28 |
-| 19:01 | Edited helm-charts/dynamo-values.yaml | inline fix | ~15 |
-| 19:01 | Session end: 17 writes across 8 files (sdk-patches.ts, model-catalog-api.ts, dynamo-values.yaml, DatasetSpecification.ts, package.json) | 9 reads | ~181521 tok |
-| 19:07 | Session end: 17 writes across 8 files (sdk-patches.ts, model-catalog-api.ts, dynamo-values.yaml, DatasetSpecification.ts, package.json) | 12 reads | ~200268 tok |
-| 19:09 | Created .planning/HANDOFF.json | — | ~3324 |
-| 19:10 | Created .planning/phases/12-model-catalog-configuration-file-input-tapis-compatibility/.continue-here.md | — | ~3886 |
-| 19:12 | Session end: 19 writes across 10 files (sdk-patches.ts, model-catalog-api.ts, dynamo-values.yaml, DatasetSpecification.ts, package.json) | 13 reads | ~207756 tok |
+> Consolidated session (28 actions)
 
 ## Session: 2026-04-28 19:13
-
-| Time | Action | File(s) | Outcome | ~Tokens |
-|------|--------|---------|---------|--------|
+> Consolidated session (0 actions)
 
 ## Session: 2026-04-28 19:13
-
-| Time | Action | File(s) | Outcome | ~Tokens |
-|------|--------|---------|---------|--------|
-| 19:22 | Created model-catalog-api/.github/workflows/ci.yml | — | ~551 |
-| 19:27 | Edited helm-charts/dynamo-values.yaml | 5→10 lines | ~68 |
-| 19:28 | Session end: 2 writes across 2 files (ci.yml, dynamo-values.yaml) | 14 reads | ~68853 tok |
-| 19:34 | Edited model-catalog-api/src/mappers/response.ts | added 1 condition(s) | ~297 |
-| 19:42 | Edited helm-charts/dynamo-values.yaml | 5→5 lines | ~36 |
-| 19:42 | Edited .planning/HANDOFF.json | 2→2 lines | ~18 |
-| 19:44 | Edited .planning/HANDOFF.json | 2→4 lines | ~362 |
-| 19:45 | Edited .planning/HANDOFF.json | inline fix | ~115 |
-| 19:46 | Edited .planning/HANDOFF.json | 3→2 lines | ~87 |
-| 19:47 | Edited .planning/HANDOFF.json | 7→7 lines | ~426 |
+> Consolidated session (10 actions)
 
 ## Session: 2026-04-28 19:47
-
-| Time | Action | File(s) | Outcome | ~Tokens |
-|------|--------|---------|---------|--------|
-| 19:49 | Created .planning/todos/pending/2026-04-28-widen-ensemble-manager-graphql-engine-ci-branches.md | — | ~567 |
-| 19:49 | Session end: 1 writes across 1 files (2026-04-28-widen-ensemble-manager-graphql-engine-ci-branches.md) | 1 reads | ~607 tok |
-| 19:52 | Created .planning/phases/12-model-catalog-configuration-file-input-tapis-compatibility/.continue-here.md | — | ~1056 |
-| 19:52 | Session end: 2 writes across 2 files (2026-04-28-widen-ensemble-manager-graphql-engine-ci-branches.md, .continue-here.md) | 3 reads | ~5381 tok |
+> Consolidated session (4 actions)
 
 ## Session: 2026-04-28 19:52
-
-| Time | Action | File(s) | Outcome | ~Tokens |
-|------|--------|---------|---------|--------|
-| 19:58 | Edited ui/src/screens/models/configure/resources/dataset-specification.ts | 6→11 lines | ~214 |
-| 19:59 | Edited ui/src/screens/models/configure/resources/dataset-specification.ts | added 2 condition(s) | ~209 |
-| 19:59 | Edited ui/src/screens/models/configure/resources/dataset-specification.ts | 8→10 lines | ~116 |
-| 12:05 | Diagnosed isOptional checkbox bug: base ModelCatalogResource.setResources lazy-refetches DSpec by id, drops junction column from render+save | resource.ts:1419,479,1642 dataset-specification.ts | hypothesis confirmed | ~3500 |
-| 12:05 | Added _junctionOverlay + setResources/requestUpdate overrides to ModelCatalogDatasetSpecification to preserve isOptional across lazy GET | ui/src/screens/models/configure/resources/dataset-specification.ts | fix applied, tsc clean | ~600 |
-| 20:01 | Edited helm-charts/dynamo-values.yaml | inline fix | ~15 |
-| 20:01 | Session end: 4 writes across 2 files (dataset-specification.ts, dynamo-values.yaml) | 7 reads | ~23755 tok |
+> Consolidated session (7 actions)
 
 ## Session: 2026-04-29 20:04
-
-| Time | Action | File(s) | Outcome | ~Tokens |
-|------|--------|---------|---------|--------|
-| 20:10 | Edited model-catalog-api/src/mappers/response.ts | modified scalar() | ~185 |
-| 20:11 | Edited model-catalog-api/src/mappers/__tests__/response.test.ts | expanded (+54 lines) | ~594 |
-| 20:12 | Edited helm-charts/dynamo-values.yaml | inline fix | ~15 |
-| 12:11 | Diagnosed isOptional-stuck-true after refresh: response.ts hoist wrapped junction scalar in array; UI !![false] -> true | model-catalog-api/src/mappers/response.ts:115 | root cause located | ~400 |
-| 12:12 | Fixed mca response mapper to emit junction column as scalar; added 2 vitest assertions | model-catalog-api/src/mappers/{response.ts,__tests__/response.test.ts} | 26/26 pass | ~600 |
-| 20:13 | Session end: 3 writes across 3 files (response.ts, response.test.ts, dynamo-values.yaml) | 4 reads | ~11964 tok |
-| 20:13 | Session end: 3 writes across 3 files (response.ts, response.test.ts, dynamo-values.yaml) | 4 reads | ~11964 tok |
-| 20:14 | Session end: 3 writes across 3 files (response.ts, response.test.ts, dynamo-values.yaml) | 4 reads | ~11964 tok |
-| 20:15 | Session end: 3 writes across 3 files (response.ts, response.test.ts, dynamo-values.yaml) | 4 reads | ~11964 tok |
-| 20:18 | Edited ui/src/screens/models/configure/resources/dataset-specification.ts | inline fix | ~17 |
-| 20:18 | Edited ui/src/screens/models/configure/resources/dataset-specification.ts | 13→17 lines | ~298 |
-| 20:18 | Edited helm-charts/dynamo-values.yaml | inline fix | ~15 |
-| 20:18 | Session end: 6 writes across 4 files (response.ts, response.test.ts, dynamo-values.yaml, dataset-specification.ts) | 5 reads | ~16992 tok |
-| 21:20 | Session end: 6 writes across 4 files (response.ts, response.test.ts, dynamo-values.yaml, dataset-specification.ts) | 5 reads | ~16992 tok |
-| 21:21 | Created .planning/HANDOFF.json | — | ~2800 |
+> Consolidated session (15 actions)
 
 ## Session: 2026-04-29 21:22
-
-| Time | Action | File(s) | Outcome | ~Tokens |
-|------|--------|---------|---------|--------|
-| 21:22 | Created .planning/phases/12-model-catalog-configuration-file-input-tapis-compatibility/.continue-here.md | — | ~1275 |
-| 21:23 | Session end: 1 writes across 1 files (.continue-here.md) | 0 reads | ~1366 tok |
-| 21:25 | Edited mint-ensemble-manager/.github/workflows/docker-publish.yml | 7→7 lines | ~29 |
-| 21:25 | Edited graphql_engine/.github/workflows/docker-publish.yml | 7→7 lines | ~22 |
-| 21:26 | Edited graphql_engine/.github/workflows/docker-publish.yml | expanded (+6 lines) | ~150 |
-| 21:27 | Edited graphql_engine/.github/workflows/docker-publish.yml | inline fix | ~54 |
-| 21:28 | Session end: 5 writes across 2 files (.continue-here.md, docker-publish.yml) | 2 reads | ~3698 tok |
-| 21:31 | Session end: 5 writes across 2 files (.continue-here.md, docker-publish.yml) | 2 reads | ~3698 tok |
-| 21:38 | Session end: 5 writes across 2 files (.continue-here.md, docker-publish.yml) | 2 reads | ~3698 tok |
-| 21:38 | Session end: 5 writes across 2 files (.continue-here.md, docker-publish.yml) | 2 reads | ~3698 tok |
-| 21:40 | Edited mint-ensemble-manager/src/api/api-v1/paths/problemStatements/tasks/subtasks/executions/index.ts | modified if() | ~243 |
-| 22:15 | Edited helm-charts/dynamo-values.yaml | 5→5 lines | ~36 |
-| 22:17 | Session end: 7 writes across 4 files (.continue-here.md, docker-publish.yml, index.ts, dynamo-values.yaml) | 3 reads | ~4586 tok |
-| 22:19 | Session end: 7 writes across 4 files (.continue-here.md, docker-publish.yml, index.ts, dynamo-values.yaml) | 3 reads | ~4586 tok |
-| 22:22 | Session end: 7 writes across 4 files (.continue-here.md, docker-publish.yml, index.ts, dynamo-values.yaml) | 3 reads | ~4586 tok |
+> Consolidated session (15 actions)
 
 ## Session: 2026-05-01 16:40
 
@@ -622,3 +363,224 @@
 | 17:35 | Created .claude/skills/update-helm-image-tags/update.sh | — | ~655 |
 | 17:36 | Edited .claude/skills/update-helm-image-tags/update.sh | 2→4 lines | ~57 |
 | 17:36 | Session end: 2 writes across 1 files (update.sh) | 0 reads | ~763 tok |
+| 17:36 | Session end: 2 writes across 1 files (update.sh) | 0 reads | ~763 tok |
+| 17:37 | Created .claude/skills/update-helm-image-tags/update.sh | — | ~806 |
+| 17:37 | Created .claude/skills/update-helm-image-tags/SKILL.md | — | ~564 |
+
+## Session: 2026-05-03 17:38
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 17:39 | Edited .claude/skills/update-helm-image-tags/update.sh | 5→5 lines | ~71 |
+| 17:39 | Edited .claude/skills/update-helm-image-tags/update.sh | 15→17 lines | ~110 |
+| 17:39 | Edited .claude/skills/update-helm-image-tags/update.sh | 9→10 lines | ~93 |
+| 17:39 | Edited .claude/skills/update-helm-image-tags/update.sh | 6→6 lines | ~70 |
+| 17:39 | Session end: 4 writes across 1 files (update.sh) | 1 reads | ~1174 tok |
+
+## Session: 2026-05-03 17:41
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 17:52 | Edited dynamo/shared/values.yaml | 3→2 lines | ~12 |
+| 17:52 | Edited helm-charts/dynamo-values.yaml | 8→7 lines | ~122 |
+| 17:55 | Removed wrong tapis_webhook_base_url override (portals.tapis.io) — prod now uses code fallback ${ensemble_manager_api}/tapis | dynamo/shared/values.yaml, helm-charts/dynamo-values.yaml | bug-076 fixed | ~150 |
+| 17:55 | Logged bug-076 + cerebrum learning + do-not-repeat | .wolf/buglog.json, .wolf/cerebrum.md | OpenWolf protocol followed | ~80 |
+| 17:56 | Session end: 2 writes across 2 files (values.yaml, dynamo-values.yaml) | 4 reads | ~1664 tok |
+| 17:58 | Edited helm-charts/dynamo-values.yaml | 7→8 lines | ~143 |
+| 18:03 | Session end: 3 writes across 2 files (values.yaml, dynamo-values.yaml) | 4 reads | ~1807 tok |
+| 22:05 | Verified bug-076 fix end-to-end via job 29ab7ef6-...-007: 5 webhook events received SUBMITTING_JOB→FINISHED. Confirmed deleteSubscriptionsMatchingSubject=true on FINISHED — Tapis auto-purges sub on terminal status. | .wolf/buglog.json | bug-076 marked verified-fixed | ~120 |
+| 18:06 | Session end: 3 writes across 2 files (values.yaml, dynamo-values.yaml) | 4 reads | ~1807 tok |
+
+## Session: 2026-05-03 18:06
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 18:17 | Created docs/superpowers/specs/2026-05-03-mint-raw-outputs-fallback-design.md | — | ~3039 |
+| 18:17 | Session end: 1 writes across 1 files (2026-05-03-mint-raw-outputs-fallback-design.md) | 3 reads | ~3256 tok |
+
+## Session: 2026-05-03 18:22
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 18:29 | Created docs/superpowers/specs/2026-05-03-mint-raw-outputs-fallback-design.md | — | ~4130 |
+
+## Session: 2026-05-03 18:29
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+
+## Session: 2026-05-03 18:33
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 18:34 | Edited mint-ensemble-manager/src/classes/graphql/graphql_functions.ts | added nullish coalescing | ~486 |
+| 18:36 | Session end: 1 writes across 1 files (graphql_functions.ts) | 7 reads | ~12393 tok |
+| 18:37 | Session end: 1 writes across 1 files (graphql_functions.ts) | 7 reads | ~12393 tok |
+| 18:37 | Created .planning/todos/pending/2026-05-03-mint-datasets-optional-input-warning.md | — | ~570 |
+| 18:37 | Edited mint-ensemble-manager/src/classes/graphql/graphql_functions.ts | added optional chaining | ~470 |
+| 18:38 | Edited .planning/STATE.md | 2→3 lines | ~130 |
+| 18:38 | Session end: 4 writes across 3 files (graphql_functions.ts, 2026-05-03-mint-datasets-optional-input-warning.md, STATE.md) | 10 reads | ~18383 tok |
+| 18:38 | Created mint-ensemble-manager/src/classes/graphql/graphql_functions.test.ts | — | ~580 |
+| 18:39 | Edited ui/src/queries/thread/get.graphql | 6→7 lines | ~49 |
+| 18:39 | Edited ui/src/queries/thread/get-subscription.graphql | 6→7 lines | ~30 |
+| 18:39 | Edited ui/src/util/graphql_adapter.ts | 4→9 lines | ~73 |
+| 18:40 | Edited ui/src/screens/models/reducers.ts | 6→7 lines | ~45 |
+| 18:42 | Fix matchTapisOutputsToMintOutputs crash: map Hasura output shape in getModelOutputsByModelId, add tests | graphql_functions.ts, graphql_functions.test.ts | tests pass 77/77, build ok | ~3500 |
+| 18:40 | Session end: 9 writes across 8 files (graphql_functions.ts, 2026-05-03-mint-datasets-optional-input-warning.md, STATE.md, graphql_functions.test.ts, get.graphql) | 11 reads | ~19165 tok |
+| 18:41 | Edited ui/src/screens/modeling/thread/thread-expansion-datasets.ts | added 1 condition(s) | ~181 |
+| 18:42 | Edited ui/src/screens/modeling/thread/thread-expansion-datasets.ts | 11→12 lines | ~136 |
+| 18:44 | Edited ui/src/screens/modeling/thread/thread-expansion-datasets.ts | modified renderRequiredDatasetRow() | ~342 |
+| 18:44 | Edited dynamo/shared/values.yaml | 5→5 lines | ~39 |
+| 18:45 | Session end: 13 writes across 10 files (graphql_functions.ts, 2026-05-03-mint-datasets-optional-input-warning.md, STATE.md, graphql_functions.test.ts, get.graphql) | 13 reads | ~21397 tok |
+| 18:49 | Created .claude/skills/dynamo-bump-from-branch/SKILL.md | — | ~989 |
+
+## Session: 2026-05-03 18:49
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 18:53 | Created .claude/skills/dynamo-bump-from-branch/bump.sh | — | ~2192 |
+| 19:05 | Created skill dynamo-bump-from-branch | .claude/skills/dynamo-bump-from-branch/{SKILL.md,bump.sh} | dry-run + --branch override verified | ~4200 |
+| 18:54 | Session end: 1 writes across 1 files (bump.sh) | 0 reads | ~2348 tok |
+
+## Session: 2026-05-03 19:27
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 19:38 | Edited ui/src/screens/modeling/thread/mint-datasets.ts | modified if() | ~68 |
+| 19:39 | Edited .planning/todos/pending/2026-05-03-mint-datasets-optional-input-warning.md | modified Remaining() | ~273 |
+| 19:40 | Session end: 2 writes across 2 files (mint-datasets.ts, 2026-05-03-mint-datasets-optional-input-warning.md) | 1 reads | ~360 tok |
+
+## Session: 2026-05-03 19:43
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+
+## Session: 2026-05-03 19:46
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+
+## Session: 2026-05-03 19:50
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+
+## Session: 2026-05-03 19:50
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+
+## Session: 2026-05-03 19:53
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 19:55 | Edited ui/src/screens/modeling/thread/mint-datasets.ts | modified if() | ~852 |
+| 19:55 | Session end: 1 writes across 1 files (mint-datasets.ts) | 3 reads | ~21059 tok |
+| 19:56 | Session end: 1 writes across 1 files (mint-datasets.ts) | 4 reads | ~32646 tok |
+| 19:57 | Created .planning/quick/260503-rnt-apply-optional-input-warning-fix-to-mint/260503-rnt-PLAN.md | — | ~3121 |
+| 19:59 | Edited ui/src/screens/modeling/thread/mint-datasets.ts | 7→10 lines | ~267 |
+| 20:00 | Created .planning/quick/260503-rnt-apply-optional-input-warning-fix-to-mint/260503-rnt-01-SUMMARY.md | — | ~1108 |
+| 20:01 | Edited .planning/STATE.md | 2→2 lines | ~42 |
+| 20:01 | Edited .planning/STATE.md | inline fix | ~31 |
+| 20:01 | Edited .planning/STATE.md | 1→2 lines | ~128 |
+| 20:01 | Session end: 7 writes across 4 files (mint-datasets.ts, 260503-rnt-PLAN.md, 260503-rnt-01-SUMMARY.md, STATE.md) | 5 reads | ~40726 tok |
+| 20:10 | Session end: 7 writes across 4 files (mint-datasets.ts, 260503-rnt-PLAN.md, 260503-rnt-01-SUMMARY.md, STATE.md) | 5 reads | ~40726 tok |
+| 20:11 | Session end: 7 writes across 4 files (mint-datasets.ts, 260503-rnt-PLAN.md, 260503-rnt-01-SUMMARY.md, STATE.md) | 5 reads | ~40726 tok |
+| 20:12 | Session end: 7 writes across 4 files (mint-datasets.ts, 260503-rnt-PLAN.md, 260503-rnt-01-SUMMARY.md, STATE.md) | 5 reads | ~40726 tok |
+| 20:13 | Session end: 7 writes across 4 files (mint-datasets.ts, 260503-rnt-PLAN.md, 260503-rnt-01-SUMMARY.md, STATE.md) | 5 reads | ~40726 tok |
+| 20:16 | Edited ui/src/util/state_functions.ts | modified if() | ~48 |
+
+## Session: 2026-05-04 20:17
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 20:18 | Edited dynamo/shared/values.yaml | 7→7 lines | ~55 |
+| 20:19 | Session end: 1 writes across 1 files (values.yaml) | 0 reads | ~55 tok |
+
+## Session: 2026-05-04 20:24
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+
+## Session: 2026-05-04 20:32
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 20:35 | Edited mint-ensemble-manager/src/classes/common/__tests__/ExecutionCreationStatic.test.ts | expanded (+57 lines) | ~673 |
+| 20:36 | Edited mint-ensemble-manager/src/classes/common/ExecutionCreation.ts | added 1 condition(s) | ~474 |
+| 20:38 | Edited dynamo/shared/values.yaml | 5→5 lines | ~39 |
+| 20:40 | Session end: 3 writes across 3 files (ExecutionCreationStatic.test.ts, ExecutionCreation.ts, values.yaml) | 10 reads | ~20086 tok |
+
+## Session: 2026-05-04 20:46
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+
+## Session: 2026-05-04 20:46
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 20:50 | Generated client summary on Fuseki→Hasura migration + Phase 12 optional inputs | (no files modified) | summary delivered | ~1500 |
+
+## Session: 2026-05-04 04:00
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+
+## Session: 2026-05-07 18:30
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 19:14 | Edited ui/src/model-catalog-api/default-redux-api.ts | modified _getIdFromUri() | ~81 |
+| 19:14 | Session end: 1 writes across 1 files (default-redux-api.ts) | 3 reads | ~81 tok |
+| 19:16 | Session end: 1 writes across 1 files (default-redux-api.ts) | 3 reads | ~81 tok |
+| 19:17 | Edited model-catalog-api/src/service.ts | added 1 condition(s) | ~198 |
+| 19:17 | Edited model-catalog-api/src/service.ts | added 1 condition(s) | ~142 |
+| 19:18 | Edited model-catalog-api/src/service.ts | added 1 condition(s) | ~181 |
+| 19:19 | Session end: 4 writes across 2 files (default-redux-api.ts, service.ts) | 3 reads | ~602 tok |
+| 19:21 | Session end: 4 writes across 2 files (default-redux-api.ts, service.ts) | 3 reads | ~602 tok |
+| 19:24 | Created .planning/quick/260507-bug-a-uri-strict-mode/.continue-here.md | — | ~894 |
+| 19:24 | Session end: 5 writes across 3 files (default-redux-api.ts, service.ts, .continue-here.md) | 3 reads | ~1560 tok |
+
+## Session: 2026-05-07 19:24
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 19:26 | Edited model-catalog-api/src/__tests__/integration.test.ts | added optional chaining | ~232 |
+| 19:26 | Edited model-catalog-api/src/__tests__/integration.test.ts | inline fix | ~21 |
+
+## Session: 2026-05-07 19:27
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 19:28 | Edited model-catalog-api/src/__tests__/integration.test.ts | 10→10 lines | ~108 |
+| 19:28 | Edited model-catalog-api/src/__tests__/integration.test.ts | 10→10 lines | ~96 |
+| 19:28 | Edited model-catalog-api/src/__tests__/integration.test.ts | 9→9 lines | ~93 |
+| 19:32 | Session end: 3 writes across 1 files (integration.test.ts) | 2 reads | ~14521 tok |
+| 19:34 | Edited model-catalog-api/src/service.ts | added 2 condition(s) | ~355 |
+| 19:34 | Edited model-catalog-api/src/service.ts | added 2 condition(s) | ~233 |
+| 19:34 | Edited model-catalog-api/src/service.ts | added 1 condition(s) | ~136 |
+| 19:34 | Edited model-catalog-api/src/service.ts | modified filter() | ~193 |
+| 19:35 | Edited model-catalog-api/src/service.ts | 5→3 lines | ~61 |
+| 19:35 | Edited model-catalog-api/src/service.ts | modified filter() | ~179 |
+| 19:35 | Edited model-catalog-api/src/custom-handlers.ts | added 1 condition(s) | ~197 |
+| 19:36 | Edited model-catalog-api/src/custom-handlers.ts | startsWith() → requireFullUri() | ~72 |
+| 19:36 | Edited model-catalog-api/src/custom-handlers.ts | startsWith() → requireFullUri() | ~75 |
+| 19:36 | Edited model-catalog-api/src/custom-handlers.ts | startsWith() → requireFullUri() | ~72 |
+| 19:36 | Edited model-catalog-api/src/custom-handlers.ts | added 1 condition(s) | ~64 |
+| 19:36 | Edited model-catalog-api/src/custom-handlers.ts | startsWith() → requireFullUri() | ~73 |
+| 19:36 | Edited model-catalog-api/src/custom-handlers.ts | modified custom_configuration_id_inputs_get() | ~92 |
+| 19:36 | Edited model-catalog-api/src/custom-handlers.ts | modified custom_configuration_id_inputs_get() | ~73 |
+| 19:37 | Edited model-catalog-api/src/__tests__/integration.test.ts | added optional chaining | ~147 |
+| 19:37 | Edited model-catalog-api/src/__tests__/integration.test.ts | reduced (-9 lines) | ~388 |
+| 19:38 | Session end: 19 writes across 3 files (integration.test.ts, service.ts, custom-handlers.ts) | 3 reads | ~25966 tok |
+| 19:39 | Edited model-catalog-api/src/mappers/request.ts | 8→4 lines | ~77 |
+| 19:39 | Edited model-catalog-api/src/mappers/__tests__/request.test.ts | IDs() → unchanged() | ~222 |
+| 19:39 | Session end: 21 writes across 5 files (integration.test.ts, service.ts, custom-handlers.ts, request.ts, request.test.ts) | 5 reads | ~26265 tok |
+| 19:40 | Session end: 21 writes across 5 files (integration.test.ts, service.ts, custom-handlers.ts, request.ts, request.test.ts) | 5 reads | ~26265 tok |
+| 19:40 | Session end: 21 writes across 5 files (integration.test.ts, service.ts, custom-handlers.ts, request.ts, request.test.ts) | 5 reads | ~26265 tok |
+
+## Session: 2026-05-08 20:04
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|

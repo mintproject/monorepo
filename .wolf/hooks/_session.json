@@ -1,24 +1,9 @@
 {
-  "session_id": "session-2026-05-03-1735",
-  "started": "2026-05-03T21:35:21.374Z",
+  "session_id": "session-2026-05-08-2004",
+  "started": "2026-05-08T00:04:07.679Z",
   "files_read": {},
-  "files_written": [
-    {
-      "file": "/Users/mosorio/repos/mint/.claude/skills/update-helm-image-tags/update.sh",
-      "action": "create",
-      "tokens": 702,
-      "at": "2026-05-03T21:35:48.358Z"
-    },
-    {
-      "file": "/Users/mosorio/repos/mint/.claude/skills/update-helm-image-tags/update.sh",
-      "action": "edit",
-      "tokens": 61,
-      "at": "2026-05-03T21:36:07.394Z"
-    }
-  ],
-  "edit_counts": {
-    ".claude/skills/update-helm-image-tags/update.sh": 2
-  },
+  "files_written": [],
+  "edit_counts": {},
   "anatomy_hits": 0,
   "anatomy_misses": 0,
   "repeated_reads_warned": 0,

@@ -1,7 +1,7 @@
 # anatomy.md
 
-> Auto-maintained by OpenWolf. Last scanned: 2026-05-03T21:36:07.383Z
-> Files: 514 tracked | Anatomy hits: 0 | Misses: 0
+> Auto-maintained by OpenWolf. Last scanned: 2026-05-07T23:39:18.168Z
+> Files: 519 tracked | Anatomy hits: 0 | Misses: 0
 
 ## ./
 
@@ -14,16 +14,21 @@
 ## .claude/
 
 - `settings.json` (~441 tok)
-- `settings.local.json` — Declares f (~375 tok)
+- `settings.local.json` — Declares f (~394 tok)
 
 ## .claude/rules/
 
 - `openwolf.md` (~313 tok)
 
+## .claude/skills/dynamo-bump-from-branch/
+
+- `bump.sh` — Bump dynamo image tag(s) to one or more submodule branch HEAD SHAs. (~2348 tok)
+- `SKILL.md` — dynamo-bump-from-branch (~927 tok)
+
 ## .claude/skills/update-helm-image-tags/
 
-- `SKILL.md` — update-helm-image-tags (~565 tok)
-- `update.sh` — Update helm-charts image tags to latest commit SHAs on each component's default branch. (~696 tok)
+- `SKILL.md` — update-helm-image-tags (~528 tok)
+- `update.sh` — Update image tags in a single helm values file to latest commit SHAs on each component's default branch. (~888 tok)
 
 ## .claude/worktrees/agent-a094a84f/
 
@@ -401,7 +406,7 @@
 - `MILESTONES.md` — Milestones (~253 tok)
 - `PROJECT.md` — DYNAMO - Model Catalog GraphQL Migration (~1630 tok)
 - `ROADMAP.md` — Roadmap: DYNAMO Model Catalog GraphQL Migration (~2604 tok)
-- `STATE.md` — Project State (~4195 tok)
+- `STATE.md` — Project State (~4289 tok)
 
 ## .planning/codebase/
 
@@ -697,6 +702,15 @@
 - `260427-vbh-PLAN.md` — Trust Boundaries (~1244 tok)
 - `260427-vbh-SUMMARY.md` — Quick Task 260427-vbh: Modify UI GitHub Workflows Docker Publish Summary (~484 tok)
 
+## .planning/quick/260503-rnt-apply-optional-input-warning-fix-to-mint/
+
+- `260503-rnt-01-SUMMARY.md` — Quick Task 260503-rnt Plan 01: Optional Input Visual Distinction in mint-datasets Summary (~1039 tok)
+- `260503-rnt-PLAN.md` — Trust Boundaries (~2926 tok)
+
+## .planning/quick/260507-bug-a-uri-strict-mode/
+
+- `.continue-here.md` — Continue Here — Bug A: URI Strict Mode (~838 tok)
+
 ## .planning/research/
 
 - `ARCHITECTURE.md` — Architecture Patterns: RDF-to-PostgreSQL Migration (~1744 tok)
@@ -717,6 +731,7 @@
 
 - `2026-04-26-centralize-execution-config-in-ensemble-manager-ui-fetches-v.md` — Problem (~779 tok)
 - `2026-04-26-secure-dynamo-values-yaml-secrets.md` — Problem (~576 tok)
+- `2026-05-03-mint-datasets-optional-input-warning.md` — Status (~538 tok)
 
 ## .venv/
 
@@ -803,9 +818,6 @@
 
 - `INSTALLER` (~2 tok)
 - `METADATA` (~660 tok)
-- `RECORD` (~273 tok)
-- `top_level.txt` (~2 tok)
-- `WHEEL` (~25 tok)
 
 ## .venv/lib/python3.11/site-packages/certifi-2026.4.22.dist-info/licenses/
 
@@ -819,12 +831,23 @@
 - `core.py` — URL patterns: 3 routes (~970 tok)
 - `py.typed` (~0 tok)
 
-## .venv/lib/python3.11/site-packages/charset_normalizer/
+## model-catalog-api/src/
 
-- `__init__.py` (~431 tok)
-- `__main__.py` (~32 tok)
-- `api.py` — from_bytes (~11098 tok)
+- `custom-handlers.ts` — Custom endpoint handlers for the 13 /custom/ and /user/login endpoints. (~8400 tok)
+- `service.ts` — Generic CRUD service for all 46 API resource types. (~7929 tok)
 
-## dynamo/shared/
+## model-catalog-api/src/__tests__/
 
-- `values.yaml` (~1530 tok)
+- `integration.test.ts` — Integration tests for the CatalogServiceImpl pipeline. (~6734 tok)
+
+## model-catalog-api/src/mappers/
+
+- `request.ts` — Request mapper: transforms v1.8.0 API request bodies to Hasura insert/update format. (~2591 tok)
+
+## model-catalog-api/src/mappers/__tests__/
+
+- `request.test.ts` — ============================================================================ (~4979 tok)
+
+## ui/src/model-catalog-api/
+
+- `default-redux-api.ts` — Exports DefaultReduxApi (~2652 tok)
