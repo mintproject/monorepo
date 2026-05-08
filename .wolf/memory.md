@@ -584,3 +584,62 @@
 
 | Time | Action | File(s) | Outcome | ~Tokens |
 |------|--------|---------|---------|--------|
+
+## Session: 2026-05-08 20:08
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+
+## Session: 2026-05-08 20:12
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+
+## Session: 2026-05-08 20:34
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 20:39 | flatten nested w3id URIs in modflow notebook | 00_minimal_mint_model_debug_modflow2000.ipynb | 7 URIs renamed (1 model + 6 VPs), outputs cleared | ~3000 |
+
+## Session: 2026-05-08 21:10
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+
+## Session: 2026-05-08 21:13
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 21:15 | Created dynamo-experiment-may/tests/test_modelconfiguration_writepaths.py | dynamo-experiment-may/tests/test_modelconfiguration_writepaths.py | created | ~6590 |
+| 21:25 | Ran 5 hypotheses; H5 won (nested-DS-object shape, existing ids); H1 FK error revealed Configuration.hasInput targets DatasetSpecification not VariablePresentation; DS POST also broken (same cascade) | tests/modelconfig_writepaths_results.json | partial: relations persist, MODFLOW SVO still empty | ~3500 |
+| 21:19 | Session end: 1 writes across 1 files (test_modelconfiguration_writepaths.py) | 3 reads | ~6590 tok |
+| 21:20 | Created .planning/todos/pending/2026-05-07-fix-modelconfiguration-cascade-null-label.md | — | ~847 |
+| 21:21 | Edited .planning/STATE.md | 1→2 lines | ~93 |
+| 21:21 | Session end: 3 writes across 3 files (test_modelconfiguration_writepaths.py, 2026-05-07-fix-modelconfiguration-cascade-null-label.md, STATE.md) | 5 reads | ~11887 tok |
+
+## Session: 2026-05-08 21:21
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 21:26 | Edited model-catalog-api/src/mappers/request.ts | modified Set() | ~915 |
+| 21:28 | Edited model-catalog-api/src/mappers/request.ts | modified only() | ~237 |
+| 21:28 | Edited model-catalog-api/src/mappers/__tests__/request.test.ts | 3→4 lines | ~70 |
+| 21:29 | Edited model-catalog-api/src/mappers/__tests__/request.test.ts | 24→23 lines | ~331 |
+| 21:29 | Session end: 4 writes across 2 files (request.ts, request.test.ts) | 3 reads | ~17052 tok |
+
+## Session: 2026-05-08 21:32
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 21:32 | Edited model-catalog-api/src/mappers/__tests__/request.test.ts | 15→15 lines | ~209 |
+| 21:33 | Session end: 1 writes across 1 files (request.test.ts) | 0 reads | ~209 tok |
+
+## Session: 2026-05-08 21:33
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 21:36 | Edited model-catalog-api/src/mappers/request.ts | 4→4 lines | ~36 |
+| 21:36 | Edited model-catalog-api/src/mappers/__tests__/request.test.ts | 4→8 lines | ~145 |
+| 21:37 | Edited model-catalog-api/src/mappers/__tests__/request.test.ts | expanded (+31 lines) | ~597 |
+| 21:38 | bug-087 fix: on_conflict update_columns label->[] | model-catalog-api/src/mappers/request.ts +__tests__ | vitest 188/188 pass | ~3500 |
+| 21:38 | Session end: 3 writes across 2 files (request.ts, request.test.ts) | 4 reads | ~16609 tok |
