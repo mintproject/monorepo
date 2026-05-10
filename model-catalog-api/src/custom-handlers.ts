@@ -20,16 +20,16 @@ import { getResourceConfig } from './mappers/resource-registry.js';
 import { Apps } from '@tapis/tapis-typescript';
 
 /**
- * Reject IDs that are not full URIs (https:// or http://). Returns true when
- * the id is acceptable; otherwise sends a 400 reply and returns false.
+ * Resolve an incoming {id} path/query value to a full resource URI.
+ * If already absolute (https:// or http://), return as-is; otherwise
+ * prepend the resource's configured idPrefix to the bare slug.
  */
-function requireFullUri(reply: any, id: string): boolean {
-  if (id.startsWith('https://') || id.startsWith('http://')) return true;
-  reply.code(400).send({
-    error: 'Resource ID must be a full URL-encoded URI',
-    hint: `Got "${id}". Pass URL-encoded full URI.`,
-  });
-  return false;
+function resolveResourceId(
+  id: string,
+  resourceConfig: { idPrefix: string },
+): string {
+  if (id.startsWith('https://') || id.startsWith('http://')) return id;
+  return `${resourceConfig.idPrefix}${id}`;
 }
 
 // ---------------------------------------------------------------------------
@@ -432,8 +432,7 @@ async function custom_modelconfigurationsetups_variable_get(
 async function custom_configurationsetups_id_get(req: any, reply: any) {
   const resourceConfig = getResourceConfig('configurationsetups')!;
   const id = decodeURIComponent(req.params.id);
-  if (!requireFullUri(reply, id)) return;
-  const fullId = id;
+  const fullId = resolveResourceId(id, resourceConfig);
 
   const queryStr = `
     query CustomConfigurationSetupById($id: String!) {
@@ -474,8 +473,7 @@ async function custom_configurationsetups_id_get(req: any, reply: any) {
 async function custom_modelconfigurationsetups_id_get(req: any, reply: any) {
   const resourceConfig = getResourceConfig('modelconfigurationsetups')!;
   const id = decodeURIComponent(req.params.id);
-  if (!requireFullUri(reply, id)) return;
-  const fullId = id;
+  const fullId = resolveResourceId(id, resourceConfig);
 
   const queryStr = `
     query CustomModelConfigurationSetupById($id: String!) {
@@ -516,8 +514,7 @@ async function custom_modelconfigurationsetups_id_get(req: any, reply: any) {
 async function custom_modelconfigurations_id_get(req: any, reply: any) {
   const resourceConfig = getResourceConfig('modelconfigurations')!;
   const id = decodeURIComponent(req.params.id);
-  if (!requireFullUri(reply, id)) return;
-  const fullId = id;
+  const fullId = resolveResourceId(id, resourceConfig);
 
   const queryStr = `
     query CustomModelConfigurationById($id: String!) {
@@ -632,8 +629,9 @@ async function custom_datasetspecifications_get(req: any, reply: any) {
 
   if (configurationid) {
     const cfgId = decodeURIComponent(configurationid);
-    if (!requireFullUri(reply, cfgId)) return;
-    const fullCfgId = cfgId;
+    const fullCfgId = resolveResourceId(cfgId, {
+      idPrefix: getResourceConfig('modelconfigurations')!.idPrefix,
+    });
     const innerVars: Record<string, unknown> = { cfgId: fullCfgId };
 
     // Query junction tables directly; relationship names on junction rows are `input` and `output`
@@ -727,8 +725,9 @@ async function custom_datasetspecifications_get(req: any, reply: any) {
 async function custom_configuration_id_inputs_get(req: any, reply: any) {
   const resourceConfig = getResourceConfig('datasetspecifications')!;
   const id = decodeURIComponent(req.params.id);
-  if (!requireFullUri(reply, id)) return;
-  const fullId = id;
+  const fullId = resolveResourceId(id, {
+    idPrefix: getResourceConfig('modelconfigurations')!.idPrefix,
+  });
 
   const queryStr = `
     query CustomConfigurationInputs($id: String!) {

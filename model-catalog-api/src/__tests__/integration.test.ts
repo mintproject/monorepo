@@ -386,20 +386,32 @@ describe('URI-encoded ID decoding', () => {
 })
 
 // ---------------------------------------------------------------------------
-// Test 9: Plain ID rejected — strict URI mode (bug-086)
-// service.ts treats {id} as opaque; plain shortname returns 400.
+// Test 9: Plain ID resolved by prepending resource idPrefix
+// service.ts accepts a bare slug and prepends resourceConfig.idPrefix before
+// querying Hasura.
 // ---------------------------------------------------------------------------
 describe('getById with plain ID (no URI prefix)', () => {
   beforeEach(() => { mockQuery.mockReset() })
 
-  it('returns 400 when id does not start with https:// (strict URI mode)', async () => {
-    const req = makeReq({ params: { id: '1bade4cb-d924-4253-bfa9-4c02b461396a' } })
+  it('prepends idPrefix and queries Hasura with the resolved URI', async () => {
+    const slug = '1bade4cb-d924-4253-bfa9-4c02b461396a'
+    mockQuery.mockResolvedValueOnce({
+      data: {
+        modelcatalog_software_by_pk: {
+          id: `https://w3id.org/okn/i/mint/${slug}`,
+          label: 'X',
+        },
+      },
+    })
+
+    const req = makeReq({ params: { id: slug } })
     const reply = makeReply()
     await (CatalogService as any).softwares_id_get(req, reply)
 
-    expect(reply._status).toBe(400)
-    expect(mockQuery).not.toHaveBeenCalled()
-    expect((reply._body as any)?.error).toContain('full URL-encoded URI')
+    expect(reply._status).toBe(200)
+    expect(mockQuery).toHaveBeenCalledOnce()
+    const callArgs = mockQuery.mock.calls[0][0]
+    expect(callArgs.variables.id).toBe(`https://w3id.org/okn/i/mint/${slug}`)
   })
 })
 
@@ -409,14 +421,23 @@ describe('getById with plain ID (no URI prefix)', () => {
 describe('Custom handler URI strict mode', () => {
   beforeEach(() => { mockQuery.mockReset() })
 
-  it('custom_configurationsetups_id_get returns 400 for plain ID (strict URI mode)', async () => {
-    const req = makeReq({ params: { id: 'hand_v6' } })
+  it('custom_configurationsetups_id_get resolves plain ID with idPrefix', async () => {
+    const slug = 'hand_v6'
+    const fullUri = `https://w3id.org/okn/i/mint/${slug}`
+    mockQuery.mockResolvedValueOnce({
+      data: {
+        modelcatalog_configuration_by_pk: { id: fullUri, label: slug },
+      },
+    })
+
+    const req = makeReq({ params: { id: slug } })
     const reply = makeReply()
     await customHandlers.custom_configurationsetups_id_get(req, reply)
 
-    expect(reply._status).toBe(400)
-    expect(mockQuery).not.toHaveBeenCalled()
-    expect((reply._body as any)?.error).toContain('full URL-encoded URI')
+    expect(reply._status).toBe(200)
+    expect(mockQuery).toHaveBeenCalledOnce()
+    const callArgs = mockQuery.mock.calls[0][0]
+    expect(callArgs.variables.id).toBe(fullUri)
   })
 
   it('custom_modelconfigurationsetups_id_get passes full URI unchanged', async () => {
@@ -440,14 +461,24 @@ describe('Custom handler URI strict mode', () => {
     expect(callArgs.variables.id).toBe(fullUri)
   })
 
-  it('custom_datasetspecifications_get returns 400 for plain configurationid (strict URI mode)', async () => {
-    const req = makeReq({ query: { configurationid: 'some-config-uuid' } })
+  it('custom_datasetspecifications_get resolves plain configurationid with idPrefix', async () => {
+    const slug = 'some-config-uuid'
+    const fullCfgUri = `https://w3id.org/okn/i/mint/${slug}`
+    mockQuery.mockResolvedValueOnce({
+      data: {
+        modelcatalog_configuration_input: [],
+        modelcatalog_configuration_output: [],
+      },
+    })
+
+    const req = makeReq({ query: { configurationid: slug } })
     const reply = makeReply()
     await customHandlers.custom_datasetspecifications_get(req, reply)
 
-    expect(reply._status).toBe(400)
-    expect(mockQuery).not.toHaveBeenCalled()
-    expect((reply._body as any)?.error).toContain('full URL-encoded URI')
+    expect(reply._status).toBe(200)
+    expect(mockQuery).toHaveBeenCalledOnce()
+    const callArgs = mockQuery.mock.calls[0][0]
+    expect(callArgs.variables.cfgId).toBe(fullCfgUri)
   })
 
   it('custom_datasetspecifications_get WHERE clause uses configuration_id not model_configuration_id', async () => {
