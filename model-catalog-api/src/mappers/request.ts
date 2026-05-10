@@ -9,11 +9,8 @@
  * 5. Handle nested related objects by extracting their IDs for FK columns
  */
 
-import { randomUUID } from 'crypto';
 import { FIELD_SELECTIONS } from '../hasura/field-maps.js';
-import { getResourceConfig, type ResourceConfig } from './resource-registry.js';
-
-const ID_PREFIX = 'https://w3id.org/okn/i/mint/';
+import { type ResourceConfig } from './resource-registry.js';
 
 /** Cache of parsed scalar column sets per table name */
 const scalarColumnsCache = new Map<string, Set<string>>();
@@ -143,100 +140,3 @@ export function toHasuraInput(
   return result;
 }
 
-/**
- * Build Hasura nested insert objects for all junction-based relationships
- * found in the request body. Per D-03, these are included in a single
- * atomic mutation (not sequential inserts). Per D-04, on_conflict with
- * update_columns:[] handles link-or-create.
- *
- * @param body - v1.8.0 JSON request body (camelCase keys)
- * @param resourceConfig - The resource config for this resource type
- * @returns Map of Hasura relationship names to nested insert objects
- */
-export function buildJunctionInserts(
-  body: Record<string, unknown>,
-  resourceConfig: ResourceConfig,
-): Record<string, unknown> {
-  const junctionData: Record<string, unknown> = {};
-
-  for (const [apiFieldName, relConfig] of Object.entries(resourceConfig.relationships)) {
-    // Skip non-junction relationships (per D-06: only junction-based)
-    if (!relConfig.junctionTable || !relConfig.junctionRelName) continue;
-
-    const rawValue = body[apiFieldName];
-    if (rawValue === undefined || rawValue === null) continue;
-
-    // Normalize: accept both array-of-objects and array-of-strings (Pitfall 6)
-    const items: Record<string, unknown>[] = [];
-    if (Array.isArray(rawValue)) {
-      for (const item of rawValue) {
-        if (typeof item === 'string') {
-          items.push({ id: item });
-        } else if (item !== null && typeof item === 'object') {
-          items.push(item as Record<string, unknown>);
-        }
-      }
-    }
-
-    // Resolve target resource config for the constraint name
-    const targetConfig = getResourceConfig(relConfig.targetResource);
-    const targetTable = targetConfig?.hasuraTable;
-    if (!targetTable) continue; // target has no backing table, skip
-
-    junctionData[relConfig.hasuraRelName] = {
-      data: items.map((item) => {
-        const nestedData: Record<string, unknown> = {};
-
-        // Caller-supplied IDs must be full URIs (validated upstream at the
-        // service boundary). Missing IDs auto-generate (D-02).
-        const rawId = item['id'] as string | undefined;
-        nestedData['id'] = rawId ? rawId : `${ID_PREFIX}${randomUUID()}`;
-
-        // Build set of camelCase keys that belong to the junction row itself (not the nested entity)
-        const junctionCamelKeys = new Set(
-          relConfig.junctionColumns ? Object.values(relConfig.junctionColumns) : []
-        );
-
-        // Copy scalar fields from nested object (camelCase -> snake_case)
-        // Skip 'id' (already handled), 'type' (not stored), and junction-row-level fields
-        for (const [key, value] of Object.entries(item)) {
-          if (key === 'id' || key === 'type') continue;
-          if (junctionCamelKeys.has(key)) continue; // junction column — goes on outer row, not nested entity
-          const snakeKey = camelToSnake(key);
-          const unwrapped = Array.isArray(value)
-            ? value.length === 1
-              ? value[0]
-              : value.length === 0
-                ? null
-                : value
-            : value;
-          if (unwrapped !== null && unwrapped !== undefined) {
-            nestedData[snakeKey] = unwrapped;
-          }
-        }
-
-        const junctionRow: Record<string, unknown> = {
-          [relConfig.junctionRelName!]: {
-            data: nestedData,
-            on_conflict: {
-              constraint: `${targetTable}_pkey`,
-              update_columns: ['label'],
-            },
-          },
-        };
-        if (relConfig.junctionColumns) {
-          for (const [colName, camelKey] of Object.entries(relConfig.junctionColumns)) {
-            if (item[camelKey] !== undefined) junctionRow[colName] = item[camelKey];
-          }
-        }
-        return junctionRow;
-      }),
-      on_conflict: {
-        constraint: `${relConfig.junctionTable}_pkey`,
-        update_columns: [],
-      },
-    };
-  }
-
-  return junctionData;
-}

@@ -23,6 +23,12 @@ export interface RelationshipConfig {
   /** FK column name in the junction table pointing back to the parent entity. Required when junctionTable is set. */
   parentFkColumn?: string;
   /**
+   * Optional override for the target-entity FK column on the junction row.
+   * Defaults to `${junctionRelName}_id` (current convention).
+   * Set explicitly when the convention does not match the schema (bug-087 fold-in).
+   */
+  targetFkColumn?: string;
+  /**
    * FK column name on the child entity table pointing back to this parent (one-to-many FK relationships).
    * Set on parent.relationships[X] when the relationship is materialized as a direct FK on the child row,
    * not via a junction table. PUT/POST handler updates this FK to link/unlink child rows.
