@@ -23,3 +23,6 @@
 [submodule "model-catalog-ontology"]
 	path = model-catalog-ontology
 	url = https://github.com/mintproject/Mint-ModelCatalog-Ontology.git
+[submodule "dynamo-experiment-may"]
+	path = dynamo-experiment-may
+	url = https://github.com/In-For-Disaster-Analytics/dynamo-experiment-may.git

@@ -157,6 +157,7 @@ Recent decisions affecting current work:
 - [config] Centralize execution config in ensemble-manager, UI fetches via API — `.planning/todos/pending/2026-04-26-centralize-execution-config-in-ensemble-manager-ui-fetches-v.md`
 - [deployment] Secure dynamo-values.yaml secrets — avoid committing plaintext credentials — `.planning/todos/pending/2026-04-26-secure-dynamo-values-yaml-secrets.md`
 - [ui] Apply optional-input warning fix to mint-datasets.ts — `.planning/todos/pending/2026-05-03-mint-datasets-optional-input-warning.md`
+- [api] Fix model-catalog-api cascade null-label on relation writes (POST /modelconfigurations|setups|datasetspecifications) — `.planning/todos/pending/2026-05-07-fix-modelconfiguration-cascade-null-label.md`
 
 ### Blockers/Concerns
 
