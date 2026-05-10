@@ -16,20 +16,22 @@
 
 | Task | State | Notes |
 |------|-------|-------|
-| Bootstrap | DONE | `uv init` + `uv add --dev pytest` + `uv add requests` + `.gitignore`. Submodule commit before Task 1's notebook commit. |
-| Task 1 | IMPLEMENTED, REVIEW PENDING | Submodule commit `cbd47ad`. Parent pinned via commit `1c8fef1`. Spec compliance review NOT run; code quality review NOT run. |
-| Task 2 | TODO | |
-| Task 3 | TODO | |
-| Task 4 | TODO | |
-| Task 5 | TODO | |
-| Task 6 | TODO | |
-| Task 7 | TODO (optional, requires live MINT stack) | |
+| Bootstrap | DONE | Submodule commit `c6c90ab` (landed after Task 1, not before — minor history quirk, no defect). |
+| Task 1 | DONE | Submodule `cbd47ad`. Spec PASS, quality PASS (advisory: implementer should preserve indentation when editing future notebooks). |
+| Task 2 | DONE | Submodule `590c9c4`. Spec PASS, quality PASS (advisory: indent re-serialization noise — re-emit with same indent in future tasks). |
+| Task 3 | DONE | Submodule `5b1020c`. Spec PASS, quality PASS. |
+| Task 4 | DONE | Submodule `e414eca`. Spec PASS, quality PASS. |
+| Task 5 | DONE | Submodule `850ef6f`. Spec PASS (with documented adaptation: print f-strings rewritten to plain print to satisfy double-quoted-key test assertion — plan internal contradiction resolved by favoring test contract), quality PASS. |
+| Task 6 | DONE | Submodule `853c528`. Spec PASS, quality PASS. Final 7-cell notebook complete. Full suite 13/13 green. |
+| Task 7 | SKIPPED | Local MINT stack returned 404 (not in plan's accepted `{200, 401, 403}` reachable set). Live smoke deferred to first modeler run. |
 
-**Resume entry point:** Dispatch spec reviewer for Task 1 first, then code quality reviewer, then proceed to Task 2 implementer.
+**Final state:** Notebook complete at submodule HEAD `853c528`. All 13 structural tests pass.
 
-**Run tests from:** `dynamo-experiment-may/` with `uv run pytest tests/test_notebook_structure.py -v`. Current state: 5 pass, 1 expected fail (`test_notebook_has_seven_cells` — by design until Task 6).
+**Parent pin:** advanced via commit `e5ddf0e` — pointer now references submodule SHA `853c528` (Task 6 head).
 
-**Submodule note:** `dynamo-experiment-may` is a git submodule. Notebook + test commits land *inside* the submodule. After each commit chain in the submodule, the parent repo (`mint`) must `git add dynamo-experiment-may && git commit -m "chore: pin dynamo-experiment-may submodule for Task N"` to advance the pinned SHA.
+**Run tests from:** `dynamo-experiment-may/` with `uv run pytest tests/test_notebook_structure.py -v`. Expected: 13 pass, 0 fail.
+
+**Submodule note:** `dynamo-experiment-may` is a git submodule. Notebook + test commits landed *inside* the submodule (range `cbd47ad..853c528`); parent pointer advanced via parent-repo commit `e5ddf0e`.
 
 ---
 
