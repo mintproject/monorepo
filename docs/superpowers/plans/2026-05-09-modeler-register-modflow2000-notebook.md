@@ -6,7 +6,7 @@
 
 **Architecture:** Single-file `.ipynb` written as JSON via `Write` tool (no `nbformat` dependency). 7 cells, top-to-bottom: title, config, login, bundle description, POST + capture id, GET read-back + walk tree, bare-slug VP GET. Auth uses Tapis `portals` tenant password grant; bearer forwarded to MINT API. IDs server-minted; bare slugs only for GET paths.
 
-**Tech Stack:** Python 3, `requests`, `getpass`, Jupyter notebook (nbformat v4 JSON), MINT model-catalog-api v2.0.0, Tapis OAuth2.
+**Tech Stack:** Python 3 (managed via `uv`), `requests`, `getpass`, Jupyter notebook (nbformat v4 JSON), MINT model-catalog-api v2.0.0, Tapis OAuth2. Tests run via `uv run pytest` from `dynamo-experiment-may/`. `pyproject.toml` already declares `pytest` (dev) and `requests` (runtime).
 
 **Spec:** `docs/superpowers/specs/2026-05-09-modeler-register-modflow2000-notebook-design.md`
 
@@ -93,7 +93,7 @@ def test_no_hardcoded_bearer_token():
 cd /Users/mosorio/repos/mint/dynamo-experiment-may
 mkdir -p tests
 # (test file from step 1 already created)
-python3 -m pytest tests/test_notebook_structure.py -v
+uv run pytest tests/test_notebook_structure.py -v
 ```
 
 Expected: all tests fail with "notebook missing" (FileNotFoundError) or collection error on first test.
@@ -176,7 +176,7 @@ Note: only 2 cells exist for now. Subsequent tasks append cells. Tests for "7 ce
 - [ ] **Step 4: Run partial tests to confirm scaffolding works**
 
 ```bash
-python3 -m pytest tests/test_notebook_structure.py::test_notebook_exists tests/test_notebook_structure.py::test_notebook_is_valid_nbformat_v4 tests/test_notebook_structure.py::test_first_cell_is_title_markdown tests/test_notebook_structure.py::test_config_cell_uses_local_base_url tests/test_notebook_structure.py::test_no_hardcoded_bearer_token -v
+uv run pytest tests/test_notebook_structure.py::test_notebook_exists tests/test_notebook_structure.py::test_notebook_is_valid_nbformat_v4 tests/test_notebook_structure.py::test_first_cell_is_title_markdown tests/test_notebook_structure.py::test_config_cell_uses_local_base_url tests/test_notebook_structure.py::test_no_hardcoded_bearer_token -v
 ```
 
 Expected: all 5 pass. `test_notebook_has_seven_cells` still fails (only 2 cells).
@@ -214,7 +214,7 @@ def test_login_cell_uses_password_grant():
 - [ ] **Step 2: Run test to verify it fails**
 
 ```bash
-python3 -m pytest tests/test_notebook_structure.py::test_login_cell_uses_password_grant -v
+uv run pytest tests/test_notebook_structure.py::test_login_cell_uses_password_grant -v
 ```
 
 Expected: FAIL — only 2 cells exist, IndexError on `cell_sources()[2]`.
@@ -259,7 +259,7 @@ Edit `01_minimal_modeler_register_modflow2000.ipynb`. Insert this cell as the ne
 - [ ] **Step 4: Run test to verify it passes**
 
 ```bash
-python3 -m pytest tests/test_notebook_structure.py::test_login_cell_uses_password_grant tests/test_notebook_structure.py::test_no_hardcoded_bearer_token -v
+uv run pytest tests/test_notebook_structure.py::test_login_cell_uses_password_grant tests/test_notebook_structure.py::test_no_hardcoded_bearer_token -v
 ```
 
 Expected: both PASS.
@@ -299,7 +299,7 @@ def test_bundle_description_cell_is_markdown():
 - [ ] **Step 2: Run test to verify it fails**
 
 ```bash
-python3 -m pytest tests/test_notebook_structure.py::test_bundle_description_cell_is_markdown -v
+uv run pytest tests/test_notebook_structure.py::test_bundle_description_cell_is_markdown -v
 ```
 
 Expected: FAIL — only 3 cells exist.
@@ -333,7 +333,7 @@ Insert as cell index 3:
 - [ ] **Step 4: Run test to verify it passes**
 
 ```bash
-python3 -m pytest tests/test_notebook_structure.py::test_bundle_description_cell_is_markdown -v
+uv run pytest tests/test_notebook_structure.py::test_bundle_description_cell_is_markdown -v
 ```
 
 Expected: PASS.
@@ -385,7 +385,7 @@ def test_post_cell_uses_hydrology_category_reference():
 - [ ] **Step 2: Run tests to verify they fail**
 
 ```bash
-python3 -m pytest tests/test_notebook_structure.py::test_post_cell_builds_full_nested_bundle tests/test_notebook_structure.py::test_post_cell_uses_hydrology_category_reference -v
+uv run pytest tests/test_notebook_structure.py::test_post_cell_builds_full_nested_bundle tests/test_notebook_structure.py::test_post_cell_uses_hydrology_category_reference -v
 ```
 
 Expected: FAIL — only 4 cells.
@@ -494,7 +494,7 @@ Insert as cell index 4:
 - [ ] **Step 4: Run tests to verify they pass**
 
 ```bash
-python3 -m pytest tests/test_notebook_structure.py -v
+uv run pytest tests/test_notebook_structure.py -v
 ```
 
 Expected: all tests except `test_notebook_has_seven_cells`, `test_bundle_description_cell_is_markdown` (cell index check still passes), and the read-back/VP tests (not yet written) pass.
@@ -534,7 +534,7 @@ def test_readback_cell_walks_tree():
 - [ ] **Step 2: Run test to verify it fails**
 
 ```bash
-python3 -m pytest tests/test_notebook_structure.py::test_readback_cell_walks_tree -v
+uv run pytest tests/test_notebook_structure.py::test_readback_cell_walks_tree -v
 ```
 
 Expected: FAIL — only 5 cells.
@@ -575,7 +575,7 @@ Insert as cell index 5:
 - [ ] **Step 4: Run test to verify it passes**
 
 ```bash
-python3 -m pytest tests/test_notebook_structure.py::test_readback_cell_walks_tree -v
+uv run pytest tests/test_notebook_structure.py::test_readback_cell_walks_tree -v
 ```
 
 Expected: PASS.
@@ -621,7 +621,7 @@ Also delete the earlier-failing assertion if redundant — but `test_notebook_ha
 - [ ] **Step 2: Run tests to verify they fail**
 
 ```bash
-python3 -m pytest tests/test_notebook_structure.py::test_vp_cell_uses_bare_slug tests/test_notebook_structure.py::test_all_seven_cells_present tests/test_notebook_structure.py::test_notebook_has_seven_cells -v
+uv run pytest tests/test_notebook_structure.py::test_vp_cell_uses_bare_slug tests/test_notebook_structure.py::test_all_seven_cells_present tests/test_notebook_structure.py::test_notebook_has_seven_cells -v
 ```
 
 Expected: all 3 FAIL.
@@ -652,7 +652,7 @@ Insert as cell index 6:
 - [ ] **Step 4: Run full test suite to verify everything passes**
 
 ```bash
-python3 -m pytest tests/test_notebook_structure.py -v
+uv run pytest tests/test_notebook_structure.py -v
 ```
 
 Expected: ALL tests PASS (count should be 11+).
@@ -713,7 +713,7 @@ jupyter nbconvert --clear-output --inplace \
 - [ ] **Step 4: Re-run structure tests to confirm no regression**
 
 ```bash
-python3 -m pytest dynamo-experiment-may/tests/test_notebook_structure.py -v
+uv run pytest dynamo-experiment-may/tests/test_notebook_structure.py -v
 ```
 
 Expected: all tests PASS.
