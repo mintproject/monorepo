@@ -1,20 +1,20 @@
 # anatomy.md
 
-> Auto-maintained by OpenWolf. Last scanned: 2026-05-07T23:39:18.168Z
-> Files: 519 tracked | Anatomy hits: 0 | Misses: 0
+> Auto-maintained by OpenWolf. Last scanned: 2026-05-10T16:00:01.166Z
+> Files: 512 tracked | Anatomy hits: 0 | Misses: 0
 
 ## ./
 
 - `.DS_Store` (~2731 tok)
 - `.gitignore` — Git ignore rules (~195 tok)
-- `.gitmodules` (~259 tok)
+- `.gitmodules` (~297 tok)
 - `CLAUDE.md` — OpenWolf (~1158 tok)
 - `README.md` — Project documentation (~2028 tok)
 
 ## .claude/
 
 - `settings.json` (~441 tok)
-- `settings.local.json` — Declares f (~394 tok)
+- `settings.local.json` — Declares f (~692 tok)
 
 ## .claude/rules/
 
@@ -406,7 +406,7 @@
 - `MILESTONES.md` — Milestones (~253 tok)
 - `PROJECT.md` — DYNAMO - Model Catalog GraphQL Migration (~1630 tok)
 - `ROADMAP.md` — Roadmap: DYNAMO Model Catalog GraphQL Migration (~2604 tok)
-- `STATE.md` — Project State (~4289 tok)
+- `STATE.md` — Project State (~4341 tok)
 
 ## .planning/codebase/
 
@@ -732,6 +732,19 @@
 - `2026-04-26-centralize-execution-config-in-ensemble-manager-ui-fetches-v.md` — Problem (~779 tok)
 - `2026-04-26-secure-dynamo-values-yaml-secrets.md` — Problem (~576 tok)
 - `2026-05-03-mint-datasets-optional-input-warning.md` — Status (~538 tok)
+- `2026-05-07-fix-modelconfiguration-cascade-null-label.md` — Problem (~794 tok)
+- `bug-089-caller-migrations.md` — Bug-089 caller migration TODOs (~265 tok)
+
+## .pytest_cache/
+
+- `.gitignore` — Git ignore rules (~10 tok)
+- `CACHEDIR.TAG` (~51 tok)
+- `README.md` — Project documentation (~76 tok)
+
+## .pytest_cache/v/cache/
+
+- `lastfailed` (~27 tok)
+- `nodeids` (~149 tok)
 
 ## .venv/
 
@@ -813,41 +826,3 @@
 - `py.typed` (~0 tok)
 - `util.py` — you may not use this file except in compliance with the License. (~4962 tok)
 - `version.py` (~7 tok)
-
-## .venv/lib/python3.11/site-packages/certifi-2026.4.22.dist-info/
-
-- `INSTALLER` (~2 tok)
-- `METADATA` (~660 tok)
-
-## .venv/lib/python3.11/site-packages/certifi-2026.4.22.dist-info/licenses/
-
-- `LICENSE` — Project license (~264 tok)
-
-## .venv/lib/python3.11/site-packages/certifi/
-
-- `__init__.py` (~27 tok)
-- `__main__.py` (~70 tok)
-- `cacert.pem` — Issuer: CN=COMODO ECC Certification Authority O=COMODO CA Limited (~63638 tok)
-- `core.py` — URL patterns: 3 routes (~970 tok)
-- `py.typed` (~0 tok)
-
-## model-catalog-api/src/
-
-- `custom-handlers.ts` — Custom endpoint handlers for the 13 /custom/ and /user/login endpoints. (~8400 tok)
-- `service.ts` — Generic CRUD service for all 46 API resource types. (~7929 tok)
-
-## model-catalog-api/src/__tests__/
-
-- `integration.test.ts` — Integration tests for the CatalogServiceImpl pipeline. (~6734 tok)
-
-## model-catalog-api/src/mappers/
-
-- `request.ts` — Request mapper: transforms v1.8.0 API request bodies to Hasura insert/update format. (~2591 tok)
-
-## model-catalog-api/src/mappers/__tests__/
-
-- `request.test.ts` — ============================================================================ (~4979 tok)
-
-## ui/src/model-catalog-api/
-
-- `default-redux-api.ts` — Exports DefaultReduxApi (~2652 tok)
