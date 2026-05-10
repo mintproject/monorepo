@@ -1958,6 +1958,136 @@
       "related_bugs": [],
       "occurrences": 1,
       "last_seen": "2026-05-10T14:57:39.523Z"
+    },
+    {
+      "id": "bug-117",
+      "timestamp": "2026-05-10T17:52:47.537Z",
+      "error_message": "Missing guard clause",
+      "file": "model-catalog-api/src/hasura/field-maps.ts",
+      "root_cause": "No early return/throw for edge case: mode === 'byId'",
+      "fix": "Added guard clause: if (mode === 'byId')",
+      "tags": [
+        "auto-detected",
+        "guard-clause",
+        "ts"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-05-10T17:52:47.537Z"
+    },
+    {
+      "id": "bug-118",
+      "timestamp": "2026-05-10T18:05:54.201Z",
+      "error_message": "Null/undefined access in ",
+      "file": "model-catalog-api/src/__tests__/e2e/read-shape-deep-e2e.test.ts",
+      "root_cause": "Property access on potentially null/undefined value",
+      "fix": "Added null safety (optional chaining or null check) | Also: it('list path GET /modelconfigurations does NOT include hasP; const softwareId = uniqueId('software');",
+      "tags": [
+        "auto-detected",
+        "null-safety",
+        "ts"
+      ],
+      "related_bugs": [],
+      "occurrences": 2,
+      "last_seen": "2026-05-10T18:06:45.368Z"
+    },
+    {
+      "id": "bug-119",
+      "timestamp": "2026-05-10T18:07:04.651Z",
+      "error_message": "Missing await",
+      "file": "model-catalog-api/src/__tests__/e2e/read-shape-deep-e2e.test.ts",
+      "root_cause": "Async call without await — returned Promise instead of value",
+      "fix": "Added await to async call",
+      "tags": [
+        "auto-detected",
+        "async-fix",
+        "ts"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-05-10T18:07:04.651Z"
+    },
+    {
+      "id": "bug-120",
+      "timestamp": "2026-05-10T18:23:27.905Z",
+      "error_message": "Significant refactor of ",
+      "file": "model-catalog-api/src/service.ts",
+      "root_cause": "8 lines replaced/restructured",
+      "fix": "Rewrote 10→3 lines (8 removed) | Also: if (!id.startsWith('https://') && !id.startsWith('; reply.code(400).send({",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "ts"
+      ],
+      "related_bugs": [],
+      "occurrences": 2,
+      "last_seen": "2026-05-10T18:23:34.728Z"
+    },
+    {
+      "id": "bug-121",
+      "timestamp": "2026-05-10T18:23:41.277Z",
+      "error_message": "Incorrect value in code",
+      "file": "model-catalog-api/src/service.ts",
+      "root_cause": "Had 'https://'",
+      "fix": "Changed to `${resourceConfig.idPrefix}${id}`",
+      "tags": [
+        "auto-detected",
+        "wrong-value",
+        "ts"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-05-10T18:23:41.277Z"
+    },
+    {
+      "id": "bug-122",
+      "timestamp": "2026-05-10T18:25:13.931Z",
+      "error_message": "Significant refactor of ",
+      "file": "model-catalog-api/src/custom-handlers.ts",
+      "root_cause": "2 lines replaced/restructured",
+      "fix": "Rewrote 4→5 lines (2 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "ts"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-05-10T18:25:13.931Z"
+    },
+    {
+      "id": "bug-123",
+      "timestamp": "2026-05-10T18:25:43.589Z",
+      "error_message": "Significant refactor of ",
+      "file": "model-catalog-api/src/__tests__/integration.test.ts",
+      "root_cause": "7 lines replaced/restructured",
+      "fix": "Rewrote 17→29 lines (7 removed) | Also: it('custom_configurationsetups_id_get returns 400 ; const req = makeReq({ params: { id: 'hand_v6' } }) | Also: it('custom_datasetspecifications_get returns 400 f; const req = makeReq({ query: { configurationid: 's",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "ts"
+      ],
+      "related_bugs": [],
+      "occurrences": 3,
+      "last_seen": "2026-05-10T18:25:58.690Z"
+    },
+    {
+      "id": "bug-124",
+      "timestamp": "2026-05-10T18:26:09Z",
+      "error_message": "Resource ID must be a full URL-encoded URI",
+      "file": "model-catalog-api/src/service.ts, model-catalog-api/src/custom-handlers.ts",
+      "root_cause": "getById/delete and custom-handler {id} validation rejected bare slug paths (e.g. /softwares/<uuid>), forcing callers to URL-encode the full https://w3id.org/okn/i/mint/<id>.",
+      "fix": "Replaced strict isFullUri rejection with prepend-on-bare-slug. service.ts getById/deleteResource now compute fullId = isFullUri(id) ? id : `${resourceConfig.idPrefix}${id}`. custom-handlers.ts: requireFullUri (reject) replaced with resolveResourceId (prepend prefix). Update path uses isFullUri so http:// also accepted. Flipped 3 unit tests that asserted 400 to assert prepended URI is sent to Hasura.",
+      "tags": [
+        "model-catalog-api",
+        "validation",
+        "id-prefix",
+        "fastify",
+        "ergonomics"
+      ],
+      "related_bugs": ["bug-086"],
+      "occurrences": 1,
+      "last_seen": "2026-05-10T18:26:09Z"
     }
   ]
 }

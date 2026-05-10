@@ -1,7 +1,7 @@
 # anatomy.md
 
-> Auto-maintained by OpenWolf. Last scanned: 2026-05-10T16:00:01.166Z
-> Files: 512 tracked | Anatomy hits: 0 | Misses: 0
+> Auto-maintained by OpenWolf. Last scanned: 2026-05-10T18:25:58.680Z
+> Files: 520 tracked | Anatomy hits: 0 | Misses: 0
 
 ## ./
 
@@ -826,3 +826,32 @@
 - `py.typed` (~0 tok)
 - `util.py` — you may not use this file except in compliance with the License. (~4962 tok)
 - `version.py` (~7 tok)
+
+## docs/superpowers/plans/
+
+- `2026-05-10-modelconfig-deep-read.md` — ModelConfiguration Deep Read Implementation Plan (~8779 tok)
+
+## docs/superpowers/specs/
+
+- `2026-05-10-modelconfig-deep-read-design.md` — Deepen GET /modelconfigurations/{id} Response (DataSetSpec + VariablePresentation) (~2909 tok)
+
+## model-catalog-api/src/
+
+- `custom-handlers.ts` — Custom endpoint handlers for the 13 /custom/ and /user/login endpoints. (~8414 tok)
+- `service.ts` — Generic CRUD service for all 46 API resource types. (~4901 tok)
+
+## model-catalog-api/src/__tests__/
+
+- `integration.test.ts` — Integration tests for the CatalogServiceImpl pipeline. (~7130 tok)
+
+## model-catalog-api/src/__tests__/e2e/
+
+- `read-shape-deep-e2e.test.ts` — Declares softwareId (~2967 tok)
+
+## model-catalog-api/src/hasura/
+
+- `field-maps.ts` — GraphQL field selection strings for each Hasura modelcatalog entity table. (~4979 tok)
+
+## model-catalog-api/src/hasura/__tests__/
+
+- `field-maps.test.ts` — Declares sel (~526 tok)

@@ -802,3 +802,45 @@
 
 | Time | Action | File(s) | Outcome | ~Tokens |
 |------|--------|---------|---------|--------|
+| 13:15 | Created docs/superpowers/specs/2026-05-10-modelconfig-deep-read-design.md | — | ~3103 |
+| 13:15 | Session end: 1 writes across 1 files (2026-05-10-modelconfig-deep-read-design.md) | 4 reads | ~3325 tok |
+| 13:36 | Created docs/superpowers/plans/2026-05-10-modelconfig-deep-read.md | — | ~9364 |
+| 13:36 | Session end: 2 writes across 2 files (2026-05-10-modelconfig-deep-read-design.md, 2026-05-10-modelconfig-deep-read.md) | 7 reads | ~13358 tok |
+| 13:52 | Created model-catalog-api/src/hasura/__tests__/field-maps.test.ts | — | ~526 |
+| 13:52 | Edited model-catalog-api/src/hasura/field-maps.ts | added 2 condition(s) | ~441 |
+| 13:56 | Edited model-catalog-api/src/hasura/__tests__/field-maps.test.ts | 1→2 lines | ~53 |
+| 13:59 | Edited model-catalog-api/src/hasura/field-maps.ts | expanded (+143 lines) | ~667 |
+| 14:00 | Edited model-catalog-api/src/hasura/field-maps.ts | modified relationships() | ~208 |
+| 14:00 | Edited model-catalog-api/src/hasura/__tests__/field-maps.test.ts | 2→1 lines | ~25 |
+| 14:01 | Edited model-catalog-api/src/service.ts | 4→4 lines | ~51 |
+| 14:05 | Created model-catalog-api/src/__tests__/e2e/read-shape-deep-e2e.test.ts | — | ~1530 |
+| 14:05 | Edited model-catalog-api/src/__tests__/e2e/read-shape-deep-e2e.test.ts | added optional chaining | ~631 |
+| 14:06 | Edited model-catalog-api/src/__tests__/e2e/read-shape-deep-e2e.test.ts | added optional chaining | ~601 |
+| 14:07 | Edited model-catalog-api/src/__tests__/e2e/read-shape-deep-e2e.test.ts | expanded (+27 lines) | ~390 |
+| 14:07 | Session end: 13 writes across 6 files (2026-05-10-modelconfig-deep-read-design.md, 2026-05-10-modelconfig-deep-read.md, field-maps.test.ts, field-maps.ts, service.ts) | 12 reads | ~23288 tok |
+| 14:08 | Session end: 13 writes across 6 files (2026-05-10-modelconfig-deep-read-design.md, 2026-05-10-modelconfig-deep-read.md, field-maps.test.ts, field-maps.ts, service.ts) | 12 reads | ~23288 tok |
+
+## Session: 2026-05-10 14:09
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+
+## Session: 2026-05-10 14:21
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 14:23 | Edited model-catalog-api/src/service.ts | reduced (-7 lines) | ~56 |
+| 14:23 | Edited model-catalog-api/src/service.ts | modified DeleteMutation() | ~79 |
+| 14:23 | Edited model-catalog-api/src/service.ts | startsWith() → isFullUri() | ~50 |
+| 14:24 | Edited model-catalog-api/src/custom-handlers.ts | modified resolveResourceId() | ~121 |
+| 14:25 | Edited model-catalog-api/src/custom-handlers.ts | requireFullUri() → resolveResourceId() | ~70 |
+| 14:25 | Edited model-catalog-api/src/custom-handlers.ts | requireFullUri() → resolveResourceId() | ~73 |
+| 14:25 | Edited model-catalog-api/src/custom-handlers.ts | requireFullUri() → resolveResourceId() | ~70 |
+| 14:25 | Edited model-catalog-api/src/custom-handlers.ts | modified if() | ~59 |
+| 14:25 | Edited model-catalog-api/src/custom-handlers.ts | requireFullUri() → resolveResourceId() | ~87 |
+| 14:25 | Edited model-catalog-api/src/__tests__/integration.test.ts | expanded (+12 lines) | ~318 |
+| 14:25 | Edited model-catalog-api/src/__tests__/integration.test.ts | expanded (+9 lines) | ~185 |
+| 14:25 | Edited model-catalog-api/src/__tests__/integration.test.ts | expanded (+10 lines) | ~203 |
+| 14:26 | accept bare-slug {id} on get/delete + custom handlers (prepend idPrefix) | model-catalog-api/src/{service,custom-handlers}.ts, integration.test.ts | 120 unit tests pass | ~3500 |
+| 14:26 | Session end: 12 writes across 3 files (service.ts, custom-handlers.ts, integration.test.ts) | 4 reads | ~6424 tok |
+| 14:27 | Session end: 12 writes across 3 files (service.ts, custom-handlers.ts, integration.test.ts) | 4 reads | ~6424 tok |
