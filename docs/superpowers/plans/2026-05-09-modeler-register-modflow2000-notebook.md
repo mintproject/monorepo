@@ -12,6 +12,27 @@
 
 ---
 
+## Status (resume marker)
+
+| Task | State | Notes |
+|------|-------|-------|
+| Bootstrap | DONE | `uv init` + `uv add --dev pytest` + `uv add requests` + `.gitignore`. Submodule commit before Task 1's notebook commit. |
+| Task 1 | IMPLEMENTED, REVIEW PENDING | Submodule commit `cbd47ad`. Parent pinned via commit `1c8fef1`. Spec compliance review NOT run; code quality review NOT run. |
+| Task 2 | TODO | |
+| Task 3 | TODO | |
+| Task 4 | TODO | |
+| Task 5 | TODO | |
+| Task 6 | TODO | |
+| Task 7 | TODO (optional, requires live MINT stack) | |
+
+**Resume entry point:** Dispatch spec reviewer for Task 1 first, then code quality reviewer, then proceed to Task 2 implementer.
+
+**Run tests from:** `dynamo-experiment-may/` with `uv run pytest tests/test_notebook_structure.py -v`. Current state: 5 pass, 1 expected fail (`test_notebook_has_seven_cells` — by design until Task 6).
+
+**Submodule note:** `dynamo-experiment-may` is a git submodule. Notebook + test commits land *inside* the submodule. After each commit chain in the submodule, the parent repo (`mint`) must `git add dynamo-experiment-may && git commit -m "chore: pin dynamo-experiment-may submodule for Task N"` to advance the pinned SHA.
+
+---
+
 ## File Structure
 
 | File | Responsibility |
