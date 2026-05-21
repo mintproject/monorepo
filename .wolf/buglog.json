@@ -2085,9 +2085,59 @@
         "fastify",
         "ergonomics"
       ],
-      "related_bugs": ["bug-086"],
+      "related_bugs": [
+        "bug-086"
+      ],
       "occurrences": 1,
       "last_seen": "2026-05-10T18:26:09Z"
+    },
+    {
+      "id": "bug-125",
+      "timestamp": "2026-05-10T19:41:50.009Z",
+      "error_message": "Incorrect value in code",
+      "file": "dynamo-experiment-may/docs/superpowers/specs/2026-05-10-modeler-add-version-to-existing-modflow-design.md",
+      "root_cause": "Had `EXISTS ... (409 Conflict, re-run safe)`",
+      "fix": "Changed to `EXISTS ... (400 Constraint violation, re-run safe",
+      "tags": [
+        "auto-detected",
+        "wrong-value",
+        "md"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-05-10T19:41:50.009Z"
+    },
+    {
+      "id": "bug-126",
+      "timestamp": "2026-05-10T19:42:05.257Z",
+      "error_message": "Missing error handling in unknown",
+      "file": "dynamo-experiment-may/docs/superpowers/specs/2026-05-10-modeler-add-version-to-existing-modflow-design.md",
+      "root_cause": "Code path had no error handling — exceptions would propagate uncaught",
+      "fix": "Added try/catch block",
+      "tags": [
+        "auto-detected",
+        "error-handling",
+        "md"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-05-10T19:42:05.257Z"
+    },
+    {
+      "id": "bug-127",
+      "timestamp": "2026-05-10T19:59:18.064Z",
+      "error_message": "Significant refactor of ",
+      "file": "dynamo-experiment-may/tests/test_notebook_02_structure.py",
+      "root_cause": "2 lines replaced/restructured",
+      "fix": "Rewrote 3→16 lines (2 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "py"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-05-10T19:59:18.064Z"
     }
   ]
 }

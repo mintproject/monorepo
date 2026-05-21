@@ -222,7 +222,7 @@
 > Consolidated session (0 actions)
 
 ## Session: 2026-05-01 16:40
-> Consolidated session (3 actions)
+> Consolidated session (0 actions)
 
 ## Session: 2026-05-01 16:50
 > Consolidated session (0 actions)
@@ -237,22 +237,22 @@
 > Consolidated session (0 actions)
 
 ## Session: 2026-05-01 18:19
-> Consolidated session (6 actions)
+> Consolidated session (0 actions)
 
 ## Session: 2026-05-01 18:44
-> Consolidated session (4 actions)
+> Consolidated session (0 actions)
 
 ## Session: 2026-05-01 18:59
-> Consolidated session (11 actions)
+> Consolidated session (0 actions)
 
 ## Session: 2026-05-01 19:56
-> Consolidated session (9 actions)
+> Consolidated session (0 actions)
 
 ## Session: 2026-05-02 20:48
 > Consolidated session (0 actions)
 
 ## Session: 2026-05-02 20:53
-> Consolidated session (12 actions)
+> Consolidated session (0 actions)
 
 ## Session: 2026-05-03 03:00
 > Consolidated session (0 actions)
@@ -264,37 +264,37 @@
 > Consolidated session (0 actions)
 
 ## Session: 2026-05-03 11:52
-> Consolidated session (9 actions)
+> Consolidated session (0 actions)
 
 ## Session: 2026-05-03 17:24
-> Consolidated session (1 actions)
+> Consolidated session (0 actions)
 
 ## Session: 2026-05-03 17:35
-> Consolidated session (6 actions)
+> Consolidated session (0 actions)
 
 ## Session: 2026-05-03 17:38
-> Consolidated session (5 actions)
+> Consolidated session (0 actions)
 
 ## Session: 2026-05-03 17:41
-> Consolidated session (9 actions)
+> Consolidated session (0 actions)
 
 ## Session: 2026-05-03 18:06
-> Consolidated session (2 actions)
+> Consolidated session (0 actions)
 
 ## Session: 2026-05-03 18:22
-> Consolidated session (1 actions)
+> Consolidated session (0 actions)
 
 ## Session: 2026-05-03 18:29
 > Consolidated session (0 actions)
 
 ## Session: 2026-05-03 18:33
-> Consolidated session (20 actions)
+> Consolidated session (0 actions)
 
 ## Session: 2026-05-03 18:49
-> Consolidated session (3 actions)
+> Consolidated session (0 actions)
 
 ## Session: 2026-05-03 19:27
-> Consolidated session (3 actions)
+> Consolidated session (0 actions)
 
 ## Session: 2026-05-03 19:43
 > Consolidated session (0 actions)
@@ -309,165 +309,61 @@
 > Consolidated session (0 actions)
 
 ## Session: 2026-05-03 19:53
-> Consolidated session (15 actions)
+> Consolidated session (0 actions)
 
 ## Session: 2026-05-04 20:17
-
-| Time | Action | File(s) | Outcome | ~Tokens |
-|------|--------|---------|---------|--------|
-| 20:18 | Edited dynamo/shared/values.yaml | 7→7 lines | ~55 |
-| 20:19 | Session end: 1 writes across 1 files (values.yaml) | 0 reads | ~55 tok |
+> Consolidated session (0 actions)
 
 ## Session: 2026-05-04 20:24
-
-| Time | Action | File(s) | Outcome | ~Tokens |
-|------|--------|---------|---------|--------|
+> Consolidated session (0 actions)
 
 ## Session: 2026-05-04 20:32
-
-| Time | Action | File(s) | Outcome | ~Tokens |
-|------|--------|---------|---------|--------|
-| 20:35 | Edited mint-ensemble-manager/src/classes/common/__tests__/ExecutionCreationStatic.test.ts | expanded (+57 lines) | ~673 |
-| 20:36 | Edited mint-ensemble-manager/src/classes/common/ExecutionCreation.ts | added 1 condition(s) | ~474 |
-| 20:38 | Edited dynamo/shared/values.yaml | 5→5 lines | ~39 |
-| 20:40 | Session end: 3 writes across 3 files (ExecutionCreationStatic.test.ts, ExecutionCreation.ts, values.yaml) | 10 reads | ~20086 tok |
+> Consolidated session (0 actions)
 
 ## Session: 2026-05-04 20:46
-
-| Time | Action | File(s) | Outcome | ~Tokens |
-|------|--------|---------|---------|--------|
+> Consolidated session (0 actions)
 
 ## Session: 2026-05-04 20:46
-
-| Time | Action | File(s) | Outcome | ~Tokens |
-|------|--------|---------|---------|--------|
-| 20:50 | Generated client summary on Fuseki→Hasura migration + Phase 12 optional inputs | (no files modified) | summary delivered | ~1500 |
+> Consolidated session (0 actions)
 
 ## Session: 2026-05-04 04:00
-
-| Time | Action | File(s) | Outcome | ~Tokens |
-|------|--------|---------|---------|--------|
+> Consolidated session (0 actions)
 
 ## Session: 2026-05-07 18:30
-
-| Time | Action | File(s) | Outcome | ~Tokens |
-|------|--------|---------|---------|--------|
-| 19:14 | Edited ui/src/model-catalog-api/default-redux-api.ts | modified _getIdFromUri() | ~81 |
-| 19:14 | Session end: 1 writes across 1 files (default-redux-api.ts) | 3 reads | ~81 tok |
-| 19:16 | Session end: 1 writes across 1 files (default-redux-api.ts) | 3 reads | ~81 tok |
-| 19:17 | Edited model-catalog-api/src/service.ts | added 1 condition(s) | ~198 |
-| 19:17 | Edited model-catalog-api/src/service.ts | added 1 condition(s) | ~142 |
-| 19:18 | Edited model-catalog-api/src/service.ts | added 1 condition(s) | ~181 |
-| 19:19 | Session end: 4 writes across 2 files (default-redux-api.ts, service.ts) | 3 reads | ~602 tok |
-| 19:21 | Session end: 4 writes across 2 files (default-redux-api.ts, service.ts) | 3 reads | ~602 tok |
-| 19:24 | Created .planning/quick/260507-bug-a-uri-strict-mode/.continue-here.md | — | ~894 |
-| 19:24 | Session end: 5 writes across 3 files (default-redux-api.ts, service.ts, .continue-here.md) | 3 reads | ~1560 tok |
+> Consolidated session (10 actions)
 
 ## Session: 2026-05-07 19:24
-
-| Time | Action | File(s) | Outcome | ~Tokens |
-|------|--------|---------|---------|--------|
-| 19:26 | Edited model-catalog-api/src/__tests__/integration.test.ts | added optional chaining | ~232 |
-| 19:26 | Edited model-catalog-api/src/__tests__/integration.test.ts | inline fix | ~21 |
+> Consolidated session (2 actions)
 
 ## Session: 2026-05-07 19:27
-
-| Time | Action | File(s) | Outcome | ~Tokens |
-|------|--------|---------|---------|--------|
-| 19:28 | Edited model-catalog-api/src/__tests__/integration.test.ts | 10→10 lines | ~108 |
-| 19:28 | Edited model-catalog-api/src/__tests__/integration.test.ts | 10→10 lines | ~96 |
-| 19:28 | Edited model-catalog-api/src/__tests__/integration.test.ts | 9→9 lines | ~93 |
-| 19:32 | Session end: 3 writes across 1 files (integration.test.ts) | 2 reads | ~14521 tok |
-| 19:34 | Edited model-catalog-api/src/service.ts | added 2 condition(s) | ~355 |
-| 19:34 | Edited model-catalog-api/src/service.ts | added 2 condition(s) | ~233 |
-| 19:34 | Edited model-catalog-api/src/service.ts | added 1 condition(s) | ~136 |
-| 19:34 | Edited model-catalog-api/src/service.ts | modified filter() | ~193 |
-| 19:35 | Edited model-catalog-api/src/service.ts | 5→3 lines | ~61 |
-| 19:35 | Edited model-catalog-api/src/service.ts | modified filter() | ~179 |
-| 19:35 | Edited model-catalog-api/src/custom-handlers.ts | added 1 condition(s) | ~197 |
-| 19:36 | Edited model-catalog-api/src/custom-handlers.ts | startsWith() → requireFullUri() | ~72 |
-| 19:36 | Edited model-catalog-api/src/custom-handlers.ts | startsWith() → requireFullUri() | ~75 |
-| 19:36 | Edited model-catalog-api/src/custom-handlers.ts | startsWith() → requireFullUri() | ~72 |
-| 19:36 | Edited model-catalog-api/src/custom-handlers.ts | added 1 condition(s) | ~64 |
-| 19:36 | Edited model-catalog-api/src/custom-handlers.ts | startsWith() → requireFullUri() | ~73 |
-| 19:36 | Edited model-catalog-api/src/custom-handlers.ts | modified custom_configuration_id_inputs_get() | ~92 |
-| 19:36 | Edited model-catalog-api/src/custom-handlers.ts | modified custom_configuration_id_inputs_get() | ~73 |
-| 19:37 | Edited model-catalog-api/src/__tests__/integration.test.ts | added optional chaining | ~147 |
-| 19:37 | Edited model-catalog-api/src/__tests__/integration.test.ts | reduced (-9 lines) | ~388 |
-| 19:38 | Session end: 19 writes across 3 files (integration.test.ts, service.ts, custom-handlers.ts) | 3 reads | ~25966 tok |
-| 19:39 | Edited model-catalog-api/src/mappers/request.ts | 8→4 lines | ~77 |
-| 19:39 | Edited model-catalog-api/src/mappers/__tests__/request.test.ts | IDs() → unchanged() | ~222 |
-| 19:39 | Session end: 21 writes across 5 files (integration.test.ts, service.ts, custom-handlers.ts, request.ts, request.test.ts) | 5 reads | ~26265 tok |
-| 19:40 | Session end: 21 writes across 5 files (integration.test.ts, service.ts, custom-handlers.ts, request.ts, request.test.ts) | 5 reads | ~26265 tok |
-| 19:40 | Session end: 21 writes across 5 files (integration.test.ts, service.ts, custom-handlers.ts, request.ts, request.test.ts) | 5 reads | ~26265 tok |
+> Consolidated session (26 actions)
 
 ## Session: 2026-05-08 20:04
-
-| Time | Action | File(s) | Outcome | ~Tokens |
-|------|--------|---------|---------|--------|
+> Consolidated session (0 actions)
 
 ## Session: 2026-05-08 20:08
-
-| Time | Action | File(s) | Outcome | ~Tokens |
-|------|--------|---------|---------|--------|
+> Consolidated session (0 actions)
 
 ## Session: 2026-05-08 20:12
-
-| Time | Action | File(s) | Outcome | ~Tokens |
-|------|--------|---------|---------|--------|
+> Consolidated session (0 actions)
 
 ## Session: 2026-05-08 20:34
-
-| Time | Action | File(s) | Outcome | ~Tokens |
-|------|--------|---------|---------|--------|
-| 20:39 | flatten nested w3id URIs in modflow notebook | 00_minimal_mint_model_debug_modflow2000.ipynb | 7 URIs renamed (1 model + 6 VPs), outputs cleared | ~3000 |
+> Consolidated session (1 actions)
 
 ## Session: 2026-05-08 21:10
-
-| Time | Action | File(s) | Outcome | ~Tokens |
-|------|--------|---------|---------|--------|
+> Consolidated session (0 actions)
 
 ## Session: 2026-05-08 21:13
-
-| Time | Action | File(s) | Outcome | ~Tokens |
-|------|--------|---------|---------|--------|
-| 21:15 | Created dynamo-experiment-may/tests/test_modelconfiguration_writepaths.py | dynamo-experiment-may/tests/test_modelconfiguration_writepaths.py | created | ~6590 |
-| 21:25 | Ran 5 hypotheses; H5 won (nested-DS-object shape, existing ids); H1 FK error revealed Configuration.hasInput targets DatasetSpecification not VariablePresentation; DS POST also broken (same cascade) | tests/modelconfig_writepaths_results.json | partial: relations persist, MODFLOW SVO still empty | ~3500 |
-| 21:19 | Session end: 1 writes across 1 files (test_modelconfiguration_writepaths.py) | 3 reads | ~6590 tok |
-| 21:20 | Created .planning/todos/pending/2026-05-07-fix-modelconfiguration-cascade-null-label.md | — | ~847 |
-| 21:21 | Edited .planning/STATE.md | 1→2 lines | ~93 |
-| 21:21 | Session end: 3 writes across 3 files (test_modelconfiguration_writepaths.py, 2026-05-07-fix-modelconfiguration-cascade-null-label.md, STATE.md) | 5 reads | ~11887 tok |
+> Consolidated session (6 actions)
 
 ## Session: 2026-05-08 21:21
-
-| Time | Action | File(s) | Outcome | ~Tokens |
-|------|--------|---------|---------|--------|
-| 21:26 | Edited model-catalog-api/src/mappers/request.ts | modified Set() | ~915 |
-| 21:28 | Edited model-catalog-api/src/mappers/request.ts | modified only() | ~237 |
-| 21:28 | Edited model-catalog-api/src/mappers/__tests__/request.test.ts | 3→4 lines | ~70 |
-| 21:29 | Edited model-catalog-api/src/mappers/__tests__/request.test.ts | 24→23 lines | ~331 |
-| 21:29 | Session end: 4 writes across 2 files (request.ts, request.test.ts) | 3 reads | ~17052 tok |
+> Consolidated session (5 actions)
 
 ## Session: 2026-05-08 21:32
-
-| Time | Action | File(s) | Outcome | ~Tokens |
-|------|--------|---------|---------|--------|
-| 21:32 | Edited model-catalog-api/src/mappers/__tests__/request.test.ts | 15→15 lines | ~209 |
-| 21:33 | Session end: 1 writes across 1 files (request.test.ts) | 0 reads | ~209 tok |
+> Consolidated session (2 actions)
 
 ## Session: 2026-05-08 21:33
-
-| Time | Action | File(s) | Outcome | ~Tokens |
-|------|--------|---------|---------|--------|
-| 21:36 | Edited model-catalog-api/src/mappers/request.ts | 4→4 lines | ~36 |
-| 21:36 | Edited model-catalog-api/src/mappers/__tests__/request.test.ts | 4→8 lines | ~145 |
-| 21:37 | Edited model-catalog-api/src/mappers/__tests__/request.test.ts | expanded (+31 lines) | ~597 |
-| 21:38 | bug-087 fix: on_conflict update_columns label->[] | model-catalog-api/src/mappers/request.ts +__tests__ | vitest 188/188 pass | ~3500 |
-| 21:38 | Session end: 3 writes across 2 files (request.ts, request.test.ts) | 4 reads | ~16609 tok |
-| 21:41 | Session end: 3 writes across 2 files (request.ts, request.test.ts) | 4 reads | ~16609 tok |
-| 21:43 | Session end: 3 writes across 2 files (request.ts, request.test.ts) | 4 reads | ~16609 tok |
-| 21:48 | Session end: 3 writes across 2 files (request.ts, request.test.ts) | 4 reads | ~16609 tok |
-| 13:28 | Edited model-catalog-api/src/mappers/request.ts | modified Set() | ~923 |
+> Consolidated session (9 actions)
 
 ## Session: 2026-05-09 12:37
 
@@ -844,3 +740,50 @@
 | 14:26 | accept bare-slug {id} on get/delete + custom handlers (prepend idPrefix) | model-catalog-api/src/{service,custom-handlers}.ts, integration.test.ts | 120 unit tests pass | ~3500 |
 | 14:26 | Session end: 12 writes across 3 files (service.ts, custom-handlers.ts, integration.test.ts) | 4 reads | ~6424 tok |
 | 14:27 | Session end: 12 writes across 3 files (service.ts, custom-handlers.ts, integration.test.ts) | 4 reads | ~6424 tok |
+
+## Session: 2026-05-10 14:43
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 15:11 | Created dynamo-experiment-may/docs/superpowers/specs/2026-05-10-modeler-add-version-to-existing-modflow-design.md | — | ~2120 |
+| 15:12 | Session end: 1 writes across 1 files (2026-05-10-modeler-add-version-to-existing-modflow-design.md) | 0 reads | ~2272 tok |
+| 15:24 | Created dynamo-experiment-may/docs/superpowers/plans/2026-05-10-modeler-add-version-to-existing-modflow.md | — | ~8815 |
+| 15:25 | Session end: 2 writes across 2 files (2026-05-10-modeler-add-version-to-existing-modflow-design.md, 2026-05-10-modeler-add-version-to-existing-modflow.md) | 6 reads | ~21597 tok |
+| 15:40 | Edited dynamo-experiment-may/docs/superpowers/specs/2026-05-10-modeler-add-version-to-existing-modflow-design.md | modified post_idempotent() | ~150 |
+| 15:41 | Edited dynamo-experiment-may/docs/superpowers/specs/2026-05-10-modeler-add-version-to-existing-modflow-design.md | 3→3 lines | ~54 |
+| 15:42 | Edited dynamo-experiment-may/docs/superpowers/specs/2026-05-10-modeler-add-version-to-existing-modflow-design.md | 4→6 lines | ~218 |
+| 15:42 | Edited dynamo-experiment-may/docs/superpowers/specs/2026-05-10-modeler-add-version-to-existing-modflow-design.md | inline fix | ~49 |
+| 15:42 | Edited dynamo-experiment-may/docs/superpowers/specs/2026-05-10-modeler-add-version-to-existing-modflow-design.md | inline fix | ~33 |
+| 15:45 | Created dynamo-experiment-may/tests/test_notebook_02_structure.py | — | ~1371 |
+| 15:46 | Created dynamo-experiment-may/02_modeler_add_version_to_existing_modflow.ipynb | — | ~68 |
+| 15:49 | Session end: 9 writes across 4 files (2026-05-10-modeler-add-version-to-existing-modflow-design.md, 2026-05-10-modeler-add-version-to-existing-modflow.md, test_notebook_02_structure.py, 02_modeler_add_version_to_existing_modflow.ipynb) | 11 reads | ~33903 tok |
+| 15:59 | Edited dynamo-experiment-may/tests/test_notebook_02_structure.py | modified test_notebook_has_twelve_cells() | ~162 |
+| 16:00 | Session end: 10 writes across 4 files (2026-05-10-modeler-add-version-to-existing-modflow-design.md, 2026-05-10-modeler-add-version-to-existing-modflow.md, test_notebook_02_structure.py, 02_modeler_add_version_to_existing_modflow.ipynb) | 13 reads | ~35504 tok |
+| 16:11 | Session end: 10 writes across 4 files (2026-05-10-modeler-add-version-to-existing-modflow-design.md, 2026-05-10-modeler-add-version-to-existing-modflow.md, test_notebook_02_structure.py, 02_modeler_add_version_to_existing_modflow.ipynb) | 13 reads | ~35504 tok |
+| 16:12 | Session end: 10 writes across 4 files (2026-05-10-modeler-add-version-to-existing-modflow-design.md, 2026-05-10-modeler-add-version-to-existing-modflow.md, test_notebook_02_structure.py, 02_modeler_add_version_to_existing_modflow.ipynb) | 13 reads | ~35504 tok |
+
+## Session: 2026-05-10 16:18
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+
+## Session: 2026-05-10 16:18
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 16:26 | nb02 add hasModelCategory (Hydrology) to SoftwareVersion + ModelConfiguration; fix "must enter category" UI error | dynamo-experiment-may/02_modeler_add_version_to_existing_modflow.ipynb | done | ~1.5k |
+
+## Session: 2026-05-10 16:28
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+
+## Session: 2026-05-10 16:35
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+
+## Session: 2026-05-11 04:00
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|

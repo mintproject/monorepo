@@ -1,110 +1,12 @@
 {
-  "session_id": "session-2026-05-10-1421",
-  "started": "2026-05-10T18:21:02.676Z",
-  "files_read": {
-    "/Users/mosorio/repos/mint/model-catalog-api/src/service.ts": {
-      "count": 4,
-      "tokens": 5053,
-      "first_read": "2026-05-10T18:21:55.298Z"
-    },
-    "/Users/mosorio/repos/mint/model-catalog-api/src/custom-handlers.ts": {
-      "count": 1,
-      "tokens": 0,
-      "first_read": "2026-05-10T18:21:56.230Z"
-    },
-    "/Users/mosorio/repos/mint/model-catalog-api/src/__tests__/integration.test.ts": {
-      "count": 3,
-      "tokens": 0,
-      "first_read": "2026-05-10T18:22:04.939Z"
-    },
-    "/Users/mosorio/repos/mint/model-catalog-api/src/mappers/resource-registry.ts": {
-      "count": 1,
-      "tokens": 0,
-      "first_read": "2026-05-10T18:22:14.495Z"
-    }
-  },
-  "files_written": [
-    {
-      "file": "/Users/mosorio/repos/mint/model-catalog-api/src/service.ts",
-      "action": "edit",
-      "tokens": 56,
-      "at": "2026-05-10T18:23:27.904Z"
-    },
-    {
-      "file": "/Users/mosorio/repos/mint/model-catalog-api/src/service.ts",
-      "action": "edit",
-      "tokens": 79,
-      "at": "2026-05-10T18:23:34.726Z"
-    },
-    {
-      "file": "/Users/mosorio/repos/mint/model-catalog-api/src/service.ts",
-      "action": "edit",
-      "tokens": 50,
-      "at": "2026-05-10T18:23:41.276Z"
-    },
-    {
-      "file": "/Users/mosorio/repos/mint/model-catalog-api/src/custom-handlers.ts",
-      "action": "edit",
-      "tokens": 121,
-      "at": "2026-05-10T18:24:30.828Z"
-    },
-    {
-      "file": "/Users/mosorio/repos/mint/model-catalog-api/src/custom-handlers.ts",
-      "action": "edit",
-      "tokens": 70,
-      "at": "2026-05-10T18:25:02.101Z"
-    },
-    {
-      "file": "/Users/mosorio/repos/mint/model-catalog-api/src/custom-handlers.ts",
-      "action": "edit",
-      "tokens": 73,
-      "at": "2026-05-10T18:25:06.125Z"
-    },
-    {
-      "file": "/Users/mosorio/repos/mint/model-catalog-api/src/custom-handlers.ts",
-      "action": "edit",
-      "tokens": 70,
-      "at": "2026-05-10T18:25:10.227Z"
-    },
-    {
-      "file": "/Users/mosorio/repos/mint/model-catalog-api/src/custom-handlers.ts",
-      "action": "edit",
-      "tokens": 59,
-      "at": "2026-05-10T18:25:13.929Z"
-    },
-    {
-      "file": "/Users/mosorio/repos/mint/model-catalog-api/src/custom-handlers.ts",
-      "action": "edit",
-      "tokens": 87,
-      "at": "2026-05-10T18:25:18.620Z"
-    },
-    {
-      "file": "/Users/mosorio/repos/mint/model-catalog-api/src/__tests__/integration.test.ts",
-      "action": "edit",
-      "tokens": 318,
-      "at": "2026-05-10T18:25:43.588Z"
-    },
-    {
-      "file": "/Users/mosorio/repos/mint/model-catalog-api/src/__tests__/integration.test.ts",
-      "action": "edit",
-      "tokens": 185,
-      "at": "2026-05-10T18:25:51.935Z"
-    },
-    {
-      "file": "/Users/mosorio/repos/mint/model-catalog-api/src/__tests__/integration.test.ts",
-      "action": "edit",
-      "tokens": 203,
-      "at": "2026-05-10T18:25:58.689Z"
-    }
-  ],
-  "edit_counts": {
-    "model-catalog-api/src/service.ts": 3,
-    "model-catalog-api/src/custom-handlers.ts": 6,
-    "model-catalog-api/src/__tests__/integration.test.ts": 3
-  },
-  "anatomy_hits": 1,
-  "anatomy_misses": 3,
-  "repeated_reads_warned": 5,
+  "session_id": "session-2026-05-11-0400",
+  "started": "2026-05-11T08:00:01.937Z",
+  "files_read": {},
+  "files_written": [],
+  "edit_counts": {},
+  "anatomy_hits": 0,
+  "anatomy_misses": 0,
+  "repeated_reads_warned": 0,
   "cerebrum_warnings": 0,
-  "stop_count": 2
+  "stop_count": 1
 }

@@ -1,29 +1,47 @@
 {
-  "generated_at": "2026-04-13T08:00:39.146Z",
+  "generated_at": "2026-05-11T08:00:36.468Z",
   "achievements": [
-    "Completed Phase 10: mint-ensemble-manager migration - dropped execution.model_id, repointed data_binding FKs, removed dead code",
-    "Fixed UI GraphQL fragments for execution table after model_id column removal (quick-260411-nis)",
-    "Added dataset filtering toggles (time/region/variables) to UI thread-expansion-datasets component (quick-260411-hb5)",
-    "Phase 9 complete: Merged ModelConfiguration/Setup tables into unified modelcatalog_configuration",
-    "v2.0 milestone: 100% complete (36/36 plans across all phases)"
+    "bug-089 recursive nested writes: shipped mappers/nested-tree.ts + mutation-compiler.ts with 214 unit tests pass",
+    "bug-087 on_conflict update_columns label->[] fix in mappers/request.ts (vitest 188/188)",
+    "bug-090 modeler notebook KeyError hasConfiguration fixed; added 3 e2e read-shape tests for softwareversions.hasConfiguration",
+    "Bug A URI strict mode: requireFullUri + resolveResourceId in service.ts/custom-handlers.ts; bare-slug {id} accepted with idPrefix prepend",
+    "modelconfig deep-read v2.1.0 design + plan written, field-maps.ts relationships expanded, read-shape-deep e2e tests added",
+    "model-catalog-api bumped to v2.1.0 with CHANGELOG.md and split vitest configs (unit vs e2e)",
+    "E2E harness landed: hasura-client.test.ts, e2e/helpers.ts, setup.ts, junction-e2e.test.ts, nested-write-e2e.test.ts, smoke-e2e.test.ts + run-e2e-hasura SKILL",
+    "Notebook 02 (modeler add version to existing modflow): design + plan + test_notebook_02_structure.py + ipynb shipped with hasModelCategory fix",
+    "dynamo-experiment-may bumped to 77f1b35; helm image tag bump tooling committed (5c99912)"
   ],
   "improvements": [
-    "Filter toggle state in thread-expansion-datasets is not persisted - consider adding Redux or localStorage persistence for better UX",
-    "Cache invalidation on toggle uses full cache clear - could be optimized to targeted removal for performance",
-    "Pre-existing TypeScript errors in UI (jsonwebtoken, weightless, tapis-app, ui_functions msSaveBlob) should be addressed",
-    "Consolidate duplicate GraphQL files in mint-ensemble-manager (10-02-PLAN.md lists this as pending)"
+    "Memory log overrun: 100+ empty Consolidated sessions polluting .wolf/memory.md — daemon weekly consolidation broken, prune",
+    "service.ts heavily edited (>30 touches in 2 sessions) — refactor candidates: extract uri-resolver + nested-write dispatcher modules",
+    "mutation-compiler.ts grew via many small condition additions — review for cohesion, consider splitting put/post junction paths",
+    "Caller migration audit (bug-089 task 14) found 0 hits across ui/, mint-ensemble-manager/, dynamo-experiment-may/, model-catalog-fastapi/ — verify callers actually exercise nested-write shape end-to-end before declaring done",
+    "integration.test.ts churned 15+ times — split into resource-scoped files",
+    "ui submodule has unstaged changes (M ui) — investigate drift vs pointer bump",
+    "Two untracked top-level dirs (dynamo/, model-catalog-fastapi/) — decide submodule or .gitignore",
+    "Worktrees .claude/worktrees/agent-* duplicate full .planning/ trees — stale, reclaim disk + token budget"
   ],
   "next_tasks": [
-    "Verify quick-260411-nis manually: load thread with executions, confirm no 'model_id not found' errors",
-    "Execute 10-02-PLAN.md: dead code cleanup, file consolidation, unit tests, build verification",
-    "Clean up stale worktrees: agent-a094a84f, agent-a497098e, agent-a26f4f76 show as modified in git status",
-    "Plan Phase 6: Ensemble manager Tapis integration tests (currently has 0 plans)",
-    "Plan Phase 7: Test coverage for model catalog migration (currently has 0 plans)"
+    "Resolve bug-087 follow-up: .planning/todos/pending/2026-05-07-fix-modelconfiguration-cascade-null-label.md still pending",
+    "Execute Notebook 02 plan tasks beyond cell-12 + Notebook v2.1.0 migration spec (docs/superpowers/specs/2026-05-09-notebook-v2.1.0-migration-design.md)",
+    "Wire deep-read service.ts changes to e2e: run read-shape-deep-e2e.test.ts against live Hasura via run-e2e-hasura skill",
+    "Run full e2e suite (vitest.e2e.config.ts) against staging Hasura — junction, nested-write, smoke, read-shape-deep — capture baseline",
+    "Hasura E2E integration test plan (docs/superpowers/plans/2026-05-09-hasura-e2e-integration-tests.md) — execute remaining tasks",
+    "Modeler add-version-to-existing-modflow notebook (Notebook 03) execution per plan",
+    "ETL: backfill StandardVariable/Unit data + verify MODFLOW SVO populated (test_modelconfiguration_writepaths H5 left empty)",
+    "Bump UI + ensemble-manager image tags via update-helm-image-tags after model-catalog-api 2.1.0 ships",
+    "Address pending todos: secure dynamo values.yaml secrets, centralize execution config"
   ],
   "risks": [
-    "4 stale worktrees accumulating divergent state - risk of merge conflicts or lost work",
-    "Phase 10-02 marked complete in roadmap but shows unchecked in ROADMAP.md - status inconsistency",
-    "No entries in Do-Not-Repeat section of cerebrum.md despite significant migration work - missing learnings capture",
-    "Several planning phases (1, 2, 6, 7, 8) still show '[To be planned]' - backlog grooming needed"
+    "Caller-side null-handling: bug-089 changes nested-write shape; if any caller sends old flat shape, silent data loss until e2e covers each junction relationship",
+    "label->[] on_conflict (bug-087): downstream consumers expecting label updates on conflict now no-op — verify no upsert flows depend on label refresh",
+    "Bare-slug acceptance (Bug A): idPrefix prepend can mask ID mismatches across resource types; collision risk if slugs reused across catalog vs setup namespaces",
+    "v2.1.0 release without UAT: model-catalog-api bumped but mint-ensemble-manager + ui still pinned to older API — version skew window",
+    "MODFLOW SVO data still empty after bug-090 fix per test_modelconfiguration_writepaths_results — readback may still be incomplete",
+    "Old v1.8.0 model_io/model_parameter tables kept for FK compatibility — drift accumulating; no migration plan in pending todos",
+    "JWT forwarding: write ops still rely on caller token; bare-slug resolveResourceId runs before auth — confirm Hasura permissions cover slug→full URI rewrite",
+    "Bug A integration test 'expanded (+12 lines)' but no separate test file — coverage may overlap with existing paths",
+    "Submodule drift: ui marked modified at HEAD, untracked dynamo/, model-catalog-fastapi/ — uncommitted state could be lost on branch switches",
+    "buglog.json has bug-090 entry but bug-088 missing — gap between bug-087 and bug-089"
   ]
 }

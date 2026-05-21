@@ -2,14 +2,14 @@
   "version": 1,
   "created_at": "2026-04-12T21:31:41.062Z",
   "lifetime": {
-    "total_tokens_estimated": 5088063,
-    "total_reads": 1525,
-    "total_writes": 1270,
-    "total_sessions": 150,
-    "anatomy_hits": 502,
-    "anatomy_misses": 1019,
-    "repeated_reads_blocked": 840,
-    "estimated_savings_vs_bare_cli": 4638282
+    "total_tokens_estimated": 5252347,
+    "total_reads": 1581,
+    "total_writes": 1312,
+    "total_sessions": 156,
+    "anatomy_hits": 526,
+    "anatomy_misses": 1051,
+    "repeated_reads_blocked": 853,
+    "estimated_savings_vs_bare_cli": 4659546
   },
   "sessions": [
     {
@@ -20880,12 +20880,2797 @@
         "repeated_reads_blocked": 5,
         "anatomy_lookups": 1
       }
+    },
+    {
+      "id": "session-2026-05-10-1443",
+      "started": "2026-05-10T18:43:56.097Z",
+      "ended": "2026-05-10T19:12:18.360Z",
+      "reads": [],
+      "writes": [
+        {
+          "file": "/Users/mosorio/repos/mint/dynamo-experiment-may/docs/superpowers/specs/2026-05-10-modeler-add-version-to-existing-modflow-design.md",
+          "tokens_estimated": 2272,
+          "action": "create"
+        }
+      ],
+      "totals": {
+        "input_tokens_estimated": 0,
+        "output_tokens_estimated": 2272,
+        "reads_count": 0,
+        "writes_count": 1,
+        "repeated_reads_blocked": 0,
+        "anatomy_lookups": 0
+      }
+    },
+    {
+      "id": "session-2026-05-10-1443",
+      "started": "2026-05-10T18:43:56.097Z",
+      "ended": "2026-05-10T19:25:28.950Z",
+      "reads": [
+        {
+          "file": "/Users/mosorio/repos/mint/model-catalog-api/src/service.ts",
+          "tokens_estimated": 4901,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/model-catalog-api/src/mappers/resource-registry.ts",
+          "tokens_estimated": 0,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/model-catalog-api/src/mappers/nested-tree.ts",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/model-catalog-api/src/hasura/field-maps.ts",
+          "tokens_estimated": 4979,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/dynamo-experiment-may/tests/test_notebook_structure.py",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/dynamo-experiment-may/pyproject.toml",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        }
+      ],
+      "writes": [
+        {
+          "file": "/Users/mosorio/repos/mint/dynamo-experiment-may/docs/superpowers/specs/2026-05-10-modeler-add-version-to-existing-modflow-design.md",
+          "tokens_estimated": 2272,
+          "action": "create"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/dynamo-experiment-may/docs/superpowers/plans/2026-05-10-modeler-add-version-to-existing-modflow.md",
+          "tokens_estimated": 9445,
+          "action": "create"
+        }
+      ],
+      "totals": {
+        "input_tokens_estimated": 9880,
+        "output_tokens_estimated": 11717,
+        "reads_count": 6,
+        "writes_count": 2,
+        "repeated_reads_blocked": 1,
+        "anatomy_lookups": 2
+      }
+    },
+    {
+      "id": "session-2026-05-10-1443",
+      "started": "2026-05-10T18:43:56.097Z",
+      "ended": "2026-05-10T19:49:06.416Z",
+      "reads": [
+        {
+          "file": "/Users/mosorio/repos/mint/model-catalog-api/src/service.ts",
+          "tokens_estimated": 4901,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/model-catalog-api/src/mappers/resource-registry.ts",
+          "tokens_estimated": 0,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/model-catalog-api/src/mappers/nested-tree.ts",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/model-catalog-api/src/hasura/field-maps.ts",
+          "tokens_estimated": 4979,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/dynamo-experiment-may/tests/test_notebook_structure.py",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/dynamo-experiment-may/pyproject.toml",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/.claude/plugins/cache/claude-plugins-official/superpowers/5.1.0/skills/subagent-driven-development/implementer-prompt.md",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/.claude/plugins/cache/claude-plugins-official/superpowers/5.1.0/skills/subagent-driven-development/spec-reviewer-prompt.md",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/.claude/plugins/cache/claude-plugins-official/superpowers/5.1.0/skills/subagent-driven-development/code-quality-reviewer-prompt.md",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/dynamo-experiment-may/docs/superpowers/specs/2026-05-10-modeler-add-version-to-existing-modflow-design.md",
+          "tokens_estimated": 2058,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/dynamo-experiment-may/docs/superpowers/plans/2026-05-10-modeler-add-version-to-existing-modflow.md",
+          "tokens_estimated": 8264,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        }
+      ],
+      "writes": [
+        {
+          "file": "/Users/mosorio/repos/mint/dynamo-experiment-may/docs/superpowers/specs/2026-05-10-modeler-add-version-to-existing-modflow-design.md",
+          "tokens_estimated": 2272,
+          "action": "create"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/dynamo-experiment-may/docs/superpowers/plans/2026-05-10-modeler-add-version-to-existing-modflow.md",
+          "tokens_estimated": 9445,
+          "action": "create"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/dynamo-experiment-may/docs/superpowers/specs/2026-05-10-modeler-add-version-to-existing-modflow-design.md",
+          "tokens_estimated": 161,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/dynamo-experiment-may/docs/superpowers/specs/2026-05-10-modeler-add-version-to-existing-modflow-design.md",
+          "tokens_estimated": 58,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/dynamo-experiment-may/docs/superpowers/specs/2026-05-10-modeler-add-version-to-existing-modflow-design.md",
+          "tokens_estimated": 234,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/dynamo-experiment-may/docs/superpowers/specs/2026-05-10-modeler-add-version-to-existing-modflow-design.md",
+          "tokens_estimated": 52,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/dynamo-experiment-may/docs/superpowers/specs/2026-05-10-modeler-add-version-to-existing-modflow-design.md",
+          "tokens_estimated": 35,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/dynamo-experiment-may/tests/test_notebook_02_structure.py",
+          "tokens_estimated": 1371,
+          "action": "create"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/dynamo-experiment-may/02_modeler_add_version_to_existing_modflow.ipynb",
+          "tokens_estimated": 73,
+          "action": "create"
+        }
+      ],
+      "totals": {
+        "input_tokens_estimated": 20202,
+        "output_tokens_estimated": 13701,
+        "reads_count": 11,
+        "writes_count": 9,
+        "repeated_reads_blocked": 3,
+        "anatomy_lookups": 4
+      }
+    },
+    {
+      "id": "session-2026-05-10-1443",
+      "started": "2026-05-10T18:43:56.097Z",
+      "ended": "2026-05-10T20:00:01.094Z",
+      "reads": [
+        {
+          "file": "/Users/mosorio/repos/mint/model-catalog-api/src/service.ts",
+          "tokens_estimated": 4901,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/model-catalog-api/src/mappers/resource-registry.ts",
+          "tokens_estimated": 0,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/model-catalog-api/src/mappers/nested-tree.ts",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/model-catalog-api/src/hasura/field-maps.ts",
+          "tokens_estimated": 4979,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/dynamo-experiment-may/tests/test_notebook_structure.py",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/dynamo-experiment-may/pyproject.toml",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/.claude/plugins/cache/claude-plugins-official/superpowers/5.1.0/skills/subagent-driven-development/implementer-prompt.md",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/.claude/plugins/cache/claude-plugins-official/superpowers/5.1.0/skills/subagent-driven-development/spec-reviewer-prompt.md",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/.claude/plugins/cache/claude-plugins-official/superpowers/5.1.0/skills/subagent-driven-development/code-quality-reviewer-prompt.md",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/dynamo-experiment-may/docs/superpowers/specs/2026-05-10-modeler-add-version-to-existing-modflow-design.md",
+          "tokens_estimated": 2058,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/dynamo-experiment-may/docs/superpowers/plans/2026-05-10-modeler-add-version-to-existing-modflow.md",
+          "tokens_estimated": 8264,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/dynamo-experiment-may/tests/test_notebook_02_structure.py",
+          "tokens_estimated": 1371,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/dynamo-experiment-may/02_modeler_add_version_to_existing_modflow.ipynb",
+          "tokens_estimated": 68,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        }
+      ],
+      "writes": [
+        {
+          "file": "/Users/mosorio/repos/mint/dynamo-experiment-may/docs/superpowers/specs/2026-05-10-modeler-add-version-to-existing-modflow-design.md",
+          "tokens_estimated": 2272,
+          "action": "create"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/dynamo-experiment-may/docs/superpowers/plans/2026-05-10-modeler-add-version-to-existing-modflow.md",
+          "tokens_estimated": 9445,
+          "action": "create"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/dynamo-experiment-may/docs/superpowers/specs/2026-05-10-modeler-add-version-to-existing-modflow-design.md",
+          "tokens_estimated": 161,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/dynamo-experiment-may/docs/superpowers/specs/2026-05-10-modeler-add-version-to-existing-modflow-design.md",
+          "tokens_estimated": 58,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/dynamo-experiment-may/docs/superpowers/specs/2026-05-10-modeler-add-version-to-existing-modflow-design.md",
+          "tokens_estimated": 234,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/dynamo-experiment-may/docs/superpowers/specs/2026-05-10-modeler-add-version-to-existing-modflow-design.md",
+          "tokens_estimated": 52,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/dynamo-experiment-may/docs/superpowers/specs/2026-05-10-modeler-add-version-to-existing-modflow-design.md",
+          "tokens_estimated": 35,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/dynamo-experiment-may/tests/test_notebook_02_structure.py",
+          "tokens_estimated": 1371,
+          "action": "create"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/dynamo-experiment-may/02_modeler_add_version_to_existing_modflow.ipynb",
+          "tokens_estimated": 73,
+          "action": "create"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/dynamo-experiment-may/tests/test_notebook_02_structure.py",
+          "tokens_estimated": 162,
+          "action": "edit"
+        }
+      ],
+      "totals": {
+        "input_tokens_estimated": 21641,
+        "output_tokens_estimated": 13863,
+        "reads_count": 13,
+        "writes_count": 10,
+        "repeated_reads_blocked": 3,
+        "anatomy_lookups": 6
+      }
+    },
+    {
+      "id": "session-2026-05-10-1443",
+      "started": "2026-05-10T18:43:56.097Z",
+      "ended": "2026-05-10T20:11:15.915Z",
+      "reads": [
+        {
+          "file": "/Users/mosorio/repos/mint/model-catalog-api/src/service.ts",
+          "tokens_estimated": 4901,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/model-catalog-api/src/mappers/resource-registry.ts",
+          "tokens_estimated": 0,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/model-catalog-api/src/mappers/nested-tree.ts",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/model-catalog-api/src/hasura/field-maps.ts",
+          "tokens_estimated": 4979,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/dynamo-experiment-may/tests/test_notebook_structure.py",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/dynamo-experiment-may/pyproject.toml",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/.claude/plugins/cache/claude-plugins-official/superpowers/5.1.0/skills/subagent-driven-development/implementer-prompt.md",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/.claude/plugins/cache/claude-plugins-official/superpowers/5.1.0/skills/subagent-driven-development/spec-reviewer-prompt.md",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/.claude/plugins/cache/claude-plugins-official/superpowers/5.1.0/skills/subagent-driven-development/code-quality-reviewer-prompt.md",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/dynamo-experiment-may/docs/superpowers/specs/2026-05-10-modeler-add-version-to-existing-modflow-design.md",
+          "tokens_estimated": 2058,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/dynamo-experiment-may/docs/superpowers/plans/2026-05-10-modeler-add-version-to-existing-modflow.md",
+          "tokens_estimated": 8264,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/dynamo-experiment-may/tests/test_notebook_02_structure.py",
+          "tokens_estimated": 1371,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/dynamo-experiment-may/02_modeler_add_version_to_existing_modflow.ipynb",
+          "tokens_estimated": 68,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        }
+      ],
+      "writes": [
+        {
+          "file": "/Users/mosorio/repos/mint/dynamo-experiment-may/docs/superpowers/specs/2026-05-10-modeler-add-version-to-existing-modflow-design.md",
+          "tokens_estimated": 2272,
+          "action": "create"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/dynamo-experiment-may/docs/superpowers/plans/2026-05-10-modeler-add-version-to-existing-modflow.md",
+          "tokens_estimated": 9445,
+          "action": "create"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/dynamo-experiment-may/docs/superpowers/specs/2026-05-10-modeler-add-version-to-existing-modflow-design.md",
+          "tokens_estimated": 161,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/dynamo-experiment-may/docs/superpowers/specs/2026-05-10-modeler-add-version-to-existing-modflow-design.md",
+          "tokens_estimated": 58,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/dynamo-experiment-may/docs/superpowers/specs/2026-05-10-modeler-add-version-to-existing-modflow-design.md",
+          "tokens_estimated": 234,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/dynamo-experiment-may/docs/superpowers/specs/2026-05-10-modeler-add-version-to-existing-modflow-design.md",
+          "tokens_estimated": 52,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/dynamo-experiment-may/docs/superpowers/specs/2026-05-10-modeler-add-version-to-existing-modflow-design.md",
+          "tokens_estimated": 35,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/dynamo-experiment-may/tests/test_notebook_02_structure.py",
+          "tokens_estimated": 1371,
+          "action": "create"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/dynamo-experiment-may/02_modeler_add_version_to_existing_modflow.ipynb",
+          "tokens_estimated": 73,
+          "action": "create"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/dynamo-experiment-may/tests/test_notebook_02_structure.py",
+          "tokens_estimated": 162,
+          "action": "edit"
+        }
+      ],
+      "totals": {
+        "input_tokens_estimated": 21641,
+        "output_tokens_estimated": 13863,
+        "reads_count": 13,
+        "writes_count": 10,
+        "repeated_reads_blocked": 3,
+        "anatomy_lookups": 6
+      }
+    },
+    {
+      "id": "session-2026-05-10-1443",
+      "started": "2026-05-10T18:43:56.097Z",
+      "ended": "2026-05-10T20:12:20.497Z",
+      "reads": [
+        {
+          "file": "/Users/mosorio/repos/mint/model-catalog-api/src/service.ts",
+          "tokens_estimated": 4901,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/model-catalog-api/src/mappers/resource-registry.ts",
+          "tokens_estimated": 0,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/model-catalog-api/src/mappers/nested-tree.ts",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/model-catalog-api/src/hasura/field-maps.ts",
+          "tokens_estimated": 4979,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/dynamo-experiment-may/tests/test_notebook_structure.py",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/dynamo-experiment-may/pyproject.toml",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/.claude/plugins/cache/claude-plugins-official/superpowers/5.1.0/skills/subagent-driven-development/implementer-prompt.md",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/.claude/plugins/cache/claude-plugins-official/superpowers/5.1.0/skills/subagent-driven-development/spec-reviewer-prompt.md",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/.claude/plugins/cache/claude-plugins-official/superpowers/5.1.0/skills/subagent-driven-development/code-quality-reviewer-prompt.md",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/dynamo-experiment-may/docs/superpowers/specs/2026-05-10-modeler-add-version-to-existing-modflow-design.md",
+          "tokens_estimated": 2058,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/dynamo-experiment-may/docs/superpowers/plans/2026-05-10-modeler-add-version-to-existing-modflow.md",
+          "tokens_estimated": 8264,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/dynamo-experiment-may/tests/test_notebook_02_structure.py",
+          "tokens_estimated": 1371,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/dynamo-experiment-may/02_modeler_add_version_to_existing_modflow.ipynb",
+          "tokens_estimated": 68,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        }
+      ],
+      "writes": [
+        {
+          "file": "/Users/mosorio/repos/mint/dynamo-experiment-may/docs/superpowers/specs/2026-05-10-modeler-add-version-to-existing-modflow-design.md",
+          "tokens_estimated": 2272,
+          "action": "create"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/dynamo-experiment-may/docs/superpowers/plans/2026-05-10-modeler-add-version-to-existing-modflow.md",
+          "tokens_estimated": 9445,
+          "action": "create"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/dynamo-experiment-may/docs/superpowers/specs/2026-05-10-modeler-add-version-to-existing-modflow-design.md",
+          "tokens_estimated": 161,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/dynamo-experiment-may/docs/superpowers/specs/2026-05-10-modeler-add-version-to-existing-modflow-design.md",
+          "tokens_estimated": 58,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/dynamo-experiment-may/docs/superpowers/specs/2026-05-10-modeler-add-version-to-existing-modflow-design.md",
+          "tokens_estimated": 234,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/dynamo-experiment-may/docs/superpowers/specs/2026-05-10-modeler-add-version-to-existing-modflow-design.md",
+          "tokens_estimated": 52,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/dynamo-experiment-may/docs/superpowers/specs/2026-05-10-modeler-add-version-to-existing-modflow-design.md",
+          "tokens_estimated": 35,
+          "action": "edit"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/dynamo-experiment-may/tests/test_notebook_02_structure.py",
+          "tokens_estimated": 1371,
+          "action": "create"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/dynamo-experiment-may/02_modeler_add_version_to_existing_modflow.ipynb",
+          "tokens_estimated": 73,
+          "action": "create"
+        },
+        {
+          "file": "/Users/mosorio/repos/mint/dynamo-experiment-may/tests/test_notebook_02_structure.py",
+          "tokens_estimated": 162,
+          "action": "edit"
+        }
+      ],
+      "totals": {
+        "input_tokens_estimated": 21641,
+        "output_tokens_estimated": 13863,
+        "reads_count": 13,
+        "writes_count": 10,
+        "repeated_reads_blocked": 3,
+        "anatomy_lookups": 6
+      }
     }
   ],
   "daemon_usage": [],
-  "waste_flags": [],
+  "waste_flags": [
+    {
+      "pattern": "memory_bloat",
+      "description": "memory.md is ~12114 tokens",
+      "tokens_wasted": 7114,
+      "suggestion": "memory.md is growing large. Consolidation should run more frequently.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "50% of file lookups missed anatomy in session session-2026-04-13-0400",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "50% of file lookups missed anatomy in session session-2026-04-26-1102",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "50% of file lookups missed anatomy in session session-2026-04-26-1102",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "78% of file lookups missed anatomy in session session-2026-04-26-1111",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "80% of file lookups missed anatomy in session session-2026-04-26-1111",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "80% of file lookups missed anatomy in session session-2026-04-26-1111",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "81% of file lookups missed anatomy in session session-2026-04-26-1111",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-04-26-1342",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "50% of file lookups missed anatomy in session session-2026-04-26-1342",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "67% of file lookups missed anatomy in session session-2026-04-26-1342",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "67% of file lookups missed anatomy in session session-2026-04-26-1342",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "50% of file lookups missed anatomy in session session-2026-04-26-1411",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "33% of file lookups missed anatomy in session session-2026-04-26-1411",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "33% of file lookups missed anatomy in session session-2026-04-26-1411",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-04-26-1425",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "33% of file lookups missed anatomy in session session-2026-04-26-1425",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "25% of file lookups missed anatomy in session session-2026-04-26-1425",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "83% of file lookups missed anatomy in session session-2026-04-26-1452",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "83% of file lookups missed anatomy in session session-2026-04-26-1452",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "83% of file lookups missed anatomy in session session-2026-04-26-1452",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "89% of file lookups missed anatomy in session session-2026-04-26-1509",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "89% of file lookups missed anatomy in session session-2026-04-26-1509",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "83% of file lookups missed anatomy in session session-2026-04-26-1518",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "86% of file lookups missed anatomy in session session-2026-04-26-1518",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "86% of file lookups missed anatomy in session session-2026-04-26-1518",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "43% of file lookups missed anatomy in session session-2026-04-26-1528",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "43% of file lookups missed anatomy in session session-2026-04-26-1528",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "75% of file lookups missed anatomy in session session-2026-04-26-1538",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "83% of file lookups missed anatomy in session session-2026-04-26-1538",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "89% of file lookups missed anatomy in session session-2026-04-26-1538",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "89% of file lookups missed anatomy in session session-2026-04-26-1538",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "89% of file lookups missed anatomy in session session-2026-04-26-1538",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "89% of file lookups missed anatomy in session session-2026-04-26-1538",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "89% of file lookups missed anatomy in session session-2026-04-26-1538",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "89% of file lookups missed anatomy in session session-2026-04-26-1538",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-04-26-1617",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-04-26-1617",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "83% of file lookups missed anatomy in session session-2026-04-26-1617",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-04-26-1623",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-04-26-1628",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-04-26-1628",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "75% of file lookups missed anatomy in session session-2026-04-26-1628",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "75% of file lookups missed anatomy in session session-2026-04-26-1628",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "75% of file lookups missed anatomy in session session-2026-04-26-1628",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "75% of file lookups missed anatomy in session session-2026-04-26-1628",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "50% of file lookups missed anatomy in session session-2026-04-26-1817",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "43% of file lookups missed anatomy in session session-2026-04-26-1830",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-04-26-1834",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-04-26-1834",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-04-26-1842",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-04-26-1842",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-04-26-1842",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-04-26-1842",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "67% of file lookups missed anatomy in session session-2026-04-26-1842",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "50% of file lookups missed anatomy in session session-2026-04-26-1842",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "50% of file lookups missed anatomy in session session-2026-04-26-1842",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "50% of file lookups missed anatomy in session session-2026-04-26-1842",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "80% of file lookups missed anatomy in session session-2026-04-26-1859",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "80% of file lookups missed anatomy in session session-2026-04-26-1859",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "80% of file lookups missed anatomy in session session-2026-04-26-1859",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "50% of file lookups missed anatomy in session session-2026-04-26-1859",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "65% of file lookups missed anatomy in session session-2026-04-26-1859",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "65% of file lookups missed anatomy in session session-2026-04-26-1859",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "65% of file lookups missed anatomy in session session-2026-04-26-1859",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-04-26-1914",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-04-26-1914",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-04-26-1914",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-04-26-1914",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-04-26-1914",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-04-26-1914",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-04-26-1914",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-04-26-1914",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "50% of file lookups missed anatomy in session session-2026-04-26-1914",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "36% of file lookups missed anatomy in session session-2026-04-26-1914",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "36% of file lookups missed anatomy in session session-2026-04-26-1914",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "36% of file lookups missed anatomy in session session-2026-04-26-1914",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "36% of file lookups missed anatomy in session session-2026-04-26-1914",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "36% of file lookups missed anatomy in session session-2026-04-26-1914",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "36% of file lookups missed anatomy in session session-2026-04-26-1914",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-04-26-1958",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-04-26-1958",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-04-26-1958",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-04-26-1958",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-04-26-1958",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-04-26-1958",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-04-26-1958",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-04-26-1958",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-04-26-1958",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-04-26-1958",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-04-26-1958",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-04-26-1958",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-04-26-1958",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-04-26-1958",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-04-26-1958",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-04-26-1958",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-04-26-1958",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-04-26-1958",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-04-26-1958",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "75% of file lookups missed anatomy in session session-2026-04-26-1958",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "75% of file lookups missed anatomy in session session-2026-04-26-1958",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "75% of file lookups missed anatomy in session session-2026-04-26-1958",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "75% of file lookups missed anatomy in session session-2026-04-26-1958",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "75% of file lookups missed anatomy in session session-2026-04-26-1958",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-04-27-2102",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-04-27-2102",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-04-27-2111",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-04-27-2111",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-04-27-2143",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-04-27-2227",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-04-27-2227",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "33% of file lookups missed anatomy in session session-2026-04-27-1705",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-04-27-1714",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "56% of file lookups missed anatomy in session session-2026-04-27-1725",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-04-28-2025",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "75% of file lookups missed anatomy in session session-2026-04-28-2025",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "50% of file lookups missed anatomy in session session-2026-04-28-2025",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "56% of file lookups missed anatomy in session session-2026-04-28-2123",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "25% of file lookups missed anatomy in session session-2026-04-28-2231",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "25% of file lookups missed anatomy in session session-2026-04-28-2231",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "40% of file lookups missed anatomy in session session-2026-04-28-2231",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "67% of file lookups missed anatomy in session session-2026-04-28-1836",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "67% of file lookups missed anatomy in session session-2026-04-28-1836",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "67% of file lookups missed anatomy in session session-2026-04-28-1836",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "75% of file lookups missed anatomy in session session-2026-04-28-1836",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "75% of file lookups missed anatomy in session session-2026-04-28-1836",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "67% of file lookups missed anatomy in session session-2026-04-28-1836",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "44% of file lookups missed anatomy in session session-2026-04-28-1836",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "33% of file lookups missed anatomy in session session-2026-04-28-1836",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "38% of file lookups missed anatomy in session session-2026-04-28-1836",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "33% of file lookups missed anatomy in session session-2026-04-28-1913",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "31% of file lookups missed anatomy in session session-2026-04-28-1913",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "29% of file lookups missed anatomy in session session-2026-04-28-1913",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-04-28-1947",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "67% of file lookups missed anatomy in session session-2026-04-28-1947",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "33% of file lookups missed anatomy in session session-2026-04-28-1952",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "33% of file lookups missed anatomy in session session-2026-04-28-1952",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "29% of file lookups missed anatomy in session session-2026-04-28-1952",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "25% of file lookups missed anatomy in session session-2026-04-29-2004",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "25% of file lookups missed anatomy in session session-2026-04-29-2004",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "25% of file lookups missed anatomy in session session-2026-04-29-2004",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "25% of file lookups missed anatomy in session session-2026-04-29-2004",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "50% of file lookups missed anatomy in session session-2026-04-29-2122",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "50% of file lookups missed anatomy in session session-2026-04-29-2122",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "50% of file lookups missed anatomy in session session-2026-04-29-2122",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "50% of file lookups missed anatomy in session session-2026-04-29-2122",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "33% of file lookups missed anatomy in session session-2026-04-29-2122",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "33% of file lookups missed anatomy in session session-2026-04-29-2122",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "33% of file lookups missed anatomy in session session-2026-04-29-2122",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-05-01-1701",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-05-01-1701",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-05-01-1701",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "75% of file lookups missed anatomy in session session-2026-05-01-1819",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "80% of file lookups missed anatomy in session session-2026-05-01-1819",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "50% of file lookups missed anatomy in session session-2026-05-01-1844",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "78% of file lookups missed anatomy in session session-2026-05-01-1859",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "87% of file lookups missed anatomy in session session-2026-05-01-1859",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "87% of file lookups missed anatomy in session session-2026-05-01-1859",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-05-01-1956",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-05-01-1956",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-05-01-1956",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-05-01-1956",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-05-01-1956",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-05-01-1956",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-05-01-1956",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-05-01-1956",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-05-01-1956",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "33% of file lookups missed anatomy in session session-2026-05-02-2053",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "33% of file lookups missed anatomy in session session-2026-05-02-2053",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-05-03-1152",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-05-03-1152",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-05-03-1152",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "67% of file lookups missed anatomy in session session-2026-05-03-1741",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "75% of file lookups missed anatomy in session session-2026-05-03-1741",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "75% of file lookups missed anatomy in session session-2026-05-03-1741",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "75% of file lookups missed anatomy in session session-2026-05-03-1741",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-05-03-1806",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-05-03-1806",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-05-03-1806",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-05-03-1822",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "86% of file lookups missed anatomy in session session-2026-05-03-1833",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "86% of file lookups missed anatomy in session session-2026-05-03-1833",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "70% of file lookups missed anatomy in session session-2026-05-03-1833",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "73% of file lookups missed anatomy in session session-2026-05-03-1833",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "69% of file lookups missed anatomy in session session-2026-05-03-1833",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-05-03-1927",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "50% of file lookups missed anatomy in session session-2026-05-03-1943",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "33% of file lookups missed anatomy in session session-2026-05-03-1953",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "25% of file lookups missed anatomy in session session-2026-05-03-1953",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "60% of file lookups missed anatomy in session session-2026-05-04-2032",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-05-07-1830",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-05-07-1830",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-05-07-1830",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-05-07-1830",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-05-07-1830",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-05-07-1830",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-05-07-1830",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-05-07-1830",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-05-07-1830",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-05-07-1830",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-05-07-1830",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "33% of file lookups missed anatomy in session session-2026-05-07-1927",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "60% of file lookups missed anatomy in session session-2026-05-07-1927",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "60% of file lookups missed anatomy in session session-2026-05-07-1927",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "60% of file lookups missed anatomy in session session-2026-05-07-1927",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-05-08-2113",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "80% of file lookups missed anatomy in session session-2026-05-08-2113",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-05-09-1238",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-05-09-1238",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-05-09-1238",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-05-09-1238",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-05-09-1238",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-05-09-1238",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-05-09-1238",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-05-09-1238",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "50% of file lookups missed anatomy in session session-2026-05-09-1315",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "50% of file lookups missed anatomy in session session-2026-05-09-1315",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "86% of file lookups missed anatomy in session session-2026-05-09-1736",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "86% of file lookups missed anatomy in session session-2026-05-09-1736",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "86% of file lookups missed anatomy in session session-2026-05-09-1736",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "86% of file lookups missed anatomy in session session-2026-05-09-1736",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "86% of file lookups missed anatomy in session session-2026-05-09-1736",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "86% of file lookups missed anatomy in session session-2026-05-09-1736",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "86% of file lookups missed anatomy in session session-2026-05-09-1736",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "86% of file lookups missed anatomy in session session-2026-05-09-1736",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "86% of file lookups missed anatomy in session session-2026-05-09-1736",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "86% of file lookups missed anatomy in session session-2026-05-09-1736",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "86% of file lookups missed anatomy in session session-2026-05-09-1736",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "80% of file lookups missed anatomy in session session-2026-05-09-1736",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "60% of file lookups missed anatomy in session session-2026-05-09-1840",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-05-09-1846",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "75% of file lookups missed anatomy in session session-2026-05-09-1846",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "58% of file lookups missed anatomy in session session-2026-05-09-1846",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "58% of file lookups missed anatomy in session session-2026-05-09-1846",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "33% of file lookups missed anatomy in session session-2026-05-09-1910",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "29% of file lookups missed anatomy in session session-2026-05-09-1935",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-05-10-2153",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-05-10-2153",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-05-10-2153",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-05-10-2153",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-05-10-2153",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-05-10-2153",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-05-10-2153",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-05-10-2153",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "83% of file lookups missed anatomy in session session-2026-05-10-2153",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-05-10-0300",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-05-10-1043",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-05-10-1043",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-05-10-1043",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-05-10-1043",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-05-10-1043",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-05-10-1246",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-05-10-1246",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-05-10-1246",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-05-10-1246",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-05-10-1246",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-05-10-1246",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "100% of file lookups missed anatomy in session session-2026-05-10-1246",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "92% of file lookups missed anatomy in session session-2026-05-10-1246",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "92% of file lookups missed anatomy in session session-2026-05-10-1246",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "75% of file lookups missed anatomy in session session-2026-05-10-1421",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "75% of file lookups missed anatomy in session session-2026-05-10-1421",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "67% of file lookups missed anatomy in session session-2026-05-10-1443",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "64% of file lookups missed anatomy in session session-2026-05-10-1443",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "54% of file lookups missed anatomy in session session-2026-05-10-1443",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "54% of file lookups missed anatomy in session session-2026-05-10-1443",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    },
+    {
+      "pattern": "anatomy_miss_rate",
+      "description": "54% of file lookups missed anatomy in session session-2026-05-10-1443",
+      "tokens_wasted": 0,
+      "suggestion": "Run openwolf scan to refresh anatomy.md.",
+      "detected_at": "2026-05-11T04:00:00.549Z"
+    }
+  ],
   "optimization_report": {
-    "last_generated": "2026-04-13T04:00:00.700Z",
-    "patterns": []
+    "last_generated": "2026-05-11T04:00:00.572Z",
+    "patterns": [
+      "memory_bloat",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate",
+      "anatomy_miss_rate"
+    ]
   }
 }
