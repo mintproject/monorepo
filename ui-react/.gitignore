@@ -1,0 +1,22 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Environment files with secrets
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+
+# GraphQL codegen output (regenerated from schema)
+src/graphql/generated/graphql.ts
+
+# Test coverage
+coverage/
