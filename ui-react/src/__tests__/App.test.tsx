@@ -8,7 +8,10 @@ import { AuthProvider } from '../lib/auth/AuthProvider';
 
 function renderApp(initialEntries: string[] = ['/']) {
   return render(
-    <MemoryRouter initialEntries={initialEntries}>
+    <MemoryRouter
+      initialEntries={initialEntries}
+      future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
+    >
       <MockedProvider mocks={[]}>
         <AuthProvider>
           <App />
