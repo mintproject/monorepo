@@ -1,0 +1,57 @@
+#import "../fragments/model-catalog.graphql"
+
+query GetModelTree {
+  modelcatalog_software(
+    order_by: { label: asc }
+    where: { type: { _eq: "https://w3id.org/okn/o/sdm#Model" } }
+  ) {
+    id
+    label
+    versions: software_versions(order_by: { label: asc }) {
+      id
+      label
+      version_id
+      configurations(
+        order_by: { label: asc }
+        where: { model_configuration_id: { _is_null: true } }
+      ) {
+        id
+        label
+        child_configurations(order_by: { label: asc }) {
+          id
+          label
+        }
+      }
+    }
+  }
+}
+
+query GetConfiguration($id: String!) {
+  modelcatalog_configuration_by_pk(id: $id) {
+    ...ConfigurationFields
+  }
+}
+
+query PrefetchReferenceData {
+  modelcatalog_standard_variable(order_by: { label: asc }) {
+    id
+    label
+    description
+  }
+  modelcatalog_unit(order_by: { label: asc }) {
+    id
+    label
+  }
+}
+
+query GetPersons($search: String) {
+  modelcatalog_person(
+    order_by: { label: asc }
+    where: { label: { _ilike: $search } }
+    limit: 50
+  ) {
+    id
+    label
+    name
+  }
+}
