@@ -43,6 +43,9 @@
     "uuid": "^14.0.0",
     "zod": "^3.23.0"
   },
+  "engines": {
+    "node": ">=20"
+  },
   "devDependencies": {
     "@eslint/js": "^9.7.0",
     "@graphql-codegen/cli": "^5.0.2",
