@@ -8,6 +8,13 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'jsdom',
+    environmentOptions: {
+      jsdom: {
+        // Enable Web Storage API (localStorage, sessionStorage) in jsdom
+        // Required for auth token storage tests
+        url: 'http://localhost/',
+      },
+    },
     setupFiles: ['./src/test/setup.ts'],
     css: true,
     // CI-compatible reporters: verbose output + JUnit for CI systems
