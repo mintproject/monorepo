@@ -1,17 +1,32 @@
 import React, { createContext, useCallback, useEffect, useMemo, useState } from 'react';
 
-export interface AuthUser {
-  email: string;
-  username: string;
-  sub: string;
-}
+import { authorize, logout as oauth2Logout } from './oauth2-adapter';
+import {
+  clearTokens,
+  decodeUserFromToken,
+  loadPersistedToken,
+  setTokenChangeCallback,
+  type JwtUser,
+} from './token-store';
+
+// ---------------------------------------------------------------------------
+// Context shape
+// ---------------------------------------------------------------------------
+
+export type { JwtUser as AuthUser };
 
 export interface AuthState {
+  /** True when a valid access token is present. */
   isAuthenticated: boolean;
+  /** True while the initial token check is in progress on mount. */
   isLoading: boolean;
-  user: AuthUser | null;
+  /** Decoded user information, or null when not authenticated. */
+  user: JwtUser | null;
+  /** Raw JWT access token, or null when not authenticated. */
   accessToken: string | null;
+  /** Redirect the browser to the IdP authorization endpoint. */
   login: () => void;
+  /** Clear tokens and redirect to IdP logout endpoint. */
   logout: () => void;
 }
 
@@ -24,52 +39,63 @@ export const AuthContext = createContext<AuthState>({
   logout: () => {},
 });
 
+// ---------------------------------------------------------------------------
+// Provider
+// ---------------------------------------------------------------------------
+
 interface AuthProviderProps {
   children: React.ReactNode;
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
   const [isLoading, setIsLoading] = useState(true);
-  const [user, setUser] = useState<AuthUser | null>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
 
+  // Derive user from token on every token change — avoids a separate state
+  const user = useMemo<JwtUser | null>(
+    () => (accessToken ? (decodeUserFromToken(accessToken) ?? null) : null),
+    [accessToken],
+  );
+
+  // -------------------------------------------------------------------------
+  // Mount: restore persisted token
+  // -------------------------------------------------------------------------
   useEffect(() => {
-    // Check localStorage for existing token on mount
-    const token = localStorage.getItem('access_token');
-    if (token) {
-      try {
-        // Decode JWT payload (base64)
-        const payload = JSON.parse(atob(token.split('.')[1] ?? ''));
-        const exp = (payload.exp as number) * 1000;
-        if (Date.now() < exp) {
-          setAccessToken(token);
-          setUser({
-            email: payload.email ?? '',
-            username: payload.preferred_username ?? payload.sub ?? '',
-            sub: payload.sub ?? '',
-          });
-        } else {
-          localStorage.removeItem('access_token');
-        }
-      } catch {
-        localStorage.removeItem('access_token');
-      }
-    }
+    const persisted = loadPersistedToken();
+    setAccessToken(persisted);
     setIsLoading(false);
   }, []);
 
+  // -------------------------------------------------------------------------
+  // Subscribe to token changes from token-store (refresh, logout, etc.)
+  // -------------------------------------------------------------------------
+  useEffect(() => {
+    setTokenChangeCallback((token) => {
+      setAccessToken(token);
+    });
+    return () => {
+      // Clear the callback on unmount (test isolation)
+      setTokenChangeCallback(() => {});
+    };
+  }, []);
+
+  // -------------------------------------------------------------------------
+  // Actions
+  // -------------------------------------------------------------------------
   const login = useCallback(() => {
-    // OAuth2 redirect will be implemented in oauth2-adapter.ts
-    // This is a placeholder for the auth flow
-    console.log('Login not yet implemented');
+    authorize();
   }, []);
 
   const logout = useCallback(() => {
-    localStorage.removeItem('access_token');
-    setUser(null);
+    // Clear local state immediately before IdP redirect
     setAccessToken(null);
+    clearTokens();
+    oauth2Logout();
   }, []);
 
+  // -------------------------------------------------------------------------
+  // Context value
+  // -------------------------------------------------------------------------
   const value = useMemo<AuthState>(
     () => ({
       isAuthenticated: !!accessToken,
