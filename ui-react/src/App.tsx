@@ -87,9 +87,10 @@ export function App() {
             <Route path="/oauth2/callback" element={<OAuth2CallbackPage />} />
             <Route path="/login-required" element={<LoginRequiredPage />} />
 
-            {/* Datasets */}
+            {/* Datasets — flat routes (not nested outlet) */}
             <Route path="/datasets" element={<DatasetsHome />} />
             <Route path="/datasets/browse" element={<DatasetsBrowse />} />
+            <Route path="/datasets/browse/:id" element={<DatasetsBrowse />} />
             <Route path="/datasets/search" element={<DatasetsSearch />} />
             <Route path="/datasets/detail/:id" element={<DatasetDetail />} />
             <Route path="/datasets/register" element={<DatasetsRegister />} />

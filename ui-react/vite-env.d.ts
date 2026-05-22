@@ -10,6 +10,8 @@ interface MintConfig {
   WELCOME_MESSAGE?: string;
   /** Data Catalog REST API base URL (e.g. https://datacatalog.mint.isi.edu/api/v1) */
   DATA_CATALOG_API?: string;
+  /** Model Catalog REST API base URL. */
+  MODEL_CATALOG_API?: string;
   /** Fixed origin to register as the single Tapis callback_url (Vercel prod). */
   AUTH_CALLBACK_ORIGIN?: string;
   /** Regex source overriding the default preview-origin allowlist. */
