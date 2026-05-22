@@ -1,0 +1,66 @@
+#import "../fragments/region.graphql"
+
+query ListTopRegions {
+  region(where: { parent_region_id: { _is_null: true } }, order_by: { name: asc }) {
+    ...RegionFields
+  }
+}
+
+query ListSubRegions($regionId: String!) {
+  region(
+    where: { parent_region_id: { _eq: $regionId } }
+    order_by: { name: asc }
+  ) {
+    ...RegionFields
+  }
+}
+
+query GetRegion($id: String!) {
+  region_by_pk(id: $id) {
+    ...RegionFields
+    subregions {
+      ...RegionFields
+    }
+  }
+}
+
+query ListRegionCategories {
+  region_category {
+    ...RegionCategoryFields
+    sub_categories {
+      region_category_id
+    }
+  }
+}
+
+query ListRegionsByCategory($categoryId: String!) {
+  region(
+    where: { category_id: { _eq: $categoryId }, parent_region_id: { _is_null: false } }
+    order_by: { name: asc }
+  ) {
+    ...RegionFields
+  }
+}
+
+mutation InsertRegions($objects: [region_insert_input!]!) {
+  insert_region(objects: $objects) {
+    returning {
+      ...RegionFields
+    }
+  }
+}
+
+mutation DeleteRegion($id: String!) {
+  delete_region_by_pk(id: $id) {
+    id
+  }
+}
+
+mutation UpdateRegion($id: String!, $name: String!, $categoryId: String) {
+  update_region_by_pk(
+    pk_columns: { id: $id }
+    _set: { name: $name, category_id: $categoryId }
+  ) {
+    ...RegionFields
+  }
+}

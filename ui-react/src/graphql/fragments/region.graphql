@@ -1,0 +1,17 @@
+fragment RegionFields on region {
+  id
+  name
+  parent_region_id
+  category_id
+  model_catalog_uri
+  geometries {
+    id
+    geometry
+  }
+}
+
+fragment RegionCategoryFields on region_category {
+  id
+  name
+  citation
+}

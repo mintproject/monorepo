@@ -29,9 +29,11 @@ import { DatasetsTransformations } from './pages/datasets/DatasetsTransformation
 
 // Pages — regions
 import { RegionsHome } from './pages/regions/RegionsHome';
-import { RegionsEditor } from './pages/regions/RegionsEditor';
-import { RegionDatasets } from './pages/regions/RegionDatasets';
-import { RegionModels } from './pages/regions/RegionModels';
+import { RegionsAdministrative } from './pages/regions/RegionsAdministrative';
+import { RegionsHydrology } from './pages/regions/RegionsHydrology';
+import { RegionsAgriculture } from './pages/regions/RegionsAgriculture';
+import { RegionsManual } from './pages/regions/RegionsManual';
+import { RegionQueryPage } from './pages/regions/RegionQueryPage';
 
 // Pages — variables
 import { VariablesHome } from './pages/variables/VariablesHome';
@@ -97,9 +99,12 @@ export function App() {
 
             {/* Regions */}
             <Route path="/regions" element={<RegionsHome />} />
-            <Route path="/regions/editor" element={<RegionsEditor />} />
-            <Route path="/regions/:id/datasets" element={<RegionDatasets />} />
-            <Route path="/regions/:id/models" element={<RegionModels />} />
+            <Route path="/regions/administrative" element={<RegionsAdministrative />} />
+            <Route path="/regions/hydrology" element={<RegionsHydrology />} />
+            <Route path="/regions/agriculture" element={<RegionsAgriculture />} />
+            <Route path="/regions/manual" element={<RegionsManual />} />
+            <Route path="/regions/:id/datasets" element={<RegionQueryPage />} />
+            <Route path="/regions/:id/models" element={<RegionQueryPage />} />
 
             {/* Variables */}
             <Route path="/variables" element={<VariablesHome />} />

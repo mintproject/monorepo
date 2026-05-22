@@ -1,4 +1,5 @@
 #import "../fragments/model-catalog.graphql"
+#import "../fragments/region.graphql"
 
 query GetModelTree {
   modelcatalog_software(
