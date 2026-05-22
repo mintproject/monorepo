@@ -10,7 +10,6 @@
  */
 import { ApolloClient, ApolloProvider, createHttpLink, gql, InMemoryCache, useQuery } from '@apollo/client';
 import { act, screen, waitFor } from '@testing-library/react';
-import React from 'react';
 import { describe, expect, it } from 'vitest';
 
 import { renderWithProviders } from '@/test/utils/render';

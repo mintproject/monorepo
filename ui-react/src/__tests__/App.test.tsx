@@ -1,24 +1,11 @@
-import { render, screen } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
-import { MockedProvider } from '@apollo/client/testing';
+import { screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
 import { App } from '../App';
-import { AuthProvider } from '../lib/auth/AuthProvider';
+import { renderWithProviders } from '../test/utils/render';
 
 function renderApp(initialEntries: string[] = ['/']) {
-  return render(
-    <MemoryRouter
-      initialEntries={initialEntries}
-      future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
-    >
-      <MockedProvider mocks={[]}>
-        <AuthProvider>
-          <App />
-        </AuthProvider>
-      </MockedProvider>
-    </MemoryRouter>,
-  );
+  return renderWithProviders(<App />, { initialEntries });
 }
 
 describe('App', () => {
@@ -27,20 +14,39 @@ describe('App', () => {
     expect(screen.getByText('MINT Model Catalog')).toBeInTheDocument();
   });
 
-  it('renders the sidebar navigation links', () => {
+  it('renders the sidebar navigation with all platform sections', () => {
     renderApp();
-    const navLinks = screen.getAllByRole('link');
-    const navTexts = navLinks.map((l) => l.textContent);
-    expect(navTexts).toContain('Models');
-    expect(navTexts).toContain('Configure');
-    expect(navTexts).toContain('Register');
+    expect(screen.getByRole('link', { name: /home/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /models/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /modeling/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /datasets/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /regions/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('link', { name: /variables/i }),
+    ).toBeInTheDocument();
   });
 
-  it('redirects / to /models and renders ModelsPage', () => {
+  it('renders AppHome at / with welcome text', () => {
     renderApp(['/']);
-    // The page heading "Models" should appear as an h3 inside CardTitle
-    const headings = screen.getAllByText('Models');
-    expect(headings.length).toBeGreaterThanOrEqual(1);
+    expect(
+      screen.getByText(/welcome to mint model catalog/i),
+    ).toBeInTheDocument();
+  });
+
+  it('renders ModelsPage at /models', () => {
+    renderApp(['/models']);
+    // "Models" appears in the sidebar button AND the page CardTitle; check heading
+    expect(
+      screen.getByText('Model catalog tree and detail view will be implemented here.'),
+    ).toBeInTheDocument();
   });
 
   it('renders NotFoundPage for unknown routes', () => {

@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 /**
  * Register page — Model registration wizard.
- * Steps: Software metadata → Version metadata → Configuration.
+ * Will contain the multi-step wizard: Software → Version → Configuration.
  */
 export function RegisterPage() {
   return (
