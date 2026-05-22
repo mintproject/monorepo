@@ -15,8 +15,9 @@ dist/
 # OS
 .DS_Store
 
-# GraphQL codegen output (regenerated from schema)
-src/graphql/generated/graphql.ts
+# GraphQL codegen output — tracked as bootstrap until Hasura admin secret is available in CI
+# Regenerate with: HASURA_ENDPOINT=<url> HASURA_ADMIN_SECRET=<secret> npm run codegen
+# src/graphql/generated/graphql.ts
 
 # Test coverage
 coverage/
