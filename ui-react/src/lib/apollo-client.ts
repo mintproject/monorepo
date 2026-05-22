@@ -1,6 +1,8 @@
 import { ApolloClient, InMemoryCache, createHttpLink } from '@apollo/client';
 import { setContext } from '@apollo/client/link/context';
 
+import { getAccessToken } from './auth/token-store';
+
 function getConfig() {
   return (
     window.__MINT_CONFIG__ ?? {
@@ -17,8 +19,16 @@ const httpLink = createHttpLink({
   uri: () => getConfig().HASURA_ENDPOINT,
 });
 
+/**
+ * Auth link: reads the current access token from the token store on every request.
+ * Using setContext ensures stale tokens are never baked into the client at creation time —
+ * the token is fetched fresh per request.
+ *
+ * Anonymous reads (no header) -> Hasura anonymous role (SELECT only).
+ * Authenticated writes -> JWT with x-hasura-* claims -> user role (full CRUD).
+ */
 const authLink = setContext((_, { headers }: { headers?: Record<string, string> }) => {
-  const token = localStorage.getItem('access_token');
+  const token = getAccessToken();
   return {
     headers: {
       ...headers,

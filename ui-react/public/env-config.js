@@ -1,6 +1,7 @@
 // Runtime configuration — injected by Docker entrypoint at container startup.
 // In development, Vite env vars (VITE_*) are used as fallbacks.
-// In production, this file is generated from environment variables.
+// In production, this file is generated from environment variables by the
+// Docker entrypoint script (scripts/entrypoint.sh).
 window.__MINT_CONFIG__ = {
   HASURA_ENDPOINT: "http://localhost:8080/v1/graphql",
   AUTH_SERVER: "https://iam.mint.isi.edu",
