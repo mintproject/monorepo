@@ -55,21 +55,21 @@ describe('useModelTree', () => {
   it('builds tree from query data', () => {
     const { result } = renderHook(() => useModelTree(mockData));
     expect(result.current.nodes).toHaveLength(2);
-    expect(result.current.nodes[0].label).toBe('PIHM');
-    expect(result.current.nodes[0].entityType).toBe('software');
-    expect(result.current.nodes[0].children).toHaveLength(1);
-    expect(result.current.nodes[0].children[0].entityType).toBe('version');
-    expect(result.current.nodes[0].children[0].children[0].entityType).toBe('config');
-    expect(result.current.nodes[0].children[0].children[0].children[0].entityType).toBe('setup');
+    expect(result.current.nodes[0]!.label).toBe('PIHM');
+    expect(result.current.nodes[0]!.entityType).toBe('software');
+    expect(result.current.nodes[0]!.children).toHaveLength(1);
+    expect(result.current.nodes[0]!.children[0]!.entityType).toBe('version');
+    expect(result.current.nodes[0]!.children[0]!.children[0]!.entityType).toBe('config');
+    expect(result.current.nodes[0]!.children[0]!.children[0]!.children[0]!.entityType).toBe('setup');
   });
 
   it('nodeId is scoped by entity type to avoid collisions', () => {
     const { result } = renderHook(() => useModelTree(mockData));
-    const sw = result.current.nodes[0];
+    const sw = result.current.nodes[0]!;
     expect(sw.nodeId).toBe('software:sw1');
-    expect(sw.children[0].nodeId).toBe('version:ver1');
-    expect(sw.children[0].children[0].nodeId).toBe('config:cfg1');
-    expect(sw.children[0].children[0].children[0].nodeId).toBe('setup:setup1');
+    expect(sw.children[0]!.nodeId).toBe('version:ver1');
+    expect(sw.children[0]!.children[0]!.nodeId).toBe('config:cfg1');
+    expect(sw.children[0]!.children[0]!.children[0]!.nodeId).toBe('setup:setup1');
   });
 
   it('starts with no nodes expanded', () => {
@@ -131,7 +131,7 @@ describe('useModelTree', () => {
       });
       // Only CYCLES should survive
       expect(result.current.nodes).toHaveLength(1);
-      expect(result.current.nodes[0].label).toBe('CYCLES');
+      expect(result.current.nodes[0]!.label).toBe('CYCLES');
     });
 
     it('keeps ancestors of matching descendants', () => {
@@ -142,12 +142,12 @@ describe('useModelTree', () => {
       });
       // PIHM > v2.2 > Default Config > Ethiopia Setup — all four levels kept
       expect(result.current.nodes).toHaveLength(1);
-      expect(result.current.nodes[0].label).toBe('PIHM');
-      const ver = result.current.nodes[0].children[0];
+      expect(result.current.nodes[0]!.label).toBe('PIHM');
+      const ver = result.current.nodes[0]!.children[0]!;
       expect(ver.label).toContain('v2.2');
-      const cfg = ver.children[0];
+      const cfg = ver.children[0]!;
       expect(cfg.label).toBe('Default Config');
-      const setup = cfg.children[0];
+      const setup = cfg.children[0]!;
       expect(setup.label).toBe('Ethiopia Setup');
     });
 

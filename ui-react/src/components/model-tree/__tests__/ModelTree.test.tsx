@@ -1,4 +1,3 @@
-import React from 'react';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
@@ -116,7 +115,7 @@ describe('ModelTree', () => {
     expect(screen.queryByText(/v2\.2/)).not.toBeInTheDocument();
 
     // Click the expand chevron on PIHM
-    const expandBtn = screen.getAllByRole('button', { name: /expand/i })[0];
+    const expandBtn = screen.getAllByRole('button', { name: /expand/i })[0]!;
     await user.click(expandBtn);
 
     expect(screen.getByText(/v2\.2/)).toBeInTheDocument();

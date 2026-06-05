@@ -125,7 +125,7 @@ describe('AuthProvider', () => {
     );
 
     await waitFor(() => expect(capturedState?.isLoading).toBe(false));
-    expect(capturedState?.accessToken).toBe(token);
-    expect(capturedState?.isAuthenticated).toBe(true);
+    expect((capturedState as unknown as AuthState).accessToken).toBe(token);
+    expect((capturedState as unknown as AuthState).isAuthenticated).toBe(true);
   });
 });

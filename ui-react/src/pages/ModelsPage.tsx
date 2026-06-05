@@ -1,4 +1,3 @@
-import React from 'react';
 
 import { ModelTree } from '@/components/model-tree';
 import { ModelSelectionProvider, useModelSelection } from '@/contexts/ModelSelectionContext';

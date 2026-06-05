@@ -2,7 +2,6 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 
 import { AppShell } from './components/layout/AppShell';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
-import { ProtectedRoute, LoginRequiredPage } from './components/common/ProtectedRoute';
 import { Toaster } from './components/ui/toaster';
 import { ModelSelectionProvider } from './contexts/ModelSelectionContext';
 
@@ -37,7 +36,6 @@ import { VariablesHome } from './pages/variables/VariablesHome';
 
 // 404
 import { NotFoundPage } from './pages/NotFoundPage';
-import { OAuth2CallbackPage } from './pages/OAuth2CallbackPage';
 
 export function App() {
   return (

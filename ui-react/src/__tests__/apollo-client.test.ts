@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import { Kind, OperationTypeNode } from 'graphql';
 import { InMemoryCache } from '@apollo/client';
 import { apolloClient } from '../lib/apollo-client';
 
@@ -35,24 +36,24 @@ describe('InMemoryCache type policies', () => {
     // Write two junction rows sharing the same configuration_id
     cache.writeQuery({
       query: {
-        kind: 'Document',
+        kind: Kind.DOCUMENT,
         definitions: [
           {
-            kind: 'OperationDefinition',
-            operation: 'query',
+            kind: Kind.OPERATION_DEFINITION,
+            operation: OperationTypeNode.QUERY,
             selectionSet: {
-              kind: 'SelectionSet',
+              kind: Kind.SELECTION_SET,
               selections: [
                 {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'items' },
+                  kind: Kind.FIELD,
+                  name: { kind: Kind.NAME, value: 'items' },
                   selectionSet: {
-                    kind: 'SelectionSet',
+                    kind: Kind.SELECTION_SET,
                     selections: [
-                      { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'configuration_id' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'input_id' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'is_optional' } },
+                      { kind: Kind.FIELD, name: { kind: Kind.NAME, value: '__typename' } },
+                      { kind: Kind.FIELD, name: { kind: Kind.NAME, value: 'configuration_id' } },
+                      { kind: Kind.FIELD, name: { kind: Kind.NAME, value: 'input_id' } },
+                      { kind: Kind.FIELD, name: { kind: Kind.NAME, value: 'is_optional' } },
                     ],
                   },
                 },
@@ -81,24 +82,24 @@ describe('InMemoryCache type policies', () => {
 
     const result = cache.readQuery<{ items: Array<{ configuration_id: string; input_id: string; is_optional: boolean }> }>({
       query: {
-        kind: 'Document',
+        kind: Kind.DOCUMENT,
         definitions: [
           {
-            kind: 'OperationDefinition',
-            operation: 'query',
+            kind: Kind.OPERATION_DEFINITION,
+            operation: OperationTypeNode.QUERY,
             selectionSet: {
-              kind: 'SelectionSet',
+              kind: Kind.SELECTION_SET,
               selections: [
                 {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'items' },
+                  kind: Kind.FIELD,
+                  name: { kind: Kind.NAME, value: 'items' },
                   selectionSet: {
-                    kind: 'SelectionSet',
+                    kind: Kind.SELECTION_SET,
                     selections: [
-                      { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'configuration_id' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'input_id' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'is_optional' } },
+                      { kind: Kind.FIELD, name: { kind: Kind.NAME, value: '__typename' } },
+                      { kind: Kind.FIELD, name: { kind: Kind.NAME, value: 'configuration_id' } },
+                      { kind: Kind.FIELD, name: { kind: Kind.NAME, value: 'input_id' } },
+                      { kind: Kind.FIELD, name: { kind: Kind.NAME, value: 'is_optional' } },
                     ],
                   },
                 },
@@ -124,23 +125,23 @@ describe('InMemoryCache type policies', () => {
 
     cache.writeQuery({
       query: {
-        kind: 'Document',
+        kind: Kind.DOCUMENT,
         definitions: [
           {
-            kind: 'OperationDefinition',
-            operation: 'query',
+            kind: Kind.OPERATION_DEFINITION,
+            operation: OperationTypeNode.QUERY,
             selectionSet: {
-              kind: 'SelectionSet',
+              kind: Kind.SELECTION_SET,
               selections: [
                 {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'sv' },
+                  kind: Kind.FIELD,
+                  name: { kind: Kind.NAME, value: 'sv' },
                   selectionSet: {
-                    kind: 'SelectionSet',
+                    kind: Kind.SELECTION_SET,
                     selections: [
-                      { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'label' } },
+                      { kind: Kind.FIELD, name: { kind: Kind.NAME, value: '__typename' } },
+                      { kind: Kind.FIELD, name: { kind: Kind.NAME, value: 'id' } },
+                      { kind: Kind.FIELD, name: { kind: Kind.NAME, value: 'label' } },
                     ],
                   },
                 },
