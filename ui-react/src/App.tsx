@@ -75,6 +75,10 @@ export function App() {
               element={<MintThread />}
             />
 
+            {/* Auth callback */}
+            <Route path="/oauth2/callback" element={<OAuth2CallbackPage />} />
+            <Route path="/login-required" element={<LoginRequiredPage />} />
+
             {/* Datasets */}
             <Route path="/datasets" element={<DatasetsHome />} />
             <Route path="/datasets/browse" element={<DatasetsBrowse />} />
