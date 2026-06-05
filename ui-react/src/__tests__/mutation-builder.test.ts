@@ -182,7 +182,7 @@ describe('buildAddParameterVariables', () => {
       hasDefaultValue: '0.5',
       hasMinimumAcceptedValue: '0.0',
       hasMaximumAcceptedValue: '1.0',
-      hasFixedValue: null,
+      hasFixedValue: undefined,
       hasAcceptedValues: ['0.1', '0.5', '1.0'],
       position: 3,
       parameterType: 'calibration',
@@ -252,7 +252,7 @@ describe('diffInputRows', () => {
     expect(toAdd).toHaveLength(0);
     expect(toRemove).toHaveLength(0);
     expect(toUpdate).toHaveLength(1);
-    expect(toUpdate[0].label).toBe('New Label');
+    expect(toUpdate[0]!.label).toBe('New Label');
   });
 
   it('does not mark unchanged rows as toUpdate', () => {
@@ -287,7 +287,7 @@ describe('diffInputRows', () => {
     expect(toAdd).toHaveLength(1);
     expect(toRemove).toContain('https://id/ds-3');
     expect(toUpdate).toHaveLength(1);
-    expect(toUpdate[0].label).toBe('Updated');
+    expect(toUpdate[0]!.label).toBe('Updated');
   });
 });
 

@@ -1,4 +1,3 @@
-import React from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
@@ -161,8 +160,6 @@ describe('TreeNode', () => {
         />
       </ul>,
     );
-    // The row div should have the selected class
-    const row = screen.getByRole('button', { hidden: true });
     // We check aria-selected on the treeitem
     const item = screen.getByRole('treeitem');
     expect(item).toHaveAttribute('aria-selected', 'true');
