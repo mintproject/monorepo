@@ -1386,3 +1386,71 @@ export function useDeleteConfigurationRegionMutation(
 }
 
 export type DeleteConfigurationRegionMutationHookResult = ReturnType<typeof useDeleteConfigurationRegionMutation>;
+
+// ─── Query: GetVariablePresentations ─────────────────────────────────────────
+
+export type GetVariablePresentationsQueryVariables = Exact<{ [key: string]: never }>;
+
+export type GetVariablePresentationsQuery = {
+  __typename?: 'query_root';
+  modelcatalog_variable_presentation: Array<{
+    __typename?: 'modelcatalog_variable_presentation';
+    id: string;
+    label?: string | null;
+    has_long_name?: string | null;
+    has_short_name?: string | null;
+    standard_variable?: {
+      __typename?: 'modelcatalog_standard_variable';
+      id: string;
+      label?: string | null;
+      description?: string | null;
+    } | null;
+    unit?: {
+      __typename?: 'modelcatalog_unit';
+      id: string;
+      label?: string | null;
+    } | null;
+  }>;
+};
+
+export const GetVariablePresentationsDocument = gql`
+  query GetVariablePresentations {
+    modelcatalog_variable_presentation(order_by: { label: asc }) {
+      id
+      label
+      has_long_name
+      has_short_name
+      standard_variable {
+        id
+        label
+        description
+      }
+      unit {
+        id
+        label
+      }
+    }
+  }
+`;
+
+export function useGetVariablePresentationsQuery(
+  baseOptions?: Apollo.QueryHookOptions<GetVariablePresentationsQuery, GetVariablePresentationsQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useQuery<GetVariablePresentationsQuery, GetVariablePresentationsQueryVariables>(
+    GetVariablePresentationsDocument,
+    options
+  );
+}
+
+export function useGetVariablePresentationsLazyQuery(
+  baseOptions?: Apollo.LazyQueryHookOptions<GetVariablePresentationsQuery, GetVariablePresentationsQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useLazyQuery<GetVariablePresentationsQuery, GetVariablePresentationsQueryVariables>(
+    GetVariablePresentationsDocument,
+    options
+  );
+}
+
+export type GetVariablePresentationsQueryHookResult = ReturnType<typeof useGetVariablePresentationsQuery>;

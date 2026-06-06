@@ -55,3 +55,21 @@ query GetPersons($search: String) {
     name
   }
 }
+
+query GetVariablePresentations {
+  modelcatalog_variable_presentation(order_by: { label: asc }) {
+    id
+    label
+    has_long_name
+    has_short_name
+    standard_variable {
+      id
+      label
+      description
+    }
+    unit {
+      id
+      label
+    }
+  }
+}
