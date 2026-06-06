@@ -13,7 +13,11 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "codegen": "graphql-codegen --config codegen.ts"
+    "codegen": "graphql-codegen --config codegen.ts",
+    "prepare": "cd .. && husky ui-react/.husky"
+  },
+  "lint-staged": {
+    "src/**/*.{ts,tsx,css,json}": "prettier --write"
   },
   "dependencies": {
     "@apollo/client": "^3.14.1",
@@ -72,7 +76,9 @@
     "eslint-plugin-react-hooks": "^5.1.0",
     "eslint-plugin-react-refresh": "^0.4.8",
     "globals": "^15.8.0",
+    "husky": "^9.1.7",
     "jsdom": "^24.1.0",
+    "lint-staged": "^17.0.7",
     "msw": "^2.14.6",
     "postcss": "^8.4.39",
     "prettier": "^3.3.0",
