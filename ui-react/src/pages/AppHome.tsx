@@ -198,7 +198,7 @@ function RegionMap({ regions, onRegionClick }: RegionMapProps) {
   return (
     <GoogleMap
       mapContainerClassName="middle2main"
-      mapContainerStyle={{ width: '100%' }}
+      mapContainerStyle={{ width: '100%', height: '100%' }}
       zoom={3}
       center={{ lat: 0, lng: 20 }}
       options={{
