@@ -9,7 +9,7 @@
  */
 
 import { clearTokens, setRefreshCallback, storeTokens } from './token-store';
-import { encodeState } from './oauth-state';
+import { encodeState, decodeState } from './oauth-state';
 
 // ---------------------------------------------------------------------------
 // Config helpers
@@ -259,6 +259,14 @@ export interface CallbackResult {
   error?: string;
 }
 
+/** Reads the raw `state` value from the URL fragment (implicit) or query (code). */
+function getReturnedRawState(): string | null {
+  const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+  const fromHash = hashParams.get('state');
+  if (fromHash) return fromHash;
+  return new URLSearchParams(window.location.search).get('state');
+}
+
 /**
  * Handles the OAuth2 callback URL.
  * Detects whether we got a code or an implicit token and processes accordingly.
@@ -273,10 +281,10 @@ export async function handleCallback(): Promise<CallbackResult> {
     return { type: 'error', error: description };
   }
 
-  // Validate state to prevent CSRF
-  const returnedState = queryParams.get('state');
-  const storedState = sessionStorage.getItem('oauth2_state');
-  if (returnedState && storedState && returnedState !== storedState) {
+  // Validate the state nonce to prevent CSRF.
+  const decoded = decodeState(getReturnedRawState());
+  const storedNonce = sessionStorage.getItem('oauth2_state');
+  if (decoded && storedNonce && decoded.nonce !== storedNonce) {
     return { type: 'error', error: 'State mismatch — possible CSRF attack' };
   }
   sessionStorage.removeItem('oauth2_state');

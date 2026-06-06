@@ -16,7 +16,7 @@ import {
   refreshAccessToken,
   resolveGrantType,
 } from '@/lib/auth/oauth2-adapter';
-import { decodeState } from '@/lib/auth/oauth-state';
+import { decodeState, encodeState } from '@/lib/auth/oauth-state';
 import { clearTokens, getAccessToken, getRefreshToken } from '@/lib/auth/token-store';
 
 // ---------------------------------------------------------------------------
@@ -250,7 +250,10 @@ describe('handleCallback', () => {
 
   it('returns error on state mismatch (CSRF)', async () => {
     sessionStorage.setItem('oauth2_state', 'correct-state');
-    window.location.search = '?code=abc&state=wrong-state';
+    // State must now be encoded JSON so decodeState returns a valid object;
+    // the nonce inside must differ from the stored nonce to trigger CSRF rejection.
+    const wrongState = encodeState({ nonce: 'wrong-state', origin: 'http://localhost' });
+    window.location.search = `?code=abc&state=${wrongState}`;
     const result = await handleCallback();
     expect(result.type).toBe('error');
     expect(result.error).toContain('State mismatch');
@@ -388,5 +391,44 @@ describe('preview-aware authorization URL', () => {
     expect(decoded).not.toBeNull();
     expect(decoded!.origin).toBe('http://localhost');
     expect(decoded!.nonce).toBe(sessionStorage.getItem('oauth2_state'));
+  });
+});
+
+describe('handleCallback CSRF via encoded state', () => {
+  it('reads implicit token + state from the fragment and stores the token', async () => {
+    setMintConfig({ AUTH_PROVIDER: 'tapis' });
+    sessionStorage.setItem('oauth2_state', 'nonce-1');
+    const state = encodeState({ nonce: 'nonce-1', origin: 'http://localhost' });
+    window.location.hash = `#access_token=tok-abc&expires_in=3600&state=${state}`;
+
+    const result = await handleCallback();
+    expect(result.type).toBe('token');
+    expect(getAccessToken()).toBe('tok-abc');
+  });
+
+  it('rejects a forged nonce in the fragment state', async () => {
+    setMintConfig({ AUTH_PROVIDER: 'tapis' });
+    sessionStorage.setItem('oauth2_state', 'nonce-1');
+    const state = encodeState({ nonce: 'WRONG', origin: 'http://localhost' });
+    window.location.hash = `#access_token=tok-abc&state=${state}`;
+
+    const result = await handleCallback();
+    expect(result.type).toBe('error');
+    expect(result.error).toMatch(/CSRF/i);
+  });
+});
+
+describe('auth round-trip: buildAuthorizationUrl state survives handleCallback', () => {
+  it('accepts the state produced by buildAuthorizationUrl on the same origin (implicit)', async () => {
+    setMintConfig({ AUTH_PROVIDER: 'tapis' });
+    // Build the authorization URL — this sets sessionStorage nonce and returns encoded state.
+    const authUrl = new URL(buildAuthorizationUrl());
+    const state = authUrl.searchParams.get('state')!;
+    // Simulate the IdP echoing the token + state back in the fragment.
+    window.location.hash = `#access_token=tok-rt&expires_in=3600&state=${state}`;
+
+    const result = await handleCallback();
+    expect(result.type).toBe('token');
+    expect(getAccessToken()).toBe('tok-rt');
   });
 });
