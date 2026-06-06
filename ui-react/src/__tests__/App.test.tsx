@@ -43,9 +43,9 @@ describe('App', () => {
 
   it('renders ModelsPage at /models', () => {
     renderApp(['/models']);
-    // "Models" appears in the sidebar button AND the page CardTitle; check heading
+    // The Models page renders the model tree with a search/filter input
     expect(
-      screen.getByText('Model catalog tree and detail view will be implemented here.'),
+      screen.getByPlaceholderText(/filter models/i),
     ).toBeInTheDocument();
   });
 
