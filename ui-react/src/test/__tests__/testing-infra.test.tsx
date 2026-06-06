@@ -26,10 +26,31 @@ import { useAuth } from '@/lib/auth/useAuth';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
+/**
+ * Custom fetch that drops the AbortSignal before delegating to the global fetch.
+ *
+ * Under jsdom on Node 18+, the global `AbortController`/`AbortSignal` come from
+ * jsdom while the global `Request` (used by MSW's fetch interceptor) is Node's
+ * native (undici) implementation. Node's `Request` rejects a jsdom `AbortSignal`
+ * with "Expected signal to be an instance of AbortSignal". Apollo's HttpLink
+ * always injects such a signal, so we strip it here — the tests don't rely on
+ * request cancellation.
+ */
+const fetchWithoutSignal: typeof fetch = (input, init) => {
+  if (init && 'signal' in init) {
+    const { signal: _signal, ...rest } = init;
+    return fetch(input, rest);
+  }
+  return fetch(input, init);
+};
+
 /** Minimal Apollo Client that routes through MSW (points at the mocked URL) */
 function makeMswApolloClient() {
   return new ApolloClient({
-    link: createHttpLink({ uri: 'http://localhost:8080/v1/graphql' }),
+    link: createHttpLink({
+      uri: 'http://localhost:8080/v1/graphql',
+      fetch: fetchWithoutSignal,
+    }),
     cache: new InMemoryCache(),
   });
 }
