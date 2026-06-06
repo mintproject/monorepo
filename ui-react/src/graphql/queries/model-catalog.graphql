@@ -74,3 +74,10 @@ query GetVariablePresentations {
     }
   }
 }
+
+query GetRegions {
+  modelcatalog_region(order_by: { label: asc }) {
+    id
+    label
+  }
+}
