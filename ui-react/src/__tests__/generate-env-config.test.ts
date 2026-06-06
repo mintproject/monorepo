@@ -55,4 +55,13 @@ describe('renderEnvConfig', () => {
     expect(out.trim().endsWith(';')).toBe(true);
     expect(out).toContain('"AUTH_CLIENT_ID": "x"');
   });
+
+  it('escapes values so the output is valid JSON-parseable JS', () => {
+    const out = renderEnvConfig({ WELCOME_MESSAGE: 'he said "hi"\nline2', AUTH_CLIENT_ID: 'x' });
+    // Extract the object literal between the first '{' and the trailing '};'
+    const json = out.slice(out.indexOf('{'), out.lastIndexOf('}') + 1);
+    const parsed = JSON.parse(json);
+    expect(parsed.WELCOME_MESSAGE).toBe('he said "hi"\nline2');
+    expect(parsed.AUTH_CLIENT_ID).toBe('x');
+  });
 });

@@ -26,6 +26,7 @@ function pick(env, ...names) {
  * @returns {Record<string, string | undefined>}
  */
 export function buildEnvConfig(env = process.env) {
+  // NOTE: these defaults must mirror public/env-config.js — update both together.
   const config = /** @type {Record<string, string | undefined>} */ ({
     HASURA_ENDPOINT:
       pick(env, 'HASURA_ENDPOINT', 'VITE_HASURA_ENDPOINT') ?? 'http://graphql.mint.local/v1/graphql',
