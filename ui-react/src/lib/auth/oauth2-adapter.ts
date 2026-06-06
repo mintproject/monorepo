@@ -10,6 +10,7 @@
 
 import { clearTokens, setRefreshCallback, storeTokens } from './token-store';
 import { encodeState, decodeState } from './oauth-state';
+import { isAllowedOrigin } from './origin-allowlist';
 
 // ---------------------------------------------------------------------------
 // Config helpers
@@ -265,6 +266,39 @@ function getReturnedRawState(): string | null {
   const fromHash = hashParams.get('state');
   if (fromHash) return fromHash;
   return new URLSearchParams(window.location.search).get('state');
+}
+
+export interface ForwardResult {
+  forwarded: boolean;
+  error?: string;
+}
+
+/**
+ * When login lands on the fixed callback origin but was initiated from a
+ * different (preview) origin, forward the result back there — gated by the
+ * allowlist. Returns { forwarded:true } when a redirect was issued OR refused;
+ * { forwarded:false } when this origin should handle the callback itself.
+ */
+export function maybeForwardToOrigin(): ForwardResult {
+  const decoded = decodeState(getReturnedRawState());
+  if (!decoded || decoded.origin === window.location.origin) {
+    return { forwarded: false };
+  }
+
+  const { AUTH_CALLBACK_ORIGIN, AUTH_PREVIEW_ORIGIN_ALLOWLIST } = getConfig();
+  const allowed = isAllowedOrigin(decoded.origin, {
+    fixedOrigin: AUTH_CALLBACK_ORIGIN,
+    patternSource: AUTH_PREVIEW_ORIGIN_ALLOWLIST,
+  });
+  if (!allowed) {
+    return {
+      forwarded: true,
+      error: `Refusing to forward authentication to a disallowed origin: ${decoded.origin}`,
+    };
+  }
+
+  window.location.href = `${decoded.origin}/oauth2/callback${window.location.search}${window.location.hash}`;
+  return { forwarded: true };
 }
 
 /**

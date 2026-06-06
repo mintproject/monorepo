@@ -13,6 +13,7 @@ import {
   handleCallback,
   handleImplicitCallback,
   logout,
+  maybeForwardToOrigin,
   refreshAccessToken,
   resolveGrantType,
 } from '@/lib/auth/oauth2-adapter';
@@ -453,5 +454,40 @@ describe('auth round-trip: buildAuthorizationUrl state survives handleCallback',
     const result = await handleCallback();
     expect(result.type).toBe('token');
     expect(getAccessToken()).toBe('tok-rt');
+  });
+});
+
+describe('maybeForwardToOrigin', () => {
+  const PREVIEW = 'https://monorepo-git-feat-modeling-datasets-mosoriobs-projects.vercel.app';
+
+  it('does not forward when state.origin equals the current origin', () => {
+    setMintConfig({ AUTH_PROVIDER: 'tapis' });
+    const state = encodeState({ nonce: 'n', origin: 'http://localhost' });
+    window.location.hash = `#access_token=tok&state=${state}`;
+    const result = maybeForwardToOrigin();
+    expect(result.forwarded).toBe(false);
+  });
+
+  it('forwards to an allowed preview origin, preserving the fragment', () => {
+    setMintConfig({ AUTH_PROVIDER: 'tapis' });
+    const state = encodeState({ nonce: 'n', origin: PREVIEW });
+    window.location.hash = `#access_token=tok&state=${state}`;
+    window.location.search = '';
+    const result = maybeForwardToOrigin();
+    expect(result.forwarded).toBe(true);
+    expect(result.error).toBeUndefined();
+    expect(window.location.href).toBe(`${PREVIEW}/oauth2/callback#access_token=tok&state=${state}`);
+  });
+
+  it('refuses to forward to a disallowed origin', () => {
+    setMintConfig({ AUTH_PROVIDER: 'tapis' });
+    const evil = 'https://evil.example.com';
+    const state = encodeState({ nonce: 'n', origin: evil });
+    window.location.hash = `#access_token=tok&state=${state}`;
+    const before = window.location.href;
+    const result = maybeForwardToOrigin();
+    expect(result.forwarded).toBe(true);
+    expect(result.error).toMatch(/disallowed/i);
+    expect(window.location.href).toBe(before); // no redirect issued
   });
 });
