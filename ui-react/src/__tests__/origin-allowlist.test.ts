@@ -54,4 +54,23 @@ describe('isAllowedOrigin', () => {
     expect(DEFAULT_PREVIEW_ORIGIN_PATTERN.startsWith('^')).toBe(true);
     expect(DEFAULT_PREVIEW_ORIGIN_PATTERN.endsWith('$')).toBe(true);
   });
+
+  it('rejects the production origin when no fixedOrigin is configured', () => {
+    expect(isAllowedOrigin(PROD)).toBe(false);
+  });
+
+  it('rejects everything when patternSource is an empty string', () => {
+    expect(isAllowedOrigin('https://evil.example.com', { patternSource: '' })).toBe(false);
+  });
+
+  it('rejects an unanchored patternSource override (fail-closed)', () => {
+    const unanchored = 'monorepo-git-[a-z0-9-]+-mosoriobs-projects\\.vercel\\.app';
+    expect(isAllowedOrigin(PREVIEW, { patternSource: unanchored })).toBe(false);
+  });
+
+  it('honors a valid anchored patternSource override', () => {
+    const custom = '^https://my-app\\.example\\.com$';
+    expect(isAllowedOrigin('https://my-app.example.com', { patternSource: custom })).toBe(true);
+    expect(isAllowedOrigin(PREVIEW, { patternSource: custom })).toBe(false);
+  });
 });

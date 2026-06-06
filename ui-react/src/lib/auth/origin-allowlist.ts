@@ -16,7 +16,10 @@ const MAX_ORIGIN_LENGTH = 269; // hostname cap (253) + scheme/port slack
 export interface AllowlistOptions {
   /** The single registered fixed origin (always allowed). */
   fixedOrigin?: string;
-  /** Regex source string overriding DEFAULT_PREVIEW_ORIGIN_PATTERN. */
+  /**
+   * Regex source string overriding DEFAULT_PREVIEW_ORIGIN_PATTERN.
+   * Must be anchored (`^...$`); empty or unanchored values are rejected (fail-closed).
+   */
   patternSource?: string;
 }
 
@@ -37,7 +40,13 @@ export function isAllowedOrigin(origin: string, opts: AllowlistOptions = {}): bo
   if (LOCALHOST_PATTERN.test(origin)) return true;
   if (opts.fixedOrigin && origin === opts.fixedOrigin) return true;
 
-  const source = opts.patternSource ?? DEFAULT_PREVIEW_ORIGIN_PATTERN;
+  const source =
+    opts.patternSource && opts.patternSource.length > 0
+      ? opts.patternSource
+      : DEFAULT_PREVIEW_ORIGIN_PATTERN;
+  // Defense-in-depth: only accept an anchored pattern, so a misconfigured or
+  // empty override can never silently widen the allowlist to a substring match.
+  if (!source.startsWith('^') || !source.endsWith('$')) return false;
   let re: RegExp;
   try {
     re = new RegExp(source);
