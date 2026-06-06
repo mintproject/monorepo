@@ -39,7 +39,7 @@ export type ModelcatalogSoftware = {
   description?: Maybe<Scalars['String']['output']>;
   type?: Maybe<Scalars['String']['output']>;
   author?: Maybe<ModelcatalogPerson>;
-  software_versions: Array<ModelcatalogSoftwareVersion>;
+  versions: Array<ModelcatalogSoftwareVersion>;
 };
 
 export type ModelcatalogSoftwareVersion = {
@@ -1141,7 +1141,7 @@ export type RegisterModelMutation = {
     __typename?: 'modelcatalog_software';
     id: string;
     label?: string | null;
-    software_versions: Array<{
+    versions: Array<{
       __typename?: 'modelcatalog_software_version';
       id: string;
       label?: string | null;
@@ -1174,7 +1174,7 @@ export const RegisterModelDocument = gql`
         label: $softwareLabel
         description: $softwareDescription
         type: $softwareType
-        software_versions: {
+        versions: {
           data: [
             {
               id: $versionId
@@ -1197,7 +1197,7 @@ export const RegisterModelDocument = gql`
     ) {
       id
       label
-      software_versions {
+      versions {
         id
         label
         configurations {
