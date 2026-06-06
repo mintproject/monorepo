@@ -13,9 +13,11 @@ import {
   handleCallback,
   handleImplicitCallback,
   logout,
+  maybeForwardToOrigin,
   refreshAccessToken,
   resolveGrantType,
 } from '@/lib/auth/oauth2-adapter';
+import { decodeState, encodeState } from '@/lib/auth/oauth-state';
 import { clearTokens, getAccessToken, getRefreshToken } from '@/lib/auth/token-store';
 
 // ---------------------------------------------------------------------------
@@ -249,7 +251,10 @@ describe('handleCallback', () => {
 
   it('returns error on state mismatch (CSRF)', async () => {
     sessionStorage.setItem('oauth2_state', 'correct-state');
-    window.location.search = '?code=abc&state=wrong-state';
+    // State must now be encoded JSON so decodeState returns a valid object;
+    // the nonce inside must differ from the stored nonce to trigger CSRF rejection.
+    const wrongState = encodeState({ nonce: 'wrong-state', origin: 'http://localhost' });
+    window.location.search = `?code=abc&state=${wrongState}`;
     const result = await handleCallback();
     expect(result.type).toBe('error');
     expect(result.error).toContain('State mismatch');
@@ -257,7 +262,8 @@ describe('handleCallback', () => {
 
   it('processes authorization code when state matches', async () => {
     sessionStorage.setItem('oauth2_state', 'good-state');
-    window.location.search = '?code=real-code&state=good-state';
+    const state = encodeState({ nonce: 'good-state', origin: 'http://localhost' });
+    window.location.search = `?code=real-code&state=${state}`;
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: () =>
@@ -359,5 +365,148 @@ describe('logout', () => {
     logout();
     expect(getAccessToken()).toBeNull();
     expect(window.location.href).toBe('/');
+  });
+});
+
+describe('preview-aware authorization URL', () => {
+  it('uses window.location.origin for redirect_uri when AUTH_CALLBACK_ORIGIN is unset', () => {
+    setMintConfig({ AUTH_PROVIDER: 'tapis' });
+    const url = new URL(buildAuthorizationUrl());
+    expect(url.searchParams.get('redirect_uri')).toBe('http://localhost/oauth2/callback');
+  });
+
+  it('uses AUTH_CALLBACK_ORIGIN for redirect_uri when set', () => {
+    setMintConfig({
+      AUTH_PROVIDER: 'tapis',
+      AUTH_CALLBACK_ORIGIN: 'https://monorepo-mosoriobs-projects.vercel.app',
+    });
+    const url = new URL(buildAuthorizationUrl());
+    expect(url.searchParams.get('redirect_uri')).toBe(
+      'https://monorepo-mosoriobs-projects.vercel.app/oauth2/callback',
+    );
+  });
+
+  it('encodes {nonce, origin} in state and mirrors the nonce in sessionStorage', () => {
+    setMintConfig({ AUTH_PROVIDER: 'tapis' });
+    const url = new URL(buildAuthorizationUrl());
+    const decoded = decodeState(url.searchParams.get('state'));
+    expect(decoded).not.toBeNull();
+    expect(decoded!.origin).toBe('http://localhost');
+    expect(decoded!.nonce).toBe(sessionStorage.getItem('oauth2_state'));
+  });
+});
+
+describe('handleCallback CSRF via encoded state', () => {
+  it('reads implicit token + state from the fragment and stores the token', async () => {
+    setMintConfig({ AUTH_PROVIDER: 'tapis' });
+    sessionStorage.setItem('oauth2_state', 'nonce-1');
+    const state = encodeState({ nonce: 'nonce-1', origin: 'http://localhost' });
+    window.location.hash = `#access_token=tok-abc&expires_in=3600&state=${state}`;
+
+    const result = await handleCallback();
+    expect(result.type).toBe('token');
+    expect(getAccessToken()).toBe('tok-abc');
+  });
+
+  it('rejects a forged nonce in the fragment state', async () => {
+    setMintConfig({ AUTH_PROVIDER: 'tapis' });
+    sessionStorage.setItem('oauth2_state', 'nonce-1');
+    const state = encodeState({ nonce: 'WRONG', origin: 'http://localhost' });
+    window.location.hash = `#access_token=tok-abc&state=${state}`;
+
+    const result = await handleCallback();
+    expect(result.type).toBe('error');
+    expect(result.error).toMatch(/CSRF/i);
+  });
+
+  it('rejects a callback with NO state when login was initiated (fail closed)', async () => {
+    setMintConfig({ AUTH_PROVIDER: 'tapis' });
+    sessionStorage.setItem('oauth2_state', 'nonce-1');
+    window.location.hash = '#access_token=tok-abc&expires_in=3600';
+    window.location.search = '';
+
+    const result = await handleCallback();
+    expect(result.type).toBe('error');
+    expect(result.error).toMatch(/CSRF/i);
+  });
+
+  it('rejects a callback with a garbled (undecodable) state when login was initiated', async () => {
+    setMintConfig({ AUTH_PROVIDER: 'tapis' });
+    sessionStorage.setItem('oauth2_state', 'nonce-1');
+    window.location.hash = '#access_token=tok-abc&state=not-valid-base64-json';
+    window.location.search = '';
+
+    const result = await handleCallback();
+    expect(result.type).toBe('error');
+    expect(result.error).toMatch(/CSRF/i);
+  });
+});
+
+describe('auth round-trip: buildAuthorizationUrl state survives handleCallback', () => {
+  it('accepts the state produced by buildAuthorizationUrl on the same origin (implicit)', async () => {
+    setMintConfig({ AUTH_PROVIDER: 'tapis' });
+    // Build the authorization URL — this sets sessionStorage nonce and returns encoded state.
+    const authUrl = new URL(buildAuthorizationUrl());
+    const state = authUrl.searchParams.get('state')!;
+    // Simulate the IdP echoing the token + state back in the fragment.
+    window.location.hash = `#access_token=tok-rt&expires_in=3600&state=${state}`;
+
+    const result = await handleCallback();
+    expect(result.type).toBe('token');
+    expect(getAccessToken()).toBe('tok-rt');
+  });
+});
+
+describe('maybeForwardToOrigin', () => {
+  const PREVIEW = 'https://monorepo-git-feat-modeling-datasets-mosoriobs-projects.vercel.app';
+
+  it('does not forward when state.origin equals the current origin', () => {
+    setMintConfig({ AUTH_PROVIDER: 'tapis' });
+    const state = encodeState({ nonce: 'n', origin: 'http://localhost' });
+    window.location.hash = `#access_token=tok&state=${state}`;
+    const result = maybeForwardToOrigin();
+    expect(result.forwarded).toBe(false);
+  });
+
+  it('forwards to an allowed preview origin, preserving the fragment', () => {
+    setMintConfig({ AUTH_PROVIDER: 'tapis' });
+    const state = encodeState({ nonce: 'n', origin: PREVIEW });
+    window.location.hash = `#access_token=tok&state=${state}`;
+    window.location.search = '';
+    const result = maybeForwardToOrigin();
+    expect(result.forwarded).toBe(true);
+    expect(result.error).toBeUndefined();
+    expect(window.location.href).toBe(`${PREVIEW}/oauth2/callback#access_token=tok&state=${state}`);
+  });
+
+  it('refuses to forward to a disallowed origin', () => {
+    setMintConfig({ AUTH_PROVIDER: 'tapis' });
+    const evil = 'https://evil.example.com';
+    const state = encodeState({ nonce: 'n', origin: evil });
+    window.location.hash = `#access_token=tok&state=${state}`;
+    const before = window.location.href;
+    const result = maybeForwardToOrigin();
+    expect(result.forwarded).toBe(true);
+    expect(result.error).toMatch(/disallowed/i);
+    expect(window.location.href).toBe(before); // no redirect issued
+  });
+
+  it('does not forward when the URL carries no state at all', () => {
+    setMintConfig({ AUTH_PROVIDER: 'tapis' });
+    window.location.hash = '';
+    window.location.search = '';
+    const result = maybeForwardToOrigin();
+    expect(result.forwarded).toBe(false);
+  });
+
+  it('forwards a code-flow callback whose state is in the query string', () => {
+    setMintConfig({ AUTH_PROVIDER: 'tapis' });
+    const state = encodeState({ nonce: 'n', origin: PREVIEW });
+    window.location.hash = '';
+    window.location.search = `?code=abc&state=${state}`;
+    const result = maybeForwardToOrigin();
+    expect(result.forwarded).toBe(true);
+    expect(result.error).toBeUndefined();
+    expect(window.location.href).toBe(`${PREVIEW}/oauth2/callback?code=abc&state=${state}`);
   });
 });
