@@ -299,7 +299,7 @@ export const GetModelTreeDocument = gql`
     ) {
       id
       label
-      versions: software_versions(order_by: { label: asc }) {
+      versions(order_by: { label: asc }) {
         id
         label
         version_id
