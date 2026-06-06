@@ -107,7 +107,7 @@ describe('mapStandardVariables', () => {
       modelcatalog_unit: [],
     };
     const result = mapStandardVariables(data);
-    expect(result[0].label).toBe('');
+    expect(result[0]!.label).toBe('');
   });
 });
 
@@ -149,7 +149,7 @@ describe('mapUnits', () => {
       ],
     };
     const result = mapUnits(data);
-    expect(result[0].label).toBe('');
+    expect(result[0]!.label).toBe('');
   });
 });
 
@@ -176,7 +176,7 @@ describe('client-side filter logic (Standard Variables)', () => {
         (sv.description?.toLowerCase().includes(lower) ?? false),
     );
     expect(filtered).toHaveLength(1);
-    expect(filtered[0].label).toBe('Precipitation');
+    expect(filtered[0]!.label).toBe('Precipitation');
   });
 
   it('filters on description (case-insensitive)', () => {
@@ -187,7 +187,7 @@ describe('client-side filter logic (Standard Variables)', () => {
         (sv.description?.toLowerCase().includes(lower) ?? false),
     );
     expect(filtered).toHaveLength(1);
-    expect(filtered[0].label).toBe('Evapotranspiration');
+    expect(filtered[0]!.label).toBe('Evapotranspiration');
   });
 
   it('returns empty array when no match', () => {
@@ -209,7 +209,7 @@ describe('client-side filter logic (Standard Variables)', () => {
         (sv.description?.toLowerCase().includes(lower) ?? false),
     );
     expect(filtered).toHaveLength(1);
-    expect(filtered[0].label).toBe('Temperature');
+    expect(filtered[0]!.label).toBe('Temperature');
   });
 });
 

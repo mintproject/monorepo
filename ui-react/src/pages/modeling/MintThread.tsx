@@ -13,11 +13,7 @@ import { useCallback, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
 import { Skeleton } from '@/components/ui/skeleton';
-import {
-  Thread,
-  getUserPermission,
-  useGetThreadQuery,
-} from '@/graphql/generated/modeling';
+import { Thread, getUserPermission, useGetThreadQuery } from '@/graphql/generated/modeling';
 import { useAuth } from '@/lib/auth/useAuth';
 import { cn } from '@/lib/utils';
 
@@ -95,18 +91,16 @@ function ThreadBreadcrumb({ steps, currentSection, sectionStatus, onSelect }: Br
             onClick={() => onSelect(step.id)}
             className={cn(
               'relative flex items-center px-3 py-2 text-xs font-medium transition-colors',
-              'border-t border-b border-r first:border-l first:rounded-l last:rounded-r',
+              'border-b border-r border-t first:rounded-l first:border-l last:rounded-r',
               // Chevron arrow effect via right padding
               'after:absolute after:right-0 after:top-0 after:h-full',
-              isActive && isDone && 'bg-blue-700 text-white border-blue-700',
-              isActive && !isDone && 'bg-blue-600 text-white border-blue-600',
-              !isActive && isDone && 'bg-teal-700 text-white border-teal-700 hover:bg-teal-600',
-              !isActive && !isDone && 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50',
+              isActive && isDone && 'border-blue-700 bg-blue-700 text-white',
+              isActive && !isDone && 'border-blue-600 bg-blue-600 text-white',
+              !isActive && isDone && 'border-teal-700 bg-teal-700 text-white hover:bg-teal-600',
+              !isActive && !isDone && 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50',
             )}
           >
-            {isDone && !isActive && (
-              <span className="mr-1 text-green-300 font-bold">✓</span>
-            )}
+            {isDone && !isActive && <span className="mr-1 font-bold text-green-300">✓</span>}
             {step.label}
           </button>
         );
@@ -172,7 +166,7 @@ export function MintThread() {
 
   if (error) {
     return (
-      <p className="text-sm text-destructive p-4" role="alert">
+      <p className="p-4 text-sm text-destructive" role="alert">
         Failed to load thread: {error.message}
       </p>
     );
@@ -180,9 +174,7 @@ export function MintThread() {
 
   if (!thread) {
     return (
-      <p className="text-sm text-muted-foreground p-4">
-        No sub-task selected or thread not found.
-      </p>
+      <p className="p-4 text-sm text-muted-foreground">No sub-task selected or thread not found.</p>
     );
   }
 
@@ -209,11 +201,7 @@ export function MintThread() {
           />
         );
       case 'summary':
-        return (
-          <MintSummary
-            thread={thread!}
-          />
-        );
+        return <MintSummary thread={thread!} />;
       default:
         return <StepPlaceholder name={currentSection} />;
     }
@@ -228,7 +216,7 @@ export function MintThread() {
       )}
     >
       {/* Header: breadcrumb + maximize toggle */}
-      <div className="flex items-center gap-2 border-b pb-2 mb-0">
+      <div className="mb-0 flex items-center gap-2 border-b pb-2">
         <ThreadBreadcrumb
           steps={STEPS}
           currentSection={currentSection}
@@ -239,20 +227,14 @@ export function MintThread() {
           type="button"
           aria-label={maximized ? 'Restore size' : 'Maximize'}
           onClick={() => setMaximized((m) => !m)}
-          className="ml-auto shrink-0 rounded p-1.5 hover:bg-gray-100 text-gray-500"
+          className="ml-auto shrink-0 rounded p-1.5 text-gray-500 hover:bg-gray-100"
         >
-          {maximized ? (
-            <Minimize2 className="h-4 w-4" />
-          ) : (
-            <Maximize2 className="h-4 w-4" />
-          )}
+          {maximized ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
         </button>
       </div>
 
       {/* Step content */}
-      <div className="flex-1 overflow-y-auto p-4">
-        {renderStep()}
-      </div>
+      <div className="flex-1 overflow-y-auto p-4">{renderStep()}</div>
     </div>
   );
 }

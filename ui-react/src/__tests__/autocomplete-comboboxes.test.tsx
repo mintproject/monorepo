@@ -73,10 +73,9 @@ const prefetchMock = {
 
 describe('StandardVariableCombobox', () => {
   it('shows placeholder after data loads when no value is selected', async () => {
-    renderWithProviders(
-      <StandardVariableCombobox value={null} onChange={vi.fn()} />,
-      { apolloMocks: [prefetchMock] },
-    );
+    renderWithProviders(<StandardVariableCombobox value={null} onChange={vi.fn()} />, {
+      apolloMocks: [prefetchMock],
+    });
     // After Apollo resolves the mock, loading ends and placeholder appears
     await waitFor(() => {
       expect(screen.getByText('Search standard variables...')).toBeInTheDocument();
@@ -90,10 +89,9 @@ describe('StandardVariableCombobox', () => {
       label: 'Precipitation',
       description: 'Amount of precipitation',
     };
-    renderWithProviders(
-      <StandardVariableCombobox value={selected} onChange={vi.fn()} />,
-      { apolloMocks: [prefetchMock] },
-    );
+    renderWithProviders(<StandardVariableCombobox value={selected} onChange={vi.fn()} />, {
+      apolloMocks: [prefetchMock],
+    });
     // Wait for loading to complete
     await waitFor(() => {
       expect(screen.getByText('Precipitation')).toBeInTheDocument();
@@ -102,10 +100,9 @@ describe('StandardVariableCombobox', () => {
 
   it('opens popover and shows options when trigger is clicked', async () => {
     const user = userEvent.setup();
-    renderWithProviders(
-      <StandardVariableCombobox value={null} onChange={vi.fn()} />,
-      { apolloMocks: [prefetchMock] },
-    );
+    renderWithProviders(<StandardVariableCombobox value={null} onChange={vi.fn()} />, {
+      apolloMocks: [prefetchMock],
+    });
 
     // Wait for data to load
     await waitFor(() => expect(screen.getByRole('combobox')).not.toBeDisabled());
@@ -122,10 +119,9 @@ describe('StandardVariableCombobox', () => {
 
   it('shows description text for standard variables that have one', async () => {
     const user = userEvent.setup();
-    renderWithProviders(
-      <StandardVariableCombobox value={null} onChange={vi.fn()} />,
-      { apolloMocks: [prefetchMock] },
-    );
+    renderWithProviders(<StandardVariableCombobox value={null} onChange={vi.fn()} />, {
+      apolloMocks: [prefetchMock],
+    });
 
     await waitFor(() => expect(screen.getByRole('combobox')).not.toBeDisabled());
     await user.click(screen.getByRole('combobox'));
@@ -139,10 +135,9 @@ describe('StandardVariableCombobox', () => {
     const user = userEvent.setup();
     const handleChange = vi.fn();
 
-    renderWithProviders(
-      <StandardVariableCombobox value={null} onChange={handleChange} />,
-      { apolloMocks: [prefetchMock] },
-    );
+    renderWithProviders(<StandardVariableCombobox value={null} onChange={handleChange} />, {
+      apolloMocks: [prefetchMock],
+    });
 
     await waitFor(() => expect(screen.getByRole('combobox')).not.toBeDisabled());
     await user.click(screen.getByRole('combobox'));
@@ -166,10 +161,9 @@ describe('StandardVariableCombobox', () => {
       description: 'Amount of precipitation',
     };
 
-    renderWithProviders(
-      <StandardVariableCombobox value={selected} onChange={handleChange} />,
-      { apolloMocks: [prefetchMock] },
-    );
+    renderWithProviders(<StandardVariableCombobox value={selected} onChange={handleChange} />, {
+      apolloMocks: [prefetchMock],
+    });
 
     await waitFor(() => expect(screen.getByRole('combobox')).not.toBeDisabled());
     await user.click(screen.getByRole('combobox'));
@@ -178,7 +172,7 @@ describe('StandardVariableCombobox', () => {
 
     // Click on the already-selected item (the one inside the list)
     const items = screen.getAllByText('Precipitation');
-    await user.click(items[items.length - 1]); // last one is the list item
+    await user.click(items[items.length - 1]!); // last one is the list item
 
     expect(handleChange).toHaveBeenCalledWith(null);
   });
@@ -194,11 +188,7 @@ describe('StandardVariableCombobox', () => {
 
   it('supports custom placeholder', async () => {
     renderWithProviders(
-      <StandardVariableCombobox
-        value={null}
-        onChange={vi.fn()}
-        placeholder="Pick a variable..."
-      />,
+      <StandardVariableCombobox value={null} onChange={vi.fn()} placeholder="Pick a variable..." />,
       { apolloMocks: [prefetchMock] },
     );
     await waitFor(() => {
@@ -211,10 +201,9 @@ describe('StandardVariableCombobox', () => {
 
 describe('UnitCombobox', () => {
   it('shows placeholder after data loads when no value is selected', async () => {
-    renderWithProviders(
-      <UnitCombobox value={null} onChange={vi.fn()} />,
-      { apolloMocks: [prefetchMock] },
-    );
+    renderWithProviders(<UnitCombobox value={null} onChange={vi.fn()} />, {
+      apolloMocks: [prefetchMock],
+    });
     await waitFor(() => {
       expect(screen.getByText('Search units...')).toBeInTheDocument();
     });
@@ -223,10 +212,9 @@ describe('UnitCombobox', () => {
 
   it('shows selected label when a value is provided', async () => {
     const selected = { id: 'https://w3id.org/okn/i/mint/u1', label: 'mm/day' };
-    renderWithProviders(
-      <UnitCombobox value={selected} onChange={vi.fn()} />,
-      { apolloMocks: [prefetchMock] },
-    );
+    renderWithProviders(<UnitCombobox value={selected} onChange={vi.fn()} />, {
+      apolloMocks: [prefetchMock],
+    });
     await waitFor(() => {
       expect(screen.getByText('mm/day')).toBeInTheDocument();
     });
@@ -234,10 +222,9 @@ describe('UnitCombobox', () => {
 
   it('opens popover and shows options when trigger is clicked', async () => {
     const user = userEvent.setup();
-    renderWithProviders(
-      <UnitCombobox value={null} onChange={vi.fn()} />,
-      { apolloMocks: [prefetchMock] },
-    );
+    renderWithProviders(<UnitCombobox value={null} onChange={vi.fn()} />, {
+      apolloMocks: [prefetchMock],
+    });
 
     await waitFor(() => expect(screen.getByRole('combobox')).not.toBeDisabled());
     await user.click(screen.getByRole('combobox'));
@@ -252,10 +239,9 @@ describe('UnitCombobox', () => {
     const user = userEvent.setup();
     const handleChange = vi.fn();
 
-    renderWithProviders(
-      <UnitCombobox value={null} onChange={handleChange} />,
-      { apolloMocks: [prefetchMock] },
-    );
+    renderWithProviders(<UnitCombobox value={null} onChange={handleChange} />, {
+      apolloMocks: [prefetchMock],
+    });
 
     await waitFor(() => expect(screen.getByRole('combobox')).not.toBeDisabled());
     await user.click(screen.getByRole('combobox'));
@@ -273,26 +259,24 @@ describe('UnitCombobox', () => {
     const handleChange = vi.fn();
     const selected = { id: 'https://w3id.org/okn/i/mint/u1', label: 'mm/day' };
 
-    renderWithProviders(
-      <UnitCombobox value={selected} onChange={handleChange} />,
-      { apolloMocks: [prefetchMock] },
-    );
+    renderWithProviders(<UnitCombobox value={selected} onChange={handleChange} />, {
+      apolloMocks: [prefetchMock],
+    });
 
     await waitFor(() => expect(screen.getByRole('combobox')).not.toBeDisabled());
     await user.click(screen.getByRole('combobox'));
     await waitFor(() => screen.getAllByText('mm/day'));
 
     const items = screen.getAllByText('mm/day');
-    await user.click(items[items.length - 1]);
+    await user.click(items[items.length - 1]!);
 
     expect(handleChange).toHaveBeenCalledWith(null);
   });
 
   it('is disabled when disabled prop is true', () => {
-    renderWithProviders(
-      <UnitCombobox value={null} onChange={vi.fn()} disabled={true} />,
-      { apolloMocks: [prefetchMock] },
-    );
+    renderWithProviders(<UnitCombobox value={null} onChange={vi.fn()} disabled={true} />, {
+      apolloMocks: [prefetchMock],
+    });
     expect(screen.getByRole('combobox')).toBeDisabled();
   });
 });

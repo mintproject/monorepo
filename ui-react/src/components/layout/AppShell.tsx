@@ -20,11 +20,7 @@ export function AppShell({ children }: AppShellProps) {
       />
       <div className="flex flex-1 overflow-hidden">
         <Sidebar collapsed={sidebarCollapsed} />
-        <main
-          className={cn(
-            'flex-1 overflow-y-auto p-6 transition-all duration-200',
-          )}
-        >
+        <main className={cn('flex-1 overflow-y-auto p-6 transition-all duration-200')}>
           {children}
         </main>
       </div>

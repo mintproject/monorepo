@@ -67,10 +67,9 @@ const personsEmptyMock = {
 
 describe('PersonCombobox', () => {
   it('shows placeholder when no value is selected', () => {
-    renderWithProviders(
-      <PersonCombobox value={null} onChange={vi.fn()} />,
-      { apolloMocks: [personsMockNoFilter] },
-    );
+    renderWithProviders(<PersonCombobox value={null} onChange={vi.fn()} />, {
+      apolloMocks: [personsMockNoFilter],
+    });
     expect(screen.getByRole('combobox')).toBeInTheDocument();
     expect(screen.getByText('Search persons...')).toBeInTheDocument();
   });
@@ -81,19 +80,17 @@ describe('PersonCombobox', () => {
       label: 'Alice Smith',
       name: 'Alice Smith',
     };
-    renderWithProviders(
-      <PersonCombobox value={selected} onChange={vi.fn()} />,
-      { apolloMocks: [personsMockNoFilter] },
-    );
+    renderWithProviders(<PersonCombobox value={selected} onChange={vi.fn()} />, {
+      apolloMocks: [personsMockNoFilter],
+    });
     expect(screen.getByText('Alice Smith')).toBeInTheDocument();
   });
 
   it('opens popover and shows persons from query result', async () => {
     const user = userEvent.setup();
-    renderWithProviders(
-      <PersonCombobox value={null} onChange={vi.fn()} />,
-      { apolloMocks: [personsMockNoFilter] },
-    );
+    renderWithProviders(<PersonCombobox value={null} onChange={vi.fn()} />, {
+      apolloMocks: [personsMockNoFilter],
+    });
 
     await user.click(screen.getByRole('combobox'));
 
@@ -107,10 +104,9 @@ describe('PersonCombobox', () => {
     const user = userEvent.setup();
     const handleChange = vi.fn();
 
-    renderWithProviders(
-      <PersonCombobox value={null} onChange={handleChange} />,
-      { apolloMocks: [personsMockNoFilter] },
-    );
+    renderWithProviders(<PersonCombobox value={null} onChange={handleChange} />, {
+      apolloMocks: [personsMockNoFilter],
+    });
 
     await user.click(screen.getByRole('combobox'));
     await waitFor(() => screen.getByText('Alice Smith'));
@@ -132,26 +128,24 @@ describe('PersonCombobox', () => {
       name: 'Alice Smith',
     };
 
-    renderWithProviders(
-      <PersonCombobox value={selected} onChange={handleChange} />,
-      { apolloMocks: [personsMockNoFilter] },
-    );
+    renderWithProviders(<PersonCombobox value={selected} onChange={handleChange} />, {
+      apolloMocks: [personsMockNoFilter],
+    });
 
     await user.click(screen.getByRole('combobox'));
     await waitFor(() => screen.getAllByText('Alice Smith'));
 
     const items = screen.getAllByText('Alice Smith');
-    await user.click(items[items.length - 1]);
+    await user.click(items[items.length - 1]!);
 
     expect(handleChange).toHaveBeenCalledWith(null);
   });
 
   it('shows "No matching persons" when query returns empty array', async () => {
     const user = userEvent.setup();
-    renderWithProviders(
-      <PersonCombobox value={null} onChange={vi.fn()} />,
-      { apolloMocks: [personsEmptyMock] },
-    );
+    renderWithProviders(<PersonCombobox value={null} onChange={vi.fn()} />, {
+      apolloMocks: [personsEmptyMock],
+    });
 
     await user.click(screen.getByRole('combobox'));
 
@@ -161,20 +155,15 @@ describe('PersonCombobox', () => {
   });
 
   it('is disabled when disabled prop is true', () => {
-    renderWithProviders(
-      <PersonCombobox value={null} onChange={vi.fn()} disabled={true} />,
-      { apolloMocks: [personsMockNoFilter] },
-    );
+    renderWithProviders(<PersonCombobox value={null} onChange={vi.fn()} disabled={true} />, {
+      apolloMocks: [personsMockNoFilter],
+    });
     expect(screen.getByRole('combobox')).toBeDisabled();
   });
 
   it('supports custom placeholder', () => {
     renderWithProviders(
-      <PersonCombobox
-        value={null}
-        onChange={vi.fn()}
-        placeholder="Add an author..."
-      />,
+      <PersonCombobox value={null} onChange={vi.fn()} placeholder="Add an author..." />,
       { apolloMocks: [personsMockNoFilter] },
     );
     expect(screen.getByText('Add an author...')).toBeInTheDocument();
@@ -203,10 +192,9 @@ describe('PersonCombobox', () => {
       },
     };
 
-    renderWithProviders(
-      <PersonCombobox value={null} onChange={vi.fn()} />,
-      { apolloMocks: [mockWithDifferentName] },
-    );
+    renderWithProviders(<PersonCombobox value={null} onChange={vi.fn()} />, {
+      apolloMocks: [mockWithDifferentName],
+    });
 
     await user.click(screen.getByRole('combobox'));
 

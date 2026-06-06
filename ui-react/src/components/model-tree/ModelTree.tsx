@@ -30,8 +30,7 @@ export function ModelTree({ className }: ModelTreeProps) {
   const { selection, dispatch } = useModelSelection();
 
   // Derive the currently highlighted entity id from the deepest selection.
-  const selectedEntityId =
-    selection.configurationId ?? selection.versionId ?? selection.softwareId;
+  const selectedEntityId = selection.configurationId ?? selection.versionId ?? selection.softwareId;
 
   const handleSelect = (node: TreeNodeData) => {
     switch (node.entityType) {

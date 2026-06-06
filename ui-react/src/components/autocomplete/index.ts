@@ -1,5 +1,8 @@
 export { StandardVariableCombobox } from './StandardVariableCombobox';
-export type { StandardVariableComboboxProps, StandardVariableOption } from './StandardVariableCombobox';
+export type {
+  StandardVariableComboboxProps,
+  StandardVariableOption,
+} from './StandardVariableCombobox';
 
 export { UnitCombobox } from './UnitCombobox';
 export type { UnitComboboxProps, UnitOption } from './UnitCombobox';

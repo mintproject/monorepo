@@ -115,11 +115,7 @@ export function PersonCombobox({
       </PopoverTrigger>
       <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
         <Command shouldFilter={false}>
-          <CommandInput
-            placeholder={placeholder}
-            value={search}
-            onValueChange={setSearch}
-          />
+          <CommandInput placeholder={placeholder} value={search} onValueChange={setSearch} />
           <CommandList>
             {loading ? (
               <div className="flex items-center justify-center py-6">

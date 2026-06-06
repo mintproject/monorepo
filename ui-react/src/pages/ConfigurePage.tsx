@@ -16,9 +16,8 @@ export function ConfigurePage() {
       </CardHeader>
       <CardContent>
         <p className="text-muted-foreground">
-          Configuration form with model tree navigation will be implemented
-          here. This will be the single-form workflow replacing the 5-level
-          nested modal chain.
+          Configuration form with model tree navigation will be implemented here. This will be the
+          single-form workflow replacing the 5-level nested modal chain.
         </p>
       </CardContent>
     </Card>

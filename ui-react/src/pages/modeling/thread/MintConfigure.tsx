@@ -24,14 +24,15 @@ export function MintConfigure({ thread, onContinue, onThreadUpdated }: MintConfi
 
   return (
     <div data-testid="mint-configure">
-      <h3 className="text-base font-semibold mb-2">Sub-task</h3>
-      <p className="text-sm text-gray-600 mb-4">
-        This page allows you to set a general configuration for this sub-task, choose one or
-        more models and datasets to generate a set of executions to be run.
+      <h3 className="mb-2 text-base font-semibold">Sub-task</h3>
+      <p className="mb-4 text-sm text-gray-600">
+        This page allows you to set a general configuration for this sub-task, choose one or more
+        models and datasets to generate a set of executions to be run.
         {perm.write && (
           <span>
-            {' '}Please click on the <span className="font-mono">✎</span> icon inside each
-            section to make changes.
+            {' '}
+            Please click on the <span className="font-mono">✎</span> icon inside each section to
+            make changes.
           </span>
         )}
       </p>

@@ -8,9 +8,7 @@ export function VariablesHome() {
         <CardTitle>VariablesHome</CardTitle>
       </CardHeader>
       <CardContent>
-        <p className="text-muted-foreground">
-          Variables overview will be implemented here.
-        </p>
+        <p className="text-muted-foreground">Variables overview will be implemented here.</p>
       </CardContent>
     </Card>
   );

@@ -77,7 +77,7 @@ const EMPTY_TASK_FORM: TaskForm = {
   id: '',
   name: '',
   startDate: '2000-01-01',
-  endDate: (new Date().toISOString().split('T')[0] ?? ''),
+  endDate: new Date().toISOString().split('T')[0] ?? '',
   regionId: '',
 };
 
@@ -85,7 +85,7 @@ const EMPTY_THREAD_FORM: ThreadForm = {
   id: '',
   name: '',
   startDate: '2000-01-01',
-  endDate: (new Date().toISOString().split('T')[0] ?? ''),
+  endDate: new Date().toISOString().split('T')[0] ?? '',
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -151,11 +151,7 @@ export function MintProblemStatement() {
   const [deleteThread] = useDeleteThreadMutation();
 
   // ── derived ───────────────────────────────────────────────────────────────
-  const psPerm = getUserPermission(
-    ps?.permissions,
-    ps?.events,
-    user?.username,
-  );
+  const psPerm = getUserPermission(ps?.permissions, ps?.events, user?.username);
 
   const tasks: TaskWithThreads[] = (ps?.tasks ?? []).slice().sort((a, b) => {
     const ta = getLatestEvent(a.events)?.timestamp ?? '';
@@ -392,11 +388,7 @@ export function MintProblemStatement() {
   }
 
   if (!ps) {
-    return (
-      <p className="text-sm text-muted-foreground">
-        Problem statement not found.
-      </p>
-    );
+    return <p className="text-sm text-muted-foreground">Problem statement not found.</p>;
   }
 
   return (
@@ -423,19 +415,15 @@ export function MintProblemStatement() {
           <div className="flex-1 overflow-y-auto">
             {/* Help text */}
             <p className="px-3 py-2 text-xs text-muted-foreground">
-              Several modeling tasks can be created for a given problem statement.
-              Each task can have multiple sub-tasks.
+              Several modeling tasks can be created for a given problem statement. Each task can
+              have multiple sub-tasks.
             </p>
 
             {/* Task list */}
             <ul className="mt-1" role="tree" aria-label="Tasks">
               {tasks.map((task) => {
                 const isSelected = task.id === selectedTaskId;
-                const taskPerm = getUserPermission(
-                  task.permissions,
-                  task.events,
-                  user?.username,
-                );
+                const taskPerm = getUserPermission(task.permissions, task.events, user?.username);
                 const lastEvent = getLatestEvent(task.events);
 
                 return (
@@ -559,7 +547,8 @@ export function MintProblemStatement() {
                                 <p className="truncate text-sm">{pname}</p>
                                 {threadLastEvent && (
                                   <p className="text-xs text-muted-foreground/70">
-                                    {threadLastEvent.userid} · {fmtDateTime(threadLastEvent.timestamp)}
+                                    {threadLastEvent.userid} ·{' '}
+                                    {fmtDateTime(threadLastEvent.timestamp)}
                                   </p>
                                 )}
                               </div>
@@ -598,25 +587,26 @@ export function MintProblemStatement() {
                         })}
 
                         {/* Create new sub-task */}
-                        {selectedTask && getUserPermission(
-                          selectedTask.permissions,
-                          selectedTask.events,
-                          user?.username,
-                        ).write && (
-                          <li>
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                openAddThreadDialog();
-                              }}
-                              className="flex w-full items-center gap-2 px-3 py-2 text-sm text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950"
-                            >
-                              <FilePlus className="h-3.5 w-3.5" />
-                              Create new sub-task
-                            </button>
-                          </li>
-                        )}
+                        {selectedTask &&
+                          getUserPermission(
+                            selectedTask.permissions,
+                            selectedTask.events,
+                            user?.username,
+                          ).write && (
+                            <li>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  openAddThreadDialog();
+                                }}
+                                className="flex w-full items-center gap-2 px-3 py-2 text-sm text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950"
+                              >
+                                <FilePlus className="h-3.5 w-3.5" />
+                                Create new sub-task
+                              </button>
+                            </li>
+                          )}
                       </ul>
                     )}
                   </li>
@@ -634,11 +624,7 @@ export function MintProblemStatement() {
               onClick={openAddTaskDialog}
               disabled={!psPerm.write}
             >
-              {psPerm.write ? (
-                <FolderPlus className="h-4 w-4" />
-              ) : (
-                <Lock className="h-4 w-4" />
-              )}
+              {psPerm.write ? <FolderPlus className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
               Add new task
             </Button>
           </div>
@@ -685,8 +671,8 @@ export function MintProblemStatement() {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete task?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete &quot;{deleteTaskTarget?.name}&quot; and all
-              its sub-tasks.
+              This will permanently delete &quot;{deleteTaskTarget?.name}&quot; and all its
+              sub-tasks.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -754,15 +740,7 @@ interface TaskDialogProps {
   onCancel: () => void;
 }
 
-function TaskDialog({
-  open,
-  isEdit,
-  form,
-  saving,
-  onChange,
-  onSubmit,
-  onCancel,
-}: TaskDialogProps) {
+function TaskDialog({ open, isEdit, form, saving, onChange, onSubmit, onCancel }: TaskDialogProps) {
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onCancel()}>
       <DialogContent className="sm:max-w-md">
@@ -845,8 +823,8 @@ function ThreadDialog({
         </DialogHeader>
         {!isEdit && (
           <p className="text-sm text-muted-foreground">
-            A sub-task lets you investigate different initial conditions or different
-            models within this task.
+            A sub-task lets you investigate different initial conditions or different models within
+            this task.
           </p>
         )}
         <div className="grid gap-4 py-2">

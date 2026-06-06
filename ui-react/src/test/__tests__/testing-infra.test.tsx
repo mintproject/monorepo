@@ -8,7 +8,14 @@
  * This test uses a real Apollo Client instance (not MockedProvider) to
  * demonstrate that MSW is genuinely intercepting HTTP requests.
  */
-import { ApolloClient, ApolloProvider, createHttpLink, gql, InMemoryCache, useQuery } from '@apollo/client';
+import {
+  ApolloClient,
+  ApolloProvider,
+  createHttpLink,
+  gql,
+  InMemoryCache,
+  useQuery,
+} from '@apollo/client';
 import { act, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
@@ -43,8 +50,7 @@ function StandardVariableList() {
   const { loading, error, data } = useQuery(GET_STANDARD_VARIABLES);
   if (loading) return <div data-testid="loading">Loading...</div>;
   if (error) return <div data-testid="error">{error.message}</div>;
-  const vars: Array<{ id: string; label: string }> =
-    data?.modelcatalog_standard_variable ?? [];
+  const vars: Array<{ id: string; label: string }> = data?.modelcatalog_standard_variable ?? [];
   return (
     <ul data-testid="sv-list">
       {vars.map((v) => (
@@ -131,12 +137,16 @@ describe('testing infrastructure', () => {
         return <span data-testid="count">{count}</span>;
       }
 
-      const mock = makeQueryMock(SIMPLE_QUERY, {}, {
-        modelcatalog_configuration: [
-          { id: 'http://example.org/config/1' },
-          { id: 'http://example.org/config/2' },
-        ],
-      });
+      const mock = makeQueryMock(
+        SIMPLE_QUERY,
+        {},
+        {
+          modelcatalog_configuration: [
+            { id: 'http://example.org/config/1' },
+            { id: 'http://example.org/config/2' },
+          ],
+        },
+      );
 
       renderWithProviders(<ConfigCount />, { apolloMocks: [mock] });
 

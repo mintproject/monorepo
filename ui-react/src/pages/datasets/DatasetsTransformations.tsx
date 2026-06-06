@@ -8,9 +8,7 @@ export function DatasetsTransformations() {
         <CardTitle>DatasetsTransformations</CardTitle>
       </CardHeader>
       <CardContent>
-        <p className="text-muted-foreground">
-          Dataset transformations will be implemented here.
-        </p>
+        <p className="text-muted-foreground">Dataset transformations will be implemented here.</p>
       </CardContent>
     </Card>
   );

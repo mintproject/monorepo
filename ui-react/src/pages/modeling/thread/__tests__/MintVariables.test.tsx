@@ -32,9 +32,7 @@ const baseThread: Thread = {
 
 describe('MintVariables', () => {
   it('shows edit form when no variables are selected', () => {
-    renderWithProviders(
-      <MintVariables thread={baseThread} onContinue={vi.fn()} />,
-    );
+    renderWithProviders(<MintVariables thread={baseThread} onContinue={vi.fn()} />);
     expect(screen.getByTestId('variables-form')).toBeInTheDocument();
     expect(screen.getByLabelText(/indicator/i)).toBeInTheDocument();
   });
@@ -44,9 +42,7 @@ describe('MintVariables', () => {
       ...baseThread,
       response_variable_id: 'cycles__crop_production',
     };
-    renderWithProviders(
-      <MintVariables thread={thread} onContinue={vi.fn()} />,
-    );
+    renderWithProviders(<MintVariables thread={thread} onContinue={vi.fn()} />);
     expect(screen.queryByTestId('variables-form')).not.toBeInTheDocument();
     expect(screen.getByText('cycles__crop_production')).toBeInTheDocument();
   });
@@ -56,9 +52,7 @@ describe('MintVariables', () => {
       ...baseThread,
       response_variable_id: 'cycles__crop_production',
     };
-    renderWithProviders(
-      <MintVariables thread={thread} onContinue={vi.fn()} />,
-    );
+    renderWithProviders(<MintVariables thread={thread} onContinue={vi.fn()} />);
     expect(screen.getByTestId('variables-continue')).toBeInTheDocument();
   });
 
@@ -68,9 +62,7 @@ describe('MintVariables', () => {
       ...baseThread,
       response_variable_id: 'cycles__crop_production',
     };
-    renderWithProviders(
-      <MintVariables thread={thread} onContinue={onContinue} />,
-    );
+    renderWithProviders(<MintVariables thread={thread} onContinue={onContinue} />);
     fireEvent.click(screen.getByTestId('variables-continue'));
     expect(onContinue).toHaveBeenCalledOnce();
   });
@@ -80,25 +72,19 @@ describe('MintVariables', () => {
       ...baseThread,
       response_variable_id: 'cycles__crop_production',
     };
-    renderWithProviders(
-      <MintVariables thread={thread} onContinue={vi.fn()} />,
-    );
+    renderWithProviders(<MintVariables thread={thread} onContinue={vi.fn()} />);
     fireEvent.click(screen.getByRole('button', { name: /edit variables/i }));
     expect(screen.getByTestId('variables-form')).toBeInTheDocument();
   });
 
   it('shows submit button in edit mode', () => {
-    renderWithProviders(
-      <MintVariables thread={baseThread} onContinue={vi.fn()} />,
-    );
+    renderWithProviders(<MintVariables thread={baseThread} onContinue={vi.fn()} />);
     expect(screen.getByTestId('variables-submit')).toBeInTheDocument();
     expect(screen.getByTestId('variables-submit')).toHaveTextContent('Select & Continue');
   });
 
   it('displays indicator and driving variable inputs', () => {
-    renderWithProviders(
-      <MintVariables thread={baseThread} onContinue={vi.fn()} />,
-    );
+    renderWithProviders(<MintVariables thread={baseThread} onContinue={vi.fn()} />);
     expect(screen.getByLabelText(/indicator/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/adjustable variable/i)).toBeInTheDocument();
   });
@@ -108,9 +94,7 @@ describe('MintVariables', () => {
       ...baseThread,
       response_variable_id: 'cycles__crop_production',
     };
-    renderWithProviders(
-      <MintVariables thread={thread} onContinue={vi.fn()} />,
-    );
+    renderWithProviders(<MintVariables thread={thread} onContinue={vi.fn()} />);
     // Click edit icon to enter edit mode
     fireEvent.click(screen.getByRole('button', { name: /edit variables/i }));
     expect(screen.getByRole('button', { name: /cancel/i })).toBeInTheDocument();

@@ -33,9 +33,7 @@ export interface UseReferenceDataResult {
   error: Error | null;
 }
 
-function mapStandardVariables(
-  data: PrefetchReferenceDataQuery | undefined,
-): StandardVariable[] {
+function mapStandardVariables(data: PrefetchReferenceDataQuery | undefined): StandardVariable[] {
   if (!data?.modelcatalog_standard_variable) return [];
   return data.modelcatalog_standard_variable.map((sv) => ({
     id: sv.id,

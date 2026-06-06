@@ -118,7 +118,7 @@ export function StandardVariableCombobox({
                   <div className="flex flex-col">
                     <span className="font-medium">{sv.label}</span>
                     {sv.description && (
-                      <span className="text-xs text-muted-foreground line-clamp-1">
+                      <span className="line-clamp-1 text-xs text-muted-foreground">
                         {sv.description}
                       </span>
                     )}

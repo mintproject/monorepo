@@ -8,9 +8,7 @@ export function RegionsHome() {
         <CardTitle>RegionsHome</CardTitle>
       </CardHeader>
       <CardContent>
-        <p className="text-muted-foreground">
-          Regions overview will be implemented here.
-        </p>
+        <p className="text-muted-foreground">Regions overview will be implemented here.</p>
       </CardContent>
     </Card>
   );
