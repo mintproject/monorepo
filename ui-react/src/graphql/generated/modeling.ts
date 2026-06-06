@@ -994,7 +994,7 @@ export type InsertThreadProvenanceMutation = {
 export const InsertThreadProvenanceDocument = gql`
   mutation InsertThreadProvenance(
     $threadId: String!
-    $event: thread_events_enum!
+    $event: thread_events!
     $userid: String!
     $notes: String
   ) {
@@ -1024,16 +1024,152 @@ export function useInsertThreadProvenanceMutation(
   );
 }
 
+// ─── Thread data binding mutations ───────────────────────────────────────────
+//
+// Used by the MintDatasets step to write dataset selections into the database.
+// Mirrors: ui/src/queries/thread/update-datasets.graphql
+
+export type UpdateThreadDataMutationVariables = {
+  threadId: string;
+  event: {
+    thread_id: string;
+    event: string;
+    userid: string;
+    notes?: string | null;
+  };
+  data: Array<{
+    thread_id: string;
+    dataslice: {
+      data: {
+        id: string;
+        name: string;
+        region_id: string;
+        start_date: string | null;
+        end_date: string | null;
+        resource_count: number;
+        dataset: {
+          data: { id: string; name: string };
+          on_conflict: { constraint: string; update_columns: string[] };
+        };
+        resources: {
+          data: Array<{
+            resource: {
+              data: {
+                id: string;
+                dcid?: string | null;
+                name: string;
+                url: string;
+                start_date?: string | null;
+                end_date?: string | null;
+              };
+              on_conflict: { constraint: string; update_columns: string[] };
+            };
+            selected: boolean;
+          }>;
+          on_conflict: { constraint: string; update_columns: string[] };
+        };
+      };
+      on_conflict: { constraint: string; update_columns: string[] };
+    };
+  }>;
+  modelIO: Array<{
+    thread_model_id: string;
+    model_io_id: string;
+    dataslice_id: string;
+  }>;
+};
+
+export type UpdateThreadDataMutation = {
+  insert_thread_data?: { returning: Array<{ thread_id: string }> } | null;
+  insert_thread_model_io?: { returning: Array<{ model_io_id: string }> } | null;
+  insert_thread_provenance_one?: { thread_id: string } | null;
+};
+
+export const UpdateThreadDataDocument = gql`
+  mutation UpdateThreadData(
+    $threadId: String!
+    $event: thread_provenance_insert_input!
+    $data: [thread_data_insert_input!]!
+    $modelIO: [thread_model_io_insert_input!]!
+  ) {
+    delete_thread_model_execution_summary(
+      where: { thread_model: { thread_id: { _eq: $threadId } } }
+    ) {
+      affected_rows
+    }
+    delete_thread_model_execution(
+      where: { thread_model: { thread_id: { _eq: $threadId } } }
+    ) {
+      affected_rows
+    }
+    delete_thread_model_io(
+      where: { thread_model: { thread_id: { _eq: $threadId } } }
+    ) {
+      affected_rows
+    }
+    delete_thread_model_parameter(
+      where: { thread_model: { thread_id: { _eq: $threadId } } }
+    ) {
+      affected_rows
+    }
+    delete_dataslice_resource(
+      where: { dataslice: { thread_data: { thread_id: { _eq: $threadId } } } }
+    ) {
+      affected_rows
+    }
+    delete_dataslice(
+      where: { thread_data: { thread_id: { _eq: $threadId } } }
+    ) {
+      affected_rows
+    }
+    delete_thread_data(where: { thread_id: { _eq: $threadId } }) {
+      affected_rows
+    }
+    insert_thread_data(objects: $data) {
+      returning {
+        thread_id
+      }
+    }
+    insert_thread_model_io(objects: $modelIO) {
+      returning {
+        model_io_id
+      }
+    }
+    insert_thread_provenance_one(object: $event) {
+      thread_id
+    }
+  }
+`;
+
+export function useUpdateThreadDataMutation(
+  baseOptions?: Apollo.MutationHookOptions<
+    UpdateThreadDataMutation,
+    UpdateThreadDataMutationVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useMutation<UpdateThreadDataMutation, UpdateThreadDataMutationVariables>(
+    UpdateThreadDataDocument,
+    options,
+  );
+}
+
 // ─── ID generator (mirrors legacy GraphQL adapter) ────────────────────────────
 
 /**
- * Generate a unique ID for new resources, matching the legacy format.
- * Legacy code used: `mint://` + type + `/` + random prefix
+ * Generate a unique ID for new problem statements / tasks / threads.
+ *
+ * The value is stored verbatim as the table primary key (and FK target) and is
+ * embedded directly in route URLs, so it must be a bare short token like the
+ * existing DB rows (e.g. `uPOdCNpNNscghQbJda73`). It must NOT be a
+ * `mint://<type>/...` URI: that prefix is not what the DB stores (so by_pk
+ * lookups miss) and its `//` collapses to `/` in the browser URL. The `_type`
+ * argument is retained only for call-site readability.
  */
-export function generateModelingId(type: 'problem_statement' | 'task' | 'thread'): string {
+export function generateModelingId(_type: 'problem_statement' | 'task' | 'thread'): string {
   const rand = Math.random().toString(36).substring(2, 10);
   const ts = Date.now().toString(36);
-  return `mint://${type}/${rand}${ts}`;
+  return `${rand}${ts}`;
 }
 
 // ─── Mutation: SetThreadModels ────────────────────────────────────────────────

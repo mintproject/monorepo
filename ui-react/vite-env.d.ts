@@ -8,6 +8,8 @@ interface MintConfig {
   AUTH_PROVIDER: 'keycloak' | 'tapis';
   GOOGLE_MAPS_KEY?: string;
   WELCOME_MESSAGE?: string;
+  /** Data Catalog REST API base URL (e.g. https://datacatalog.mint.isi.edu/api/v1) */
+  DATA_CATALOG_API?: string;
   /** Fixed origin to register as the single Tapis callback_url (Vercel prod). */
   AUTH_CALLBACK_ORIGIN?: string;
   /** Regex source overriding the default preview-origin allowlist. */

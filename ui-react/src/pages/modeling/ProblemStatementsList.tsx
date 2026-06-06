@@ -1,6 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useQuery } from '@apollo/client';
 import { useNavigate } from 'react-router-dom';
 import { Pencil, Trash2, Plus, Search, X, ClipboardList } from 'lucide-react';
+
+import { LIST_TOP_REGIONS } from '@/graphql/queries/regions';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -76,12 +79,16 @@ function formatDateTime(iso?: string | null): string {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Region selector stub.
-// The full region picker requires the regions list which is a separate
-// concern.  For now we use a plain text input that accepts the region ID
-// string, matching the same data the legacy form stored.
-// ---------------------------------------------------------------------------
+// ─── Region types ─────────────────────────────────────────────────────────────
+
+interface TopRegion {
+  id: string;
+  name: string;
+}
+
+interface ListTopRegionsData {
+  region: TopRegion[];
+}
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
@@ -100,9 +107,28 @@ export function ProblemStatementsList({ regionId = 'DEFAULT' }: ProblemStatement
   const { user } = useAuth();
   const { toast } = useToast();
 
+  // ── regions ─────────────────────────────────────────────────────────────────
+  // problem_statement.region_id is a FK to the region table, so we must scope
+  // the list to (and create against) a region that actually exists. The legacy
+  // placeholder 'DEFAULT' is not a real region and caused FK violations.
+  const { data: regionsData } = useQuery<ListTopRegionsData>(LIST_TOP_REGIONS);
+  const regions = useMemo(() => regionsData?.region ?? [], [regionsData]);
+
+  const [selectedRegionId, setSelectedRegionId] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    if (!selectedRegionId && regions.length > 0) {
+      // Honour the requested region when it exists, otherwise fall back to the
+      // first available region instead of the bogus 'DEFAULT'.
+      const initial = regions.find((r) => r.id === regionId)?.id ?? regions[0]?.id;
+      if (initial) setSelectedRegionId(initial);
+    }
+  }, [regions, selectedRegionId, regionId]);
+
   // ── data ──────────────────────────────────────────────────────────────────
   const { data, loading, error, refetch } = useListProblemStatementsQuery({
-    variables: { regionId },
+    variables: { regionId: selectedRegionId ?? '' },
+    skip: !selectedRegionId,
     fetchPolicy: 'cache-and-network',
   });
 
@@ -132,7 +158,7 @@ export function ProblemStatementsList({ regionId = 'DEFAULT' }: ProblemStatement
 
   // ── form helpers ──────────────────────────────────────────────────────────
   function openAddDialog() {
-    setForm({ ...EMPTY_FORM, regionId });
+    setForm({ ...EMPTY_FORM, regionId: selectedRegionId ?? '' });
     setDialogOpen(true);
   }
 
@@ -171,6 +197,10 @@ export function ProblemStatementsList({ regionId = 'DEFAULT' }: ProblemStatement
       });
       return;
     }
+    if (!form.regionId) {
+      toast({ title: 'A region is required', variant: 'destructive' });
+      return;
+    }
 
     setSaving(true);
     try {
@@ -180,7 +210,7 @@ export function ProblemStatementsList({ regionId = 'DEFAULT' }: ProblemStatement
           variables: {
             id: form.id,
             name: form.name.trim(),
-            regionId: form.regionId || regionId,
+            regionId: form.regionId,
             startDate: form.startDate,
             endDate: form.endDate,
           },
@@ -202,7 +232,7 @@ export function ProblemStatementsList({ regionId = 'DEFAULT' }: ProblemStatement
           variables: {
             id: newId,
             name: form.name.trim(),
-            regionId: form.regionId || regionId,
+            regionId: form.regionId,
             startDate: form.startDate,
             endDate: form.endDate,
           },
@@ -284,6 +314,19 @@ export function ProblemStatementsList({ regionId = 'DEFAULT' }: ProblemStatement
             </button>
           )}
         </div>
+        <select
+          aria-label="Filter by region"
+          value={selectedRegionId ?? ''}
+          onChange={(e) => setSelectedRegionId(e.target.value)}
+          className="flex h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+          disabled={regions.length === 0}
+        >
+          {regions.map((r) => (
+            <option key={r.id} value={r.id}>
+              {r.name}
+            </option>
+          ))}
+        </select>
         <Button onClick={openAddDialog} aria-label="Add problem statement">
           <Plus className="mr-1.5 h-4 w-4" />
           Add
@@ -343,6 +386,7 @@ export function ProblemStatementsList({ regionId = 'DEFAULT' }: ProblemStatement
         open={dialogOpen}
         isEdit={!!form.id}
         form={form}
+        regions={regions}
         saving={saving}
         onChange={(field, val) => setForm((f) => ({ ...f, [field]: val }))}
         onSubmit={handleSubmit}
@@ -470,6 +514,7 @@ interface DialogProps {
   open: boolean;
   isEdit: boolean;
   form: FormValues;
+  regions: TopRegion[];
   saving: boolean;
   onChange: (field: keyof FormValues, value: string) => void;
   onSubmit: () => void;
@@ -480,6 +525,7 @@ function ProblemStatementDialog({
   open,
   isEdit,
   form,
+  regions,
   saving,
   onChange,
   onSubmit,
@@ -512,6 +558,28 @@ function ProblemStatementDialog({
               placeholder="e.g. Explore interventions to increase crop yield"
               required
             />
+          </div>
+
+          {/* Region */}
+          <div className="grid gap-1.5">
+            <Label htmlFor="ps-region">Region</Label>
+            <select
+              id="ps-region"
+              aria-label="Region"
+              value={form.regionId}
+              onChange={(e) => onChange('regionId', e.target.value)}
+              className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+              required
+            >
+              <option value="" disabled>
+                Select a region…
+              </option>
+              {regions.map((r) => (
+                <option key={r.id} value={r.id}>
+                  {r.name}
+                </option>
+              ))}
+            </select>
           </div>
 
           {/* Time period */}

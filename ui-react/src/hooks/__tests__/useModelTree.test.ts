@@ -55,23 +55,36 @@ describe('useModelTree', () => {
   it('builds tree from query data', () => {
     const { result } = renderHook(() => useModelTree(mockData));
     expect(result.current.nodes).toHaveLength(2);
-    expect(result.current.nodes[0]!.label).toBe('PIHM');
-    expect(result.current.nodes[0]!.entityType).toBe('software');
-    expect(result.current.nodes[0]!.children).toHaveLength(1);
-    expect(result.current.nodes[0]!.children[0]!.entityType).toBe('version');
-    expect(result.current.nodes[0]!.children[0]!.children[0]!.entityType).toBe('config');
-    expect(result.current.nodes[0]!.children[0]!.children[0]!.children[0]!.entityType).toBe(
-      'setup',
-    );
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const node0 = result.current.nodes[0]!;
+    expect(node0.label).toBe('PIHM');
+    expect(node0.entityType).toBe('software');
+    expect(node0.children).toHaveLength(1);
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const ver = node0.children[0]!;
+    expect(ver.entityType).toBe('version');
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const cfg = ver.children[0]!;
+    expect(cfg.entityType).toBe('config');
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const setup = cfg.children[0]!;
+    expect(setup.entityType).toBe('setup');
   });
 
   it('nodeId is scoped by entity type to avoid collisions', () => {
     const { result } = renderHook(() => useModelTree(mockData));
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const sw = result.current.nodes[0]!;
     expect(sw.nodeId).toBe('software:sw1');
-    expect(sw.children[0]!.nodeId).toBe('version:ver1');
-    expect(sw.children[0]!.children[0]!.nodeId).toBe('config:cfg1');
-    expect(sw.children[0]!.children[0]!.children[0]!.nodeId).toBe('setup:setup1');
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const ver = sw.children[0]!;
+    expect(ver.nodeId).toBe('version:ver1');
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const cfg = ver.children[0]!;
+    expect(cfg.nodeId).toBe('config:cfg1');
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const setup = cfg.children[0]!;
+    expect(setup.nodeId).toBe('setup:setup1');
   });
 
   it('starts with no nodes expanded', () => {
@@ -133,6 +146,7 @@ describe('useModelTree', () => {
       });
       // Only CYCLES should survive
       expect(result.current.nodes).toHaveLength(1);
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       expect(result.current.nodes[0]!.label).toBe('CYCLES');
     });
 
@@ -144,11 +158,15 @@ describe('useModelTree', () => {
       });
       // PIHM > v2.2 > Default Config > Ethiopia Setup — all four levels kept
       expect(result.current.nodes).toHaveLength(1);
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       expect(result.current.nodes[0]!.label).toBe('PIHM');
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const ver = result.current.nodes[0]!.children[0]!;
       expect(ver.label).toContain('v2.2');
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const cfg = ver.children[0]!;
       expect(cfg.label).toBe('Default Config');
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const setup = cfg.children[0]!;
       expect(setup.label).toBe('Ethiopia Setup');
     });
