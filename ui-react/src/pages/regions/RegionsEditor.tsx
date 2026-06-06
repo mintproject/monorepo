@@ -27,6 +27,7 @@ import { RegionModels } from './RegionModels';
 import {
   type RegionData,
   calculateBoundingBox,
+  parseGeometry,
   parseGeoJsonFeatures,
   generateRegionId,
   type NewRegionFromGeoJSON,
@@ -70,11 +71,17 @@ export function RegionsEditor({ regionId, regionType, mapHeight = '320px' }: Reg
     if (!selectedRegion) return;
     const geojson = {
       type: 'FeatureCollection',
-      features: selectedRegion.geometries.map((g) => ({
-        type: 'Feature',
-        properties: { id: selectedRegion.id, name: selectedRegion.name },
-        geometry: JSON.parse(g.geometry),
-      })),
+      features: selectedRegion.geometries
+        .map((g) => {
+          const geometry = parseGeometry(g.geometry);
+          if (!geometry) return null;
+          return {
+            type: 'Feature',
+            properties: { id: selectedRegion.id, name: selectedRegion.name },
+            geometry,
+          };
+        })
+        .filter(Boolean),
     };
     const blob = new Blob([JSON.stringify(geojson, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -236,12 +243,8 @@ function RegionMap({ regions, selectedRegion, onRegionClick }: RegionMapProps) {
     features: regions.flatMap((r) =>
       r.geometries
         .map((g) => {
-          let geom: GeoJSON.Geometry;
-          try {
-            geom = JSON.parse(g.geometry);
-          } catch {
-            return null;
-          }
+          const geom = parseGeometry(g.geometry);
+          if (!geom) return null;
           return {
             type: 'Feature',
             properties: { regionId: r.id, regionName: r.name },

@@ -11,7 +11,12 @@ export interface BoundingBox {
 
 export interface RegionGeometryData {
   id: number;
-  geometry: string;
+  /**
+   * Hasura returns the jsonb `geometry` column as an already-parsed object,
+   * while file uploads and the generated types model it as a JSON string.
+   * Accept both shapes.
+   */
+  geometry: string | GeoJSON.Geometry;
 }
 
 export interface RegionData {
@@ -30,10 +35,20 @@ export interface RegionCategoryData {
   sub_categories?: Array<{ region_category_id: string }>;
 }
 
-/** Parse a GeoJSON geometry string into a parsed object. */
-export function parseGeometry(geometryStr: string): GeoJSON.Geometry | null {
+/**
+ * Normalise a geometry value into a parsed GeoJSON object.
+ *
+ * Hasura returns jsonb geometry columns as already-parsed objects, whereas
+ * GeoJSON file uploads (and the generated GraphQL types) provide JSON strings.
+ * Handle both, returning null for anything unparseable.
+ */
+export function parseGeometry(
+  geometry: string | GeoJSON.Geometry | null | undefined,
+): GeoJSON.Geometry | null {
+  if (geometry == null) return null;
+  if (typeof geometry === 'object') return geometry;
   try {
-    return JSON.parse(geometryStr) as GeoJSON.Geometry;
+    return JSON.parse(geometry) as GeoJSON.Geometry;
   } catch {
     return null;
   }

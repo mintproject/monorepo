@@ -17,6 +17,7 @@ import { RegionsAgriculture } from '../pages/regions/RegionsAgriculture';
 import {
   calculateBoundingBox,
   parseGeoJsonFeatures,
+  parseGeometry,
   generateRegionId,
 } from '../pages/regions/regionUtils';
 import type { RegionGeometryData } from '../pages/regions/regionUtils';
@@ -81,6 +82,51 @@ describe('regionUtils', () => {
     it('returns null for invalid geometry JSON', () => {
       const geometries: RegionGeometryData[] = [{ id: 1, geometry: 'not-json' }];
       expect(calculateBoundingBox(geometries)).toBeNull();
+    });
+
+    // Hasura returns jsonb geometry columns as already-parsed objects, not
+    // strings. The bounding box (and map) must handle that shape.
+    it('handles geometry returned as a parsed object (Hasura jsonb)', () => {
+      const geometries = [
+        {
+          id: 1,
+          geometry: {
+            type: 'Polygon',
+            coordinates: [
+              [
+                [10, 20],
+                [30, 20],
+                [30, 40],
+                [10, 40],
+                [10, 20],
+              ],
+            ],
+          },
+        },
+      ] as unknown as RegionGeometryData[];
+      const bbox = calculateBoundingBox(geometries);
+      expect(bbox).not.toBeNull();
+      expect(bbox!.xmin).toBe(10);
+      expect(bbox!.xmax).toBe(30);
+      expect(bbox!.ymin).toBe(20);
+      expect(bbox!.ymax).toBe(40);
+    });
+  });
+
+  describe('parseGeometry', () => {
+    it('parses a JSON geometry string', () => {
+      const geom = parseGeometry(JSON.stringify({ type: 'Point', coordinates: [1, 2] }));
+      expect(geom).toEqual({ type: 'Point', coordinates: [1, 2] });
+    });
+
+    it('passes through an already-parsed geometry object (Hasura jsonb)', () => {
+      const obj = { type: 'Point', coordinates: [1, 2] };
+      expect(parseGeometry(obj as unknown as string)).toEqual(obj);
+    });
+
+    it('returns null for invalid input', () => {
+      expect(parseGeometry('not-json')).toBeNull();
+      expect(parseGeometry(null as unknown as string)).toBeNull();
     });
   });
 
