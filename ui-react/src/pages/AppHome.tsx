@@ -157,7 +157,7 @@ function RegionMap({ regions, onRegionClick }: RegionMapProps) {
         infoWindow.open(map);
       });
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
     [regions, onRegionClick],
   );
 
