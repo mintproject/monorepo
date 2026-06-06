@@ -4,12 +4,7 @@
  */
 export const mapStyles: google.maps.MapTypeStyle[] = [
   {
-    stylers: [
-      { hue: '#00aaff' },
-      { saturation: -100 },
-      { lightness: 12 },
-      { gamma: 2.15 },
-    ],
+    stylers: [{ hue: '#00aaff' }, { saturation: -100 }, { lightness: 12 }, { gamma: 2.15 }],
   },
   {
     featureType: 'landscape',
