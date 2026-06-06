@@ -178,3 +178,41 @@ SPA introduces Tapis-support uncertainty (PKCE) and is out of scope here.
 1. Exact production origin to register as `callback_url`.
 2. Whether `handleImplicitCallback()` already reads `state` from the fragment;
    if not, add it (needed for the forwarder to recover `state.origin`).
+
+## Implementation update (2026-06-06)
+
+Resolved during implementation:
+
+- **Fixed origin confirmed:** `https://monorepo-mosoriobs-projects.vercel.app`.
+- **Tapis client registered:** `mint-vercel`, `callback_url =
+  https://monorepo-mosoriobs-projects.vercel.app/oauth2/callback`, owner
+  `mosorio`, public client (implicit grant — `client_key` unused by the SPA).
+- **Open item 2 resolved:** `handleImplicitCallback()` already reads from the
+  fragment, and a new `getReturnedRawState()` helper reads `state` from the
+  fragment (implicit) or query (code) for the CSRF/forwarder logic.
+
+### Config-delivery correction (important)
+
+The original plan assumed Vercel could supply the new keys via `VITE_*`
+project env vars. That is **wrong**: `index.html` loads `public/env-config.js`,
+which Vite copies into `dist/`, so on Vercel `window.__MINT_CONFIG__` is always
+present — and `getConfig()` treats it as all-or-nothing (`__MINT_CONFIG__ ??
+VITE_* fallbacks`), so the `VITE_*` fallbacks never apply on Vercel. The static
+file also pins `AUTH_CLIENT_ID: "mint-local"`.
+
+**Fix delivered:** `ui-react/scripts/generate-env-config.mjs` runs after
+`vite build` (wired in `package.json`). It is a no-op unless `process.env.VERCEL`
+is set; on Vercel it rewrites `dist/env-config.js` from the project env vars,
+each falling back to the committed defaults. Local/Docker behavior is unchanged.
+
+**Vercel project env vars to set** (Preview + Production scopes):
+
+| Var | Value |
+|---|---|
+| `AUTH_CLIENT_ID` | `mint-vercel` |
+| `AUTH_CALLBACK_ORIGIN` | `https://monorepo-mosoriobs-projects.vercel.app` |
+| `AUTH_PREVIEW_ORIGIN_ALLOWLIST` | *(optional — overrides the default anchored pattern)* |
+
+Defaults in `generate-env-config.mjs` mirror `public/env-config.js`; keep the
+two in sync. The CSRF check is fail-closed; the origin allowlist is anchored and
+fail-closed (empty/unanchored override patterns are rejected).

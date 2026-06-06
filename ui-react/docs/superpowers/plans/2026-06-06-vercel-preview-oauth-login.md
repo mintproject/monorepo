@@ -813,43 +813,38 @@ git commit -m "feat(auth): forward preview logins from the callback page"
 
 ## Task 7: Provision the fixed Tapis client + Vercel env (ops)
 
-> These are external actions. They require (a) the **confirmed** production origin and (b) Tapis credentials. Do not guess the production origin — verify it in the Vercel dashboard first. The Tapis `callback_url` must match it character-for-character.
+> External actions. `FIXED_ORIGIN = https://monorepo-mosoriobs-projects.vercel.app` (confirmed). The Tapis `callback_url` must match it character-for-character.
+>
+> **Status:** the Tapis client is already registered (Steps 1–3 done). The
+> `VITE_*` env-var approach in the original Steps 4–5 was **superseded** —
+> see the note below and the spec's "Config-delivery correction". Only the
+> "Configure Vercel env" + redeploy steps remain.
 
 **Files:** none (uses `tacc/ckan` `scripts/tapis-oauth/` and Vercel config)
 
-- [ ] **Step 1: Confirm the production origin**
+- [x] **Step 1: Production origin confirmed** — `https://monorepo-mosoriobs-projects.vercel.app`.
 
-Determine the monorepo's stable production URL (custom domain if one exists, else the Vercel production alias, e.g. `https://monorepo-mosoriobs-projects.vercel.app`). Record it as `FIXED_ORIGIN`.
+- [x] **Step 2: Tapis client registered** — `mint-vercel`, `callback_url = https://monorepo-mosoriobs-projects.vercel.app/oauth2/callback` (created via `tacc/ckan` `scripts/tapis-oauth/create-client.sh`, owner `mosorio`, public client).
 
-- [ ] **Step 2: Register the fixed-callback Tapis client**
+- [x] **Step 3: Registration verified** — `get-client.sh mint-vercel` returns the matching `callback_url`.
 
-From the `tacc/ckan` repo, with `TAPIS_USERNAME`/`TAPIS_PASSWORD` exported:
-
-```bash
-bash scripts/tapis-oauth/create-client.sh "$TAPIS_USERNAME" "$TAPIS_PASSWORD" \
-  mint-vercel "<FIXED_ORIGIN>/oauth2/callback"
-```
-
-Expected: JSON response with `"status": "success"` and `callback_url` equal to `<FIXED_ORIGIN>/oauth2/callback`.
-
-- [ ] **Step 3: Verify registration**
-
-```bash
-bash scripts/tapis-oauth/get-client.sh "$TAPIS_USERNAME" "$TAPIS_PASSWORD" mint-vercel
-```
-
-Expected: `callback_url` matches `FIXED_ORIGIN`.
+> **Why Steps 4–5 changed:** `public/env-config.js` ships to Vercel (Vite copies
+> `public/` → `dist/`, loaded by `index.html`), so `window.__MINT_CONFIG__` is
+> always present on Vercel and `getConfig()`'s `VITE_*` fallbacks never apply
+> there. Delivery is therefore handled by `ui-react/scripts/generate-env-config.mjs`
+> (runs after `vite build`; no-op unless `process.env.VERCEL`), which rewrites
+> `dist/env-config.js` from the Vercel project env vars below.
 
 - [ ] **Step 4: Configure Vercel env (Preview + Production scopes)**
 
-Set, for the `monorepo` Vercel project (Preview and Production environments):
-- `VITE_AUTH_CLIENT_ID=mint-vercel`
-- `VITE_AUTH_CALLBACK_ORIGIN=<FIXED_ORIGIN>`
-- (optional) `VITE_AUTH_PREVIEW_ORIGIN_ALLOWLIST` only if the default pattern needs overriding.
+In the `monorepo` Vercel project settings (Preview **and** Production), set:
+- `AUTH_CLIENT_ID=mint-vercel`
+- `AUTH_CALLBACK_ORIGIN=https://monorepo-mosoriobs-projects.vercel.app`
+- (optional) `AUTH_PREVIEW_ORIGIN_ALLOWLIST` only if the default anchored pattern needs overriding.
 
-Leave local dev (`.env.development`, `public/env-config.js`) untouched so it keeps using `mint-local` and `window.location.origin`.
+(Unprefixed names; `VITE_`-prefixed equivalents also work as fallbacks. Other keys — HASURA, AUTH_SERVER, GOOGLE_MAPS_KEY — default to the committed values in `generate-env-config.mjs`; set them only to override.) Leave local dev (`.env.development`, `public/env-config.js`) untouched so it keeps using `mint-local`.
 
-- [ ] **Step 5: Redeploy the preview branch** so the new env vars take effect.
+- [ ] **Step 5: Redeploy the preview branch** so the regenerated `env-config.js` takes effect.
 
 ---
 
