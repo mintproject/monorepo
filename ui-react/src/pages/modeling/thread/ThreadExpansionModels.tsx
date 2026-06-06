@@ -17,7 +17,11 @@ interface ThreadExpansionModelsProps {
   onContinue?: () => void;
 }
 
-export function ThreadExpansionModels({ thread, onUpdated, onContinue }: ThreadExpansionModelsProps) {
+export function ThreadExpansionModels({
+  thread,
+  onUpdated,
+  onContinue,
+}: ThreadExpansionModelsProps) {
   const { user } = useAuth();
   const perm = getUserPermission(thread.permissions, thread.events, user?.username ?? null);
 
@@ -50,11 +54,7 @@ export function ThreadExpansionModels({ thread, onUpdated, onContinue }: ThreadE
 
   // View mode: selected models list, delegated to MintModels
   const viewContent = (
-    <MintModels
-      thread={thread}
-      onThreadUpdated={onUpdated}
-      onContinue={onContinue}
-    />
+    <MintModels thread={thread} onThreadUpdated={onUpdated} onContinue={onContinue} />
   );
 
   // Edit content is null — MintModels handles its own edit/view toggle
@@ -67,7 +67,9 @@ export function ThreadExpansionModels({ thread, onUpdated, onContinue }: ThreadE
       defaultOpen={!hasModels}
       canEdit={perm.write}
       viewContent={viewContent}
-      onSave={async () => { onUpdated?.(); }}
+      onSave={async () => {
+        onUpdated?.();
+      }}
     />
   );
 }

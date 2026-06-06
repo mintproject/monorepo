@@ -36,10 +36,6 @@ import { RegionModels } from './pages/regions/RegionModels';
 // Pages — variables
 import { VariablesHome } from './pages/variables/VariablesHome';
 
-// Auth pages
-import { OAuth2CallbackPage } from './pages/OAuth2CallbackPage';
-import { LoginRequiredPage } from './components/common/ProtectedRoute';
-
 // 404
 import { NotFoundPage } from './pages/NotFoundPage';
 

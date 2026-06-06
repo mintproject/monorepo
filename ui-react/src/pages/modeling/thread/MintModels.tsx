@@ -110,7 +110,7 @@ interface ModelTableRowProps {
 function ModelTableRow({ row, checked, onToggle }: ModelTableRowProps) {
   return (
     <tr className={cn('border-b', checked && 'bg-blue-50')}>
-      <td className="px-3 py-2 w-8">
+      <td className="w-8 px-3 py-2">
         <input
           type="checkbox"
           checked={checked}
@@ -120,9 +120,9 @@ function ModelTableRow({ row, checked, onToggle }: ModelTableRowProps) {
         />
       </td>
       <td className="px-3 py-2">
-        <span className="font-medium text-sm">{row.name}</span>
+        <span className="text-sm font-medium">{row.name}</span>
         {row.description && (
-          <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{row.description}</p>
+          <p className="mt-0.5 line-clamp-2 text-xs text-gray-500">{row.description}</p>
         )}
       </td>
       <td className="px-3 py-2 text-sm text-gray-600">{row.category || '-'}</td>
@@ -147,9 +147,9 @@ function CompareDialog({ rows, onClose }: CompareDialogProps) {
       aria-label="Model comparison"
       data-testid="compare-dialog"
     >
-      <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[80vh] flex flex-col">
-        <div className="flex items-center justify-between p-4 border-b">
-          <h2 className="font-semibold text-base">Model Comparison</h2>
+      <div className="mx-4 flex max-h-[80vh] w-full max-w-4xl flex-col rounded-lg bg-white shadow-xl">
+        <div className="flex items-center justify-between border-b p-4">
+          <h2 className="text-base font-semibold">Model Comparison</h2>
           <button
             type="button"
             onClick={onClose}
@@ -160,13 +160,13 @@ function CompareDialog({ rows, onClose }: CompareDialogProps) {
           </button>
         </div>
 
-        <div className="overflow-auto flex-1 p-4">
-          <table className="w-full text-sm border-collapse">
+        <div className="flex-1 overflow-auto p-4">
+          <table className="w-full border-collapse text-sm">
             <thead>
               <tr className="border-b">
-                <th className="text-left px-3 py-2 font-semibold border-r">Model details</th>
+                <th className="border-r px-3 py-2 text-left font-semibold">Model details</th>
                 {rows.map((r) => (
-                  <th key={r.id} className="text-left px-3 py-2 font-semibold">
+                  <th key={r.id} className="px-3 py-2 text-left font-semibold">
                     {r.name}
                   </th>
                 ))}
@@ -175,7 +175,7 @@ function CompareDialog({ rows, onClose }: CompareDialogProps) {
             <tbody>
               {COMPARISON_FEATURES.map((feature) => (
                 <tr key={feature.name} className="border-b">
-                  <td className="px-3 py-2 font-medium border-r bg-gray-50">{feature.name}</td>
+                  <td className="border-r bg-gray-50 px-3 py-2 font-medium">{feature.name}</td>
                   {rows.map((r) => (
                     <td key={r.id} className="px-3 py-2">
                       {feature.getValue(r)}
@@ -184,9 +184,9 @@ function CompareDialog({ rows, onClose }: CompareDialogProps) {
                 </tr>
               ))}
               <tr className="border-b">
-                <td className="px-3 py-2 font-medium border-r bg-gray-50">Description</td>
+                <td className="border-r bg-gray-50 px-3 py-2 font-medium">Description</td>
                 {rows.map((r) => (
-                  <td key={r.id} className="px-3 py-2 text-gray-600 text-xs">
+                  <td key={r.id} className="px-3 py-2 text-xs text-gray-600">
                     {r.description || <span className="italic text-gray-400">None</span>}
                   </td>
                 ))}
@@ -335,7 +335,7 @@ export function MintModels({ thread, onContinue, onThreadUpdated }: MintModelsPr
         </p>
 
         <div className="clt">
-          <h3 className="text-sm font-semibold mb-2">
+          <h3 className="mb-2 text-sm font-semibold">
             Selected Models
             {perm.write && (
               <button
@@ -348,32 +348,24 @@ export function MintModels({ thread, onContinue, onThreadUpdated }: MintModelsPr
               </button>
             )}
           </h3>
-          <ul className="list-disc pl-5 space-y-1 text-sm">
+          <ul className="list-disc space-y-1 pl-5 text-sm">
             {(thread.thread_models ?? []).map((tm: ThreadModel) => {
               const cfgId = tm.modelcatalog_configuration_id ?? tm.model_id ?? tm.id;
               const row = allRows.find((r) => r.id === cfgId);
-              return (
-                <li key={tm.id}>
-                  {row ? row.name : cfgId}
-                </li>
-              );
+              return <li key={tm.id}>{row ? row.name : cfgId}</li>;
             })}
           </ul>
         </div>
 
         {latestModelEvent?.notes && (
-          <fieldset className="border rounded p-3">
-            <legend className="text-xs font-medium px-1">Notes</legend>
+          <fieldset className="rounded border p-3">
+            <legend className="px-1 text-xs font-medium">Notes</legend>
             <p className="text-sm text-gray-700">{latestModelEvent.notes}</p>
           </fieldset>
         )}
 
         <div className="flex justify-end">
-          <Button
-            type="button"
-            onClick={onContinue}
-            data-testid="continue-btn"
-          >
+          <Button type="button" onClick={onContinue} data-testid="continue-btn">
             Continue
           </Button>
         </div>
@@ -385,20 +377,20 @@ export function MintModels({ thread, onContinue, onThreadUpdated }: MintModelsPr
   return (
     <div className="space-y-4" data-testid="models-edit-mode">
       <p className="text-sm text-gray-600">
-        The models below are available in the catalog. Select one or more calibrated
-        models to use in this sub-task. You can compare selected models before saving.
+        The models below are available in the catalog. Select one or more calibrated models to use
+        in this sub-task. You can compare selected models before saving.
       </p>
 
       {/* Search bar */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
         <input
           id="model-search"
           type="text"
           placeholder="Filter models by name, region or description…"
           value={searchText}
           onChange={(e) => setSearchText(e.target.value)}
-          className="w-full pl-9 pr-3 py-2 border rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+          className="w-full rounded border py-2 pl-9 pr-3 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
           data-testid="model-search-input"
         />
       </div>
@@ -417,11 +409,11 @@ export function MintModels({ thread, onContinue, onThreadUpdated }: MintModelsPr
       )}
 
       {!loading && !error && (
-        <div className="overflow-auto border rounded">
+        <div className="overflow-auto rounded border">
           <table className="w-full text-sm" data-testid="models-table">
-            <thead className="bg-gray-50 border-b">
+            <thead className="border-b bg-gray-50">
               <tr>
-                <th className="px-3 py-2 w-8" />
+                <th className="w-8 px-3 py-2" />
                 <th className="px-3 py-2 text-left font-semibold">Model</th>
                 <th className="px-3 py-2 text-left font-semibold">Category</th>
                 <th className="px-3 py-2 text-left font-semibold">Calibration Region</th>
@@ -432,7 +424,7 @@ export function MintModels({ thread, onContinue, onThreadUpdated }: MintModelsPr
                 <tr>
                   <td
                     colSpan={4}
-                    className="px-3 py-6 text-center text-gray-400 text-sm"
+                    className="px-3 py-6 text-center text-sm text-gray-400"
                     data-testid="no-models-row"
                   >
                     {searchText ? 'No models match your search.' : 'No models found.'}
@@ -452,10 +444,7 @@ export function MintModels({ thread, onContinue, onThreadUpdated }: MintModelsPr
               {/* Show/hide other-region models link */}
               {!searchText && otherRows.length > 0 && (
                 <tr>
-                  <td
-                    colSpan={4}
-                    className="px-3 py-2 text-sm text-gray-400"
-                  >
+                  <td colSpan={4} className="px-3 py-2 text-sm text-gray-400">
                     <button
                       type="button"
                       className="cursor-pointer underline hover:text-gray-600"
@@ -474,14 +463,14 @@ export function MintModels({ thread, onContinue, onThreadUpdated }: MintModelsPr
       )}
 
       {/* Notes */}
-      <fieldset className="border rounded p-3">
-        <legend className="text-xs font-medium px-1">Notes</legend>
+      <fieldset className="rounded border p-3">
+        <legend className="px-1 text-xs font-medium">Notes</legend>
         <textarea
           id="model-notes"
           rows={3}
           defaultValue={notesDefault}
           onChange={(e) => setNotes(e.target.value)}
-          className="w-full text-sm border-none outline-none resize-none"
+          className="w-full resize-none border-none text-sm outline-none"
           data-testid="model-notes"
         />
       </fieldset>
@@ -536,12 +525,7 @@ export function MintModels({ thread, onContinue, onThreadUpdated }: MintModelsPr
       </div>
 
       {/* Comparison modal */}
-      {showCompare && (
-        <CompareDialog
-          rows={selectedRows}
-          onClose={() => setShowCompare(false)}
-        />
-      )}
+      {showCompare && <CompareDialog rows={selectedRows} onClose={() => setShowCompare(false)} />}
     </div>
   );
 }
