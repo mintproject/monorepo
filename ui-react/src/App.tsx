@@ -53,7 +53,14 @@ export function App() {
             {/* Models */}
             <Route path="/models" element={<ModelsPage />} />
             <Route path="/models/configure/:id" element={<ConfigurePage />} />
-            <Route path="/models/register" element={<RegisterPage />} />
+            <Route
+              path="/models/register"
+              element={
+                <ProtectedRoute>
+                  <RegisterPage />
+                </ProtectedRoute>
+              }
+            />
 
             {/* Legacy configure route — redirect to models */}
             <Route path="/configure" element={<Navigate to="/models" replace />} />
