@@ -994,7 +994,7 @@ export type InsertThreadProvenanceMutation = {
 export const InsertThreadProvenanceDocument = gql`
   mutation InsertThreadProvenance(
     $threadId: String!
-    $event: thread_events_enum!
+    $event: thread_events!
     $userid: String!
     $notes: String
   ) {
