@@ -281,10 +281,13 @@ export async function handleCallback(): Promise<CallbackResult> {
     return { type: 'error', error: description };
   }
 
-  // Validate the state nonce to prevent CSRF.
+  // Validate the state nonce to prevent CSRF. Fail closed: if this browser
+  // initiated login (a stored nonce exists), the callback MUST present a
+  // decodable state whose nonce matches. Missing/garbled state is rejected.
   const decoded = decodeState(getReturnedRawState());
   const storedNonce = sessionStorage.getItem('oauth2_state');
-  if (decoded && storedNonce && decoded.nonce !== storedNonce) {
+  if (storedNonce && (!decoded || decoded.nonce !== storedNonce)) {
+    sessionStorage.removeItem('oauth2_state');
     return { type: 'error', error: 'State mismatch — possible CSRF attack' };
   }
   sessionStorage.removeItem('oauth2_state');

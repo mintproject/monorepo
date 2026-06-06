@@ -417,6 +417,28 @@ describe('handleCallback CSRF via encoded state', () => {
     expect(result.type).toBe('error');
     expect(result.error).toMatch(/CSRF/i);
   });
+
+  it('rejects a callback with NO state when login was initiated (fail closed)', async () => {
+    setMintConfig({ AUTH_PROVIDER: 'tapis' });
+    sessionStorage.setItem('oauth2_state', 'nonce-1');
+    window.location.hash = '#access_token=tok-abc&expires_in=3600';
+    window.location.search = '';
+
+    const result = await handleCallback();
+    expect(result.type).toBe('error');
+    expect(result.error).toMatch(/CSRF/i);
+  });
+
+  it('rejects a callback with a garbled (undecodable) state when login was initiated', async () => {
+    setMintConfig({ AUTH_PROVIDER: 'tapis' });
+    sessionStorage.setItem('oauth2_state', 'nonce-1');
+    window.location.hash = '#access_token=tok-abc&state=not-valid-base64-json';
+    window.location.search = '';
+
+    const result = await handleCallback();
+    expect(result.type).toBe('error');
+    expect(result.error).toMatch(/CSRF/i);
+  });
 });
 
 describe('auth round-trip: buildAuthorizationUrl state survives handleCallback', () => {
