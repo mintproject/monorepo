@@ -87,7 +87,7 @@ describe('MintThread', () => {
   });
 
   it('shows error message when query fails', async () => {
-    const errorMock = {
+    const errorMock: MockedResponse = {
       request: {
         query: GetThreadDocument,
         variables: { id: 'test-thread-id' },

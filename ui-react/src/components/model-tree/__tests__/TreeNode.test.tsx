@@ -160,6 +160,7 @@ describe('TreeNode', () => {
         />
       </ul>,
     );
+    // The row div should have the selected class
     // We check aria-selected on the treeitem
     const item = screen.getByRole('treeitem');
     expect(item).toHaveAttribute('aria-selected', 'true');

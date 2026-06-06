@@ -36,6 +36,9 @@ import { RegionModels } from './pages/regions/RegionModels';
 // Pages — variables
 import { VariablesHome } from './pages/variables/VariablesHome';
 
+// Auth
+import { OAuth2CallbackPage } from './pages/OAuth2CallbackPage';
+
 // 404
 import { NotFoundPage } from './pages/NotFoundPage';
 
@@ -79,7 +82,6 @@ export function App() {
 
             {/* Auth callback */}
             <Route path="/oauth2/callback" element={<OAuth2CallbackPage />} />
-            <Route path="/login-required" element={<LoginRequiredPage />} />
 
             {/* Datasets */}
             <Route path="/datasets" element={<DatasetsHome />} />
