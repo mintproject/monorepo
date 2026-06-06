@@ -174,13 +174,23 @@ describe('token-store', () => {
 
     it('returns true when access expired but refresh token still valid', () => {
       // Store with access expiring immediately
-      storeTokens({ accessToken: 'tok', accessExpiresIn: -1, refreshToken: 'ref', refreshExpiresIn: 3600 });
+      storeTokens({
+        accessToken: 'tok',
+        accessExpiresIn: -1,
+        refreshToken: 'ref',
+        refreshExpiresIn: 3600,
+      });
       // Access is expired, refresh is valid
       expect(isTokenValid()).toBe(true);
     });
 
     it('clears tokens and returns false when both tokens expired', () => {
-      storeTokens({ accessToken: 'tok', accessExpiresIn: -1, refreshToken: 'ref', refreshExpiresIn: -1 });
+      storeTokens({
+        accessToken: 'tok',
+        accessExpiresIn: -1,
+        refreshToken: 'ref',
+        refreshExpiresIn: -1,
+      });
       expect(isTokenValid()).toBe(false);
       expect(getAccessToken()).toBeNull();
     });

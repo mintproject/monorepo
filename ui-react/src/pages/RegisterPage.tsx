@@ -11,9 +11,7 @@ export function RegisterPage() {
         <CardTitle>Register Model</CardTitle>
       </CardHeader>
       <CardContent>
-        <p className="text-muted-foreground">
-          Model registration wizard will be implemented here.
-        </p>
+        <p className="text-muted-foreground">Model registration wizard will be implemented here.</p>
       </CardContent>
     </Card>
   );

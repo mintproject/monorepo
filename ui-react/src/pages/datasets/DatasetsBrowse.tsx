@@ -8,9 +8,7 @@ export function DatasetsBrowse() {
         <CardTitle>DatasetsBrowse</CardTitle>
       </CardHeader>
       <CardContent>
-        <p className="text-muted-foreground">
-          Dataset browsing will be implemented here.
-        </p>
+        <p className="text-muted-foreground">Dataset browsing will be implemented here.</p>
       </CardContent>
     </Card>
   );

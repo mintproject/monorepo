@@ -265,8 +265,18 @@ describe('diffInputRows', () => {
   });
 
   it('detects standard variable change as update', () => {
-    const orig = [makeInputRow({ existingId: 'https://id/ds-1', standardVariable: { id: 'sv-1', label: 'SV 1' } })];
-    const modified = [makeInputRow({ existingId: 'https://id/ds-1', standardVariable: { id: 'sv-2', label: 'SV 2' } })];
+    const orig = [
+      makeInputRow({
+        existingId: 'https://id/ds-1',
+        standardVariable: { id: 'sv-1', label: 'SV 1' },
+      }),
+    ];
+    const modified = [
+      makeInputRow({
+        existingId: 'https://id/ds-1',
+        standardVariable: { id: 'sv-2', label: 'SV 2' },
+      }),
+    ];
     const { toUpdate } = diffInputRows(orig, modified);
     expect(toUpdate).toHaveLength(1);
   });
@@ -280,7 +290,7 @@ describe('diffInputRows', () => {
     const modified: InputRow[] = [
       makeInputRow({ existingId: 'https://id/ds-1', label: 'Keep' }),
       makeInputRow({ existingId: 'https://id/ds-2', label: 'Updated' }),
-      makeInputRow({ label: 'New Input' }),  // no existingId = new
+      makeInputRow({ label: 'New Input' }), // no existingId = new
     ];
     const { toAdd, toRemove, toUpdate } = diffInputRows(orig, modified);
 
@@ -307,7 +317,9 @@ describe('diffParameterRows', () => {
 
   it('detects default value change as update', () => {
     const orig = [makeParameterRow({ existingId: 'https://id/param-1', hasDefaultValue: '1.0' })];
-    const modified = [makeParameterRow({ existingId: 'https://id/param-1', hasDefaultValue: '2.0' })];
+    const modified = [
+      makeParameterRow({ existingId: 'https://id/param-1', hasDefaultValue: '2.0' }),
+    ];
     const { toUpdate } = diffParameterRows(orig, modified);
     expect(toUpdate).toHaveLength(1);
   });

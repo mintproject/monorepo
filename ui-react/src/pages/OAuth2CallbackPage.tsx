@@ -45,7 +45,7 @@ export function OAuth2CallbackPage() {
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
           <div
-            className="mb-4 h-8 w-8 animate-spin rounded-full border-4 border-current border-t-transparent mx-auto"
+            className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-4 border-current border-t-transparent"
             aria-label="Loading"
             role="status"
           />
@@ -58,11 +58,11 @@ export function OAuth2CallbackPage() {
   if (status === 'error') {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="text-center max-w-md p-6">
-          <h1 className="text-xl font-semibold text-destructive mb-2">Authentication Failed</h1>
-          <p className="text-sm text-muted-foreground mb-4">{errorMessage}</p>
+        <div className="max-w-md p-6 text-center">
+          <h1 className="mb-2 text-xl font-semibold text-destructive">Authentication Failed</h1>
+          <p className="mb-4 text-sm text-muted-foreground">{errorMessage}</p>
           <button
-            className="text-sm underline text-primary"
+            className="text-sm text-primary underline"
             onClick={() => (window.location.href = '/')}
           >
             Return to home

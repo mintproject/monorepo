@@ -80,7 +80,9 @@ describe('InMemoryCache type policies', () => {
       },
     });
 
-    const result = cache.readQuery<{ items: Array<{ configuration_id: string; input_id: string; is_optional: boolean }> }>({
+    const result = cache.readQuery<{
+      items: Array<{ configuration_id: string; input_id: string; is_optional: boolean }>;
+    }>({
       query: {
         kind: Kind.DOCUMENT,
         definitions: [

@@ -32,13 +32,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
     // Trigger OAuth2 redirect and show a transitional state.
     // Using a Navigate to a dedicated login-required page lets us avoid
     // a redirect loop — the login-required page calls login() from useAuth().
-    return (
-      <Navigate
-        to="/login-required"
-        state={{ from: location }}
-        replace
-      />
-    );
+    return <Navigate to="/login-required" state={{ from: location }} replace />;
   }
 
   return <>{children}</>;
@@ -58,14 +52,14 @@ export function LoginRequiredPage() {
   // Auto-initiate login on mount — useEffect so it runs once after mount.
   useEffect(() => {
     login();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
     <div className="flex min-h-screen items-center justify-center">
       <div className="text-center">
         <div
-          className="mb-4 h-8 w-8 animate-spin rounded-full border-4 border-current border-t-transparent mx-auto"
+          className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-4 border-current border-t-transparent"
           aria-label="Loading"
           role="status"
         />
