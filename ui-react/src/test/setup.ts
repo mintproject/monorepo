@@ -2,6 +2,27 @@ import '@testing-library/jest-dom/vitest';
 
 import { afterAll, afterEach, beforeAll } from 'vitest';
 
+// ---------------------------------------------------------------------------
+// ResizeObserver polyfill — jsdom does not implement ResizeObserver, but
+// cmdk (used by the Command/combobox components) requires it. Provide a
+// no-op stub so components can mount without crashing.
+// ---------------------------------------------------------------------------
+if (typeof ResizeObserver === 'undefined') {
+  globalThis.ResizeObserver = class ResizeObserver {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  };
+}
+
+// ---------------------------------------------------------------------------
+// scrollIntoView polyfill — jsdom stubs this as a no-op but cmdk calls it
+// on list items during keyboard navigation and the popover open lifecycle.
+// ---------------------------------------------------------------------------
+if (!Element.prototype.scrollIntoView) {
+  Element.prototype.scrollIntoView = function () {};
+}
+
 import { server } from './msw/server';
 
 // ---------------------------------------------------------------------------
