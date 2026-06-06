@@ -273,7 +273,7 @@ mutation RegisterModel(
       label: $softwareLabel
       description: $softwareDescription
       type: $softwareType
-      software_versions: {
+      versions: {
         data: [
           {
             id: $versionId
@@ -296,7 +296,7 @@ mutation RegisterModel(
   ) {
     id
     label
-    software_versions {
+    versions {
       id
       label
       configurations {
