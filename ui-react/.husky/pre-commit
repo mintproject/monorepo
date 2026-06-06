@@ -1,0 +1,1 @@
+cd ui-react && npx lint-staged
