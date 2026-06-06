@@ -1725,3 +1725,42 @@ export function useInsertRegionsMutation(
 }
 
 export type InsertRegionsMutationHookResult = ReturnType<typeof useInsertRegionsMutation>;
+
+// ─── Query: GetRegions ────────────────────────────────────────────────────────
+
+export type GetRegionsQueryVariables = Exact<{ [key: string]: never }>;
+
+export type GetRegionsQuery = {
+  __typename?: 'query_root';
+  modelcatalog_region: Array<{
+    __typename?: 'modelcatalog_region';
+    id: string;
+    label?: string | null;
+  }>;
+};
+
+export const GetRegionsDocument = gql`
+  query GetRegions {
+    modelcatalog_region(order_by: { label: asc }) {
+      id
+      label
+    }
+  }
+`;
+
+export function useGetRegionsQuery(
+  baseOptions?: Apollo.QueryHookOptions<GetRegionsQuery, GetRegionsQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useQuery<GetRegionsQuery, GetRegionsQueryVariables>(GetRegionsDocument, options);
+}
+
+export function useGetRegionsLazyQuery(
+  baseOptions?: Apollo.LazyQueryHookOptions<GetRegionsQuery, GetRegionsQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useLazyQuery<GetRegionsQuery, GetRegionsQueryVariables>(GetRegionsDocument, options);
+}
+
+export type GetRegionsQueryHookResult = ReturnType<typeof useGetRegionsQuery>;
+export type GetRegionsLazyQueryHookResult = ReturnType<typeof useGetRegionsLazyQuery>;
