@@ -39,7 +39,7 @@ export type ModelcatalogSoftware = {
   description?: Maybe<Scalars['String']['output']>;
   type?: Maybe<Scalars['String']['output']>;
   author?: Maybe<ModelcatalogPerson>;
-  software_versions: Array<ModelcatalogSoftwareVersion>;
+  versions: Array<ModelcatalogSoftwareVersion>;
 };
 
 export type ModelcatalogSoftwareVersion = {
@@ -299,7 +299,7 @@ export const GetModelTreeDocument = gql`
     ) {
       id
       label
-      versions: software_versions(order_by: { label: asc }) {
+      versions(order_by: { label: asc }) {
         id
         label
         version_id
@@ -1141,7 +1141,7 @@ export type RegisterModelMutation = {
     __typename?: 'modelcatalog_software';
     id: string;
     label?: string | null;
-    software_versions: Array<{
+    versions: Array<{
       __typename?: 'modelcatalog_software_version';
       id: string;
       label?: string | null;
@@ -1174,7 +1174,7 @@ export const RegisterModelDocument = gql`
         label: $softwareLabel
         description: $softwareDescription
         type: $softwareType
-        software_versions: {
+        versions: {
           data: [
             {
               id: $versionId
@@ -1197,7 +1197,7 @@ export const RegisterModelDocument = gql`
     ) {
       id
       label
-      software_versions {
+      versions {
         id
         label
         configurations {
@@ -1386,3 +1386,382 @@ export function useDeleteConfigurationRegionMutation(
 }
 
 export type DeleteConfigurationRegionMutationHookResult = ReturnType<typeof useDeleteConfigurationRegionMutation>;
+
+// ─── Query: GetRegions ────────────────────────────────────────────────────────
+
+export type GetRegionsQueryVariables = Exact<{ [key: string]: never }>;
+
+export type GetRegionsQuery = {
+  __typename?: 'query_root';
+  modelcatalog_region: Array<{
+    __typename?: 'modelcatalog_region';
+    id: string;
+    label?: string | null;
+  }>;
+};
+
+export const GetRegionsDocument = gql`
+  query GetRegions {
+    modelcatalog_region(order_by: { label: asc }) {
+      id
+      label
+    }
+  }
+`;
+
+export function useGetRegionsQuery(
+  baseOptions?: Apollo.QueryHookOptions<GetRegionsQuery, GetRegionsQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useQuery<GetRegionsQuery, GetRegionsQueryVariables>(GetRegionsDocument, options);
+}
+
+export function useGetRegionsLazyQuery(
+  baseOptions?: Apollo.LazyQueryHookOptions<GetRegionsQuery, GetRegionsQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useLazyQuery<GetRegionsQuery, GetRegionsQueryVariables>(GetRegionsDocument, options);
+}
+
+// ─── Region types ─────────────────────────────────────────────────────────────
+
+export type RegionGeometry = {
+  __typename?: 'region_geometry';
+  id: number;
+  geometry: string;
+};
+
+export type Region = {
+  __typename?: 'region';
+  id: string;
+  name: string;
+  parent_region_id?: string | null;
+  category_id?: string | null;
+  model_catalog_uri?: string | null;
+  geometries: Array<RegionGeometry>;
+};
+
+export type RegionSubCategory = {
+  __typename?: 'region_category_sub_category';
+  region_category_id: string;
+};
+
+export type RegionCategory = {
+  __typename?: 'region_category';
+  id: string;
+  name: string;
+  citation?: string | null;
+  sub_categories: Array<RegionSubCategory>;
+};
+
+// ─── Region fragment types ────────────────────────────────────────────────────
+
+export type RegionFieldsFragment = {
+  __typename?: 'region';
+  id: string;
+  name: string;
+  parent_region_id?: string | null;
+  category_id?: string | null;
+  model_catalog_uri?: string | null;
+  geometries: Array<{
+    __typename?: 'region_geometry';
+    id: number;
+    geometry: string;
+  }>;
+};
+
+export type RegionCategoryFieldsFragment = {
+  __typename?: 'region_category';
+  id: string;
+  name: string;
+  citation?: string | null;
+};
+
+// ─── Query: ListRegionCategories ──────────────────────────────────────────────
+
+export type ListRegionCategoriesQueryVariables = Exact<{ [key: string]: never }>;
+
+export type ListRegionCategoriesQuery = {
+  __typename?: 'query_root';
+  region_category: Array<{
+    __typename?: 'region_category';
+    id: string;
+    name: string;
+    citation?: string | null;
+    sub_categories: Array<{
+      __typename?: 'region_category_sub_category';
+      region_category_id: string;
+    }>;
+  }>;
+};
+
+export const ListRegionCategoriesDocument = gql`
+  query ListRegionCategories {
+    region_category {
+      id
+      name
+      citation
+      sub_categories {
+        region_category_id
+      }
+    }
+  }
+`;
+
+export function useListRegionCategoriesQuery(
+  baseOptions?: Apollo.QueryHookOptions<ListRegionCategoriesQuery, ListRegionCategoriesQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useQuery<ListRegionCategoriesQuery, ListRegionCategoriesQueryVariables>(
+    ListRegionCategoriesDocument,
+    options
+  );
+}
+
+export function useListRegionCategoriesLazyQuery(
+  baseOptions?: Apollo.LazyQueryHookOptions<ListRegionCategoriesQuery, ListRegionCategoriesQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useLazyQuery<ListRegionCategoriesQuery, ListRegionCategoriesQueryVariables>(
+    ListRegionCategoriesDocument,
+    options
+  );
+}
+
+export type ListRegionCategoriesQueryHookResult = ReturnType<typeof useListRegionCategoriesQuery>;
+
+// ─── Query: ListRegionsByCategory ─────────────────────────────────────────────
+
+export type ListRegionsByCategoryQueryVariables = Exact<{ categoryId: Scalars['String']['input'] }>;
+
+export type ListRegionsByCategoryQuery = {
+  __typename?: 'query_root';
+  region: Array<RegionFieldsFragment>;
+};
+
+export const ListRegionsByCategoryDocument = gql`
+  query ListRegionsByCategory($categoryId: String!) {
+    region(
+      where: { category_id: { _eq: $categoryId }, parent_region_id: { _is_null: false } }
+      order_by: { name: asc }
+    ) {
+      id
+      name
+      parent_region_id
+      category_id
+      model_catalog_uri
+      geometries {
+        id
+        geometry
+      }
+    }
+  }
+`;
+
+export function useListRegionsByCategoryQuery(
+  baseOptions: Apollo.QueryHookOptions<ListRegionsByCategoryQuery, ListRegionsByCategoryQueryVariables> &
+    ({ variables: ListRegionsByCategoryQueryVariables; skip?: boolean } | { skip: boolean })
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useQuery<ListRegionsByCategoryQuery, ListRegionsByCategoryQueryVariables>(
+    ListRegionsByCategoryDocument,
+    options
+  );
+}
+
+export function useListRegionsByCategoryLazyQuery(
+  baseOptions?: Apollo.LazyQueryHookOptions<ListRegionsByCategoryQuery, ListRegionsByCategoryQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useLazyQuery<ListRegionsByCategoryQuery, ListRegionsByCategoryQueryVariables>(
+    ListRegionsByCategoryDocument,
+    options
+  );
+}
+
+export type ListRegionsByCategoryQueryHookResult = ReturnType<typeof useListRegionsByCategoryQuery>;
+
+// ─── Query: GetRegion ─────────────────────────────────────────────────────────
+
+export type GetRegionQueryVariables = Exact<{ id: Scalars['String']['input'] }>;
+
+export type GetRegionQuery = {
+  __typename?: 'query_root';
+  region_by_pk?: (RegionFieldsFragment & {
+    subregions: Array<RegionFieldsFragment>;
+  }) | null;
+};
+
+export const GetRegionDocument = gql`
+  query GetRegion($id: String!) {
+    region_by_pk(id: $id) {
+      id
+      name
+      parent_region_id
+      category_id
+      model_catalog_uri
+      geometries {
+        id
+        geometry
+      }
+      subregions {
+        id
+        name
+        parent_region_id
+        category_id
+        model_catalog_uri
+        geometries {
+          id
+          geometry
+        }
+      }
+    }
+  }
+`;
+
+export function useGetRegionQuery(
+  baseOptions: Apollo.QueryHookOptions<GetRegionQuery, GetRegionQueryVariables> &
+    ({ variables: GetRegionQueryVariables; skip?: boolean } | { skip: boolean })
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useQuery<GetRegionQuery, GetRegionQueryVariables>(
+    GetRegionDocument,
+    options
+  );
+}
+
+export function useGetRegionLazyQuery(
+  baseOptions?: Apollo.LazyQueryHookOptions<GetRegionQuery, GetRegionQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useLazyQuery<GetRegionQuery, GetRegionQueryVariables>(
+    GetRegionDocument,
+    options
+  );
+}
+
+export type GetRegionQueryHookResult = ReturnType<typeof useGetRegionQuery>;
+
+// ─── Mutation: InsertRegions ──────────────────────────────────────────────────
+
+export type RegionInsertInput = {
+  id: string;
+  name: string;
+  parent_region_id?: string | null;
+  category_id?: string | null;
+  geometries?: {
+    data: Array<{ geometry: string }>;
+  };
+};
+
+export type InsertRegionsMutationVariables = Exact<{ objects: Array<RegionInsertInput> | RegionInsertInput }>;
+
+export type InsertRegionsMutation = {
+  __typename?: 'mutation_root';
+  insert_region?: {
+    __typename?: 'region_mutation_response';
+    returning: Array<RegionFieldsFragment>;
+  } | null;
+};
+
+export const InsertRegionsDocument = gql`
+  mutation InsertRegions($objects: [region_insert_input!]!) {
+    insert_region(objects: $objects) {
+      returning {
+        id
+        name
+        parent_region_id
+        category_id
+        model_catalog_uri
+        geometries {
+          id
+          geometry
+        }
+      }
+    }
+  }
+`;
+
+export function useInsertRegionsMutation(
+  baseOptions?: Apollo.MutationHookOptions<InsertRegionsMutation, InsertRegionsMutationVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useMutation<InsertRegionsMutation, InsertRegionsMutationVariables>(
+    InsertRegionsDocument,
+    options
+  );
+}
+
+export type InsertRegionsMutationHookResult = ReturnType<typeof useInsertRegionsMutation>;
+
+export type GetRegionsQueryHookResult = ReturnType<typeof useGetRegionsQuery>;
+export type GetRegionsLazyQueryHookResult = ReturnType<typeof useGetRegionsLazyQuery>;
+
+// ─── Query: GetVariablePresentations ─────────────────────────────────────────
+
+export type GetVariablePresentationsQueryVariables = Exact<{ [key: string]: never }>;
+
+export type GetVariablePresentationsQuery = {
+  __typename?: 'query_root';
+  modelcatalog_variable_presentation: Array<{
+    __typename?: 'modelcatalog_variable_presentation';
+    id: string;
+    label?: string | null;
+    has_long_name?: string | null;
+    has_short_name?: string | null;
+    standard_variable?: {
+      __typename?: 'modelcatalog_standard_variable';
+      id: string;
+      label?: string | null;
+      description?: string | null;
+    } | null;
+    unit?: {
+      __typename?: 'modelcatalog_unit';
+      id: string;
+      label?: string | null;
+    } | null;
+  }>;
+};
+
+export const GetVariablePresentationsDocument = gql`
+  query GetVariablePresentations {
+    modelcatalog_variable_presentation(order_by: { label: asc }) {
+      id
+      label
+      has_long_name
+      has_short_name
+      standard_variable {
+        id
+        label
+        description
+      }
+      unit {
+        id
+        label
+      }
+    }
+  }
+`;
+
+export function useGetVariablePresentationsQuery(
+  baseOptions?: Apollo.QueryHookOptions<GetVariablePresentationsQuery, GetVariablePresentationsQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useQuery<GetVariablePresentationsQuery, GetVariablePresentationsQueryVariables>(
+    GetVariablePresentationsDocument,
+    options
+  );
+}
+
+export function useGetVariablePresentationsLazyQuery(
+  baseOptions?: Apollo.LazyQueryHookOptions<GetVariablePresentationsQuery, GetVariablePresentationsQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useLazyQuery<GetVariablePresentationsQuery, GetVariablePresentationsQueryVariables>(
+    GetVariablePresentationsDocument,
+    options
+  );
+}
+
+export type GetVariablePresentationsQueryHookResult = ReturnType<typeof useGetVariablePresentationsQuery>;
+export type GetVariablePresentationsLazyQueryHookResult = ReturnType<typeof useGetVariablePresentationsLazyQuery>;

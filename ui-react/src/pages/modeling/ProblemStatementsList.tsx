@@ -1,6 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useQuery } from '@apollo/client';
 import { useNavigate } from 'react-router-dom';
 import { Pencil, Trash2, Plus, Search, X, ClipboardList } from 'lucide-react';
+
+import { LIST_TOP_REGIONS } from '@/graphql/queries/regions';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -56,7 +59,7 @@ const EMPTY_FORM: FormValues = {
   name: '',
   regionId: '',
   startDate: '2000-01-01',
-  endDate: (new Date().toISOString().split('T')[0] ?? ''),
+  endDate: new Date().toISOString().split('T')[0] ?? '',
   notes: '',
 };
 
@@ -76,12 +79,16 @@ function formatDateTime(iso?: string | null): string {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Region selector stub.
-// The full region picker requires the regions list which is a separate
-// concern.  For now we use a plain text input that accepts the region ID
-// string, matching the same data the legacy form stored.
-// ---------------------------------------------------------------------------
+// ─── Region types ─────────────────────────────────────────────────────────────
+
+interface TopRegion {
+  id: string;
+  name: string;
+}
+
+interface ListTopRegionsData {
+  region: TopRegion[];
+}
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
@@ -95,16 +102,33 @@ interface ProblemStatementsListProps {
  * Supports create, edit, delete, and free-text search. Permission-gated
  * edit/delete icons match the legacy LitElement component exactly.
  */
-export function ProblemStatementsList({
-  regionId = 'DEFAULT',
-}: ProblemStatementsListProps) {
+export function ProblemStatementsList({ regionId = 'DEFAULT' }: ProblemStatementsListProps) {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
 
+  // ── regions ─────────────────────────────────────────────────────────────────
+  // problem_statement.region_id is a FK to the region table, so we must scope
+  // the list to (and create against) a region that actually exists. The legacy
+  // placeholder 'DEFAULT' is not a real region and caused FK violations.
+  const { data: regionsData } = useQuery<ListTopRegionsData>(LIST_TOP_REGIONS);
+  const regions = useMemo(() => regionsData?.region ?? [], [regionsData]);
+
+  const [selectedRegionId, setSelectedRegionId] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    if (!selectedRegionId && regions.length > 0) {
+      // Honour the requested region when it exists, otherwise fall back to the
+      // first available region instead of the bogus 'DEFAULT'.
+      const initial = regions.find((r) => r.id === regionId)?.id ?? regions[0]?.id;
+      if (initial) setSelectedRegionId(initial);
+    }
+  }, [regions, selectedRegionId, regionId]);
+
   // ── data ──────────────────────────────────────────────────────────────────
   const { data, loading, error, refetch } = useListProblemStatementsQuery({
-    variables: { regionId },
+    variables: { regionId: selectedRegionId ?? '' },
+    skip: !selectedRegionId,
     fetchPolicy: 'cache-and-network',
   });
 
@@ -125,9 +149,7 @@ export function ProblemStatementsList({
   const statements = data?.problem_statement ?? [];
 
   const filtered = statements
-    .filter((ps) =>
-      !filter || (ps.name ?? '').toLowerCase().includes(filter.toLowerCase()),
-    )
+    .filter((ps) => !filter || (ps.name ?? '').toLowerCase().includes(filter.toLowerCase()))
     .sort((a, b) => {
       const ta = getLatestEvent(a.events)?.timestamp ?? '';
       const tb = getLatestEvent(b.events)?.timestamp ?? '';
@@ -136,13 +158,12 @@ export function ProblemStatementsList({
 
   // ── form helpers ──────────────────────────────────────────────────────────
   function openAddDialog() {
-    setForm({ ...EMPTY_FORM, regionId });
+    setForm({ ...EMPTY_FORM, regionId: selectedRegionId ?? '' });
     setDialogOpen(true);
   }
 
   function openEditDialog(ps: ProblemStatement) {
-    const lastNotes =
-      getLatestEventOfType(['CREATE', 'UPDATE'], ps.events)?.notes ?? '';
+    const lastNotes = getLatestEventOfType(['CREATE', 'UPDATE'], ps.events)?.notes ?? '';
     setForm({
       id: ps.id,
       name: ps.name ?? '',
@@ -176,6 +197,10 @@ export function ProblemStatementsList({
       });
       return;
     }
+    if (!form.regionId) {
+      toast({ title: 'A region is required', variant: 'destructive' });
+      return;
+    }
 
     setSaving(true);
     try {
@@ -185,7 +210,7 @@ export function ProblemStatementsList({
           variables: {
             id: form.id,
             name: form.name.trim(),
-            regionId: form.regionId || regionId,
+            regionId: form.regionId,
             startDate: form.startDate,
             endDate: form.endDate,
           },
@@ -207,7 +232,7 @@ export function ProblemStatementsList({
           variables: {
             id: newId,
             name: form.name.trim(),
-            regionId: form.regionId || regionId,
+            regionId: form.regionId,
             startDate: form.startDate,
             endDate: form.endDate,
           },
@@ -289,6 +314,19 @@ export function ProblemStatementsList({
             </button>
           )}
         </div>
+        <select
+          aria-label="Filter by region"
+          value={selectedRegionId ?? ''}
+          onChange={(e) => setSelectedRegionId(e.target.value)}
+          className="flex h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+          disabled={regions.length === 0}
+        >
+          {regions.map((r) => (
+            <option key={r.id} value={r.id}>
+              {r.name}
+            </option>
+          ))}
+        </select>
         <Button onClick={openAddDialog} aria-label="Add problem statement">
           <Plus className="mr-1.5 h-4 w-4" />
           Add
@@ -348,6 +386,7 @@ export function ProblemStatementsList({
         open={dialogOpen}
         isEdit={!!form.id}
         form={form}
+        regions={regions}
         saving={saving}
         onChange={(field, val) => setForm((f) => ({ ...f, [field]: val }))}
         onSubmit={handleSubmit}
@@ -355,16 +394,13 @@ export function ProblemStatementsList({
       />
 
       {/* ── Delete confirmation ───────────────────────────────────────────── */}
-      <AlertDialog
-        open={!!deleteTarget}
-        onOpenChange={(open) => !open && setDeleteTarget(null)}
-      >
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete problem statement?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete &quot;{deleteTarget?.name}&quot; and all
-              associated tasks and sub-tasks. This action cannot be undone.
+              This will permanently delete &quot;{deleteTarget?.name}&quot; and all associated tasks
+              and sub-tasks. This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -392,13 +428,7 @@ interface CardProps {
   onDelete: () => void;
 }
 
-function ProblemStatementCard({
-  ps,
-  currentUserId,
-  onSelect,
-  onEdit,
-  onDelete,
-}: CardProps) {
+function ProblemStatementCard({ ps, currentUserId, onSelect, onEdit, onDelete }: CardProps) {
   const perms = getUserPermission(ps.permissions, ps.events, currentUserId);
   const createEvent = getLatestEventOfType(['CREATE'], ps.events);
   const lastEvent = getLatestEvent(ps.events);
@@ -459,19 +489,17 @@ function ProblemStatementCard({
         {/* Metadata */}
         <div className="space-y-1 text-sm text-muted-foreground">
           <p>
-            <span className="font-medium">Time period:</span>{' '}
-            {formatDate(ps.start_date)} to {formatDate(ps.end_date)}
+            <span className="font-medium">Time period:</span> {formatDate(ps.start_date)} to{' '}
+            {formatDate(ps.end_date)}
           </p>
           {createEvent && (
             <p className="text-xs">
-              Created by {createEvent.userid} at{' '}
-              {formatDateTime(createEvent.timestamp)}
+              Created by {createEvent.userid} at {formatDateTime(createEvent.timestamp)}
             </p>
           )}
           {lastEvent && (
             <p className="text-xs">
-              Last updated by {lastEvent.userid} at{' '}
-              {formatDateTime(lastEvent.timestamp)}
+              Last updated by {lastEvent.userid} at {formatDateTime(lastEvent.timestamp)}
             </p>
           )}
         </div>
@@ -486,6 +514,7 @@ interface DialogProps {
   open: boolean;
   isEdit: boolean;
   form: FormValues;
+  regions: TopRegion[];
   saving: boolean;
   onChange: (field: keyof FormValues, value: string) => void;
   onSubmit: () => void;
@@ -496,6 +525,7 @@ function ProblemStatementDialog({
   open,
   isEdit,
   form,
+  regions,
   saving,
   onChange,
   onSubmit,
@@ -512,8 +542,8 @@ function ProblemStatementDialog({
 
         {!isEdit && (
           <p className="text-sm text-muted-foreground">
-            Please enter a short text to describe the overall problem. For example,
-            &quot;Explore interventions to increase agricultural productivity in South Sudan&quot;.
+            Please enter a short text to describe the overall problem. For example, &quot;Explore
+            interventions to increase agricultural productivity in South Sudan&quot;.
           </p>
         )}
 
@@ -528,6 +558,28 @@ function ProblemStatementDialog({
               placeholder="e.g. Explore interventions to increase crop yield"
               required
             />
+          </div>
+
+          {/* Region */}
+          <div className="grid gap-1.5">
+            <Label htmlFor="ps-region">Region</Label>
+            <select
+              id="ps-region"
+              aria-label="Region"
+              value={form.regionId}
+              onChange={(e) => onChange('regionId', e.target.value)}
+              className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+              required
+            >
+              <option value="" disabled>
+                Select a region…
+              </option>
+              {regions.map((r) => (
+                <option key={r.id} value={r.id}>
+                  {r.name}
+                </option>
+              ))}
+            </select>
           </div>
 
           {/* Time period */}

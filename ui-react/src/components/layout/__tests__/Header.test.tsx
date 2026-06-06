@@ -15,9 +15,7 @@ vi.mock('@/lib/auth/useAuth', () => ({
   }),
 }));
 
-function renderHeader(
-  props: { sidebarCollapsed?: boolean; onToggleSidebar?: () => void } = {},
-) {
+function renderHeader(props: { sidebarCollapsed?: boolean; onToggleSidebar?: () => void } = {}) {
   const onToggleSidebar = props.onToggleSidebar ?? vi.fn();
   return render(
     <MemoryRouter>
@@ -37,9 +35,7 @@ describe('Header', () => {
 
   it('shows Sign In button when not authenticated', () => {
     renderHeader();
-    expect(
-      screen.getByRole('button', { name: /sign in/i }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /sign in/i })).toBeInTheDocument();
   });
 
   it('calls onToggleSidebar when menu button is clicked', async () => {
@@ -52,8 +48,6 @@ describe('Header', () => {
 
   it('shows Expand sidebar label when sidebar is collapsed', () => {
     renderHeader({ sidebarCollapsed: true });
-    expect(
-      screen.getByRole('button', { name: /expand sidebar/i }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /expand sidebar/i })).toBeInTheDocument();
   });
 });

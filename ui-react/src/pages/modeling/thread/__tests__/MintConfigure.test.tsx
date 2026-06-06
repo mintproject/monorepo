@@ -23,34 +23,26 @@ const mockThread: Thread = {
 
 describe('MintConfigure', () => {
   it('renders the configure, models and datasets panels', () => {
-    renderWithProviders(
-      <MintConfigure thread={mockThread} onContinue={vi.fn()} />,
-    );
+    renderWithProviders(<MintConfigure thread={mockThread} onContinue={vi.fn()} />);
     expect(screen.getByText('General framing')).toBeInTheDocument();
     expect(screen.getByText('Select models')).toBeInTheDocument();
     expect(screen.getByText('Select datasets')).toBeInTheDocument();
   });
 
   it('renders the "Select & Continue" button', () => {
-    renderWithProviders(
-      <MintConfigure thread={mockThread} onContinue={vi.fn()} />,
-    );
+    renderWithProviders(<MintConfigure thread={mockThread} onContinue={vi.fn()} />);
     expect(screen.getByTestId('configure-continue')).toBeInTheDocument();
   });
 
   it('calls onContinue when Continue is clicked', () => {
     const onContinue = vi.fn();
-    renderWithProviders(
-      <MintConfigure thread={mockThread} onContinue={onContinue} />,
-    );
+    renderWithProviders(<MintConfigure thread={mockThread} onContinue={onContinue} />);
     fireEvent.click(screen.getByTestId('configure-continue'));
     expect(onContinue).toHaveBeenCalledOnce();
   });
 
   it('shows the sub-task description text', () => {
-    renderWithProviders(
-      <MintConfigure thread={mockThread} onContinue={vi.fn()} />,
-    );
+    renderWithProviders(<MintConfigure thread={mockThread} onContinue={vi.fn()} />);
     expect(screen.getByText(/general configuration for this sub-task/i)).toBeInTheDocument();
   });
 });

@@ -17,35 +17,25 @@ describe('App', () => {
   it('renders the sidebar navigation with all platform sections', () => {
     renderApp();
     expect(screen.getByRole('link', { name: /home/i })).toBeInTheDocument();
-    expect(
-      screen.getByRole('button', { name: /models/i }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole('button', { name: /modeling/i }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole('button', { name: /datasets/i }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole('button', { name: /regions/i }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole('link', { name: /variables/i }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /models/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /modeling/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /datasets/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /regions/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /variables/i })).toBeInTheDocument();
   });
 
   it('renders AppHome at / with welcome text', () => {
     renderApp(['/']);
-    expect(
-      screen.getByText(/welcome to mint model catalog/i),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/welcome to mint model catalog/i)).toBeInTheDocument();
   });
 
   it('renders ModelsPage at /models', () => {
     renderApp(['/models']);
     // The Models page renders the model tree with a search/filter input
+    expect(screen.getByPlaceholderText(/filter models/i)).toBeInTheDocument();
+    // ...and the selection-detail placeholder until a tree node is picked.
     expect(
-      screen.getByPlaceholderText(/filter models/i),
+      screen.getByText('Select a model, version, or configuration on the left.'),
     ).toBeInTheDocument();
   });
 

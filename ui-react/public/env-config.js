@@ -9,4 +9,6 @@ window.__MINT_CONFIG__ = {
   AUTH_REALM: "",
   AUTH_PROVIDER: "tapis",
   GOOGLE_MAPS_KEY: "AIzaSyDf8bXwyV7v9whOpZl64SRVWKdE6yBbt2k",
+  DATA_CATALOG_API: "https://data.mint.isi.edu",
+  MODEL_CATALOG_API: "https://api.models.mint.isi.edu/v1.8.0",
 };

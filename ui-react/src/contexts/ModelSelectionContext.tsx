@@ -50,11 +50,10 @@ interface ModelSelectionProviderProps {
 export function ModelSelectionProvider({ children }: ModelSelectionProviderProps) {
   const [selection, dispatch] = useReducer(modelSelectionReducer, initialState);
   const value = useMemo(() => ({ selection, dispatch }), [selection]);
-  return (
-    <ModelSelectionContext.Provider value={value}>{children}</ModelSelectionContext.Provider>
-  );
+  return <ModelSelectionContext.Provider value={value}>{children}</ModelSelectionContext.Provider>;
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useModelSelection() {
   const context = useContext(ModelSelectionContext);
   if (!context) {

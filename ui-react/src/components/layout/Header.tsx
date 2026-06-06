@@ -24,18 +24,14 @@ export function Header({ sidebarCollapsed, onToggleSidebar }: HeaderProps) {
         >
           <Menu className="h-5 w-5" />
         </Button>
-        <span className="text-lg font-semibold leading-none">
-          MINT Model Catalog
-        </span>
+        <span className="text-lg font-semibold leading-none">MINT Model Catalog</span>
       </div>
 
       <div className="flex items-center gap-3">
         {isAuthenticated ? (
           <>
             <UserAvatar username={user?.username} />
-            <span className="hidden text-sm text-muted-foreground sm:inline">
-              {user?.username}
-            </span>
+            <span className="hidden text-sm text-muted-foreground sm:inline">{user?.username}</span>
             <Button variant="outline" size="sm" onClick={logout}>
               Sign Out
             </Button>
@@ -52,16 +48,14 @@ export function Header({ sidebarCollapsed, onToggleSidebar }: HeaderProps) {
 
 /** Simple initials-based avatar when no image is available. */
 function UserAvatar({ username }: { username?: string }) {
-  const initials = username
-    ? username.slice(0, 2).toUpperCase()
-    : '??';
+  const initials = username ? username.slice(0, 2).toUpperCase() : '??';
 
   return (
     <span
       aria-hidden="true"
       className={cn(
         'flex h-8 w-8 items-center justify-center rounded-full',
-        'bg-primary text-primary-foreground text-xs font-medium select-none',
+        'select-none bg-primary text-xs font-medium text-primary-foreground',
       )}
     >
       {initials}

@@ -114,9 +114,17 @@ describe('getLatestEventOfType', () => {
 // ─── generateModelingId ───────────────────────────────────────────────────────
 
 describe('generateModelingId', () => {
-  it('generates a string starting with mint://', () => {
+  // IDs are stored verbatim as the table primary key and embedded in URLs.
+  // The DB convention (and existing rows) use a bare short token like
+  // 'uPOdCNpNNscghQbJda73' — NOT a 'mint://problem_statement/...' URI, which
+  // both breaks the by_pk lookup and collapses the '//' in the route URL.
+  it('generates a bare short id with no URI prefix or path separators', () => {
     const id = generateModelingId('problem_statement');
-    expect(id).toMatch(/^mint:\/\/problem_statement\//);
+    expect(id).not.toContain('mint://');
+    expect(id).not.toContain('/');
+    expect(id).not.toContain(':');
+    expect(id).toMatch(/^[a-z0-9]+$/i);
+    expect(id.length).toBeGreaterThan(8);
   });
 
   it('generates different IDs on each call', () => {
@@ -125,9 +133,9 @@ describe('generateModelingId', () => {
     expect(id1).not.toBe(id2);
   });
 
-  it('generates IDs for all supported types', () => {
-    expect(generateModelingId('problem_statement')).toMatch(/problem_statement/);
-    expect(generateModelingId('task')).toMatch(/task/);
-    expect(generateModelingId('thread')).toMatch(/thread/);
+  it('generates a bare id for every supported type', () => {
+    for (const type of ['problem_statement', 'task', 'thread'] as const) {
+      expect(generateModelingId(type)).toMatch(/^[a-z0-9]+$/i);
+    }
   });
 });

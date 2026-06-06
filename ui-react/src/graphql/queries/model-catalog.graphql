@@ -1,4 +1,5 @@
 #import "../fragments/model-catalog.graphql"
+#import "../fragments/region.graphql"
 
 query GetModelTree {
   modelcatalog_software(
@@ -7,7 +8,7 @@ query GetModelTree {
   ) {
     id
     label
-    versions: software_versions(order_by: { label: asc }) {
+    versions(order_by: { label: asc }) {
       id
       label
       version_id
@@ -53,5 +54,30 @@ query GetPersons($search: String) {
     id
     label
     name
+  }
+}
+
+query GetRegions {
+  modelcatalog_region(order_by: { label: asc }) {
+    id
+    label
+  }
+}
+
+query GetVariablePresentations {
+  modelcatalog_variable_presentation(order_by: { label: asc }) {
+    id
+    label
+    has_long_name
+    has_short_name
+    standard_variable {
+      id
+      label
+      description
+    }
+    unit {
+      id
+      label
+    }
   }
 }

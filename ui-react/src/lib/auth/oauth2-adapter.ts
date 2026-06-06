@@ -8,11 +8,9 @@
  * Provider detection is done from window.__MINT_CONFIG__.AUTH_PROVIDER at runtime.
  */
 
-import {
-  clearTokens,
-  setRefreshCallback,
-  storeTokens,
-} from './token-store';
+import { clearTokens, setRefreshCallback, storeTokens } from './token-store';
+import { encodeState, decodeState } from './oauth-state';
+import { isAllowedOrigin } from './origin-allowlist';
 
 // ---------------------------------------------------------------------------
 // Config helpers
@@ -25,12 +23,18 @@ function getConfig() {
       AUTH_CLIENT_ID: import.meta.env.VITE_AUTH_CLIENT_ID ?? 'mint-local',
       AUTH_REALM: import.meta.env.VITE_AUTH_REALM ?? '',
       AUTH_PROVIDER: (import.meta.env.VITE_AUTH_PROVIDER ?? 'tapis') as 'keycloak' | 'tapis',
+      AUTH_CALLBACK_ORIGIN: import.meta.env.VITE_AUTH_CALLBACK_ORIGIN as string | undefined,
+      AUTH_PREVIEW_ORIGIN_ALLOWLIST: import.meta.env.VITE_AUTH_PREVIEW_ORIGIN_ALLOWLIST as
+        | string
+        | undefined,
     }
   );
 }
 
 function getCallbackUrl(): string {
-  return `${window.location.origin}/oauth2/callback`;
+  const { AUTH_CALLBACK_ORIGIN } = getConfig();
+  const base = AUTH_CALLBACK_ORIGIN ?? window.location.origin;
+  return `${base}/oauth2/callback`;
 }
 
 // ---------------------------------------------------------------------------
@@ -96,8 +100,9 @@ export function resolveGrantType(): GrantType {
 export function buildAuthorizationUrl(grantType?: GrantType): string {
   const { AUTH_CLIENT_ID } = getConfig();
   const type = grantType ?? resolveGrantType();
-  const state = generateState();
-  sessionStorage.setItem('oauth2_state', state);
+  const nonce = generateState();
+  sessionStorage.setItem('oauth2_state', nonce);
+  const state = encodeState({ nonce, origin: window.location.origin });
 
   const params = new URLSearchParams({
     client_id: AUTH_CLIENT_ID,
@@ -255,6 +260,50 @@ export interface CallbackResult {
   error?: string;
 }
 
+/** Reads the raw `state` value from the URL fragment (implicit) or query (code). */
+function getReturnedRawState(): string | null {
+  const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+  const fromHash = hashParams.get('state');
+  if (fromHash) return fromHash;
+  return new URLSearchParams(window.location.search).get('state');
+}
+
+export interface ForwardResult {
+  forwarded: boolean;
+  error?: string;
+}
+
+/**
+ * When login lands on the fixed callback origin but was initiated from a
+ * different (preview) origin, forward the result back there — gated by the
+ * allowlist. Returns { forwarded:true } when a redirect was issued OR refused;
+ * { forwarded:false } when this origin should handle the callback itself.
+ */
+export function maybeForwardToOrigin(): ForwardResult {
+  const decoded = decodeState(getReturnedRawState());
+  if (!decoded || decoded.origin === window.location.origin) {
+    return { forwarded: false };
+  }
+
+  const { AUTH_CALLBACK_ORIGIN, AUTH_PREVIEW_ORIGIN_ALLOWLIST } = getConfig();
+  const allowed = isAllowedOrigin(decoded.origin, {
+    fixedOrigin: AUTH_CALLBACK_ORIGIN,
+    patternSource: AUTH_PREVIEW_ORIGIN_ALLOWLIST,
+  });
+  if (!allowed) {
+    return {
+      forwarded: true,
+      error: `Refusing to forward authentication to a disallowed origin: ${decoded.origin}`,
+    };
+  }
+
+  // Forward verbatim: in supported flows exactly one of search/hash carries the
+  // credential + state (Tapis implicit → fragment, code flow → query). The target
+  // origin was already validated by isAllowedOrigin above.
+  window.location.href = `${decoded.origin}/oauth2/callback${window.location.search}${window.location.hash}`;
+  return { forwarded: true };
+}
+
 /**
  * Handles the OAuth2 callback URL.
  * Detects whether we got a code or an implicit token and processes accordingly.
@@ -269,10 +318,13 @@ export async function handleCallback(): Promise<CallbackResult> {
     return { type: 'error', error: description };
   }
 
-  // Validate state to prevent CSRF
-  const returnedState = queryParams.get('state');
-  const storedState = sessionStorage.getItem('oauth2_state');
-  if (returnedState && storedState && returnedState !== storedState) {
+  // Validate the state nonce to prevent CSRF. Fail closed: if this browser
+  // initiated login (a stored nonce exists), the callback MUST present a
+  // decodable state whose nonce matches. Missing/garbled state is rejected.
+  const decoded = decodeState(getReturnedRawState());
+  const storedNonce = sessionStorage.getItem('oauth2_state');
+  if (storedNonce && (!decoded || decoded.nonce !== storedNonce)) {
+    sessionStorage.removeItem('oauth2_state');
     return { type: 'error', error: 'State mismatch — possible CSRF attack' };
   }
   sessionStorage.removeItem('oauth2_state');
@@ -309,17 +361,13 @@ function saveTapisTokenResponse(result: TapisTokenResult): void {
   const accessExpiresIn =
     result.access_token.expires_in ??
     (result.access_token.expires_at
-      ? Math.floor(
-          (new Date(result.access_token.expires_at).getTime() - Date.now()) / 1000,
-        )
+      ? Math.floor((new Date(result.access_token.expires_at).getTime() - Date.now()) / 1000)
       : undefined);
 
   const refreshExpiresIn =
     result.refresh_token?.expires_in ??
     (result.refresh_token?.expires_at
-      ? Math.floor(
-          (new Date(result.refresh_token.expires_at).getTime() - Date.now()) / 1000,
-        )
+      ? Math.floor((new Date(result.refresh_token.expires_at).getTime() - Date.now()) / 1000)
       : undefined);
 
   storeTokens({

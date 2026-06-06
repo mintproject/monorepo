@@ -4,11 +4,13 @@
 import { describe, expect, it } from 'vitest';
 import { screen, waitFor } from '@testing-library/react';
 import { Route, Routes } from 'react-router-dom';
-import { MockedProvider, type MockedResponse } from '@apollo/client/testing';
+import { MockedProvider } from '@apollo/client/testing';
 import { render } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { AuthContext, type AuthState } from '@/lib/auth/AuthProvider';
 import { mockAuthState } from '@/test/utils/auth-mocks';
+import type { MockedResponse } from '@apollo/client/testing';
+import { makeNetworkErrorMock } from '@/test/utils/apollo-mocks';
 import { MintThread } from '../../MintThread';
 import { GetThreadDocument } from '@/graphql/generated/modeling';
 
@@ -40,7 +42,8 @@ const getThreadMock = {
 
 /** Renders MintThread inside a proper Route so useParams works. */
 function renderMintThread(
-  apolloMocks: MockedResponse[] = [getThreadMock],
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  apolloMocks: MockedResponse<any, any>[] = [getThreadMock],
   authState: AuthState = mockAuthState,
 ) {
   return render(
@@ -70,9 +73,12 @@ describe('MintThread', () => {
 
   it('shows breadcrumb navigation steps after data loads', async () => {
     renderMintThread();
-    await waitFor(() => {
-      expect(screen.getByTestId('breadcrumb-configure')).toBeInTheDocument();
-    }, { timeout: 3000 });
+    await waitFor(
+      () => {
+        expect(screen.getByTestId('breadcrumb-configure')).toBeInTheDocument();
+      },
+      { timeout: 3000 },
+    );
     expect(screen.getByTestId('breadcrumb-variables')).toBeInTheDocument();
     expect(screen.getByTestId('breadcrumb-models')).toBeInTheDocument();
     expect(screen.getByTestId('breadcrumb-datasets')).toBeInTheDocument();
@@ -81,36 +87,46 @@ describe('MintThread', () => {
 
   it('renders Configure step by default', async () => {
     renderMintThread();
-    await waitFor(() => {
-      expect(screen.getByTestId('mint-configure')).toBeInTheDocument();
-    }, { timeout: 3000 });
+    await waitFor(
+      () => {
+        expect(screen.getByTestId('mint-configure')).toBeInTheDocument();
+      },
+      { timeout: 3000 },
+    );
   });
 
   it('shows error message when query fails', async () => {
-    const errorMock: MockedResponse = {
-      request: {
-        query: GetThreadDocument,
-        variables: { id: 'test-thread-id' },
-      },
-      error: new Error('Network error'),
-    };
+    const errorMock = makeNetworkErrorMock(
+      GetThreadDocument,
+      { id: 'test-thread-id' },
+      'Network error',
+    );
     renderMintThread([errorMock]);
-    await waitFor(() => {
-      expect(screen.getByRole('alert')).toBeInTheDocument();
-    }, { timeout: 3000 });
+    await waitFor(
+      () => {
+        expect(screen.getByRole('alert')).toBeInTheDocument();
+      },
+      { timeout: 3000 },
+    );
   });
 
   it('shows maximize button after data loads', async () => {
     renderMintThread();
-    await waitFor(() => {
-      expect(screen.getByRole('button', { name: /maximize/i })).toBeInTheDocument();
-    }, { timeout: 3000 });
+    await waitFor(
+      () => {
+        expect(screen.getByRole('button', { name: /maximize/i })).toBeInTheDocument();
+      },
+      { timeout: 3000 },
+    );
   });
 
   it('shows the mint-thread container after data loads', async () => {
     renderMintThread();
-    await waitFor(() => {
-      expect(screen.getByTestId('mint-thread')).toBeInTheDocument();
-    }, { timeout: 3000 });
+    await waitFor(
+      () => {
+        expect(screen.getByTestId('mint-thread')).toBeInTheDocument();
+      },
+      { timeout: 3000 },
+    );
   });
 });
