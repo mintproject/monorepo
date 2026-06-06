@@ -4,7 +4,7 @@
 import { describe, expect, it } from 'vitest';
 import { screen, waitFor } from '@testing-library/react';
 import { Route, Routes } from 'react-router-dom';
-import { MockedProvider } from '@apollo/client/testing';
+import { MockedProvider, type MockedResponse } from '@apollo/client/testing';
 import { render } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { AuthContext, type AuthState } from '@/lib/auth/AuthProvider';
@@ -40,7 +40,7 @@ const getThreadMock = {
 
 /** Renders MintThread inside a proper Route so useParams works. */
 function renderMintThread(
-  apolloMocks = [getThreadMock],
+  apolloMocks: MockedResponse[] = [getThreadMock],
   authState: AuthState = mockAuthState,
 ) {
   return render(
@@ -92,7 +92,6 @@ describe('MintThread', () => {
         query: GetThreadDocument,
         variables: { id: 'test-thread-id' },
       },
-      result: { data: null },
       error: new Error('Network error'),
     };
     renderMintThread([errorMock]);

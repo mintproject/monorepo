@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 
 import { AppShell } from './components/layout/AppShell';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
+import { LoginRequiredPage } from './components/common/ProtectedRoute';
 import { Toaster } from './components/ui/toaster';
 import { ModelSelectionProvider } from './contexts/ModelSelectionContext';
 
@@ -10,6 +11,7 @@ import { AppHome } from './pages/AppHome';
 import { ModelsPage } from './pages/ModelsPage';
 import { ConfigurePage } from './pages/ConfigurePage';
 import { RegisterPage } from './pages/RegisterPage';
+import { OAuth2CallbackPage } from './pages/OAuth2CallbackPage';
 
 // Pages — modeling
 import { ModelingHome } from './pages/modeling/ModelingHome';
