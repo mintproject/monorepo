@@ -31,9 +31,9 @@ describe('App', () => {
 
   it('renders ModelsPage at /models', () => {
     renderApp(['/models']);
-    // "Models" appears in the sidebar button AND the page CardTitle; check heading
+    // ModelsPage shows the selection-detail placeholder until a tree node is picked.
     expect(
-      screen.getByText('Model catalog tree and detail view will be implemented here.'),
+      screen.getByText('Select a model, version, or configuration on the left.'),
     ).toBeInTheDocument();
   });
 
