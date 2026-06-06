@@ -879,6 +879,136 @@ export function useDeleteThreadMutation(
   );
 }
 
+// ─── Query: GetThread ─────────────────────────────────────────────────────────
+
+export type GetThreadQueryVariables = {
+  id: string;
+};
+
+export type GetThreadQuery = {
+  __typename?: 'query_root';
+  thread_by_pk?: Thread | null;
+};
+
+export const GetThreadDocument = gql`
+  ${THREAD_INFO}
+  query GetThread($id: String!) {
+    thread_by_pk(id: $id) {
+      ...thread_info
+    }
+  }
+`;
+
+export function useGetThreadQuery(
+  baseOptions: Apollo.QueryHookOptions<GetThreadQuery, GetThreadQueryVariables> & {
+    variables: GetThreadQueryVariables;
+  },
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useQuery<GetThreadQuery, GetThreadQueryVariables>(
+    GetThreadDocument,
+    options,
+  );
+}
+
+// ─── Mutation: UpdateThread ───────────────────────────────────────────────────
+
+export type UpdateThreadMutationVariables = {
+  id: string;
+  name?: string | null;
+  startDate: string;
+  endDate: string;
+  regionId?: string | null;
+  drivingVariableId?: string | null;
+  responseVariableId?: string | null;
+};
+
+export type UpdateThreadMutation = {
+  update_thread_by_pk?: Pick<Thread, 'id'> | null;
+};
+
+export const UpdateThreadDocument = gql`
+  mutation UpdateThread(
+    $id: String!
+    $name: String
+    $startDate: date!
+    $endDate: date!
+    $regionId: String
+    $drivingVariableId: String
+    $responseVariableId: String
+  ) {
+    update_thread_by_pk(
+      pk_columns: { id: $id }
+      _set: {
+        name: $name
+        start_date: $startDate
+        end_date: $endDate
+        region_id: $regionId
+        driving_variable_id: $drivingVariableId
+        response_variable_id: $responseVariableId
+      }
+    ) {
+      id
+    }
+  }
+`;
+
+export function useUpdateThreadMutation(
+  baseOptions?: Apollo.MutationHookOptions<UpdateThreadMutation, UpdateThreadMutationVariables>,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useMutation<UpdateThreadMutation, UpdateThreadMutationVariables>(
+    UpdateThreadDocument,
+    options,
+  );
+}
+
+// ─── Mutation: InsertThreadProvenance ─────────────────────────────────────────
+
+export type InsertThreadProvenanceMutationVariables = {
+  threadId: string;
+  event: ThreadEvents;
+  userid: string;
+  notes?: string | null;
+};
+
+export type InsertThreadProvenanceMutation = {
+  insert_thread_provenance_one?: { thread_id: string } | null;
+};
+
+export const InsertThreadProvenanceDocument = gql`
+  mutation InsertThreadProvenance(
+    $threadId: String!
+    $event: thread_events_enum!
+    $userid: String!
+    $notes: String
+  ) {
+    insert_thread_provenance_one(
+      object: {
+        thread_id: $threadId
+        event: $event
+        userid: $userid
+        notes: $notes
+      }
+    ) {
+      thread_id
+    }
+  }
+`;
+
+export function useInsertThreadProvenanceMutation(
+  baseOptions?: Apollo.MutationHookOptions<
+    InsertThreadProvenanceMutation,
+    InsertThreadProvenanceMutationVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useMutation<InsertThreadProvenanceMutation, InsertThreadProvenanceMutationVariables>(
+    InsertThreadProvenanceDocument,
+    options,
+  );
+}
+
 // ─── ID generator (mirrors legacy GraphQL adapter) ────────────────────────────
 
 /**
