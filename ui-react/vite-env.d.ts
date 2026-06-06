@@ -6,6 +6,8 @@ interface MintConfig {
   AUTH_CLIENT_ID: string;
   AUTH_REALM: string;
   AUTH_PROVIDER: 'keycloak' | 'tapis';
+  GOOGLE_MAPS_KEY?: string;
+  WELCOME_MESSAGE?: string;
 }
 
 interface Window {
