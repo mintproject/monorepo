@@ -44,6 +44,7 @@ import {
   useDeleteTaskMutation,
   useInsertTaskProvenanceMutation,
   useInsertThreadMutation,
+  useInsertThreadProvenanceMutation,
   useDeleteThreadMutation,
   getUserPermission,
   getLatestEvent,
@@ -148,6 +149,7 @@ export function MintProblemStatement() {
   const [deleteTask] = useDeleteTaskMutation();
   const [insertTaskProvenance] = useInsertTaskProvenanceMutation();
   const [insertThread] = useInsertThreadMutation();
+  const [insertThreadProvenance] = useInsertThreadProvenanceMutation();
   const [deleteThread] = useDeleteThreadMutation();
 
   // ── derived ───────────────────────────────────────────────────────────────
@@ -256,6 +258,19 @@ export function MintProblemStatement() {
             regionId: taskForm.regionId || null,
           },
         });
+        // A thread is only visible to its creator once it has a CREATE
+        // provenance row (thread SELECT permission filters on events/permissions);
+        // without this the new sub-task returns null from thread_by_pk.
+        if (user?.username) {
+          await insertThreadProvenance({
+            variables: {
+              threadId: defaultThreadId,
+              event: 'CREATE',
+              userid: user.username,
+              notes: null,
+            },
+          });
+        }
 
         setSelectedTaskId(newId);
         setSelectedThreadId(defaultThreadId);
@@ -325,6 +340,7 @@ export function MintProblemStatement() {
       // For simplicity we only support creating new threads from this dialog
       // Editing an existing thread's name is straightforward but requires
       // an update_thread_by_pk mutation — kept minimal for this 1:1 port scope
+      const isNewThread = !threadForm.id;
       const newId = threadForm.id || generateModelingId('thread');
       await insertThread({
         variables: {
@@ -336,6 +352,18 @@ export function MintProblemStatement() {
           regionId: selectedTask.region_id ?? null,
         },
       });
+      // New threads need a CREATE provenance row to be visible to their
+      // creator (thread SELECT permission filters on events/permissions).
+      if (isNewThread && user?.username) {
+        await insertThreadProvenance({
+          variables: {
+            threadId: newId,
+            event: 'CREATE',
+            userid: user.username,
+            notes: null,
+          },
+        });
+      }
       toast({ title: 'Sub-task created' });
       setSelectedThreadId(newId);
       setThreadDialogOpen(false);
