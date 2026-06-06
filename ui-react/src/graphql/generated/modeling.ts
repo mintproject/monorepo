@@ -96,6 +96,14 @@ export type ThreadProvenance = {
   notes?: Maybe<string>;
 };
 
+export type ThreadModel = {
+  __typename?: 'thread_model';
+  id: string;
+  thread_id: string;
+  model_id?: string | null;
+  modelcatalog_configuration_id?: string | null;
+};
+
 export type Thread = {
   __typename?: 'thread';
   id: string;
@@ -108,6 +116,7 @@ export type Thread = {
   response_variable_id?: Maybe<string>;
   events: ThreadProvenance[];
   permissions: ThreadPermission[];
+  thread_models?: ThreadModel[];
 };
 
 export type Task = {
@@ -259,6 +268,12 @@ const THREAD_INFO = gql`
       user_id
       read
       write
+    }
+    thread_models {
+      id
+      thread_id
+      model_id
+      modelcatalog_configuration_id
     }
   }
 `;
@@ -1019,4 +1034,141 @@ export function generateModelingId(type: 'problem_statement' | 'task' | 'thread'
   const rand = Math.random().toString(36).substring(2, 10);
   const ts = Date.now().toString(36);
   return `mint://${type}/${rand}${ts}`;
+}
+
+// ─── Mutation: SetThreadModels ────────────────────────────────────────────────
+
+/**
+ * Replace all model selections for a thread in a single transaction.
+ * Deletes existing thread_model rows then inserts the new selection.
+ */
+export type SetThreadModelsMutationVariables = {
+  threadId: string;
+  models: Array<{ thread_id: string; modelcatalog_configuration_id: string }>;
+  userid: string;
+  notes?: string | null;
+};
+
+export type SetThreadModelsMutation = {
+  delete_thread_model?: { affected_rows: number } | null;
+  insert_thread_model?: {
+    returning: Array<{ id: string; thread_id: string; modelcatalog_configuration_id?: string | null }>;
+  } | null;
+  insert_thread_provenance_one?: { thread_id: string } | null;
+};
+
+export const SetThreadModelsDocument = gql`
+  mutation SetThreadModels(
+    $threadId: String!
+    $models: [thread_model_insert_input!]!
+    $userid: String!
+    $notes: String
+  ) {
+    delete_thread_model(where: { thread_id: { _eq: $threadId } }) {
+      affected_rows
+    }
+    insert_thread_model(objects: $models) {
+      returning {
+        id
+        thread_id
+        modelcatalog_configuration_id
+      }
+    }
+    insert_thread_provenance_one(
+      object: {
+        thread_id: $threadId
+        event: SELECT_MODELS
+        userid: $userid
+        notes: $notes
+      }
+    ) {
+      thread_id
+    }
+  }
+`;
+
+export function useSetThreadModelsMutation(
+  baseOptions?: Apollo.MutationHookOptions<SetThreadModelsMutation, SetThreadModelsMutationVariables>,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useMutation<SetThreadModelsMutation, SetThreadModelsMutationVariables>(
+    SetThreadModelsDocument,
+    options,
+  );
+}
+
+// ─── Query: GetModelTreeWithRegions ──────────────────────────────────────────
+
+/**
+ * Extended model tree query that includes region data for filtering.
+ */
+export type ModelSetupInfo = {
+  id: string;
+  label?: string | null;
+  description?: string | null;
+  regions: Array<{
+    region: { id: string; label?: string | null };
+  }>;
+};
+
+export type ModelConfigInfo = {
+  id: string;
+  label?: string | null;
+  regions: Array<{
+    region: { id: string; label?: string | null };
+  }>;
+  child_configurations: ModelSetupInfo[];
+};
+
+export type GetModelTreeWithRegionsQuery = {
+  __typename?: 'query_root';
+  modelcatalog_software: Array<{
+    id: string;
+    label?: string | null;
+    versions: Array<{
+      id: string;
+      label?: string | null;
+      configurations: ModelConfigInfo[];
+    }>;
+  }>;
+};
+
+export const GetModelTreeWithRegionsDocument = gql`
+  query GetModelTreeWithRegions {
+    modelcatalog_software(
+      order_by: { label: asc }
+      where: { type: { _eq: "https://w3id.org/okn/o/sdm#Model" } }
+    ) {
+      id
+      label
+      versions: software_versions(order_by: { label: asc }) {
+        id
+        label
+        configurations(
+          order_by: { label: asc }
+          where: { model_configuration_id: { _is_null: true } }
+        ) {
+          id
+          label
+          regions { region { id label } }
+          child_configurations(order_by: { label: asc }) {
+            id
+            label
+            description
+            regions { region { id label } }
+          }
+        }
+      }
+    }
+  }
+`;
+
+export function useGetModelTreeWithRegionsQuery(
+  baseOptions?: Apollo.QueryHookOptions<GetModelTreeWithRegionsQuery, Record<string, never>>,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useQuery<GetModelTreeWithRegionsQuery, Record<string, never>>(
+    GetModelTreeWithRegionsDocument,
+    options,
+  );
 }

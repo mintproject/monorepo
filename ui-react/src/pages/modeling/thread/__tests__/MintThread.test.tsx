@@ -40,7 +40,8 @@ const getThreadMock = {
 
 /** Renders MintThread inside a proper Route so useParams works. */
 function renderMintThread(
-  apolloMocks: MockedResponse[] = [getThreadMock],
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  apolloMocks: MockedResponse<any>[] = [getThreadMock],
   authState: AuthState = mockAuthState,
 ) {
   return render(
@@ -92,6 +93,7 @@ describe('MintThread', () => {
         query: GetThreadDocument,
         variables: { id: 'test-thread-id' },
       },
+      result: { data: {} as never },
       error: new Error('Network error'),
     };
     renderMintThread([errorMock]);
