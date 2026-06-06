@@ -6,33 +6,33 @@ export function RegionsHome() {
   return (
     <div className="content-page">
       <div className="mb-8">
-        <h1 className="text-2xl font-semibold mb-2">Regions</h1>
-        <div className="space-y-3 text-sm text-muted-foreground max-w-3xl">
+        <h1 className="mb-2 text-2xl font-semibold">Regions</h1>
+        <div className="max-w-3xl space-y-3 text-sm text-muted-foreground">
           <p>
             In this section, users can browse, manage, and organize a variety of geographical areas
             that serve as the foundation for registering datasets and configuring models within the
             system. Each dataset and model is directly linked to a specific area, which makes it
-            possible to establish meaningful connections between available data and the corresponding
-            geographical regions.
+            possible to establish meaningful connections between available data and the
+            corresponding geographical regions.
           </p>
           <p>
             The platform is designed to accommodate multiple levels of regional detail across each
-            category. For example, administrative regions may include different levels such as states,
-            provinces, districts, or municipalities, while other categories may feature regions defined
-            by natural or land use boundaries. This flexible structure supports use cases that require
-            both broad overviews and fine-grained local distinctions.
+            category. For example, administrative regions may include different levels such as
+            states, provinces, districts, or municipalities, while other categories may feature
+            regions defined by natural or land use boundaries. This flexible structure supports use
+            cases that require both broad overviews and fine-grained local distinctions.
           </p>
           <p>
             Users have the ability to add new regions or entire subcategories at any time, using
-            GeoJSON files to define boundaries and attributes as needed. This ensures that the system
-            can be tailored to evolving data requirements and organizational needs, supporting effective
-            management and exploration of geographical information.
+            GeoJSON files to define boundaries and attributes as needed. This ensures that the
+            system can be tailored to evolving data requirements and organizational needs,
+            supporting effective management and exploration of geographical information.
           </p>
         </div>
       </div>
 
-      <div className="bg-gray-50 -mx-6 px-6 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl">
+      <div className="-mx-6 bg-gray-50 px-6 py-8">
+        <div className="grid max-w-4xl grid-cols-1 gap-6 md:grid-cols-2">
           <CategoryCard
             title="Agricultural Regions"
             description="Geographic areas characterized by distinct patterns of agricultural activity due to climate, soil type, topography, economic factors, or cultural practices. These regions help us understand where and why certain types of crops and livestock are produced."
@@ -72,13 +72,13 @@ interface CategoryCardProps {
 
 function CategoryCard({ title, description, href, label, icon }: CategoryCardProps) {
   return (
-    <div className="bg-white rounded-lg border p-6 flex justify-between items-start gap-4">
+    <div className="flex items-start justify-between gap-4 rounded-lg border bg-white p-6">
       <div className="flex-1">
-        <h4 className="font-semibold text-base mb-2">{title}</h4>
-        <p className="text-sm text-muted-foreground mb-4">{description}</p>
+        <h4 className="mb-2 text-base font-semibold">{title}</h4>
+        <p className="mb-4 text-sm text-muted-foreground">{description}</p>
         <Link
           to={href}
-          className="inline-flex items-center px-4 py-2 border border-primary text-primary rounded hover:bg-primary hover:text-primary-foreground transition-colors text-sm font-medium"
+          className="inline-flex items-center rounded border border-primary px-4 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary hover:text-primary-foreground"
         >
           {label}
         </Link>

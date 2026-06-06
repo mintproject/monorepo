@@ -9,9 +9,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { screen } from '@testing-library/react';
 import { renderWithProviders } from '@/test/utils/render';
 
-import {
-  RegionsHome,
-} from '../pages/regions/RegionsHome';
+import { RegionsHome } from '../pages/regions/RegionsHome';
 import { RegionsManual } from '../pages/regions/RegionsManual';
 import { RegionsAdministrative } from '../pages/regions/RegionsAdministrative';
 import { RegionsHydrology } from '../pages/regions/RegionsHydrology';
@@ -36,7 +34,9 @@ vi.mock('leaflet', () => ({
 }));
 
 vi.mock('react-leaflet', () => ({
-  MapContainer: ({ children }: { children: React.ReactNode }) => <div data-testid="map-container">{children}</div>,
+  MapContainer: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="map-container">{children}</div>
+  ),
   TileLayer: () => <div data-testid="tile-layer" />,
   GeoJSON: () => <div data-testid="geo-json" />,
   useMapEvents: () => ({}),
@@ -110,9 +110,7 @@ describe('regionUtils', () => {
     it('handles features with null geometry', () => {
       const geojson: GeoJSON.FeatureCollection<GeoJSON.Geometry | null> = {
         type: 'FeatureCollection',
-        features: [
-          { type: 'Feature', properties: {}, geometry: null },
-        ],
+        features: [{ type: 'Feature', properties: {}, geometry: null }],
       };
       const result = parseGeoJsonFeatures(geojson);
       expect(result).toHaveLength(1);
@@ -143,9 +141,15 @@ describe('RegionsHome', () => {
 
   it('renders three category card headings', () => {
     renderWithProviders(<RegionsHome />);
-    expect(screen.getByRole('heading', { level: 4, name: 'Agricultural Regions' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { level: 4, name: 'Hydrological Regions' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { level: 4, name: 'Administrative Regions' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { level: 4, name: 'Agricultural Regions' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { level: 4, name: 'Hydrological Regions' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { level: 4, name: 'Administrative Regions' }),
+    ).toBeInTheDocument();
   });
 
   it('renders explore links for each category', () => {

@@ -65,7 +65,7 @@ export function RegionModels({ regionName }: RegionModelsProps) {
 
   return (
     <div className="mt-6">
-      <h4 className="text-base font-semibold mb-3">
+      <h4 className="mb-3 text-base font-semibold">
         Models for <span className="text-primary">{regionName}</span>
       </h4>
 
@@ -74,7 +74,7 @@ export function RegionModels({ regionName }: RegionModelsProps) {
           <LoadingSpinner />
         </div>
       ) : totalSetups === 0 ? (
-        <p className="text-sm text-muted-foreground px-4 pb-4">No models for this region</p>
+        <p className="px-4 pb-4 text-sm text-muted-foreground">No models for this region</p>
       ) : (
         <div className="space-y-2">
           {Object.entries(categorized).map(([category, setups]) => (
@@ -101,13 +101,13 @@ function ModelCategoryExpander({ category, setups, getModelUrl }: ModelCategoryE
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="border rounded">
+    <div className="rounded border">
       <button
-        className="w-full flex items-center justify-between px-4 py-2 text-left hover:bg-gray-50"
+        className="flex w-full items-center justify-between px-4 py-2 text-left hover:bg-gray-50"
         onClick={() => setOpen((o) => !o)}
       >
         <div>
-          <span className="font-medium text-sm">{category} models</span>
+          <span className="text-sm font-medium">{category} models</span>
           <span className="ml-2 text-xs text-muted-foreground">
             {setups.length} configuration{setups.length !== 1 ? 's' : ''} found
           </span>
@@ -121,11 +121,11 @@ function ModelCategoryExpander({ category, setups, getModelUrl }: ModelCategoryE
             <li key={setup.id}>
               <Link
                 to={getModelUrl(setup)}
-                className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 no-underline"
+                className="flex items-center gap-3 px-4 py-3 no-underline hover:bg-gray-50"
               >
-                <Globe className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                <Globe className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
                 <div>
-                  <p className="font-medium text-sm">{setup.label ?? setup.id.split('/').pop()}</p>
+                  <p className="text-sm font-medium">{setup.label ?? setup.id.split('/').pop()}</p>
                 </div>
               </Link>
             </li>

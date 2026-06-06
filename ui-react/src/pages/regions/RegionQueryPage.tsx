@@ -20,7 +20,7 @@ export function RegionQueryPage() {
   const bbox = region ? calculateBoundingBox(region.geometries) : undefined;
 
   if (!id) {
-    return <p className="text-sm text-muted-foreground p-4">No region selected.</p>;
+    return <p className="p-4 text-sm text-muted-foreground">No region selected.</p>;
   }
 
   if (loading) {
@@ -32,14 +32,18 @@ export function RegionQueryPage() {
   }
 
   if (!region) {
-    return <p className="text-sm text-muted-foreground p-4">Region not found.</p>;
+    return <p className="p-4 text-sm text-muted-foreground">Region not found.</p>;
   }
 
   return (
     <div className="content-page space-y-6">
       <h2 className="text-xl font-semibold">{region.name}</h2>
       <RegionModels regionId={region.id} regionName={region.name} regionType="" />
-      <RegionDatasets regionId={region.id} regionName={region.name} boundingBox={bbox ?? undefined} />
+      <RegionDatasets
+        regionId={region.id}
+        regionName={region.name}
+        boundingBox={bbox ?? undefined}
+      />
     </div>
   );
 }

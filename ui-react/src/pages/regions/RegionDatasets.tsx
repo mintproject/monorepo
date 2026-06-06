@@ -98,7 +98,7 @@ export function RegionDatasets({ regionId, regionName, boundingBox }: RegionData
 
   return (
     <div className="mt-6">
-      <h4 className="text-base font-semibold mb-3">
+      <h4 className="mb-3 text-base font-semibold">
         Datasets with resources in <span className="text-primary">{regionName}</span>
       </h4>
 
@@ -107,24 +107,22 @@ export function RegionDatasets({ regionId, regionName, boundingBox }: RegionData
           <LoadingSpinner />
         </div>
       ) : error ? (
-        <p className="text-sm text-muted-foreground px-4 pb-4">
-          Could not load datasets: {error}
-        </p>
+        <p className="px-4 pb-4 text-sm text-muted-foreground">Could not load datasets: {error}</p>
       ) : datasets.length === 0 ? (
-        <p className="text-sm text-muted-foreground px-4 pb-4">No datasets for this region</p>
+        <p className="px-4 pb-4 text-sm text-muted-foreground">No datasets for this region</p>
       ) : (
-        <ul className="divide-y border rounded">
+        <ul className="divide-y rounded border">
           {datasets.map((ds) => (
             <li key={ds.id} className="flex items-start gap-3 px-4 py-3 hover:bg-gray-50">
-              <Folder className="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
-              <div className="flex-1 min-w-0">
+              <Folder className="mt-0.5 h-5 w-5 flex-shrink-0 text-muted-foreground" />
+              <div className="min-w-0 flex-1">
                 <Link
                   to={`/datasets/detail/${ds.id}/${regionId}`}
-                  className="font-medium text-sm hover:underline"
+                  className="text-sm font-medium hover:underline"
                 >
                   {ds.title || ds.name}
                 </Link>
-                <div className="text-xs text-muted-foreground mt-0.5 flex gap-2 flex-wrap">
+                <div className="mt-0.5 flex flex-wrap gap-2 text-xs text-muted-foreground">
                   {ds.is_cached ? (
                     <span className="text-green-600">Available on MINT servers</span>
                   ) : (
@@ -141,7 +139,7 @@ export function RegionDatasets({ regionId, regionName, boundingBox }: RegionData
                   href={buildTransformUrl(ds.id)}
                   target="_blank"
                   rel="noreferrer"
-                  className="flex-shrink-0 inline-flex items-center gap-1 text-xs border rounded px-2 py-1 hover:bg-gray-100"
+                  className="inline-flex flex-shrink-0 items-center gap-1 rounded border px-2 py-1 text-xs hover:bg-gray-100"
                   onClick={(e) => e.stopPropagation()}
                 >
                   Transform <ExternalLink className="h-3 w-3" />

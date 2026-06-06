@@ -5,7 +5,13 @@ import 'leaflet/dist/leaflet.css';
 import { Plus, Download, AlertCircle } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -18,7 +24,13 @@ import {
 import { useListRegionCategoriesWithHierarchy } from './useRegionCategories';
 import { RegionDatasets } from './RegionDatasets';
 import { RegionModels } from './RegionModels';
-import { type RegionData, calculateBoundingBox, parseGeoJsonFeatures, generateRegionId, type NewRegionFromGeoJSON } from './regionUtils';
+import {
+  type RegionData,
+  calculateBoundingBox,
+  parseGeoJsonFeatures,
+  generateRegionId,
+  type NewRegionFromGeoJSON,
+} from './regionUtils';
 
 interface RegionsEditorProps {
   regionId: string;
@@ -77,13 +89,14 @@ export function RegionsEditor({ regionId, regionType, mapHeight = '320px' }: Reg
 
   const categoryName = categories.find((c) => c.id === regionType)?.name ?? regionType;
   const currentCategoryObj = subcategories.find((sc) => sc.id === activeCategoryId);
-  const citation = currentCategoryObj?.citation ?? categories.find((c) => c.id === regionType)?.citation;
+  const citation =
+    currentCategoryObj?.citation ?? categories.find((c) => c.id === regionType)?.citation;
 
   return (
     <div className="w-full">
       {/* Subcategory tabs */}
       {subcategories.length > 0 && (
-        <div className="flex items-center mb-2 gap-1">
+        <div className="mb-2 flex items-center gap-1">
           <Tabs value={activeCategoryId} onValueChange={handleSubcategoryChange}>
             <TabsList>
               <TabsTrigger value={regionType}>{categoryName}</TabsTrigger>
@@ -105,45 +118,50 @@ export function RegionsEditor({ regionId, regionType, mapHeight = '320px' }: Reg
       )}
 
       {/* Description + citation */}
-      <div className="flex justify-between items-start mb-2">
+      <div className="mb-2 flex items-start justify-between">
         <div className="text-sm text-muted-foreground">
           {regionType === 'administrative'
             ? `The following map shows the administrative regions in this area.`
             : `The following map shows the current areas of interest for ${regionType} modeling in this area.`}
-          {citation && (
-            <div className="italic text-xs mt-1">{citation}</div>
-          )}
+          {citation && <div className="mt-1 text-xs italic">{citation}</div>}
         </div>
         <Button variant="ghost" size="sm" onClick={() => setAddRegionsOpen(true)}>
-          <Plus className="h-4 w-4 mr-1" /> Add regions
+          <Plus className="mr-1 h-4 w-4" /> Add regions
         </Button>
       </div>
 
       {/* Map */}
       {loading ? (
-        <div className="flex items-center justify-center bg-gray-100 rounded" style={{ height: mapHeight }}>
+        <div
+          className="flex items-center justify-center rounded bg-gray-100"
+          style={{ height: mapHeight }}
+        >
           <LoadingSpinner />
         </div>
       ) : regions.length === 0 ? (
         <div
-          className="flex flex-col items-center justify-center bg-gray-200 rounded text-gray-500 font-semibold text-base gap-2"
+          className="flex flex-col items-center justify-center gap-2 rounded bg-gray-200 text-base font-semibold text-gray-500"
           style={{ height: mapHeight }}
         >
           <AlertCircle className="h-8 w-8" />
           <span>This category does not have any region yet.</span>
           <Button variant="outline" size="sm" onClick={() => setAddRegionsOpen(true)}>
-            <Plus className="h-4 w-4 mr-1" /> Add new regions
+            <Plus className="mr-1 h-4 w-4" /> Add new regions
           </Button>
         </div>
       ) : (
-        <div style={{ height: mapHeight, zIndex: 0 }} className="rounded overflow-hidden border">
-          <RegionMap regions={regions} selectedRegion={selectedRegion} onRegionClick={handleRegionClick} />
+        <div style={{ height: mapHeight, zIndex: 0 }} className="overflow-hidden rounded border">
+          <RegionMap
+            regions={regions}
+            selectedRegion={selectedRegion}
+            onRegionClick={handleRegionClick}
+          />
         </div>
       )}
 
       {/* Selected region info */}
       {selectedRegion && (
-        <div className="mt-2 text-sm flex justify-between items-center">
+        <div className="mt-2 flex items-center justify-between text-sm">
           <span>
             <b>Selected region:</b> {selectedRegion.name}{' '}
             <span className="text-muted-foreground">(id: {selectedRegion.id})</span>
@@ -151,10 +169,11 @@ export function RegionsEditor({ regionId, regionType, mapHeight = '320px' }: Reg
           {bbox && (
             <span className="flex items-center gap-2">
               <b>Bounding box:</b>
-              {bbox.xmin.toFixed(4)},{bbox.ymin.toFixed(4)} – {bbox.xmax.toFixed(4)},{bbox.ymax.toFixed(4)}
+              {bbox.xmin.toFixed(4)},{bbox.ymin.toFixed(4)} – {bbox.xmax.toFixed(4)},
+              {bbox.ymax.toFixed(4)}
               <button
                 onClick={downloadGeoJson}
-                className="flex items-center gap-1 px-2 py-0.5 border rounded hover:bg-gray-100 text-xs"
+                className="flex items-center gap-1 rounded border px-2 py-0.5 text-xs hover:bg-gray-100"
               >
                 <Download className="h-3 w-3" /> Download
               </button>
@@ -163,7 +182,7 @@ export function RegionsEditor({ regionId, regionType, mapHeight = '320px' }: Reg
         </div>
       )}
       {selectedRegion && (
-        <p className="text-xs text-muted-foreground mt-1">
+        <p className="mt-1 text-xs text-muted-foreground">
           <b>Note:</b> Models and Datasets are calculated using the bounding box of the highlighted
           region. Results from overlapping regions may be included.
         </p>
@@ -172,8 +191,16 @@ export function RegionsEditor({ regionId, regionType, mapHeight = '320px' }: Reg
       {/* Sub-panels */}
       {selectedRegion && (
         <>
-          <RegionModels regionId={selectedRegion.id} regionName={selectedRegion.name} regionType={regionType} />
-          <RegionDatasets regionId={selectedRegion.id} regionName={selectedRegion.name} boundingBox={bbox ?? undefined} />
+          <RegionModels
+            regionId={selectedRegion.id}
+            regionName={selectedRegion.name}
+            regionType={regionType}
+          />
+          <RegionDatasets
+            regionId={selectedRegion.id}
+            regionName={selectedRegion.name}
+            boundingBox={bbox ?? undefined}
+          />
         </>
       )}
 
@@ -207,19 +234,21 @@ function RegionMap({ regions, selectedRegion, onRegionClick }: RegionMapProps) {
   const featureCollection: GeoJSON.FeatureCollection = {
     type: 'FeatureCollection',
     features: regions.flatMap((r) =>
-      r.geometries.map((g) => {
-        let geom: GeoJSON.Geometry;
-        try {
-          geom = JSON.parse(g.geometry);
-        } catch {
-          return null;
-        }
-        return {
-          type: 'Feature',
-          properties: { regionId: r.id, regionName: r.name },
-          geometry: geom,
-        } as GeoJSON.Feature;
-      }).filter((f): f is GeoJSON.Feature => f !== null)
+      r.geometries
+        .map((g) => {
+          let geom: GeoJSON.Geometry;
+          try {
+            geom = JSON.parse(g.geometry);
+          } catch {
+            return null;
+          }
+          return {
+            type: 'Feature',
+            properties: { regionId: r.id, regionName: r.name },
+            geometry: geom,
+          } as GeoJSON.Feature;
+        })
+        .filter((f): f is GeoJSON.Feature => f !== null),
     ),
   };
 
@@ -322,9 +351,10 @@ function AddRegionsDialog({
 
   const [insertRegions, { loading }] = useInsertRegionsMutation();
 
-  const propertyKeys: string[] = parsedFeatures.length > 0 && parsedFeatures[0]
-    ? Object.keys(parsedFeatures[0].featureProperties)
-    : [];
+  const propertyKeys: string[] =
+    parsedFeatures.length > 0 && parsedFeatures[0]
+      ? Object.keys(parsedFeatures[0].featureProperties)
+      : [];
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -390,7 +420,9 @@ function AddRegionsDialog({
     }
     const missing = selected.filter((i) => !names[i]?.trim());
     if (missing.length > 0) {
-      setError('Please enter a name for all selected regions, or select a GeoJSON property to auto-fill names.');
+      setError(
+        'Please enter a name for all selected regions, or select a GeoJSON property to auto-fill names.',
+      );
       return;
     }
 
@@ -433,7 +465,7 @@ function AddRegionsDialog({
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && handleClose()}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Add {regionType} regions</DialogTitle>
         </DialogHeader>
@@ -450,7 +482,9 @@ function AddRegionsDialog({
             >
               <option value={regionType}>Base regions</option>
               {subcategories.map((sc) => (
-                <option key={sc.id} value={sc.id}>{sc.name}</option>
+                <option key={sc.id} value={sc.id}>
+                  {sc.name}
+                </option>
               ))}
             </select>
           </div>
@@ -481,7 +515,9 @@ function AddRegionsDialog({
               >
                 <option value="">— select property —</option>
                 {propertyKeys.map((k) => (
-                  <option key={k} value={k}>{k}</option>
+                  <option key={k} value={k}>
+                    {k}
+                  </option>
                 ))}
               </select>
             </div>
@@ -490,12 +526,12 @@ function AddRegionsDialog({
           {/* Regions table */}
           {parsedFeatures.length > 0 && (
             <div>
-              <p className="text-sm text-muted-foreground mb-2">
+              <p className="mb-2 text-sm text-muted-foreground">
                 {parsedFeatures.length} regions found. {checkedIndices.size} selected.
               </p>
-              <div className="max-h-64 overflow-auto border rounded">
+              <div className="max-h-64 overflow-auto rounded border">
                 <table className="w-full text-sm">
-                  <thead className="bg-gray-50 sticky top-0">
+                  <thead className="sticky top-0 bg-gray-50">
                     <tr>
                       <th className="p-2 text-left">
                         <input
@@ -510,7 +546,10 @@ function AddRegionsDialog({
                   </thead>
                   <tbody>
                     {parsedFeatures.map((feature, i) => (
-                      <tr key={i} className={checkedIndices.has(i) ? 'bg-white' : 'bg-gray-50 opacity-50'}>
+                      <tr
+                        key={i}
+                        className={checkedIndices.has(i) ? 'bg-white' : 'bg-gray-50 opacity-50'}
+                      >
                         <td className="p-2">
                           <input
                             type="checkbox"
@@ -526,7 +565,7 @@ function AddRegionsDialog({
                             className="h-7 text-sm"
                           />
                         </td>
-                        <td className="p-2 text-xs text-muted-foreground truncate max-w-48">
+                        <td className="max-w-48 truncate p-2 text-xs text-muted-foreground">
                           {Object.entries(feature.featureProperties)
                             .slice(0, 2)
                             .map(([k, v]) => `${k}: ${v}`)
@@ -541,19 +580,23 @@ function AddRegionsDialog({
           )}
 
           {error && (
-            <p className="text-sm text-destructive flex items-center gap-1">
+            <p className="flex items-center gap-1 text-sm text-destructive">
               <AlertCircle className="h-4 w-4" /> {error}
             </p>
           )}
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={handleClose}>Cancel</Button>
+          <Button variant="outline" onClick={handleClose}>
+            Cancel
+          </Button>
           <Button
             onClick={handleSubmit}
             disabled={loading || parsedFeatures.length === 0 || checkedIndices.size === 0}
           >
-            {loading ? 'Adding…' : `Add ${checkedIndices.size} region${checkedIndices.size !== 1 ? 's' : ''}`}
+            {loading
+              ? 'Adding…'
+              : `Add ${checkedIndices.size} region${checkedIndices.size !== 1 ? 's' : ''}`}
           </Button>
         </DialogFooter>
       </DialogContent>
