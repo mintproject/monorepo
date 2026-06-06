@@ -111,12 +111,12 @@ export function ThreadExpansion({
 
   return (
     <div
-      className={cn('border-b border-gray-200 mb-1', editMode && 'bg-yellow-50', className)}
+      className={cn('mb-1 border-b border-gray-200', editMode && 'bg-yellow-50', className)}
       data-testid="thread-expansion"
     >
       {/* Header row */}
       <div
-        className="flex cursor-pointer items-center gap-2 px-4 py-3 select-none hover:bg-gray-50"
+        className="flex cursor-pointer select-none items-center gap-2 px-4 py-3 hover:bg-gray-50"
         onClick={handleToggle}
         aria-expanded={open}
         role="button"
@@ -134,12 +134,10 @@ export function ThreadExpansion({
         </span>
 
         {/* Title */}
-        <span className="flex-1 font-semibold text-sm">{name}</span>
+        <span className="flex-1 text-sm font-semibold">{name}</span>
 
         {/* Status info (shown when collapsed) */}
-        {!open && (
-          <span className="text-xs text-gray-500 truncate max-w-xs">{statusInfo}</span>
-        )}
+        {!open && <span className="max-w-xs truncate text-xs text-gray-500">{statusInfo}</span>}
       </div>
 
       {/* Expanded body */}
@@ -147,23 +145,23 @@ export function ThreadExpansion({
         <div className="relative px-4 pb-4">
           {/* Loading overlay */}
           {isBusy && (
-            <div className="absolute inset-0 z-10 flex items-center justify-center bg-gray-500/30 rounded">
-              <span className="animate-spin h-6 w-6 border-2 border-blue-600 border-t-transparent rounded-full" />
+            <div className="absolute inset-0 z-10 flex items-center justify-center rounded bg-gray-500/30">
+              <span className="h-6 w-6 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
             </div>
           )}
 
           {/* Separator */}
-          <hr className="mb-3 -mx-4" />
+          <hr className="-mx-4 mb-3" />
 
           {/* Description + edit button row */}
-          <div className="flex items-start justify-between gap-2 mb-3">
+          <div className="mb-3 flex items-start justify-between gap-2">
             <p className="text-sm text-gray-600">{description}</p>
             {canEdit && !editMode && editContent !== undefined && (
               <button
                 type="button"
                 aria-label={`Edit ${name}`}
                 onClick={handleEditEnable}
-                className="shrink-0 rounded p-1 hover:bg-gray-100 text-gray-500 hover:text-gray-900"
+                className="shrink-0 rounded p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-900"
               >
                 <Edit className="h-4 w-4" />
               </button>

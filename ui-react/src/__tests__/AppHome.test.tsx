@@ -97,9 +97,7 @@ describe('AppHome', () => {
 
   it('shows region selection instruction', () => {
     renderWithProviders(<AppHome />, { apolloMocks: [listRegionsMock] });
-    expect(
-      screen.getByText(/Select a region by hovering over it and clicking/),
-    ).toBeTruthy();
+    expect(screen.getByText(/Select a region by hovering over it and clicking/)).toBeTruthy();
   });
 
   it('shows loading spinner while regions are loading', () => {
@@ -132,11 +130,12 @@ describe('AppHome', () => {
       apolloMocks: [emptyRegionsMock],
     });
 
-    await waitFor(() => {
-      expect(
-        screen.queryByText(/No regions available/),
-      ).toBeTruthy();
-    }, { timeout: 3000 });
+    await waitFor(
+      () => {
+        expect(screen.queryByText(/No regions available/)).toBeTruthy();
+      },
+      { timeout: 3000 },
+    );
   });
 
   it('falls back to default welcome message when config not set', () => {
@@ -151,8 +150,6 @@ describe('AppHome', () => {
 
     renderWithProviders(<AppHome />, { apolloMocks: [listRegionsMock] });
     // Should fall back to the default message
-    expect(
-      screen.getByText('Welcome to MINT Model Catalog'),
-    ).toBeTruthy();
+    expect(screen.getByText('Welcome to MINT Model Catalog')).toBeTruthy();
   });
 });

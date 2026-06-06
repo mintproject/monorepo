@@ -4,11 +4,13 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { ConfirmDialog } from '../ConfirmDialog';
 
-function renderDialog(overrides: {
-  open?: boolean;
-  onConfirm?: () => void;
-  onOpenChange?: (open: boolean) => void;
-} = {}) {
+function renderDialog(
+  overrides: {
+    open?: boolean;
+    onConfirm?: () => void;
+    onOpenChange?: (open: boolean) => void;
+  } = {},
+) {
   const onConfirm = overrides.onConfirm ?? vi.fn();
   const onOpenChange = overrides.onOpenChange ?? vi.fn();
   return {
@@ -30,9 +32,7 @@ describe('ConfirmDialog', () => {
   it('renders title and description when open', () => {
     renderDialog();
     expect(screen.getByText('Delete item')).toBeInTheDocument();
-    expect(
-      screen.getByText('Are you sure you want to delete this item?'),
-    ).toBeInTheDocument();
+    expect(screen.getByText('Are you sure you want to delete this item?')).toBeInTheDocument();
   });
 
   it('does not render content when closed', () => {
@@ -63,8 +63,6 @@ describe('ConfirmDialog', () => {
         confirmLabel="Yes, remove"
       />,
     );
-    expect(
-      screen.getByRole('button', { name: /yes, remove/i }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /yes, remove/i })).toBeInTheDocument();
   });
 });

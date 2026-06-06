@@ -31,8 +31,8 @@ export function ThreadExpansionModels({ thread, onUpdated }: ThreadExpansionMode
   const viewContent = (
     <div data-testid="models-view" className="text-sm text-gray-500">
       <p>
-        Model selection will be implemented in a subsequent step. Use the model catalog to find
-        and select models appropriate for your region and time period.
+        Model selection will be implemented in a subsequent step. Use the model catalog to find and
+        select models appropriate for your region and time period.
       </p>
     </div>
   );
@@ -40,8 +40,8 @@ export function ThreadExpansionModels({ thread, onUpdated }: ThreadExpansionMode
   const editContent = (
     <div data-testid="models-edit-form" className="text-sm text-gray-500">
       <p>
-        Full model selection UI (search, filter by region, add/remove models) will be available
-        in the models step.
+        Full model selection UI (search, filter by region, add/remove models) will be available in
+        the models step.
       </p>
     </div>
   );
@@ -55,7 +55,9 @@ export function ThreadExpansionModels({ thread, onUpdated }: ThreadExpansionMode
       canEdit={perm.write}
       viewContent={viewContent}
       editContent={editContent}
-      onSave={async () => { onUpdated?.(); }}
+      onSave={async () => {
+        onUpdated?.();
+      }}
     />
   );
 }

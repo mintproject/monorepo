@@ -42,10 +42,9 @@ describe('OAuth2CallbackPage', () => {
       initialEntries: ['/oauth2/callback'],
     });
 
-    await waitFor(
-      () => expect(screen.getByText(/Signed in\. Redirecting/i)).toBeInTheDocument(),
-      { timeout: 2000 },
-    );
+    await waitFor(() => expect(screen.getByText(/Signed in\. Redirecting/i)).toBeInTheDocument(), {
+      timeout: 2000,
+    });
   });
 
   it('shows error state when handleCallback returns error', async () => {
@@ -60,9 +59,7 @@ describe('OAuth2CallbackPage', () => {
       initialEntries: ['/oauth2/callback'],
     });
 
-    await waitFor(() =>
-      expect(screen.getByText(/Authentication Failed/i)).toBeInTheDocument(),
-    );
+    await waitFor(() => expect(screen.getByText(/Authentication Failed/i)).toBeInTheDocument());
     expect(screen.getByText('access_denied')).toBeInTheDocument();
   });
 
@@ -75,9 +72,7 @@ describe('OAuth2CallbackPage', () => {
       initialEntries: ['/oauth2/callback'],
     });
 
-    await waitFor(() =>
-      expect(screen.getByText(/Authentication Failed/i)).toBeInTheDocument(),
-    );
+    await waitFor(() => expect(screen.getByText(/Authentication Failed/i)).toBeInTheDocument());
     expect(screen.getByText('Network failure')).toBeInTheDocument();
   });
 });

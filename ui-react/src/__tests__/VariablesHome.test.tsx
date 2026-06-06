@@ -130,9 +130,7 @@ describe('VariablesHome', () => {
   it('renders the search input', async () => {
     renderVariablesHome();
     await waitFor(() => {
-      expect(
-        screen.getByPlaceholderText('Search variable presentations...'),
-      ).toBeInTheDocument();
+      expect(screen.getByPlaceholderText('Search variable presentations...')).toBeInTheDocument();
     });
   });
 
@@ -223,9 +221,7 @@ describe('VariablesHome', () => {
   it('renders an accessible table with aria-label', async () => {
     renderVariablesHome();
     await waitFor(() => {
-      expect(
-        screen.getByRole('table', { name: /variable presentations/i }),
-      ).toBeInTheDocument();
+      expect(screen.getByRole('table', { name: /variable presentations/i })).toBeInTheDocument();
     });
   });
 });

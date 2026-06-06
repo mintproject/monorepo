@@ -75,7 +75,7 @@ export function TreeNode({
           'group flex w-full cursor-pointer items-center gap-1.5 rounded-md px-2 py-1 text-sm',
           'transition-colors hover:bg-accent hover:text-accent-foreground',
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-          selected && 'bg-accent text-accent-foreground font-medium',
+          selected && 'bg-accent font-medium text-accent-foreground',
           !selected && 'text-foreground',
         )}
         style={{ paddingLeft: `${8 + depth * 16}px` }}

@@ -37,9 +37,7 @@ const columns: ColumnDef<VariablePresentation>[] = [
     id: 'standard_variable',
     accessorFn: (row) => row.standard_variable?.label ?? '',
     header: 'Standard Variables',
-    cell: ({ getValue }) => (
-      <span className="text-[#6c757d]">{(getValue() as string) || '-'}</span>
-    ),
+    cell: ({ getValue }) => <span className="text-[#6c757d]">{(getValue() as string) || '-'}</span>,
   },
   {
     id: 'label',
@@ -47,12 +45,11 @@ const columns: ColumnDef<VariablePresentation>[] = [
     header: 'Variable Presentation',
     cell: ({ row }) => {
       const label = row.original.label ?? 'Unnamed';
-      const description =
-        row.original.standard_variable?.description ?? 'No description available';
+      const description = row.original.standard_variable?.description ?? 'No description available';
       return (
         <div>
           <div className="font-medium text-[#2c3e50]">{label}</div>
-          <div className="text-[#6c757d] text-sm leading-relaxed break-words pr-4">
+          <div className="break-words pr-4 text-sm leading-relaxed text-[#6c757d]">
             {description}
           </div>
         </div>
@@ -71,7 +68,7 @@ const columns: ColumnDef<VariablePresentation>[] = [
     accessorFn: (row) => row.unit?.label ?? '',
     header: 'Units',
     cell: ({ getValue }) => (
-      <span className="text-[#6c757d] italic">{(getValue() as string) || '-'}</span>
+      <span className="italic text-[#6c757d]">{(getValue() as string) || '-'}</span>
     ),
   },
 ];
@@ -90,23 +87,18 @@ function CopyButton({ value }: { value: string }) {
   }, [value]);
 
   return (
-    <div className="relative group inline-block">
+    <div className="group relative inline-block">
       <button
         type="button"
         onClick={handleCopy}
         title="Copy standard variable name"
         aria-label="Copy standard variable name"
-        className="w-8 h-8 inline-flex items-center justify-center rounded text-[#6c757d]
-                   opacity-60 hover:opacity-100 hover:bg-[#f1f3f5] transition-all"
+        className="inline-flex h-8 w-8 items-center justify-center rounded text-[#6c757d] opacity-60 transition-all hover:bg-[#f1f3f5] hover:opacity-100"
       >
         <Copy size={16} />
       </button>
       {/* Tooltip */}
-      <span
-        className="absolute bottom-full left-1/2 -translate-x-1/4 mb-2 px-2 py-1
-                   bg-[#2c3e50] text-white text-xs rounded whitespace-nowrap
-                   opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity"
-      >
+      <span className="pointer-events-none absolute bottom-full left-1/2 mb-2 -translate-x-1/4 whitespace-nowrap rounded bg-[#2c3e50] px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
         {copied ? 'Copied!' : 'Click to copy standard variable name'}
       </span>
     </div>
@@ -129,7 +121,7 @@ function ExplanationSection({ expanded, onToggle }: { expanded: boolean; onToggl
       <button
         type="button"
         onClick={onToggle}
-        className="flex items-center gap-1 text-[#6c757d] text-sm hover:text-[#495057] mb-3"
+        className="mb-3 flex items-center gap-1 text-sm text-[#6c757d] hover:text-[#495057]"
         aria-expanded={expanded}
       >
         <ChevronRight
@@ -140,12 +132,12 @@ function ExplanationSection({ expanded, onToggle }: { expanded: boolean; onToggl
       </button>
 
       {expanded && (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 mb-4">
-          <div className="bg-white rounded-lg shadow-sm p-4">
-            <h4 className="font-semibold text-[#2c3e50] mb-2 text-sm">
+        <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div className="rounded-lg bg-white p-4 shadow-sm">
+            <h4 className="mb-2 text-sm font-semibold text-[#2c3e50]">
               What is a Standard Variable?
             </h4>
-            <p className="text-[#6c757d] text-sm leading-relaxed">
+            <p className="text-sm leading-relaxed text-[#6c757d]">
               A standard variable is necessary to refer to all variables using the same nomenclature
               in a domain ontology. For example, a standard variable may be a{' '}
               <a
@@ -161,11 +153,11 @@ function ExplanationSection({ expanded, onToggle }: { expanded: boolean; onToggl
             </p>
           </div>
 
-          <div className="bg-white rounded-lg shadow-sm p-4">
-            <h4 className="font-semibold text-[#2c3e50] mb-2 text-sm">
+          <div className="rounded-lg bg-white p-4 shadow-sm">
+            <h4 className="mb-2 text-sm font-semibold text-[#2c3e50]">
               What is a Variable Presentation?
             </h4>
-            <p className="text-[#6c757d] text-sm leading-relaxed">
+            <p className="text-sm leading-relaxed text-[#6c757d]">
               A variable presentation is a concept used to represent an instantiation of a variable
               in an input/output dataset. This allows different models to use the same variable
               concept with different units or representations while maintaining semantic
@@ -173,11 +165,11 @@ function ExplanationSection({ expanded, onToggle }: { expanded: boolean; onToggl
             </p>
           </div>
 
-          <div className="bg-white rounded-lg shadow-sm p-4 md:col-span-2">
-            <h4 className="font-semibold text-[#2c3e50] mb-2 text-sm">
+          <div className="rounded-lg bg-white p-4 shadow-sm md:col-span-2">
+            <h4 className="mb-2 text-sm font-semibold text-[#2c3e50]">
               How to Use Standard Variables
             </h4>
-            <p className="text-[#6c757d] text-sm leading-relaxed">
+            <p className="text-sm leading-relaxed text-[#6c757d]">
               The standard variable will be required on your model inputs and datasets (data
               catalog). Use the search bar below to find the appropriate standard variable for your
               data or model. You can click the copy button next to each variable to easily copy its
@@ -227,10 +219,10 @@ export function VariablesHome() {
   return (
     <div>
       {/* Page header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-[#212529]">Explore Variables</h1>
-          <p className="text-[#6c757d] text-base mt-1">
+          <p className="mt-1 text-base text-[#6c757d]">
             Standard variables and variable presentations
           </p>
         </div>
@@ -243,19 +235,19 @@ export function VariablesHome() {
       />
 
       {/* Search bar */}
-      <div className="flex items-center bg-white rounded-lg shadow-sm px-4 py-2 mb-4">
+      <div className="mb-4 flex items-center rounded-lg bg-white px-4 py-2 shadow-sm">
         <Input
           type="text"
           placeholder="Search variable presentations..."
           value={globalFilter}
           onChange={(e) => setGlobalFilter(e.target.value)}
-          className="border-none shadow-none focus-visible:ring-0 text-[#495057] placeholder:text-[#adb5bd]"
+          className="border-none text-[#495057] shadow-none placeholder:text-[#adb5bd] focus-visible:ring-0"
           aria-label="Search variable presentations"
         />
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-lg shadow-sm overflow-visible relative">
+      <div className="relative overflow-visible rounded-lg bg-white shadow-sm">
         {loading && (
           <div className="p-8 text-center text-[#6c757d]">Loading variable presentations…</div>
         )}
@@ -267,7 +259,11 @@ export function VariablesHome() {
         )}
 
         {!loading && !error && (
-          <table className="w-full border-collapse" role="table" aria-label="Variable presentations">
+          <table
+            className="w-full border-collapse"
+            role="table"
+            aria-label="Variable presentations"
+          >
             <thead>
               {table.getHeaderGroups().map((headerGroup) => (
                 <tr key={headerGroup.id}>
@@ -275,8 +271,7 @@ export function VariablesHome() {
                     <th
                       key={header.id}
                       style={{ width: header.getSize() !== 150 ? header.getSize() : undefined }}
-                      className="bg-[#f8f9fa] px-4 py-3 text-left font-semibold text-[rgb(72,72,72)]
-                                 border-b-2 border-[#dee2e6] sticky top-0 z-10 text-sm"
+                      className="sticky top-0 z-10 border-b-2 border-[#dee2e6] bg-[#f8f9fa] px-4 py-3 text-left text-sm font-semibold text-[rgb(72,72,72)]"
                     >
                       {header.isPlaceholder ? null : header.column.getCanSort() ? (
                         <button
@@ -306,11 +301,10 @@ export function VariablesHome() {
                 table.getRowModel().rows.map((row, idx) => (
                   <tr
                     key={row.id}
-                    className={`border-b border-[#dee2e6] hover:bg-[#EEEEEE] transition-colors
-                                ${idx % 2 === 0 ? 'bg-[#F9F9F9]' : 'bg-[#F2F2F2]'}`}
+                    className={`border-b border-[#dee2e6] transition-colors hover:bg-[#EEEEEE] ${idx % 2 === 0 ? 'bg-[#F9F9F9]' : 'bg-[#F2F2F2]'}`}
                   >
                     {row.getVisibleCells().map((cell) => (
-                      <td key={cell.id} className="px-4 py-3 align-top text-[#212529] text-sm">
+                      <td key={cell.id} className="px-4 py-3 align-top text-sm text-[#212529]">
                         {flexRender(cell.column.columnDef.cell, cell.getContext())}
                       </td>
                     ))}
@@ -324,7 +318,7 @@ export function VariablesHome() {
 
       {/* Pagination controls */}
       {!loading && !error && table.getPageCount() > 1 && (
-        <div className="flex items-center justify-between mt-4">
+        <div className="mt-4 flex items-center justify-between">
           <span className="text-sm text-[#6c757d]">
             Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()} (
             {table.getFilteredRowModel().rows.length} rows)

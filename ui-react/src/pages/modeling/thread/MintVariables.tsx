@@ -91,9 +91,9 @@ export function MintVariables({ thread, onContinue, onThreadUpdated }: MintVaria
 
   return (
     <div data-testid="mint-variables">
-      <p className="text-sm text-gray-600 mb-4">
-        This step is for selecting indicators and adjustable variables for your analysis.
-        An <strong>indicator</strong> is an index or a variable of interest that results from a model.
+      <p className="mb-4 text-sm text-gray-600">
+        This step is for selecting indicators and adjustable variables for your analysis. An{' '}
+        <strong>indicator</strong> is an index or a variable of interest that results from a model.
         An <strong>adjustable variable</strong> indicates the kind of inputs that you want to use to
         drive the results.
       </p>
@@ -101,23 +101,24 @@ export function MintVariables({ thread, onContinue, onThreadUpdated }: MintVaria
       {hasVariables && !editMode ? (
         /* ── View mode ─────────────────────────────────────────────────────── */
         <div>
-          <div className="flex items-center justify-between mb-2">
-            <h4 className="font-semibold text-sm">Variables</h4>
+          <div className="mb-2 flex items-center justify-between">
+            <h4 className="text-sm font-semibold">Variables</h4>
             {perm.write && (
               <button
                 type="button"
                 aria-label="Edit variables"
                 onClick={() => setEditMode(true)}
-                className="rounded p-1 hover:bg-gray-100 text-gray-500 hover:text-gray-900"
+                className="rounded p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-900"
               >
                 ✎
               </button>
-            )}          </div>
-          <div className="border rounded p-3 text-sm space-y-2">
+            )}{' '}
+          </div>
+          <div className="space-y-2 rounded border p-3 text-sm">
             <div>
               <span className="font-semibold">Indicators:</span>
               {thread.response_variable_id ? (
-                <ul className="list-disc list-inside ml-2">
+                <ul className="ml-2 list-inside list-disc">
                   <li>{thread.response_variable_id}</li>
                 </ul>
               ) : (
@@ -127,7 +128,7 @@ export function MintVariables({ thread, onContinue, onThreadUpdated }: MintVaria
             <div>
               <span className="font-semibold">Adjustable Variables:</span>
               {thread.driving_variable_id ? (
-                <ul className="list-disc list-inside ml-2">
+                <ul className="ml-2 list-inside list-disc">
                   <li>{thread.driving_variable_id}</li>
                 </ul>
               ) : (
@@ -149,8 +150,8 @@ export function MintVariables({ thread, onContinue, onThreadUpdated }: MintVaria
       ) : (
         /* ── Edit mode ─────────────────────────────────────────────────────── */
         <form data-testid="variables-form" onSubmit={handleSubmit} className="space-y-4">
-          <div className="border rounded p-3 space-y-3">
-            <h4 className="font-semibold text-sm">Variables</h4>
+          <div className="space-y-3 rounded border p-3">
+            <h4 className="text-sm font-semibold">Variables</h4>
 
             <div className="space-y-1">
               <label htmlFor="response-variable" className="text-sm font-medium">
