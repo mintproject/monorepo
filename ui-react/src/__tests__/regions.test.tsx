@@ -5,8 +5,8 @@
  * the entire react-leaflet module so that RegionsEditor can be rendered
  * without hanging or crashing.
  */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { screen, waitFor } from '@testing-library/react';
+import { describe, it, expect, vi } from 'vitest';
+import { screen } from '@testing-library/react';
 import { renderWithProviders } from '@/test/utils/render';
 
 import {
@@ -108,7 +108,7 @@ describe('regionUtils', () => {
     });
 
     it('handles features with null geometry', () => {
-      const geojson: GeoJSON.FeatureCollection = {
+      const geojson: GeoJSON.FeatureCollection<GeoJSON.Geometry | null> = {
         type: 'FeatureCollection',
         features: [
           { type: 'Feature', properties: {}, geometry: null },

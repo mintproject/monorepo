@@ -38,6 +38,10 @@ import { RegionQueryPage } from './pages/regions/RegionQueryPage';
 // Pages — variables
 import { VariablesHome } from './pages/variables/VariablesHome';
 
+// Auth
+import { OAuth2CallbackPage } from './pages/OAuth2CallbackPage';
+import { ProtectedRoute, LoginRequiredPage } from './components/common/ProtectedRoute';
+
 // 404
 import { NotFoundPage } from './pages/NotFoundPage';
 

@@ -102,7 +102,7 @@ export interface NewRegionFromGeoJSON {
   featureProperties: Record<string, unknown>;
 }
 
-export function parseGeoJsonFeatures(geojson: GeoJSON.FeatureCollection): NewRegionFromGeoJSON[] {
+export function parseGeoJsonFeatures(geojson: GeoJSON.FeatureCollection<GeoJSON.Geometry | null>): NewRegionFromGeoJSON[] {
   return geojson.features.map((feature) => ({
     name: '',
     geometries: feature.geometry ? [JSON.stringify(feature.geometry)] : [],
