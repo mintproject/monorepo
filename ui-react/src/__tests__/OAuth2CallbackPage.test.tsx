@@ -19,8 +19,12 @@ vi.mock('@/lib/auth/oauth2-adapter', () => ({
 }));
 
 describe('OAuth2CallbackPage', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
+    // Explicitly pin the default so this block is robust even if clearAllMocks
+    // semantics change (e.g. config adds resetAllMocks: true).
+    const adapter = await import('@/lib/auth/oauth2-adapter');
+    (adapter.maybeForwardToOrigin as ReturnType<typeof vi.fn>).mockReturnValue({ forwarded: false });
   });
 
   it('shows processing state initially', async () => {
