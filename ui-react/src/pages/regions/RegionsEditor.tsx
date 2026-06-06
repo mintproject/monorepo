@@ -8,9 +8,7 @@ export function RegionsEditor() {
         <CardTitle>RegionsEditor</CardTitle>
       </CardHeader>
       <CardContent>
-        <p className="text-muted-foreground">
-          Region editor will be implemented here.
-        </p>
+        <p className="text-muted-foreground">Region editor will be implemented here.</p>
       </CardContent>
     </Card>
   );

@@ -54,32 +54,17 @@ export function App() {
 
             {/* Models */}
             <Route path="/models" element={<ModelsPage />} />
-            <Route
-              path="/models/configure/:id"
-              element={<ConfigurePage />}
-            />
+            <Route path="/models/configure/:id" element={<ConfigurePage />} />
             <Route path="/models/register" element={<RegisterPage />} />
 
             {/* Legacy configure route — redirect to models */}
-            <Route
-              path="/configure"
-              element={<Navigate to="/models" replace />}
-            />
+            <Route path="/configure" element={<Navigate to="/models" replace />} />
 
             {/* Modeling */}
             <Route path="/modeling" element={<ModelingHome />} />
-            <Route
-              path="/modeling/problem-statements"
-              element={<ProblemStatementsList />}
-            />
-            <Route
-              path="/modeling/problem-statement/:id"
-              element={<MintProblemStatement />}
-            />
-            <Route
-              path="/modeling/thread/:id"
-              element={<MintThread />}
-            />
+            <Route path="/modeling/problem-statements" element={<ProblemStatementsList />} />
+            <Route path="/modeling/problem-statement/:id" element={<MintProblemStatement />} />
+            <Route path="/modeling/thread/:id" element={<MintThread />} />
 
             {/* Auth callback */}
             <Route path="/oauth2/callback" element={<OAuth2CallbackPage />} />
@@ -89,30 +74,15 @@ export function App() {
             <Route path="/datasets" element={<DatasetsHome />} />
             <Route path="/datasets/browse" element={<DatasetsBrowse />} />
             <Route path="/datasets/search" element={<DatasetsSearch />} />
-            <Route
-              path="/datasets/detail/:id"
-              element={<DatasetDetail />}
-            />
-            <Route
-              path="/datasets/register"
-              element={<DatasetsRegister />}
-            />
-            <Route
-              path="/datasets/transformations"
-              element={<DatasetsTransformations />}
-            />
+            <Route path="/datasets/detail/:id" element={<DatasetDetail />} />
+            <Route path="/datasets/register" element={<DatasetsRegister />} />
+            <Route path="/datasets/transformations" element={<DatasetsTransformations />} />
 
             {/* Regions */}
             <Route path="/regions" element={<RegionsHome />} />
             <Route path="/regions/editor" element={<RegionsEditor />} />
-            <Route
-              path="/regions/:id/datasets"
-              element={<RegionDatasets />}
-            />
-            <Route
-              path="/regions/:id/models"
-              element={<RegionModels />}
-            />
+            <Route path="/regions/:id/datasets" element={<RegionDatasets />} />
+            <Route path="/regions/:id/models" element={<RegionModels />} />
 
             {/* Variables */}
             <Route path="/variables" element={<VariablesHome />} />

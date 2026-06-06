@@ -8,9 +8,7 @@ export function DatasetsRegister() {
         <CardTitle>DatasetsRegister</CardTitle>
       </CardHeader>
       <CardContent>
-        <p className="text-muted-foreground">
-          Dataset registration will be implemented here.
-        </p>
+        <p className="text-muted-foreground">Dataset registration will be implemented here.</p>
       </CardContent>
     </Card>
   );

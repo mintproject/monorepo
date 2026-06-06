@@ -71,9 +71,12 @@ describe('MintThread', () => {
 
   it('shows breadcrumb navigation steps after data loads', async () => {
     renderMintThread();
-    await waitFor(() => {
-      expect(screen.getByTestId('breadcrumb-configure')).toBeInTheDocument();
-    }, { timeout: 3000 });
+    await waitFor(
+      () => {
+        expect(screen.getByTestId('breadcrumb-configure')).toBeInTheDocument();
+      },
+      { timeout: 3000 },
+    );
     expect(screen.getByTestId('breadcrumb-variables')).toBeInTheDocument();
     expect(screen.getByTestId('breadcrumb-models')).toBeInTheDocument();
     expect(screen.getByTestId('breadcrumb-datasets')).toBeInTheDocument();
@@ -82,9 +85,12 @@ describe('MintThread', () => {
 
   it('renders Configure step by default', async () => {
     renderMintThread();
-    await waitFor(() => {
-      expect(screen.getByTestId('mint-configure')).toBeInTheDocument();
-    }, { timeout: 3000 });
+    await waitFor(
+      () => {
+        expect(screen.getByTestId('mint-configure')).toBeInTheDocument();
+      },
+      { timeout: 3000 },
+    );
   });
 
   it('shows error message when query fails', async () => {
@@ -97,22 +103,31 @@ describe('MintThread', () => {
       error: new Error('Network error'),
     };
     renderMintThread([errorMock]);
-    await waitFor(() => {
-      expect(screen.getByRole('alert')).toBeInTheDocument();
-    }, { timeout: 3000 });
+    await waitFor(
+      () => {
+        expect(screen.getByRole('alert')).toBeInTheDocument();
+      },
+      { timeout: 3000 },
+    );
   });
 
   it('shows maximize button after data loads', async () => {
     renderMintThread();
-    await waitFor(() => {
-      expect(screen.getByRole('button', { name: /maximize/i })).toBeInTheDocument();
-    }, { timeout: 3000 });
+    await waitFor(
+      () => {
+        expect(screen.getByRole('button', { name: /maximize/i })).toBeInTheDocument();
+      },
+      { timeout: 3000 },
+    );
   });
 
   it('shows the mint-thread container after data loads', async () => {
     renderMintThread();
-    await waitFor(() => {
-      expect(screen.getByTestId('mint-thread')).toBeInTheDocument();
-    }, { timeout: 3000 });
+    await waitFor(
+      () => {
+        expect(screen.getByTestId('mint-thread')).toBeInTheDocument();
+      },
+      { timeout: 3000 },
+    );
   });
 });

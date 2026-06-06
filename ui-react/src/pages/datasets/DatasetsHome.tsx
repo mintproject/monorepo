@@ -8,9 +8,7 @@ export function DatasetsHome() {
         <CardTitle>DatasetsHome</CardTitle>
       </CardHeader>
       <CardContent>
-        <p className="text-muted-foreground">
-          Datasets overview will be implemented here.
-        </p>
+        <p className="text-muted-foreground">Datasets overview will be implemented here.</p>
       </CardContent>
     </Card>
   );

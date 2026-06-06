@@ -2,6 +2,7 @@
  * Tests for ProtectedRoute component
  */
 import { screen } from '@testing-library/react';
+import { Route, Routes } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
 
 import { ProtectedRoute } from '@/components/common/ProtectedRoute';
@@ -40,10 +41,24 @@ describe('ProtectedRoute', () => {
   });
 
   it('redirects to /login-required when not authenticated', () => {
+    // Render inside a Routes tree so the <Navigate> resolves to a real route
+    // and ProtectedRoute unmounts — rendering it bare would re-navigate on every
+    // render (a fresh location.state.from each time) and loop indefinitely.
     renderWithProviders(
-      <ProtectedRoute>
-        <div data-testid="protected-content">Secret content</div>
-      </ProtectedRoute>,
+      <Routes>
+        <Route
+          path="/configure"
+          element={
+            <ProtectedRoute>
+              <div data-testid="protected-content">Secret content</div>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/login-required"
+          element={<div data-testid="login-required">Login required</div>}
+        />
+      </Routes>,
       {
         authState: {
           ...mockUnauthenticatedState,
@@ -53,7 +68,8 @@ describe('ProtectedRoute', () => {
       },
     );
 
-    // Content should not be shown when unauthenticated
+    // Content should not be shown when unauthenticated; we land on /login-required.
     expect(screen.queryByTestId('protected-content')).not.toBeInTheDocument();
+    expect(screen.getByTestId('login-required')).toBeInTheDocument();
   });
 });

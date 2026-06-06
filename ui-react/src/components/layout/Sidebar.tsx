@@ -1,14 +1,6 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import {
-  ChevronRight,
-  Database,
-  FlaskConical,
-  Home,
-  Map,
-  Variable,
-  Workflow,
-} from 'lucide-react';
+import { ChevronRight, Database, FlaskConical, Home, Map, Variable, Workflow } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 
@@ -131,9 +123,7 @@ function DirectLink({
       className={cn(
         'flex items-center gap-2 rounded-md px-2 py-2 text-sm font-medium transition-colors',
         'hover:bg-accent hover:text-accent-foreground',
-        active
-          ? 'bg-accent text-accent-foreground'
-          : 'text-muted-foreground',
+        active ? 'bg-accent text-accent-foreground' : 'text-muted-foreground',
       )}
     >
       <Icon className="h-4 w-4 shrink-0" />
@@ -152,9 +142,7 @@ function SectionGroup({
   currentPath: string;
 }) {
   const Icon = section.icon;
-  const isAnyChildActive = section.items?.some((item) =>
-    currentPath.startsWith(item.href),
-  );
+  const isAnyChildActive = section.items?.some((item) => currentPath.startsWith(item.href));
 
   const [open, setOpen] = useState(isAnyChildActive ?? false);
 
@@ -167,9 +155,7 @@ function SectionGroup({
         className={cn(
           'flex items-center justify-center rounded-md p-2 text-sm transition-colors',
           'hover:bg-accent hover:text-accent-foreground',
-          isAnyChildActive
-            ? 'bg-accent text-accent-foreground'
-            : 'text-muted-foreground',
+          isAnyChildActive ? 'bg-accent text-accent-foreground' : 'text-muted-foreground',
         )}
         aria-label={section.label}
       >
@@ -186,19 +172,14 @@ function SectionGroup({
         className={cn(
           'flex w-full items-center gap-2 rounded-md px-2 py-2 text-sm font-medium transition-colors',
           'hover:bg-accent hover:text-accent-foreground',
-          isAnyChildActive
-            ? 'text-foreground'
-            : 'text-muted-foreground',
+          isAnyChildActive ? 'text-foreground' : 'text-muted-foreground',
         )}
         aria-expanded={open}
       >
         <Icon className="h-4 w-4 shrink-0" />
         <span className="flex-1 text-left">{section.label}</span>
         <ChevronRight
-          className={cn(
-            'h-3.5 w-3.5 shrink-0 transition-transform',
-            open && 'rotate-90',
-          )}
+          className={cn('h-3.5 w-3.5 shrink-0 transition-transform', open && 'rotate-90')}
         />
       </button>
 
@@ -212,7 +193,7 @@ function SectionGroup({
                 'rounded-md px-2 py-1.5 text-sm transition-colors',
                 'hover:bg-accent hover:text-accent-foreground',
                 currentPath.startsWith(item.href)
-                  ? 'bg-accent/60 text-accent-foreground font-medium'
+                  ? 'bg-accent/60 font-medium text-accent-foreground'
                   : 'text-muted-foreground',
               )}
             >

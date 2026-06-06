@@ -60,7 +60,9 @@ describe('useModelTree', () => {
     expect(result.current.nodes[0]!.children).toHaveLength(1);
     expect(result.current.nodes[0]!.children[0]!.entityType).toBe('version');
     expect(result.current.nodes[0]!.children[0]!.children[0]!.entityType).toBe('config');
-    expect(result.current.nodes[0]!.children[0]!.children[0]!.children[0]!.entityType).toBe('setup');
+    expect(result.current.nodes[0]!.children[0]!.children[0]!.children[0]!.entityType).toBe(
+      'setup',
+    );
   });
 
   it('nodeId is scoped by entity type to avoid collisions', () => {

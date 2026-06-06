@@ -56,7 +56,7 @@ const EMPTY_FORM: FormValues = {
   name: '',
   regionId: '',
   startDate: '2000-01-01',
-  endDate: (new Date().toISOString().split('T')[0] ?? ''),
+  endDate: new Date().toISOString().split('T')[0] ?? '',
   notes: '',
 };
 
@@ -95,9 +95,7 @@ interface ProblemStatementsListProps {
  * Supports create, edit, delete, and free-text search. Permission-gated
  * edit/delete icons match the legacy LitElement component exactly.
  */
-export function ProblemStatementsList({
-  regionId = 'DEFAULT',
-}: ProblemStatementsListProps) {
+export function ProblemStatementsList({ regionId = 'DEFAULT' }: ProblemStatementsListProps) {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
@@ -125,9 +123,7 @@ export function ProblemStatementsList({
   const statements = data?.problem_statement ?? [];
 
   const filtered = statements
-    .filter((ps) =>
-      !filter || (ps.name ?? '').toLowerCase().includes(filter.toLowerCase()),
-    )
+    .filter((ps) => !filter || (ps.name ?? '').toLowerCase().includes(filter.toLowerCase()))
     .sort((a, b) => {
       const ta = getLatestEvent(a.events)?.timestamp ?? '';
       const tb = getLatestEvent(b.events)?.timestamp ?? '';
@@ -141,8 +137,7 @@ export function ProblemStatementsList({
   }
 
   function openEditDialog(ps: ProblemStatement) {
-    const lastNotes =
-      getLatestEventOfType(['CREATE', 'UPDATE'], ps.events)?.notes ?? '';
+    const lastNotes = getLatestEventOfType(['CREATE', 'UPDATE'], ps.events)?.notes ?? '';
     setForm({
       id: ps.id,
       name: ps.name ?? '',
@@ -355,16 +350,13 @@ export function ProblemStatementsList({
       />
 
       {/* ── Delete confirmation ───────────────────────────────────────────── */}
-      <AlertDialog
-        open={!!deleteTarget}
-        onOpenChange={(open) => !open && setDeleteTarget(null)}
-      >
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete problem statement?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete &quot;{deleteTarget?.name}&quot; and all
-              associated tasks and sub-tasks. This action cannot be undone.
+              This will permanently delete &quot;{deleteTarget?.name}&quot; and all associated tasks
+              and sub-tasks. This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -392,13 +384,7 @@ interface CardProps {
   onDelete: () => void;
 }
 
-function ProblemStatementCard({
-  ps,
-  currentUserId,
-  onSelect,
-  onEdit,
-  onDelete,
-}: CardProps) {
+function ProblemStatementCard({ ps, currentUserId, onSelect, onEdit, onDelete }: CardProps) {
   const perms = getUserPermission(ps.permissions, ps.events, currentUserId);
   const createEvent = getLatestEventOfType(['CREATE'], ps.events);
   const lastEvent = getLatestEvent(ps.events);
@@ -459,19 +445,17 @@ function ProblemStatementCard({
         {/* Metadata */}
         <div className="space-y-1 text-sm text-muted-foreground">
           <p>
-            <span className="font-medium">Time period:</span>{' '}
-            {formatDate(ps.start_date)} to {formatDate(ps.end_date)}
+            <span className="font-medium">Time period:</span> {formatDate(ps.start_date)} to{' '}
+            {formatDate(ps.end_date)}
           </p>
           {createEvent && (
             <p className="text-xs">
-              Created by {createEvent.userid} at{' '}
-              {formatDateTime(createEvent.timestamp)}
+              Created by {createEvent.userid} at {formatDateTime(createEvent.timestamp)}
             </p>
           )}
           {lastEvent && (
             <p className="text-xs">
-              Last updated by {lastEvent.userid} at{' '}
-              {formatDateTime(lastEvent.timestamp)}
+              Last updated by {lastEvent.userid} at {formatDateTime(lastEvent.timestamp)}
             </p>
           )}
         </div>
@@ -512,8 +496,8 @@ function ProblemStatementDialog({
 
         {!isEdit && (
           <p className="text-sm text-muted-foreground">
-            Please enter a short text to describe the overall problem. For example,
-            &quot;Explore interventions to increase agricultural productivity in South Sudan&quot;.
+            Please enter a short text to describe the overall problem. For example, &quot;Explore
+            interventions to increase agricultural productivity in South Sudan&quot;.
           </p>
         )}
 

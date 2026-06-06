@@ -31,8 +31,8 @@ export function ThreadExpansionDatasets({ thread, onUpdated }: ThreadExpansionDa
   const viewContent = (
     <div data-testid="datasets-view" className="text-sm text-gray-500">
       <p>
-        Dataset selection will be implemented in a subsequent step. Datasets must be mapped to
-        model inputs after models are selected.
+        Dataset selection will be implemented in a subsequent step. Datasets must be mapped to model
+        inputs after models are selected.
       </p>
     </div>
   );
@@ -55,7 +55,9 @@ export function ThreadExpansionDatasets({ thread, onUpdated }: ThreadExpansionDa
       canEdit={perm.write}
       viewContent={viewContent}
       editContent={editContent}
-      onSave={async () => { onUpdated?.(); }}
+      onSave={async () => {
+        onUpdated?.();
+      }}
     />
   );
 }

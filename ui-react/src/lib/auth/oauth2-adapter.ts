@@ -8,11 +8,7 @@
  * Provider detection is done from window.__MINT_CONFIG__.AUTH_PROVIDER at runtime.
  */
 
-import {
-  clearTokens,
-  setRefreshCallback,
-  storeTokens,
-} from './token-store';
+import { clearTokens, setRefreshCallback, storeTokens } from './token-store';
 
 // ---------------------------------------------------------------------------
 // Config helpers
@@ -309,17 +305,13 @@ function saveTapisTokenResponse(result: TapisTokenResult): void {
   const accessExpiresIn =
     result.access_token.expires_in ??
     (result.access_token.expires_at
-      ? Math.floor(
-          (new Date(result.access_token.expires_at).getTime() - Date.now()) / 1000,
-        )
+      ? Math.floor((new Date(result.access_token.expires_at).getTime() - Date.now()) / 1000)
       : undefined);
 
   const refreshExpiresIn =
     result.refresh_token?.expires_in ??
     (result.refresh_token?.expires_at
-      ? Math.floor(
-          (new Date(result.refresh_token.expires_at).getTime() - Date.now()) / 1000,
-        )
+      ? Math.floor((new Date(result.refresh_token.expires_at).getTime() - Date.now()) / 1000)
       : undefined);
 
   storeTokens({

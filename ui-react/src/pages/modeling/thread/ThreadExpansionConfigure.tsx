@@ -61,7 +61,8 @@ export function ThreadExpansionConfigure({ thread, onUpdated }: ThreadExpansionC
 
   function getStatusInfo(): string {
     const status = getStatus();
-    if (status === 'done') return `${thread.name} · ${fmtDate(thread.start_date)} – ${fmtDate(thread.end_date)}`;
+    if (status === 'done')
+      return `${thread.name} · ${fmtDate(thread.start_date)} – ${fmtDate(thread.end_date)}`;
     return 'Open to set general framing options';
   }
 
@@ -110,11 +111,11 @@ export function ThreadExpansionConfigure({ thread, onUpdated }: ThreadExpansionC
     <table className="w-full text-sm" data-testid="configure-view">
       <tbody>
         <tr className="align-top">
-          <td className="font-semibold w-32 pb-1.5">Goal:</td>
+          <td className="w-32 pb-1.5 font-semibold">Goal:</td>
           <td>{thread.name ?? ''}</td>
         </tr>
         <tr className="align-top">
-          <td className="font-semibold pb-1.5">Time Period:</td>
+          <td className="pb-1.5 font-semibold">Time Period:</td>
           <td>
             <span className="font-mono">{fmtDate(thread.start_date)}</span>
             {' to '}
@@ -123,19 +124,19 @@ export function ThreadExpansionConfigure({ thread, onUpdated }: ThreadExpansionC
         </tr>
         {thread.region_id && (
           <tr className="align-top">
-            <td className="font-semibold pb-1.5">Region:</td>
+            <td className="pb-1.5 font-semibold">Region:</td>
             <td className="text-gray-700">{thread.region_id}</td>
           </tr>
         )}
         {thread.response_variable_id && (
           <tr className="align-top">
-            <td className="font-semibold pb-1.5">Indicator:</td>
+            <td className="pb-1.5 font-semibold">Indicator:</td>
             <td className="text-gray-700">{thread.response_variable_id}</td>
           </tr>
         )}
         {thread.driving_variable_id && (
           <tr className="align-top">
-            <td className="font-semibold pb-1.5">Driving Variable:</td>
+            <td className="pb-1.5 font-semibold">Driving Variable:</td>
             <td className="text-gray-700">{thread.driving_variable_id}</td>
           </tr>
         )}
@@ -146,7 +147,9 @@ export function ThreadExpansionConfigure({ thread, onUpdated }: ThreadExpansionC
   const editContent = (
     <form className="space-y-3 text-sm" data-testid="configure-edit-form">
       <div className="flex flex-col gap-1">
-        <label htmlFor="thread-name" className="font-semibold">Goal:</label>
+        <label htmlFor="thread-name" className="font-semibold">
+          Goal:
+        </label>
         <input
           id="thread-name"
           type="text"
@@ -157,8 +160,10 @@ export function ThreadExpansionConfigure({ thread, onUpdated }: ThreadExpansionC
         />
       </div>
       <div className="flex items-center gap-2">
-        <div className="flex flex-col gap-1 flex-1">
-          <label htmlFor="thread-start" className="font-semibold">Start Date:</label>
+        <div className="flex flex-1 flex-col gap-1">
+          <label htmlFor="thread-start" className="font-semibold">
+            Start Date:
+          </label>
           <input
             id="thread-start"
             type="date"
@@ -168,8 +173,10 @@ export function ThreadExpansionConfigure({ thread, onUpdated }: ThreadExpansionC
           />
         </div>
         <span className="mt-5 text-gray-400">to</span>
-        <div className="flex flex-col gap-1 flex-1">
-          <label htmlFor="thread-end" className="font-semibold">End Date:</label>
+        <div className="flex flex-1 flex-col gap-1">
+          <label htmlFor="thread-end" className="font-semibold">
+            End Date:
+          </label>
           <input
             id="thread-end"
             type="date"
@@ -180,7 +187,9 @@ export function ThreadExpansionConfigure({ thread, onUpdated }: ThreadExpansionC
         </div>
       </div>
       <div className="flex flex-col gap-1">
-        <label htmlFor="thread-region" className="font-semibold">Region ID:</label>
+        <label htmlFor="thread-region" className="font-semibold">
+          Region ID:
+        </label>
         <input
           id="thread-region"
           type="text"
@@ -191,7 +200,9 @@ export function ThreadExpansionConfigure({ thread, onUpdated }: ThreadExpansionC
         />
       </div>
       <div className={cn('flex flex-col gap-1')}>
-        <label htmlFor="thread-indicator" className="font-semibold">Indicator (response variable):</label>
+        <label htmlFor="thread-indicator" className="font-semibold">
+          Indicator (response variable):
+        </label>
         <input
           id="thread-indicator"
           type="text"
@@ -202,7 +213,9 @@ export function ThreadExpansionConfigure({ thread, onUpdated }: ThreadExpansionC
         />
       </div>
       <div className="flex flex-col gap-1">
-        <label htmlFor="thread-driving" className="font-semibold">Driving Variable:</label>
+        <label htmlFor="thread-driving" className="font-semibold">
+          Driving Variable:
+        </label>
         <input
           id="thread-driving"
           type="text"
