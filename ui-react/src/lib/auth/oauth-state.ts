@@ -37,7 +37,9 @@ export function decodeState(raw: string | null | undefined): OAuthState | null {
       typeof parsed === 'object' &&
       parsed !== null &&
       typeof (parsed as OAuthState).nonce === 'string' &&
-      typeof (parsed as OAuthState).origin === 'string'
+      (parsed as OAuthState).nonce.length > 0 &&
+      typeof (parsed as OAuthState).origin === 'string' &&
+      (parsed as OAuthState).origin.length > 0
     ) {
       const { nonce, origin } = parsed as OAuthState;
       return { nonce, origin };

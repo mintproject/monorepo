@@ -32,4 +32,11 @@ describe('oauth-state codec', () => {
   it('returns null for oversized input', () => {
     expect(decodeState('a'.repeat(5000))).toBeNull();
   });
+
+  it('returns null when nonce or origin is an empty string', () => {
+    const encode = (obj: unknown) =>
+      btoa(JSON.stringify(obj)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    expect(decodeState(encode({ nonce: '', origin: 'https://example.com' }))).toBeNull();
+    expect(decodeState(encode({ nonce: 'abc', origin: '' }))).toBeNull();
+  });
 });
