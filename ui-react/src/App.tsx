@@ -2,7 +2,7 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 
 import { AppShell } from './components/layout/AppShell';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
-import { LoginRequiredPage } from './components/common/ProtectedRoute';
+import { LoginRequiredPage, ProtectedRoute } from './components/common/ProtectedRoute';
 import { Toaster } from './components/ui/toaster';
 import { ModelSelectionProvider } from './contexts/ModelSelectionContext';
 
@@ -58,9 +58,30 @@ export function App() {
 
             {/* Modeling */}
             <Route path="/modeling" element={<ModelingHome />} />
-            <Route path="/modeling/problem-statements" element={<ProblemStatementsList />} />
-            <Route path="/modeling/problem-statement/:id" element={<MintProblemStatement />} />
-            <Route path="/modeling/thread/:id" element={<MintThread />} />
+            <Route
+              path="/modeling/problem-statements"
+              element={
+                <ProtectedRoute>
+                  <ProblemStatementsList />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/modeling/problem-statement/:id"
+              element={
+                <ProtectedRoute>
+                  <MintProblemStatement />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/modeling/thread/:id"
+              element={
+                <ProtectedRoute>
+                  <MintThread />
+                </ProtectedRoute>
+              }
+            />
 
             {/* Auth callback */}
             <Route path="/oauth2/callback" element={<OAuth2CallbackPage />} />
