@@ -62,7 +62,9 @@ describe('ProblemStatementsList region selection', () => {
         insertVars.push(vars);
         return true;
       },
-      result: { data: { insert_problem_statement: { returning: [{ id: 'mint://problem_statement/new' }] } } },
+      result: {
+        data: { insert_problem_statement: { returning: [{ id: 'mint://problem_statement/new' }] } },
+      },
     };
     const provenanceMock: MockedResponse = {
       request: { query: InsertProblemStatementProvenanceDocument },
@@ -71,7 +73,13 @@ describe('ProblemStatementsList region selection', () => {
     };
 
     renderWithProviders(<ProblemStatementsList />, {
-      apolloMocks: [regionsMock, listMock('south_sudan'), listMock('ethiopia'), insertMock, provenanceMock],
+      apolloMocks: [
+        regionsMock,
+        listMock('south_sudan'),
+        listMock('ethiopia'),
+        insertMock,
+        provenanceMock,
+      ],
       initialEntries: ['/modeling/problem-statements'],
     });
 
