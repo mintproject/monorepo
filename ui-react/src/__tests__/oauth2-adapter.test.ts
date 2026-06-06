@@ -261,7 +261,8 @@ describe('handleCallback', () => {
 
   it('processes authorization code when state matches', async () => {
     sessionStorage.setItem('oauth2_state', 'good-state');
-    window.location.search = '?code=real-code&state=good-state';
+    const state = encodeState({ nonce: 'good-state', origin: 'http://localhost' });
+    window.location.search = `?code=real-code&state=${state}`;
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: () =>
