@@ -94,8 +94,7 @@ function datasetFromDCResponse(
     name: (ds['dataset_name'] as string) ?? '',
     region: '',
     variables,
-    datatype:
-      (dmeta['datatype'] as string) ?? (dmeta['data_type'] as string) ?? '',
+    datatype: (dmeta['datatype'] as string) ?? (dmeta['data_type'] as string) ?? '',
     time_period: tc
       ? {
           start_date: parseDate(tc['start_time']),
@@ -117,9 +116,7 @@ function datasetFromDCResponse(
   };
 }
 
-function resourceFromDCResponse(
-  row: Record<string, unknown>,
-): DataCatalogResource {
+function resourceFromDCResponse(row: Record<string, unknown>): DataCatalogResource {
   const dmeta = (row['resource_metadata'] as Record<string, unknown>) ?? {};
   const tc = dmeta['temporal_coverage'] as Record<string, unknown> | undefined;
   return {
@@ -153,18 +150,12 @@ async function post<T>(url: string, body: unknown): Promise<T> {
 /**
  * Find datasets by standard variable names, optional spatial + temporal filters.
  */
-export async function findDatasets(
-  params: DatasetQueryParams,
-): Promise<DataCatalogDataset[]> {
+export async function findDatasets(params: DatasetQueryParams): Promise<DataCatalogDataset[]> {
   const baseUrl = getDataCatalogUrl();
-  const obj = await post<Record<string, unknown>>(
-    `${baseUrl}/datasets/find`,
-    params,
-  );
+  const obj = await post<Record<string, unknown>>(`${baseUrl}/datasets/find`, params);
   if (!obj || obj['result'] !== 'success') return [];
   const rawList = (obj['datasets'] as Record<string, unknown>[]) ?? [];
-  const variables =
-    (params.standard_variable_names__in as string[] | undefined) ?? [];
+  const variables = (params.standard_variable_names__in as string[] | undefined) ?? [];
   return rawList.map((ds) => datasetFromDCResponse(ds, variables));
 }
 
@@ -218,14 +209,11 @@ export async function loadDatasetResources(params: {
     filter['start_time__lte'] = params.endDate.toISOString().replace(/\.\d{3}Z$/, '');
   }
 
-  const obj = await post<Record<string, unknown>>(
-    `${baseUrl}/datasets/dataset_resources`,
-    {
-      dataset_id: params.datasetId,
-      filter,
-      limit: 5000,
-    },
-  );
+  const obj = await post<Record<string, unknown>>(`${baseUrl}/datasets/dataset_resources`, {
+    dataset_id: params.datasetId,
+    filter,
+    limit: 5000,
+  });
 
   if (!obj || !obj['resources']) return [];
   const rawList = obj['resources'] as Record<string, unknown>[];

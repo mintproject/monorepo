@@ -37,9 +37,7 @@ const mockModel: ThreadModel = {
 
 describe('ThreadExpansionDatasets', () => {
   it('renders the Select datasets panel header', () => {
-    renderWithProviders(
-      <ThreadExpansionDatasets thread={mockThread} />,
-    );
+    renderWithProviders(<ThreadExpansionDatasets thread={mockThread} />);
     expect(screen.getByText('Select datasets')).toBeInTheDocument();
   });
 
@@ -80,9 +78,7 @@ describe('ThreadExpansionDatasets', () => {
   });
 
   it('expands the panel on header click', () => {
-    renderWithProviders(
-      <ThreadExpansionDatasets thread={mockThread} />,
-    );
+    renderWithProviders(<ThreadExpansionDatasets thread={mockThread} />);
 
     // Click header to expand
     const header = screen.getByRole('button', { name: /Select datasets/i });
@@ -113,12 +109,7 @@ describe('ThreadExpansionDatasets', () => {
 
   it('calls onUpdated when save action is triggered', async () => {
     const onUpdated = vi.fn();
-    renderWithProviders(
-      <ThreadExpansionDatasets
-        thread={mockThread}
-        onUpdated={onUpdated}
-      />,
-    );
+    renderWithProviders(<ThreadExpansionDatasets thread={mockThread} onUpdated={onUpdated} />);
 
     // onUpdated is called after the onSave callback resolves
     // This is tested via the ThreadExpansion save flow

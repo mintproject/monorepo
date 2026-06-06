@@ -9,7 +9,12 @@ import { screen, fireEvent, waitFor } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import { server } from '@/test/msw/server';
 import { renderWithProviders } from '@/test/utils/render';
-import { MintDatasets, type ThreadModel, type ThreadModelEnsemble, type PersistedDataslice } from '../MintDatasets';
+import {
+  MintDatasets,
+  type ThreadModel,
+  type ThreadModelEnsemble,
+  type PersistedDataslice,
+} from '../MintDatasets';
 import type { Thread } from '@/graphql/generated/modeling';
 
 // ─── Fixtures ─────────────────────────────────────────────────────────────────
@@ -215,9 +220,7 @@ describe('MintDatasets', () => {
       />,
     );
 
-    expect(
-      screen.getByText(/selecting datasets for each of the models/i),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/selecting datasets for each of the models/i)).toBeInTheDocument();
   });
 
   it('shows existing binding view mode when bindings are present and no edit mode', () => {

@@ -126,7 +126,9 @@ function ResourceSelectionDialog({
 }: ResourceSelectionDialogProps) {
   const [selected, setSelected] = useState<Record<string, boolean>>(() => {
     const init: Record<string, boolean> = {};
-    resources.forEach((r) => { init[r.id] = r.selected ?? true; });
+    resources.forEach((r) => {
+      init[r.id] = r.selected ?? true;
+    });
     return init;
   });
 
@@ -145,7 +147,9 @@ function ResourceSelectionDialog({
 
   function toggleAll(checked: boolean) {
     const next: Record<string, boolean> = {};
-    resources.forEach((r) => { next[r.id] = checked; });
+    resources.forEach((r) => {
+      next[r.id] = checked;
+    });
     setSelected(next);
   }
 
@@ -157,18 +161,18 @@ function ResourceSelectionDialog({
       aria-label="Select resources"
       data-testid="resource-selection-dialog"
     >
-      <div className="w-[600px] max-h-[80vh] flex flex-col bg-white rounded shadow-lg">
-        <div className="px-4 py-3 border-b font-semibold text-sm">{title}</div>
+      <div className="flex max-h-[80vh] w-[600px] flex-col rounded bg-white shadow-lg">
+        <div className="border-b px-4 py-3 text-sm font-semibold">{title}</div>
         <div className="flex-1 overflow-auto p-4">
           {loading ? (
             <div className="flex justify-center py-8">
-              <span className="animate-spin h-6 w-6 border-2 border-blue-600 border-t-transparent rounded-full" />
+              <span className="h-6 w-6 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
             </div>
           ) : (
-            <table className="w-full text-sm border-collapse">
+            <table className="w-full border-collapse text-sm">
               <thead>
                 <tr className="border-b bg-gray-50">
-                  <th className="px-2 py-1 text-left w-8">
+                  <th className="w-8 px-2 py-1 text-left">
                     <input
                       type="checkbox"
                       id="all-resources"
@@ -196,11 +200,16 @@ function ResourceSelectionDialog({
                       />
                     </td>
                     <td className="px-2 py-1">
-                      <a href={r.url} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">
+                      <a
+                        href={r.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-blue-600 hover:underline"
+                      >
                         {r.name}
                       </a>
                     </td>
-                    <td className="px-2 py-1 text-gray-500 text-xs">
+                    <td className="px-2 py-1 text-xs text-gray-500">
                       {r.time_period
                         ? `${formatDate(r.time_period.start_date)} — ${formatDate(r.time_period.end_date)}`
                         : ''}
@@ -211,7 +220,7 @@ function ResourceSelectionDialog({
             </table>
           )}
         </div>
-        <div className="px-4 py-3 border-t flex justify-end gap-2">
+        <div className="flex justify-end gap-2 border-t px-4 py-3">
           <button
             type="button"
             onClick={onClose}
@@ -259,7 +268,12 @@ function ComparisonDialog({ datasets, regionId, onClose }: ComparisonDialogProps
     {
       name: 'Source',
       fn: (ds) => (
-        <a href={ds.source.url} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">
+        <a
+          href={ds.source.url}
+          target="_blank"
+          rel="noreferrer"
+          className="text-blue-600 hover:underline"
+        >
           {ds.source.name}
         </a>
       ),
@@ -277,13 +291,13 @@ function ComparisonDialog({ datasets, regionId, onClose }: ComparisonDialogProps
       aria-label="Compare datasets"
       data-testid="comparison-dialog"
     >
-      <div className="w-[80vw] max-h-[80vh] flex flex-col bg-white rounded shadow-lg">
-        <div className="px-4 py-3 border-b font-semibold text-sm">Compare Datasets</div>
+      <div className="flex max-h-[80vh] w-[80vw] flex-col rounded bg-white shadow-lg">
+        <div className="border-b px-4 py-3 text-sm font-semibold">Compare Datasets</div>
         <div className="flex-1 overflow-auto">
-          <table className="w-full text-sm border-collapse">
+          <table className="w-full border-collapse text-sm">
             <thead>
               <tr className="border-b bg-gray-50">
-                <th className="px-3 py-2 text-left border-r w-40" />
+                <th className="w-40 border-r px-3 py-2 text-left" />
                 {datasets.map((ds) => (
                   <th key={ds.id} className="px-3 py-2 text-left">
                     <b>{ds.name}</b>
@@ -294,7 +308,7 @@ function ComparisonDialog({ datasets, regionId, onClose }: ComparisonDialogProps
             <tbody>
               {features.map((feat) => (
                 <tr key={feat.name} className="border-b hover:bg-gray-50">
-                  <td className="px-3 py-2 border-r font-semibold">{feat.name}</td>
+                  <td className="border-r px-3 py-2 font-semibold">{feat.name}</td>
                   {datasets.map((ds) => (
                     <td key={ds.id} className="px-3 py-2">
                       {feat.fn(ds)}
@@ -305,7 +319,7 @@ function ComparisonDialog({ datasets, regionId, onClose }: ComparisonDialogProps
             </tbody>
           </table>
         </div>
-        <div className="px-4 py-3 border-t flex justify-end">
+        <div className="flex justify-end border-t px-4 py-3">
           <button
             type="button"
             onClick={onClose}
@@ -356,7 +370,9 @@ function InputDatasetPicker({
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [showAllDatasets, setShowAllDatasets] = useState(false);
-  const [datasetResources, setDatasetResources] = useState<Record<string, DataCatalogResource[]>>({});
+  const [datasetResources, setDatasetResources] = useState<Record<string, DataCatalogResource[]>>(
+    {},
+  );
   const [loadingResources, setLoadingResources] = useState<Record<string, boolean>>({});
   const [resourceDialog, setResourceDialog] = useState<{
     dataset: DataCatalogDataset;
@@ -379,14 +395,18 @@ function InputDatasetPicker({
   useEffect(() => {
     const chosen = datasets.filter((ds) => selectedIds.has(ds.id));
     onChange(input.id, chosen);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedIds, datasets]);
 
   const inputType = input.variables[0]?.replace(/.*#/, '') ?? '';
 
   // Filter by datatype match
   const typeMatchingDatasets = datasets.filter((ds) => ds.datatype === inputType);
-  const visibleDatasets = showAllDatasets ? datasets : typeMatchingDatasets.length > 0 ? typeMatchingDatasets : datasets;
+  const visibleDatasets = showAllDatasets
+    ? datasets
+    : typeMatchingDatasets.length > 0
+      ? typeMatchingDatasets
+      : datasets;
   const hiddenCount = datasets.length - typeMatchingDatasets.length;
 
   // Driving variable match check (bold rows)
@@ -464,7 +484,7 @@ function InputDatasetPicker({
                 {slice.dataset.name}
               </a>
               {total > 1 && (
-                <span className="text-gray-500 text-xs ml-1">
+                <span className="ml-1 text-xs text-gray-500">
                   ({selCount}/{total} files)
                 </span>
               )}
@@ -478,32 +498,36 @@ function InputDatasetPicker({
   // Edit mode or no existing bindings
   return (
     <div className="mt-2">
-      <div className="flex items-start gap-1 mb-2 text-sm">
+      <div className="mb-2 flex items-start gap-1 text-sm">
         {input.isOptional ? (
-          <span className="text-gray-400 text-xs" title="Optional input — selection not required">ℹ</span>
+          <span className="text-xs text-gray-400" title="Optional input — selection not required">
+            ℹ
+          </span>
         ) : (
-          <span className="text-orange-500 text-xs" title="Required input">⚠</span>
+          <span className="text-xs text-orange-500" title="Required input">
+            ⚠
+          </span>
         )}
         <span>
           Select an input dataset for <strong>{input.name}</strong>
-          {input.isOptional && <span className="text-gray-400 text-xs ml-1">(optional)</span>}.
-          {' '}You can select more than one dataset if you want several runs.
-          {' '}Datasets matching the driving variable (if any) are in <strong>bold</strong>.
+          {input.isOptional && <span className="ml-1 text-xs text-gray-400">(optional)</span>}. You
+          can select more than one dataset if you want several runs. Datasets matching the driving
+          variable (if any) are in <strong>bold</strong>.
         </span>
       </div>
 
       {loading ? (
-        <div className="flex items-center gap-2 text-sm text-gray-500 py-4">
-          <span className="animate-spin h-4 w-4 border-2 border-blue-600 border-t-transparent rounded-full" />
+        <div className="flex items-center gap-2 py-4 text-sm text-gray-500">
+          <span className="h-4 w-4 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
           Loading datasets…
         </div>
       ) : (
         <>
           <div className="overflow-auto">
-            <table className="w-full text-xs border-collapse border border-gray-200">
+            <table className="w-full border-collapse border border-gray-200 text-xs">
               <thead>
-                <tr className="bg-gray-50 border-b">
-                  <th className="px-2 py-1 w-6" />
+                <tr className="border-b bg-gray-50">
+                  <th className="w-6 px-2 py-1" />
                   <th className="px-2 py-1 text-left font-semibold">Dataset</th>
                   <th className="px-2 py-1 text-left">Categories</th>
                   <th className="px-2 py-1 text-left">Region</th>
@@ -552,7 +576,7 @@ function InputDatasetPicker({
                                 {selCount}/{resources.length} resources —{' '}
                                 <button
                                   type="button"
-                                  className="text-blue-600 hover:underline cursor-pointer"
+                                  className="cursor-pointer text-blue-600 hover:underline"
                                   onClick={() =>
                                     setResourceDialog({
                                       dataset: ds,
@@ -570,7 +594,7 @@ function InputDatasetPicker({
                               {resCount} total resources —{' '}
                               <button
                                 type="button"
-                                className="text-blue-600 hover:underline cursor-pointer"
+                                className="cursor-pointer text-blue-600 hover:underline"
                                 disabled={loadingResources[ds.id]}
                                 onClick={() => handleLoadAndToggleResources(ds)}
                               >
@@ -616,12 +640,11 @@ function InputDatasetPicker({
                       <button
                         type="button"
                         onClick={() => setShowAllDatasets((v) => !v)}
-                        className="text-blue-600 hover:underline cursor-pointer"
+                        className="cursor-pointer text-blue-600 hover:underline"
                       >
                         {showAllDatasets ? 'Hide' : 'Show'} {hiddenCount} dataset
-                        {hiddenCount !== 1 ? 's' : ''} that match the input variables but not
-                        the input datatype ({inputType}). They might need some data
-                        transformation.
+                        {hiddenCount !== 1 ? 's' : ''} that match the input variables but not the
+                        input datatype ({inputType}). They might need some data transformation.
                       </button>
                     </td>
                   </tr>
@@ -699,11 +722,7 @@ export function MintDatasets({
 
   const modelIds = Object.keys(models);
 
-  function handleInputChange(
-    modelId: string,
-    inputId: string,
-    datasets: DataCatalogDataset[],
-  ) {
+  function handleInputChange(modelId: string, inputId: string, datasets: DataCatalogDataset[]) {
     if (!selectionRef.current[modelId]) selectionRef.current[modelId] = {};
     selectionRef.current[modelId][inputId] = datasets;
   }
@@ -728,15 +747,35 @@ export function MintDatasets({
             start_date: string | null;
             end_date: string | null;
             resource_count: number;
-            dataset: { data: { id: string; name: string }; on_conflict: { constraint: string; update_columns: string[] } };
-            resources: { data: Array<{ resource: { data: { id: string; dcid?: string | null; name: string; url: string; start_date?: string | null; end_date?: string | null }; on_conflict: { constraint: string; update_columns: string[] } }; selected: boolean }>; on_conflict: { constraint: string; update_columns: string[] } };
+            dataset: {
+              data: { id: string; name: string };
+              on_conflict: { constraint: string; update_columns: string[] };
+            };
+            resources: {
+              data: Array<{
+                resource: {
+                  data: {
+                    id: string;
+                    dcid?: string | null;
+                    name: string;
+                    url: string;
+                    start_date?: string | null;
+                    end_date?: string | null;
+                  };
+                  on_conflict: { constraint: string; update_columns: string[] };
+                };
+                selected: boolean;
+              }>;
+              on_conflict: { constraint: string; update_columns: string[] };
+            };
           };
           on_conflict: { constraint: string; update_columns: string[] };
         };
       };
 
       const dataSlices: DataSliceInput[] = [];
-      const modelIO: Array<{ thread_model_id: string; model_io_id: string; dataslice_id: string }> = [];
+      const modelIO: Array<{ thread_model_id: string; model_io_id: string; dataslice_id: string }> =
+        [];
       let allOk = true;
 
       for (const modelId of modelIds) {
@@ -746,7 +785,7 @@ export function MintDatasets({
 
         for (const input of model.input_files.filter((inp) => !inp.value)) {
           // If we have pre-existing bindings and not in edit mode, carry them forward
-          const existingBindings = (ensemble?.bindings?.[input.id] ?? []);
+          const existingBindings = ensemble?.bindings?.[input.id] ?? [];
           if (!editMode && existingBindings.length > 0) {
             // Keep existing — don't add new slices
             existingBindings.forEach((sliceId) => {
@@ -860,10 +899,8 @@ export function MintDatasets({
 
   if (modelIds.length === 0) {
     return (
-      <div data-testid="mint-datasets" className="text-sm text-gray-600 space-y-2">
-        <p>
-          This step is for selecting datasets for each of the models that you selected earlier.
-        </p>
+      <div data-testid="mint-datasets" className="space-y-2 text-sm text-gray-600">
+        <p>This step is for selecting datasets for each of the models that you selected earlier.</p>
         <p className="text-orange-600">Please select model(s) first.</p>
       </div>
     );
@@ -873,14 +910,14 @@ export function MintDatasets({
 
   return (
     <div data-testid="mint-datasets">
-      <p className="text-sm text-gray-600 mb-4">
+      <p className="mb-4 text-sm text-gray-600">
         This step is for selecting datasets for each of the models that you selected earlier.
       </p>
 
       {hasSomeBinding && perm.write && !editMode && (
-        <p className="text-sm text-gray-500 mb-4">
-          Please click the{' '}
-          <span className="font-mono font-bold text-gray-700">✎</span> icon to make changes.
+        <p className="mb-4 text-sm text-gray-500">
+          Please click the <span className="font-mono font-bold text-gray-700">✎</span> icon to make
+          changes.
         </p>
       )}
 
@@ -895,9 +932,9 @@ export function MintDatasets({
             const fixedInputs = model.input_files.filter((inp) => !!inp.value);
 
             return (
-              <div key={modelId} className="border rounded p-4 space-y-4">
-                <h4 className="font-semibold text-sm">
-                  <span className="text-gray-400 font-normal">MODEL: </span>
+              <div key={modelId} className="space-y-4 rounded border p-4">
+                <h4 className="text-sm font-semibold">
+                  <span className="font-normal text-gray-400">MODEL: </span>
                   {model.url ? (
                     <a
                       target="_blank"
@@ -914,7 +951,7 @@ export function MintDatasets({
 
                 {/* Pre-selected (fixed) inputs */}
                 <div>
-                  <h5 className="text-xs font-semibold uppercase text-gray-500 mb-1">
+                  <h5 className="mb-1 text-xs font-semibold uppercase text-gray-500">
                     Pre-selected Datasets
                   </h5>
                   {fixedInputs.length === 0 ? (
@@ -922,9 +959,9 @@ export function MintDatasets({
                       No pre-selected datasets were needed for this model.
                     </p>
                   ) : (
-                    <table className="text-xs border-collapse border border-gray-200 w-full">
+                    <table className="w-full border-collapse border border-gray-200 text-xs">
                       <thead>
-                        <tr className="bg-gray-50 border-b">
+                        <tr className="border-b bg-gray-50">
                           <th className="px-2 py-1 text-left">Input</th>
                           <th className="px-2 py-1 text-left">Selected File</th>
                         </tr>
@@ -945,7 +982,7 @@ export function MintDatasets({
 
                 {/* User-selected inputs */}
                 <div>
-                  <div className="flex items-center justify-between mb-1">
+                  <div className="mb-1 flex items-center justify-between">
                     <h5 className="text-xs font-semibold uppercase text-gray-500">
                       User Selected Datasets
                     </h5>
@@ -954,7 +991,7 @@ export function MintDatasets({
                         type="button"
                         aria-label="Edit dataset selections"
                         onClick={() => setEditMode(true)}
-                        className="rounded p-1 hover:bg-gray-100 text-gray-500 hover:text-gray-900 text-xs"
+                        className="rounded p-1 text-xs text-gray-500 hover:bg-gray-100 hover:text-gray-900"
                       >
                         ✎
                       </button>
@@ -969,7 +1006,7 @@ export function MintDatasets({
                     <ul className="space-y-4">
                       {inputFiles.map((inp) => (
                         <li key={inp.id}>
-                          <p className="text-xs font-medium text-gray-700 mb-1">
+                          <p className="mb-1 text-xs font-medium text-gray-700">
                             Input: {inp.name}
                           </p>
                           <InputDatasetPicker
@@ -1007,7 +1044,10 @@ export function MintDatasets({
           <div className="mt-6 space-y-4">
             {editMode && (
               <div>
-                <label htmlFor="dataset-notes" className="block text-xs font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="dataset-notes"
+                  className="mb-1 block text-xs font-medium text-gray-700"
+                >
                   Notes
                 </label>
                 <textarea
