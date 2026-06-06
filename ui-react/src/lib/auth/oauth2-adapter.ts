@@ -297,6 +297,9 @@ export function maybeForwardToOrigin(): ForwardResult {
     };
   }
 
+  // Forward verbatim: in supported flows exactly one of search/hash carries the
+  // credential + state (Tapis implicit → fragment, code flow → query). The target
+  // origin was already validated by isAllowedOrigin above.
   window.location.href = `${decoded.origin}/oauth2/callback${window.location.search}${window.location.hash}`;
   return { forwarded: true };
 }

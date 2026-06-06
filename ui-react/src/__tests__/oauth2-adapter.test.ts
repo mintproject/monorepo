@@ -490,4 +490,23 @@ describe('maybeForwardToOrigin', () => {
     expect(result.error).toMatch(/disallowed/i);
     expect(window.location.href).toBe(before); // no redirect issued
   });
+
+  it('does not forward when the URL carries no state at all', () => {
+    setMintConfig({ AUTH_PROVIDER: 'tapis' });
+    window.location.hash = '';
+    window.location.search = '';
+    const result = maybeForwardToOrigin();
+    expect(result.forwarded).toBe(false);
+  });
+
+  it('forwards a code-flow callback whose state is in the query string', () => {
+    setMintConfig({ AUTH_PROVIDER: 'tapis' });
+    const state = encodeState({ nonce: 'n', origin: PREVIEW });
+    window.location.hash = '';
+    window.location.search = `?code=abc&state=${state}`;
+    const result = maybeForwardToOrigin();
+    expect(result.forwarded).toBe(true);
+    expect(result.error).toBeUndefined();
+    expect(window.location.href).toBe(`${PREVIEW}/oauth2/callback?code=abc&state=${state}`);
+  });
 });
