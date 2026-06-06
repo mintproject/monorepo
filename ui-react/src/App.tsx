@@ -36,8 +36,21 @@ import { RegionModels } from './pages/regions/RegionModels';
 // Pages — variables
 import { VariablesHome } from './pages/variables/VariablesHome';
 
+// Auth pages
+import { OAuth2CallbackPage } from './pages/OAuth2CallbackPage';
+
 // 404
 import { NotFoundPage } from './pages/NotFoundPage';
+
+// Inline stub for login-required — full page lives in feat/auth-integration
+function LoginRequiredPage() {
+  return (
+    <div className="flex flex-col items-center justify-center min-h-screen gap-4">
+      <h1 className="text-2xl font-semibold">Login Required</h1>
+      <p className="text-gray-600">You must be logged in to view this page.</p>
+    </div>
+  );
+}
 
 export function App() {
   return (

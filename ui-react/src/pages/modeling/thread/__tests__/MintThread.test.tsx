@@ -93,7 +93,8 @@ describe('MintThread', () => {
   });
 
   it('shows error message when query fails', async () => {
-    const errorMock = {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const errorMock: any = {
       request: {
         query: GetThreadDocument,
         variables: { id: 'test-thread-id' },
