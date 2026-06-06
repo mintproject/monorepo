@@ -6,11 +6,12 @@ import { getAccessToken } from './auth/token-store';
 function getConfig() {
   return (
     window.__MINT_CONFIG__ ?? {
-      HASURA_ENDPOINT: import.meta.env.VITE_HASURA_ENDPOINT ?? 'http://localhost:8080/v1/graphql',
-      AUTH_SERVER: import.meta.env.VITE_AUTH_SERVER ?? '',
-      AUTH_CLIENT_ID: import.meta.env.VITE_AUTH_CLIENT_ID ?? '',
+      HASURA_ENDPOINT:
+        import.meta.env.VITE_HASURA_ENDPOINT ?? 'http://graphql.mint.local/v1/graphql',
+      AUTH_SERVER: import.meta.env.VITE_AUTH_SERVER ?? 'https://portals.tapis.io',
+      AUTH_CLIENT_ID: import.meta.env.VITE_AUTH_CLIENT_ID ?? 'mint-local',
       AUTH_REALM: import.meta.env.VITE_AUTH_REALM ?? '',
-      AUTH_PROVIDER: (import.meta.env.VITE_AUTH_PROVIDER as 'keycloak' | 'tapis') ?? 'keycloak',
+      AUTH_PROVIDER: (import.meta.env.VITE_AUTH_PROVIDER as 'keycloak' | 'tapis') ?? 'tapis',
     }
   );
 }
