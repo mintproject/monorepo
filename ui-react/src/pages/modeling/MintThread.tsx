@@ -18,12 +18,21 @@ import {
   getUserPermission,
   useGetThreadQuery,
 } from '@/graphql/generated/modeling';
+import {
+  ExecutionSummaryMap,
+  ModelEnsembleMap,
+  ModelExecutionsMap,
+  ThreadExecutionData,
+} from '@/graphql/generated/execution';
 import { useAuth } from '@/lib/auth/useAuth';
 import { cn } from '@/lib/utils';
 
 import { MintConfigure } from './thread/MintConfigure';
 import { MintVariables } from './thread/MintVariables';
 import { MintSummary } from './thread/MintSummary';
+import { MintParameters } from './thread/MintParameters';
+import { MintRuns } from './thread/MintRuns';
+import { MintResults } from './thread/MintResults';
 
 // ─── Step definitions ──────────────────────────────────────────────────────────
 
@@ -49,9 +58,9 @@ const STEPS: StepDef[] = [
   { id: 'variables', label: 'Variables', implemented: true },
   { id: 'models', label: 'Models', implemented: false },
   { id: 'datasets', label: 'Datasets', implemented: false },
-  { id: 'parameters', label: 'Parameters', implemented: false },
-  { id: 'runs', label: 'Runs', implemented: false },
-  { id: 'results', label: 'Results', implemented: false },
+  { id: 'parameters', label: 'Parameters', implemented: true },
+  { id: 'runs', label: 'Runs', implemented: true },
+  { id: 'results', label: 'Results', implemented: true },
   { id: 'summary', label: 'Summary', implemented: true },
 ];
 
@@ -67,6 +76,35 @@ function getConfigureStatus(thread: Thread): StepStatus {
 function getVariablesStatus(thread: Thread): StepStatus {
   if (thread.response_variable_id) return 'done';
   return 'not_started';
+}
+
+function getParametersStatus(threadData: ThreadExecutionData | null): StepStatus {
+  if (!threadData) return 'not_started';
+  const modelIds = Object.keys(threadData.models ?? {});
+  if (modelIds.length === 0) return 'not_started';
+  const allBound = modelIds.every((mid) => {
+    const model = threadData.models[mid]!;
+    const bindings = threadData.model_ensembles[mid]?.bindings ?? {};
+    return model.input_parameters
+      .filter((p) => !p.value)
+      .every((p) => (bindings[p.id ?? ''] ?? []).length > 0);
+  });
+  return allBound ? 'done' : 'not_started';
+}
+
+function getRunsStatus(threadData: ThreadExecutionData | null): StepStatus {
+  if (!threadData) return 'not_started';
+  const modelIds = Object.keys(threadData.execution_summary ?? {});
+  if (modelIds.length === 0) return 'not_started';
+  const allDone = modelIds.every((mid) => {
+    const s = threadData.execution_summary[mid]!;
+    return (
+      s.submitted_runs > 0 &&
+      s.successful_runs + s.failed_runs >= s.total_runs &&
+      s.total_runs > 0
+    );
+  });
+  return allDone ? 'done' : 'not_started';
 }
 
 // ─── Breadcrumb ────────────────────────────────────────────────────────────────
@@ -134,6 +172,12 @@ export function MintThread() {
   const [maximized, setMaximized] = useState(false);
   const [currentSection, setCurrentSection] = useState<ThreadSection>('configure');
 
+  // ── Execution state (local for this 1:1 port) ────────────────────────────
+  // In the legacy app this state lives in Redux. Here we keep it local so the
+  // component can function without a Hasura subscription for execution tables.
+  const [threadExecutionData, setThreadExecutionData] = useState<ThreadExecutionData | null>(null);
+  const [modelExecutions, setModelExecutions] = useState<ModelExecutionsMap>({});
+
   const { data, loading, error, refetch } = useGetThreadQuery({
     variables: { id: threadId! },
     skip: !threadId,
@@ -146,18 +190,108 @@ export function MintThread() {
     void refetch();
   }, [refetch]);
 
+  // Sync threadExecutionData when thread loads (minimal bootstrap)
+  // In a full port this would come from a Hasura subscription query that joins
+  // thread_model, thread_model_parameter, thread_model_io, thread_model_execution_summary
+  useCallback(() => {
+    if (thread && !threadExecutionData) {
+      setThreadExecutionData({
+        id: thread.id,
+        models: {},
+        model_ensembles: {},
+        execution_summary: {},
+        data: {},
+        response_variables: thread.response_variable_id ? [thread.response_variable_id] : [],
+      });
+    }
+  }, [thread, threadExecutionData]);
+
   function buildSectionStatus(t: Thread): Record<ThreadSection, StepStatus> {
     return {
       configure: getConfigureStatus(t),
       variables: getVariablesStatus(t),
       models: 'not_started',
       datasets: 'not_started',
-      parameters: 'not_started',
-      runs: 'not_started',
+      parameters: getParametersStatus(threadExecutionData),
+      runs: getRunsStatus(threadExecutionData),
       results: 'not_started',
       summary: 'not_started',
     };
   }
+
+  // ── Execution handlers ──────────────────────────────────────────────────
+
+  const handleSaveParameters = useCallback(
+    async (ensembles: ModelEnsembleMap, summary: ExecutionSummaryMap, _notes: string) => {
+      setThreadExecutionData((prev) =>
+        prev
+          ? { ...prev, model_ensembles: ensembles, execution_summary: summary }
+          : prev,
+      );
+      // In production, also persist to Hasura via mutation
+    },
+    [],
+  );
+
+  const handleFetchRuns = useCallback(
+    (modelId: string, page: number, pageSize: number) => {
+      // In a full port this dispatches a Hasura query / Apollo query with pagination.
+      // Placeholder: mark as loading
+      void modelId; void page; void pageSize;
+      setModelExecutions((prev) => ({
+        ...prev,
+        [modelId]: prev[modelId] ?? { executions: [], loading: false },
+      }));
+    },
+    [],
+  );
+
+  const handleSubmitRuns = useCallback(
+    async (modelId: string) => {
+      // POST to the ensemble manager REST API
+      const ensembleManagerApi =
+        (window.__MINT_CONFIG__ as { ENSEMBLE_MANAGER_API?: string } | undefined)
+          ?.ENSEMBLE_MANAGER_API ?? '';
+      const executionEngine = 'localex';
+      const token = localStorage.getItem('access-token');
+      const resp = await fetch(
+        `${ensembleManagerApi}/executionEngines/${executionEngine}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify({
+            thread_id: threadId,
+            model_id: modelId,
+          }),
+        },
+      );
+      if (!resp.ok) {
+        throw new Error(`Ensemble manager returned ${resp.status}`);
+      }
+      // Mark submitted
+      setThreadExecutionData((prev) =>
+        prev
+          ? {
+              ...prev,
+              execution_summary: {
+                ...prev.execution_summary,
+                [modelId]: {
+                  ...(prev.execution_summary[modelId] ?? {
+                    total_runs: 0, submitted_runs: 0, failed_runs: 0, successful_runs: 0,
+                  }),
+                  submitted_for_execution: true,
+                  submission_time: new Date().toISOString(),
+                },
+              },
+            }
+          : prev,
+      );
+    },
+    [threadId],
+  );
 
   // ── render ─────────────────────────────────────────────────────────────────
 
@@ -188,7 +322,16 @@ export function MintThread() {
 
   const sectionStatus = buildSectionStatus(thread);
   const perm = getUserPermission(thread.permissions, thread.events, user?.username ?? null);
-  void perm; // reserved for future use (conditional edit buttons)
+
+  // Derive a minimal threadExecutionData for parameter/run/result steps
+  const execData: ThreadExecutionData = threadExecutionData ?? {
+    id: thread.id,
+    models: {},
+    model_ensembles: {},
+    execution_summary: {},
+    data: {},
+    response_variables: thread.response_variable_id ? [thread.response_variable_id] : [],
+  };
 
   function renderStep() {
     switch (currentSection) {
@@ -206,6 +349,44 @@ export function MintThread() {
             thread={thread!}
             onContinue={() => setCurrentSection('models')}
             onThreadUpdated={handleThreadUpdated}
+          />
+        );
+      case 'parameters':
+        return (
+          <MintParameters
+            threadData={execData}
+            canWrite={perm.write}
+            canExecute={perm.write}
+            onSave={handleSaveParameters}
+            onContinue={() => setCurrentSection('runs')}
+          />
+        );
+      case 'runs':
+        return (
+          <MintRuns
+            threadData={execData}
+            executions={modelExecutions}
+            canWrite={perm.write}
+            canExecute={perm.write}
+            ensembleManagerApi={
+              (window.__MINT_CONFIG__ as { ENSEMBLE_MANAGER_API?: string } | undefined)
+                ?.ENSEMBLE_MANAGER_API ?? ''
+            }
+            executionEngine="localex"
+            onContinue={() => setCurrentSection('results')}
+            onFetchRuns={handleFetchRuns}
+            onSubmitRuns={handleSubmitRuns}
+          />
+        );
+      case 'results':
+        return (
+          <MintResults
+            threadData={execData}
+            executions={modelExecutions}
+            canWrite={perm.write}
+            ingestionApiAvailable={false}
+            onContinue={() => setCurrentSection('summary')}
+            onFetchRuns={handleFetchRuns}
           />
         );
       case 'summary':
