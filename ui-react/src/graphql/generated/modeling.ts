@@ -1009,6 +1009,136 @@ export function useInsertThreadProvenanceMutation(
   );
 }
 
+// ─── Thread data binding mutations ───────────────────────────────────────────
+//
+// Used by the MintDatasets step to write dataset selections into the database.
+// Mirrors: ui/src/queries/thread/update-datasets.graphql
+
+export type UpdateThreadDataMutationVariables = {
+  threadId: string;
+  event: {
+    thread_id: string;
+    event: string;
+    userid: string;
+    notes?: string | null;
+  };
+  data: Array<{
+    thread_id: string;
+    dataslice: {
+      data: {
+        id: string;
+        name: string;
+        region_id: string;
+        start_date: string | null;
+        end_date: string | null;
+        resource_count: number;
+        dataset: {
+          data: { id: string; name: string };
+          on_conflict: { constraint: string; update_columns: string[] };
+        };
+        resources: {
+          data: Array<{
+            resource: {
+              data: {
+                id: string;
+                dcid?: string | null;
+                name: string;
+                url: string;
+                start_date?: string | null;
+                end_date?: string | null;
+              };
+              on_conflict: { constraint: string; update_columns: string[] };
+            };
+            selected: boolean;
+          }>;
+          on_conflict: { constraint: string; update_columns: string[] };
+        };
+      };
+      on_conflict: { constraint: string; update_columns: string[] };
+    };
+  }>;
+  modelIO: Array<{
+    thread_model_id: string;
+    model_io_id: string;
+    dataslice_id: string;
+  }>;
+};
+
+export type UpdateThreadDataMutation = {
+  insert_thread_data?: { returning: Array<{ thread_id: string }> } | null;
+  insert_thread_model_io?: { returning: Array<{ model_io_id: string }> } | null;
+  insert_thread_provenance_one?: { thread_id: string } | null;
+};
+
+export const UpdateThreadDataDocument = gql`
+  mutation UpdateThreadData(
+    $threadId: String!
+    $event: thread_provenance_insert_input!
+    $data: [thread_data_insert_input!]!
+    $modelIO: [thread_model_io_insert_input!]!
+  ) {
+    delete_thread_model_execution_summary(
+      where: { thread_model: { thread_id: { _eq: $threadId } } }
+    ) {
+      affected_rows
+    }
+    delete_thread_model_execution(
+      where: { thread_model: { thread_id: { _eq: $threadId } } }
+    ) {
+      affected_rows
+    }
+    delete_thread_model_io(
+      where: { thread_model: { thread_id: { _eq: $threadId } } }
+    ) {
+      affected_rows
+    }
+    delete_thread_model_parameter(
+      where: { thread_model: { thread_id: { _eq: $threadId } } }
+    ) {
+      affected_rows
+    }
+    delete_dataslice_resource(
+      where: { dataslice: { thread_data: { thread_id: { _eq: $threadId } } } }
+    ) {
+      affected_rows
+    }
+    delete_dataslice(
+      where: { thread_data: { thread_id: { _eq: $threadId } } }
+    ) {
+      affected_rows
+    }
+    delete_thread_data(where: { thread_id: { _eq: $threadId } }) {
+      affected_rows
+    }
+    insert_thread_data(objects: $data) {
+      returning {
+        thread_id
+      }
+    }
+    insert_thread_model_io(objects: $modelIO) {
+      returning {
+        model_io_id
+      }
+    }
+    insert_thread_provenance_one(object: $event) {
+      thread_id
+    }
+  }
+`;
+
+export function useUpdateThreadDataMutation(
+  baseOptions?: Apollo.MutationHookOptions<
+    UpdateThreadDataMutation,
+    UpdateThreadDataMutationVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useMutation<UpdateThreadDataMutation, UpdateThreadDataMutationVariables>(
+    UpdateThreadDataDocument,
+    options,
+  );
+}
+
 // ─── ID generator (mirrors legacy GraphQL adapter) ────────────────────────────
 
 /**
