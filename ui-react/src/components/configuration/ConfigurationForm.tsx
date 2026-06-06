@@ -25,6 +25,10 @@ import {
   useDeleteConfigurationOutputMutation,
   useDeleteConfigurationParameterMutation,
   useUpdateConfigurationMutation,
+  useUpdateDatasetSpecificationMutation,
+  useUpdateVariablePresentationMutation,
+  useInsertConfigurationInputJunctionMutation,
+  useUpdateModelParameterMutation,
   useAddConfigurationAuthorMutation,
   useDeleteConfigurationAuthorMutation,
   useAddConfigurationRegionMutation,
@@ -169,6 +173,10 @@ export function ConfigurationForm({ configurationId, onSaved, onCancel }: Config
   const [deleteInput] = useDeleteConfigurationInputMutation();
   const [deleteOutput] = useDeleteConfigurationOutputMutation();
   const [deleteParameter] = useDeleteConfigurationParameterMutation();
+  const [updateDatasetSpec] = useUpdateDatasetSpecificationMutation();
+  const [updateVarPresentation] = useUpdateVariablePresentationMutation();
+  const [insertInputJunction] = useInsertConfigurationInputJunctionMutation();
+  const [updateParameter] = useUpdateModelParameterMutation();
   const [addAuthor] = useAddConfigurationAuthorMutation();
   const [deleteAuthor] = useDeleteConfigurationAuthorMutation();
   const [addRegion] = useAddConfigurationRegionMutation();
@@ -234,6 +242,40 @@ export function ConfigurationForm({ configurationId, onSaved, onCancel }: Config
       for (const row of inputDiff.toAdd) {
         await addInput({ variables: buildAddInputVariables(configurationId, row) });
       }
+      for (const row of inputDiff.toUpdate) {
+        // Update DatasetSpecification scalar fields
+        await updateDatasetSpec({
+          variables: {
+            id: row.existingId!,
+            label: row.label,
+            description: row.description ?? null,
+            hasFormat: row.hasFormat ?? null,
+            hasDimensionality: row.hasDimensionality ?? null,
+            position: row.position,
+          },
+        });
+        // Update VariablePresentation if it exists
+        if (row.existingPresentationId) {
+          await updateVarPresentation({
+            variables: {
+              id: row.existingPresentationId,
+              label: row.variableLabel ?? row.label,
+              hasLongName: row.variableLongName ?? null,
+              hasShortName: row.variableShortName ?? null,
+              hasStandardVariable: row.standardVariable?.id ?? null,
+              usesUnit: row.unit?.id ?? null,
+            },
+          });
+        }
+        // Update is_optional on the junction row via upsert (on_conflict sets is_optional)
+        await insertInputJunction({
+          variables: {
+            configurationId,
+            inputId: row.existingId!,
+            isOptional: row.isOptional,
+          },
+        });
+      }
 
       // 3. Outputs diff
       const outputDiff = originalData
@@ -246,6 +288,32 @@ export function ConfigurationForm({ configurationId, onSaved, onCancel }: Config
       for (const row of outputDiff.toAdd) {
         await addOutput({ variables: buildAddOutputVariables(configurationId, row) });
       }
+      for (const row of outputDiff.toUpdate) {
+        // Update DatasetSpecification scalar fields
+        await updateDatasetSpec({
+          variables: {
+            id: row.existingId!,
+            label: row.label,
+            description: row.description ?? null,
+            hasFormat: row.hasFormat ?? null,
+            hasDimensionality: row.hasDimensionality ?? null,
+            position: row.position,
+          },
+        });
+        // Update VariablePresentation if it exists
+        if (row.existingPresentationId) {
+          await updateVarPresentation({
+            variables: {
+              id: row.existingPresentationId,
+              label: row.variableLabel ?? row.label,
+              hasLongName: row.variableLongName ?? null,
+              hasShortName: row.variableShortName ?? null,
+              hasStandardVariable: row.standardVariable?.id ?? null,
+              usesUnit: row.unit?.id ?? null,
+            },
+          });
+        }
+      }
 
       // 4. Parameters diff
       const paramDiff = originalData
@@ -257,6 +325,22 @@ export function ConfigurationForm({ configurationId, onSaved, onCancel }: Config
       }
       for (const row of paramDiff.toAdd) {
         await addParameter({ variables: buildAddParameterVariables(configurationId, row) });
+      }
+      for (const row of paramDiff.toUpdate) {
+        await updateParameter({
+          variables: {
+            id: row.existingId!,
+            label: row.label,
+            description: row.description ?? null,
+            hasDataType: row.hasDataType ?? null,
+            hasDefaultValue: row.hasDefaultValue ?? null,
+            hasMinimumAcceptedValue: row.hasMinimumAcceptedValue ?? null,
+            hasMaximumAcceptedValue: row.hasMaximumAcceptedValue ?? null,
+            hasFixedValue: row.hasFixedValue ?? null,
+            hasAcceptedValues: row.hasAcceptedValues?.length ? row.hasAcceptedValues : null,
+            position: row.position,
+          },
+        });
       }
 
       // 5. Authors diff
