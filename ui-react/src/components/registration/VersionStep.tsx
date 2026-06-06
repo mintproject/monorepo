@@ -8,13 +8,7 @@
  */
 import { useFormContext } from 'react-hook-form';
 
-import {
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
+import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import type { VersionStepSchema } from '@/schemas/registration';
@@ -68,11 +62,7 @@ export function VersionStep() {
           <FormItem>
             <FormLabel>Description</FormLabel>
             <FormControl>
-              <Textarea
-                placeholder="What changed in this version?"
-                rows={3}
-                {...field}
-              />
+              <Textarea placeholder="What changed in this version?" rows={3} {...field} />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -106,11 +96,7 @@ export function VersionStep() {
           <FormItem>
             <FormLabel>Source Code URL</FormLabel>
             <FormControl>
-              <Input
-                placeholder="https://github.com/org/model"
-                type="url"
-                {...field}
-              />
+              <Input placeholder="https://github.com/org/model" type="url" {...field} />
             </FormControl>
             <FormMessage />
           </FormItem>

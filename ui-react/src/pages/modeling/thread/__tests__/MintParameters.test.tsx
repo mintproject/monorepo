@@ -197,9 +197,7 @@ describe('MintParameters', () => {
         'model-1': {
           id: 'model-1',
           name: 'StaticModel',
-          input_parameters: [
-            { id: 'p1', name: 'fixed', type: 'string', value: 'fixed_val' },
-          ],
+          input_parameters: [{ id: 'p1', name: 'fixed', type: 'string', value: 'fixed_val' }],
           input_files: [],
           output_files: [],
         },

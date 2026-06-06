@@ -138,9 +138,7 @@ describe('InputRow', () => {
 
     await userEvent.click(screen.getByRole('button', { name: /add input/i }));
 
-    expect(
-      screen.getByText(/optional \(not required for model execution\)/i),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/optional \(not required for model execution\)/i)).toBeInTheDocument();
   });
 
   it('toggles collapsible variable overrides', async () => {

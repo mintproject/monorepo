@@ -28,7 +28,11 @@ function toDateTimeString(ts: string | null | undefined): string {
   }
 }
 
-function getResourceUrl(res: { url?: string | null; location?: string | null; name?: string | null }): string {
+function getResourceUrl(res: {
+  url?: string | null;
+  location?: string | null;
+  name?: string | null;
+}): string {
   return res.url ?? res.location ?? res.name ?? '';
 }
 
@@ -51,14 +55,11 @@ function StatusBar({ status, progress }: StatusBarProps) {
   const color = STATUS_BAR_CLASSES[status] ?? 'bg-gray-300';
   return (
     <div
-      className="h-4 w-24 rounded bg-gray-200 overflow-hidden"
+      className="h-4 w-24 overflow-hidden rounded bg-gray-200"
       title={status}
       aria-label={`Run status: ${status}`}
     >
-      <div
-        className={`h-full transition-all ${color}`}
-        style={{ width: `${pct}%` }}
-      />
+      <div className={`h-full transition-all ${color}`} style={{ width: `${pct}%` }} />
     </div>
   );
 }
@@ -80,13 +81,13 @@ function LogDialog({ open, log, onClose }: LogDialogProps) {
       aria-modal="true"
       aria-label="Run log"
     >
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-3xl mx-4 flex flex-col max-h-[80vh]">
-        <div className="flex items-center justify-between px-4 py-3 border-b">
-          <h3 className="font-semibold text-sm">Run log</h3>
+      <div className="mx-4 flex max-h-[80vh] w-full max-w-3xl flex-col rounded-lg bg-white shadow-xl">
+        <div className="flex items-center justify-between border-b px-4 py-3">
+          <h3 className="text-sm font-semibold">Run log</h3>
           <button
             type="button"
             onClick={onClose}
-            className="p-1 rounded hover:bg-gray-100"
+            className="rounded p-1 hover:bg-gray-100"
             aria-label="Close log dialog"
           >
             <X className="h-4 w-4" />
@@ -98,10 +99,10 @@ function LogDialog({ open, log, onClose }: LogDialogProps) {
               <span className="h-6 w-6 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
             </div>
           ) : (
-            <pre className="text-xs whitespace-pre-wrap font-mono">{log}</pre>
+            <pre className="whitespace-pre-wrap font-mono text-xs">{log}</pre>
           )}
         </div>
-        <div className="px-4 py-3 border-t flex justify-end">
+        <div className="flex justify-end border-t px-4 py-3">
           <button
             type="button"
             onClick={onClose}
@@ -215,13 +216,10 @@ export function MintRuns({
       logAbortRef.current = ctrl;
       try {
         const token = localStorage.getItem('access-token');
-        const resp = await fetch(
-          `${ensembleManagerApi}/executions/${executionId}/logs`,
-          {
-            signal: ctrl.signal,
-            headers: token ? { Authorization: `Bearer ${token}` } : {},
-          },
-        );
+        const resp = await fetch(`${ensembleManagerApi}/executions/${executionId}/logs`, {
+          signal: ctrl.signal,
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
         if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
         let text = await resp.text();
         // Clean ANSI / escape sequences
@@ -246,7 +244,7 @@ export function MintRuns({
   if (!paramsDone) {
     return (
       <div data-testid="mint-runs">
-        <p className="text-sm text-gray-600 mb-2">This step is for monitoring model runs.</p>
+        <p className="mb-2 text-sm text-gray-600">This step is for monitoring model runs.</p>
         <p className="text-sm text-gray-500">Please setup some models first.</p>
       </div>
     );
@@ -254,8 +252,8 @@ export function MintRuns({
 
   return (
     <div data-testid="mint-runs">
-      <p className="text-sm text-gray-600 mb-4">This step is for monitoring model runs.</p>
-      <h3 className="text-sm font-semibold mb-3">Runs</h3>
+      <p className="mb-4 text-sm text-gray-600">This step is for monitoring model runs.</p>
+      <h3 className="mb-3 text-sm font-semibold">Runs</h3>
 
       <ul className="space-y-4">
         {modelIds.map((mid) => {
@@ -278,7 +276,7 @@ export function MintRuns({
 
           // ── count inputs × params for display ──────────────────────────
           const nParameters = model.input_parameters
-            .map((p) => ((threadData.model_ensembles[mid]?.bindings[p.id ?? ''] ?? [0]).length))
+            .map((p) => (threadData.model_ensembles[mid]?.bindings[p.id ?? ''] ?? [0]).length)
             .reduce((a, b) => a * b, 1);
 
           const nInputs = model.input_files
@@ -295,22 +293,19 @@ export function MintRuns({
           const adjustableParams = model.input_parameters.filter((p) => !p.value);
 
           return (
-            <li key={mid} className="border rounded-md overflow-hidden">
-              <div className="bg-gray-50 px-4 py-2 border-b font-medium text-sm">
-                {model.name}
-              </div>
+            <li key={mid} className="overflow-hidden rounded-md border">
+              <div className="border-b bg-gray-50 px-4 py-2 text-sm font-medium">{model.name}</div>
 
               {!summary.total_runs ? (
                 <div className="px-4 py-3 text-sm text-orange-600">
                   🚨 No runs configured. Please go back to the Data and Parameters steps.
                 </div>
               ) : !submitted ? (
-                <div className="px-4 py-3 space-y-2">
+                <div className="space-y-2 px-4 py-3">
                   <p className="text-sm text-gray-600">
                     The parameter settings require {summary.total_runs} runs ({nInputs} input
                     resources × {nParameters} parameters).{' '}
-                    {model.output_files.length * summary.total_runs} output files will be
-                    generated.
+                    {model.output_files.length * summary.total_runs} output files will be generated.
                   </p>
                   {canExecute && canWrite ? (
                     <button
@@ -336,21 +331,19 @@ export function MintRuns({
                   )}
                 </div>
               ) : (
-                <div className="px-4 py-3 space-y-2">
+                <div className="space-y-2 px-4 py-3">
                   <p className="text-sm text-gray-600">
-                    Below is the status of all runs. A green bar means completed; grey/partial
-                    means in progress; red means failed.
+                    Below is the status of all runs. A green bar means completed; grey/partial means
+                    in progress; red means failed.
                   </p>
                   <p className="text-sm text-gray-600">
                     {summary.total_runs} runs required ({nInputs} inputs × {nParameters}{' '}
-                    parameters).{' '}
-                    {!finished ? 'So far, ' : ''}
+                    parameters). {!finished ? 'So far, ' : ''}
                     {submittedRuns} submitted, {successfulRuns} succeeded,{' '}
                     <span className={failedRuns > 0 ? 'text-red-600' : ''}>
                       {failedRuns} failed
                     </span>
-                    .{' '}
-                    {runningRuns > 0 && `${runningRuns} running`}
+                    . {runningRuns > 0 && `${runningRuns} running`}
                     {runningRuns > 0 && pendingRuns > 0 && ', '}
                     {pendingRuns > 0 && `${pendingRuns} waiting`}
                   </p>
@@ -361,7 +354,7 @@ export function MintRuns({
                       type="button"
                       onClick={() => handleNextPage(mid, -1)}
                       disabled={currentPage <= 1}
-                      className="px-2 py-0.5 border rounded hover:bg-gray-50 disabled:opacity-40"
+                      className="rounded border px-2 py-0.5 hover:bg-gray-50 disabled:opacity-40"
                     >
                       Back
                     </button>
@@ -372,7 +365,7 @@ export function MintRuns({
                       type="button"
                       onClick={() => handleNextPage(mid, 1)}
                       disabled={currentPage >= totalPages}
-                      className="px-2 py-0.5 border rounded hover:bg-gray-50 disabled:opacity-40"
+                      className="rounded border px-2 py-0.5 hover:bg-gray-50 disabled:opacity-40"
                     >
                       Next
                     </button>
@@ -380,7 +373,7 @@ export function MintRuns({
                       <button
                         type="button"
                         onClick={() => onFetchRuns(mid, currentPage, PAGE_SIZE)}
-                        className="flex items-center gap-1 px-2 py-0.5 border rounded hover:bg-gray-50"
+                        className="flex items-center gap-1 rounded border px-2 py-0.5 hover:bg-gray-50"
                         title="Reload"
                       >
                         <RefreshCw className="h-3 w-3" />
@@ -390,25 +383,25 @@ export function MintRuns({
                   </div>
 
                   {/* Runs table */}
-                  <div className="overflow-auto max-h-96 border border-gray-200">
+                  <div className="max-h-96 overflow-auto border border-gray-200">
                     {grouped.loading ? (
                       <div className="flex items-center justify-center py-8">
                         <span className="h-6 w-6 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
                       </div>
                     ) : (
                       <table
-                        className="w-full text-xs border-collapse"
+                        className="w-full border-collapse text-xs"
                         data-testid={`runs-table-${mid}`}
                       >
-                        <thead className="bg-gray-100 sticky top-0">
+                        <thead className="sticky top-0 bg-gray-100">
                           <tr>
-                            <th colSpan={4} className="text-left px-2 py-1 font-semibold">
+                            <th colSpan={4} className="px-2 py-1 text-left font-semibold">
                               Run
                             </th>
                             {adjustableInputs.length > 0 && (
                               <th
                                 colSpan={adjustableInputs.length}
-                                className="text-left px-2 py-1 font-semibold"
+                                className="px-2 py-1 text-left font-semibold"
                               >
                                 Inputs
                               </th>
@@ -416,7 +409,7 @@ export function MintRuns({
                             {adjustableParams.length > 0 && (
                               <th
                                 colSpan={adjustableParams.length}
-                                className="text-left px-2 py-1 font-semibold"
+                                className="px-2 py-1 text-left font-semibold"
                               >
                                 Parameters
                               </th>
@@ -446,9 +439,7 @@ export function MintRuns({
                           {grouped.executions.length === 0 ? (
                             <tr>
                               <td
-                                colSpan={
-                                  4 + adjustableInputs.length + adjustableParams.length || 5
-                                }
+                                colSpan={4 + adjustableInputs.length + adjustableParams.length || 5}
                                 className="px-2 py-4 text-center text-gray-400"
                               >
                                 <div className="flex items-center justify-center gap-2">
@@ -481,7 +472,7 @@ export function MintRuns({
                                     <button
                                       type="button"
                                       onClick={() => void handleViewLog(execution.id)}
-                                      className="flex items-center gap-1 px-1.5 py-0.5 border rounded text-xs hover:bg-gray-50"
+                                      className="flex items-center gap-1 rounded border px-1.5 py-0.5 text-xs hover:bg-gray-50"
                                     >
                                       <ExternalLink className="h-3 w-3" />
                                       View Log
@@ -517,9 +508,15 @@ export function MintRuns({
                                     );
                                   })}
                                   {adjustableParams.map((param) => {
-                                    let pval = execution.bindings[param.id ?? ''] as string | null | undefined;
+                                    let pval = execution.bindings[param.id ?? ''] as
+                                      | string
+                                      | null
+                                      | undefined;
                                     if (pval == null) pval = paramDefaults[param.id ?? ''];
-                                    if (typeof pval === 'string' && pval.startsWith('__region_geojson')) {
+                                    if (
+                                      typeof pval === 'string' &&
+                                      pval.startsWith('__region_geojson')
+                                    ) {
                                       pval = 'Region GeoJSON';
                                     }
                                     return (

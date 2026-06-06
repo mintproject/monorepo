@@ -86,19 +86,19 @@ const defaultMocks = [configQueryMock, emptyRefDataMock, emptyRegionsMock];
 
 describe('ConfigurationForm (edit mode)', () => {
   it('renders loading state when configuration is loading', () => {
-    renderWithProviders(
-      <ConfigurationForm configurationId="cfg1" />,
-      { apolloMocks: defaultMocks },
-    );
+    renderWithProviders(<ConfigurationForm configurationId="cfg1" />, {
+      apolloMocks: defaultMocks,
+    });
 
-    expect(document.querySelector('[class*=animate-spin]') ?? screen.queryByRole('status')).toBeTruthy();
+    expect(
+      document.querySelector('[class*=animate-spin]') ?? screen.queryByRole('status'),
+    ).toBeTruthy();
   });
 
   it('populates form with existing configuration data', async () => {
-    renderWithProviders(
-      <ConfigurationForm configurationId="cfg1" />,
-      { apolloMocks: defaultMocks },
-    );
+    renderWithProviders(<ConfigurationForm configurationId="cfg1" />, {
+      apolloMocks: defaultMocks,
+    });
 
     await waitFor(() => {
       const nameInput = screen.getByPlaceholderText('Configuration name') as HTMLInputElement;
@@ -107,10 +107,9 @@ describe('ConfigurationForm (edit mode)', () => {
   });
 
   it('shows validation error when label is cleared', async () => {
-    renderWithProviders(
-      <ConfigurationForm configurationId="cfg1" />,
-      { apolloMocks: defaultMocks },
-    );
+    renderWithProviders(<ConfigurationForm configurationId="cfg1" />, {
+      apolloMocks: defaultMocks,
+    });
 
     await waitFor(() => {
       expect(screen.getByPlaceholderText('Configuration name')).toBeInTheDocument();
@@ -130,10 +129,9 @@ describe('ConfigurationForm (edit mode)', () => {
 
   it('calls onCancel when Cancel button is clicked', async () => {
     const onCancel = vi.fn();
-    renderWithProviders(
-      <ConfigurationForm configurationId="cfg1" onCancel={onCancel} />,
-      { apolloMocks: defaultMocks },
-    );
+    renderWithProviders(<ConfigurationForm configurationId="cfg1" onCancel={onCancel} />, {
+      apolloMocks: defaultMocks,
+    });
 
     await waitFor(() => {
       expect(screen.getByRole('button', { name: /cancel/i })).toBeInTheDocument();
@@ -144,10 +142,9 @@ describe('ConfigurationForm (edit mode)', () => {
   });
 
   it('renders all major form sections', async () => {
-    renderWithProviders(
-      <ConfigurationForm configurationId="cfg1" />,
-      { apolloMocks: defaultMocks },
-    );
+    renderWithProviders(<ConfigurationForm configurationId="cfg1" />, {
+      apolloMocks: defaultMocks,
+    });
 
     await waitFor(() => {
       expect(screen.getByText('Configuration Details')).toBeInTheDocument();
@@ -162,10 +159,9 @@ describe('ConfigurationForm (edit mode)', () => {
 
   it('calls onSaved after successful save', async () => {
     const onSaved = vi.fn();
-    renderWithProviders(
-      <ConfigurationForm configurationId="cfg1" onSaved={onSaved} />,
-      { apolloMocks: [...defaultMocks, updateConfigMock] },
-    );
+    renderWithProviders(<ConfigurationForm configurationId="cfg1" onSaved={onSaved} />, {
+      apolloMocks: [...defaultMocks, updateConfigMock],
+    });
 
     await waitFor(() => {
       const nameInput = screen.getByPlaceholderText('Configuration name') as HTMLInputElement;

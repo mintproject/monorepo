@@ -92,7 +92,7 @@ export interface ConfigurationFormData {
  */
 export function buildAddInputVariables(
   configurationId: string,
-  row: InputRow
+  row: InputRow,
 ): AddConfigurationInputMutationVariables {
   const inputId = row.existingId ?? generateMintUri();
   const presentationId = row.existingPresentationId ?? generateMintUri();
@@ -122,7 +122,7 @@ export function buildAddInputVariables(
  */
 export function buildAddOutputVariables(
   configurationId: string,
-  row: InputRow
+  row: InputRow,
 ): AddConfigurationOutputMutationVariables {
   const outputId = row.existingId ?? generateMintUri();
   const presentationId = row.existingPresentationId ?? generateMintUri();
@@ -150,7 +150,7 @@ export function buildAddOutputVariables(
  */
 export function buildAddParameterVariables(
   configurationId: string,
-  row: ParameterRow
+  row: ParameterRow,
 ): AddConfigurationParameterMutationVariables {
   const parameterId = row.existingId ?? generateMintUri();
 
@@ -188,17 +188,17 @@ export function assignPositions<T extends { position?: number }>(rows: T[]): T[]
  */
 export function diffInputRows(
   originalRows: InputRow[],
-  modifiedRows: InputRow[]
+  modifiedRows: InputRow[],
 ): {
   toAdd: InputRow[];
   toRemove: string[];
   toUpdate: InputRow[];
 } {
   const originalMap = new Map(
-    originalRows.filter((r) => r.existingId).map((r) => [r.existingId!, r])
+    originalRows.filter((r) => r.existingId).map((r) => [r.existingId!, r]),
   );
   const modifiedMap = new Map(
-    modifiedRows.filter((r) => r.existingId).map((r) => [r.existingId!, r])
+    modifiedRows.filter((r) => r.existingId).map((r) => [r.existingId!, r]),
   );
 
   const toAdd = modifiedRows.filter((r) => !r.existingId);
@@ -231,17 +231,17 @@ export function diffInputRows(
  */
 export function diffParameterRows(
   originalRows: ParameterRow[],
-  modifiedRows: ParameterRow[]
+  modifiedRows: ParameterRow[],
 ): {
   toAdd: ParameterRow[];
   toRemove: string[];
   toUpdate: ParameterRow[];
 } {
   const originalMap = new Map(
-    originalRows.filter((r) => r.existingId).map((r) => [r.existingId!, r])
+    originalRows.filter((r) => r.existingId).map((r) => [r.existingId!, r]),
   );
   const modifiedMap = new Map(
-    modifiedRows.filter((r) => r.existingId).map((r) => [r.existingId!, r])
+    modifiedRows.filter((r) => r.existingId).map((r) => [r.existingId!, r]),
   );
 
   const toAdd = modifiedRows.filter((r) => !r.existingId);

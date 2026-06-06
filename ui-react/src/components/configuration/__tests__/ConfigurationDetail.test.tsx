@@ -112,19 +112,19 @@ const configQueryMock = {
 
 describe('ConfigurationDetail', () => {
   it('renders loading state initially', () => {
-    renderWithProviders(
-      <ConfigurationDetail configurationId="cfg1" />,
-      { apolloMocks: [configQueryMock] },
-    );
+    renderWithProviders(<ConfigurationDetail configurationId="cfg1" />, {
+      apolloMocks: [configQueryMock],
+    });
     // Loading spinner should be present
-    expect(document.querySelector('[class*=animate-spin]') ?? screen.queryByRole('status')).toBeTruthy();
+    expect(
+      document.querySelector('[class*=animate-spin]') ?? screen.queryByRole('status'),
+    ).toBeTruthy();
   });
 
   it('renders configuration details after loading', async () => {
-    renderWithProviders(
-      <ConfigurationDetail configurationId="cfg1" />,
-      { apolloMocks: [configQueryMock] },
-    );
+    renderWithProviders(<ConfigurationDetail configurationId="cfg1" />, {
+      apolloMocks: [configQueryMock],
+    });
 
     await waitFor(() => {
       expect(screen.getByText('Default Configuration')).toBeInTheDocument();
@@ -140,10 +140,9 @@ describe('ConfigurationDetail', () => {
   });
 
   it('shows "Required" badge for non-optional inputs', async () => {
-    renderWithProviders(
-      <ConfigurationDetail configurationId="cfg1" />,
-      { apolloMocks: [configQueryMock] },
-    );
+    renderWithProviders(<ConfigurationDetail configurationId="cfg1" />, {
+      apolloMocks: [configQueryMock],
+    });
 
     await waitFor(() => {
       expect(screen.getByText('Required')).toBeInTheDocument();
@@ -152,10 +151,9 @@ describe('ConfigurationDetail', () => {
 
   it('shows Edit button when onEdit is provided', async () => {
     const onEdit = vi.fn();
-    renderWithProviders(
-      <ConfigurationDetail configurationId="cfg1" onEdit={onEdit} />,
-      { apolloMocks: [configQueryMock] },
-    );
+    renderWithProviders(<ConfigurationDetail configurationId="cfg1" onEdit={onEdit} />, {
+      apolloMocks: [configQueryMock],
+    });
 
     await waitFor(() => {
       expect(screen.getByRole('button', { name: /edit/i })).toBeInTheDocument();
@@ -166,10 +164,9 @@ describe('ConfigurationDetail', () => {
   });
 
   it('renders parameter details', async () => {
-    renderWithProviders(
-      <ConfigurationDetail configurationId="cfg1" />,
-      { apolloMocks: [configQueryMock] },
-    );
+    renderWithProviders(<ConfigurationDetail configurationId="cfg1" />, {
+      apolloMocks: [configQueryMock],
+    });
 
     await waitFor(() => {
       expect(screen.getByText('Threshold')).toBeInTheDocument();

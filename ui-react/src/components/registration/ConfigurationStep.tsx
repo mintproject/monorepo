@@ -11,13 +11,7 @@
  */
 import { useFormContext } from 'react-hook-form';
 
-import {
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
+import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
@@ -31,8 +25,7 @@ export function ConfigurationStep() {
   return (
     <div className="space-y-6">
       <p className="text-sm text-muted-foreground">
-        Define the configuration for this model version — its name, inputs,
-        outputs, and parameters.
+        Define the configuration for this model version — its name, inputs, outputs, and parameters.
       </p>
 
       {/* Configuration metadata */}

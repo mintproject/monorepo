@@ -8,13 +8,7 @@
  */
 import { useFormContext } from 'react-hook-form';
 
-import {
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
+import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import {
@@ -94,11 +88,7 @@ export function SoftwareStep() {
           <FormItem>
             <FormLabel>Description</FormLabel>
             <FormControl>
-              <Textarea
-                placeholder="Brief description of the model"
-                rows={3}
-                {...field}
-              />
+              <Textarea placeholder="Brief description of the model" rows={3} {...field} />
             </FormControl>
             <FormMessage />
           </FormItem>

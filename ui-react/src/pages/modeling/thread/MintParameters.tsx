@@ -23,10 +23,7 @@ const MAX_PARAMETER_COMBINATIONS = 100000;
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
 
-function totalConfigs(
-  bindings: Record<string, string[]>,
-  parameters: ModelParameter[],
-): number {
+function totalConfigs(bindings: Record<string, string[]>, parameters: ModelParameter[]): number {
   return parameters
     .filter((p) => !p.value)
     .reduce((acc, p) => {
@@ -99,16 +96,12 @@ export function MintParameters({
         }
       } else if (param.type === 'int') {
         const n = parseInt(v, 10);
-        if (param.min != null && n < parseInt(param.min, 10))
-          return `Min is ${param.min}`;
-        if (param.max != null && n > parseInt(param.max, 10))
-          return `Max is ${param.max}`;
+        if (param.min != null && n < parseInt(param.min, 10)) return `Min is ${param.min}`;
+        if (param.max != null && n > parseInt(param.max, 10)) return `Max is ${param.max}`;
       } else if (param.type === 'float') {
         const n = parseFloat(v);
-        if (param.min != null && n < parseFloat(param.min))
-          return `Min is ${param.min}`;
-        if (param.max != null && n > parseFloat(param.max))
-          return `Max is ${param.max}`;
+        if (param.min != null && n < parseFloat(param.min)) return `Min is ${param.min}`;
+        if (param.max != null && n > parseFloat(param.max)) return `Max is ${param.max}`;
       }
     }
     return null;
@@ -194,16 +187,8 @@ export function MintParameters({
   // ─ Get default value for a param (handles region_geojson, dates) ──────────
   function getDefaultDisplayValue(param: ModelParameter): string {
     if (param.default === '__region_geojson') return 'Region GeoJSON';
-    if (
-      param.type?.includes('StartDate') &&
-      problemStartDate
-    )
-      return formatDate(problemStartDate);
-    if (
-      param.type?.includes('EndDate') &&
-      problemEndDate
-    )
-      return formatDate(problemEndDate);
+    if (param.type?.includes('StartDate') && problemStartDate) return formatDate(problemStartDate);
+    if (param.type?.includes('EndDate') && problemEndDate) return formatDate(problemEndDate);
     return param.default ?? '';
   }
 
@@ -211,7 +196,7 @@ export function MintParameters({
   if (!isConfigured) {
     return (
       <div data-testid="mint-parameters">
-        <p className="text-sm text-gray-600 mb-2">
+        <p className="mb-2 text-sm text-gray-600">
           Please specify the values for the adjustable parameters.
         </p>
         <p className="text-sm text-gray-500">Please select model(s) first.</p>
@@ -223,21 +208,21 @@ export function MintParameters({
 
   return (
     <div data-testid="mint-parameters">
-      <p className="text-sm text-gray-600 mb-4">
-        This step is for specifying values for the adjustable parameters of the models that
-        you selected earlier.
+      <p className="mb-4 text-sm text-gray-600">
+        This step is for specifying values for the adjustable parameters of the models that you
+        selected earlier.
       </p>
 
       {isDone && canWrite && !editMode && (
-        <p className="text-sm text-gray-500 mb-4">
-          Please click on the <span className="font-mono">✎</span> icon to make changes
-          and run the model.
+        <p className="mb-4 text-sm text-gray-500">
+          Please click on the <span className="font-mono">✎</span> icon to make changes and run the
+          model.
         </p>
       )}
 
       {/* ── Setup Models ── */}
-      <div className="border rounded-md mb-4">
-        <div className="flex items-center justify-between px-4 py-2 bg-gray-50 border-b rounded-t-md">
+      <div className="mb-4 rounded-md border">
+        <div className="flex items-center justify-between rounded-t-md border-b bg-gray-50 px-4 py-2">
           <h3 className="text-sm font-semibold">Setup Models</h3>
           {canWrite && !editMode && (
             <button
@@ -245,7 +230,7 @@ export function MintParameters({
               aria-label="Edit parameters"
               data-testid="edit-parameters-btn"
               onClick={() => setEditMode(true)}
-              className="p-1 rounded hover:bg-gray-200 text-gray-500"
+              className="rounded p-1 text-gray-500 hover:bg-gray-200"
             >
               <Edit2 className="h-4 w-4" />
             </button>
@@ -273,23 +258,23 @@ export function MintParameters({
 
             return (
               <li key={mid} className="px-4 py-3">
-                <h4 className="text-sm font-medium mb-2">
+                <h4 className="mb-2 text-sm font-medium">
                   Model: <span className="text-blue-700">{model.name}</span>
                 </h4>
                 <ul className="space-y-3">
                   {/* Fixed (expert-set) parameters */}
                   {fixedParams.length > 0 && (
                     <li>
-                      <p className="text-xs font-semibold mb-1">
+                      <p className="mb-1 text-xs font-semibold">
                         Expert modeler has selected the following parameters:
                       </p>
-                      <table className="w-full text-xs border-collapse">
+                      <table className="w-full border-collapse text-xs">
                         <thead>
                           <tr className="bg-gray-100">
-                            <th className="text-left px-2 py-1 font-semibold w-3/5">
+                            <th className="w-3/5 px-2 py-1 text-left font-semibold">
                               Adjustable Parameter
                             </th>
-                            <th className="text-left px-2 py-1 font-semibold">Values</th>
+                            <th className="px-2 py-1 text-left font-semibold">Values</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -304,9 +289,7 @@ export function MintParameters({
                                 )}
                               </td>
                               <td className="px-2 py-1">
-                                {p.default === '__region_geojson'
-                                  ? 'Region GeoJSON'
-                                  : p.value}
+                                {p.default === '__region_geojson' ? 'Region GeoJSON' : p.value}
                               </td>
                             </tr>
                           ))}
@@ -319,25 +302,27 @@ export function MintParameters({
                   {adjustableParams.length > 0 ? (
                     <li>
                       {editMode && (
-                        <p className="text-xs text-gray-600 mb-1">
-                          Setup the model by specifying values below. You can enter more than
-                          one value (comma separated) if you want several runs.
+                        <p className="mb-1 text-xs text-gray-600">
+                          Setup the model by specifying values below. You can enter more than one
+                          value (comma separated) if you want several runs.
                         </p>
                       )}
                       {model.usage_notes && (
-                        <p className="text-xs text-gray-500 mb-1">{model.usage_notes}</p>
+                        <p className="mb-1 text-xs text-gray-500">{model.usage_notes}</p>
                       )}
                       <form
-                        ref={(el) => { formRefs.current[mid] = el; }}
+                        ref={(el) => {
+                          formRefs.current[mid] = el;
+                        }}
                         data-testid={`param-form-${mid}`}
                       >
-                        <table className="w-full text-xs border-collapse">
+                        <table className="w-full border-collapse text-xs">
                           <thead>
                             <tr className="bg-gray-100">
-                              <th className="text-left px-2 py-1 font-semibold w-3/5">
+                              <th className="w-3/5 px-2 py-1 text-left font-semibold">
                                 Adjustable Parameter
                               </th>
-                              <th className="text-left px-2 py-1 font-semibold">Values</th>
+                              <th className="px-2 py-1 text-left font-semibold">Values</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -361,8 +346,8 @@ export function MintParameters({
                                         {p.min != null && p.max != null
                                           ? `Range: ${p.min} – ${p.max}.`
                                           : p.min != null
-                                          ? `Min: ${p.min}.`
-                                          : `Max: ${p.max}.`}
+                                            ? `Min: ${p.min}.`
+                                            : `Max: ${p.max}.`}
                                         {p.default && ` Default: ${p.default}`}
                                       </div>
                                     )}
@@ -380,11 +365,11 @@ export function MintParameters({
                                           data-testid={`param-input-${p.id}`}
                                           defaultValue={displayValue}
                                           placeholder={getDefaultDisplayValue(p)}
-                                          className="w-full border rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-blue-400"
+                                          className="w-full rounded border px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-blue-400"
                                         />
                                         {errors[errKey] && (
                                           <div
-                                            className="text-red-500 text-xs mt-0.5"
+                                            className="mt-0.5 text-xs text-red-500"
                                             data-testid={`param-error-${p.id}`}
                                           >
                                             {errors[errKey]}
@@ -446,10 +431,10 @@ export function MintParameters({
             </button>
           </div>
           <div>
-            <label className="block text-xs font-semibold text-gray-500 mb-1">Notes</label>
+            <label className="mb-1 block text-xs font-semibold text-gray-500">Notes</label>
             <textarea
               ref={notesRef}
-              className="w-full border rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-blue-400"
+              className="w-full rounded border px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-blue-400"
               rows={3}
               data-testid="parameters-notes"
             />
@@ -464,7 +449,7 @@ export function MintParameters({
             className="rounded bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700"
           >
             Continue
-            <ChevronDown className="inline ml-1 h-4 w-4 -rotate-90" />
+            <ChevronDown className="ml-1 inline h-4 w-4 -rotate-90" />
           </button>
         </div>
       )}

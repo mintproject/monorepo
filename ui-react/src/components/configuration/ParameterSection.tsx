@@ -15,7 +15,7 @@ export function ParameterSection() {
 
   return (
     <section aria-label="Parameters">
-      <div className="flex items-center justify-between mb-3">
+      <div className="mb-3 flex items-center justify-between">
         <h3 className="text-sm font-semibold">Parameters</h3>
         <Button
           type="button"
@@ -30,7 +30,7 @@ export function ParameterSection() {
       </div>
 
       {fields.length === 0 ? (
-        <p className="text-sm text-muted-foreground py-4 text-center border rounded-md">
+        <p className="rounded-md border py-4 text-center text-sm text-muted-foreground">
           No parameters defined. Click &ldquo;Add Parameter&rdquo; to add one.
         </p>
       ) : (

@@ -12,13 +12,9 @@ import type { ThreadExecutionData, ModelExecutionsMap } from '@/graphql/generate
 const mockModel = {
   id: 'model-1',
   name: 'HydroModel',
-  input_parameters: [
-    { id: 'param-1', name: 'threshold', type: 'float', default: '5' },
-  ],
+  input_parameters: [{ id: 'param-1', name: 'threshold', type: 'float', default: '5' }],
   input_files: [],
-  output_files: [
-    { id: 'out-1', name: 'discharge_output', variables: ['streamflow'] },
-  ],
+  output_files: [{ id: 'out-1', name: 'discharge_output', variables: ['streamflow'] }],
 };
 
 const mockThreadDataNotSubmitted: ThreadExecutionData = {

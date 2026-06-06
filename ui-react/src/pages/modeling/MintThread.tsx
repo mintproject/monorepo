@@ -95,9 +95,7 @@ function getRunsStatus(threadData: ThreadExecutionData | null): StepStatus {
   const allDone = modelIds.every((mid) => {
     const s = threadData.execution_summary[mid]!;
     return (
-      s.submitted_runs > 0 &&
-      s.successful_runs + s.failed_runs >= s.total_runs &&
-      s.total_runs > 0
+      s.submitted_runs > 0 && s.successful_runs + s.failed_runs >= s.total_runs && s.total_runs > 0
     );
   });
   return allDone ? 'done' : 'not_started';
@@ -218,27 +216,24 @@ export function MintThread() {
   const handleSaveParameters = useCallback(
     async (ensembles: ModelEnsembleMap, summary: ExecutionSummaryMap, _notes: string) => {
       setThreadExecutionData((prev) =>
-        prev
-          ? { ...prev, model_ensembles: ensembles, execution_summary: summary }
-          : prev,
+        prev ? { ...prev, model_ensembles: ensembles, execution_summary: summary } : prev,
       );
       // In production, also persist to Hasura via mutation
     },
     [],
   );
 
-  const handleFetchRuns = useCallback(
-    (modelId: string, page: number, pageSize: number) => {
-      // In a full port this dispatches a Hasura query / Apollo query with pagination.
-      // Placeholder: mark as loading
-      void modelId; void page; void pageSize;
-      setModelExecutions((prev) => ({
-        ...prev,
-        [modelId]: prev[modelId] ?? { executions: [], loading: false },
-      }));
-    },
-    [],
-  );
+  const handleFetchRuns = useCallback((modelId: string, page: number, pageSize: number) => {
+    // In a full port this dispatches a Hasura query / Apollo query with pagination.
+    // Placeholder: mark as loading
+    void modelId;
+    void page;
+    void pageSize;
+    setModelExecutions((prev) => ({
+      ...prev,
+      [modelId]: prev[modelId] ?? { executions: [], loading: false },
+    }));
+  }, []);
 
   const handleSubmitRuns = useCallback(
     async (modelId: string) => {
@@ -248,20 +243,17 @@ export function MintThread() {
           ?.ENSEMBLE_MANAGER_API ?? '';
       const executionEngine = 'localex';
       const token = localStorage.getItem('access-token');
-      const resp = await fetch(
-        `${ensembleManagerApi}/executionEngines/${executionEngine}`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          },
-          body: JSON.stringify({
-            thread_id: threadId,
-            model_id: modelId,
-          }),
+      const resp = await fetch(`${ensembleManagerApi}/executionEngines/${executionEngine}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
-      );
+        body: JSON.stringify({
+          thread_id: threadId,
+          model_id: modelId,
+        }),
+      });
       if (!resp.ok) {
         throw new Error(`Ensemble manager returned ${resp.status}`);
       }
@@ -274,7 +266,10 @@ export function MintThread() {
                 ...prev.execution_summary,
                 [modelId]: {
                   ...(prev.execution_summary[modelId] ?? {
-                    total_runs: 0, submitted_runs: 0, failed_runs: 0, successful_runs: 0,
+                    total_runs: 0,
+                    submitted_runs: 0,
+                    failed_runs: 0,
+                    successful_runs: 0,
                   }),
                   submitted_for_execution: true,
                   submission_time: new Date().toISOString(),

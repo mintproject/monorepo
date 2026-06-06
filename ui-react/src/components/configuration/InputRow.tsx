@@ -14,13 +14,7 @@ import { ChevronDown, ChevronRight, Trash2 } from 'lucide-react';
 import { StandardVariableCombobox } from '@/components/autocomplete/StandardVariableCombobox';
 import { UnitCombobox } from '@/components/autocomplete/UnitCombobox';
 import { Button } from '@/components/ui/button';
-import {
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
+import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import type { ConfigurationFormSchema } from '@/schemas/configuration';
 import { cn } from '@/lib/utils';
@@ -40,14 +34,13 @@ export function InputRow({ index, prefix, onRemove }: InputRowProps) {
 
   // Cast to Path<ConfigurationFormSchema> — RHF's generic is too strict for
   // dynamic template literals, but the paths are always valid at runtime.
-  const p = (field: string) =>
-    `${prefix}.${index}.${field}` as Path<ConfigurationFormSchema>;
+  const p = (field: string) => `${prefix}.${index}.${field}` as Path<ConfigurationFormSchema>;
 
   return (
-    <div className="rounded-md border p-4 space-y-3 bg-card">
+    <div className="space-y-3 rounded-md border bg-card p-4">
       {/* Row header: position badge + remove button */}
       <div className="flex items-center justify-between">
-        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+        <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
           {prefix === 'inputs' ? 'Input' : 'Output'} {index + 1}
         </span>
         <Button
@@ -71,7 +64,11 @@ export function InputRow({ index, prefix, onRemove }: InputRowProps) {
             <FormItem>
               <FormLabel>Label *</FormLabel>
               <FormControl>
-                <Input placeholder="e.g. Precipitation" {...field} value={field.value as string ?? ''} />
+                <Input
+                  placeholder="e.g. Precipitation"
+                  {...field}
+                  value={(field.value as string) ?? ''}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -84,7 +81,11 @@ export function InputRow({ index, prefix, onRemove }: InputRowProps) {
             <FormItem>
               <FormLabel>Format</FormLabel>
               <FormControl>
-                <Input placeholder="e.g. CSV, NetCDF" {...field} value={field.value as string ?? ''} />
+                <Input
+                  placeholder="e.g. CSV, NetCDF"
+                  {...field}
+                  value={(field.value as string) ?? ''}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -100,7 +101,11 @@ export function InputRow({ index, prefix, onRemove }: InputRowProps) {
           <FormItem>
             <FormLabel>Description</FormLabel>
             <FormControl>
-              <Input placeholder="Optional description" {...field} value={field.value as string ?? ''} />
+              <Input
+                placeholder="Optional description"
+                {...field}
+                value={(field.value as string) ?? ''}
+              />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -148,12 +153,12 @@ export function InputRow({ index, prefix, onRemove }: InputRowProps) {
         <input
           type="checkbox"
           id={`${prefix}-${index}-isOptional`}
-          className="h-4 w-4 rounded border-input accent-primary cursor-pointer"
+          className="h-4 w-4 cursor-pointer rounded border-input accent-primary"
           {...register(p('isOptional'))}
         />
         <label
           htmlFor={`${prefix}-${index}-isOptional`}
-          className="text-sm text-muted-foreground cursor-pointer select-none"
+          className="cursor-pointer select-none text-sm text-muted-foreground"
         >
           Optional (not required for model execution)
         </label>
@@ -163,7 +168,7 @@ export function InputRow({ index, prefix, onRemove }: InputRowProps) {
       <div>
         <button
           type="button"
-          className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+          className="flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
           onClick={() => setOverridesOpen((v) => !v)}
           aria-expanded={overridesOpen}
         >
@@ -176,7 +181,7 @@ export function InputRow({ index, prefix, onRemove }: InputRowProps) {
         </button>
 
         {overridesOpen && (
-          <div className={cn('grid grid-cols-3 gap-3 mt-2')}>
+          <div className={cn('mt-2 grid grid-cols-3 gap-3')}>
             <FormField
               control={control}
               name={p('variableLabel')}
@@ -184,7 +189,12 @@ export function InputRow({ index, prefix, onRemove }: InputRowProps) {
                 <FormItem>
                   <FormLabel className="text-xs">Variable Label</FormLabel>
                   <FormControl>
-                    <Input placeholder="Override label" {...field} value={field.value as string ?? ''} className="h-8 text-sm" />
+                    <Input
+                      placeholder="Override label"
+                      {...field}
+                      value={(field.value as string) ?? ''}
+                      className="h-8 text-sm"
+                    />
                   </FormControl>
                 </FormItem>
               )}
@@ -196,7 +206,12 @@ export function InputRow({ index, prefix, onRemove }: InputRowProps) {
                 <FormItem>
                   <FormLabel className="text-xs">Long Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="Long name" {...field} value={field.value as string ?? ''} className="h-8 text-sm" />
+                    <Input
+                      placeholder="Long name"
+                      {...field}
+                      value={(field.value as string) ?? ''}
+                      className="h-8 text-sm"
+                    />
                   </FormControl>
                 </FormItem>
               )}
@@ -208,7 +223,12 @@ export function InputRow({ index, prefix, onRemove }: InputRowProps) {
                 <FormItem>
                   <FormLabel className="text-xs">Short Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="Short name" {...field} value={field.value as string ?? ''} className="h-8 text-sm" />
+                    <Input
+                      placeholder="Short name"
+                      {...field}
+                      value={(field.value as string) ?? ''}
+                      className="h-8 text-sm"
+                    />
                   </FormControl>
                 </FormItem>
               )}
