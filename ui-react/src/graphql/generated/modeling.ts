@@ -1157,13 +1157,19 @@ export function useUpdateThreadDataMutation(
 // ─── ID generator (mirrors legacy GraphQL adapter) ────────────────────────────
 
 /**
- * Generate a unique ID for new resources, matching the legacy format.
- * Legacy code used: `mint://` + type + `/` + random prefix
+ * Generate a unique ID for new problem statements / tasks / threads.
+ *
+ * The value is stored verbatim as the table primary key (and FK target) and is
+ * embedded directly in route URLs, so it must be a bare short token like the
+ * existing DB rows (e.g. `uPOdCNpNNscghQbJda73`). It must NOT be a
+ * `mint://<type>/...` URI: that prefix is not what the DB stores (so by_pk
+ * lookups miss) and its `//` collapses to `/` in the browser URL. The `_type`
+ * argument is retained only for call-site readability.
  */
-export function generateModelingId(type: 'problem_statement' | 'task' | 'thread'): string {
+export function generateModelingId(_type: 'problem_statement' | 'task' | 'thread'): string {
   const rand = Math.random().toString(36).substring(2, 10);
   const ts = Date.now().toString(36);
-  return `mint://${type}/${rand}${ts}`;
+  return `${rand}${ts}`;
 }
 
 // ─── Mutation: SetThreadModels ────────────────────────────────────────────────
