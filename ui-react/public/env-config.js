@@ -8,4 +8,5 @@ window.__MINT_CONFIG__ = {
   AUTH_CLIENT_ID: "mint-local",
   AUTH_REALM: "",
   AUTH_PROVIDER: "tapis",
+  GOOGLE_MAPS_KEY: "AIzaSyDf8bXwyV7v9whOpZl64SRVWKdE6yBbt2k",
 };
