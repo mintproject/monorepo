@@ -1238,22 +1238,54 @@ export function useSetThreadModelsMutation(
 /**
  * Extended model tree query that includes region data for filtering.
  */
+
+// ─── Model I/O sub-types (Task 1) ────────────────────────────────────────────
+
+export type StandardVariableRef = { id: string; label?: string | null };
+
+export type VariablePresentationRef = {
+  presentation: {
+    id: string;
+    standard_variable?: StandardVariableRef | null;
+  };
+};
+
+export type DatasetSpecRef = {
+  id: string;
+  label?: string | null;
+  presentations: VariablePresentationRef[];
+};
+
+export type ConfigInputRef = {
+  is_optional?: boolean | null;
+  input: DatasetSpecRef;
+};
+
+export type ConfigOutputRef = {
+  output: DatasetSpecRef;
+};
+
 export type ModelSetupInfo = {
   id: string;
   label?: string | null;
   description?: string | null;
-  regions: Array<{
-    region: { id: string; label?: string | null };
-  }>;
+  regions: Array<{ region: { id: string; label?: string | null } }>;
+  inputs: ConfigInputRef[];
+  outputs: ConfigOutputRef[];
 };
 
 export type ModelConfigInfo = {
   id: string;
   label?: string | null;
-  regions: Array<{
-    region: { id: string; label?: string | null };
-  }>;
+  regions: Array<{ region: { id: string; label?: string | null } }>;
+  inputs: ConfigInputRef[];
+  outputs: ConfigOutputRef[];
   child_configurations: ModelSetupInfo[];
+};
+
+/** A configuration or setup that carries inputs/outputs — the unit extractModelIO consumes. */
+export type ModelIOConfig = Pick<ModelConfigInfo, 'id' | 'label' | 'regions' | 'inputs' | 'outputs'> & {
+  child_configurations?: ModelSetupInfo[];
 };
 
 export type GetModelTreeWithRegionsQuery = {
@@ -1268,6 +1300,43 @@ export type GetModelTreeWithRegionsQuery = {
     }>;
   }>;
 };
+
+// ─── I/O extractor (Task 1) ──────────────────────────────────────────────────
+
+export type ModelInputVar = {
+  id: string;
+  name: string;
+  variableIds: string[];
+  variableLabels: string[];
+  optional: boolean;
+};
+
+export type ModelIO = {
+  inputs: ModelInputVar[];
+  outputs: ModelInputVar[];
+  /** Flat list of all standard-variable ids this config produces (for the indicator filter). */
+  producesVariableIds: string[];
+};
+
+function specToVar(spec: DatasetSpecRef, optional: boolean): ModelInputVar {
+  const svs = spec.presentations
+    .map((p) => p.presentation.standard_variable)
+    .filter((sv): sv is StandardVariableRef => !!sv);
+  return {
+    id: spec.id,
+    name: spec.label ?? spec.id,
+    variableIds: svs.map((sv) => sv.id),
+    variableLabels: svs.map((sv) => sv.label ?? sv.id),
+    optional,
+  };
+}
+
+export function extractModelIO(config: ModelIOConfig): ModelIO {
+  const inputs = (config.inputs ?? []).map((i) => specToVar(i.input, !!i.is_optional));
+  const outputs = (config.outputs ?? []).map((o) => specToVar(o.output, false));
+  const producesVariableIds = outputs.flatMap((o) => o.variableIds);
+  return { inputs, outputs, producesVariableIds };
+}
 
 export const GetModelTreeWithRegionsDocument = gql`
   query GetModelTreeWithRegions {
@@ -1287,11 +1356,41 @@ export const GetModelTreeWithRegionsDocument = gql`
           id
           label
           regions { region { id label } }
+          inputs {
+            is_optional
+            input {
+              id
+              label
+              presentations { presentation { id standard_variable { id label } } }
+            }
+          }
+          outputs {
+            output {
+              id
+              label
+              presentations { presentation { id standard_variable { id label } } }
+            }
+          }
           child_configurations(order_by: { label: asc }) {
             id
             label
             description
             regions { region { id label } }
+            inputs {
+              is_optional
+              input {
+                id
+                label
+                presentations { presentation { id standard_variable { id label } } }
+              }
+            }
+            outputs {
+              output {
+                id
+                label
+                presentations { presentation { id standard_variable { id label } } }
+              }
+            }
           }
         }
       }
