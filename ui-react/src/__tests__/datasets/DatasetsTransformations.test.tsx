@@ -100,6 +100,8 @@ describe('DatasetsTransformations', () => {
       expect(screen.getByText('Converts DEM data for TopoFlow model.')).toBeInTheDocument();
     });
 
-    expect(fetchDataTransformation).toHaveBeenCalledWith(mockTransformations[0].id);
+    const first = mockTransformations[0];
+    expect(first).toBeDefined();
+    expect(fetchDataTransformation).toHaveBeenCalledWith(first!.id);
   });
 });
