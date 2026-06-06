@@ -9,6 +9,7 @@
  */
 
 import { clearTokens, setRefreshCallback, storeTokens } from './token-store';
+import { encodeState } from './oauth-state';
 
 // ---------------------------------------------------------------------------
 // Config helpers
@@ -21,12 +22,18 @@ function getConfig() {
       AUTH_CLIENT_ID: import.meta.env.VITE_AUTH_CLIENT_ID ?? 'mint-local',
       AUTH_REALM: import.meta.env.VITE_AUTH_REALM ?? '',
       AUTH_PROVIDER: (import.meta.env.VITE_AUTH_PROVIDER ?? 'tapis') as 'keycloak' | 'tapis',
+      AUTH_CALLBACK_ORIGIN: import.meta.env.VITE_AUTH_CALLBACK_ORIGIN as string | undefined,
+      AUTH_PREVIEW_ORIGIN_ALLOWLIST: import.meta.env.VITE_AUTH_PREVIEW_ORIGIN_ALLOWLIST as
+        | string
+        | undefined,
     }
   );
 }
 
 function getCallbackUrl(): string {
-  return `${window.location.origin}/oauth2/callback`;
+  const { AUTH_CALLBACK_ORIGIN } = getConfig();
+  const base = AUTH_CALLBACK_ORIGIN ?? window.location.origin;
+  return `${base}/oauth2/callback`;
 }
 
 // ---------------------------------------------------------------------------
@@ -92,8 +99,9 @@ export function resolveGrantType(): GrantType {
 export function buildAuthorizationUrl(grantType?: GrantType): string {
   const { AUTH_CLIENT_ID } = getConfig();
   const type = grantType ?? resolveGrantType();
-  const state = generateState();
-  sessionStorage.setItem('oauth2_state', state);
+  const nonce = generateState();
+  sessionStorage.setItem('oauth2_state', nonce);
+  const state = encodeState({ nonce, origin: window.location.origin });
 
   const params = new URLSearchParams({
     client_id: AUTH_CLIENT_ID,

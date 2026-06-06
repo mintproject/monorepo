@@ -16,6 +16,7 @@ import {
   refreshAccessToken,
   resolveGrantType,
 } from '@/lib/auth/oauth2-adapter';
+import { decodeState } from '@/lib/auth/oauth-state';
 import { clearTokens, getAccessToken, getRefreshToken } from '@/lib/auth/token-store';
 
 // ---------------------------------------------------------------------------
@@ -359,5 +360,33 @@ describe('logout', () => {
     logout();
     expect(getAccessToken()).toBeNull();
     expect(window.location.href).toBe('/');
+  });
+});
+
+describe('preview-aware authorization URL', () => {
+  it('uses window.location.origin for redirect_uri when AUTH_CALLBACK_ORIGIN is unset', () => {
+    setMintConfig({ AUTH_PROVIDER: 'tapis' });
+    const url = new URL(buildAuthorizationUrl());
+    expect(url.searchParams.get('redirect_uri')).toBe('http://localhost/oauth2/callback');
+  });
+
+  it('uses AUTH_CALLBACK_ORIGIN for redirect_uri when set', () => {
+    setMintConfig({
+      AUTH_PROVIDER: 'tapis',
+      AUTH_CALLBACK_ORIGIN: 'https://monorepo-mosoriobs-projects.vercel.app',
+    });
+    const url = new URL(buildAuthorizationUrl());
+    expect(url.searchParams.get('redirect_uri')).toBe(
+      'https://monorepo-mosoriobs-projects.vercel.app/oauth2/callback',
+    );
+  });
+
+  it('encodes {nonce, origin} in state and mirrors the nonce in sessionStorage', () => {
+    setMintConfig({ AUTH_PROVIDER: 'tapis' });
+    const url = new URL(buildAuthorizationUrl());
+    const decoded = decodeState(url.searchParams.get('state'));
+    expect(decoded).not.toBeNull();
+    expect(decoded!.origin).toBe('http://localhost');
+    expect(decoded!.nonce).toBe(sessionStorage.getItem('oauth2_state'));
   });
 });
