@@ -4,11 +4,13 @@
 import { describe, expect, it } from 'vitest';
 import { screen, waitFor } from '@testing-library/react';
 import { Route, Routes } from 'react-router-dom';
-import { MockedProvider, type MockedResponse } from '@apollo/client/testing';
+import { MockedProvider } from '@apollo/client/testing';
 import { render } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { AuthContext, type AuthState } from '@/lib/auth/AuthProvider';
 import { mockAuthState } from '@/test/utils/auth-mocks';
+import type { MockedResponse } from '@apollo/client/testing';
+import { makeNetworkErrorMock } from '@/test/utils/apollo-mocks';
 import { MintThread } from '../../MintThread';
 import { GetThreadDocument } from '@/graphql/generated/modeling';
 
@@ -41,7 +43,7 @@ const getThreadMock = {
 /** Renders MintThread inside a proper Route so useParams works. */
 function renderMintThread(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  apolloMocks: MockedResponse<any>[] = [getThreadMock],
+  apolloMocks: MockedResponse<any, any>[] = [getThreadMock],
   authState: AuthState = mockAuthState,
 ) {
   return render(
@@ -94,15 +96,11 @@ describe('MintThread', () => {
   });
 
   it('shows error message when query fails', async () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const errorMock: any = {
-      request: {
-        query: GetThreadDocument,
-        variables: { id: 'test-thread-id' },
-      },
-      result: { data: {} as never },
-      error: new Error('Network error'),
-    };
+    const errorMock = makeNetworkErrorMock(
+      GetThreadDocument,
+      { id: 'test-thread-id' },
+      'Network error',
+    );
     renderMintThread([errorMock]);
     await waitFor(
       () => {
