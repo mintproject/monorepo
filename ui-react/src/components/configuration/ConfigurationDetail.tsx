@@ -16,10 +16,7 @@ export interface ConfigurationDetailProps {
   onEdit?: () => void;
 }
 
-export function ConfigurationDetail({
-  configurationId,
-  onEdit,
-}: ConfigurationDetailProps) {
+export function ConfigurationDetail({ configurationId, onEdit }: ConfigurationDetailProps) {
   const { data, loading, error } = useGetConfigurationQuery({
     variables: { id: configurationId },
     fetchPolicy: 'cache-first',
@@ -64,7 +61,7 @@ export function ConfigurationDetail({
       {/* Authors */}
       {config.authors.length > 0 && (
         <section>
-          <h3 className="text-xs font-semibold uppercase text-muted-foreground tracking-wide mb-2">
+          <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             Authors
           </h3>
           <div className="flex flex-wrap gap-1.5">
@@ -80,7 +77,7 @@ export function ConfigurationDetail({
       {/* Regions */}
       {config.regions.length > 0 && (
         <section>
-          <h3 className="text-xs font-semibold uppercase text-muted-foreground tracking-wide mb-2">
+          <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             Regions
           </h3>
           <div className="flex flex-wrap gap-1.5">
@@ -95,13 +92,13 @@ export function ConfigurationDetail({
 
       {/* Inputs */}
       <section>
-        <h3 className="text-xs font-semibold uppercase text-muted-foreground tracking-wide mb-2">
+        <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           Inputs ({config.inputs.length})
         </h3>
         {config.inputs.length === 0 ? (
           <p className="text-sm text-muted-foreground">No inputs defined.</p>
         ) : (
-          <table className="w-full text-sm border-collapse">
+          <table className="w-full border-collapse text-sm">
             <thead>
               <tr className="border-b text-left text-xs text-muted-foreground">
                 <th className="py-1.5 pr-3 font-medium">Label</th>
@@ -123,14 +120,16 @@ export function ConfigurationDetail({
                     <td className="py-2 pr-3 text-muted-foreground">
                       {vp?.standard_variable?.label ?? '—'}
                     </td>
-                    <td className="py-2 pr-3 text-muted-foreground">
-                      {vp?.unit?.label ?? '—'}
-                    </td>
+                    <td className="py-2 pr-3 text-muted-foreground">{vp?.unit?.label ?? '—'}</td>
                     <td className="py-2">
                       {inp.is_optional ? (
-                        <Badge variant="outline" className="text-xs">Optional</Badge>
+                        <Badge variant="outline" className="text-xs">
+                          Optional
+                        </Badge>
                       ) : (
-                        <Badge variant="secondary" className="text-xs">Required</Badge>
+                        <Badge variant="secondary" className="text-xs">
+                          Required
+                        </Badge>
                       )}
                     </td>
                   </tr>
@@ -143,13 +142,13 @@ export function ConfigurationDetail({
 
       {/* Outputs */}
       <section>
-        <h3 className="text-xs font-semibold uppercase text-muted-foreground tracking-wide mb-2">
+        <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           Outputs ({config.outputs.length})
         </h3>
         {config.outputs.length === 0 ? (
           <p className="text-sm text-muted-foreground">No outputs defined.</p>
         ) : (
-          <table className="w-full text-sm border-collapse">
+          <table className="w-full border-collapse text-sm">
             <thead>
               <tr className="border-b text-left text-xs text-muted-foreground">
                 <th className="py-1.5 pr-3 font-medium">Label</th>
@@ -170,9 +169,7 @@ export function ConfigurationDetail({
                     <td className="py-2 pr-3 text-muted-foreground">
                       {vp?.standard_variable?.label ?? '—'}
                     </td>
-                    <td className="py-2 text-muted-foreground">
-                      {vp?.unit?.label ?? '—'}
-                    </td>
+                    <td className="py-2 text-muted-foreground">{vp?.unit?.label ?? '—'}</td>
                   </tr>
                 );
               })}
@@ -183,13 +180,13 @@ export function ConfigurationDetail({
 
       {/* Parameters */}
       <section>
-        <h3 className="text-xs font-semibold uppercase text-muted-foreground tracking-wide mb-2">
+        <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           Parameters ({config.parameters.length})
         </h3>
         {config.parameters.length === 0 ? (
           <p className="text-sm text-muted-foreground">No parameters defined.</p>
         ) : (
-          <table className="w-full text-sm border-collapse">
+          <table className="w-full border-collapse text-sm">
             <thead>
               <tr className="border-b text-left text-xs text-muted-foreground">
                 <th className="py-1.5 pr-3 font-medium">Label</th>
@@ -204,15 +201,11 @@ export function ConfigurationDetail({
                 return (
                   <tr key={p.id} className="border-b last:border-0">
                     <td className="py-2 pr-3 font-medium">{p.label}</td>
-                    <td className="py-2 pr-3 text-muted-foreground">
-                      {p.has_data_type ?? '—'}
-                    </td>
+                    <td className="py-2 pr-3 text-muted-foreground">{p.has_data_type ?? '—'}</td>
                     <td className="py-2 pr-3 text-muted-foreground">
                       {p.has_default_value ?? '—'}
                     </td>
-                    <td className="py-2 text-muted-foreground">
-                      {p.has_fixed_value ?? '—'}
-                    </td>
+                    <td className="py-2 text-muted-foreground">{p.has_fixed_value ?? '—'}</td>
                   </tr>
                 );
               })}

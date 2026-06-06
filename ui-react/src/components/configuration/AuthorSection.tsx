@@ -35,25 +35,21 @@ export function AuthorSection() {
 
   return (
     <section aria-label="Authors">
-      <h3 className="text-sm font-semibold mb-3">Authors</h3>
+      <h3 className="mb-3 text-sm font-semibold">Authors</h3>
 
       {/* Search combobox */}
-      <PersonCombobox
-        value={null}
-        onChange={addAuthor}
-        placeholder="Search and add author..."
-      />
+      <PersonCombobox value={null} onChange={addAuthor} placeholder="Search and add author..." />
 
       {/* Selected chips */}
       {(selectedAuthors?.length ?? 0) > 0 && (
-        <div className="flex flex-wrap gap-1.5 mt-2">
+        <div className="mt-2 flex flex-wrap gap-1.5">
           {selectedAuthors?.map((author) => (
             <Badge key={author.id} variant="secondary" className="gap-1 pr-1">
               {author.label || author.id}
               <button
                 type="button"
                 onClick={() => removeAuthor(author.id)}
-                className="rounded-full hover:bg-muted p-0.5"
+                className="rounded-full p-0.5 hover:bg-muted"
                 aria-label={`Remove author ${author.label}`}
               >
                 <X className="h-2.5 w-2.5" />

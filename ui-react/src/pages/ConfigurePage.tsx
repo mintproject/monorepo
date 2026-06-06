@@ -45,7 +45,7 @@ function ConfigurePanel() {
 
   if (isEditing) {
     return (
-      <div className="p-6 overflow-auto">
+      <div className="overflow-auto p-6">
         <ConfigurationForm
           configurationId={configId}
           onSaved={() => setIsEditing(false)}
@@ -56,11 +56,8 @@ function ConfigurePanel() {
   }
 
   return (
-    <div className="p-6 overflow-auto">
-      <ConfigurationDetail
-        configurationId={configId}
-        onEdit={() => setIsEditing(true)}
-      />
+    <div className="overflow-auto p-6">
+      <ConfigurationDetail configurationId={configId} onEdit={() => setIsEditing(true)} />
     </div>
   );
 }
@@ -77,9 +74,9 @@ export function ConfigurePage() {
     <ModelSelectionProvider>
       <div className="flex h-full gap-0 overflow-hidden">
         {/* Left panel: model tree */}
-        <aside className="flex w-72 flex-col gap-3 border-r p-4 overflow-auto">
-          <h2 className="text-base font-semibold shrink-0">Models</h2>
-          <ModelTree className="flex-1 min-h-0" />
+        <aside className="flex w-72 flex-col gap-3 overflow-auto border-r p-4">
+          <h2 className="shrink-0 text-base font-semibold">Models</h2>
+          <ModelTree className="min-h-0 flex-1" />
         </aside>
 
         {/* Right panel: detail / form */}

@@ -32,13 +32,7 @@ import {
   type ConfigurationFieldsFragment,
 } from '@/graphql/generated/graphql';
 import { Button } from '@/components/ui/button';
-import {
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
+import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
@@ -50,10 +44,7 @@ import {
   diffParameterRows,
   assignPositions,
 } from '@/lib/mutation-builder';
-import {
-  configurationFormSchema,
-  type ConfigurationFormSchema,
-} from '@/schemas/configuration';
+import { configurationFormSchema, type ConfigurationFormSchema } from '@/schemas/configuration';
 
 import { InputOutputSection } from './InputOutputSection';
 import { ParameterSection } from './ParameterSection';
@@ -160,11 +151,7 @@ export interface ConfigurationFormProps {
   onCancel?: () => void;
 }
 
-export function ConfigurationForm({
-  configurationId,
-  onSaved,
-  onCancel,
-}: ConfigurationFormProps) {
+export function ConfigurationForm({ configurationId, onSaved, onCancel }: ConfigurationFormProps) {
   const isEdit = !!configurationId;
 
   // ─── Queries ────────────────────────────────────────────────────────────────
@@ -319,9 +306,7 @@ export function ConfigurationForm({
 
   if (isEdit && !config) {
     return (
-      <div className="p-4 text-sm text-destructive">
-        Configuration not found: {configurationId}
-      </div>
+      <div className="p-4 text-sm text-destructive">Configuration not found: {configurationId}</div>
     );
   }
 
@@ -331,7 +316,7 @@ export function ConfigurationForm({
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6" noValidate>
         {/* ── Configuration Metadata ── */}
         <section aria-label="Configuration metadata">
-          <h3 className="text-sm font-semibold mb-3">Configuration Details</h3>
+          <h3 className="mb-3 text-sm font-semibold">Configuration Details</h3>
           <div className="space-y-3">
             <FormField
               control={control}

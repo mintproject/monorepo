@@ -20,10 +20,7 @@ export function RegionSection() {
 
   const { data, loading, error } = useGetRegionsQuery({ fetchPolicy: 'cache-first' });
 
-  const regions = React.useMemo(
-    () => data?.modelcatalog_region ?? [],
-    [data],
-  );
+  const regions = React.useMemo(() => data?.modelcatalog_region ?? [], [data]);
 
   const isSelected = (id: string) => selectedRegions?.some((r) => r.id === id) ?? false;
 
@@ -31,7 +28,11 @@ export function RegionSection() {
     (id: string, label: string) => {
       const current = selectedRegions ?? [];
       if (isSelected(id)) {
-        setValue('regions', current.filter((r) => r.id !== id), { shouldDirty: true });
+        setValue(
+          'regions',
+          current.filter((r) => r.id !== id),
+          { shouldDirty: true },
+        );
       } else {
         setValue('regions', [...current, { id, label }], { shouldDirty: true });
       }
@@ -50,7 +51,7 @@ export function RegionSection() {
   if (loading) {
     return (
       <section aria-label="Regions">
-        <h3 className="text-sm font-semibold mb-3">Regions</h3>
+        <h3 className="mb-3 text-sm font-semibold">Regions</h3>
         <LoadingSpinner size="sm" />
       </section>
     );
@@ -59,7 +60,7 @@ export function RegionSection() {
   if (error) {
     return (
       <section aria-label="Regions">
-        <h3 className="text-sm font-semibold mb-3">Regions</h3>
+        <h3 className="mb-3 text-sm font-semibold">Regions</h3>
         <p className="text-sm text-destructive">Failed to load regions.</p>
       </section>
     );
@@ -67,18 +68,18 @@ export function RegionSection() {
 
   return (
     <section aria-label="Regions">
-      <h3 className="text-sm font-semibold mb-3">Regions</h3>
+      <h3 className="mb-3 text-sm font-semibold">Regions</h3>
 
       {/* Selected chips */}
       {(selectedRegions?.length ?? 0) > 0 && (
-        <div className="flex flex-wrap gap-1.5 mb-3">
+        <div className="mb-3 flex flex-wrap gap-1.5">
           {selectedRegions?.map((r) => (
             <Badge key={r.id} variant="secondary" className="gap-1 pr-1">
               {r.label || r.id}
               <button
                 type="button"
                 onClick={() => removeRegion(r.id)}
-                className="rounded-full hover:bg-muted p-0.5"
+                className="rounded-full p-0.5 hover:bg-muted"
                 aria-label={`Remove region ${r.label}`}
               >
                 <X className="h-2.5 w-2.5" />
@@ -89,9 +90,9 @@ export function RegionSection() {
       )}
 
       {/* Available regions list */}
-      <div className="border rounded-md max-h-40 overflow-y-auto">
+      <div className="max-h-40 overflow-y-auto rounded-md border">
         {regions.length === 0 ? (
-          <p className="text-sm text-muted-foreground p-3 text-center">No regions available.</p>
+          <p className="p-3 text-center text-sm text-muted-foreground">No regions available.</p>
         ) : (
           <ul>
             {regions.map((region) => {
@@ -101,7 +102,7 @@ export function RegionSection() {
                   <button
                     type="button"
                     className={cn(
-                      'flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground transition-colors',
+                      'flex w-full items-center gap-2 px-3 py-2 text-sm transition-colors hover:bg-accent hover:text-accent-foreground',
                       selected && 'bg-accent/50',
                     )}
                     onClick={() => toggleRegion(region.id, region.label ?? '')}

@@ -8,13 +8,7 @@ import type { Path } from 'react-hook-form';
 import { Trash2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import {
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
+import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import type { ConfigurationFormSchema } from '@/schemas/configuration';
 
@@ -30,14 +24,13 @@ export function ParameterRow({ index, onRemove }: ParameterRowProps) {
 
   // Cast to Path<ConfigurationFormSchema> — RHF generic is too strict for
   // dynamic template literals, but the paths are always valid at runtime.
-  const p = (field: string) =>
-    `parameters.${index}.${field}` as Path<ConfigurationFormSchema>;
+  const p = (field: string) => `parameters.${index}.${field}` as Path<ConfigurationFormSchema>;
 
   return (
-    <div className="rounded-md border p-4 space-y-3 bg-card">
+    <div className="space-y-3 rounded-md border bg-card p-4">
       {/* Row header */}
       <div className="flex items-center justify-between">
-        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+        <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
           Parameter {index + 1}
         </span>
         <Button
@@ -61,7 +54,11 @@ export function ParameterRow({ index, onRemove }: ParameterRowProps) {
             <FormItem>
               <FormLabel>Label *</FormLabel>
               <FormControl>
-                <Input placeholder="e.g. Threshold" {...field} value={field.value as string ?? ''} />
+                <Input
+                  placeholder="e.g. Threshold"
+                  {...field}
+                  value={(field.value as string) ?? ''}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -101,7 +98,11 @@ export function ParameterRow({ index, onRemove }: ParameterRowProps) {
           <FormItem>
             <FormLabel>Description</FormLabel>
             <FormControl>
-              <Input placeholder="Optional description" {...field} value={field.value as string ?? ''} />
+              <Input
+                placeholder="Optional description"
+                {...field}
+                value={(field.value as string) ?? ''}
+              />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -117,7 +118,7 @@ export function ParameterRow({ index, onRemove }: ParameterRowProps) {
             <FormItem>
               <FormLabel>Default Value</FormLabel>
               <FormControl>
-                <Input placeholder="Default" {...field} value={field.value as string ?? ''} />
+                <Input placeholder="Default" {...field} value={(field.value as string) ?? ''} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -130,7 +131,11 @@ export function ParameterRow({ index, onRemove }: ParameterRowProps) {
             <FormItem>
               <FormLabel>Fixed Value</FormLabel>
               <FormControl>
-                <Input placeholder="Fixed (overrides default)" {...field} value={field.value as string ?? ''} />
+                <Input
+                  placeholder="Fixed (overrides default)"
+                  {...field}
+                  value={(field.value as string) ?? ''}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -147,7 +152,7 @@ export function ParameterRow({ index, onRemove }: ParameterRowProps) {
             <FormItem>
               <FormLabel>Min Value</FormLabel>
               <FormControl>
-                <Input placeholder="Minimum" {...field} value={field.value as string ?? ''} />
+                <Input placeholder="Minimum" {...field} value={(field.value as string) ?? ''} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -160,7 +165,7 @@ export function ParameterRow({ index, onRemove }: ParameterRowProps) {
             <FormItem>
               <FormLabel>Max Value</FormLabel>
               <FormControl>
-                <Input placeholder="Maximum" {...field} value={field.value as string ?? ''} />
+                <Input placeholder="Maximum" {...field} value={(field.value as string) ?? ''} />
               </FormControl>
               <FormMessage />
             </FormItem>

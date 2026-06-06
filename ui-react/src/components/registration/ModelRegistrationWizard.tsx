@@ -36,10 +36,7 @@ import {
   type SoftwareStepSchema,
   type VersionStepSchema,
 } from '@/schemas/registration';
-import {
-  configurationFormSchema,
-  type ConfigurationFormSchema,
-} from '@/schemas/configuration';
+import { configurationFormSchema, type ConfigurationFormSchema } from '@/schemas/configuration';
 import {
   buildAddInputVariables,
   buildAddOutputVariables,
@@ -88,11 +85,7 @@ function StepIndicator({ steps, currentStep }: StepIndicatorProps) {
                   ].join(' ')}
                   aria-current={isCurrent ? 'step' : undefined}
                 >
-                  {isCompleted ? (
-                    <CheckCircle2 className="h-4 w-4" />
-                  ) : (
-                    <span>{index + 1}</span>
-                  )}
+                  {isCompleted ? <CheckCircle2 className="h-4 w-4" /> : <span>{index + 1}</span>}
                 </div>
                 <div className="mt-1 text-center">
                   <p
@@ -232,8 +225,8 @@ export function ModelRegistrationWizard() {
         inputsWithPos.map((row) =>
           addInput({
             variables: buildAddInputVariables(configurationId, row),
-          })
-        )
+          }),
+        ),
       );
 
       // 3. Add outputs
@@ -242,8 +235,8 @@ export function ModelRegistrationWizard() {
         outputsWithPos.map((row) =>
           addOutput({
             variables: buildAddOutputVariables(configurationId, row),
-          })
-        )
+          }),
+        ),
       );
 
       // 4. Add parameters
@@ -252,8 +245,8 @@ export function ModelRegistrationWizard() {
         paramsWithPos.map((row) =>
           addParameter({
             variables: buildAddParameterVariables(configurationId, row),
-          })
-        )
+          }),
+        ),
       );
 
       toast({
@@ -281,9 +274,7 @@ export function ModelRegistrationWizard() {
       <Card>
         <CardHeader>
           <CardTitle>{STEPS[currentStep]?.label ?? ''}</CardTitle>
-          <p className="text-sm text-muted-foreground">
-            {STEPS[currentStep]?.description ?? ''}
-          </p>
+          <p className="text-sm text-muted-foreground">{STEPS[currentStep]?.description ?? ''}</p>
         </CardHeader>
         <CardContent>
           {/* Step 0: Software */}
@@ -335,11 +326,7 @@ export function ModelRegistrationWizard() {
               Back
             </Button>
 
-            <Button
-              type="button"
-              onClick={handleNext}
-              disabled={registering}
-            >
+            <Button type="button" onClick={handleNext} disabled={registering}>
               {registering && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {isLastStep ? 'Register Model' : 'Next'}
               {!isLastStep && <ChevronRight className="ml-1 h-4 w-4" />}

@@ -11,10 +11,7 @@ import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 
-import {
-  PrefetchReferenceDataDocument,
-  GetRegionsDocument,
-} from '@/graphql/generated/graphql';
+import { PrefetchReferenceDataDocument, GetRegionsDocument } from '@/graphql/generated/graphql';
 import { renderWithProviders } from '@/test/utils/render';
 import { ModelRegistrationWizard } from '@/components/registration/ModelRegistrationWizard';
 import { RegisterPage } from '@/pages/RegisterPage';

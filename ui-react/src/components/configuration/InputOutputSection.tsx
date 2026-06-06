@@ -23,7 +23,7 @@ export function InputOutputSection({ prefix }: InputOutputSectionProps) {
 
   return (
     <section aria-label={sectionLabel}>
-      <div className="flex items-center justify-between mb-3">
+      <div className="mb-3 flex items-center justify-between">
         <h3 className="text-sm font-semibold">{sectionLabel}</h3>
         <Button
           type="button"
@@ -38,19 +38,14 @@ export function InputOutputSection({ prefix }: InputOutputSectionProps) {
       </div>
 
       {fields.length === 0 ? (
-        <p className="text-sm text-muted-foreground py-4 text-center border rounded-md">
+        <p className="rounded-md border py-4 text-center text-sm text-muted-foreground">
           No {sectionLabel.toLowerCase()} defined. Click &ldquo;Add{' '}
           {sectionLabel === 'Inputs' ? 'Input' : 'Output'}&rdquo; to add one.
         </p>
       ) : (
         <div className="space-y-3">
           {fields.map((field, index) => (
-            <InputRow
-              key={field.id}
-              index={index}
-              prefix={prefix}
-              onRemove={() => remove(index)}
-            />
+            <InputRow key={field.id} index={index} prefix={prefix} onRemove={() => remove(index)} />
           ))}
         </div>
       )}

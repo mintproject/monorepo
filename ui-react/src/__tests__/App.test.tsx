@@ -31,7 +31,9 @@ describe('App', () => {
 
   it('renders ModelsPage at /models', () => {
     renderApp(['/models']);
-    // ModelsPage shows the selection-detail placeholder until a tree node is picked.
+    // The Models page renders the model tree with a search/filter input
+    expect(screen.getByPlaceholderText(/filter models/i)).toBeInTheDocument();
+    // ...and the selection-detail placeholder until a tree node is picked.
     expect(
       screen.getByText('Select a model, version, or configuration on the left.'),
     ).toBeInTheDocument();

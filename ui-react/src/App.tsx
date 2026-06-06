@@ -11,7 +11,6 @@ import { AppHome } from './pages/AppHome';
 import { ModelsPage } from './pages/ModelsPage';
 import { ConfigurePage } from './pages/ConfigurePage';
 import { RegisterPage } from './pages/RegisterPage';
-import { OAuth2CallbackPage } from './pages/OAuth2CallbackPage';
 
 // Pages — modeling
 import { ModelingHome } from './pages/modeling/ModelingHome';
@@ -37,6 +36,9 @@ import { RegionQueryPage } from './pages/regions/RegionQueryPage';
 
 // Pages — variables
 import { VariablesHome } from './pages/variables/VariablesHome';
+
+// Auth
+import { OAuth2CallbackPage } from './pages/OAuth2CallbackPage';
 
 // 404
 import { NotFoundPage } from './pages/NotFoundPage';
