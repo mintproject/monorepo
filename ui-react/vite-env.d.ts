@@ -8,6 +8,10 @@ interface MintConfig {
   AUTH_PROVIDER: 'keycloak' | 'tapis';
   GOOGLE_MAPS_KEY?: string;
   WELCOME_MESSAGE?: string;
+  /** Fixed origin to register as the single Tapis callback_url (Vercel prod). */
+  AUTH_CALLBACK_ORIGIN?: string;
+  /** Regex source overriding the default preview-origin allowlist. */
+  AUTH_PREVIEW_ORIGIN_ALLOWLIST?: string;
 }
 
 interface Window {

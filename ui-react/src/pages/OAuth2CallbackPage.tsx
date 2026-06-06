@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { handleCallback } from '../lib/auth/oauth2-adapter';
+import { handleCallback, maybeForwardToOrigin } from '../lib/auth/oauth2-adapter';
 
 type Status = 'processing' | 'success' | 'error';
 
@@ -21,6 +21,16 @@ export function OAuth2CallbackPage() {
   useEffect(() => {
     if (processed.current) return;
     processed.current = true;
+
+    const forward = maybeForwardToOrigin();
+    if (forward.forwarded) {
+      if (forward.error) {
+        setStatus('error');
+        setErrorMessage(forward.error);
+      }
+      // Otherwise the browser is redirecting to the originating origin; keep the spinner.
+      return;
+    }
 
     handleCallback()
       .then((result) => {
