@@ -3,9 +3,9 @@
 // In production, this file is generated from environment variables by the
 // Docker entrypoint script (scripts/entrypoint.sh).
 window.__MINT_CONFIG__ = {
-  HASURA_ENDPOINT: "http://localhost:8080/v1/graphql",
-  AUTH_SERVER: "https://iam.mint.isi.edu",
-  AUTH_CLIENT_ID: "mint-ui",
-  AUTH_REALM: "production",
-  AUTH_PROVIDER: "keycloak",
+  HASURA_ENDPOINT: "http://graphql.mint.local/v1/graphql",
+  AUTH_SERVER: "https://portals.tapis.io",
+  AUTH_CLIENT_ID: "mint-local",
+  AUTH_REALM: "",
+  AUTH_PROVIDER: "tapis",
 };
