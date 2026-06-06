@@ -24,7 +24,9 @@ describe('OAuth2CallbackPage', () => {
     // Explicitly pin the default so this block is robust even if clearAllMocks
     // semantics change (e.g. config adds resetAllMocks: true).
     const adapter = await import('@/lib/auth/oauth2-adapter');
-    (adapter.maybeForwardToOrigin as ReturnType<typeof vi.fn>).mockReturnValue({ forwarded: false });
+    (adapter.maybeForwardToOrigin as ReturnType<typeof vi.fn>).mockReturnValue({
+      forwarded: false,
+    });
   });
 
   it('shows processing state initially', async () => {
@@ -98,7 +100,7 @@ describe('OAuth2CallbackPage forwarding', () => {
     });
 
     await waitFor(() =>
-      expect(maybeForwardToOrigin as ReturnType<typeof vi.fn>).toHaveBeenCalled()
+      expect(maybeForwardToOrigin as ReturnType<typeof vi.fn>).toHaveBeenCalled(),
     );
     expect(handleCallback as ReturnType<typeof vi.fn>).not.toHaveBeenCalled();
     // Page keeps showing the processing/spinner state
@@ -131,8 +133,6 @@ describe('OAuth2CallbackPage forwarding', () => {
       initialEntries: ['/oauth2/callback'],
     });
 
-    await waitFor(() =>
-      expect(handleCallback as ReturnType<typeof vi.fn>).toHaveBeenCalled()
-    );
+    await waitFor(() => expect(handleCallback as ReturnType<typeof vi.fn>).toHaveBeenCalled());
   });
 });

@@ -157,7 +157,7 @@ function RegionMap({ regions, onRegionClick }: RegionMapProps) {
         infoWindow.open(map);
       });
     },
-     
+
     [regions, onRegionClick],
   );
 

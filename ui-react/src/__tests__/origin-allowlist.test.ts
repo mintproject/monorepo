@@ -28,13 +28,15 @@ describe('isAllowedOrigin', () => {
   });
 
   it('rejects a suffix-spoofing host', () => {
-    expect(
-      isAllowedOrigin('https://monorepo-git-x-mosoriobs-projects.vercel.app.evil.com'),
-    ).toBe(false);
+    expect(isAllowedOrigin('https://monorepo-git-x-mosoriobs-projects.vercel.app.evil.com')).toBe(
+      false,
+    );
   });
 
   it('rejects a prefix-spoofing host', () => {
-    expect(isAllowedOrigin('https://evil.monorepo-git-x-mosoriobs-projects.vercel.app')).toBe(false);
+    expect(isAllowedOrigin('https://evil.monorepo-git-x-mosoriobs-projects.vercel.app')).toBe(
+      false,
+    );
   });
 
   it('rejects http (non-localhost) preview', () => {
