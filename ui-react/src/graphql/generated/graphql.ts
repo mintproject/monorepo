@@ -1387,73 +1387,41 @@ export function useDeleteConfigurationRegionMutation(
 
 export type DeleteConfigurationRegionMutationHookResult = ReturnType<typeof useDeleteConfigurationRegionMutation>;
 
-// ─── Query: GetVariablePresentations ─────────────────────────────────────────
+// ─── Query: GetRegions ────────────────────────────────────────────────────────
 
-export type GetVariablePresentationsQueryVariables = Exact<{ [key: string]: never }>;
+export type GetRegionsQueryVariables = Exact<{ [key: string]: never }>;
 
-export type GetVariablePresentationsQuery = {
+export type GetRegionsQuery = {
   __typename?: 'query_root';
-  modelcatalog_variable_presentation: Array<{
-    __typename?: 'modelcatalog_variable_presentation';
+  modelcatalog_region: Array<{
+    __typename?: 'modelcatalog_region';
     id: string;
     label?: string | null;
-    has_long_name?: string | null;
-    has_short_name?: string | null;
-    standard_variable?: {
-      __typename?: 'modelcatalog_standard_variable';
-      id: string;
-      label?: string | null;
-      description?: string | null;
-    } | null;
-    unit?: {
-      __typename?: 'modelcatalog_unit';
-      id: string;
-      label?: string | null;
-    } | null;
   }>;
 };
 
-export const GetVariablePresentationsDocument = gql`
-  query GetVariablePresentations {
-    modelcatalog_variable_presentation(order_by: { label: asc }) {
+export const GetRegionsDocument = gql`
+  query GetRegions {
+    modelcatalog_region(order_by: { label: asc }) {
       id
       label
-      has_long_name
-      has_short_name
-      standard_variable {
-        id
-        label
-        description
-      }
-      unit {
-        id
-        label
-      }
     }
   }
 `;
 
-export function useGetVariablePresentationsQuery(
-  baseOptions?: Apollo.QueryHookOptions<GetVariablePresentationsQuery, GetVariablePresentationsQueryVariables>
+export function useGetRegionsQuery(
+  baseOptions?: Apollo.QueryHookOptions<GetRegionsQuery, GetRegionsQueryVariables>
 ) {
   const options = { ...defaultOptions, ...baseOptions };
-  return Apollo.useQuery<GetVariablePresentationsQuery, GetVariablePresentationsQueryVariables>(
-    GetVariablePresentationsDocument,
-    options
-  );
+  return Apollo.useQuery<GetRegionsQuery, GetRegionsQueryVariables>(GetRegionsDocument, options);
 }
 
-export function useGetVariablePresentationsLazyQuery(
-  baseOptions?: Apollo.LazyQueryHookOptions<GetVariablePresentationsQuery, GetVariablePresentationsQueryVariables>
+export function useGetRegionsLazyQuery(
+  baseOptions?: Apollo.LazyQueryHookOptions<GetRegionsQuery, GetRegionsQueryVariables>
 ) {
   const options = { ...defaultOptions, ...baseOptions };
-  return Apollo.useLazyQuery<GetVariablePresentationsQuery, GetVariablePresentationsQueryVariables>(
-    GetVariablePresentationsDocument,
-    options
-  );
+  return Apollo.useLazyQuery<GetRegionsQuery, GetRegionsQueryVariables>(GetRegionsDocument, options);
 }
-
-export type GetVariablePresentationsQueryHookResult = ReturnType<typeof useGetVariablePresentationsQuery>;
 
 // ─── Region types ─────────────────────────────────────────────────────────────
 
@@ -1725,3 +1693,6 @@ export function useInsertRegionsMutation(
 }
 
 export type InsertRegionsMutationHookResult = ReturnType<typeof useInsertRegionsMutation>;
+
+export type GetRegionsQueryHookResult = ReturnType<typeof useGetRegionsQuery>;
+export type GetRegionsLazyQueryHookResult = ReturnType<typeof useGetRegionsLazyQuery>;
