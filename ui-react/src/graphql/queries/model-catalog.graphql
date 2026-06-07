@@ -81,3 +81,18 @@ query GetVariablePresentations {
     }
   }
 }
+
+query GetModelFamilies {
+  modelcatalog_software(
+    order_by: { label: asc }
+    where: { type: { _eq: "https://w3id.org/okn/o/sdm#Model" } }
+  ) {
+    id
+    label
+    versions(order_by: { label: asc }) {
+      id
+      label
+      version_id
+    }
+  }
+}

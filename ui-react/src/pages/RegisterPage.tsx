@@ -1,10 +1,9 @@
 /**
  * RegisterPage — /models/register
  *
- * Protected route. Hosts the multi-step model registration wizard:
- *   Software -> Version -> Configuration
+ * Protected route. Hosts the config-first model creation form.
  */
-import { ModelRegistrationWizard } from '@/components/registration/ModelRegistrationWizard';
+import { CreateModelForm } from '@/components/registration/CreateModelForm';
 
 export function RegisterPage() {
   return (
@@ -12,10 +11,11 @@ export function RegisterPage() {
       <div className="mb-6">
         <h1 className="text-2xl font-bold">Register Model</h1>
         <p className="text-muted-foreground">
-          Add a new model to the MINT catalog by completing all three steps.
+          Define a model configuration — its parameters, inputs and outputs. Linking it to a model
+          family is optional.
         </p>
       </div>
-      <ModelRegistrationWizard />
+      <CreateModelForm />
     </div>
   );
 }
