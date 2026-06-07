@@ -369,3 +369,82 @@ mutation DeleteConfigurationRegion($configurationId: String!, $regionId: String!
     region_id
   }
 }
+
+# Re-insert the configuration_input junction row after deleting it (for is_optional update).
+# Requires an existing DatasetSpecification — does NOT nest-create a new one.
+mutation InsertConfigurationInputJunction(
+  $configurationId: String!
+  $inputId: String!
+  $isOptional: Boolean!
+) {
+  insert_modelcatalog_configuration_input_one(
+    object: {
+      configuration_id: $configurationId
+      input_id: $inputId
+      is_optional: $isOptional
+    }
+    on_conflict: {
+      constraint: modelcatalog_configuration_input_pkey
+      update_columns: [is_optional]
+    }
+  ) {
+    configuration_id
+    input_id
+    is_optional
+  }
+}
+
+# Re-insert the configuration_output junction row after deleting it (for is_optional update).
+mutation InsertConfigurationOutputJunction(
+  $configurationId: String!
+  $outputId: String!
+) {
+  insert_modelcatalog_configuration_output_one(
+    object: {
+      configuration_id: $configurationId
+      output_id: $outputId
+    }
+    on_conflict: {
+      constraint: modelcatalog_configuration_output_pkey
+      update_columns: []
+    }
+  ) {
+    configuration_id
+    output_id
+  }
+}
+
+mutation UpdateModelParameter(
+  $id: String!
+  $label: String!
+  $description: String
+  $hasDataType: String
+  $hasDefaultValue: String
+  $hasMinimumAcceptedValue: String
+  $hasMaximumAcceptedValue: String
+  $hasFixedValue: String
+  $hasAcceptedValues: [String!]
+  $position: Int!
+) {
+  update_modelcatalog_parameter_by_pk(
+    pk_columns: { id: $id }
+    _set: {
+      label: $label
+      description: $description
+      has_data_type: $hasDataType
+      has_default_value: $hasDefaultValue
+      has_minimum_accepted_value: $hasMinimumAcceptedValue
+      has_maximum_accepted_value: $hasMaximumAcceptedValue
+      has_fixed_value: $hasFixedValue
+      has_accepted_values: $hasAcceptedValues
+      position: $position
+    }
+  ) {
+    id
+    label
+    description
+    has_data_type
+    has_default_value
+    position
+  }
+}
