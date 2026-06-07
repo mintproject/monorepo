@@ -97,11 +97,13 @@ export function StandardVariableCombobox({
 
   const { recent, recordUse } = useRecentStandardVariables();
 
-  const recentIds = React.useMemo(() => recent.map((r) => r.id), [recent]);
-
   const result = React.useMemo(
-    () => buildStandardVariableGroups(options, recentIds, search),
-    [options, recentIds, search],
+    () => buildStandardVariableGroups(
+      options,
+      recent.map((r) => r.id),
+      search,
+    ),
+    [options, recent, search],
   );
 
   const handleSelect = React.useCallback(
@@ -151,9 +153,11 @@ export function StandardVariableCombobox({
               <CommandEmpty>No matching standard variables.</CommandEmpty>
             ) : (
               <>
-                <div className="px-3 py-1.5 text-[11px] text-muted-foreground">
-                  Showing {result.matchCount} of {result.total}
-                </div>
+                {search.trim() !== '' && (
+                  <div className="px-3 py-1.5 text-[11px] text-muted-foreground">
+                    Showing {result.matchCount} of {result.total}
+                  </div>
+                )}
                 {result.groups.map((group) => (
                   <CommandGroup
                     key={group.key}
@@ -204,18 +208,18 @@ export function StandardVariableCombobox({
               </>
             )}
             {onRequestNew && (
-              <div className="border-t p-1">
-                <button
-                  type="button"
-                  onClick={() => {
+              <CommandGroup className="border-t">
+                <CommandItem
+                  value="__request_new_standard_variable__"
+                  onSelect={() => {
                     onRequestNew();
                     setOpen(false);
                   }}
-                  className="w-full rounded-sm px-2 py-1.5 text-left text-sm text-primary hover:bg-accent"
+                  className="text-primary"
                 >
                   + Request a new standard variable
-                </button>
-              </div>
+                </CommandItem>
+              </CommandGroup>
             )}
           </CommandList>
         </Command>

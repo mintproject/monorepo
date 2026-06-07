@@ -72,4 +72,41 @@ describe('StandardVariableCombobox', () => {
       expect.objectContaining({ id: 'sv-soil', label: 'soil_moisture_content' }),
     );
   });
+
+  it('deselects when the already-selected item is clicked again', async () => {
+    const user = userEvent.setup();
+    const { onChange } = renderCombobox({
+      id: 'sv-air',
+      label: 'air__temperature',
+      description: null,
+    });
+    await waitFor(() => expect(screen.getByRole('combobox')).not.toBeDisabled());
+    await user.click(screen.getByRole('combobox'));
+    const matches = await screen.findAllByText('air__temperature');
+    await user.click(matches[matches.length - 1]!);
+    expect(onChange).toHaveBeenCalledWith(null);
+  });
+
+  it('pins a just-selected variable under "Recently used" on reopen', async () => {
+    const user = userEvent.setup();
+    renderCombobox();
+    await waitFor(() => expect(screen.getByRole('combobox')).not.toBeDisabled());
+    await user.click(screen.getByRole('combobox'));
+    await user.click(await screen.findByText('air__temperature'));
+    await user.click(screen.getByRole('combobox')); // reopen
+    expect(await screen.findByText('Recently used')).toBeInTheDocument();
+  });
+
+  it('invokes onRequestNew from the footer action when provided', async () => {
+    const user = userEvent.setup();
+    const onRequestNew = vi.fn();
+    renderWithProviders(
+      <StandardVariableCombobox value={null} onChange={vi.fn()} onRequestNew={onRequestNew} />,
+      { apolloMocks: [prefetchMock] },
+    );
+    await waitFor(() => expect(screen.getByRole('combobox')).not.toBeDisabled());
+    await user.click(screen.getByRole('combobox'));
+    await user.click(await screen.findByText('+ Request a new standard variable'));
+    expect(onRequestNew).toHaveBeenCalled();
+  });
 });
