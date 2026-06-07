@@ -1,69 +1,69 @@
 /**
- * Zod validation schemas for the ModelRegistrationWizard.
+ * Zod validation schema for the config-first "Create a new model" form.
  *
- * SoftwareStep: Software entity fields
- * VersionStep: SoftwareVersion entity fields
- *
- * The ConfigurationStep reuses configurationFormSchema from ./configuration.ts
- *
- * See: .planning/design/DESIGN-DOCUMENT.md §5.6
+ * UI terminology: Model = Configuration, Model Family = Software, Version = SoftwareVersion.
+ * The configuration row editors (inputs/outputs/parameters) reuse schemas from ./configuration.ts.
  */
 import { z } from 'zod';
+import { inputRowSchema, parameterRowSchema, regionSelectionSchema } from '@/schemas/configuration';
 
-// ─── Software Step ────────────────────────────────────────────────────────────
+// ─── Software type constants ──────────────────────────────────────────────────
 
 export const SOFTWARE_TYPE_MODEL = 'https://w3id.org/okn/o/sdm#Model';
 export const SOFTWARE_TYPE_EMULATOR = 'https://w3id.org/okn/o/sdm#Emulator';
 
-export const softwareStepSchema = z.object({
+// ─── Optional Model Family link ───────────────────────────────────────────────
+// `none`     → standalone configuration (software_version_id = null)
+// `existing` → link to a chosen Software+Version pair (versionId required — the
+//              picker always lists pairs, and Configuration links via software_version_id)
+// `new`      → create a Software + one SoftwareVersion, then link
+
+export const modelFamilyLinkSchema = z.discriminatedUnion('mode', [
+  z.object({ mode: z.literal('none') }),
+  z.object({
+    mode: z.literal('existing'),
+    softwareId: z.string().min(1),
+    softwareLabel: z.string(),
+    versionId: z.string().min(1, 'Choose a version'),
+    versionLabel: z.string().optional(),
+  }),
+  z.object({
+    mode: z.literal('new'),
+    familyName: z.string().min(1, 'Family name is required'),
+    versionName: z.string().optional(),
+  }),
+]);
+
+export type ModelFamilyLink = z.infer<typeof modelFamilyLinkSchema>;
+
+// ─── Root form schema ─────────────────────────────────────────────────────────
+
+export const createModelSchema = z.object({
   label: z.string().min(1, 'Model name is required'),
   description: z.string().optional(),
-  keywords: z.string().optional(),
+  inputs: z.array(inputRowSchema),
+  outputs: z.array(inputRowSchema),
+  parameters: z.array(parameterRowSchema),
+  regions: z.array(regionSelectionSchema),
   license: z.string().optional(),
   website: z.string().url('Enter a valid URL').optional().or(z.literal('')),
-  type: z.string().min(1, 'Software type is required').default(SOFTWARE_TYPE_MODEL),
+  keywords: z.string().optional(),
+  modelFamily: modelFamilyLinkSchema,
 });
 
-export type SoftwareStepSchema = z.infer<typeof softwareStepSchema>;
+export type CreateModelSchema = z.infer<typeof createModelSchema>;
 
-// ─── Version Step ─────────────────────────────────────────────────────────────
-
-export const versionStepSchema = z.object({
-  versionId: z.string().optional(),
-  label: z.string().min(1, 'Version label is required'),
-  description: z.string().optional(),
-  hasUsageNotes: z.string().optional(),
-  hasSourceCode: z.string().url('Enter a valid URL').optional().or(z.literal('')),
-});
-
-export type VersionStepSchema = z.infer<typeof versionStepSchema>;
-
-// ─── Combined wizard form ─────────────────────────────────────────────────────
-
-export const registrationWizardSchema = z.object({
-  software: softwareStepSchema,
-  version: versionStepSchema,
-});
-
-export type RegistrationWizardSchema = z.infer<typeof registrationWizardSchema>;
-
-export function emptySoftwareStep(): SoftwareStepSchema {
+export function emptyCreateModel(): CreateModelSchema {
   return {
     label: '',
     description: '',
-    keywords: '',
+    inputs: [],
+    outputs: [],
+    parameters: [],
+    regions: [],
     license: '',
     website: '',
-    type: SOFTWARE_TYPE_MODEL,
-  };
-}
-
-export function emptyVersionStep(): VersionStepSchema {
-  return {
-    versionId: '',
-    label: '',
-    description: '',
-    hasUsageNotes: '',
-    hasSourceCode: '',
+    keywords: '',
+    modelFamily: { mode: 'none' },
   };
 }
