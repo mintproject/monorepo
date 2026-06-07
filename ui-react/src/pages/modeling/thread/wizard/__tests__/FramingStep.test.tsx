@@ -68,6 +68,7 @@ describe('FramingStep', () => {
       />,
       { apolloMocks: [regionsMock] },
     );
-    expect(await screen.findByDisplayValue('texas')).toBeInTheDocument();
+    const select = await screen.findByLabelText('Select a region');
+    expect(select).toHaveValue('texas');
   });
 });
