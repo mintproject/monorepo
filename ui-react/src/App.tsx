@@ -32,6 +32,7 @@ import { RegionsAdministrative } from './pages/regions/RegionsAdministrative';
 import { RegionsHydrology } from './pages/regions/RegionsHydrology';
 import { RegionsAgriculture } from './pages/regions/RegionsAgriculture';
 import { RegionsManual } from './pages/regions/RegionsManual';
+import { RegionsEditor } from './pages/regions/RegionsEditor';
 import { RegionQueryPage } from './pages/regions/RegionQueryPage';
 
 // Pages — variables
@@ -109,6 +110,7 @@ export function App() {
 
             {/* Regions */}
             <Route path="/regions" element={<RegionsHome />} />
+            <Route path="/regions/editor" element={<RegionsEditor />} />
             <Route path="/regions/administrative" element={<RegionsAdministrative />} />
             <Route path="/regions/hydrology" element={<RegionsHydrology />} />
             <Route path="/regions/agriculture" element={<RegionsAgriculture />} />
