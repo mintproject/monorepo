@@ -62,6 +62,14 @@ describe('categorizeStandardVariable', () => {
       'Energy & Carbon Flux',
     );
   });
+  it('does not route meteorological hourly variables to Fire & Fuel', () => {
+    expect(categorizeStandardVariable('atmosphere_precipitation__24hr_accumulation')).toBe(
+      'Atmosphere & Climate',
+    );
+  });
+  it('uses description text when the label matches no rule', () => {
+    expect(categorizeStandardVariable('xyz__quantity', 'volumetric soil moisture')).toBe('Soil');
+  });
   it('falls back to Unnamed / Other for UUIDs and unmatched tokens', () => {
     expect(categorizeStandardVariable('06100430-298a-49d7-9834-590783d62379')).toBe(
       'Unnamed / Other',
