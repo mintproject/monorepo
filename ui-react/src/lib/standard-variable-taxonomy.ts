@@ -35,13 +35,17 @@ export const CATEGORY_ORDER: StandardVariableCategory[] = [
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-/** True for UUID-shaped, empty, or structureless (single-token) labels. */
+/**
+ * True only for labels with no human meaning — UUID-shaped or empty. A bare
+ * single word (`Precipitation`) or a hyphenated name
+ * (`Modflow-Spatially-Distributed-Grid`) is a real, usable label and must NOT
+ * be flagged: it stays selectable and shows its own text (it may still land in
+ * "Unnamed / Other" when no category rule matches, but it is not demoted).
+ */
 export function isUnnamedLabel(label: string): boolean {
   const trimmed = label.trim();
   if (trimmed === '') return true;
   if (UUID_RE.test(trimmed)) return true;
-  // A real SVO name has underscores; a human phrase has spaces. Neither => junk.
-  if (!trimmed.includes('_') && !trimmed.includes(' ')) return true;
   return false;
 }
 

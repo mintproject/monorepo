@@ -14,8 +14,9 @@ describe('isUnnamedLabel', () => {
     expect(isUnnamedLabel('')).toBe(true);
     expect(isUnnamedLabel('   ')).toBe(true);
   });
-  it('flags single tokens with no structure', () => {
-    expect(isUnnamedLabel('Modflow')).toBe(true);
+  it('treats bare single-word and hyphenated labels as named (usable)', () => {
+    expect(isUnnamedLabel('Modflow')).toBe(false);
+    expect(isUnnamedLabel('Modflow-Spatially-Distributed-Grid')).toBe(false);
   });
   it('accepts SVO-structured names', () => {
     expect(isUnnamedLabel('soil_moisture_content')).toBe(false);
