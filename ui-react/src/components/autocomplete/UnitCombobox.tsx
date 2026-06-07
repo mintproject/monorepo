@@ -104,7 +104,10 @@ export function UnitCombobox({
               {options.map((unit) => (
                 <CommandItem
                   key={unit.id}
-                  value={unit.label}
+                  // Key by the unique id; units can share labels, and duplicate cmdk
+                  // values break click selection. Keep the label searchable via keywords.
+                  value={unit.id}
+                  keywords={[unit.label]}
                   onSelect={() => handleSelect(unit.id)}
                 >
                   <Check

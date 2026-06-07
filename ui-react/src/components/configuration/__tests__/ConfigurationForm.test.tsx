@@ -213,9 +213,14 @@ describe('ConfigurationForm (edit mode)', () => {
     const submitButton = screen.getByRole('button', { name: /save changes/i });
     await userEvent.click(submitButton);
 
-    await waitFor(() => {
-      expect(screen.getByText('Configuration name is required')).toBeInTheDocument();
-    });
+    // react-hook-form + zodResolver validation is async; under CI load (coverage +
+    // parallel run) the error can take longer than the 1000ms default to render.
+    await waitFor(
+      () => {
+        expect(screen.getByText('Configuration name is required')).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
   });
 
   it('calls onCancel when Cancel button is clicked', async () => {

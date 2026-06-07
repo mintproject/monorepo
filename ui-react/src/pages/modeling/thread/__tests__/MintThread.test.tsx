@@ -12,7 +12,8 @@ import { mockAuthState } from '@/test/utils/auth-mocks';
 import type { MockedResponse } from '@apollo/client/testing';
 import { makeNetworkErrorMock } from '@/test/utils/apollo-mocks';
 import { MintThread } from '../../MintThread';
-import { GetThreadDocument } from '@/graphql/generated/modeling';
+import { LIST_TOP_REGIONS } from '@/graphql/queries/regions';
+import { GetThreadDocument, GetModelTreeWithRegionsDocument } from '@/graphql/generated/modeling';
 
 const mockThread = {
   __typename: 'thread' as const,
@@ -26,6 +27,7 @@ const mockThread = {
   response_variable_id: null,
   events: [],
   permissions: [],
+  thread_models: [],
 };
 
 const getThreadMock = {
@@ -40,10 +42,19 @@ const getThreadMock = {
   },
 };
 
+const regionsMock = {
+  request: { query: LIST_TOP_REGIONS },
+  result: { data: { region: [] } },
+};
+const modelTreeMock = {
+  request: { query: GetModelTreeWithRegionsDocument },
+  result: { data: { modelcatalog_software: [] } },
+};
+
 /** Renders MintThread inside a proper Route so useParams works. */
 function renderMintThread(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  apolloMocks: MockedResponse<any, any>[] = [getThreadMock],
+  apolloMocks: MockedResponse<any, any>[] = [getThreadMock, regionsMock, modelTreeMock],
   authState: AuthState = mockAuthState,
 ) {
   return render(
@@ -71,28 +82,33 @@ describe('MintThread', () => {
     expect(document.body).toBeTruthy();
   });
 
-  it('shows breadcrumb navigation steps after data loads', async () => {
+  it('shows the wizard rail steps after data loads', async () => {
     renderMintThread();
-    await waitFor(
-      () => {
-        expect(screen.getByTestId('breadcrumb-configure')).toBeInTheDocument();
-      },
-      { timeout: 3000 },
-    );
-    expect(screen.getByTestId('breadcrumb-variables')).toBeInTheDocument();
-    expect(screen.getByTestId('breadcrumb-models')).toBeInTheDocument();
-    expect(screen.getByTestId('breadcrumb-datasets')).toBeInTheDocument();
-    expect(screen.getByTestId('breadcrumb-summary')).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByTestId('rail-step-framing')).toBeInTheDocument(), {
+      timeout: 3000,
+    });
+    expect(screen.getByTestId('rail-step-variables')).toBeInTheDocument();
+    expect(screen.getByTestId('rail-step-models')).toBeInTheDocument();
+    expect(screen.getByTestId('rail-step-datasets')).toBeInTheDocument();
+    expect(screen.getByTestId('rail-step-summary')).toBeInTheDocument();
   });
 
-  it('renders Configure step by default', async () => {
+  it('renders the Framing step by default', async () => {
     renderMintThread();
     await waitFor(
-      () => {
-        expect(screen.getByTestId('mint-configure')).toBeInTheDocument();
+      () => expect(screen.getByRole('heading', { name: 'Framing' })).toBeInTheDocument(),
+      {
+        timeout: 3000,
       },
-      { timeout: 3000 },
     );
+  });
+
+  it('locks Datasets until a model is selected', async () => {
+    renderMintThread();
+    await waitFor(() => expect(screen.getByTestId('rail-step-datasets')).toBeInTheDocument(), {
+      timeout: 3000,
+    });
+    expect(screen.getByTestId('rail-step-datasets')).toBeDisabled();
   });
 
   it('shows error message when query fails', async () => {

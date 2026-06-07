@@ -1238,22 +1238,71 @@ export function useSetThreadModelsMutation(
 /**
  * Extended model tree query that includes region data for filtering.
  */
+
+// ─── Model I/O sub-types (Task 1) ────────────────────────────────────────────
+
+export type StandardVariableRef = { id: string; label?: string | null };
+
+export type VariablePresentationRef = {
+  // Composite keyFields for the modelcatalog_dataset_specification_presentation
+  // junction (see apollo-client.ts) — required so InMemoryCache can normalize.
+  dataset_specification_id?: string;
+  presentation_id?: string;
+  presentation: {
+    id: string;
+    standard_variable?: StandardVariableRef | null;
+  };
+};
+
+export type DatasetSpecRef = {
+  id: string;
+  label?: string | null;
+  presentations: VariablePresentationRef[];
+};
+
+export type ConfigInputRef = {
+  // Composite keyFields for modelcatalog_configuration_input.
+  configuration_id?: string;
+  input_id?: string;
+  is_optional?: boolean | null;
+  input: DatasetSpecRef;
+};
+
+export type ConfigOutputRef = {
+  // Composite keyFields for modelcatalog_configuration_output.
+  configuration_id?: string;
+  output_id?: string;
+  output: DatasetSpecRef;
+};
+
+/** A configuration_region junction row — composite keyFields configuration_id + region_id. */
+export type ConfigRegionRef = {
+  configuration_id?: string;
+  region_id?: string;
+  region: { id: string; label?: string | null };
+};
+
 export type ModelSetupInfo = {
   id: string;
   label?: string | null;
   description?: string | null;
-  regions: Array<{
-    region: { id: string; label?: string | null };
-  }>;
+  regions: ConfigRegionRef[];
+  inputs: ConfigInputRef[];
+  outputs: ConfigOutputRef[];
 };
 
 export type ModelConfigInfo = {
   id: string;
   label?: string | null;
-  regions: Array<{
-    region: { id: string; label?: string | null };
-  }>;
+  regions: ConfigRegionRef[];
+  inputs: ConfigInputRef[];
+  outputs: ConfigOutputRef[];
   child_configurations: ModelSetupInfo[];
+};
+
+/** A configuration or setup that carries inputs/outputs — the unit extractModelIO consumes. */
+export type ModelIOConfig = Pick<ModelConfigInfo, 'id' | 'label' | 'regions' | 'inputs' | 'outputs'> & {
+  child_configurations?: ModelSetupInfo[];
 };
 
 export type GetModelTreeWithRegionsQuery = {
@@ -1268,6 +1317,43 @@ export type GetModelTreeWithRegionsQuery = {
     }>;
   }>;
 };
+
+// ─── I/O extractor (Task 1) ──────────────────────────────────────────────────
+
+export type ModelInputVar = {
+  id: string;
+  name: string;
+  variableIds: string[];
+  variableLabels: string[];
+  optional: boolean;
+};
+
+export type ModelIO = {
+  inputs: ModelInputVar[];
+  outputs: ModelInputVar[];
+  /** Flat list of all standard-variable ids this config produces (for the indicator filter). */
+  producesVariableIds: string[];
+};
+
+function specToVar(spec: DatasetSpecRef, optional: boolean): ModelInputVar {
+  const svs = spec.presentations
+    .map((p) => p.presentation.standard_variable)
+    .filter((sv): sv is StandardVariableRef => !!sv);
+  return {
+    id: spec.id,
+    name: spec.label ?? spec.id,
+    variableIds: svs.map((sv) => sv.id),
+    variableLabels: svs.map((sv) => sv.label ?? sv.id),
+    optional,
+  };
+}
+
+export function extractModelIO(config: ModelIOConfig): ModelIO {
+  const inputs = (config.inputs ?? []).map((i) => specToVar(i.input, !!i.is_optional));
+  const outputs = (config.outputs ?? []).map((o) => specToVar(o.output, false));
+  const producesVariableIds = outputs.flatMap((o) => o.variableIds);
+  return { inputs, outputs, producesVariableIds };
+}
 
 export const GetModelTreeWithRegionsDocument = gql`
   query GetModelTreeWithRegions {
@@ -1286,12 +1372,66 @@ export const GetModelTreeWithRegionsDocument = gql`
         ) {
           id
           label
-          regions { region { id label } }
+          regions { configuration_id region_id region { id label } }
+          inputs {
+            configuration_id
+            input_id
+            is_optional
+            input {
+              id
+              label
+              presentations {
+                dataset_specification_id
+                presentation_id
+                presentation { id standard_variable { id label } }
+              }
+            }
+          }
+          outputs {
+            configuration_id
+            output_id
+            output {
+              id
+              label
+              presentations {
+                dataset_specification_id
+                presentation_id
+                presentation { id standard_variable { id label } }
+              }
+            }
+          }
           child_configurations(order_by: { label: asc }) {
             id
             label
             description
-            regions { region { id label } }
+            regions { configuration_id region_id region { id label } }
+            inputs {
+              configuration_id
+              input_id
+              is_optional
+              input {
+                id
+                label
+                presentations {
+                  dataset_specification_id
+                  presentation_id
+                  presentation { id standard_variable { id label } }
+                }
+              }
+            }
+            outputs {
+              configuration_id
+              output_id
+              output {
+                id
+                label
+                presentations {
+                  dataset_specification_id
+                  presentation_id
+                  presentation { id standard_variable { id label } }
+                }
+              }
+            }
           }
         }
       }
