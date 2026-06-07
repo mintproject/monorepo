@@ -106,7 +106,13 @@ export function StandardVariableCombobox({
               {options.map((sv) => (
                 <CommandItem
                   key={sv.id}
-                  value={`${sv.label} ${sv.description ?? ''}`}
+                  // cmdk identifies items by `value`, which must be UNIQUE. Standard
+                  // variables frequently share a label (and many have no description),
+                  // so a label-derived value collides across items and breaks click
+                  // selection in the browser. Key by the unique id; keep label and
+                  // description searchable via `keywords`.
+                  value={sv.id}
+                  keywords={[sv.label, sv.description ?? ''].filter(Boolean)}
                   onSelect={() => handleSelect(sv.id)}
                 >
                   <Check
