@@ -11,12 +11,12 @@
 **Terminology (UI label → DB entity):** Model → `Configuration`, Model Family → `Software`, Version → `SoftwareVersion`. DB tables/columns unchanged.
 
 **Environment prerequisites (flag before starting):**
-- New GraphQL operations require `npm run codegen` against a running Hasura (`HASURA_ENDPOINT` + `HASURA_ADMIN_SECRET`). Codegen here uses `typescript-operations`, so generated types only cover declared operations.
-- The FK-drop migration (Task 9) requires the Hasura CLI and a reachable database.
+- New GraphQL operations require `npm run codegen` against a running Hasura (`HASURA_ENDPOINT` + `HASURA_ADMIN_SECRET`). Codegen here uses `typescript-operations`, so generated types only cover declared operations. **As executed:** codegen ran against `http://graphql.mint.local/v1/graphql`.
+- ~~The FK-drop migration (Task 9) requires the Hasura CLI and a reachable database.~~ Task 9 was **skipped** — verification showed no migration is needed (see Task 9).
 
 **Spec:** `docs/superpowers/specs/2026-06-06-config-first-model-creation-design.md`
 
-**Working directory for all commands below:** `ui-react/` (except Task 9, which is `graphql_engine/`).
+**Working directory for all commands below:** `ui-react/`.
 
 ---
 
@@ -1450,64 +1450,17 @@ git commit -m "chore(registration): lint + format config-first form"
 
 ---
 
-## Task 9: Hasura migration — drop the Configuration→SoftwareVersion FK
+## Task 9: ~~Hasura migration — drop the Configuration→SoftwareVersion FK~~ — SKIPPED (not needed)
 
-**Files:**
-- Create: `graphql_engine/migrations/default/<timestamp>_drop_configuration_software_version_fk/{up,down}.sql`
+**Resolution (verified 2026-06-06): no migration required. Task removed.**
 
-> Requires Hasura CLI + a reachable database. Run from `graphql_engine/`.
+Verification against the live schema (`graphql.mint.local`) showed the FK-drop is **unnecessary and would be counterproductive**:
 
-- [ ] **Step 1: Identify the FK constraint name**
+- `modelcatalog_configuration.software_version_id` is **already nullable** (`information_schema.columns.is_nullable = YES`).
+- The FK is `FOREIGN KEY (software_version_id) REFERENCES modelcatalog_software_version(id) ON DELETE CASCADE`. A standard FK **ignores NULL values**, so a standalone config (`software_version_id = NULL`) is already permitted — confirmed with a transactional `INSERT ... VALUES (..., NULL)` that succeeded and was rolled back.
+- Dropping the FK would remove referential integrity for *linked* configs and break the useful `ON DELETE CASCADE`. The FK only constrains *non-null* links — exactly what we want.
 
-Run (psql against the dev DB, or Hasura console SQL):
-
-```sql
-SELECT conname
-FROM pg_constraint
-WHERE conrelid = 'modelcatalog_configuration'::regclass
-  AND contype = 'f'
-  AND confrelid = 'modelcatalog_software_version'::regclass;
-```
-
-Expected: one constraint name (e.g. `modelcatalog_configuration_software_version_id_fkey`). Use it below.
-
-- [ ] **Step 2: Create the migration**
-
-Run: `hasura migrate create drop_configuration_software_version_fk --database-name default`
-
-Populate `up.sql`:
-
-```sql
-ALTER TABLE modelcatalog_configuration
-  DROP CONSTRAINT IF EXISTS modelcatalog_configuration_software_version_id_fkey;
-```
-
-Populate `down.sql` (restores the FK; allow nulls so existing standalone rows don't break the rollback):
-
-```sql
-ALTER TABLE modelcatalog_configuration
-  ADD CONSTRAINT modelcatalog_configuration_software_version_id_fkey
-  FOREIGN KEY (software_version_id)
-  REFERENCES modelcatalog_software_version (id);
-```
-
-> Replace the constraint name in both files with the actual one from Step 1 if it differs.
-
-- [ ] **Step 3: Apply + reload metadata**
-
-```bash
-hasura migrate apply --database-name default
-hasura metadata reload
-```
-
-Expected: migration applies cleanly; `software_version_id` is now nullable-in-practice (no FK). Confirm an `insert_modelcatalog_configuration_one` with `software_version_id: null` succeeds (the `CreateModelForm` standalone path).
-
-- [ ] **Step 4: Commit**
-
-```bash
-git add graphql_engine/migrations/default
-git commit -m "feat(db): drop Configuration->SoftwareVersion FK to allow standalone configs"
-```
+**Decision (confirmed with the human): keep the FK, ship no `graphql_engine` change.** The `CreateModelForm` standalone path (`softwareVersionId: null`) works against the deployed DB as-is.
 
 ---
 
@@ -1517,7 +1470,7 @@ git commit -m "feat(db): drop Configuration->SoftwareVersion FK to allow standal
 - [ ] **Typecheck/build:** `npm run build` → PASS
 - [ ] **Lint/format:** `npm run lint && npm run format:check` → PASS
 - [ ] **Manual smoke (with dev server + Hasura):** `npm run dev`, visit `/models/register`:
-  - Create a model with name + one parameter, no family → lands on `/models/configure/:id`.
+  - Create a model with name + one parameter, no family → lands on `/models/configure/:id` (standalone config, `software_version_id = NULL` — no migration required, the column is already nullable).
   - Create a model linking `Modflow — 2013` → configuration has that `software_version_id`.
   - Create a model with a new family "PIHM / 2024.1" → new Software+Version exist and the config links to the new version.
   - Tag a region → `configuration_region` row exists.
@@ -1527,3 +1480,4 @@ git commit -m "feat(db): drop Configuration->SoftwareVersion FK to allow standal
 - Standalone configs (null `software_version_id`) won't show in `GetModelTree` (queries `modelcatalog_software`). Needs a standalone-config listing on the browse page.
 - App-wide relabel (Software/Configuration → Model Family/Model) across tree/browse pages.
 - Persistence for license/website/keywords (currently captured in the form but not stored — matches prior behavior). Decide target columns and wire mutations.
+- **Codegen source of truth:** `src/graphql/generated/graphql.ts` was regenerated against `graphql.mint.local`, whose schema types `modelcatalog_{standard_variable,unit}.label` as **non-null** `string` (production/`develop` typed them `string | null`). A `@ts-expect-error` in `useReferenceData.test.ts` documents the divergence. Before merge, confirm `graphql.mint.local` is the authoritative schema (it should be — it reflects the deployed `graphql_engine`), or regenerate against the production endpoint.

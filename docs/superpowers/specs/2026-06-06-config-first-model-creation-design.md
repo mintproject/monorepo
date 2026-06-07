@@ -67,8 +67,7 @@ Three states inside the optional block:
 
 ## Data model & backend
 
-- **Remove the FK constraint** that requires `Configuration` to belong to a `SoftwareVersion`/`Software`. A `Configuration` may now exist with a null parent (standalone "Model").
-  - Hasura migration to drop the constraint; `hasura metadata reload`.
+- **No schema migration needed (verified 2026-06-06).** The original plan called for dropping the `Configuration → SoftwareVersion` FK so a Configuration could be standalone. Verification against the live schema showed this is **unnecessary**: `modelcatalog_configuration.software_version_id` is **already nullable**, and a standard FK ignores NULL values — so a standalone config (`software_version_id = NULL`) is already permitted (confirmed with a transactional insert). The FK only constrains *non-null* links, which is the integrity we want to keep; it also provides `ON DELETE CASCADE` (deleting a Version cleans up its configs). **Decision: keep the FK; ship no `graphql_engine` migration.**
 - **Software link resolution** at submit:
   - *Existing picked* → associate the Configuration with that Software/Version.
   - *New family entered* → create `Software` + first `SoftwareVersion`, then associate.
@@ -77,7 +76,7 @@ Three states inside the optional block:
 
 ### Decision: link directly to Software, Version optional
 
-Now that the FK is gone, when linking to an **existing** family the model associates with the **Software** directly; the **Version** is captured when the user picks a specific `Modflow — 2013` pair but is **optional**. (Confirmed direction: "link config directly to Software, Version optional.")
+A Configuration links upward only via `software_version_id` (there is no `software_id` column). The Model Family picker always lists Software+Version **pairs** (`Modflow — 2013`), so an "existing" selection always carries a concrete `versionId` that becomes the config's `software_version_id`. A standalone config leaves it NULL. (Confirmed direction: "link config directly to Software, Version optional" — realized as: existing picks always carry a version; standalone leaves the link null.)
 
 ## Form schema & submit
 
