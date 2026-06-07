@@ -55,4 +55,19 @@ describe('useRecentStandardVariables', () => {
     const { result } = renderHook(() => useRecentStandardVariables());
     expect(result.current.recent).toEqual([]);
   });
+
+  it('normalizes a stored item with no description to null', () => {
+    localStorage.setItem(RECENT_STORAGE_KEY, JSON.stringify([{ id: 'x', label: 'x_label' }]));
+    const { result } = renderHook(() => useRecentStandardVariables());
+    expect(result.current.recent).toEqual([{ id: 'x', label: 'x_label', description: null }]);
+  });
+
+  it('round-trips a non-null description on hydration', () => {
+    localStorage.setItem(
+      RECENT_STORAGE_KEY,
+      JSON.stringify([{ id: 'y', label: 'y_label', description: 'Yield' }]),
+    );
+    const { result } = renderHook(() => useRecentStandardVariables());
+    expect(result.current.recent[0]?.description).toBe('Yield');
+  });
 });

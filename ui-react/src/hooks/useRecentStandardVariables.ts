@@ -18,13 +18,12 @@ function readStored(): StandardVariableOption[] {
     if (!raw) return [];
     const parsed: unknown = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
-    return parsed.filter(
-      (o): o is StandardVariableOption =>
-        typeof o === 'object' &&
-        o !== null &&
-        typeof (o as { id?: unknown }).id === 'string' &&
-        typeof (o as { label?: unknown }).label === 'string',
-    );
+    return parsed.flatMap((o) => {
+      if (typeof o !== 'object' || o === null) return [];
+      const { id, label, description } = o as Record<string, unknown>;
+      if (typeof id !== 'string' || typeof label !== 'string') return [];
+      return [{ id, label, description: typeof description === 'string' ? description : null }];
+    });
   } catch {
     return [];
   }
