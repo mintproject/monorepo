@@ -1765,3 +1765,183 @@ export function useGetVariablePresentationsLazyQuery(
 
 export type GetVariablePresentationsQueryHookResult = ReturnType<typeof useGetVariablePresentationsQuery>;
 export type GetVariablePresentationsLazyQueryHookResult = ReturnType<typeof useGetVariablePresentationsLazyQuery>;
+
+// ─── Mutation: InsertConfigurationInputJunction ───────────────────────────────
+
+export type InsertConfigurationInputJunctionMutationVariables = Exact<{
+  configurationId: Scalars['String']['input'];
+  inputId: Scalars['String']['input'];
+  isOptional: Scalars['Boolean']['input'];
+}>;
+
+export type InsertConfigurationInputJunctionMutation = {
+  __typename?: 'mutation_root';
+  insert_modelcatalog_configuration_input_one?: {
+    __typename?: 'modelcatalog_configuration_input';
+    configuration_id: string;
+    input_id: string;
+    is_optional?: boolean | null;
+  } | null;
+};
+
+export const InsertConfigurationInputJunctionDocument = gql`
+  mutation InsertConfigurationInputJunction(
+    $configurationId: String!
+    $inputId: String!
+    $isOptional: Boolean!
+  ) {
+    insert_modelcatalog_configuration_input_one(
+      object: {
+        configuration_id: $configurationId
+        input_id: $inputId
+        is_optional: $isOptional
+      }
+      on_conflict: {
+        constraint: modelcatalog_configuration_input_pkey
+        update_columns: [is_optional]
+      }
+    ) {
+      configuration_id
+      input_id
+      is_optional
+    }
+  }
+`;
+
+export function useInsertConfigurationInputJunctionMutation(
+  baseOptions?: Apollo.MutationHookOptions<InsertConfigurationInputJunctionMutation, InsertConfigurationInputJunctionMutationVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useMutation<InsertConfigurationInputJunctionMutation, InsertConfigurationInputJunctionMutationVariables>(
+    InsertConfigurationInputJunctionDocument,
+    options
+  );
+}
+
+export type InsertConfigurationInputJunctionMutationHookResult = ReturnType<typeof useInsertConfigurationInputJunctionMutation>;
+
+// ─── Mutation: InsertConfigurationOutputJunction ──────────────────────────────
+
+export type InsertConfigurationOutputJunctionMutationVariables = Exact<{
+  configurationId: Scalars['String']['input'];
+  outputId: Scalars['String']['input'];
+}>;
+
+export type InsertConfigurationOutputJunctionMutation = {
+  __typename?: 'mutation_root';
+  insert_modelcatalog_configuration_output_one?: {
+    __typename?: 'modelcatalog_configuration_output';
+    configuration_id: string;
+    output_id: string;
+  } | null;
+};
+
+export const InsertConfigurationOutputJunctionDocument = gql`
+  mutation InsertConfigurationOutputJunction(
+    $configurationId: String!
+    $outputId: String!
+  ) {
+    insert_modelcatalog_configuration_output_one(
+      object: {
+        configuration_id: $configurationId
+        output_id: $outputId
+      }
+      on_conflict: {
+        constraint: modelcatalog_configuration_output_pkey
+        update_columns: []
+      }
+    ) {
+      configuration_id
+      output_id
+    }
+  }
+`;
+
+export function useInsertConfigurationOutputJunctionMutation(
+  baseOptions?: Apollo.MutationHookOptions<InsertConfigurationOutputJunctionMutation, InsertConfigurationOutputJunctionMutationVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useMutation<InsertConfigurationOutputJunctionMutation, InsertConfigurationOutputJunctionMutationVariables>(
+    InsertConfigurationOutputJunctionDocument,
+    options
+  );
+}
+
+export type InsertConfigurationOutputJunctionMutationHookResult = ReturnType<typeof useInsertConfigurationOutputJunctionMutation>;
+
+// ─── Mutation: UpdateModelParameter ──────────────────────────────────────────
+
+export type UpdateModelParameterMutationVariables = Exact<{
+  id: Scalars['String']['input'];
+  label: Scalars['String']['input'];
+  description?: InputMaybe<Scalars['String']['input']>;
+  hasDataType?: InputMaybe<Scalars['String']['input']>;
+  hasDefaultValue?: InputMaybe<Scalars['String']['input']>;
+  hasMinimumAcceptedValue?: InputMaybe<Scalars['String']['input']>;
+  hasMaximumAcceptedValue?: InputMaybe<Scalars['String']['input']>;
+  hasFixedValue?: InputMaybe<Scalars['String']['input']>;
+  hasAcceptedValues?: InputMaybe<Array<Scalars['String']['input']> | Scalars['String']['input']>;
+  position: Scalars['Int']['input'];
+}>;
+
+export type UpdateModelParameterMutation = {
+  __typename?: 'mutation_root';
+  update_modelcatalog_parameter_by_pk?: {
+    __typename?: 'modelcatalog_parameter';
+    id: string;
+    label?: string | null;
+    description?: string | null;
+    has_data_type?: string | null;
+    has_default_value?: string | null;
+    position?: number | null;
+  } | null;
+};
+
+export const UpdateModelParameterDocument = gql`
+  mutation UpdateModelParameter(
+    $id: String!
+    $label: String!
+    $description: String
+    $hasDataType: String
+    $hasDefaultValue: String
+    $hasMinimumAcceptedValue: String
+    $hasMaximumAcceptedValue: String
+    $hasFixedValue: String
+    $hasAcceptedValues: [String!]
+    $position: Int!
+  ) {
+    update_modelcatalog_parameter_by_pk(
+      pk_columns: { id: $id }
+      _set: {
+        label: $label
+        description: $description
+        has_data_type: $hasDataType
+        has_default_value: $hasDefaultValue
+        has_minimum_accepted_value: $hasMinimumAcceptedValue
+        has_maximum_accepted_value: $hasMaximumAcceptedValue
+        has_fixed_value: $hasFixedValue
+        has_accepted_values: $hasAcceptedValues
+        position: $position
+      }
+    ) {
+      id
+      label
+      description
+      has_data_type
+      has_default_value
+      position
+    }
+  }
+`;
+
+export function useUpdateModelParameterMutation(
+  baseOptions?: Apollo.MutationHookOptions<UpdateModelParameterMutation, UpdateModelParameterMutationVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useMutation<UpdateModelParameterMutation, UpdateModelParameterMutationVariables>(
+    UpdateModelParameterDocument,
+    options
+  );
+}
+
+export type UpdateModelParameterMutationHookResult = ReturnType<typeof useUpdateModelParameterMutation>;

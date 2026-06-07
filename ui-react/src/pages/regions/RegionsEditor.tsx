@@ -34,14 +34,18 @@ import {
 } from './regionUtils';
 
 interface RegionsEditorProps {
-  regionId: string;
-  regionType: string;
+  regionId?: string;
+  regionType?: string;
   /** Optional: override CSS height of the map. Default 320px. */
   mapHeight?: string;
 }
 
 /** Map + GeoJSON polygon CRUD + subcategory tabs. */
-export function RegionsEditor({ regionId, regionType, mapHeight = '320px' }: RegionsEditorProps) {
+export function RegionsEditor({
+  regionId = 'global',
+  regionType = 'administrative',
+  mapHeight = '320px',
+}: RegionsEditorProps) {
   const [selectedSubcategory, setSelectedSubcategory] = useState<string>('');
   const [selectedRegion, setSelectedRegion] = useState<RegionData | null>(null);
   const [addRegionsOpen, setAddRegionsOpen] = useState(false);
