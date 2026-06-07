@@ -62,7 +62,12 @@ export function rankStandardVariables(
 
   // Pass 2: remaining items whose description word-starts-with the query.
   const descMatches = matchSorter(options, q, {
-    keys: [{ key: (o: StandardVariableOption) => o.description ?? '', threshold: rankings.WORD_STARTS_WITH }],
+    keys: [
+      {
+        key: (o: StandardVariableOption) => o.description ?? '',
+        threshold: rankings.WORD_STARTS_WITH,
+      },
+    ],
   }).filter((o) => !labelMatchIds.has(o.id));
 
   return [...labelMatches, ...descMatches];

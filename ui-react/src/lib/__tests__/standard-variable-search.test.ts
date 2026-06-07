@@ -98,9 +98,7 @@ describe('buildStandardVariableGroups', () => {
     expect(soilGroup?.options.some((o) => o.id === 'sv-soil-m')).toBe(true);
   });
   it('labels an unnamed row with no description as "Unnamed variable"', () => {
-    const opts = [
-      { id: 'u', label: '06100430-298a-49d7-9834-590783d62379', description: null },
-    ];
+    const opts = [{ id: 'u', label: '06100430-298a-49d7-9834-590783d62379', description: null }];
     const { groups } = buildStandardVariableGroups(opts, [], '');
     const row = groups.find((g) => g.key === 'Unnamed / Other')?.options[0];
     expect(row?.displayLabel).toBe('Unnamed variable');

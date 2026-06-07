@@ -2,12 +2,13 @@ import { act, renderHook } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import type { StandardVariableOption } from '@/components/autocomplete/StandardVariableCombobox';
-import {
-  RECENT_STORAGE_KEY,
-  useRecentStandardVariables,
-} from '@/hooks/useRecentStandardVariables';
+import { RECENT_STORAGE_KEY, useRecentStandardVariables } from '@/hooks/useRecentStandardVariables';
 
-const opt = (id: string): StandardVariableOption => ({ id, label: `${id}_label`, description: null });
+const opt = (id: string): StandardVariableOption => ({
+  id,
+  label: `${id}_label`,
+  description: null,
+});
 
 afterEach(() => {
   localStorage.clear();

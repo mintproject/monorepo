@@ -53,7 +53,10 @@ interface CategoryRule {
 // Ordered: first match wins. Specific domains first; cross-cutting tokens
 // (bare "moisture", "flux", "water") are deliberately omitted as triggers.
 const RULES: CategoryRule[] = [
-  { category: 'Fire & Fuel', test: /fire|fuel|_dead_|_live_|burn|flame|combust|\d+hr_dead|\d+hr_live/i },
+  {
+    category: 'Fire & Fuel',
+    test: /fire|fuel|_dead_|_live_|burn|flame|combust|\d+hr_dead|\d+hr_live/i,
+  },
   { category: 'Soil', test: /soil|sediment|infiltration|porosity/i },
   { category: 'Hydrology — Groundwater', test: /groundwater|aquifer|water_table|recharge/i },
   {

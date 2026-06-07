@@ -98,11 +98,12 @@ export function StandardVariableCombobox({
   const { recent, recordUse } = useRecentStandardVariables();
 
   const result = React.useMemo(
-    () => buildStandardVariableGroups(
-      options,
-      recent.map((r) => r.id),
-      search,
-    ),
+    () =>
+      buildStandardVariableGroups(
+        options,
+        recent.map((r) => r.id),
+        search,
+      ),
     [options, recent, search],
   );
 
@@ -173,7 +174,11 @@ export function StandardVariableCombobox({
                     }
                   >
                     {group.options.map((opt) => (
-                      <CommandItem key={opt.id} value={opt.id} onSelect={() => handleSelect(opt.id)}>
+                      <CommandItem
+                        key={opt.id}
+                        value={opt.id}
+                        onSelect={() => handleSelect(opt.id)}
+                      >
                         <Check
                           className={cn(
                             'mr-2 h-4 w-4 shrink-0',
