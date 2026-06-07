@@ -1244,6 +1244,10 @@ export function useSetThreadModelsMutation(
 export type StandardVariableRef = { id: string; label?: string | null };
 
 export type VariablePresentationRef = {
+  // Composite keyFields for the modelcatalog_dataset_specification_presentation
+  // junction (see apollo-client.ts) — required so InMemoryCache can normalize.
+  dataset_specification_id?: string;
+  presentation_id?: string;
   presentation: {
     id: string;
     standard_variable?: StandardVariableRef | null;
@@ -1257,19 +1261,32 @@ export type DatasetSpecRef = {
 };
 
 export type ConfigInputRef = {
+  // Composite keyFields for modelcatalog_configuration_input.
+  configuration_id?: string;
+  input_id?: string;
   is_optional?: boolean | null;
   input: DatasetSpecRef;
 };
 
 export type ConfigOutputRef = {
+  // Composite keyFields for modelcatalog_configuration_output.
+  configuration_id?: string;
+  output_id?: string;
   output: DatasetSpecRef;
+};
+
+/** A configuration_region junction row — composite keyFields configuration_id + region_id. */
+export type ConfigRegionRef = {
+  configuration_id?: string;
+  region_id?: string;
+  region: { id: string; label?: string | null };
 };
 
 export type ModelSetupInfo = {
   id: string;
   label?: string | null;
   description?: string | null;
-  regions: Array<{ region: { id: string; label?: string | null } }>;
+  regions: ConfigRegionRef[];
   inputs: ConfigInputRef[];
   outputs: ConfigOutputRef[];
 };
@@ -1277,7 +1294,7 @@ export type ModelSetupInfo = {
 export type ModelConfigInfo = {
   id: string;
   label?: string | null;
-  regions: Array<{ region: { id: string; label?: string | null } }>;
+  regions: ConfigRegionRef[];
   inputs: ConfigInputRef[];
   outputs: ConfigOutputRef[];
   child_configurations: ModelSetupInfo[];
@@ -1355,40 +1372,64 @@ export const GetModelTreeWithRegionsDocument = gql`
         ) {
           id
           label
-          regions { region { id label } }
+          regions { configuration_id region_id region { id label } }
           inputs {
+            configuration_id
+            input_id
             is_optional
             input {
               id
               label
-              presentations { presentation { id standard_variable { id label } } }
+              presentations {
+                dataset_specification_id
+                presentation_id
+                presentation { id standard_variable { id label } }
+              }
             }
           }
           outputs {
+            configuration_id
+            output_id
             output {
               id
               label
-              presentations { presentation { id standard_variable { id label } } }
+              presentations {
+                dataset_specification_id
+                presentation_id
+                presentation { id standard_variable { id label } }
+              }
             }
           }
           child_configurations(order_by: { label: asc }) {
             id
             label
             description
-            regions { region { id label } }
+            regions { configuration_id region_id region { id label } }
             inputs {
+              configuration_id
+              input_id
               is_optional
               input {
                 id
                 label
-                presentations { presentation { id standard_variable { id label } } }
+                presentations {
+                  dataset_specification_id
+                  presentation_id
+                  presentation { id standard_variable { id label } }
+                }
               }
             }
             outputs {
+              configuration_id
+              output_id
               output {
                 id
                 label
-                presentations { presentation { id standard_variable { id label } } }
+                presentations {
+                  dataset_specification_id
+                  presentation_id
+                  presentation { id standard_variable { id label } }
+                }
               }
             }
           }
