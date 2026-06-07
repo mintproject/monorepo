@@ -369,3 +369,47 @@ mutation DeleteConfigurationRegion($configurationId: String!, $regionId: String!
     region_id
   }
 }
+
+mutation CreateModelFamily(
+  $softwareId: String!
+  $softwareLabel: String!
+  $softwareType: String!
+  $versionId: String!
+  $versionLabel: String!
+) {
+  insert_modelcatalog_software_one(
+    object: {
+      id: $softwareId
+      label: $softwareLabel
+      type: $softwareType
+      versions: { data: [{ id: $versionId, label: $versionLabel }] }
+    }
+  ) {
+    id
+    label
+    versions {
+      id
+      label
+    }
+  }
+}
+
+mutation CreateConfiguration(
+  $id: String!
+  $label: String!
+  $description: String
+  $softwareVersionId: String
+) {
+  insert_modelcatalog_configuration_one(
+    object: {
+      id: $id
+      label: $label
+      description: $description
+      software_version_id: $softwareVersionId
+    }
+  ) {
+    id
+    label
+    software_version_id
+  }
+}

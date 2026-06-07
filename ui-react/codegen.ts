@@ -11,6 +11,7 @@ const config: CodegenConfig = {
     },
   ],
   documents: 'src/graphql/**/*.graphql',
+  ignoreNoDocuments: true,
   generates: {
     'src/graphql/generated/graphql.ts': {
       plugins: [
@@ -26,7 +27,9 @@ const config: CodegenConfig = {
           uuid: 'string',
           timestamptz: 'string',
           jsonb: 'unknown',
+          _text: 'string[]',
         },
+        skipDocumentsValidation: true,
       },
     },
   },
