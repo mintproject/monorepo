@@ -47,7 +47,9 @@ export function buildThreadModels(
       input_files: io.inputs.map((i) => ({
         id: i.id,
         name: i.name,
-        variables: i.variableIds,
+        // The data catalog filters by standard-variable NAME (standard_variable_names__in),
+        // so pass the variable labels, not the URI ids.
+        variables: i.variableLabels,
         isOptional: i.optional,
       })),
     };

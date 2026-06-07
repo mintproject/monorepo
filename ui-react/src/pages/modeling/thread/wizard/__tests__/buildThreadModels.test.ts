@@ -73,8 +73,15 @@ describe('buildThreadModels', () => {
     expect(Object.keys(models)).toEqual(['cfgA']);
     expect(models.cfgA?.name).toBe('PIHM Flood A');
     expect(models.cfgA?.input_files).toEqual([
-      { id: 'inA', name: 'precipitation', variables: ['sv-precip'], isOptional: false },
+      { id: 'inA', name: 'precipitation', variables: ['precip'], isOptional: false },
     ]);
+  });
+
+  it('uses standard-variable labels (names) for the data-catalog query, not URI ids', () => {
+    const models = buildThreadModels(thread(), tree);
+    // 'precip' is the standard_variable.label; 'sv-precip' is its URI id and must NOT be used.
+    expect(models.cfgA?.input_files[0]?.variables).toEqual(['precip']);
+    expect(models.cfgA?.input_files[0]?.variables).not.toContain('sv-precip');
   });
 
   it('returns an empty map when no models are selected', () => {

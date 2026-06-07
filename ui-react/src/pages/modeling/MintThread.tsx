@@ -111,22 +111,6 @@ export function MintThread() {
     void refetch();
   }, [refetch]);
 
-  // Sync threadExecutionData when thread loads (minimal bootstrap)
-  // In a full port this would come from a Hasura subscription query that joins
-  // thread_model, thread_model_parameter, thread_model_io, thread_model_execution_summary
-  useCallback(() => {
-    if (thread && !threadExecutionData) {
-      setThreadExecutionData({
-        id: thread.id,
-        models: {},
-        model_ensembles: {},
-        execution_summary: {},
-        data: {},
-        response_variables: thread.response_variable_id ? [thread.response_variable_id] : [],
-      });
-    }
-  }, [thread, threadExecutionData]);
-
   // ── Execution handlers ──────────────────────────────────────────────────
 
   const handleSaveParameters = useCallback(
