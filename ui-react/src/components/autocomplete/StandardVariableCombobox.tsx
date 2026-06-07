@@ -1,17 +1,25 @@
 /**
  * StandardVariableCombobox
  *
- * Client-side filtered combobox for Standard Variables.
- * Data is prefetched from Apollo cache (cache-first policy) — no network call per keystroke.
- *
- * Filter: case-insensitive substring match on label (primary) and description (secondary).
- * Keyboard: full ARIA combobox pattern via cmdk + Radix Popover.
+ * Domain-grouped, rank-searched picker for Standard Variables. Data is
+ * prefetched from the Apollo cache (cache-first) — all grouping/ranking is
+ * synchronous and client-side. Filtering is taken off cmdk (shouldFilter
+ * false); ranking + grouping come from lib/standard-variable-search, category
+ * assignment from lib/standard-variable-taxonomy, recency from
+ * hooks/useRecentStandardVariables. UUID/unnamed rows are demoted into an
+ * "Unnamed / Other" group with their description shown as the name.
  */
 
 import * as React from 'react';
 import { Check, ChevronsUpDown } from 'lucide-react';
 
 import { usePrefetchReferenceDataQuery } from '@/graphql/generated/graphql';
+import { useRecentStandardVariables } from '@/hooks/useRecentStandardVariables';
+import {
+  RECENT_GROUP_KEY,
+  buildStandardVariableGroups,
+  highlightRanges,
+} from '@/lib/standard-variable-search';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import {
@@ -41,6 +49,27 @@ export interface StandardVariableComboboxProps {
   disabled?: boolean;
   /** Additional className for the trigger button. */
   className?: string;
+  /** When provided, renders a "request a new standard variable" footer action. */
+  onRequestNew?: () => void;
+}
+
+/** Render text with every matched query substring highlighted. */
+function Highlighted({ text, query }: { text: string; query: string }) {
+  const ranges = highlightRanges(text, query);
+  if (ranges.length === 0) return <>{text}</>;
+  const parts: React.ReactNode[] = [];
+  let cursor = 0;
+  ranges.forEach(([start, end], i) => {
+    if (cursor < start) parts.push(text.slice(cursor, start));
+    parts.push(
+      <mark key={i} className="rounded-sm bg-yellow-200 px-0.5 text-inherit">
+        {text.slice(start, end)}
+      </mark>,
+    );
+    cursor = end;
+  });
+  if (cursor < text.length) parts.push(text.slice(cursor));
+  return <>{parts}</>;
 }
 
 export function StandardVariableCombobox({
@@ -49,8 +78,10 @@ export function StandardVariableCombobox({
   placeholder = 'Search standard variables...',
   disabled = false,
   className,
+  onRequestNew,
 }: StandardVariableComboboxProps) {
   const [open, setOpen] = React.useState(false);
+  const [search, setSearch] = React.useState('');
 
   // Reads from Apollo cache — cache-first means no network call if already fetched
   const { data, loading } = usePrefetchReferenceDataQuery({ fetchPolicy: 'cache-first' });
@@ -64,24 +95,39 @@ export function StandardVariableCombobox({
     }));
   }, [data]);
 
+  const { recent, recordUse } = useRecentStandardVariables();
+
+  const recentIds = React.useMemo(() => recent.map((r) => r.id), [recent]);
+
+  const result = React.useMemo(
+    () => buildStandardVariableGroups(options, recentIds, search),
+    [options, recentIds, search],
+  );
+
   const handleSelect = React.useCallback(
     (selectedId: string) => {
       if (value?.id === selectedId) {
-        // Deselect on re-click
         onChange(null);
       } else {
         const found = options.find((o) => o.id === selectedId) ?? null;
         onChange(found);
+        if (found) recordUse(found);
       }
       setOpen(false);
+      setSearch('');
     },
-    [value, options, onChange],
+    [value, options, onChange, recordUse],
   );
+
+  const handleOpenChange = React.useCallback((nextOpen: boolean) => {
+    setOpen(nextOpen);
+    if (!nextOpen) setSearch('');
+  }, []);
 
   const triggerLabel = value?.label ?? placeholder;
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
         <Button
           variant="outline"
@@ -98,34 +144,79 @@ export function StandardVariableCombobox({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
-        <Command>
-          <CommandInput placeholder={placeholder} />
+        <Command shouldFilter={false}>
+          <CommandInput placeholder={placeholder} value={search} onValueChange={setSearch} />
           <CommandList>
-            <CommandEmpty>No matching standard variables.</CommandEmpty>
-            <CommandGroup>
-              {options.map((sv) => (
-                <CommandItem
-                  key={sv.id}
-                  value={`${sv.label} ${sv.description ?? ''}`}
-                  onSelect={() => handleSelect(sv.id)}
-                >
-                  <Check
-                    className={cn(
-                      'mr-2 h-4 w-4 shrink-0',
-                      value?.id === sv.id ? 'opacity-100' : 'opacity-0',
-                    )}
-                  />
-                  <div className="flex flex-col">
-                    <span className="font-medium">{sv.label}</span>
-                    {sv.description && (
-                      <span className="line-clamp-1 text-xs text-muted-foreground">
-                        {sv.description}
+            {result.groups.length === 0 ? (
+              <CommandEmpty>No matching standard variables.</CommandEmpty>
+            ) : (
+              <>
+                <div className="px-3 py-1.5 text-[11px] text-muted-foreground">
+                  Showing {result.matchCount} of {result.total}
+                </div>
+                {result.groups.map((group) => (
+                  <CommandGroup
+                    key={group.key}
+                    heading={
+                      <span className="flex items-center justify-between">
+                        <span>{group.key}</span>
+                        {group.key !== RECENT_GROUP_KEY && (
+                          <span className="rounded-full bg-muted px-1.5 text-[10px] font-normal text-muted-foreground">
+                            {group.options.length}
+                          </span>
+                        )}
                       </span>
-                    )}
-                  </div>
-                </CommandItem>
-              ))}
-            </CommandGroup>
+                    }
+                  >
+                    {group.options.map((opt) => (
+                      <CommandItem key={opt.id} value={opt.id} onSelect={() => handleSelect(opt.id)}>
+                        <Check
+                          className={cn(
+                            'mr-2 h-4 w-4 shrink-0',
+                            value?.id === opt.id ? 'opacity-100' : 'opacity-0',
+                          )}
+                        />
+                        <div className="flex min-w-0 flex-col">
+                          <span
+                            className={cn(
+                              'truncate font-medium',
+                              opt.isUnnamed && 'text-muted-foreground',
+                            )}
+                          >
+                            <Highlighted text={opt.displayLabel} query={search} />
+                          </span>
+                          {opt.isUnnamed
+                            ? opt.label !== opt.displayLabel && (
+                                <span className="truncate font-mono text-[10px] text-muted-foreground/60">
+                                  {opt.label}
+                                </span>
+                              )
+                            : opt.description && (
+                                <span className="line-clamp-1 text-xs text-muted-foreground">
+                                  {opt.description}
+                                </span>
+                              )}
+                        </div>
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                ))}
+              </>
+            )}
+            {onRequestNew && (
+              <div className="border-t p-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    onRequestNew();
+                    setOpen(false);
+                  }}
+                  className="w-full rounded-sm px-2 py-1.5 text-left text-sm text-primary hover:bg-accent"
+                >
+                  + Request a new standard variable
+                </button>
+              </div>
+            )}
           </CommandList>
         </Command>
       </PopoverContent>
