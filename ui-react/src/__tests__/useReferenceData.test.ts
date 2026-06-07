@@ -100,7 +100,9 @@ describe('mapStandardVariables', () => {
         {
           __typename: 'modelcatalog_standard_variable',
           id: 'https://w3id.org/okn/i/mint/sv-no-label',
-          label: null,
+          // Cast: the generated type says string but the server may return null;
+          // this test verifies the mapper handles that gracefully.
+          label: null as unknown as string,
           description: null,
         },
       ],
@@ -144,7 +146,9 @@ describe('mapUnits', () => {
         {
           __typename: 'modelcatalog_unit',
           id: 'https://w3id.org/okn/i/mint/u-no-label',
-          label: null,
+          // Cast: the generated type says string but the server may return null;
+          // this test verifies the mapper handles that gracefully.
+          label: null as unknown as string,
         },
       ],
     };

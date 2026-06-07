@@ -1,7 +1,6 @@
 /**
- * CreateModelForm — config-first single-page model creation (replaces the
- * 3-step ModelRegistrationWizard). UI terms: Model = Configuration,
- * Model Family = Software, Version = SoftwareVersion.
+ * CreateModelForm — config-first single-page model creation.
+ * UI terms: Model = Configuration, Model Family = Software, Version = SoftwareVersion.
  *
  * Submit order:
  *   1. (optional) CreateModelFamily → Software + first SoftwareVersion
