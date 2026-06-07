@@ -44,6 +44,16 @@ describe('StandardVariableCombobox', () => {
     expect(await screen.findByText('soil_moisture_content')).toBeInTheDocument();
   });
 
+  it('shows the description, not the raw UUID, on the trigger for an unnamed selection', async () => {
+    renderCombobox({
+      id: 'sv-uuid',
+      label: '06100430-298a-49d7-9834-590783d62379',
+      description: 'Near-surface moisture index',
+    });
+    expect(await screen.findByText('Near-surface moisture index')).toBeInTheDocument();
+    expect(screen.queryByText('06100430-298a-49d7-9834-590783d62379')).not.toBeInTheDocument();
+  });
+
   it('opens and renders category group headings', async () => {
     const user = userEvent.setup();
     renderCombobox();

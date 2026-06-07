@@ -20,6 +20,7 @@ import {
   buildStandardVariableGroups,
   highlightRanges,
 } from '@/lib/standard-variable-search';
+import { isUnnamedLabel } from '@/lib/standard-variable-taxonomy';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import {
@@ -127,7 +128,13 @@ export function StandardVariableCombobox({
     if (!nextOpen) setSearch('');
   }, []);
 
-  const triggerLabel = value?.label ?? placeholder;
+  // Mirror the in-list demotion on the closed trigger: never surface a raw
+  // UUID/unnamed label — show its description (or a friendly placeholder).
+  const triggerLabel = value
+    ? isUnnamedLabel(value.label)
+      ? (value.description ?? 'Unnamed variable')
+      : value.label
+    : placeholder;
 
   return (
     <Popover open={open} onOpenChange={handleOpenChange}>
@@ -156,7 +163,7 @@ export function StandardVariableCombobox({
               <>
                 {search.trim() !== '' && (
                   <div className="px-3 py-1.5 text-[11px] text-muted-foreground">
-                    Showing {result.matchCount} of {result.total}
+                    Showing {result.matchCount} of {result.total} · best matches first
                   </div>
                 )}
                 {result.groups.map((group) => (
