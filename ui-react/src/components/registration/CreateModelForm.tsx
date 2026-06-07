@@ -65,7 +65,7 @@ export function CreateModelForm() {
   });
 
   const [createModelFamily] = useCreateModelFamilyMutation();
-  const [createConfiguration, { loading: creating }] = useCreateConfigurationMutation();
+  const [createConfiguration] = useCreateConfigurationMutation();
   const [addInput] = useAddConfigurationInputMutation();
   const [addOutput] = useAddConfigurationOutputMutation();
   const [addParameter] = useAddConfigurationParameterMutation();
@@ -109,6 +109,9 @@ export function CreateModelForm() {
       await Promise.all(
         data.regions.map((r) => addRegion({ variables: { configurationId, regionId: r.id } })),
       );
+
+      // NOTE: license, website, and keywords are collected but not yet persisted —
+      // no mutation target exists for standalone configs. Tracked as a follow-up.
 
       toast({ title: 'Model created', description: `${data.label} was created successfully.` });
       navigate(`/models/configure/${encodeURIComponent(configurationId)}`);
@@ -184,8 +187,10 @@ export function CreateModelForm() {
                 )}
 
                 <div className="flex justify-end">
-                  <Button type="submit" disabled={creating}>
-                    {creating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  <Button type="submit" disabled={form.formState.isSubmitting}>
+                    {form.formState.isSubmitting && (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    )}
                     Create model
                   </Button>
                 </div>
