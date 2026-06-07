@@ -136,6 +136,9 @@ export function ModelFamilyPicker({ value, onChange }: ModelFamilyPickerProps) {
       setOpen(false);
     };
 
+    const selectedPairId =
+      value.mode === 'existing' ? `${value.softwareId}:${value.versionId}` : undefined;
+
     return (
       <div className="flex items-center gap-2">
         <Popover open={open} onOpenChange={setOpen}>
@@ -166,9 +169,7 @@ export function ModelFamilyPicker({ value, onChange }: ModelFamilyPickerProps) {
                       <Check
                         className={cn(
                           'mr-2 h-4 w-4 shrink-0',
-                          value.mode === 'existing' && value.versionId === pair.versionId
-                            ? 'opacity-100'
-                            : 'opacity-0',
+                          selectedPairId === pair.id ? 'opacity-100' : 'opacity-0',
                         )}
                       />
                       <span>{pair.display}</span>
