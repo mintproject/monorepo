@@ -1,3 +1,4 @@
+import * as React from 'react';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
@@ -25,9 +26,29 @@ const familiesMock = {
   },
 };
 
-function setup(value: ModelFamilyLink = { mode: 'none' }) {
+/** Stateful harness: feeds value back like the real form does (controlled component). */
+function Harness({
+  spy,
+  initial,
+}: {
+  spy: (v: ModelFamilyLink) => void;
+  initial?: ModelFamilyLink;
+}) {
+  const [value, setValue] = React.useState<ModelFamilyLink>(initial ?? { mode: 'none' });
+  return (
+    <ModelFamilyPicker
+      value={value}
+      onChange={(v) => {
+        spy(v);
+        setValue(v);
+      }}
+    />
+  );
+}
+
+function setup(initial?: ModelFamilyLink) {
   const onChange = vi.fn();
-  renderWithProviders(<ModelFamilyPicker value={value} onChange={onChange} />, {
+  renderWithProviders(<Harness spy={onChange} initial={initial} />, {
     apolloMocks: [familiesMock],
   });
   return { onChange };
@@ -70,5 +91,19 @@ describe('ModelFamilyPicker', () => {
     expect(onChange).toHaveBeenLastCalledWith(
       expect.objectContaining({ mode: 'new', familyName: 'PIHM', versionName: '2024.1' }),
     );
+  });
+
+  it('clears an existing selection back to none', async () => {
+    const user = userEvent.setup();
+    const { onChange } = setup({
+      mode: 'existing',
+      softwareId: 's-modflow',
+      softwareLabel: 'Modflow',
+      versionId: 'v-2013',
+      versionLabel: '2013',
+    });
+
+    await user.click(screen.getByRole('button', { name: /clear model family/i }));
+    expect(onChange).toHaveBeenCalledWith({ mode: 'none' });
   });
 });

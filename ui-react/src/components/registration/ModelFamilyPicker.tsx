@@ -6,6 +6,7 @@
  *   existing → a chosen Software + Version pair (listed "Modflow — 2013")
  *   new      → an inline name + version form (creates Software + first Version on submit)
  *
+ * All view state is derived from the `value` prop — no internal view/draft state.
  * Data: GetModelFamilies (Software with versions). Reuses the cmdk + Popover combobox pattern.
  */
 import * as React from 'react';
@@ -28,6 +29,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import type { ModelFamilyLink } from '@/schemas/registration';
 
 interface PairOption {
+  id: string; // composite key: `${softwareId}:${versionId}`
   softwareId: string;
   softwareLabel: string;
   versionId: string;
@@ -41,12 +43,7 @@ export interface ModelFamilyPickerProps {
 }
 
 export function ModelFamilyPicker({ value, onChange }: ModelFamilyPickerProps) {
-  // Internal view fallback so "Create a new family" shows the new-form even when
-  // the controlled value isn't fed back (and so the picker popover can open).
-  const [view, setView] = React.useState<'default' | 'new'>('default');
   const [open, setOpen] = React.useState(false);
-  const [draftName, setDraftName] = React.useState('');
-  const [draftVersion, setDraftVersion] = React.useState('');
 
   const { data, loading } = useGetModelFamiliesQuery({ fetchPolicy: 'cache-first' });
 
@@ -54,6 +51,7 @@ export function ModelFamilyPicker({ value, onChange }: ModelFamilyPickerProps) {
     const software = data?.modelcatalog_software ?? [];
     return software.flatMap((s) =>
       (s.versions ?? []).map((v) => ({
+        id: `${s.id}:${v.id}`,
         softwareId: s.id,
         softwareLabel: s.label ?? '',
         versionId: v.id,
@@ -63,30 +61,23 @@ export function ModelFamilyPicker({ value, onChange }: ModelFamilyPickerProps) {
     );
   }, [data]);
 
-  const showNew = value.mode === 'new' || view === 'new';
-
   // ─── New-family form ──────────────────────────────────────────────────────
 
+  const showNew = value.mode === 'new';
+
   if (showNew) {
-    const familyName = value.mode === 'new' ? (value.familyName ?? draftName) : draftName;
-    const versionName = value.mode === 'new' ? (value.versionName ?? draftVersion) : draftVersion;
+    const familyName = value.familyName ?? '';
+    const versionName = value.versionName ?? '';
 
     const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      const next = e.target.value;
-      setDraftName(next);
-      onChange({ mode: 'new', familyName: next, versionName: draftVersion });
+      onChange({ mode: 'new', familyName: e.target.value, versionName });
     };
 
     const handleVersionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      const next = e.target.value;
-      setDraftVersion(next);
-      onChange({ mode: 'new', familyName: draftName, versionName: next });
+      onChange({ mode: 'new', familyName, versionName: e.target.value });
     };
 
     const handleBackToExisting = () => {
-      setView('default');
-      setDraftName('');
-      setDraftVersion('');
       onChange({ mode: 'none' });
     };
 
@@ -131,8 +122,8 @@ export function ModelFamilyPicker({ value, onChange }: ModelFamilyPickerProps) {
       onChange({ mode: 'none' });
     };
 
-    const handleChange = (selectedDisplay: string) => {
-      const found = pairs.find((p) => p.display === selectedDisplay);
+    const handleChange = (selectedId: string) => {
+      const found = pairs.find((p) => p.id === selectedId);
       if (found) {
         onChange({
           mode: 'existing',
@@ -167,8 +158,9 @@ export function ModelFamilyPicker({ value, onChange }: ModelFamilyPickerProps) {
                 <CommandGroup>
                   {pairs.map((pair) => (
                     <CommandItem
-                      key={`${pair.softwareId}:${pair.versionId}`}
-                      value={pair.display}
+                      key={pair.id}
+                      value={pair.id}
+                      keywords={[pair.display]}
                       onSelect={handleChange}
                     >
                       <Check
@@ -202,8 +194,8 @@ export function ModelFamilyPicker({ value, onChange }: ModelFamilyPickerProps) {
 
   // ─── None state — entry control ───────────────────────────────────────────
 
-  const handleSelect = (selectedDisplay: string) => {
-    const found = pairs.find((p) => p.display === selectedDisplay);
+  const handleSelect = (selectedId: string) => {
+    const found = pairs.find((p) => p.id === selectedId);
     if (found) {
       onChange({
         mode: 'existing',
@@ -217,9 +209,6 @@ export function ModelFamilyPicker({ value, onChange }: ModelFamilyPickerProps) {
   };
 
   const handleCreateNew = () => {
-    setView('new');
-    setDraftName('');
-    setDraftVersion('');
     onChange({ mode: 'new', familyName: '', versionName: '' });
   };
 
@@ -248,8 +237,9 @@ export function ModelFamilyPicker({ value, onChange }: ModelFamilyPickerProps) {
               <CommandGroup>
                 {pairs.map((pair) => (
                   <CommandItem
-                    key={`${pair.softwareId}:${pair.versionId}`}
-                    value={pair.display}
+                    key={pair.id}
+                    value={pair.id}
+                    keywords={[pair.display]}
                     onSelect={handleSelect}
                   >
                     <Check className="mr-2 h-4 w-4 shrink-0 opacity-0" />
