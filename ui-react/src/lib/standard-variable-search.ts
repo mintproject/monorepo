@@ -63,25 +63,32 @@ export function rankStandardVariables(
   // Pass 2: remaining items whose description word-starts-with the query.
   const descMatches = matchSorter(options, q, {
     keys: [{ key: (o: StandardVariableOption) => o.description ?? '', threshold: rankings.WORD_STARTS_WITH }],
-    threshold: rankings.WORD_STARTS_WITH,
   }).filter((o) => !labelMatchIds.has(o.id));
 
   return [...labelMatches, ...descMatches];
 }
 
-/** Single case-insensitive highlight range for `text`, or [] if none. */
+/** All case-insensitive highlight ranges for `text`, or [] if none / empty query. */
 export function highlightRanges(text: string, query: string): Array<[number, number]> {
   const q = query.trim();
   if (q === '') return [];
-  const idx = text.toLowerCase().indexOf(q.toLowerCase());
-  if (idx === -1) return [];
-  return [[idx, idx + q.length]];
+  const haystack = text.toLowerCase();
+  const needle = q.toLowerCase();
+  const ranges: Array<[number, number]> = [];
+  let from = 0;
+  for (;;) {
+    const idx = haystack.indexOf(needle, from);
+    if (idx === -1) break;
+    ranges.push([idx, idx + needle.length]);
+    from = idx + needle.length;
+  }
+  return ranges;
 }
 
 function toDisplay(option: StandardVariableOption): DisplayStandardVariable {
   const isUnnamed = isUnnamedLabel(option.label);
   const category = categorizeStandardVariable(option.label, option.description);
-  const displayLabel = isUnnamed && option.description ? option.description : option.label;
+  const displayLabel = isUnnamed ? (option.description ?? 'Unnamed variable') : option.label;
   return { ...option, category, isUnnamed, displayLabel };
 }
 

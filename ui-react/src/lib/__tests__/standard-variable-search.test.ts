@@ -35,6 +35,12 @@ describe('rankStandardVariables', () => {
     const ranked = rankStandardVariables(OPTIONS, 'soil');
     expect(ranked.every((o) => o.id !== 'sv-air')).toBe(true);
   });
+  it('returns exactly the matching options for a label query', () => {
+    const ids = rankStandardVariables(OPTIONS, 'soil')
+      .map((o) => o.id)
+      .sort();
+    expect(ids).toEqual(['sv-soil-m', 'sv-soil-t']);
+  });
 });
 
 describe('highlightRanges', () => {
@@ -44,6 +50,12 @@ describe('highlightRanges', () => {
   it('returns empty for no match or empty query', () => {
     expect(highlightRanges('air__temperature', 'xyz')).toEqual([]);
     expect(highlightRanges('air__temperature', '')).toEqual([]);
+  });
+  it('returns every occurrence of the query', () => {
+    expect(highlightRanges('soil_and_soil', 'soil')).toEqual([
+      [0, 4],
+      [9, 13],
+    ]);
   });
 });
 
@@ -77,5 +89,20 @@ describe('buildStandardVariableGroups', () => {
     const res = buildStandardVariableGroups(OPTIONS, ['sv-soil-m'], '');
     expect(res.total).toBe(OPTIONS.length);
     expect(res.matchCount).toBe(OPTIONS.length);
+  });
+  it('shows a recent item in both the Recently used group and its category group', () => {
+    const { groups } = buildStandardVariableGroups(OPTIONS, ['sv-soil-m'], 'soil');
+    const recentGroup = groups.find((g) => g.key === RECENT_GROUP_KEY);
+    const soilGroup = groups.find((g) => g.key === 'Soil');
+    expect(recentGroup?.options.some((o) => o.id === 'sv-soil-m')).toBe(true);
+    expect(soilGroup?.options.some((o) => o.id === 'sv-soil-m')).toBe(true);
+  });
+  it('labels an unnamed row with no description as "Unnamed variable"', () => {
+    const opts = [
+      { id: 'u', label: '06100430-298a-49d7-9834-590783d62379', description: null },
+    ];
+    const { groups } = buildStandardVariableGroups(opts, [], '');
+    const row = groups.find((g) => g.key === 'Unnamed / Other')?.options[0];
+    expect(row?.displayLabel).toBe('Unnamed variable');
   });
 });
