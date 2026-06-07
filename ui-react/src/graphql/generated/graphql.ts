@@ -26258,7 +26258,7 @@ export type AddConfigurationParameterMutationVariables = Exact<{
   hasMinimumAcceptedValue?: InputMaybe<Scalars['String']['input']>;
   hasMaximumAcceptedValue?: InputMaybe<Scalars['String']['input']>;
   hasFixedValue?: InputMaybe<Scalars['String']['input']>;
-  hasAcceptedValues?: InputMaybe<Array<Scalars['String']['input']> | Scalars['String']['input']>;
+  hasAcceptedValues?: InputMaybe<Scalars['_text']['input']>;
   position: Scalars['Int']['input'];
   parameterType?: InputMaybe<Scalars['String']['input']>;
 }>;
@@ -26761,7 +26761,7 @@ export type AddConfigurationOutputMutationHookResult = ReturnType<typeof useAddC
 export type AddConfigurationOutputMutationResult = Apollo.MutationResult<AddConfigurationOutputMutation>;
 export type AddConfigurationOutputMutationOptions = Apollo.BaseMutationOptions<AddConfigurationOutputMutation, AddConfigurationOutputMutationVariables>;
 export const AddConfigurationParameterDocument = gql`
-    mutation AddConfigurationParameter($configurationId: String!, $parameterId: String!, $label: String!, $description: String, $hasDataType: String, $hasDefaultValue: String, $hasMinimumAcceptedValue: String, $hasMaximumAcceptedValue: String, $hasFixedValue: String, $hasAcceptedValues: [String!], $position: Int!, $parameterType: String) {
+    mutation AddConfigurationParameter($configurationId: String!, $parameterId: String!, $label: String!, $description: String, $hasDataType: String, $hasDefaultValue: String, $hasMinimumAcceptedValue: String, $hasMaximumAcceptedValue: String, $hasFixedValue: String, $hasAcceptedValues: _text, $position: Int!, $parameterType: String) {
   insert_modelcatalog_configuration_parameter_one(
     object: {configuration_id: $configurationId, parameter: {data: {id: $parameterId, label: $label, description: $description, has_data_type: $hasDataType, has_default_value: $hasDefaultValue, has_minimum_accepted_value: $hasMinimumAcceptedValue, has_maximum_accepted_value: $hasMaximumAcceptedValue, has_fixed_value: $hasFixedValue, has_accepted_values: $hasAcceptedValues, position: $position, parameter_type: $parameterType}}}
   ) {

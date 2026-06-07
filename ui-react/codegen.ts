@@ -29,7 +29,6 @@ const config: CodegenConfig = {
           jsonb: 'unknown',
           _text: 'string[]',
         },
-        skipDocumentsValidation: true,
       },
     },
   },

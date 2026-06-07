@@ -136,7 +136,7 @@ mutation AddConfigurationParameter(
   $hasMinimumAcceptedValue: String
   $hasMaximumAcceptedValue: String
   $hasFixedValue: String
-  $hasAcceptedValues: [String!]
+  $hasAcceptedValues: _text
   $position: Int!
   $parameterType: String
 ) {
