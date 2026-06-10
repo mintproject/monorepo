@@ -101,10 +101,9 @@ describe('StandardVariableUnitPicker', () => {
     });
   });
 
-  it('offers the create gate at a search dead-end', async () => {
+  it('opens the create form from the gate at a search dead-end, prefilled with the query', async () => {
     const user = userEvent.setup();
-    const onRequestCreate = vi.fn();
-    renderPicker({ onRequestCreate });
+    renderPicker();
 
     const trigger = await screen.findByRole('combobox', {
       name: /choose standard variable and unit/i,
@@ -117,6 +116,7 @@ describe('StandardVariableUnitPicker', () => {
       await screen.findByRole('button', { name: /create .*albedo.* as a new standard variable/i }),
     );
 
-    expect(onRequestCreate).toHaveBeenCalledWith({ query: 'albedo', phenomenon: null });
+    expect(screen.getByRole('heading', { name: /create a new standard variable/i })).toBeVisible();
+    expect(screen.getByLabelText(/name/i)).toHaveValue('albedo');
   });
 });
