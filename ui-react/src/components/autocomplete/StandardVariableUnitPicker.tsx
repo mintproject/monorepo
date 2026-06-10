@@ -233,12 +233,12 @@ export function StandardVariableUnitPicker({
               />
             </div>
 
-            <div className="max-h-[260px] min-h-[200px] overflow-auto">
+            <div className="min-h-[200px]">
               {search.trim() === '' ? (
-                // ---- browse: phenomenon | property ----
+                // ---- browse: phenomenon | property (each scrolls independently) ----
                 <div className="grid grid-cols-2">
-                  <div className="border-r">
-                    <div className="px-3 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  <div className="max-h-[280px] overflow-auto border-r">
+                    <div className="sticky top-0 z-10 bg-background px-3 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
                       1 · Phenomenon
                     </div>
                     {phenomenonGroups.map((g) => (
@@ -258,8 +258,8 @@ export function StandardVariableUnitPicker({
                       </button>
                     ))}
                   </div>
-                  <div>
-                    <div className="px-3 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  <div className="max-h-[280px] overflow-auto">
+                    <div className="sticky top-0 z-10 bg-background px-3 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
                       2 · Property
                     </div>
                     {phenomenon === null ? (
@@ -315,7 +315,7 @@ export function StandardVariableUnitPicker({
                 </div>
               ) : (
                 // ---- search results ----
-                <div className="py-1">
+                <div className="max-h-[280px] overflow-auto py-1">
                   {searchResults.map((opt) => {
                     const { phenomenon: ph, property } = humanizeStandardVariable(opt.label);
                     return (
