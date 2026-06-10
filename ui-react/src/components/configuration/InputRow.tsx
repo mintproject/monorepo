@@ -2,7 +2,7 @@
  * InputRow — single row in the inputs or outputs field array.
  *
  * Fields: label, description, format, isOptional (junction field),
- * Standard Variable combobox, Unit combobox, collapsible variable overrides.
+ * a merged Standard variable + Unit picker (Option C), collapsible overrides.
  *
  * isOptional is a first-class field — stored on the configuration_input junction row.
  */
@@ -11,8 +11,7 @@ import { useFormContext } from 'react-hook-form';
 import type { Path } from 'react-hook-form';
 import { ChevronDown, ChevronRight, Trash2 } from 'lucide-react';
 
-import { StandardVariableCombobox } from '@/components/autocomplete/StandardVariableCombobox';
-import { UnitCombobox } from '@/components/autocomplete/UnitCombobox';
+import { StandardVariableUnitPicker } from '@/components/autocomplete/StandardVariableUnitPicker';
 import { Button } from '@/components/ui/button';
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
@@ -30,7 +29,7 @@ export interface InputRowProps {
 
 export function InputRow({ index, prefix, onRemove }: InputRowProps) {
   const [overridesOpen, setOverridesOpen] = React.useState(false);
-  const { control, register } = useFormContext<ConfigurationFormSchema>();
+  const { control, register, setValue, watch } = useFormContext<ConfigurationFormSchema>();
 
   // Cast to Path<ConfigurationFormSchema> — RHF's generic is too strict for
   // dynamic template literals, but the paths are always valid at runtime.
@@ -112,41 +111,34 @@ export function InputRow({ index, prefix, onRemove }: InputRowProps) {
         )}
       />
 
-      {/* Standard Variable + Unit */}
-      <div className="grid grid-cols-2 gap-3">
-        <FormField
-          control={control}
-          name={p('standardVariable')}
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Standard Variable</FormLabel>
-              <FormControl>
-                <StandardVariableCombobox
-                  value={field.value as Parameters<typeof StandardVariableCombobox>[0]['value']}
-                  onChange={field.onChange}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={control}
-          name={p('unit')}
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Unit</FormLabel>
-              <FormControl>
-                <UnitCombobox
-                  value={field.value as Parameters<typeof UnitCombobox>[0]['value']}
-                  onChange={field.onChange}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-      </div>
+      {/* Standard variable + Unit — merged guided picker (Option C) */}
+      <FormField
+        control={control}
+        name={p('standardVariable')}
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Standard variable &amp; unit</FormLabel>
+            <FormControl>
+              <StandardVariableUnitPicker
+                variable={
+                  field.value as Parameters<typeof StandardVariableUnitPicker>[0]['variable']
+                }
+                unit={watch(p('unit')) as Parameters<typeof StandardVariableUnitPicker>[0]['unit']}
+                onResolve={(variable, unit) => {
+                  field.onChange(variable);
+                  // setValue's value type is too strict for dynamic paths; the
+                  // shape always matches unitSelectionSchema | null at runtime.
+                  setValue(p('unit'), unit as Parameters<typeof setValue>[1], {
+                    shouldDirty: true,
+                    shouldValidate: true,
+                  });
+                }}
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
 
       {/* isOptional */}
       <div className="flex items-center gap-2">
