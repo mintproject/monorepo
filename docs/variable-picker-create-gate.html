@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Create-a-variable gate — modal picker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#16130f;--ink2:#4a443c;--ink3:#8a8275;--line:#e7e2d8;--line2:#d8d2c5;
+    --paper:#faf7f1;--card:#fff;--accent:#b4451f;--accent2:#1d5c54;--good:#1d5c54;--warn:#9a6b00;--bad:#9c2b1a;--chip:#f1ece1;
+    --shadow:0 1px 2px rgba(30,24,14,.06),0 8px 26px rgba(30,24,14,.07);
+    --shadowbig:0 18px 50px rgba(30,24,14,.22);
+    --mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;--sans:'IBM Plex Sans',system-ui,sans-serif;--serif:'Newsreader',Georgia,serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.55;
+    background-image:radial-gradient(circle at 1px 1px,rgba(120,110,90,.05) 1px,transparent 0);background-size:22px 22px}
+  .wrap{max-width:1040px;margin:0 auto;padding:0 28px 110px}
+  header.hero{padding:58px 0 26px;border-bottom:1px solid var(--line)}
+  .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);margin:0 0 14px}
+  h1{font-family:var(--serif);font-weight:500;font-size:clamp(30px,4.4vw,48px);line-height:1.05;letter-spacing:-.015em;margin:0 0 16px}
+  h1 em{font-style:italic;color:var(--accent)}
+  .lede{font-family:var(--serif);font-size:20px;line-height:1.5;color:var(--ink2);max-width:46em;margin:0}
+  .meta{margin-top:22px;font-family:var(--mono);font-size:12px;color:var(--ink3);display:flex;gap:22px;flex-wrap:wrap}
+  .meta b{color:var(--ink2);font-weight:500}
+
+  .stage{display:grid;grid-template-columns:1fr 300px;gap:30px;align-items:start;margin-top:42px}
+  @media(max-width:900px){.stage{grid-template-columns:1fr}}
+
+  .statebar{display:flex;gap:6px;margin:0 0 16px;flex-wrap:wrap}
+  .sbtn{font-size:12.5px;font-weight:500;border:1px solid var(--line2);background:var(--card);color:var(--ink2);padding:7px 13px;border-radius:999px;cursor:pointer}
+  .sbtn.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .demolabel{font-family:var(--mono);font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--ink3);margin:0 0 12px}
+
+  /* modal */
+  .modal{width:560px;max-width:100%;background:#fff;border-radius:16px;box-shadow:var(--shadowbig);overflow:hidden;border:1px solid var(--line)}
+  .mtop{display:flex;align-items:center;justify-content:space-between;padding:15px 18px 13px;border-bottom:1px solid var(--line)}
+  .mtop h3{margin:0;font-family:var(--serif);font-size:18px;font-weight:600}
+  .mtop .close{border:0;background:none;font-size:20px;color:var(--ink3);cursor:pointer;line-height:1}
+  .msearch{display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--line);padding:11px 16px}
+  .msearch svg{color:var(--ink3);flex:none}
+  .msearch input{border:0;outline:0;font-family:var(--sans);font-size:14.5px;width:100%;background:transparent;color:var(--ink)}
+  .mbody{min-height:250px;max-height:340px;overflow:auto}
+
+  /* guided columns (browse) */
+  .cols{display:grid;grid-template-columns:1fr 1fr;height:250px}
+  .col{border-right:1px solid var(--line);display:flex;flex-direction:column;overflow:hidden}
+  .col:last-child{border-right:0}
+  .col .hd{font-size:10.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--ink3);padding:11px 13px 7px}
+  .col .scroll{overflow:auto;flex:1}
+  .bitem{padding:9px 13px;font-size:13.5px;cursor:pointer;border-left:2px solid transparent;display:flex;justify-content:space-between;gap:8px}
+  .bitem:hover{background:#f6f2ea}.bitem.on{background:#f0ece3;border-left-color:var(--accent);font-weight:600}
+  .bitem .c{font-family:var(--mono);font-size:10px;color:var(--ink3)}
+  .bempty{padding:14px 13px;color:var(--ink3);font-size:13px}
+
+  /* result rows */
+  .rows{padding:6px 0}
+  .row{display:flex;gap:11px;align-items:flex-start;padding:9px 16px;cursor:pointer;border-left:2px solid transparent}
+  .row:hover{background:#f6f2ea;border-left-color:var(--accent)}
+  .objchip{display:inline-block;font-family:var(--mono);font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--accent2);background:#eaf2f0;border:1px solid #d3e6e2;border-radius:5px;padding:1px 6px;margin-right:7px;vertical-align:1px}
+  .row .nm{font-weight:600;font-size:14px}
+  .row .mc{font-family:var(--mono);font-size:10.5px;color:var(--ink3);margin-top:2px}
+  mark{background:#ffe9a8;border-radius:3px;padding:0 1px}
+
+  /* empty / dead-end state */
+  .empty{padding:22px 18px}
+  .empty .ttl{font-size:14px;color:var(--ink2);margin:0 0 4px}
+  .empty .ttl b{color:var(--ink)}
+  .empty .sub{font-size:12.5px;color:var(--ink3);margin:0 0 16px}
+  .nearttl{font-family:var(--mono);font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--accent2);margin:0 0 8px}
+  .near{border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-bottom:18px}
+  .near .row{border-bottom:1px solid var(--line)}
+  .near .row:last-child{border-bottom:0}
+
+  /* the GATE */
+  .gate-primary{display:flex;align-items:center;gap:13px;width:100%;border:1.5px dashed var(--accent);background:#fdf4ef;border-radius:12px;padding:14px 16px;cursor:pointer;text-align:left;transition:.12s}
+  .gate-primary:hover{background:#fbe9e0}
+  .gate-primary .plus{width:30px;height:30px;border-radius:8px;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:19px;flex:none}
+  .gate-primary .g-nm{font-weight:600;font-size:14px}
+  .gate-primary .g-nm code{font-family:var(--mono);font-size:12.5px;background:#fff;border:1px solid var(--line2);border-radius:5px;padding:1px 6px}
+  .gate-primary .g-sub{font-size:12px;color:var(--ink2);margin-top:2px}
+
+  .mfoot{border-top:1px solid var(--line);background:var(--paper);padding:11px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .gate-quiet{display:inline-flex;align-items:center;gap:8px;color:var(--accent);font-size:13px;font-weight:600;cursor:pointer;background:none;border:0;font-family:var(--sans)}
+  .gate-quiet:hover{text-decoration:underline}
+  .gate-quiet .p{width:18px;height:18px;border-radius:5px;border:1.5px solid var(--accent);display:flex;align-items:center;justify-content:center;font-size:13px;line-height:1}
+  .mfoot .hint{font-size:11px;color:var(--ink3)}
+
+  /* after-gate placeholder (NOT the form) */
+  .handoff{padding:26px 20px;text-align:center}
+  .handoff .badge{display:inline-block;font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--warn);background:#fbf2dc;border:1px solid #ead9a8;border-radius:999px;padding:4px 11px;margin-bottom:14px}
+  .handoff h4{font-family:var(--serif);font-size:20px;font-weight:600;margin:0 0 8px}
+  .handoff p{font-size:13.5px;color:var(--ink2);margin:0 auto 6px;max-width:34em}
+  .handoff .carry{display:inline-flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:12px 0 18px}
+  .handoff .kv{font-family:var(--mono);font-size:11.5px;background:var(--chip);border:1px solid var(--line2);border-radius:7px;padding:4px 9px}
+  .handoff .kv b{color:var(--accent2)}
+  .handoff .back{border:1px solid var(--line2);background:#fff;border-radius:8px;padding:8px 14px;font-size:13px;cursor:pointer;font-family:var(--sans);color:var(--ink2)}
+
+  /* notes */
+  .notes h4{font-size:12.5px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.1em;color:var(--accent);margin:0 0 12px}
+  .notes ul{margin:0 0 22px;padding-left:17px}
+  .notes li{margin:0 0 11px;font-size:13.5px;color:var(--ink2)}
+  .notes li b{color:var(--ink)}
+  .notes code{font-family:var(--mono);font-size:11.5px;background:var(--chip);border-radius:5px;padding:1px 5px}
+  .arch{background:linear-gradient(180deg,#fff,#fbf8f2);border:1px solid var(--line2);border-radius:12px;padding:16px;margin-top:6px}
+  .arch h4{margin-top:0}
+  .arch p{font-size:12.5px;color:var(--ink2);margin:0 0 9px}
+  footer{margin-top:60px;padding-top:22px;border-top:1px solid var(--line);font-family:var(--mono);font-size:11.5px;color:var(--ink3);display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <p class="kicker">MINT · Register Model · Option C · the create gate</p>
+  <h1>When the variable isn't in the catalog, <em>open a door</em> — not a dead end.</h1>
+  <p class="lede">The modal needs a controlled way into "create a new standard variable." This is just the <strong>gate</strong> — where it lives and how it behaves — not the creation form behind it. It's deliberately <em>available but not eager</em>: quiet while browsing, primary only at a true dead-end, and it always shows near-misses first so we don't mint another duplicate of the 423 concepts already there.</p>
+  <div class="meta">
+    <span><b>Wires to</b> onRequestNew()</span>
+    <span><b>Ends at</b> insert modelcatalog_standard_variable</span>
+    <span><b>Form</b> = next step</span>
+  </div>
+</header>
+
+<div class="stage">
+  <div>
+    <div class="statebar">
+      <button class="sbtn on" data-s="browse">Browsing (gate is quiet)</button>
+      <button class="sbtn" data-s="match">Search w/ matches</button>
+      <button class="sbtn" data-s="deadend">Dead-end (gate is primary)</button>
+      <button class="sbtn" data-s="handoff">After the gate</button>
+    </div>
+    <p class="demolabel">Standard variable & unit · modal</p>
+    <div class="modal" id="modal"></div>
+  </div>
+
+  <div class="notes">
+    <h4>How the gate behaves</h4>
+    <ul>
+      <li><b>Two placements.</b> A <b>quiet</b> footer gate that's always present while browsing, and a <b>primary</b> gate that only takes over at a real dead-end (search with no match).</li>
+      <li><b>Find-before-create.</b> The dead-end shows <b>"Did you mean…"</b> near-misses first. This is the guardrail against the <b>176 duplicate rows</b> we already have in the data.</li>
+      <li><b>Carries context.</b> The gate hands the typed query (and the phenomenon, if one's selected) to the form so it can pre-fill — the gate just passes it; it doesn't collect it.</li>
+      <li><b>Permission-aware.</b> Creating writes to a shared catalog, so the gate is only live for an authenticated user (anonymous role is SELECT-only).</li>
+    </ul>
+    <div class="arch">
+      <h4>Where it plugs in</h4>
+      <p>The combobox already stubs this: <code>StandardVariableCombobox</code> takes an optional <code>onRequestNew</code> prop. The gate fires it; the parent (the modal) swaps the picker for the create form.</p>
+      <p>On submit, the form inserts into <code>modelcatalog_standard_variable</code> (<code>id, label, description, same_as</code>) — the new id flows straight back into the same <code>standardVariable</code> field. No schema change.</p>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <span>MINT — create-a-variable gate · visual companion</span>
+  <span>data: live preview · feat/standard-variable-picker-ux</span>
+</footer>
+</div>
+
+<script>
+const FLOW = {
+  'Air':{'Temperature':'air__temperature','Daily max of temperature':'air__daily_max_of_temperature'},
+  'Atmosphere water':{'Precipitation volume flux':'atmosphere_water__precipitation_leq_volume_flux','Precipitation rate':'atmosphere_water__precipitation_rate'},
+  'Channel water':{'Volume flow rate':'channel_water__volume_flow_rate','Manning n parameter':'channel_water_flow__manning_n_parameter'},
+  'Soil water':{'Volume fraction':'soil_water__volume_fraction','Saturated hydraulic conductivity':'soil_water__saturated_hydraulic_conductivity'},
+  'Aquifer system':{'Recharge rate':'aquifer_system__recharge_rate','Hydraulic property set':'aquifer_system__hydraulic_property_set'},
+  'Land surface':{'Elevation':'land_surface__elevation'},
+};
+const FLAT = [];
+for(const obj in FLOW) for(const prop in FLOW[obj]) FLAT.push({obj,prop,label:FLOW[obj][prop]});
+
+const SEARCH='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>';
+
+let state='browse', query='', selObj='Soil water';
+
+function rowHTML(r,q){
+  const mk=t=>q?t.replace(new RegExp('('+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','ig'),'<mark>$1</mark>'):t;
+  return `<div class="row"><div><div class="nm"><span class="objchip">${r.obj}</span>${mk(r.prop)}</div><div class="mc">${mk(r.label)}</div></div></div>`;
+}
+function quietGate(){
+  return `<div class="mfoot"><button class="gate-quiet" data-act="create"><span class="p">+</span> Can't find it? Create a new standard variable</button><span class="hint">authenticated</span></div>`;
+}
+function primaryGate(q){
+  const shown = q?`<code>${q}</code>`:'a new variable';
+  return `<button class="gate-primary" data-act="create"><span class="plus">+</span>
+    <span><span class="g-nm">Create ${shown} as a new standard variable</span>
+    <span class="g-sub">Opens a short form · you'll confirm the name, phenomenon &amp; property</span></span></button>`;
+}
+
+function browseBody(){
+  const objs=Object.keys(FLOW);
+  const objCol=objs.map(o=>`<div class="bitem ${selObj===o?'on':''}" data-o="${o}"><span>${o}</span><span class="c">${Object.keys(FLOW[o]).length}</span></div>`).join('');
+  const props=selObj?Object.keys(FLOW[selObj]).map(p=>`<div class="bitem" data-q="${p}">${p}</div>`).join(''):`<div class="bempty">Select a phenomenon →</div>`;
+  return `<div class="cols">
+    <div class="col"><div class="hd">1 · Phenomenon</div><div class="scroll">${objCol}</div></div>
+    <div class="col"><div class="hd">2 · Property</div><div class="scroll">${props}</div></div></div>`;
+}
+function matchBody(q){
+  const ql=q.toLowerCase();
+  const hits=FLAT.filter(r=>(r.label+' '+r.obj+' '+r.prop).toLowerCase().includes(ql));
+  if(hits.length) return `<div class="rows">${hits.map(r=>rowHTML(r,q)).join('')}</div>`;
+  return deadendBody(q);
+}
+function deadendBody(q){
+  // find-before-create: near-misses by shared 3+ char token
+  const ql=(q||'').toLowerCase();
+  const toks=ql.split(/[^a-z]+/).filter(t=>t.length>=3);
+  let near=FLAT.filter(r=>toks.some(t=>(r.label+' '+r.prop).toLowerCase().includes(t)));
+  if(!near.length) near=FLAT.slice(0,2); // always offer something to check first
+  near=near.slice(0,3);
+  return `<div class="empty">
+    <p class="ttl">No standard variable matches <b>"${q||'…'}"</b>.</p>
+    <p class="sub">Before creating one, check these — the catalog already has 423 concepts and we don't want duplicates.</p>
+    <p class="nearttl">Did you mean</p>
+    <div class="near">${near.map(r=>rowHTML(r,'')).join('')}</div>
+    ${primaryGate(q)}
+  </div>`;
+}
+function handoffBody(q){
+  return `<div class="handoff">
+    <span class="badge">gate → form (next step)</span>
+    <h4>Create a new standard variable</h4>
+    <p>This is where the gate leads. The form itself is the next design — for now, the gate's job is done: it opened the door and handed over what the user already typed.</p>
+    <div class="carry"><span class="kv">name = <b>${q||'(empty)'}</b></span><span class="kv">phenomenon = <b>${selObj||'—'}</b></span><span class="kv">creator = <b>current user</b></span></div>
+    <button class="back" data-act="back">← Back to picker</button>
+  </div>`;
+}
+
+function render(){
+  const m=document.getElementById('modal');
+  let body, foot='';
+  if(state==='browse'){ body=browseBody(); foot=quietGate(); query=''; }
+  else if(state==='match'){ query=query||'precip'; body=matchBody(query); foot=quietGate(); }
+  else if(state==='deadend'){ query=query||'albedo'; body=deadendBody(query); foot=quietGate(); }
+  else if(state==='handoff'){ body=handoffBody(query); foot=''; }
+  const searchVal = (state==='match'||state==='deadend')?query:'';
+  m.innerHTML=`
+    <div class="mtop"><h3>Choose standard variable &amp; unit</h3><button class="close">✕</button></div>
+    <div class="msearch">${SEARCH}<input id="q" placeholder="Search standard variables… (try “precip”, then “albedo”)" value="${searchVal}"></div>
+    <div class="mbody">${body}</div>
+    ${foot}`;
+  const q=document.getElementById('q');
+  if(q && state!=='handoff'){ q.addEventListener('input',e=>{query=e.target.value; state=query.trim()===''?'browse':'match'; syncBtns(); render(); q2focus();}); }
+}
+let focusEnd=false;
+function q2focus(){ const q=document.getElementById('q'); if(q && (state==='match'||state==='deadend')){ q.focus(); q.setSelectionRange(q.value.length,q.value.length);} }
+function syncBtns(){ document.querySelectorAll('.sbtn').forEach(b=>b.classList.toggle('on',b.dataset.s===state)); }
+
+document.getElementById('modal').addEventListener('click',e=>{
+  const o=e.target.closest('.bitem[data-o]'); if(o){selObj=o.dataset.o; render(); return;}
+  if(e.target.closest('[data-act="create"]')){ state='handoff'; syncBtns(); render(); return; }
+  if(e.target.closest('[data-act="back"]')){ state='browse'; query=''; syncBtns(); render(); return; }
+});
+document.querySelectorAll('.sbtn').forEach(b=>b.addEventListener('click',()=>{
+  state=b.dataset.s;
+  if(state==='match') query='precip';
+  if(state==='deadend') query='albedo';
+  syncBtns(); render(); q2focus();
+}));
+render();
+</script>
+</body>
+</html>
