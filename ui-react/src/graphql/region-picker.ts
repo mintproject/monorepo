@@ -13,15 +13,23 @@ export interface PickerRegion {
   id: string;
   name: string;
   category_id: string | null;
+  geometries: Array<{ id: number; geometry: string | GeoJSON.Geometry }>;
 }
 
-/** Regions whose category is one of the given categories (or their subcategories). */
+/**
+ * Regions whose category is one of the given categories (or their subcategories),
+ * including their GeoJSON geometries so the picker can render them on a map.
+ */
 export const REGIONS_BY_CATEGORIES = gql`
   query RegionsByCategories($categoryIds: [String!]!) {
     region(where: { category_id: { _in: $categoryIds } }, order_by: { name: asc }) {
       id
       name
       category_id
+      geometries {
+        id
+        geometry
+      }
     }
   }
 `;

@@ -8,7 +8,7 @@
  */
 import * as React from 'react';
 import { useQuery } from '@apollo/client';
-import { Building2, Check, Droplets, MapPin, Wheat, X } from 'lucide-react';
+import { Building2, Droplets, MapPin, Wheat, X } from 'lucide-react';
 
 import {
   Dialog,
@@ -23,6 +23,7 @@ import { Button } from '@/components/ui/button';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { useListRegionCategoriesQuery } from '@/graphql/generated/graphql';
 import { REGIONS_BY_CATEGORIES, type PickerRegion } from '@/graphql/region-picker';
+import { RegionSelectMap } from './RegionSelectMap';
 import type { RegionSelection } from '@/lib/mutation-builder';
 import { cn } from '@/lib/utils';
 
@@ -110,6 +111,8 @@ export function RegionPickerDialog({
 
   const remove = (id: string) => onChange(selected.filter((r) => r.id !== id));
 
+  const selectedIds = React.useMemo(() => new Set(selected.map((r) => r.id)), [selected]);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-xl">
@@ -175,44 +178,22 @@ export function RegionPickerDialog({
               })}
             </div>
 
-            {/* Region list for the active category */}
-            <div className="max-h-64 overflow-y-auto rounded-md border" role="tabpanel">
+            {/* Region map for the active category */}
+            <div role="tabpanel">
               {regionsLoading ? (
-                <div className="p-4">
+                <div className="flex h-[320px] items-center justify-center rounded-md border bg-muted/30">
                   <LoadingSpinner size="sm" />
                 </div>
               ) : regions.length === 0 ? (
-                <p className="p-4 text-center text-sm text-muted-foreground">
+                <p className="flex h-[320px] items-center justify-center rounded-md border bg-muted/30 text-center text-sm text-muted-foreground">
                   No regions in this category.
                 </p>
               ) : (
-                <ul>
-                  {regions.map((region) => {
-                    const sel = isSelected(region.id);
-                    return (
-                      <li key={region.id}>
-                        <button
-                          type="button"
-                          onClick={() => toggle(region)}
-                          aria-pressed={sel}
-                          className={cn(
-                            'flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition-colors hover:bg-accent hover:text-accent-foreground',
-                            sel && 'bg-accent/50',
-                          )}
-                        >
-                          <Check
-                            className={cn(
-                              'h-3.5 w-3.5 shrink-0 text-primary',
-                              sel ? 'opacity-100' : 'opacity-0',
-                            )}
-                          />
-                          <span className="truncate">{region.name}</span>
-                        </button>
-                      </li>
-                    );
-                  })}
-                </ul>
+                <RegionSelectMap regions={regions} selectedIds={selectedIds} onToggle={toggle} />
               )}
+              <p className="mt-1.5 text-xs text-muted-foreground">
+                Click a region on the map to select or deselect it.
+              </p>
             </div>
           </>
         )}
