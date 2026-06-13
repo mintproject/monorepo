@@ -1,7 +1,8 @@
 /**
  * OptionalDetailsSection — the single "Optional details" block at the bottom of
- * the Create-a-model form: Model Family link, Region(s), License, Website, Keywords.
+ * the Create-a-model form: Model Family link, License, Website, Keywords.
  * Everything here is optional. Bound to CreateModelSchema via form context.
+ * (Region selection has its own non-optional section — see RegionScopeSection.)
  */
 import { Controller, useFormContext } from 'react-hook-form';
 
@@ -9,24 +10,11 @@ import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/comp
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { useGetRegionsQuery } from '@/graphql/generated/graphql';
 import { ModelFamilyPicker } from './ModelFamilyPicker';
 import type { CreateModelSchema } from '@/schemas/registration';
 
 export function OptionalDetailsSection() {
-  const { control, watch, setValue } = useFormContext<CreateModelSchema>();
-  const { data: regionData } = useGetRegionsQuery({ fetchPolicy: 'cache-first' });
-  const regions = regionData?.modelcatalog_region ?? [];
-  const selectedRegions = watch('regions');
-
-  const toggleRegion = (id: string, label: string) => {
-    const exists = selectedRegions.some((r) => r.id === id);
-    setValue(
-      'regions',
-      exists ? selectedRegions.filter((r) => r.id !== id) : [...selectedRegions, { id, label }],
-      { shouldDirty: true },
-    );
-  };
+  const { control } = useFormContext<CreateModelSchema>();
 
   return (
     <section className="rounded-lg border bg-muted/20 p-4">
@@ -50,38 +38,6 @@ export function OptionalDetailsSection() {
             <ModelFamilyPicker value={field.value} onChange={field.onChange} />
           )}
         />
-      </div>
-
-      <Separator className="my-4" />
-
-      {/* Regions */}
-      <div className="space-y-2">
-        <Label>Region</Label>
-        {regions.length === 0 ? (
-          <p className="text-xs text-muted-foreground">No regions available.</p>
-        ) : (
-          <div className="flex flex-wrap gap-2">
-            {regions.map((r) => {
-              const active = selectedRegions.some((s) => s.id === r.id);
-              return (
-                <button
-                  key={r.id}
-                  type="button"
-                  onClick={() => toggleRegion(r.id, r.label ?? '')}
-                  className={[
-                    'rounded-full border px-3 py-1 text-xs',
-                    active
-                      ? 'border-primary bg-primary/10 text-primary'
-                      : 'border-muted text-muted-foreground',
-                  ].join(' ')}
-                  aria-pressed={active}
-                >
-                  {r.label}
-                </button>
-              );
-            })}
-          </div>
-        )}
       </div>
 
       <Separator className="my-4" />
