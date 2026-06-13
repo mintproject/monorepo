@@ -13,6 +13,7 @@ import type {
   AddConfigurationInputMutationVariables,
   AddConfigurationOutputMutationVariables,
   AddConfigurationParameterMutationVariables,
+  Modelcatalog_Dataset_Specification_Presentation_Insert_Input,
 } from '../graphql/generated/graphql';
 
 // ─── Form data types ──────────────────────────────────────────────────────────
@@ -38,23 +39,81 @@ export interface RegionSelection {
   label: string;
 }
 
+/**
+ * One variable presentation on an input/output. An input can hold zero, one, or
+ * many of these — each links to a single (optional) standard variable and unit.
+ */
+export interface PresentationRow {
+  /** Existing VariablePresentation id — present in edit mode. */
+  existingPresentationId?: string;
+  standardVariable: StandardVariableSelection | null;
+  unit: UnitSelection | null;
+  variableLabel?: string;
+  variableLongName?: string;
+  variableShortName?: string;
+}
+
 /** One row in the inputs or outputs field array of the configuration form. */
 export interface InputRow {
   /** Existing DS id — present in edit mode, absent when adding a new row. */
   existingId?: string;
-  /** Existing VariablePresentation id — present in edit mode. */
-  existingPresentationId?: string;
   label: string;
   description?: string;
   hasFormat?: string;
   hasDimensionality?: number;
   position: number;
   isOptional: boolean;
-  standardVariable: StandardVariableSelection | null;
-  unit: UnitSelection | null;
-  variableLabel?: string;
-  variableLongName?: string;
-  variableShortName?: string;
+  /** Zero, one, or many variable presentations — one per standard variable. */
+  presentations: PresentationRow[];
+}
+
+/**
+ * Resolve a presentation's label. VariablePresentation.label is NOT NULL, so every
+ * kept presentation must have a non-empty label: prefer the explicit override, then
+ * the standard variable's label, then the input label.
+ */
+function resolvePresentationLabel(row: InputRow, presentation: PresentationRow): string {
+  return (
+    presentation.variableLabel?.trim() || presentation.standardVariable?.label?.trim() || row.label
+  );
+}
+
+/**
+ * A presentation row is "empty" — and dropped on submit — when it carries no name,
+ * no standard variable, and no unit. Empty rows would otherwise create meaningless VPs.
+ */
+function isEmptyPresentation(p: PresentationRow): boolean {
+  return (
+    !p.variableLabel?.trim() &&
+    !p.standardVariable &&
+    !p.unit &&
+    !p.variableLongName?.trim() &&
+    !p.variableShortName?.trim()
+  );
+}
+
+/**
+ * Map an input's kept presentations to the nested junction insert objects expected by
+ * the `$presentations` mutation variable. Each entry nest-creates a VariablePresentation
+ * and its dataset_specification_presentation junction row.
+ */
+function buildPresentationInserts(
+  row: InputRow,
+): Modelcatalog_Dataset_Specification_Presentation_Insert_Input[] {
+  return row.presentations
+    .filter((p) => !isEmptyPresentation(p))
+    .map((p) => ({
+      presentation: {
+        data: {
+          id: p.existingPresentationId ?? generateMintUri(),
+          label: resolvePresentationLabel(row, p),
+          has_long_name: p.variableLongName ?? null,
+          has_short_name: p.variableShortName ?? null,
+          has_standard_variable: p.standardVariable?.id ?? null,
+          uses_unit: p.unit?.id ?? null,
+        },
+      },
+    }));
 }
 
 /** One row in the parameters field array. */
@@ -95,8 +154,6 @@ export function buildAddInputVariables(
   row: InputRow,
 ): AddConfigurationInputMutationVariables {
   const inputId = row.existingId ?? generateMintUri();
-  const presentationId = row.existingPresentationId ?? generateMintUri();
-  const presentationLabel = row.variableLabel ?? row.label;
 
   return {
     configurationId,
@@ -107,12 +164,7 @@ export function buildAddInputVariables(
     hasFormat: row.hasFormat ?? null,
     hasDimensionality: row.hasDimensionality ?? null,
     position: row.position,
-    presentationId,
-    presentationLabel,
-    hasLongName: row.variableLongName ?? null,
-    hasShortName: row.variableShortName ?? null,
-    hasStandardVariable: row.standardVariable?.id ?? null,
-    usesUnit: row.unit?.id ?? null,
+    presentations: buildPresentationInserts(row),
   };
 }
 
@@ -125,8 +177,6 @@ export function buildAddOutputVariables(
   row: InputRow,
 ): AddConfigurationOutputMutationVariables {
   const outputId = row.existingId ?? generateMintUri();
-  const presentationId = row.existingPresentationId ?? generateMintUri();
-  const presentationLabel = row.variableLabel ?? row.label;
 
   return {
     configurationId,
@@ -136,12 +186,7 @@ export function buildAddOutputVariables(
     hasFormat: row.hasFormat ?? null,
     hasDimensionality: row.hasDimensionality ?? null,
     position: row.position,
-    presentationId,
-    presentationLabel,
-    hasLongName: row.variableLongName ?? null,
-    hasShortName: row.variableShortName ?? null,
-    hasStandardVariable: row.standardVariable?.id ?? null,
-    usesUnit: row.unit?.id ?? null,
+    presentations: buildPresentationInserts(row),
   };
 }
 
@@ -209,17 +254,20 @@ export function diffInputRows(
     if (!r.existingId) return false;
     const orig = originalMap.get(r.existingId);
     if (!orig) return false;
+    // The edit form handles a single presentation per input; compare presentations[0].
+    const op = orig.presentations[0];
+    const mp = r.presentations[0];
     // Detect any change in key fields
     return (
       orig.label !== r.label ||
       orig.description !== r.description ||
       orig.hasFormat !== r.hasFormat ||
       orig.isOptional !== r.isOptional ||
-      orig.standardVariable?.id !== r.standardVariable?.id ||
-      orig.unit?.id !== r.unit?.id ||
-      orig.variableLabel !== r.variableLabel ||
-      orig.variableLongName !== r.variableLongName ||
-      orig.variableShortName !== r.variableShortName
+      op?.standardVariable?.id !== mp?.standardVariable?.id ||
+      op?.unit?.id !== mp?.unit?.id ||
+      op?.variableLabel !== mp?.variableLabel ||
+      op?.variableLongName !== mp?.variableLongName ||
+      op?.variableShortName !== mp?.variableShortName
     );
   });
 

@@ -16,8 +16,7 @@ describe('inputRowSchema', () => {
       label: '',
       position: 0,
       isOptional: false,
-      standardVariable: null,
-      unit: null,
+      presentations: [],
     });
     expect(result.success).toBe(false);
     if (!result.success) {
@@ -26,23 +25,45 @@ describe('inputRowSchema', () => {
     }
   });
 
-  it('accepts a valid input row with standard variable and unit', () => {
+  it('accepts a valid input row with multiple variable presentations', () => {
     const result = inputRowSchema.safeParse({
-      label: 'Precipitation',
+      label: 'Weather file',
       position: 0,
       isOptional: false,
-      standardVariable: { id: 'https://example.org/sv/1', label: 'precip' },
-      unit: { id: 'https://example.org/unit/1', label: 'mm' },
+      presentations: [
+        {
+          standardVariable: { id: 'https://example.org/sv/1', label: 'precip' },
+          unit: { id: 'https://example.org/unit/1', label: 'mm' },
+        },
+        {
+          standardVariable: { id: 'https://example.org/sv/2', label: 'temp' },
+          unit: { id: 'https://example.org/unit/2', label: 'degC' },
+        },
+      ],
     });
     expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.presentations).toHaveLength(2);
+    }
+  });
+
+  it('accepts an input row with zero presentations (zero standard variables)', () => {
+    const result = inputRowSchema.safeParse({
+      label: 'No-variable input',
+      position: 0,
+      presentations: [],
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.presentations).toEqual([]);
+    }
   });
 
   it('defaults isOptional to false', () => {
     const result = inputRowSchema.safeParse({
       label: 'Test',
       position: 0,
-      standardVariable: null,
-      unit: null,
+      presentations: [],
     });
     expect(result.success).toBe(true);
     if (result.success) {
@@ -50,15 +71,27 @@ describe('inputRowSchema', () => {
     }
   });
 
-  it('defaults standardVariable and unit to null', () => {
+  it('defaults presentations to an empty array', () => {
     const result = inputRowSchema.safeParse({
       label: 'Test',
       position: 0,
     });
     expect(result.success).toBe(true);
     if (result.success) {
-      expect(result.data.standardVariable).toBeNull();
-      expect(result.data.unit).toBeNull();
+      expect(result.data.presentations).toEqual([]);
+    }
+  });
+
+  it('defaults presentation standardVariable and unit to null', () => {
+    const result = inputRowSchema.safeParse({
+      label: 'Test',
+      position: 0,
+      presentations: [{}],
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.presentations[0]?.standardVariable).toBeNull();
+      expect(result.data.presentations[0]?.unit).toBeNull();
     }
   });
 });
@@ -106,8 +139,7 @@ describe('configurationFormSchema', () => {
           label: 'Precip',
           position: 0,
           isOptional: false,
-          standardVariable: null,
-          unit: null,
+          presentations: [],
         },
       ],
       outputs: [],
@@ -120,12 +152,13 @@ describe('configurationFormSchema', () => {
 });
 
 describe('emptyInputRow', () => {
-  it('creates a row with position set', () => {
+  it('creates a row with position set and one empty variable slot', () => {
     const row = emptyInputRow(3);
     expect(row.position).toBe(3);
     expect(row.isOptional).toBe(false);
-    expect(row.standardVariable).toBeNull();
-    expect(row.unit).toBeNull();
+    expect(row.presentations).toHaveLength(1);
+    expect(row.presentations[0]?.standardVariable).toBeNull();
+    expect(row.presentations[0]?.unit).toBeNull();
   });
 });
 

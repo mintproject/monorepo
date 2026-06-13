@@ -29,7 +29,13 @@ const emptyRefDataMock = {
 
 // ─── Test wrapper ────────────────────────────────────────────────────────────
 
-function InputsFormWrapper({ prefix }: { prefix: 'inputs' | 'outputs' }) {
+function InputsFormWrapper({
+  prefix,
+  allowMultipleVariables = false,
+}: {
+  prefix: 'inputs' | 'outputs';
+  allowMultipleVariables?: boolean;
+}) {
   const methods = useForm<ConfigurationFormSchema>({
     resolver: zodResolver(configurationFormSchema),
     defaultValues: {
@@ -45,7 +51,7 @@ function InputsFormWrapper({ prefix }: { prefix: 'inputs' | 'outputs' }) {
   return (
     <FormProvider {...methods}>
       <form>
-        <InputOutputSection prefix={prefix} />
+        <InputOutputSection prefix={prefix} allowMultipleVariables={allowMultipleVariables} />
       </form>
     </FormProvider>
   );
@@ -141,7 +147,7 @@ describe('InputRow', () => {
     expect(screen.getByText(/optional \(not required for model execution\)/i)).toBeInTheDocument();
   });
 
-  it('toggles collapsible variable overrides', async () => {
+  it('toggles collapsible long name / short name overrides', async () => {
     renderWithProviders(<InputsFormWrapper prefix="inputs" />, {
       apolloMocks: [emptyRefDataMock],
     });
@@ -149,14 +155,68 @@ describe('InputRow', () => {
     await userEvent.click(screen.getByRole('button', { name: /add input/i }));
 
     // Overrides should be hidden initially
-    expect(screen.queryByPlaceholderText('Override label')).not.toBeInTheDocument();
+    expect(screen.queryByPlaceholderText('Long name')).not.toBeInTheDocument();
 
     // Open overrides
-    await userEvent.click(screen.getByText(/variable label overrides/i));
-    expect(screen.getByPlaceholderText('Override label')).toBeInTheDocument();
+    await userEvent.click(screen.getByText(/long name \/ short name/i));
+    expect(screen.getByPlaceholderText('Long name')).toBeInTheDocument();
 
     // Close overrides
-    await userEvent.click(screen.getByText(/variable label overrides/i));
-    expect(screen.queryByPlaceholderText('Override label')).not.toBeInTheDocument();
+    await userEvent.click(screen.getByText(/long name \/ short name/i));
+    expect(screen.queryByPlaceholderText('Long name')).not.toBeInTheDocument();
+  });
+});
+
+describe('InputRow variables (presentations)', () => {
+  it('shows a single fixed variable editor and no Add Variable button when single-presentation', async () => {
+    renderWithProviders(<InputsFormWrapper prefix="inputs" />, {
+      apolloMocks: [emptyRefDataMock],
+    });
+
+    await userEvent.click(screen.getByRole('button', { name: /add input/i }));
+
+    // One presentation editor with Standard Variable + Unit fields
+    expect(screen.getByText('Standard Variable')).toBeInTheDocument();
+    expect(screen.getByText('Unit')).toBeInTheDocument();
+    // No add/remove of variables in single-presentation mode
+    expect(screen.queryByRole('button', { name: /add variable/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /remove variable/i })).not.toBeInTheDocument();
+  });
+
+  it('adds and removes variables when multiple are allowed', async () => {
+    renderWithProviders(<InputsFormWrapper prefix="inputs" allowMultipleVariables />, {
+      apolloMocks: [emptyRefDataMock],
+    });
+
+    await userEvent.click(screen.getByRole('button', { name: /add input/i }));
+
+    // Seeded with one variable
+    expect(screen.getByText('Variable 1')).toBeInTheDocument();
+
+    // Add a second variable
+    await userEvent.click(screen.getByRole('button', { name: /add variable/i }));
+    expect(screen.getByText('Variable 2')).toBeInTheDocument();
+
+    // Remove the second variable
+    const removeButtons = screen.getAllByRole('button', { name: /remove variable/i });
+    await userEvent.click(removeButtons[1]!);
+    await waitFor(() => {
+      expect(screen.queryByText('Variable 2')).not.toBeInTheDocument();
+    });
+  });
+
+  it('can reach zero variables by removing the seeded one', async () => {
+    renderWithProviders(<InputsFormWrapper prefix="inputs" allowMultipleVariables />, {
+      apolloMocks: [emptyRefDataMock],
+    });
+
+    await userEvent.click(screen.getByRole('button', { name: /add input/i }));
+
+    const removeButtons = screen.getAllByRole('button', { name: /remove variable/i });
+    await userEvent.click(removeButtons[0]!);
+
+    await waitFor(() => {
+      expect(screen.getByText(/this input carries zero standard variables/i)).toBeInTheDocument();
+    });
   });
 });

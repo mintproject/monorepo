@@ -59,18 +59,21 @@ import { AuthorSection } from './AuthorSection';
 
 /** Map a loaded configuration to form data. */
 function configToFormData(config: ConfigurationFieldsFragment): ConfigurationFormSchema {
-  const inputs = config.inputs.map((inp, i) => {
-    const ds = inp.input;
-    const vp = ds.presentations?.[0]?.presentation;
-    return {
-      existingId: ds.id,
+  // The edit form is single-presentation: map presentation[0] into a one-element
+  // presentations list. Existing inputs with multiple presentations keep the extras
+  // intact on save (the diff only touches the first). Full multi-presentation editing
+  // is a follow-up — see the register page for the multi-variable UI.
+  const toPresentationList = (
+    vp:
+      | NonNullable<
+          NonNullable<
+            ConfigurationFieldsFragment['inputs'][number]['input']['presentations']
+          >[number]
+        >['presentation']
+      | undefined,
+  ) => [
+    {
       existingPresentationId: vp?.id,
-      label: ds.label ?? '',
-      description: ds.description ?? '',
-      hasFormat: ds.has_format ?? '',
-      hasDimensionality: ds.has_dimensionality ?? undefined,
-      position: ds.position ?? i,
-      isOptional: inp.is_optional ?? false,
       standardVariable: vp?.standard_variable
         ? {
             id: vp.standard_variable.id,
@@ -82,6 +85,21 @@ function configToFormData(config: ConfigurationFieldsFragment): ConfigurationFor
       variableLabel: vp?.label ?? '',
       variableLongName: vp?.has_long_name ?? '',
       variableShortName: vp?.has_short_name ?? '',
+    },
+  ];
+
+  const inputs = config.inputs.map((inp, i) => {
+    const ds = inp.input;
+    const vp = ds.presentations?.[0]?.presentation;
+    return {
+      existingId: ds.id,
+      label: ds.label ?? '',
+      description: ds.description ?? '',
+      hasFormat: ds.has_format ?? '',
+      hasDimensionality: ds.has_dimensionality ?? undefined,
+      position: ds.position ?? i,
+      isOptional: inp.is_optional ?? false,
+      presentations: toPresentationList(vp),
     };
   });
 
@@ -90,24 +108,13 @@ function configToFormData(config: ConfigurationFieldsFragment): ConfigurationFor
     const vp = ds.presentations?.[0]?.presentation;
     return {
       existingId: ds.id,
-      existingPresentationId: vp?.id,
       label: ds.label ?? '',
       description: ds.description ?? '',
       hasFormat: ds.has_format ?? '',
       hasDimensionality: ds.has_dimensionality ?? undefined,
       position: ds.position ?? i,
       isOptional: false,
-      standardVariable: vp?.standard_variable
-        ? {
-            id: vp.standard_variable.id,
-            label: vp.standard_variable.label ?? '',
-            description: vp.standard_variable.description ?? null,
-          }
-        : null,
-      unit: vp?.unit ? { id: vp.unit.id, label: vp.unit.label ?? '' } : null,
-      variableLabel: vp?.label ?? '',
-      variableLongName: vp?.has_long_name ?? '',
-      variableShortName: vp?.has_short_name ?? '',
+      presentations: toPresentationList(vp),
     };
   });
 
@@ -254,16 +261,17 @@ export function ConfigurationForm({ configurationId, onSaved, onCancel }: Config
             position: row.position,
           },
         });
-        // Update VariablePresentation if it exists
-        if (row.existingPresentationId) {
+        // Update the first VariablePresentation if it exists (single-presentation edit)
+        const vp = row.presentations[0];
+        if (vp?.existingPresentationId) {
           await updateVarPresentation({
             variables: {
-              id: row.existingPresentationId,
-              label: row.variableLabel ?? row.label,
-              hasLongName: row.variableLongName ?? null,
-              hasShortName: row.variableShortName ?? null,
-              hasStandardVariable: row.standardVariable?.id ?? null,
-              usesUnit: row.unit?.id ?? null,
+              id: vp.existingPresentationId,
+              label: vp.variableLabel || row.label,
+              hasLongName: vp.variableLongName ?? null,
+              hasShortName: vp.variableShortName ?? null,
+              hasStandardVariable: vp.standardVariable?.id ?? null,
+              usesUnit: vp.unit?.id ?? null,
             },
           });
         }
@@ -300,16 +308,17 @@ export function ConfigurationForm({ configurationId, onSaved, onCancel }: Config
             position: row.position,
           },
         });
-        // Update VariablePresentation if it exists
-        if (row.existingPresentationId) {
+        // Update the first VariablePresentation if it exists (single-presentation edit)
+        const vp = row.presentations[0];
+        if (vp?.existingPresentationId) {
           await updateVarPresentation({
             variables: {
-              id: row.existingPresentationId,
-              label: row.variableLabel ?? row.label,
-              hasLongName: row.variableLongName ?? null,
-              hasShortName: row.variableShortName ?? null,
-              hasStandardVariable: row.standardVariable?.id ?? null,
-              usesUnit: row.unit?.id ?? null,
+              id: vp.existingPresentationId,
+              label: vp.variableLabel || row.label,
+              hasLongName: vp.variableLongName ?? null,
+              hasShortName: vp.variableShortName ?? null,
+              hasStandardVariable: vp.standardVariable?.id ?? null,
+              usesUnit: vp.unit?.id ?? null,
             },
           });
         }

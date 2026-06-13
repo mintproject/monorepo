@@ -1,8 +1,4 @@
-mutation SaveConfigurationMetadata(
-  $id: String!
-  $label: String!
-  $description: String
-) {
+mutation SaveConfigurationMetadata($id: String!, $label: String!, $description: String) {
   update_modelcatalog_configuration_by_pk(
     pk_columns: { id: $id }
     _set: { label: $label, description: $description }
@@ -22,12 +18,7 @@ mutation AddConfigurationInput(
   $hasFormat: String
   $hasDimensionality: Int
   $position: Int!
-  $presentationId: String!
-  $presentationLabel: String!
-  $hasLongName: String
-  $hasShortName: String
-  $hasStandardVariable: String
-  $usesUnit: String
+  $presentations: [modelcatalog_dataset_specification_presentation_insert_input!]!
 ) {
   insert_modelcatalog_configuration_input_one(
     object: {
@@ -41,22 +32,7 @@ mutation AddConfigurationInput(
           has_format: $hasFormat
           has_dimensionality: $hasDimensionality
           position: $position
-          presentations: {
-            data: [
-              {
-                presentation: {
-                  data: {
-                    id: $presentationId
-                    label: $presentationLabel
-                    has_long_name: $hasLongName
-                    has_short_name: $hasShortName
-                    has_standard_variable: $hasStandardVariable
-                    uses_unit: $usesUnit
-                  }
-                }
-              }
-            ]
-          }
+          presentations: { data: $presentations }
         }
       }
     }
@@ -79,12 +55,7 @@ mutation AddConfigurationOutput(
   $hasFormat: String
   $hasDimensionality: Int
   $position: Int!
-  $presentationId: String!
-  $presentationLabel: String!
-  $hasLongName: String
-  $hasShortName: String
-  $hasStandardVariable: String
-  $usesUnit: String
+  $presentations: [modelcatalog_dataset_specification_presentation_insert_input!]!
 ) {
   insert_modelcatalog_configuration_output_one(
     object: {
@@ -97,22 +68,7 @@ mutation AddConfigurationOutput(
           has_format: $hasFormat
           has_dimensionality: $hasDimensionality
           position: $position
-          presentations: {
-            data: [
-              {
-                presentation: {
-                  data: {
-                    id: $presentationId
-                    label: $presentationLabel
-                    has_long_name: $hasLongName
-                    has_short_name: $hasShortName
-                    has_standard_variable: $hasStandardVariable
-                    uses_unit: $usesUnit
-                  }
-                }
-              }
-            ]
-          }
+          presentations: { data: $presentations }
         }
       }
     }
@@ -189,10 +145,7 @@ mutation DeleteConfigurationOutput($configurationId: String!, $outputId: String!
   }
 }
 
-mutation DeleteConfigurationParameter(
-  $configurationId: String!
-  $parameterId: String!
-) {
+mutation DeleteConfigurationParameter($configurationId: String!, $parameterId: String!) {
   delete_modelcatalog_configuration_parameter_by_pk(
     configuration_id: $configurationId
     parameter_id: $parameterId
@@ -307,11 +260,7 @@ mutation RegisterModel(
   }
 }
 
-mutation UpdateConfiguration(
-  $id: String!
-  $label: String!
-  $description: String
-) {
+mutation UpdateConfiguration($id: String!, $label: String!, $description: String) {
   update_modelcatalog_configuration_by_pk(
     pk_columns: { id: $id }
     _set: { label: $label, description: $description }
@@ -327,10 +276,7 @@ mutation UpdateConfiguration(
 mutation AddConfigurationAuthor($configurationId: String!, $personId: String!) {
   insert_modelcatalog_configuration_author_one(
     object: { configuration_id: $configurationId, person_id: $personId }
-    on_conflict: {
-      constraint: modelcatalog_configuration_author_pkey
-      update_columns: []
-    }
+    on_conflict: { constraint: modelcatalog_configuration_author_pkey, update_columns: [] }
   ) {
     configuration_id
     person_id
@@ -350,10 +296,7 @@ mutation DeleteConfigurationAuthor($configurationId: String!, $personId: String!
 mutation AddConfigurationRegion($configurationId: String!, $regionId: String!) {
   insert_modelcatalog_configuration_region_one(
     object: { configuration_id: $configurationId, region_id: $regionId }
-    on_conflict: {
-      constraint: modelcatalog_configuration_region_pkey
-      update_columns: []
-    }
+    on_conflict: { constraint: modelcatalog_configuration_region_pkey, update_columns: [] }
   ) {
     configuration_id
     region_id
@@ -422,11 +365,7 @@ mutation InsertConfigurationInputJunction(
   $isOptional: Boolean!
 ) {
   insert_modelcatalog_configuration_input_one(
-    object: {
-      configuration_id: $configurationId
-      input_id: $inputId
-      is_optional: $isOptional
-    }
+    object: { configuration_id: $configurationId, input_id: $inputId, is_optional: $isOptional }
     on_conflict: {
       constraint: modelcatalog_configuration_input_pkey
       update_columns: [is_optional]
@@ -439,19 +378,10 @@ mutation InsertConfigurationInputJunction(
 }
 
 # Re-insert the configuration_output junction row after deleting it (for is_optional update).
-mutation InsertConfigurationOutputJunction(
-  $configurationId: String!
-  $outputId: String!
-) {
+mutation InsertConfigurationOutputJunction($configurationId: String!, $outputId: String!) {
   insert_modelcatalog_configuration_output_one(
-    object: {
-      configuration_id: $configurationId
-      output_id: $outputId
-    }
-    on_conflict: {
-      constraint: modelcatalog_configuration_output_pkey
-      update_columns: []
-    }
+    object: { configuration_id: $configurationId, output_id: $outputId }
+    on_conflict: { constraint: modelcatalog_configuration_output_pkey, update_columns: [] }
   ) {
     configuration_id
     output_id
