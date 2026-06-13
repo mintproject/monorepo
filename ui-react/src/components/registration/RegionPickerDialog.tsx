@@ -75,25 +75,43 @@ export function RegionPickerDialog({
     return map;
   }, [data]);
 
+  const categoryById = React.useMemo(() => {
+    const map: Record<string, string> = {};
+    (data?.region_category ?? []).forEach((c) => {
+      map[c.id] = c.name;
+    });
+    return map;
+  }, [data]);
+
+  // `activeId` is the selected top-level category; `activeLevelId` is the actual
+  // category queried — either the top category itself or one of its subcategory
+  // levels (e.g. Administrative → Administrative Level 2).
   const [activeId, setActiveId] = React.useState<string | null>(null);
+  const [activeLevelId, setActiveLevelId] = React.useState<string | null>(null);
+
+  const selectTopCategory = (id: string) => {
+    setActiveId(id);
+    setActiveLevelId(id);
+  };
 
   React.useEffect(() => {
     if (!open) return;
     if (topCategories.length === 0) return;
     const stillValid = topCategories.some((c) => c.id === activeId);
-    if (!stillValid) setActiveId(topCategories[0]?.id ?? null);
+    if (!stillValid) {
+      const first = topCategories[0]?.id ?? null;
+      setActiveId(first);
+      setActiveLevelId(first);
+    }
   }, [open, topCategories, activeId]);
 
-  const activeCategoryIds = React.useMemo(
-    () => (activeId ? [activeId, ...(subCategoryMap[activeId] ?? [])] : []),
-    [activeId, subCategoryMap],
-  );
+  const subLevels = activeId ? (subCategoryMap[activeId] ?? []) : [];
 
   const { data: regionData, loading: regionsLoading } = useQuery<{ region: PickerRegion[] }>(
     REGIONS_BY_CATEGORIES,
     {
-      variables: { categoryIds: activeCategoryIds },
-      skip: !open || activeCategoryIds.length === 0,
+      variables: { categoryIds: activeLevelId ? [activeLevelId] : [] },
+      skip: !open || !activeLevelId,
       fetchPolicy: 'cache-first',
     },
   );
@@ -163,7 +181,7 @@ export function RegionPickerDialog({
                     type="button"
                     role="tab"
                     aria-selected={active}
-                    onClick={() => setActiveId(cat.id)}
+                    onClick={() => selectTopCategory(cat.id)}
                     className={cn(
                       'inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm transition-colors',
                       active
@@ -177,6 +195,36 @@ export function RegionPickerDialog({
                 );
               })}
             </div>
+
+            {/* Level sub-tabs (e.g. Administrative / Level 2 / Level 3) */}
+            {subLevels.length > 0 && activeId && (
+              <div
+                className="flex flex-wrap gap-1.5"
+                role="tablist"
+                aria-label={`${categoryById[activeId] ?? ''} levels`}
+              >
+                {[activeId, ...subLevels].map((levelId) => {
+                  const active = levelId === activeLevelId;
+                  return (
+                    <button
+                      key={levelId}
+                      type="button"
+                      role="tab"
+                      aria-selected={active}
+                      onClick={() => setActiveLevelId(levelId)}
+                      className={cn(
+                        'rounded-md border px-2.5 py-1 text-xs transition-colors',
+                        active
+                          ? 'border-primary bg-primary/5 font-medium text-primary'
+                          : 'border-transparent text-muted-foreground hover:bg-accent',
+                      )}
+                    >
+                      {categoryById[levelId] ?? levelId}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
 
             {/* Region map for the active category */}
             <div role="tabpanel">

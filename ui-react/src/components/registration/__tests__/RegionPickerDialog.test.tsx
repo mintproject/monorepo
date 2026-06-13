@@ -128,4 +128,78 @@ describe('RegionPickerDialog', () => {
     await user.click(await screen.findByText('Texas'));
     await waitFor(() => expect(onChange).toHaveBeenCalledWith([{ id: 'tx', label: 'Texas' }]));
   });
+
+  it('filters by administrative level via the level sub-tabs', async () => {
+    const user = userEvent.setup();
+    const adminCategoriesMock = {
+      request: { query: ListRegionCategoriesDocument },
+      result: {
+        data: {
+          region_category: [
+            {
+              __typename: 'region_category',
+              id: 'administrative',
+              name: 'Administrative',
+              citation: null,
+              sub_categories: [
+                { __typename: 'region_category_tree', region_category_id: 'admin_2' },
+              ],
+            },
+            {
+              __typename: 'region_category',
+              id: 'admin_2',
+              name: 'Administrative Level 2',
+              citation: null,
+              sub_categories: [],
+            },
+          ],
+        },
+      },
+    };
+    const baseMock = {
+      request: { query: REGIONS_BY_CATEGORIES, variables: { categoryIds: ['administrative'] } },
+      result: {
+        data: {
+          region: [
+            {
+              __typename: 'region',
+              id: 'et',
+              name: 'Ethiopia',
+              category_id: 'administrative',
+              geometries: [{ __typename: 'region_geometry', id: 1, geometry: texasGeometry }],
+            },
+          ],
+        },
+      },
+    };
+    const level2Mock = {
+      request: { query: REGIONS_BY_CATEGORIES, variables: { categoryIds: ['admin_2'] } },
+      result: {
+        data: {
+          region: [
+            {
+              __typename: 'region',
+              id: 'oromia',
+              name: 'Oromia',
+              category_id: 'admin_2',
+              geometries: [{ __typename: 'region_geometry', id: 2, geometry: texasGeometry }],
+            },
+          ],
+        },
+      },
+    };
+
+    renderWithProviders(
+      <RegionPickerDialog open onOpenChange={() => {}} selected={[]} onChange={() => {}} />,
+      { apolloMocks: [adminCategoriesMock, baseMock, level2Mock] },
+    );
+
+    // Base administrative level is active by default.
+    expect(await screen.findByText('Ethiopia')).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /^Administrative Level 2$/ })).toBeInTheDocument();
+
+    // Switching to the Level 2 sub-tab loads that level's regions.
+    await user.click(screen.getByRole('tab', { name: /^Administrative Level 2$/ }));
+    expect(await screen.findByText('Oromia')).toBeInTheDocument();
+  });
 });
