@@ -10,6 +10,7 @@
  */
 import * as React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useMutation } from '@apollo/client';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { FormProvider, useForm } from 'react-hook-form';
 import { Loader2 } from 'lucide-react';
@@ -46,11 +47,13 @@ import {
 } from '@/lib/mutation-builder';
 import { resolveSubmitPlan } from '@/lib/create-model';
 import { generateMintUri } from '@/lib/uri';
+import { UPSERT_MODELCATALOG_REGION } from '@/graphql/region-picker';
 import {
   createModelSchema,
   emptyCreateModel,
   type CreateModelSchema,
 } from '@/schemas/registration';
+import { RegionScopeSection } from './RegionScopeSection';
 import { OptionalDetailsSection } from './OptionalDetailsSection';
 
 export function CreateModelForm() {
@@ -69,6 +72,7 @@ export function CreateModelForm() {
   const [addOutput] = useAddConfigurationOutputMutation();
   const [addParameter] = useAddConfigurationParameterMutation();
   const [addRegion] = useAddConfigurationRegionMutation();
+  const [upsertRegion] = useMutation(UPSERT_MODELCATALOG_REGION);
 
   const onSubmit = async (data: CreateModelSchema) => {
     setSubmitError(null);
@@ -105,9 +109,16 @@ export function CreateModelForm() {
         ),
       );
 
-      await Promise.all(
-        data.regions.map((r) => addRegion({ variables: { configurationId, regionId: r.id } })),
-      );
+      // Region scope: mirror each chosen geographic region into modelcatalog_region
+      // (so the junction FK resolves), then link it to this configuration.
+      if (data.isRegionSpecific && data.regions.length > 0) {
+        await Promise.all(
+          data.regions.map(async (r) => {
+            await upsertRegion({ variables: { id: r.id, label: r.label } });
+            await addRegion({ variables: { configurationId, regionId: r.id } });
+          }),
+        );
+      }
 
       // NOTE: license, website, and keywords are collected but not yet persisted —
       // no mutation target exists for standalone configs. Tracked as a follow-up.
@@ -167,6 +178,8 @@ export function CreateModelForm() {
                   )}
                 />
 
+                <Separator />
+                <RegionScopeSection />
                 <Separator />
                 <ParameterSection />
                 <Separator />

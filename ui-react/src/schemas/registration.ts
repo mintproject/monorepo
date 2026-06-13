@@ -44,6 +44,9 @@ export const createModelSchema = z.object({
   inputs: z.array(inputRowSchema),
   outputs: z.array(inputRowSchema),
   parameters: z.array(parameterRowSchema),
+  // `isRegionSpecific` gates region selection: off (default) means the model is
+  // non-spatial or works anywhere; on means it is calibrated for the picked regions.
+  isRegionSpecific: z.boolean(),
   regions: z.array(regionSelectionSchema),
   license: z.string().optional(),
   website: z.string().url('Enter a valid URL').optional().or(z.literal('')),
@@ -60,6 +63,7 @@ export function emptyCreateModel(): CreateModelSchema {
     inputs: [],
     outputs: [],
     parameters: [],
+    isRegionSpecific: false,
     regions: [],
     license: '',
     website: '',
