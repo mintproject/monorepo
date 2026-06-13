@@ -183,6 +183,18 @@ describe('InputRow variables (presentations)', () => {
     expect(screen.queryByRole('button', { name: /remove variable/i })).not.toBeInTheDocument();
   });
 
+  it('starts a new input with zero variables', async () => {
+    renderWithProviders(<InputsFormWrapper prefix="inputs" allowMultipleVariables />, {
+      apolloMocks: [emptyRefDataMock],
+    });
+
+    await userEvent.click(screen.getByRole('button', { name: /add input/i }));
+
+    // No variables yet — empty state shown, no variable cards
+    expect(screen.getByText(/this input carries zero standard variables/i)).toBeInTheDocument();
+    expect(screen.queryByText('Variable 1')).not.toBeInTheDocument();
+  });
+
   it('adds and removes variables when multiple are allowed', async () => {
     renderWithProviders(<InputsFormWrapper prefix="inputs" allowMultipleVariables />, {
       apolloMocks: [emptyRefDataMock],
@@ -190,7 +202,8 @@ describe('InputRow variables (presentations)', () => {
 
     await userEvent.click(screen.getByRole('button', { name: /add input/i }));
 
-    // Seeded with one variable
+    // Add the first variable
+    await userEvent.click(screen.getByRole('button', { name: /add variable/i }));
     expect(screen.getByText('Variable 1')).toBeInTheDocument();
 
     // Add a second variable
@@ -205,12 +218,14 @@ describe('InputRow variables (presentations)', () => {
     });
   });
 
-  it('can reach zero variables by removing the seeded one', async () => {
+  it('returns to the empty state after removing the last variable', async () => {
     renderWithProviders(<InputsFormWrapper prefix="inputs" allowMultipleVariables />, {
       apolloMocks: [emptyRefDataMock],
     });
 
     await userEvent.click(screen.getByRole('button', { name: /add input/i }));
+    await userEvent.click(screen.getByRole('button', { name: /add variable/i }));
+    expect(screen.getByText('Variable 1')).toBeInTheDocument();
 
     const removeButtons = screen.getAllByRole('button', { name: /remove variable/i });
     await userEvent.click(removeButtons[0]!);

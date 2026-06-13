@@ -152,13 +152,11 @@ describe('configurationFormSchema', () => {
 });
 
 describe('emptyInputRow', () => {
-  it('creates a row with position set and one empty variable slot', () => {
+  it('creates a row with position set and zero variables', () => {
     const row = emptyInputRow(3);
     expect(row.position).toBe(3);
     expect(row.isOptional).toBe(false);
-    expect(row.presentations).toHaveLength(1);
-    expect(row.presentations[0]?.standardVariable).toBeNull();
-    expect(row.presentations[0]?.unit).toBeNull();
+    expect(row.presentations).toEqual([]);
   });
 });
 

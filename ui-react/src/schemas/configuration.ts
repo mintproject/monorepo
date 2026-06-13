@@ -119,9 +119,8 @@ export function emptyInputRow(position: number): InputRowSchema {
     hasFormat: '',
     position,
     isOptional: false,
-    // Start with one empty variable slot — the common single-variable case.
-    // Users can remove it (zero variables) or add more.
-    presentations: [emptyPresentationRow()],
+    // Start with zero variables — the user adds them explicitly with "Add Variable".
+    presentations: [],
   };
 }
 
