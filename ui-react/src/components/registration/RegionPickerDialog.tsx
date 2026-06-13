@@ -7,8 +7,7 @@
  * caller mirrors these into `modelcatalog_region` on save.
  */
 import * as React from 'react';
-import { useQuery } from '@apollo/client';
-import { Building2, Droplets, MapPin, Wheat, X } from 'lucide-react';
+import { Building2, Check, Droplets, MapPin, Search, Wheat, X } from 'lucide-react';
 
 import {
   Dialog,
@@ -20,9 +19,13 @@ import {
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
-import { useListRegionCategoriesQuery } from '@/graphql/generated/graphql';
-import { REGIONS_BY_CATEGORIES, type PickerRegion } from '@/graphql/region-picker';
+import {
+  useListRegionCategoriesQuery,
+  useListRegionsByCategoryQuery,
+} from '@/graphql/generated/graphql';
+import type { PickerRegion } from '@/graphql/region-picker';
 import { RegionSelectMap } from './RegionSelectMap';
 import type { RegionSelection } from '@/lib/mutation-builder';
 import { cn } from '@/lib/utils';
@@ -107,15 +110,26 @@ export function RegionPickerDialog({
 
   const subLevels = activeId ? (subCategoryMap[activeId] ?? []) : [];
 
-  const { data: regionData, loading: regionsLoading } = useQuery<{ region: PickerRegion[] }>(
-    REGIONS_BY_CATEGORIES,
-    {
-      variables: { categoryIds: activeLevelId ? [activeLevelId] : [] },
-      skip: !open || !activeLevelId,
-      fetchPolicy: 'cache-first',
-    },
-  );
-  const regions = regionData?.region ?? [];
+  // Reuse the generated query the /regions pages use — it applies the
+  // `parent_region_id IS NOT NULL` leaf filter, so container regions aren't pickable.
+  const { data: regionData, loading: regionsLoading } = useListRegionsByCategoryQuery({
+    variables: { categoryId: activeLevelId ?? '' },
+    skip: !open || !activeLevelId,
+  });
+  const allRegions: PickerRegion[] = React.useMemo(() => regionData?.region ?? [], [regionData]);
+
+  const [search, setSearch] = React.useState('');
+
+  // Reset the search box whenever the visible category/level changes.
+  React.useEffect(() => {
+    setSearch('');
+  }, [activeLevelId]);
+
+  const regions = React.useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return allRegions;
+    return allRegions.filter((r) => r.name?.toLowerCase().includes(q));
+  }, [allRegions, search]);
 
   const isSelected = (id: string) => selected.some((r) => r.id === id);
 
@@ -133,7 +147,7 @@ export function RegionPickerDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-xl">
+      <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <MapPin className="h-4 w-4 text-primary" />
@@ -226,22 +240,87 @@ export function RegionPickerDialog({
               </div>
             )}
 
-            {/* Region map for the active category */}
-            <div role="tabpanel">
+            {/* Region map + searchable list for the active category */}
+            <div role="tabpanel" className="space-y-2">
               {regionsLoading ? (
-                <div className="flex h-[320px] items-center justify-center rounded-md border bg-muted/30">
+                <div className="flex h-[440px] items-center justify-center rounded-md border bg-muted/30">
                   <LoadingSpinner size="sm" />
                 </div>
-              ) : regions.length === 0 ? (
-                <p className="flex h-[320px] items-center justify-center rounded-md border bg-muted/30 text-center text-sm text-muted-foreground">
+              ) : allRegions.length === 0 ? (
+                <p className="flex h-[440px] items-center justify-center rounded-md border bg-muted/30 text-center text-sm text-muted-foreground">
                   No regions in this category.
                 </p>
               ) : (
-                <RegionSelectMap regions={regions} selectedIds={selectedIds} onToggle={toggle} />
+                <>
+                  <div className="relative">
+                    <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      placeholder="Search regions by name…"
+                      aria-label="Search regions"
+                      className="pl-8"
+                    />
+                  </div>
+
+                  <div className="grid gap-3 md:grid-cols-3">
+                    <div className="md:col-span-2">
+                      <RegionSelectMap
+                        regions={regions}
+                        selectedIds={selectedIds}
+                        onToggle={toggle}
+                        height="440px"
+                      />
+                    </div>
+
+                    <div
+                      data-testid="region-list"
+                      role="listbox"
+                      aria-label="Regions"
+                      aria-multiselectable="true"
+                      className="h-[440px] overflow-y-auto rounded-md border"
+                    >
+                      {regions.length === 0 ? (
+                        <p className="p-3 text-center text-sm text-muted-foreground">
+                          No regions match “{search}”.
+                        </p>
+                      ) : (
+                        <ul>
+                          {regions.map((region) => {
+                            const sel = isSelected(region.id);
+                            return (
+                              <li key={region.id}>
+                                <button
+                                  type="button"
+                                  role="option"
+                                  aria-selected={sel}
+                                  onClick={() => toggle(region)}
+                                  className={cn(
+                                    'flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition-colors hover:bg-accent hover:text-accent-foreground',
+                                    sel && 'bg-accent/50',
+                                  )}
+                                >
+                                  <Check
+                                    className={cn(
+                                      'h-3.5 w-3.5 shrink-0 text-primary',
+                                      sel ? 'opacity-100' : 'opacity-0',
+                                    )}
+                                  />
+                                  <span className="truncate">{region.name || region.id}</span>
+                                </button>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      )}
+                    </div>
+                  </div>
+
+                  <p className="text-xs text-muted-foreground">
+                    Click a region on the map or in the list to select or deselect it.
+                  </p>
+                </>
               )}
-              <p className="mt-1.5 text-xs text-muted-foreground">
-                Click a region on the map to select or deselect it.
-              </p>
             </div>
           </>
         )}

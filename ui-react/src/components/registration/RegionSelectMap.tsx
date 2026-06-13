@@ -64,6 +64,17 @@ export function RegionSelectMap({
     }
   };
 
+  // Identity of the visible regions — refit/remount when the actual set changes,
+  // not merely when its length changes (two same-size categories differ).
+  const regionsKey = regions.map((r) => r.id).join(',');
+  // Remount the layer only when the visible regions or their selection change
+  // (react-leaflet does not re-run `style` on prop change), scoped to this map's
+  // regions so selecting in another category doesn't churn this layer.
+  const selectionKey = regions
+    .filter((r) => selectedIds.has(r.id))
+    .map((r) => r.id)
+    .join(',');
+
   const MapFitter = () => {
     const map = useMapEvents({});
     useEffect(() => {
@@ -78,7 +89,7 @@ export function RegionSelectMap({
           // ignore invalid geometry
         }
       }
-    }, [regions.length]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [map]);
     return null;
   };
 
@@ -95,12 +106,12 @@ export function RegionSelectMap({
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         <LeafletGeoJSON
-          key={`${[...selectedIds].sort().join(',')}-${regions.length}`}
+          key={`${regionsKey}|${selectionKey}`}
           data={featureCollection}
           style={style}
           onEachFeature={onEachFeature}
         />
-        <MapFitter />
+        <MapFitter key={regionsKey} />
       </MapContainer>
     </div>
   );

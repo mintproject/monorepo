@@ -1,38 +1,19 @@
 /**
- * Hand-authored GraphQL operations for the model-registration region picker.
+ * Hand-authored mutation for the model-registration region picker.
  *
- * These intentionally live outside the codegen pipeline (`generated/graphql.ts`)
- * so the picker can read the geographic `region` table (categories + hierarchy)
- * and mirror selections into `modelcatalog_region` without requiring a live
- * Hasura introspection to regenerate types. Consumed via Apollo's `useQuery` /
- * `useMutation`; exported documents are reused by tests for MockedProvider.
+ * The picker reads regions via the generated `useListRegionsByCategoryQuery`
+ * (same query the /regions pages use, so it shares the `parent_region_id IS NOT
+ * NULL` leaf filter). Only this upsert is hand-authored: it has no generated
+ * counterpart and would otherwise need a codegen run against a live Hasura.
  */
 import { gql } from '@apollo/client';
 
+/** The region shape the picker map/list needs (a subset of the generated type). */
 export interface PickerRegion {
   id: string;
   name: string;
-  category_id: string | null;
   geometries: Array<{ id: number; geometry: string | GeoJSON.Geometry }>;
 }
-
-/**
- * Regions whose category is one of the given categories (or their subcategories),
- * including their GeoJSON geometries so the picker can render them on a map.
- */
-export const REGIONS_BY_CATEGORIES = gql`
-  query RegionsByCategories($categoryIds: [String!]!) {
-    region(where: { category_id: { _in: $categoryIds } }, order_by: { name: asc }) {
-      id
-      name
-      category_id
-      geometries {
-        id
-        geometry
-      }
-    }
-  }
-`;
 
 /**
  * Mirror a chosen geographic region into the model catalog so the
