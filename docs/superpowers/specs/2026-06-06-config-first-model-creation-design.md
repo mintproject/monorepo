@@ -9,7 +9,7 @@
 
 The current `/models/register` flow is a rigid 3-step wizard: **Software → Version → Configuration**. Users must define a Software and a Version before they can get to the part they actually care about — the configuration (parameters, inputs, outputs).
 
-Persona: *Will (TACC)* wants to create a "Modflow configuration for Barton Springs" — define its parameters and I/O directly. Linking that to an existing Modflow model is a **second priority**, not a prerequisite. The forced hierarchy gets in his way.
+Persona: _Will (TACC)_ wants to create a "Modflow configuration for Barton Springs" — define its parameters and I/O directly. Linking that to an existing Modflow model is a **second priority**, not a prerequisite. The forced hierarchy gets in his way.
 
 ## Goals
 
@@ -28,11 +28,11 @@ Persona: *Will (TACC)* wants to create a "Modflow configuration for Barton Sprin
 
 The UI is relabeled; **database entities and table names do not change**.
 
-| User sees | Database entity (`modelcatalog_*`) |
-|---|---|
-| **Model** | `Configuration` (a.k.a. ModelConfiguration) |
-| **Model Family** | `Software` |
-| **Version** | `SoftwareVersion` |
+| User sees        | Database entity (`modelcatalog_*`)          |
+| ---------------- | ------------------------------------------- |
+| **Model**        | `Configuration` (a.k.a. ModelConfiguration) |
+| **Model Family** | `Software`                                  |
+| **Version**      | `SoftwareVersion`                           |
 
 Page title becomes **"Create a new model."** The thing being created is a `Configuration`.
 
@@ -69,9 +69,9 @@ Three states inside the optional block:
 
 - **No schema migration needed (verified 2026-06-06).** The original plan called for dropping the `Configuration → SoftwareVersion` FK so a Configuration could be standalone. Verification against the live schema showed this is **unnecessary**: `modelcatalog_configuration.software_version_id` is **already nullable**, and a standard FK ignores NULL values — so a standalone config (`software_version_id = NULL`) is already permitted (confirmed with a transactional insert). The FK only constrains *non-null* links, which is the integrity we want to keep; it also provides `ON DELETE CASCADE` (deleting a Version cleans up its configs). **Decision: keep the FK; ship no `graphql_engine` migration.**
 - **Software link resolution** at submit:
-  - *Existing picked* → associate the Configuration with that Software/Version.
-  - *New family entered* → create `Software` + first `SoftwareVersion`, then associate.
-  - *Blank* → no Software/Version rows created; Configuration is standalone.
+  - _Existing picked_ → associate the Configuration with that Software/Version.
+  - _New family entered_ → create `Software` + first `SoftwareVersion`, then associate.
+  - _Blank_ → no Software/Version rows created; Configuration is standalone.
 - **Region** → stored via the existing `Configuration ↔ region` relationship as metadata. **No `ConfigurationSetup`** is created.
 
 ### Decision: link directly to Software, Version optional
@@ -141,3 +141,5 @@ MSW handlers updated for the new picker query and the new create mutations.
 
 - Browse/tree pages still say "Software / Configuration." A broader relabel to "Model Family / Model" across the app is implied by this change but is **not** part of this spec — track separately.
 - Exact Hasura mutation shape for "create standalone Configuration" depends on current generated operations; confirm during planning whether `RegisterModel` is split or a new mutation is added.
+
+Use worktree to isolate this from the ongoing work on the new registration flow.

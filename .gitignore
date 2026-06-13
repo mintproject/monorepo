@@ -41,3 +41,17 @@ Temporary Items
 
 # OpenWolf context management (local only)
 .wolf/
+
+# Local environment files (secrets, runtime overrides)
+.env.local
+.env.*.local
+
+# Vercel CLI (project linking metadata + local build output)
+.vercel
+
+# Superpowers local brainstorming artifacts
+.superpowers/
+
+# Local working clones (not submodules of this repo)
+dynamo/
+metalearn/

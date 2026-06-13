@@ -1,0 +1,418 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Integrating Option C into the Input row — three options</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#16130f;--ink2:#4a443c;--ink3:#8a8275;--line:#e7e2d8;--line2:#d8d2c5;
+    --paper:#faf7f1;--card:#fff;--accent:#b4451f;--accent2:#1d5c54;--good:#1d5c54;--warn:#9a6b00;--bad:#9c2b1a;--chip:#f1ece1;
+    --shadow:0 1px 2px rgba(30,24,14,.06),0 8px 26px rgba(30,24,14,.07);
+    --shadowbig:0 18px 50px rgba(30,24,14,.22);
+    --mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;--sans:'IBM Plex Sans',system-ui,sans-serif;--serif:'Newsreader',Georgia,serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.55;
+    background-image:radial-gradient(circle at 1px 1px,rgba(120,110,90,.05) 1px,transparent 0);background-size:22px 22px}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 28px 120px}
+  header.hero{padding:60px 0 28px;border-bottom:1px solid var(--line)}
+  .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);margin:0 0 14px}
+  h1{font-family:var(--serif);font-weight:500;font-size:clamp(32px,4.6vw,50px);line-height:1.04;letter-spacing:-.015em;margin:0 0 16px}
+  h1 em{font-style:italic;color:var(--accent)}
+  .lede{font-family:var(--serif);font-size:20px;line-height:1.5;color:var(--ink2);max-width:46em;margin:0}
+  .meta{margin-top:24px;font-family:var(--mono);font-size:12px;color:var(--ink3);display:flex;gap:22px;flex-wrap:wrap}
+  .meta b{color:var(--ink2);font-weight:500}
+
+  .tabs{position:sticky;top:0;z-index:60;display:flex;gap:6px;padding:16px 0;background:linear-gradient(var(--paper),var(--paper) 72%,transparent);flex-wrap:wrap;margin-top:8px}
+  .tab{font-size:13.5px;font-weight:500;border:1px solid var(--line2);background:var(--card);color:var(--ink2);padding:9px 15px;border-radius:999px;cursor:pointer;transition:.15s;display:flex;gap:9px;align-items:center}
+  .tab .dot{width:8px;height:8px;border-radius:50%;background:var(--ink3)}
+  .tab[data-k="modal"] .dot{background:#3b82f6}.tab[data-k="popover"] .dot{background:#9333ea}.tab[data-k="inline"] .dot{background:var(--accent)}
+  .tab.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .tab .pill{font-family:var(--mono);font-size:10px;padding:2px 7px;border-radius:999px;background:rgba(0,0,0,.07)}
+  .tab.on .pill{background:rgba(255,255,255,.16)}
+
+  .panel{display:none}.panel.on{display:block}
+  .head{display:flex;align-items:baseline;gap:13px;margin:8px 0 3px}
+  .head h2{font-family:var(--serif);font-weight:600;font-size:25px;margin:0}
+  .badge{font-family:var(--mono);font-size:11px;padding:3px 9px;border-radius:999px;border:1px solid var(--line2);color:var(--ink2);background:var(--card)}
+  .badge.rec{color:var(--good);border-color:#bfe0d9}
+  .lead{color:var(--ink2);max-width:58em;margin:3px 0 22px}
+
+  .stage{display:grid;grid-template-columns:1fr 320px;gap:28px;align-items:start}
+  @media(max-width:900px){.stage{grid-template-columns:1fr}}
+  .demowrap{position:relative;background:#f3eee4;border:1px solid var(--line);border-radius:18px;padding:24px;min-height:560px;overflow:hidden}
+  .demolabel{font-family:var(--mono);font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--ink3);margin:0 0 14px}
+
+  /* form card (the Input row context) */
+  .formcard{background:var(--card);border:1px solid var(--line2);border-radius:14px;box-shadow:var(--shadow);overflow:visible;position:relative}
+  .frhead{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);padding:11px 16px}
+  .frhead .t{font-family:var(--mono);font-size:11px;letter-spacing:.12em;color:var(--ink2)}
+  .frhead .x{color:var(--ink3);font-size:18px;cursor:default}
+  .frbody{padding:16px}
+  .fgrid{display:grid;grid-template-columns:1fr 120px;gap:13px;margin-bottom:13px}
+  .fld{margin-bottom:13px}
+  .lab{font-size:12px;font-weight:600;color:var(--ink2);margin:0 0 6px;display:block}
+  .lab .req{color:var(--accent)}
+  .inp{width:100%;border:1px solid var(--line2);border-radius:9px;padding:9px 11px;font-family:var(--sans);font-size:13.5px;color:var(--ink);background:#fff}
+  .inp.ph{color:var(--ink3)}
+  .ck{display:flex;align-items:center;gap:9px;font-size:13px;color:var(--ink2);margin-top:4px}
+  .ck .box{width:15px;height:15px;border:1.5px solid var(--line2);border-radius:4px}
+  .ovr{font-size:13px;color:var(--ink2);margin-top:12px;display:flex;gap:7px;align-items:center}
+  .ovr .chev{color:var(--ink3)}
+
+  /* combined trigger (the new merged field) */
+  .ctrig{display:flex;align-items:center;justify-content:space-between;width:100%;border:1px solid var(--line2);border-radius:9px;padding:10px 12px;background:#fff;cursor:pointer;font-size:13.5px;transition:.12s}
+  .ctrig:hover{border-color:var(--ink3)}
+  .ctrig.set{border-color:#cfe0db;background:#f6fbf9}
+  .ctrig .val{display:flex;align-items:center;gap:9px;min-width:0}
+  .ctrig .ph{color:var(--ink3)}
+  .ctrig .nm{font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ctrig .u{font-family:var(--mono);font-size:11px;color:var(--accent2);background:#eaf2f0;border:1px solid #d3e6e2;border-radius:6px;padding:1px 7px;flex:none}
+  .ctrig .chev{color:var(--ink3);flex:none}
+  .merged-tag{font-family:var(--mono);font-size:9.5px;color:var(--accent2);margin-left:7px;letter-spacing:.04em}
+
+  /* ===== picker body (Option C flow) ===== */
+  .picker{background:#fff;display:flex;flex-direction:column;min-height:0}
+  .pk-cols{display:grid;grid-template-columns:1fr 1fr}
+  .pk-col{border-right:1px solid var(--line);display:flex;flex-direction:column;min-width:0;overflow:hidden}
+  .pk-col:last-child{border-right:0}
+  .pk-col .hd{font-size:10.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--ink3);padding:11px 13px 7px;flex:none}
+  .pk-col .scroll{overflow:auto;flex:1;min-height:0}
+  .bitem{padding:9px 13px;font-size:13.5px;cursor:pointer;border-left:2px solid transparent;display:flex;justify-content:space-between;gap:8px}
+  .bitem:hover{background:#f6f2ea}
+  .bitem.on{background:#f0ece3;border-left-color:var(--accent);font-weight:600}
+  .bitem .c{font-family:var(--mono);font-size:10px;color:var(--ink3)}
+  .bempty{padding:14px 13px;color:var(--ink3);font-size:13px}
+  .pk-unit{border-top:1px solid var(--line);background:var(--paper);padding:14px 15px}
+  .picked{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+  .picked .nm{font-weight:600;font-size:15px}
+  .picked .mc{font-family:var(--mono);font-size:10.5px;color:var(--ink3)}
+  .ulabel{font-size:12.5px;font-weight:600;color:var(--ink2);margin:0 0 2px}
+  .ulabel .req{color:var(--accent)}
+  .uhelp{font-size:11.5px;color:var(--ink3);margin:0 0 11px}
+  .uhelp b{color:var(--accent2)}
+  .ucards{display:flex;flex-direction:column;gap:8px}
+  .ucard{display:flex;align-items:center;gap:12px;border:1px solid var(--line2);border-radius:10px;padding:10px 13px;cursor:pointer;background:#fff;transition:.12s}
+  .ucard:hover{border-color:var(--ink3)}
+  .ucard.on{border-color:var(--accent);background:#fdf4ef;box-shadow:0 0 0 1px var(--accent) inset}
+  .ucard .radio{width:16px;height:16px;border-radius:50%;border:2px solid var(--line2);flex:none;position:relative}
+  .ucard.on .radio{border-color:var(--accent)}
+  .ucard.on .radio:after{content:'';position:absolute;inset:3px;border-radius:50%;background:var(--accent)}
+  .ucard .sym{font-family:var(--mono);font-weight:500;font-size:14px;min-width:74px}
+  .ucard .nm{font-size:13px;color:var(--ink2)}
+  .ucard .src{margin-left:auto;font-family:var(--mono);font-size:9.5px;color:var(--accent2);background:#eaf2f0;border:1px solid #d3e6e2;border-radius:5px;padding:2px 7px}
+  .umore{font-size:13px;color:var(--accent);font-weight:600;cursor:pointer;padding:9px 2px 2px;display:inline-flex;gap:7px;align-items:center}
+  .umore:hover{text-decoration:underline}
+  .usearchbar{display:flex;align-items:center;gap:9px;border:1px solid var(--line2);border-radius:9px;padding:8px 11px;margin-bottom:6px;background:#fff}
+  .usearchbar svg{color:var(--ink3);flex:none}
+  .usearchbar input{border:0;outline:0;font-family:var(--sans);font-size:13px;width:100%;background:transparent}
+  .ugroups{max-height:170px;overflow:auto}
+  .udim{font-size:9.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--ink3);padding:10px 6px 4px;position:sticky;top:0;background:var(--paper)}
+  .urow{display:flex;align-items:center;gap:12px;padding:7px 9px;border-radius:8px;cursor:pointer;border-left:2px solid transparent}
+  .urow:hover{background:#f1ece1;border-left-color:var(--accent)}
+  .urow.on{background:#fdf4ef;border-left-color:var(--accent)}
+  .urow .sym{font-family:var(--mono);font-weight:500;font-size:13px;min-width:100px}
+  .urow .nm{font-size:12px;color:var(--ink2)}
+  .urow .src{margin-left:auto;font-family:var(--mono);font-size:9px;color:var(--accent2);background:#eaf2f0;border:1px solid #d3e6e2;border-radius:5px;padding:1px 6px}
+  .pk-foot{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:14px}
+  .pk-hint{font-size:11px;color:var(--ink3)}
+  .btn{background:var(--accent);color:#fff;border:0;border-radius:8px;padding:9px 15px;font-weight:600;font-size:13px;cursor:pointer;font-family:var(--sans)}
+  .btn:disabled{background:var(--line2);cursor:not-allowed}
+  .btn.ghost{background:transparent;color:var(--ink2);border:1px solid var(--line2)}
+
+  /* ---- MODAL ---- */
+  .backdrop{position:fixed;inset:0;background:rgba(28,22,12,.42);backdrop-filter:blur(2px);z-index:80;display:flex;align-items:center;justify-content:center;padding:24px;animation:fade .18s ease}
+  .modal{width:580px;max-width:96vw;background:#fff;border-radius:16px;box-shadow:var(--shadowbig);overflow:hidden;animation:pop .2s ease}
+  .modal .mtop{display:flex;align-items:center;justify-content:space-between;padding:15px 18px;border-bottom:1px solid var(--line)}
+  .modal .mtop h3{margin:0;font-family:var(--serif);font-size:18px;font-weight:600}
+  .modal .mtop .close{border:0;background:none;font-size:20px;color:var(--ink3);cursor:pointer;line-height:1}
+  .modal .pk-cols{height:230px}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  @keyframes pop{from{opacity:0;transform:translateY(10px) scale(.98)}to{opacity:1;transform:none}}
+
+  /* ---- POPOVER ---- */
+  .pop-anchor{position:relative}
+  .popover{position:absolute;top:calc(100% + 8px);left:0;width:540px;max-width:92vw;background:#fff;border:1px solid var(--line2);border-radius:14px;box-shadow:var(--shadowbig);z-index:50;overflow:hidden;animation:pop .16s ease}
+  .popover .pk-cols{height:210px}
+
+  /* ---- INLINE ---- */
+  .inline-pk{border:1px solid var(--accent);border-radius:12px;margin-top:8px;overflow:hidden;background:#fff;box-shadow:0 0 0 3px #fdf4ef;animation:pop .16s ease}
+  .inline-pk .pk-cols{height:200px}
+
+  /* side notes */
+  .notes h4{font-size:12.5px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.1em;color:var(--accent);margin:0 0 11px}
+  .notes ul{margin:0 0 20px;padding-left:17px}
+  .notes li{margin:0 0 9px;font-size:13.5px;color:var(--ink2)}
+  .notes li b{color:var(--ink)}
+  .tline{display:flex;gap:8px;font-size:13px;margin:0 0 8px}
+  .tline .k{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;width:54px;flex:none;padding-top:2px}
+  .tline.pro .k{color:var(--good)}.tline.con .k{color:var(--bad)}
+  .tline p{margin:0;color:var(--ink2)}
+
+  footer{margin-top:64px;padding-top:22px;border-top:1px solid var(--line);font-family:var(--mono);font-size:11.5px;color:var(--ink3);display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+  .recobar{margin-top:30px;background:linear-gradient(180deg,#fff,#fbf8f2);border:1px solid var(--line2);border-radius:14px;padding:20px 22px;box-shadow:var(--shadow);display:flex;gap:16px;align-items:flex-start}
+  .recobar .ic{font-size:22px}
+  .recobar h3{margin:0 0 5px;font-family:var(--serif);font-size:19px;font-weight:600}
+  .recobar p{margin:0;font-size:14px;color:var(--ink2)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <p class="kicker">MINT · Register Model · Option C integration</p>
+  <h1>One Input row. <em>Three ways</em> to open the guided variable + unit picker.</h1>
+  <p class="lede">Option C merges the two independent <strong>Standard Variable</strong> and <strong>Unit</strong> fields into a single guided flow (phenomenon → property → unit). The form schema and mutation stay the same — only how the picker <em>opens</em> changes. Here's that exact moment, in the real Input-row context, rendered three ways. Click the field to open each.</p>
+  <div class="meta">
+    <span><b>Plugs into</b> InputRow.tsx</span>
+    <span><b>Writes</b> standardVariable.id + unit.id</span>
+    <span><b>Schema</b> unchanged</span>
+  </div>
+</header>
+
+<div class="tabs">
+  <button class="tab on" data-k="modal"><span class="dot"></span>1 · Modal dialog <span class="pill">recommended</span></button>
+  <button class="tab" data-k="popover"><span class="dot"></span>2 · Wide popover</button>
+  <button class="tab" data-k="inline"><span class="dot"></span>3 · Inline expand</button>
+</div>
+
+<!-- MODAL -->
+<div class="panel on" data-p="modal">
+  <div class="head"><h2>Modal dialog</h2><span class="badge rec">recommended</span></div>
+  <p class="lead">The merged field is a compact trigger. Clicking it opens a centered modal with the full guided flow — maximum room for the two columns and the unit step, total focus, and it never clips inside a scrolling multi-row form.</p>
+  <div class="stage">
+    <div class="demowrap" id="scene-modal"><p class="demolabel">Register Model → Inputs → Input 1 — click the variable field</p></div>
+    <div class="notes">
+      <h4>What it's like</h4>
+      <ul>
+        <li><b>Most space.</b> The phenomenon→property columns and unit cards all breathe; no truncation even with 8 domains.</li>
+        <li><b>Focus.</b> Dims the form so the user does one thing: resolve this variable. Good for a deliberate, infrequent action.</li>
+        <li><b>No clipping.</b> Works the same whether it's Input 1 or Input 12, and survives the form scrolling.</li>
+        <li><b>shadcn <code style="font-family:var(--mono);font-size:11px">Dialog</code></b> — already in the kit; nothing new to pull in.</li>
+      </ul>
+      <div class="tline pro"><span class="k">For</span><p>Best ergonomics for the hardest field on the form. Scales to any number of rows.</p></div>
+      <div class="tline con"><span class="k">Cost</span><p>An overlay is a heavier gesture; pulls the eye away from the row's other fields.</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- POPOVER -->
+<div class="panel" data-p="popover">
+  <div class="head"><h2>Wide popover</h2><span class="badge">in-context</span></div>
+  <p class="lead">Same trigger, but the flow drops down anchored to the field — wider than the trigger, floating over the form. Lightest gesture, keeps the row visible, mirrors how the current combobox already behaves.</p>
+  <div class="stage">
+    <div class="demowrap" id="scene-popover" style="min-height:620px"><p class="demolabel">Register Model → Inputs → Input 1 — click the variable field</p></div>
+    <div class="notes">
+      <h4>What it's like</h4>
+      <ul>
+        <li><b>In context.</b> The row stays put; the picker feels like an extension of the field, not a detour.</li>
+        <li><b>Familiar.</b> Same mental model as today's <code style="font-family:var(--mono);font-size:11px">StandardVariableCombobox</code> popover — least retraining.</li>
+        <li><b>Lightest.</b> No backdrop, fast open/close for users adding many inputs quickly.</li>
+        <li><b>shadcn <code style="font-family:var(--mono);font-size:11px">Popover</code></b> — also already in the kit.</li>
+      </ul>
+      <div class="tline pro"><span class="k">For</span><p>Speed and context for power users adding row after row.</p></div>
+      <div class="tline con"><span class="k">Cost</span><p>Can clip near the viewport edge / bottom of the page; tighter vertical room for the unit list.</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- INLINE -->
+<div class="panel" data-p="inline">
+  <div class="head"><h2>Inline expand</h2><span class="badge">no overlay</span></div>
+  <p class="lead">No floating layer at all — the row itself expands and the guided flow appears in place, pushing the rest of the row down. Everything stays on one surface.</p>
+  <div class="stage">
+    <div class="demowrap" id="scene-inline" style="min-height:640px"><p class="demolabel">Register Model → Inputs → Input 1 — click the variable field</p></div>
+    <div class="notes">
+      <h4>What it's like</h4>
+      <ul>
+        <li><b>One surface.</b> Nothing floats; the whole interaction is part of the document flow.</li>
+        <li><b>Always visible.</b> The user keeps the row's Label/Format in view while choosing.</li>
+        <li><b>Tradeoff: it shoves.</b> With several inputs, expanding one pushes the others far down — the form gets tall and jumpy.</li>
+        <li><b>Tightest space.</b> Constrained to the row width; the two columns get cramped on narrow screens.</li>
+      </ul>
+      <div class="tline pro"><span class="k">For</span><p>Simplicity; avoids overlay/z-index entirely.</p></div>
+      <div class="tline con"><span class="k">Cost</span><p>Layout jump with many rows; least room for the flow. Weakest of the three for a dense form.</p></div>
+    </div>
+  </div>
+</div>
+
+<div class="recobar">
+  <span class="ic">→</span>
+  <div>
+    <h3>My recommendation: modal dialog</h3>
+    <p>Choosing a variable + unit is the most cognitively loaded field on this form and is done a handful of times, not hundreds. The modal gives the phenomenon→property→unit flow the room it needs and behaves identically no matter how many rows exist or how far the form has scrolled — the two failure modes of popover and inline. If quick repeat-entry turns out to matter more than focus, the same picker component drops into a <code style="font-family:var(--mono);font-size:11px">Popover</code> with a one-line change, since the body is container-agnostic.</p>
+  </div>
+</div>
+
+<footer>
+  <span>MINT — Option C integration into Register Model · visual companion</span>
+  <span>data: live preview · feat/standard-variable-picker-ux</span>
+</footer>
+</div>
+
+<script>
+/* ---- sample flow data (real labels + real presentation units) ---- */
+const FLOW = {
+  'Air':{'Temperature':{label:'air__temperature',units:['degC','K']},'Daily max of temperature':{label:'air__daily_max_of_temperature',units:['degC']}},
+  'Atmosphere water':{'Precipitation volume flux':{label:'atmosphere_water__precipitation_leq_volume_flux',units:['mm h-1','mm day-1','m day-1']},'Precipitation rate':{label:'atmosphere_water__precipitation_rate',units:['mm day-1']}},
+  'Channel water':{'Volume flow rate':{label:'channel_water__volume_flow_rate',units:['m3 s-1']},'Manning n parameter':{label:'channel_water_flow__manning_n_parameter',units:['day/m^(1/3)','m-1/3 s']}},
+  'Soil water':{'Volume fraction':{label:'soil_water__volume_fraction',units:['m3 m-3','%']},'Saturated hydraulic conductivity':{label:'soil_water__saturated_hydraulic_conductivity',units:['m day-1','cm h-1']}},
+  'Aquifer system':{'Recharge rate':{label:'aquifer_system__recharge_rate',units:['mm day-1']},'Hydraulic property set':{label:'aquifer_system__hydraulic_property_set',units:[]}},
+  'Land surface':{'Elevation':{label:'land_surface__elevation',units:['m']}},
+};
+const UNITS={
+  'K':['kelvin','Temperature'],'degC':['degrees Celsius','Temperature'],
+  'm':['metres','Length'],'cm':['centimetres','Length'],'mm':['millimetres','Length'],
+  'm s-1':['metres per second','Speed'],'m day-1':['metres per day','Depth rate'],'mm day-1':['millimetres per day','Depth rate'],
+  'mm h-1':['millimetres per hour','Depth rate'],'cm h-1':['centimetres per hour','Depth rate'],
+  'm3 s-1':['cubic metres per second','Volume flow'],'m3 day-1':['cubic metres per day','Volume flow'],
+  'm3 m-3':['vol. water / vol. soil','Fraction'],'%':['percent','Fraction'],
+  'Pa':['pascals','Pressure'],'ha':['hectares','Area'],'kg ha-1':['kg per hectare','Areal mass'],
+  'W m-2':['watts per square metre','Energy flux'],'day/m^(1/3)':['Manning roughness','Roughness'],'m-1/3 s':['Manning roughness','Roughness'],
+};
+function uName(s){return (UNITS[s]||[s,'Other'])[0];}
+function uDim(s){return (UNITS[s]||['','Other'])[1];}
+const DIM_ORDER=['Temperature','Length','Speed','Depth rate','Volume flow','Fraction','Pressure','Area','Areal mass','Energy flux','Roughness','Other'];
+function unitPretty(u){return u.replace(/(\w)-1\b/g,'$1⁻¹').replace(/(\w)-2\b/g,'$1⁻²').replace(/(\w)-3\b/g,'$1⁻³').replace(/m3\b/,'m³').replace(/m2\b/,'m²').replace(/3 /,'³ ').replace(/2 /,'² ');}
+
+const SEARCH_SVG='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>';
+const CHEV='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m7 15 5 5 5-5M7 9l5-5 5 5"/></svg>';
+
+function suggestCards(units,selSym){
+  return `<div class="ucards">`+units.map(u=>`
+    <div class="ucard ${u===selSym?'on':''}" data-u="${u}"><span class="radio"></span>
+      <span class="sym">${unitPretty(u)}</span><span class="nm">${uName(u)}</span><span class="src">from data</span></div>`).join('')+`</div>`;
+}
+function groupedUnits(suggested,q,selSym){
+  const sset=new Set(suggested);const all=Object.keys(UNITS);const ql=(q||'').toLowerCase();
+  const m=u=>!ql||(u+' '+uName(u)).toLowerCase().includes(ql);let out='';
+  if(suggested.length){const s=suggested.filter(m);if(s.length){out+=`<div class="udim" style="color:var(--accent2)">Suggested for this variable</div>`+
+    s.map(u=>`<div class="urow ${u===selSym?'on':''}" data-u="${u}"><span class="sym">${unitPretty(u)}</span><span class="nm">${uName(u)}</span><span class="src">SUGGESTED</span></div>`).join('');}}
+  for(const dim of DIM_ORDER){const items=all.filter(u=>uDim(u)===dim&&!sset.has(u)&&m(u));if(!items.length)continue;
+    out+=`<div class="udim">${dim}</div>`+items.map(u=>`<div class="urow ${u===selSym?'on':''}" data-u="${u}"><span class="sym">${unitPretty(u)}</span><span class="nm">${uName(u)}</span></div>`).join('');}
+  return out||`<div style="padding:14px;color:var(--ink3);font-size:13px">No units match.</div>`;
+}
+
+/* picker body — container-agnostic */
+function pickerBody(st){
+  const phen=Object.keys(FLOW);
+  const objCol=phen.map(o=>`<div class="bitem ${st.obj===o?'on':''}" data-o="${o}"><span>${o}</span><span class="c">${Object.keys(FLOW[o]).length}</span></div>`).join('');
+  let propCol;
+  if(!st.obj) propCol=`<div class="bempty">Select a phenomenon →</div>`;
+  else propCol=Object.keys(FLOW[st.obj]).map(p=>`<div class="bitem ${st.prop===p?'on':''}" data-q="${p}">${p}</div>`).join('');
+  let unit='';
+  if(st.prop){
+    const node=FLOW[st.obj][st.prop];const units=node.units;
+    let block;
+    if(units.length&&!st.showAll){
+      block=`<div class="uhelp"><b>Used with this variable</b> — one tap:</div>${suggestCards(units,st.unitSym||units[0])}
+        <span class="umore" data-act="all">Need a different unit? Search all 90 ↓</span>`;
+    } else {
+      block=`<div class="uhelp">${units.length?'Search the full list:':'No unit on record — search all units:'}</div>
+        <div class="usearchbar">${SEARCH_SVG}<input class="uSearch" placeholder="Search units by symbol or name…" value="${st.q||''}"></div>
+        <div class="ugroups">${groupedUnits(units,st.q,st.unitSym)}</div>`;
+    }
+    unit=`<div class="pk-unit">
+      <div class="picked"><span class="nm">${st.obj} — ${st.prop}</span><span class="mc">${node.label}</span></div>
+      <div class="ulabel">Unit <span class="req">*</span></div>${block}
+      <div class="pk-foot"><span class="pk-hint">Sets <b>standardVariable</b> &amp; <b>unit</b> in one step</span>
+        <button class="btn use-btn" ${st.unitSym||units.length===0?'':''}>Use variable + unit →</button></div></div>`;
+  } else {
+    unit=`<div class="pk-unit"><div class="ulabel" style="color:var(--ink3)">Unit <span class="req">*</span></div>
+      <div class="uhelp">Pick a phenomenon and property — the unit suggestions appear here.</div></div>`;
+  }
+  return `<div class="picker"><div class="pk-cols">
+    <div class="pk-col"><div class="hd">1 · Phenomenon</div><div class="scroll">${objCol}</div></div>
+    <div class="pk-col"><div class="hd">2 · Property</div><div class="scroll">${propCol}</div></div>
+  </div>${unit}</div>`;
+}
+
+function triggerHTML(st){
+  if(st.chosen){
+    return `<div class="ctrig set"><span class="val"><span class="nm">${st.chosen.obj} — ${st.chosen.prop}</span><span class="u">${unitPretty(st.chosen.unit)}</span></span><span class="chev">${CHEV}</span></div>`;
+  }
+  return `<div class="ctrig"><span class="val"><span class="ph">Choose standard variable &amp; unit…</span></span><span class="chev">${CHEV}</span></div>`;
+}
+
+/* a full Input-row form card; picker container varies by opt */
+function formCard(st,opt){
+  const trig=triggerHTML(st);
+  let mount='';
+  if(st.open){
+    if(opt==='popover') mount=`<div class="popover">${pickerBody(st)}</div>`;
+    if(opt==='inline') mount=`<div class="inline-pk">${pickerBody(st)}</div>`;
+  }
+  const fieldBlock = (opt==='popover')
+    ? `<div class="pop-anchor">${trig}${mount}</div>`
+    : `${trig}${opt==='inline'?mount:''}`;
+  return `<div class="formcard">
+    <div class="frhead"><span class="t">INPUT 1</span><span class="x">✕</span></div>
+    <div class="frbody">
+      <div class="fgrid">
+        <div><label class="lab">Label <span class="req">*</span></label><input class="inp" value="Daily rainfall"></div>
+        <div><label class="lab">Format</label><input class="inp ph" value="CSV"></div>
+      </div>
+      <div class="fld"><label class="lab">Description</label><input class="inp ph" placeholder="Optional description"></div>
+      <div class="fld">
+        <label class="lab">Standard variable &amp; unit <span class="req">*</span><span class="merged-tag">merged field</span></label>
+        ${fieldBlock}
+      </div>
+      <div class="ck"><span class="box"></span>Optional (not required for model execution)</div>
+      <div class="ovr"><span class="chev">›</span> Variable label overrides</div>
+    </div>
+  </div>`;
+}
+
+/* ---- state + paint per scene ---- */
+const ST={modal:newSt(),popover:newSt(),inline:newSt()};
+function newSt(){return{open:false,obj:'Soil water',prop:'Volume fraction',showAll:false,q:'',unitSym:'m3 m-3',chosen:null};}
+
+function paint(opt){
+  const root=document.getElementById('scene-'+opt);
+  const lbl=`<p class="demolabel">Register Model → Inputs → Input 1 — click the variable field</p>`;
+  let html=lbl+formCard(ST[opt],opt);
+  if(opt==='modal'&&ST[opt].open){
+    html+=`<div class="backdrop"><div class="modal">
+      <div class="mtop"><h3>Choose standard variable &amp; unit</h3><button class="close">✕</button></div>
+      ${pickerBody(ST[opt])}</div></div>`;
+  }
+  root.innerHTML=html;
+}
+
+function handle(opt,e){
+  const st=ST[opt];
+  const t=e.target;
+  if(t.closest('.ctrig')){st.open=true;paint(opt);return;}
+  if(t.closest('.close')||t.classList.contains('backdrop')){st.open=false;paint(opt);return;}
+  const o=t.closest('.bitem[data-o]');if(o){st.obj=o.dataset.o;st.prop=null;st.showAll=false;st.unitSym=null;paint(opt);return;}
+  const q=t.closest('.bitem[data-q]');if(q){st.prop=q.dataset.q;st.showAll=false;const u=FLOW[st.obj][st.prop].units;st.unitSym=u[0]||null;paint(opt);return;}
+  if(t.closest('.umore')){st.showAll=true;paint(opt);return;}
+  const uc=t.closest('[data-u]');if(uc){st.unitSym=uc.dataset.u;paint(opt);return;}
+  if(t.closest('.use-btn')){st.chosen={obj:st.obj,prop:st.prop,unit:st.unitSym||FLOW[st.obj][st.prop].units[0]};st.open=false;paint(opt);return;}
+}
+function onInput(opt,e){
+  if(!e.target.classList.contains('uSearch'))return;
+  const st=ST[opt];st.q=e.target.value;
+  const groups=document.querySelector('#scene-'+opt+' .ugroups');
+  if(groups){const units=FLOW[st.obj][st.prop].units;groups.innerHTML=groupedUnits(units,st.q,st.unitSym);}
+}
+
+['modal','popover','inline'].forEach(opt=>{
+  const root=document.getElementById('scene-'+opt);
+  root.addEventListener('click',e=>handle(opt,e));
+  root.addEventListener('input',e=>onInput(opt,e));
+  paint(opt);
+});
+
+/* tabs */
+document.querySelectorAll('.tab').forEach(tab=>tab.addEventListener('click',()=>{
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));tab.classList.add('on');
+  document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('on',p.dataset.p===tab.dataset.k));
+}));
+</script>
+</body>
+</html>

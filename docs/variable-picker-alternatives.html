@@ -1,0 +1,685 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Standard Variable Picker — UX alternatives</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#16130f; --ink2:#4a443c; --ink3:#8a8275; --line:#e7e2d8; --line2:#d8d2c5;
+    --paper:#faf7f1; --card:#ffffff; --accent:#b4451f; --accent2:#1d5c54;
+    --good:#1d5c54; --warn:#9a6b00; --bad:#9c2b1a; --chip:#f1ece1;
+    --shadow:0 1px 2px rgba(30,24,14,.06),0 8px 26px rgba(30,24,14,.07);
+    --mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;
+    --sans:'IBM Plex Sans',system-ui,sans-serif;
+    --serif:'Newsreader',Georgia,serif;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.55;
+    background-image:radial-gradient(circle at 1px 1px,rgba(120,110,90,.05) 1px,transparent 0);background-size:22px 22px;}
+  .wrap{max-width:1060px;margin:0 auto;padding:0 28px 120px}
+  header.hero{padding:64px 0 30px;border-bottom:1px solid var(--line)}
+  .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);margin:0 0 14px}
+  h1{font-family:var(--serif);font-weight:500;font-size:clamp(34px,5vw,56px);line-height:1.03;letter-spacing:-.015em;margin:0 0 18px}
+  h1 em{font-style:italic;color:var(--accent)}
+  .lede{font-family:var(--serif);font-size:21px;line-height:1.5;color:var(--ink2);max-width:46em;margin:0}
+  .meta{margin-top:26px;font-family:var(--mono);font-size:12px;color:var(--ink3);display:flex;gap:22px;flex-wrap:wrap}
+  .meta b{color:var(--ink2);font-weight:500}
+
+  section{padding:54px 0 0}
+  h2{font-family:var(--serif);font-weight:500;font-size:30px;letter-spacing:-.01em;margin:0 0 6px}
+  h2 .n{font-family:var(--mono);font-size:14px;color:var(--accent);vertical-align:super;margin-right:10px}
+  .sub{color:var(--ink2);max-width:54em;margin:0 0 26px}
+
+  /* diagnosis stats */
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:26px 0}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 16px;box-shadow:var(--shadow)}
+  .stat .v{font-family:var(--serif);font-size:34px;font-weight:600;line-height:1;letter-spacing:-.02em}
+  .stat.bad .v{color:var(--bad)} .stat.warn .v{color:var(--warn)} .stat.good .v{color:var(--good)}
+  .stat .l{font-size:12.5px;color:var(--ink2);margin-top:8px;line-height:1.35}
+  .findings{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:8px}
+  .finding{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--bad);border-radius:10px;padding:14px 16px}
+  .finding.rel{border-left-color:var(--accent2)}
+  .finding h4{margin:0 0 6px;font-size:14px;font-weight:600}
+  .finding p{margin:0;font-size:13px;color:var(--ink2)}
+  .finding code{font-family:var(--mono);font-size:11.5px;background:var(--chip);padding:1px 5px;border-radius:5px;color:var(--ink)}
+
+  /* tabs */
+  .tabs{position:sticky;top:0;z-index:20;display:flex;gap:6px;padding:14px 0;background:linear-gradient(var(--paper),var(--paper) 70%,transparent);flex-wrap:wrap;margin-top:10px}
+  .tab{font-family:var(--sans);font-size:13.5px;font-weight:500;border:1px solid var(--line2);background:var(--card);color:var(--ink2);
+    padding:9px 15px;border-radius:999px;cursor:pointer;transition:.15s;display:flex;gap:9px;align-items:center}
+  .tab .dot{width:8px;height:8px;border-radius:50%;background:var(--ink3)}
+  .tab[data-k="A"] .dot{background:#3b82f6}.tab[data-k="B"] .dot{background:#9333ea}.tab[data-k="C"] .dot{background:var(--accent)}
+  .tab:hover{border-color:var(--ink3)}
+  .tab.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .panel{display:none;animation:fade .25s ease}
+  .panel.on{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .alt-head{display:flex;align-items:baseline;gap:14px;margin:6px 0 4px}
+  .alt-head h3{font-family:var(--serif);font-weight:600;font-size:23px;margin:0}
+  .badge{font-family:var(--mono);font-size:11px;padding:3px 9px;border-radius:999px;border:1px solid var(--line2);color:var(--ink2);background:var(--card)}
+  .badge.eff{color:var(--good);border-color:#bfe0d9}.badge.mid{color:var(--warn);border-color:#e8d6a8}.badge.big{color:var(--bad);border-color:#e6bcb2}
+  .alt-sub{color:var(--ink2);max-width:56em;margin:2px 0 22px}
+
+  .stage{display:grid;grid-template-columns:1.05fr .95fr;gap:26px;align-items:start}
+  @media(max-width:880px){.stage{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}.findings{grid-template-columns:1fr}}
+  .mock-frame{background:var(--card);border:1px solid var(--line2);border-radius:16px;box-shadow:var(--shadow);overflow:hidden}
+  .mock-cap{font-family:var(--mono);font-size:11px;color:var(--ink3);text-transform:uppercase;letter-spacing:.12em;margin:0 0 10px}
+  .notes h4{font-size:13px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.1em;color:var(--accent);margin:0 0 10px}
+  .notes ul{margin:0 0 22px;padding-left:18px}
+  .notes li{margin:0 0 9px;font-size:14px;color:var(--ink2)}
+  .notes li b{color:var(--ink)}
+  .tradeoff{display:flex;gap:18px;margin-top:6px}
+  .tradeoff div{flex:1}
+  .tradeoff .t{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;margin:0 0 6px}
+  .tradeoff .pro .t{color:var(--good)} .tradeoff .con .t{color:var(--bad)}
+  .tradeoff p{margin:0;font-size:13px;color:var(--ink2)}
+
+  /* ===== shadcn-like combobox bits ===== */
+  .field{padding:16px}
+  .flabel{font-size:12.5px;font-weight:600;color:var(--ink2);margin:0 0 7px;display:flex;justify-content:space-between}
+  .flabel .req{color:var(--accent)}
+  .trigger{display:flex;align-items:center;justify-content:space-between;width:100%;border:1px solid var(--line2);border-radius:9px;
+    padding:10px 12px;background:#fff;font-size:14px;cursor:pointer;color:var(--ink)}
+  .trigger.ph{color:var(--ink3)}
+  .pop{border:1px solid var(--line2);border-radius:12px;overflow:hidden;background:#fff;box-shadow:var(--shadow)}
+  .searchbar{display:flex;align-items:center;gap:9px;border-bottom:1px solid var(--line);padding:11px 13px}
+  .searchbar svg{flex:none;color:var(--ink3)}
+  .searchbar input{border:0;outline:0;font-family:var(--sans);font-size:14px;width:100%;background:transparent;color:var(--ink)}
+  .listcount{font-size:11px;color:var(--ink3);padding:7px 13px;border-bottom:1px solid var(--line);font-family:var(--mono)}
+  .list{max-height:330px;overflow:auto}
+  .grouphd{position:sticky;top:0;background:#fff;display:flex;align-items:center;justify-content:space-between;
+    padding:9px 13px 5px;font-size:11px;font-weight:600;letter-spacing:.04em;color:var(--ink3);text-transform:uppercase}
+  .grouphd .cnt{font-family:var(--mono);background:var(--chip);border-radius:999px;padding:1px 8px;font-size:10px;color:var(--ink2)}
+  .opt{display:flex;gap:11px;align-items:flex-start;padding:9px 13px;cursor:pointer;border-left:2px solid transparent}
+  .opt:hover,.opt.act{background:#f6f2ea;border-left-color:var(--accent)}
+  .opt .chk{width:15px;height:15px;flex:none;margin-top:2px;color:var(--accent);opacity:0}
+  .opt.sel .chk{opacity:1}
+  .opt .body{min-width:0;flex:1}
+  .opt . chip{}
+  .objchip{display:inline-block;font-family:var(--mono);font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--accent2);
+    background:#eaf2f0;border:1px solid #d3e6e2;border-radius:5px;padding:1px 6px;margin-right:7px;vertical-align:1px}
+  .opt .name{font-weight:600;font-size:14px;line-height:1.25}
+  .opt .mach{font-family:var(--mono);font-size:10.5px;color:var(--ink3);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .opt .desc{font-size:12px;color:var(--ink2);margin-top:3px;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
+  .unitrow{margin-top:6px;display:flex;gap:5px;flex-wrap:wrap;align-items:center}
+  .unitrow .lab{font-size:10px;color:var(--ink3);font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em}
+  .uchip{font-family:var(--mono);font-size:10.5px;border:1px solid var(--line2);background:var(--paper);border-radius:6px;padding:1px 7px;color:var(--ink)}
+  .uchip.on{background:var(--accent);border-color:var(--accent);color:#fff}
+  .dupwarn{font-size:10.5px;color:var(--warn);font-family:var(--mono);margin-top:5px}
+  mark{background:#ffe9a8;color:inherit;border-radius:3px;padding:0 1px}
+  .demote{opacity:.6}
+  .footer-act{border-top:1px solid var(--line);padding:10px 13px;color:var(--accent);font-size:13px;font-weight:500;cursor:pointer}
+
+  /* two-pane */
+  .twopane{display:grid;grid-template-columns:200px 1fr;height:430px}
+  .facets{border-right:1px solid var(--line);background:var(--paper);overflow:auto;padding:8px}
+  .facet{display:flex;justify-content:space-between;align-items:center;padding:8px 11px;border-radius:8px;font-size:13px;cursor:pointer;color:var(--ink2)}
+  .facet:hover{background:#efe9dd}
+  .facet.on{background:var(--ink);color:#fff}
+  .facet .c{font-family:var(--mono);font-size:10.5px;opacity:.75}
+  .pane-r{display:flex;flex-direction:column;min-width:0}
+
+  /* builder */
+  .builder{display:grid;grid-template-columns:1fr 1fr;gap:0;height:330px}
+  .bcol{border-right:1px solid var(--line);display:flex;flex-direction:column;min-width:0;overflow:hidden}
+  .bcol:last-child{border-right:0}
+  .bcol .hd{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--ink3);padding:11px 13px 7px;flex:none}
+  .bcol .scroll{overflow:auto;flex:1;min-height:0}
+  .bitem{padding:9px 13px;font-size:13.5px;cursor:pointer;border-left:2px solid transparent;display:flex;justify-content:space-between;gap:8px}
+  .bitem:hover{background:#f6f2ea}
+  .bitem.on{background:#f0ece3;border-left-color:var(--accent);font-weight:600}
+  .bitem .c{font-family:var(--mono);font-size:10px;color:var(--ink3)}
+  .resolve{border-top:1px solid var(--line);background:var(--paper);padding:14px 15px}
+  .resolve .picked{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+  .resolve .picked .nm{font-weight:600;font-size:15px}
+  .resolve .picked .mc{font-family:var(--mono);font-size:10.5px;color:var(--ink3)}
+  .resolve .btn{background:var(--accent);color:#fff;border:0;border-radius:8px;padding:9px 15px;font-weight:600;font-size:13px;cursor:pointer;font-family:var(--sans)}
+  .resolve .btn:disabled{background:var(--line2);cursor:not-allowed}
+
+  /* ===== unit selector ===== */
+  .uwrap{}
+  .ulabel{font-size:12.5px;font-weight:600;color:var(--ink2);margin:0 0 2px;display:flex;justify-content:space-between;align-items:center}
+  .ulabel .req{color:var(--accent)}
+  .uhelp{font-size:11.5px;color:var(--ink3);margin:0 0 11px}
+  .uhelp b{color:var(--accent2)}
+  .ucards{display:flex;flex-direction:column;gap:8px}
+  .ucard{display:flex;align-items:center;gap:12px;border:1px solid var(--line2);border-radius:10px;padding:10px 13px;cursor:pointer;background:#fff;transition:.12s}
+  .ucard:hover{border-color:var(--ink3)}
+  .ucard.on{border-color:var(--accent);background:#fdf4ef;box-shadow:0 0 0 1px var(--accent) inset}
+  .ucard .radio{width:16px;height:16px;border-radius:50%;border:2px solid var(--line2);flex:none;position:relative}
+  .ucard.on .radio{border-color:var(--accent)}
+  .ucard.on .radio:after{content:'';position:absolute;inset:3px;border-radius:50%;background:var(--accent)}
+  .ucard .sym{font-family:var(--mono);font-weight:500;font-size:14.5px;min-width:74px}
+  .ucard .nm{font-size:13px;color:var(--ink2)}
+  .ucard .src{margin-left:auto;font-family:var(--mono);font-size:9.5px;color:var(--accent2);background:#eaf2f0;border:1px solid #d3e6e2;border-radius:5px;padding:2px 7px}
+  .umore{font-size:13px;color:var(--accent);font-weight:600;cursor:pointer;padding:9px 2px 2px;display:inline-flex;gap:7px;align-items:center}
+  .umore:hover{text-decoration:underline}
+  . usearch{}
+  .usearchbar{display:flex;align-items:center;gap:9px;border:1px solid var(--line2);border-radius:9px;padding:9px 12px;margin-bottom:6px;background:#fff}
+  .usearchbar svg{color:var(--ink3);flex:none}
+  .usearchbar input{border:0;outline:0;font-family:var(--sans);font-size:13.5px;width:100%;background:transparent}
+  .ugroups{max-height:300px;overflow:auto}
+  .udim{font-size:10px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--ink3);padding:11px 6px 4px;position:sticky;top:0;background:var(--paper)}
+  .urow{display:flex;align-items:center;gap:12px;padding:8px 9px;border-radius:8px;cursor:pointer;border-left:2px solid transparent}
+  .urow:hover{background:#f1ece1;border-left-color:var(--accent)}
+  .urow.on{background:#fdf4ef;border-left-color:var(--accent)}
+  .urow .sym{font-family:var(--mono);font-weight:500;font-size:13.5px;min-width:104px}
+  .urow .nm{font-size:12.5px;color:var(--ink2)}
+  .urow .src{margin-left:auto;font-family:var(--mono);font-size:9px;color:var(--accent2);background:#eaf2f0;border:1px solid #d3e6e2;border-radius:5px;padding:1px 6px}
+
+  .recobox{margin-top:30px;background:linear-gradient(180deg,#fff,#fbf8f2);border:1px solid var(--line2);border-radius:16px;padding:26px 26px 22px;box-shadow:var(--shadow)}
+  .recobox h2{margin-top:0}
+  .reco-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:18px}
+  @media(max-width:880px){.reco-grid{grid-template-columns:1fr}}
+  .reco-card{border:1px solid var(--line);border-radius:12px;padding:16px;background:#fff}
+  .reco-card .ph{font-family:var(--mono);font-size:11px;color:var(--accent);letter-spacing:.08em;text-transform:uppercase}
+  .reco-card h4{margin:8px 0 6px;font-size:16px;font-family:var(--serif);font-weight:600}
+  .reco-card p{margin:0;font-size:13px;color:var(--ink2)}
+  footer{margin-top:70px;padding-top:24px;border-top:1px solid var(--line);font-family:var(--mono);font-size:11.5px;color:var(--ink3);display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+  .pill{display:inline-block;font-family:var(--mono);font-size:10.5px;padding:2px 8px;border-radius:999px;background:var(--chip);color:var(--ink2);margin-left:8px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <p class="kicker">MINT · Register Model · PR #40 follow-up</p>
+  <h1>The Standard Variable picker is a <em>flat list of machine syntax</em>.<br>Here are three ways out.</h1>
+  <p class="lede">PR #40 added domain grouping and ranked search — real progress. But the underlying problem is deeper than ordering: the picker shows raw CSDMS/SVO grammar, lists the same concept five or six times, and hides the one relationship that actually helps a scientist — the <strong>units</strong> a variable is really used with.</p>
+  <div class="meta">
+    <span><b>Source</b> live data, feat/standard-variable-picker-ux</span>
+    <span><b>599</b> SV records</span>
+    <span><b>739</b> presentations</span>
+    <span><b>90</b> units</span>
+  </div>
+</header>
+
+<!-- DIAGNOSIS -->
+<section id="diagnosis">
+  <h2><span class="n">01</span>What the data actually looks like</h2>
+  <p class="sub">Pulled live from the Apollo cache and Hasura on the preview deployment. The numbers reframe the problem.</p>
+  <div class="stats">
+    <div class="stat bad"><div class="v">599</div><div class="l">records in the dropdown for <b>423</b> distinct labels</div></div>
+    <div class="stat bad"><div class="v">176</div><div class="l">rows are repeated labels — same concept listed up to <b>6×</b></div></div>
+    <div class="stat warn"><div class="v">349</div><div class="l">labels are raw <code style="font-family:var(--mono);font-size:11px">object__quantity</code> machine syntax</div></div>
+    <div class="stat good"><div class="v">476</div><div class="l">presentations carry a <b>unit</b> — the link the picker never shows</div></div>
+  </div>
+
+  <div class="findings">
+    <div class="finding"><h4>1 · Machine syntax, never humanized</h4><p>Rows read <code>atmosphere_air__daily_max_of_temperature</code>. The <code>__</code> separates phenomenon from property; <code>~</code> and <code>_</code> are grammar. Scientists shouldn't have to parse it.</p></div>
+    <div class="finding"><h4>2 · The description repeats the label</h4><p>Every row's secondary line begins with the label again — <code>air__temperature This variable has…</code> — leading whitespace and all. Pure noise.</p></div>
+    <div class="finding"><h4>3 · The same concept, five times</h4><p><code>pore_water__pressure</code> appears <b>6×</b>, <code>land_surface__elevation</code> <b>5×</b> — distinct URIs, identical to the eye. <code>same_as</code> is empty, so nothing reconciles them.</p></div>
+    <div class="finding rel"><h4>4 · Relationship the UI ignores → units</h4><p>Each record links to <b>variable_presentations</b>, and those carry units. <code>land_surface_air__temperature</code> is used with <b>K</b> and <b>degC</b>; precipitation with <b>mm h⁻¹ / mm day⁻¹ / m day⁻¹</b>. Picking a variable could pre-fill the Unit field.</p></div>
+  </div>
+</section>
+
+<!-- ALTERNATIVES -->
+<section id="alts">
+  <h2><span class="n">02</span>Three alternatives, same data</h2>
+  <p class="sub">Each mockup below is rendered from the real variable list. They escalate in ambition — from a drop-in re-render to a relationship-driven flow. Switch between them:</p>
+
+  <div class="tabs">
+    <button class="tab on" data-k="A"><span class="dot"></span>A · Humanized rows <span class="pill">drop-in</span></button>
+    <button class="tab" data-k="B"><span class="dot"></span>B · Faceted browser <span class="pill">dialog</span></button>
+    <button class="tab" data-k="C"><span class="dot"></span>C · Unit-aware flow <span class="pill">relationship</span></button>
+  </div>
+
+  <!-- PANEL A -->
+  <div class="panel on" data-p="A">
+    <div class="alt-head"><h3>Humanized, concept-collapsed rows</h3><span class="badge eff">low effort · high impact</span></div>
+    <p class="alt-sub">Keep the exact same popover the PR built. Change only what each row renders: parse the CSDMS grammar into a readable name + an object chip, collapse repeated labels into one concept, drop the redundant description, and show the units it's used with as a quiet hint.</p>
+    <div class="stage">
+      <div>
+        <p class="mock-cap">Mockup — rendered from live data</p>
+        <div class="mock-frame">
+          <div class="field">
+            <div class="flabel"><span>Standard Variable <span class="req">*</span></span></div>
+            <div class="trigger ph">Search standard variables…
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m7 15 5 5 5-5M7 9l5-5 5 5"/></svg>
+            </div>
+            <div class="pop" style="margin-top:8px" id="popA"></div>
+          </div>
+        </div>
+      </div>
+      <div class="notes">
+        <h4>What changes</h4>
+        <ul>
+          <li><b>Readable name + object chip.</b> <code style="font-family:var(--mono);font-size:11px">channel_water__volume_flow_rate</code> becomes <b>Volume flow rate</b> with a <span class="objchip" style="margin:0">CHANNEL WATER</span> chip. Machine name kept small for verification.</li>
+          <li><b>One row per concept.</b> The 6 <code style="font-family:var(--mono);font-size:11px">pore_water__pressure</code> records collapse to one; the picker resolves to the record that actually has presentations/units.</li>
+          <li><b>Units as a hint.</b> A faint "used with: K · degC" line — selecting a unit chip pre-fills the separate Unit field.</li>
+          <li><b>UUID rows demoted</b> and shown by description, exactly as PR #40 intended — but now visually quiet.</li>
+        </ul>
+        <div class="tradeoff">
+          <div class="pro"><p class="t">Why this first</p><p>Pure render-layer change. No new screen, fits the existing combobox, ships behind the work already in PR #40.</p></div>
+          <div class="con"><p class="t">Ceiling</p><p>Still a single narrow column. Browsing 400 concepts by scroll is tiring; great for "I know the name", weak for "show me what's available".</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PANEL B -->
+  <div class="panel" data-p="B">
+    <div class="alt-head"><h3>Two-pane faceted browser</h3><span class="badge mid">medium effort</span></div>
+    <p class="alt-sub">Promote the picker to a wide dialog. A left rail facets by phenomenon domain (derived from the object root — no schema change); the right pane is the humanized list with room to breathe and no truncation. This is the documented "two-pane faceted browser" follow-up from the PR, drawn concretely.</p>
+    <div class="stage">
+      <div>
+        <p class="mock-cap">Mockup — dialog, real facet counts</p>
+        <div class="mock-frame">
+          <div class="twopane">
+            <div class="facets" id="facetsB"></div>
+            <div class="pane-r">
+              <div class="searchbar">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+                <input id="searchB" placeholder="Search within this domain…">
+              </div>
+              <div class="list" id="listB" style="max-height:none;flex:1"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="notes">
+        <h4>What changes</h4>
+        <ul>
+          <li><b>Browse before you search.</b> Pick <b>Atmosphere &amp; Climate</b> or <b>Channel &amp; Streamflow</b> first; the list shrinks from 400 to ~30. Facets carry live counts.</li>
+          <li><b>Width.</b> Full names, descriptions and unit chips fit without the <code>…</code> truncation that plagues the popover.</li>
+          <li><b>Same row design as A.</b> The humanized row is reused — A and B share one component.</li>
+          <li><b>Keyboard + search still global</b> — type to search across all domains, facets just pre-filter.</li>
+        </ul>
+        <div class="tradeoff">
+          <div class="pro"><p class="t">Why</p><p>Matches how scientists actually think ("I need a hydrology input"), and scales to 400+ concepts comfortably.</p></div>
+          <div class="con"><p class="t">Cost</p><p>A new dialog component + a phenomenon→domain map. Heavier than A; an interruption to the inline form flow.</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PANEL C -->
+  <div class="panel" data-p="C">
+    <div class="alt-head"><h3>Unit-aware guided flow</h3><span class="badge big">higher effort · biggest payoff</span></div>
+    <p class="alt-sub">Exploit the relationship directly. The user picks a <b>phenomenon</b>, then a <b>property</b> — the two halves of the CSDMS grammar — so 400 strings become two short lists. On resolve, the flow reads the variable's presentations and <b>offers the units it has actually been used with</b>, wiring the Standard Variable and Unit fields together.</p>
+    <div class="stage">
+      <div>
+        <p class="mock-cap">Mockup — phenomenon → property → unit</p>
+        <div class="mock-frame">
+          <div class="builder">
+            <div class="bcol">
+              <div class="hd">1 · Phenomenon (object)</div>
+              <div class="scroll" id="objC"></div>
+            </div>
+            <div class="bcol">
+              <div class="hd">2 · Property (quantity)</div>
+              <div class="scroll" id="quantC"></div>
+            </div>
+          </div>
+          <div class="resolve" id="resolveC">
+            <div class="picked"><div class="nm" style="color:var(--ink3)">Pick a phenomenon, then a property…</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="notes">
+        <h4>What changes</h4>
+        <ul>
+          <li><b>Two short lists, not one long one.</b> Choose <span class="objchip" style="margin:0">SOIL WATER</span> → see only its ~7 properties. The grammar becomes the navigation.</li>
+          <li><b>Units come for free.</b> Resolve <code style="font-family:var(--mono);font-size:11px">soil_water__volume_fraction</code> and the flow surfaces <b>m³ m⁻³</b> and <b>%</b> — the units real presentations use — as one-tap choices for the Unit field.</li>
+          <li><b>Duplicates dissolve.</b> A concept is one node here by construction; the resolver picks the canonical record behind the scenes.</li>
+          <li><b>Escape hatch.</b> A "can't find it? search all" link drops back to alternative A's flat search.</li>
+        </ul>
+        <div class="tradeoff">
+          <div class="pro"><p class="t">Why</p><p>Directly answers the relationship you flagged: it turns the orphan Unit picker into a guided, pre-filled choice and makes the 600-row problem structurally disappear.</p></div>
+          <div class="con"><p class="t">Cost</p><p>Most build + relies on grammar parsing being clean (the ~50 human-named oddballs like <code>Flame Length</code> need the search fallback).</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- UNIT SELECTION -->
+<section id="unit">
+  <h2><span class="n">03</span>The hard part — choosing a unit</h2>
+  <p class="sub">You flagged it and you're right: in B and C the unit was buried. The root cause is in the data — <code style="font-family:var(--mono);font-size:12px;background:var(--chip);padding:1px 5px;border-radius:5px">modelcatalog_unit</code> is only <code style="font-family:var(--mono);font-size:12px;background:var(--chip);padding:1px 5px;border-radius:5px">id</code> + a cryptic <code style="font-family:var(--mono);font-size:12px;background:var(--chip);padding:1px 5px;border-radius:5px">label</code> like <code style="font-family:var(--mono);font-size:12px;background:var(--chip);padding:1px 5px;border-radius:5px">m s-1</code> or <code style="font-family:var(--mono);font-size:12px;background:var(--chip);padding:1px 5px;border-radius:5px">day/m^(1/3)</code>. No name, no dimension. So the unit picker inherits every problem the variable picker had, with none of the grammar to lean on. Two moves make it findable.</p>
+  <div class="stage">
+    <div>
+      <p class="mock-cap">Move 1 — the variable already knows its units</p>
+      <div class="mock-frame">
+        <div class="uwrap" style="padding:18px" id="unitSuggest"></div>
+      </div>
+      <p style="font-size:12.5px;color:var(--ink2);margin:12px 2px 0">For the <b>264 variables</b> with a unit on record, this is the whole interaction: one tap. No searching the list of 90 at all. The suggestions come straight from the variable's <code style="font-family:var(--mono);font-size:11px">variable_presentations</code>.</p>
+    </div>
+    <div>
+      <p class="mock-cap">Move 2 — search all units, grouped by dimension + named</p>
+      <div class="mock-frame">
+        <div class="uwrap" style="padding:18px" id="unitAll"></div>
+      </div>
+      <p style="font-size:12.5px;color:var(--ink2);margin:12px 2px 0">The fallback (and the only path today) becomes legible: a one-time client map turns <code style="font-family:var(--mono);font-size:11px">degC</code> into <b>degrees Celsius · Temperature</b>, and the variable's own units float to the top, tagged <span class="objchip" style="margin:0;color:var(--accent2)">SUGGESTED</span>. Dimension grouping also lets us flag unit/variable mismatches (a temperature in metres) — the consistency check the SVO model calls for.</p>
+    </div>
+  </div>
+</section>
+
+<!-- RECOMMENDATION -->
+<section id="reco">
+  <div class="recobox">
+    <h2 style="font-size:26px">Recommendation — ship them in order</h2>
+    <p class="sub" style="margin-bottom:0">They're not mutually exclusive. They share one humanized row component and one resolver; each is the foundation for the next.</p>
+    <div class="reco-grid">
+      <div class="reco-card"><div class="ph">Now · with PR #40</div><h4>A — Humanized rows</h4><p>Render-layer only. Land the grammar humanizer, concept-collapse, and clean descriptions on the existing combobox. Immediate relief, no new UI.</p></div>
+      <div class="reco-card"><div class="ph">Next</div><h4>B — Faceted dialog</h4><p>Reuse A's row in a wide two-pane dialog for browsing. Add the phenomenon→domain map. Handles the "show me what's there" job A can't.</p></div>
+      <div class="reco-card"><div class="ph">Then</div><h4>C — Unit-aware flow</h4><p>Wire variable → presentations → units so picking a variable suggests its units. The structural fix; also a data-quality forcing function (populate <code>same_as</code>).</p></div>
+    </div>
+  </div>
+
+  <div class="findings" style="margin-top:26px">
+    <div class="finding rel"><h4>Parallel track — data hygiene</h4><p>176 duplicate rows and empty <code>same_as</code> are a data problem the UI is papering over. Collapsing in the client is a patch; populating <code>same_as</code> (or merging orphan records with no presentations) fixes it at the source and makes every alternative simpler.</p></div>
+    <div class="finding rel"><h4>Parallel track — clean descriptions</h4><p>The "label repeated + leading whitespace" descriptions are bad source data. A one-time ETL trim removes the noise everywhere, not just in this picker.</p></div>
+  </div>
+</section>
+
+<footer>
+  <span>MINT — Standard Variable picker UX exploration · visual companion</span>
+  <span>data: live preview · feat/standard-variable-picker-ux</span>
+</footer>
+
+</div>
+
+<script>
+/* ---------- real-data sample (pulled live from the deployment) ---------- */
+// label, cleaned description, object root -> domain, presentation count, units actually used
+const DATA = [
+  // atmosphere & climate
+  ["air__temperature","Air temperature; the recorded phenomenon is air.","Atmosphere & Climate",3,["K","degC"]],
+  ["air__daily_max_of_temperature","Daily maximum of air temperature.","Atmosphere & Climate",1,["degC"]],
+  ["air__daily_min_of_temperature","Daily minimum of air temperature.","Atmosphere & Climate",1,["degC"]],
+  ["air__yearly_average_of_temperature","Yearly average of air temperature.","Atmosphere & Climate",1,[]],
+  ["atmosphere_air__daily_max_of_temperature","Daily maximum of near-surface air temperature.","Atmosphere & Climate",2,["degC","K"]],
+  ["land_surface_air__temperature","Air temperature at the land surface.","Atmosphere & Climate",4,["K","degC"]],
+  ["atmosphere_water__precipitation_leq_volume_flux","Liquid-equivalent precipitation volume flux.","Atmosphere & Climate",5,["mm h-1","mm day-1","m day-1"]],
+  ["atmosphere_water__precipitation_rate","Precipitation forcing applied to the catchment model.","Atmosphere & Climate",3,["mm day-1"]],
+  ["land_surface_wind__speed","Near-surface wind speed.","Atmosphere & Climate",2,["m s-1","m day-1"]],
+  ["atmosphere_air_water~vapor__relative_saturation","Relative humidity of near-surface air.","Atmosphere & Climate",1,["%"]],
+  // channel & streamflow
+  ["channel_water__volume_flow_rate","Simulated channel discharge or river flow rate.","Channel & Streamflow",6,["m3 s-1","m^3/s"]],
+  ["channel_water__discharge_coefficient","Discharge coefficient for the channel cross-section.","Channel & Streamflow",1,[]],
+  ["channel_water__depletion_rate","Depletion of channel water from groundwater withdrawal.","Channel & Streamflow",1,["m3 day-1"]],
+  ["channel_water_flow__manning_n_parameter","Manning's roughness coefficient for the channel.","Channel & Streamflow",2,["day/m^(1/3)","m-1/3 s"]],
+  ["channel_groundwater__water_exchange_flux","Water exchange flux between channel and groundwater.","Channel & Streamflow",2,["m3 day-1"]],
+  ["channel_network__geometry","Geometry and topology of the stream network.","Channel & Streamflow",1,[]],
+  ["channel_bed__thickness","Thickness of the channel bed.","Channel & Streamflow",1,["m"]],
+  // groundwater / aquifer
+  ["aquifer_system__hydraulic_property_set","Hydraulic property values for the aquifer system.","Groundwater & Aquifer",3,["m day-1"]],
+  ["aquifer_system__boundary_condition_specification","Hydraulic & mechanical boundary conditions for the aquifer.","Groundwater & Aquifer",2,[]],
+  ["aquifer_system__recharge_rate","Simulated recharge rate to the aquifer system.","Groundwater & Aquifer",2,["mm day-1"]],
+  ["pore_water__pressure","Pore water pressure in the simulated domain.","Groundwater & Aquifer",2,["Pa"]],
+  ["land_surface__vertical_displacement","Vertical land-surface displacement (subsidence/uplift).","Groundwater & Aquifer",3,["m"]],
+  // soil
+  ["soil_water__volume_fraction","Volumetric soil water content.","Soil",4,["m3 m-3","%"]],
+  ["soil_water__saturated_hydraulic_conductivity","Saturated hydraulic conductivity of the soil.","Soil",2,["m day-1","cm h-1"]],
+  ["soil_matter~organic__mass_fraction","Soil organic matter mass fraction.","Soil",2,["kg kg-1 x-100","g/100g"]],
+  ["soil__temperature","Soil temperature.","Soil",1,["degC"]],
+  // land cover / crop
+  ["crop__phenological_stage","Crop phenological growth stage.","Land Cover & Crop",2,["code"]],
+  ["crop__planting_or_sowing_date","Planting or sowing date of the crop.","Land Cover & Crop",2,["date"]],
+  ["land_crop__simulated_allocated_area","Simulated area allocated to the crop.","Land Cover & Crop",2,["ha","1000ha"]],
+  ["crop__potential_transpiration_volume_flux","Potential crop transpiration volume flux.","Land Cover & Crop",1,["mm day-1"]],
+  // topography
+  ["land_surface__elevation","Land-surface elevation (DEM).","Topography & Surface",5,["m"]],
+  ["land_surface__slope","Land-surface slope.","Topography & Surface",1,["m m-1"]],
+  // fire & fuel (human-named oddballs that DON'T parse — go to search)
+  ["10hr_dead_moisture","10-hour dead fuel moisture content (%).","Fire & Fuel",1,["%"],true],
+  ["1hr_dead_moisture","1-hour dead fuel moisture content (%).","Fire & Fuel",1,["%"],true],
+  ["Flame Length","Flame length in feet.","Fire & Fuel",1,["foot"],true],
+  ["LH_MOISTURE_CONTENT","Live herbaceous moisture content, percent.","Fire & Fuel",1,["%"],true],
+  // modflow package names (human-named)
+  ["General_Head_Boundary","General head boundary for the MODFLOW groundwater program.","Groundwater & Aquifer",1,[],true],
+  // UUID junk -> demoted
+  ["06100430-298a-49d7-9834-590783d62379","",null,0,[]],
+  ["2488ea88-9aa5-4ec5-909b-f1cc270a4e39","",null,0,[]],
+];
+
+const UUID_RE=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+function isUuid(l){return UUID_RE.test((l||'').trim());}
+
+/* CSDMS grammar humanizer: object__quantity, with ~ and _ as joiners */
+function humanize(label){
+  if(isUuid(label)) return {obj:null,prop:null,uuid:true};
+  if(!label.includes('__')) return {obj:null,prop:label.trim(),plain:true};
+  const [subj,quant] = label.split('__');
+  const clean = s => s.replace(/~/g,' ').replace(/_/g,' ').replace(/\s+/g,' ').trim();
+  let obj = clean(subj);
+  let prop = clean(quant);
+  prop = prop.charAt(0).toUpperCase()+prop.slice(1);
+  return {obj:obj.toUpperCase(), prop, uuid:false};
+}
+function unitPretty(u){
+  return u
+    .replace(/(\w)-1\b/g,'$1⁻¹').replace(/(\w)-2\b/g,'$1⁻²').replace(/(\w)-3\b/g,'$1⁻³')
+    .replace(/3 /,'³ ').replace(/2 /,'² ').replace(/m3\b/,'m³').replace(/m2\b/,'m²');
+}
+
+/* unit symbol -> [friendly name, physical dimension]. A finite client map;
+   the DB stores only the cryptic symbol. */
+const UNITS = {
+  'K':['kelvin','Temperature'], 'degC':['degrees Celsius','Temperature'], 'degC/day':['°C per day','Temperature'],
+  'm':['metres','Length'], 'cm':['centimetres','Length'], 'mm':['millimetres','Length'], 'foot':['feet','Length'],
+  'm s-1':['metres per second','Speed'], 'ft/min':['feet per minute','Speed'],
+  'm day-1':['metres per day','Depth rate'], 'mm day-1':['millimetres per day','Depth rate'],
+  'mm h-1':['millimetres per hour','Depth rate'], 'cm h-1':['centimetres per hour','Depth rate'],
+  'm3 s-1':['cubic metres per second','Volume flow'], 'm3 day-1':['cubic metres per day','Volume flow'],
+  'm3 m-3':['vol. water / vol. soil','Fraction'], '%':['percent','Fraction'],
+  'g/100g':['grams per 100 g','Fraction'], 'kg kg-1':['kg per kg','Fraction'], 'm m-1':['metres per metre','Fraction'],
+  'Pa':['pascals','Pressure'],
+  'ha':['hectares','Area'], '1000ha':['thousand hectares','Area'], 'km2':['square kilometres','Area'],
+  'kg ha-1':['kg per hectare','Areal mass'], 't/ha':['tonnes per hectare','Areal mass'], 'Mg ha-1':['megagrams per hectare','Areal mass'],
+  'W m-2':['watts per square metre','Energy flux'], 'MJ m-2 day-1':['MJ per m² per day','Energy flux'],
+  'day/m^(1/3)':['Manning roughness','Roughness'], 'm-1/3 s':['Manning roughness','Roughness'],
+  'day':['days','Time'], 'h':['hours','Time'], 'year':['years','Time'],
+  'date':['calendar date','Date'], 'code':['category code','Code'],
+};
+function uName(sym){ return (UNITS[sym]||[sym.replace(/_/g,' '),'Other'])[0]; }
+function uDim(sym){ return (UNITS[sym]||['','Other'])[1]; }
+const DIM_ORDER = ['Temperature','Length','Speed','Depth rate','Volume flow','Fraction','Pressure','Area','Areal mass','Energy flux','Roughness','Time','Date','Code','Other'];
+
+/* radio-card list of a variable's suggested units */
+function suggestCardsHTML(units, selIdx){
+  return `<div class="ucards">`+units.map((u,i)=>`
+    <div class="ucard ${i===selIdx?'on':''}" data-u="${u}">
+      <span class="radio"></span>
+      <span class="sym">${unitPretty(u)}</span>
+      <span class="nm">${uName(u)}</span>
+      <span class="src">from data</span>
+    </div>`).join('')+`</div>`;
+}
+/* full unit list grouped by dimension, suggested ones floated to top + tagged */
+function groupedUnitsHTML(suggested, q){
+  const sset = new Set(suggested);
+  const all = Object.keys(UNITS);
+  const ql=(q||'').toLowerCase();
+  const match = u => !ql || (u+' '+uName(u)).toLowerCase().includes(ql);
+  let out='';
+  if(suggested.length){
+    const s = suggested.filter(match);
+    if(s.length){ out+=`<div class="udim" style="color:var(--accent2)">Suggested for this variable</div>`;
+      out+=s.map(u=>`<div class="urow on" data-u="${u}"><span class="sym">${unitPretty(u)}</span><span class="nm">${uName(u)}</span><span class="src">SUGGESTED</span></div>`).join('');}
+  }
+  for(const dim of DIM_ORDER){
+    const items = all.filter(u=>uDim(u)===dim && !sset.has(u) && match(u));
+    if(!items.length) continue;
+    out+=`<div class="udim">${dim}</div>`+items.map(u=>`<div class="urow" data-u="${u}"><span class="sym">${unitPretty(u)}</span><span class="nm">${uName(u)}</span></div>`).join('');
+  }
+  return out || `<div style="padding:16px;color:var(--ink3);font-size:13px">No units match.</div>`;
+}
+function wireUnitPicks(root){
+  root.addEventListener('click',e=>{
+    const c=e.target.closest('.ucard'); if(c){root.querySelectorAll('.ucard').forEach(x=>x.classList.remove('on'));c.classList.add('on');return;}
+    const r=e.target.closest('.urow'); if(r){root.querySelectorAll('.urow').forEach(x=>x.classList.remove('on'));r.classList.add('on');}
+  });
+}
+
+/* ---------- ALT A : humanized rows ---------- */
+function rowHTML(d, q){
+  const [label,desc,domain,pres,units,plain] = d;
+  const h = humanize(label);
+  const mark = t => q ? t.replace(new RegExp('('+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','ig'),'<mark>$1</mark>') : t;
+  if(h.uuid){
+    return `<div class="opt demote"><svg class="chk" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6 9 17l-5-5"/></svg>
+      <div class="body"><div class="name" style="font-weight:500;color:var(--ink3)">Unnamed variable</div>
+      <div class="mach">${label}</div></div></div>`;
+  }
+  const chip = h.obj ? `<span class="objchip">${h.obj}</span>` : '';
+  const name = h.plain ? mark(h.prop) : `${chip}${mark(h.prop)}`;
+  const dup = pres>=5 ? `<div class="dupwarn">⚠ ${pres} records share this label · resolves to the one in use</div>`:'';
+  const uchips = units.length ? `<div class="unitrow"><span class="lab">used with</span>${units.slice(0,3).map(u=>`<span class="uchip">${unitPretty(u)}</span>`).join('')}</div>`:'';
+  return `<div class="opt"><svg class="chk" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6 9 17l-5-5"/></svg>
+    <div class="body"><div class="name">${name}</div>
+    <div class="mach">${mark(label)}</div>
+    ${desc?`<div class="desc">${desc}</div>`:''}
+    ${uchips}${dup}</div></div>`;
+}
+const DOMAIN_ORDER=["Atmosphere & Climate","Channel & Streamflow","Groundwater & Aquifer","Soil","Land Cover & Crop","Topography & Surface","Fire & Fuel"];
+function renderA(){
+  const named = DATA.filter(d=>!isUuid(d[0]));
+  const uuids = DATA.filter(d=>isUuid(d[0]));
+  let html = `<div class="searchbar"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg><input id="searchA" placeholder="Search standard variables…"></div>
+    <div class="listcount">423 concepts · 599 records collapsed · grouped by domain</div><div class="list" id="listA"></div>`;
+  document.getElementById('popA').innerHTML = html;
+  const draw = (q='') => {
+    const ql=q.toLowerCase();
+    const match = d => !ql || (d[0]+' '+(d[1]||'')).toLowerCase().includes(ql);
+    let out='';
+    for(const dom of DOMAIN_ORDER){
+      const items = named.filter(d=>d[2]===dom && match(d));
+      if(!items.length) continue;
+      out += `<div class="grouphd"><span>${dom}</span><span class="cnt">${items.length}</span></div>`;
+      out += items.map(d=>rowHTML(d,q)).join('');
+    }
+    const uq = uuids.filter(match);
+    if(uq.length){ out+=`<div class="grouphd"><span>Unnamed / Other</span><span class="cnt">38</span></div>`+uq.map(d=>rowHTML(d,q)).join('');}
+    document.getElementById('listA').innerHTML = out || `<div style="padding:20px;color:var(--ink3);font-size:13px">No matches.</div>`;
+  };
+  draw();
+  document.getElementById('searchA').addEventListener('input',e=>draw(e.target.value));
+  // unit chip + row select demo
+  document.getElementById('popA').addEventListener('click',e=>{
+    const u=e.target.closest('.uchip'); if(u){e.stopPropagation();document.querySelectorAll('#popA .uchip').forEach(x=>x.classList.remove('on'));u.classList.add('on');return;}
+    const o=e.target.closest('.opt'); if(o){document.querySelectorAll('#popA .opt').forEach(x=>x.classList.remove('sel'));o.classList.add('sel');}
+  });
+}
+
+/* ---------- ALT B : faceted ---------- */
+function renderB(){
+  const named = DATA.filter(d=>!isUuid(d[0]));
+  const counts={}; DOMAIN_ORDER.forEach(dom=>counts[dom]=named.filter(d=>d[2]===dom).length);
+  let state={facet:'All',q:''};
+  const fc = document.getElementById('facetsB');
+  fc.innerHTML = `<div class="facet on" data-f="All"><span>All domains</span><span class="c">${named.length}</span></div>`+
+    DOMAIN_ORDER.map(dom=>`<div class="facet" data-f="${dom}"><span>${dom}</span><span class="c">${counts[dom]}</span></div>`).join('');
+  const draw=()=>{
+    const ql=state.q.toLowerCase();
+    let items = named.filter(d=>(state.facet==='All'||d[2]===state.facet) && (!ql||(d[0]+' '+(d[1]||'')).toLowerCase().includes(ql)));
+    let out='';
+    if(state.facet==='All'){
+      for(const dom of DOMAIN_ORDER){const g=items.filter(d=>d[2]===dom);if(!g.length)continue;
+        out+=`<div class="grouphd"><span>${dom}</span><span class="cnt">${g.length}</span></div>`+g.map(d=>rowHTML(d,state.q)).join('');}
+    } else out = items.map(d=>rowHTML(d,state.q)).join('');
+    document.getElementById('listB').innerHTML = out||`<div style="padding:20px;color:var(--ink3);font-size:13px">No matches.</div>`;
+  };
+  draw();
+  fc.addEventListener('click',e=>{const f=e.target.closest('.facet');if(!f)return;
+    fc.querySelectorAll('.facet').forEach(x=>x.classList.remove('on'));f.classList.add('on');state.facet=f.dataset.f;draw();});
+  document.getElementById('searchB').addEventListener('input',e=>{state.q=e.target.value;draw();});
+  document.getElementById('listB').addEventListener('click',e=>{
+    const u=e.target.closest('.uchip'); if(u){e.stopPropagation();document.querySelectorAll('#listB .uchip').forEach(x=>x.classList.remove('on'));u.classList.add('on');return;}
+    const o=e.target.closest('.opt');if(o){document.querySelectorAll('#listB .opt').forEach(x=>x.classList.remove('sel'));o.classList.add('sel');}});
+}
+
+/* ---------- ALT C : guided phenomenon -> property -> unit ---------- */
+function renderC(){
+  const parsed = DATA.filter(d=>!isUuid(d[0]) && d[0].includes('__')).map(d=>{
+    const [subj,quant]=d[0].split('__');
+    return {obj:subj.replace(/~/g,' ').replace(/_/g,' ').trim(), objRaw:subj, label:d[0], desc:d[1], units:d[4], pres:d[3]};
+  });
+  const objs=[...new Set(parsed.map(p=>p.obj))].sort();
+  const objCol=document.getElementById('objC'), quantCol=document.getElementById('quantC'), resolve=document.getElementById('resolveC');
+  let sel={obj:null,prop:null};
+  const drawObjs=()=>{
+    objCol.innerHTML=objs.map(o=>{
+      const n=parsed.filter(p=>p.obj===o).length;
+      return `<div class="bitem ${sel.obj===o?'on':''}" data-o="${o}"><span>${o.charAt(0).toUpperCase()+o.slice(1)}</span><span class="c">${n}</span></div>`;
+    }).join('');
+  };
+  const drawQuants=()=>{
+    if(!sel.obj){quantCol.innerHTML=`<div style="padding:14px;color:var(--ink3);font-size:13px">Select a phenomenon →</div>`;return;}
+    const items=parsed.filter(p=>p.obj===sel.obj);
+    quantCol.innerHTML=items.map(p=>{
+      const prop=p.label.split('__')[1].replace(/~/g,' ').replace(/_/g,' ');
+      return `<div class="bitem ${sel.prop===p.label?'on':''}" data-q="${p.label}">${prop.charAt(0).toUpperCase()+prop.slice(1)}</div>`;
+    }).join('');
+  };
+  let showAll=false;
+  const drawResolve=()=>{
+    if(!sel.prop){resolve.innerHTML=`<div class="picked"><span class="nm" style="color:var(--ink3)">Pick a phenomenon, then a property…</span></div>`;return;}
+    const p=parsed.find(x=>x.label===sel.prop);
+    const units=p.units||[];
+    const propTxt=p.label.split('__')[1].replace(/~/g,' ').replace(/_/g,' ');
+    let unitBlock;
+    if(units.length && !showAll){
+      unitBlock=`<div class="uhelp"><b>Used with this variable</b> — one tap:</div>${suggestCardsHTML(units,0)}
+        <span class="umore" data-act="all">Need a different unit? Search all 90 ↓</span>`;
+    } else {
+      unitBlock=`<div class="uhelp">${units.length?'Search the full list:':'No unit on record — search all units:'}</div>
+        <div class="usearchbar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg><input id="uSearchC" placeholder="Search units by symbol or name…"></div>
+        <div class="ugroups" id="uGroupsC">${groupedUnitsHTML(units,'')}</div>`;
+    }
+    resolve.innerHTML=`
+      <div class="picked"><span class="nm">${sel.obj.charAt(0).toUpperCase()+sel.obj.slice(1)} — ${propTxt}</span><span class="mc">${p.label}</span></div>
+      <div class="uwrap"><div class="ulabel"><span>Unit <span class="req">*</span></span></div>${unitBlock}</div>
+      <div style="text-align:right;margin-top:14px"><button class="btn">Use variable + unit →</button></div>`;
+    const more=resolve.querySelector('.umore'); if(more) more.addEventListener('click',()=>{showAll=true;drawResolve();});
+    const us=resolve.querySelector('#uSearchC'); if(us) us.addEventListener('input',e=>{document.getElementById('uGroupsC').innerHTML=groupedUnitsHTML(units,e.target.value);});
+    wireUnitPicks(resolve);
+  };
+  drawObjs();drawQuants();drawResolve();
+  objCol.addEventListener('click',e=>{const b=e.target.closest('.bitem');if(!b)return;sel={obj:b.dataset.o,prop:null};showAll=false;drawObjs();drawQuants();drawResolve();});
+  quantCol.addEventListener('click',e=>{const b=e.target.closest('.bitem');if(!b)return;sel.prop=b.dataset.q;showAll=false;drawQuants();drawResolve();});
+}
+
+/* ---------- tabs ---------- */
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));t.classList.add('on');
+  document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('on',p.dataset.p===t.dataset.k));
+}));
+
+/* ---------- standalone unit-selection section ---------- */
+function renderUnitSection(){
+  // Move 1: suggested-only (air temperature -> K, degC)
+  const sg=document.getElementById('unitSuggest');
+  sg.innerHTML=`<div class="ulabel"><span>Unit <span class="req">*</span></span></div>
+    <div class="uhelp">Variable <b>Air temperature</b> · used with these units — one tap:</div>
+    ${suggestCardsHTML(['degC','K'],0)}
+    <span class="umore">Need a different unit? Search all 90 ↓</span>`;
+  wireUnitPicks(sg);
+  sg.querySelector('.umore').addEventListener('click',()=>{
+    sg.querySelector('.umore').outerHTML=`<div class="uhelp" style="margin-top:11px">Search the full list:</div>
+      <div class="usearchbar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg><input id="uSearchS" placeholder="Search units…"></div>
+      <div class="ugroups" id="uGroupsS">${groupedUnitsHTML(['degC','K'],'')}</div>`;
+    document.getElementById('uSearchS').addEventListener('input',e=>{document.getElementById('uGroupsS').innerHTML=groupedUnitsHTML(['degC','K'],e.target.value);});
+  });
+
+  // Move 2: full grouped list (variable precipitation -> mm h-1, mm day-1, m day-1 suggested)
+  const al=document.getElementById('unitAll');
+  const sugg=['mm h-1','mm day-1','m day-1'];
+  al.innerHTML=`<div class="ulabel"><span>Unit <span class="req">*</span></span></div>
+    <div class="uhelp">Variable <b>Precipitation volume flux</b> · all units, grouped by dimension:</div>
+    <div class="usearchbar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg><input id="uSearchA" placeholder="Search units by symbol or name…"></div>
+    <div class="ugroups" id="uGroupsA">${groupedUnitsHTML(sugg,'')}</div>`;
+  wireUnitPicks(al);
+  document.getElementById('uSearchA').addEventListener('input',e=>{document.getElementById('uGroupsA').innerHTML=groupedUnitsHTML(sugg,e.target.value);});
+}
+
+renderA();renderB();renderC();renderUnitSection();
+</script>
+</body>
+</html>
