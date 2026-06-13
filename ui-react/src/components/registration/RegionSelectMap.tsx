@@ -2,15 +2,32 @@
  * RegionSelectMap — Leaflet map for multi-selecting regions by clicking their
  * polygons. Selected regions are highlighted; clicking a polygon toggles it.
  *
- * Mirrors the rendering approach of pages/regions/RegionsEditor's map, adapted
- * for multi-select (a Set of selected ids + a toggle callback).
+ * Also drives two map↔list links:
+ *  - reports the current viewport (moveend/zoomend) so the list can filter to
+ *    what is on screen, and
+ *  - flies to a requested region (focusRegionId/focusNonce) so a list row can
+ *    locate itself on the map.
+ *
+ * The map always renders the full `regions` set it is given — the viewport
+ * filter applies only to the list, so panning never changes the rendered
+ * polygons and cannot fight the auto-fit.
  */
 import { useEffect } from 'react';
-import { MapContainer, TileLayer, GeoJSON as LeafletGeoJSON, useMapEvents } from 'react-leaflet';
+import {
+  MapContainer,
+  TileLayer,
+  GeoJSON as LeafletGeoJSON,
+  useMap,
+  useMapEvents,
+} from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
-import { parseGeometry } from '@/pages/regions/regionUtils';
+import {
+  calculateBoundingBox,
+  parseGeometry,
+  type ViewportBounds,
+} from '@/pages/regions/regionUtils';
 import type { PickerRegion } from '@/graphql/region-picker';
 
 interface RegionSelectMapProps {
@@ -18,6 +35,13 @@ interface RegionSelectMapProps {
   selectedIds: Set<string>;
   onToggle: (region: PickerRegion) => void;
   height?: string;
+  /** Emits the visible map area whenever the user pans/zooms (and on mount). */
+  onViewportChange?: (bounds: ViewportBounds) => void;
+  /** Fly to this region's bounds when `focusNonce` changes. */
+  focusRegionId?: string;
+  focusNonce?: number;
+  /** Re-fit the map to all current regions when this changes. */
+  fitNonce?: number;
 }
 
 export function RegionSelectMap({
@@ -25,6 +49,10 @@ export function RegionSelectMap({
   selectedIds,
   onToggle,
   height = '320px',
+  onViewportChange,
+  focusRegionId,
+  focusNonce,
+  fitNonce = 0,
 }: RegionSelectMapProps) {
   const featureCollection: GeoJSON.FeatureCollection = {
     type: 'FeatureCollection',
@@ -64,34 +92,11 @@ export function RegionSelectMap({
     }
   };
 
-  // Identity of the visible regions — refit/remount when the actual set changes,
-  // not merely when its length changes (two same-size categories differ).
   const regionsKey = regions.map((r) => r.id).join(',');
-  // Remount the layer only when the visible regions or their selection change
-  // (react-leaflet does not re-run `style` on prop change), scoped to this map's
-  // regions so selecting in another category doesn't churn this layer.
   const selectionKey = regions
     .filter((r) => selectedIds.has(r.id))
     .map((r) => r.id)
     .join(',');
-
-  const MapFitter = () => {
-    const map = useMapEvents({});
-    useEffect(() => {
-      if (featureCollection.features.length > 0) {
-        try {
-          const layer = L.geoJSON(featureCollection);
-          const bounds = layer.getBounds();
-          if (bounds.isValid()) {
-            map.fitBounds(bounds, { padding: [20, 20] });
-          }
-        } catch {
-          // ignore invalid geometry
-        }
-      }
-    }, [map]);
-    return null;
-  };
 
   return (
     <div className="overflow-hidden rounded-md border" style={{ height, zIndex: 0 }}>
@@ -111,8 +116,78 @@ export function RegionSelectMap({
           style={style}
           onEachFeature={onEachFeature}
         />
-        <MapFitter key={regionsKey} />
+        <MapFitter key={`${regionsKey}-${fitNonce}`} featureCollection={featureCollection} />
+        <ViewportWatcher onViewportChange={onViewportChange} />
+        <MapFocus regions={regions} focusRegionId={focusRegionId} focusNonce={focusNonce} />
       </MapContainer>
     </div>
   );
+}
+
+/** Fits the map to all currently-rendered features on mount (remounted via key). */
+function MapFitter({ featureCollection }: { featureCollection: GeoJSON.FeatureCollection }) {
+  const map = useMap();
+  useEffect(() => {
+    if (featureCollection.features.length > 0) {
+      try {
+        const layer = L.geoJSON(featureCollection);
+        const bounds = layer.getBounds();
+        if (bounds.isValid()) {
+          map.fitBounds(bounds, { padding: [20, 20] });
+        }
+      } catch {
+        // ignore invalid geometry
+      }
+    }
+  }, [map]); // eslint-disable-line react-hooks/exhaustive-deps
+  return null;
+}
+
+/** Reports the visible map area on mount and on every pan/zoom. */
+function ViewportWatcher({ onViewportChange }: { onViewportChange?: (b: ViewportBounds) => void }) {
+  const report = (map: L.Map) => {
+    const b = map.getBounds();
+    onViewportChange?.({
+      west: b.getWest(),
+      south: b.getSouth(),
+      east: b.getEast(),
+      north: b.getNorth(),
+    });
+  };
+  const map = useMapEvents({
+    moveend: () => report(map),
+    zoomend: () => report(map),
+  });
+  useEffect(() => {
+    report(map);
+  }, [map]); // eslint-disable-line react-hooks/exhaustive-deps
+  return null;
+}
+
+/** Flies to the requested region's bounds when `focusNonce` changes. */
+function MapFocus({
+  regions,
+  focusRegionId,
+  focusNonce,
+}: {
+  regions: PickerRegion[];
+  focusRegionId?: string;
+  focusNonce?: number;
+}) {
+  const map = useMap();
+  useEffect(() => {
+    if (!focusRegionId) return;
+    const region = regions.find((r) => r.id === focusRegionId);
+    if (!region) return;
+    const bb = calculateBoundingBox(region.geometries);
+    if (!bb) return;
+    map.flyToBounds(
+      [
+        [bb.ymin, bb.xmin],
+        [bb.ymax, bb.xmax],
+      ],
+      { padding: [20, 20], maxZoom: 8 },
+    );
+  }, [focusNonce]); // eslint-disable-line react-hooks/exhaustive-deps
+  return null;
 }

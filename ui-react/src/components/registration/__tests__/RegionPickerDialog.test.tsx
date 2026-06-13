@@ -1,6 +1,6 @@
-import { screen, waitFor } from '@testing-library/react';
+import { act, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   ListRegionCategoriesDocument,
@@ -9,6 +9,14 @@ import {
 import { renderWithProviders } from '@/test/utils/render';
 import { RegionPickerDialog } from '@/components/registration/RegionPickerDialog';
 
+// Shared mutable handle so tests can drive the mocked Leaflet map: set the
+// viewport bounds, fire map events, and assert fly-to calls.
+const lmock = vi.hoisted(() => ({
+  handlers: {} as Record<string, (() => void) | undefined>,
+  bounds: { west: -180, south: -90, east: 180, north: 90 },
+  flyToBounds: vi.fn(),
+}));
+
 // react-leaflet needs a real browser; mock it so jsdom doesn't hang. The GeoJSON
 // mock invokes onEachFeature with a fake layer and renders a clickable button per
 // feature, so polygon-click selection stays testable.
@@ -16,56 +24,94 @@ vi.mock('leaflet', () => ({
   default: { geoJSON: () => ({ getBounds: () => ({ isValid: () => false }) }) },
 }));
 vi.mock('leaflet/dist/leaflet.css', () => ({}));
-vi.mock('react-leaflet', () => ({
-  MapContainer: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid="map-container">{children}</div>
-  ),
-  TileLayer: () => <div data-testid="tile-layer" />,
-  useMapEvents: () => ({}),
-  GeoJSON: ({
-    data,
-    onEachFeature,
-  }: {
-    data: GeoJSON.FeatureCollection;
-    onEachFeature?: (
-      f: GeoJSON.Feature,
-      layer: { on: (e: string, cb: () => void) => void; bindTooltip: () => void },
-    ) => void;
-  }) => (
-    <div data-testid="geo-json">
-      {data.features.map((feature, i) => {
-        let clickHandler = () => {};
-        const layer = {
-          on: (_evt: string, cb: () => void) => {
-            clickHandler = cb;
-          },
-          bindTooltip: () => {},
-        };
-        onEachFeature?.(feature, layer);
-        return (
-          <button key={i} type="button" onClick={() => clickHandler()}>
-            {feature.properties?.regionName as string}
-          </button>
-        );
-      })}
-    </div>
-  ),
-}));
+vi.mock('react-leaflet', () => {
+  // Stable map instance — react-leaflet returns the same instance across renders,
+  // so effects keyed on the map run once (a fresh object each call would loop).
+  const mapInstance = {
+    getBounds: () => ({
+      getWest: () => lmock.bounds.west,
+      getSouth: () => lmock.bounds.south,
+      getEast: () => lmock.bounds.east,
+      getNorth: () => lmock.bounds.north,
+    }),
+    fitBounds: () => {},
+    flyToBounds: lmock.flyToBounds,
+  };
+  return {
+    MapContainer: ({ children }: { children: React.ReactNode }) => (
+      <div data-testid="map-container">{children}</div>
+    ),
+    TileLayer: () => <div data-testid="tile-layer" />,
+    useMap: () => mapInstance,
+    useMapEvents: (h: Record<string, () => void>) => {
+      Object.assign(lmock.handlers, h);
+      return mapInstance;
+    },
+    GeoJSON: ({
+      data,
+      onEachFeature,
+    }: {
+      data: GeoJSON.FeatureCollection;
+      onEachFeature?: (
+        f: GeoJSON.Feature,
+        layer: { on: (e: string, cb: () => void) => void; bindTooltip: () => void },
+      ) => void;
+    }) => (
+      <div data-testid="geo-json">
+        {data.features.map((feature, i) => {
+          let clickHandler = () => {};
+          const layer = {
+            on: (_evt: string, cb: () => void) => {
+              clickHandler = cb;
+            },
+            bindTooltip: () => {},
+          };
+          onEachFeature?.(feature, layer);
+          return (
+            <button key={i} type="button" onClick={() => clickHandler()}>
+              {feature.properties?.regionName as string}
+            </button>
+          );
+        })}
+      </div>
+    ),
+  };
+});
 
-const polygon = {
-  type: 'Polygon',
-  coordinates: [
-    [
-      [0, 0],
-      [1, 0],
-      [1, 1],
-      [0, 1],
-      [0, 0],
+beforeEach(() => {
+  lmock.bounds = { west: -180, south: -90, east: 180, north: 90 };
+  lmock.handlers = {};
+  lmock.flyToBounds.mockClear();
+});
+
+interface Box {
+  west: number;
+  south: number;
+  east: number;
+  north: number;
+}
+
+function polygonOf(b: Box) {
+  return {
+    type: 'Polygon',
+    coordinates: [
+      [
+        [b.west, b.south],
+        [b.east, b.south],
+        [b.east, b.north],
+        [b.west, b.north],
+        [b.west, b.south],
+      ],
     ],
-  ],
-};
+  };
+}
 
-function region(id: string, name: string, categoryId: string) {
+// Unique geometry ids — Apollo normalizes region_geometry by id, so reusing one
+// id would collapse every region onto a single shared geometry.
+let geomId = 0;
+
+function region(id: string, name: string, categoryId: string, box?: Box) {
+  const b = box ?? { west: 0, south: 0, east: 1, north: 1 };
   return {
     __typename: 'region',
     id,
@@ -73,7 +119,7 @@ function region(id: string, name: string, categoryId: string) {
     parent_region_id: 'parent',
     category_id: categoryId,
     model_catalog_uri: null,
-    geometries: [{ __typename: 'region_geometry', id: 1, geometry: polygon }],
+    geometries: [{ __typename: 'region_geometry', id: ++geomId, geometry: polygonOf(b) }],
   };
 }
 
@@ -97,10 +143,13 @@ function categoriesMockOf(cats: Array<{ id: string; name: string; subIds?: strin
   };
 }
 
-function regionsMockOf(categoryId: string, regions: Array<{ id: string; name: string }>) {
+function regionsMockOf(
+  categoryId: string,
+  regions: Array<{ id: string; name: string; box?: Box }>,
+) {
   return {
     request: { query: ListRegionsByCategoryDocument, variables: { categoryId } },
-    result: { data: { region: regions.map((r) => region(r.id, r.name, categoryId)) } },
+    result: { data: { region: regions.map((r) => region(r.id, r.name, categoryId, r.box)) } },
   };
 }
 
@@ -108,9 +157,11 @@ const categoriesMock = categoriesMockOf([
   { id: 'agriculture', name: 'Agriculture' },
   { id: 'hydrology', name: 'Hydrology' },
 ]);
+const TEXAS_BOX: Box = { west: -100, south: 28, east: -95, north: 32 };
+const CALIFORNIA_BOX: Box = { west: -124, south: 34, east: -118, north: 40 };
 const agricultureRegionsMock = regionsMockOf('agriculture', [
-  { id: 'tx', name: 'Texas' },
-  { id: 'ca', name: 'California' },
+  { id: 'tx', name: 'Texas', box: TEXAS_BOX },
+  { id: 'ca', name: 'California', box: CALIFORNIA_BOX },
 ]);
 
 describe('RegionPickerDialog', () => {
@@ -167,6 +218,46 @@ describe('RegionPickerDialog', () => {
       expect(screen.queryByRole('option', { name: 'Texas' })).not.toBeInTheDocument(),
     );
     expect(screen.getByRole('option', { name: 'California' })).toBeInTheDocument();
+  });
+
+  it('filters the list to the map viewport (B)', async () => {
+    renderWithProviders(
+      <RegionPickerDialog open onOpenChange={() => {}} selected={[]} onChange={() => {}} />,
+      { apolloMocks: [categoriesMock, agricultureRegionsMock] },
+    );
+
+    expect(await screen.findByRole('option', { name: 'Texas' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'California' })).toBeInTheDocument();
+
+    // Pan the map to a viewport that only covers Texas, then emit moveend.
+    lmock.bounds = { west: -101, south: 27, east: -94, north: 33 };
+    await act(async () => {
+      lmock.handlers.moveend?.();
+    });
+
+    await waitFor(() =>
+      expect(screen.queryByRole('option', { name: 'California' })).not.toBeInTheDocument(),
+    );
+    expect(screen.getByRole('option', { name: 'Texas' })).toBeInTheDocument();
+  });
+
+  it('flies the map to a region when its locate button is clicked (A)', async () => {
+    const user = userEvent.setup();
+    renderWithProviders(
+      <RegionPickerDialog open onOpenChange={() => {}} selected={[]} onChange={() => {}} />,
+      { apolloMocks: [categoriesMock, agricultureRegionsMock] },
+    );
+
+    await user.click(await screen.findByRole('button', { name: /zoom to california/i }));
+
+    await waitFor(() => expect(lmock.flyToBounds).toHaveBeenCalled());
+    expect(lmock.flyToBounds).toHaveBeenCalledWith(
+      [
+        [CALIFORNIA_BOX.south, CALIFORNIA_BOX.west],
+        [CALIFORNIA_BOX.north, CALIFORNIA_BOX.east],
+      ],
+      expect.objectContaining({ maxZoom: 8 }),
+    );
   });
 
   it('filters by administrative level via the level sub-tabs', async () => {

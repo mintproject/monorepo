@@ -7,7 +7,7 @@
  * caller mirrors these into `modelcatalog_region` on save.
  */
 import * as React from 'react';
-import { Building2, Check, Droplets, MapPin, Search, Wheat, X } from 'lucide-react';
+import { Building2, Check, Crosshair, Droplets, MapPin, Search, Wheat, X } from 'lucide-react';
 
 import {
   Dialog,
@@ -27,6 +27,11 @@ import {
 } from '@/graphql/generated/graphql';
 import type { PickerRegion } from '@/graphql/region-picker';
 import { RegionSelectMap } from './RegionSelectMap';
+import {
+  boundingBoxInViewport,
+  calculateBoundingBox,
+  type ViewportBounds,
+} from '@/pages/regions/regionUtils';
 import type { RegionSelection } from '@/lib/mutation-builder';
 import { cn } from '@/lib/utils';
 
@@ -119,17 +124,46 @@ export function RegionPickerDialog({
   const allRegions: PickerRegion[] = React.useMemo(() => regionData?.region ?? [], [regionData]);
 
   const [search, setSearch] = React.useState('');
+  // Current map viewport (B): the list filters to regions visible on the map.
+  const [viewport, setViewport] = React.useState<ViewportBounds | null>(null);
+  // Locate target (A): bumping the nonce re-flies the map to `focusId`.
+  const [focus, setFocus] = React.useState<{ id: string; nonce: number } | null>(null);
+  // Bumped to re-fit the map to all current regions ("Reset view").
+  const [fitNonce, setFitNonce] = React.useState(0);
 
-  // Reset the search box whenever the visible category/level changes.
+  // Reset search + viewport + locate whenever the visible category/level changes.
   React.useEffect(() => {
     setSearch('');
+    setViewport(null);
+    setFocus(null);
   }, [activeLevelId]);
 
+  // Map (search-filtered) — the map always renders this full set.
   const regions = React.useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return allRegions;
     return allRegions.filter((r) => r.name?.toLowerCase().includes(q));
   }, [allRegions, search]);
+
+  // Precompute each region's bounding box once (for viewport filtering + locate).
+  const regionBoundsById = React.useMemo(() => {
+    const map = new Map<string, ReturnType<typeof calculateBoundingBox>>();
+    allRegions.forEach((r) => map.set(r.id, calculateBoundingBox(r.geometries)));
+    return map;
+  }, [allRegions]);
+
+  // List (search + viewport filtered). Geometry-less regions (no box) always show
+  // since they can't be placed on the map.
+  const visibleRegions = React.useMemo(() => {
+    if (!viewport) return regions;
+    return regions.filter((r) => {
+      const bb = regionBoundsById.get(r.id);
+      if (!bb) return true;
+      return boundingBoxInViewport(bb, viewport);
+    });
+  }, [regions, viewport, regionBoundsById]);
+
+  const hiddenByViewport = regions.length - visibleRegions.length;
 
   const isSelected = (id: string) => selected.some((r) => r.id === id);
 
@@ -139,6 +173,12 @@ export function RegionPickerDialog({
     } else {
       onChange([...selected, { id: region.id, label: region.name }]);
     }
+  };
+
+  const locate = (id: string) => setFocus((f) => ({ id, nonce: (f?.nonce ?? 0) + 1 }));
+  const resetView = () => {
+    setViewport(null);
+    setFitNonce((n) => n + 1);
   };
 
   const remove = (id: string) => onChange(selected.filter((r) => r.id !== id));
@@ -270,6 +310,10 @@ export function RegionPickerDialog({
                         selectedIds={selectedIds}
                         onToggle={toggle}
                         height="440px"
+                        onViewportChange={setViewport}
+                        focusRegionId={focus?.id}
+                        focusNonce={focus?.nonce}
+                        fitNonce={fitNonce}
                       />
                     </div>
 
@@ -280,23 +324,26 @@ export function RegionPickerDialog({
                       aria-multiselectable="true"
                       className="h-[440px] overflow-y-auto rounded-md border"
                     >
-                      {regions.length === 0 ? (
+                      {visibleRegions.length === 0 ? (
                         <p className="p-3 text-center text-sm text-muted-foreground">
-                          No regions match “{search}”.
+                          {search
+                            ? `No regions match “${search}”.`
+                            : 'No regions in the current map view — zoom out or pan.'}
                         </p>
                       ) : (
                         <ul>
-                          {regions.map((region) => {
+                          {visibleRegions.map((region) => {
                             const sel = isSelected(region.id);
+                            const hasGeometry = regionBoundsById.get(region.id) != null;
                             return (
-                              <li key={region.id}>
+                              <li key={region.id} className="flex items-center">
                                 <button
                                   type="button"
                                   role="option"
                                   aria-selected={sel}
                                   onClick={() => toggle(region)}
                                   className={cn(
-                                    'flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition-colors hover:bg-accent hover:text-accent-foreground',
+                                    'flex flex-1 items-center gap-2 px-3 py-2 text-left text-sm transition-colors hover:bg-accent hover:text-accent-foreground',
                                     sel && 'bg-accent/50',
                                   )}
                                 >
@@ -308,6 +355,17 @@ export function RegionPickerDialog({
                                   />
                                   <span className="truncate">{region.name || region.id}</span>
                                 </button>
+                                {hasGeometry && (
+                                  <button
+                                    type="button"
+                                    onClick={() => locate(region.id)}
+                                    aria-label={`Zoom to ${region.name || region.id}`}
+                                    title="Zoom to region"
+                                    className="shrink-0 px-2 py-2 text-muted-foreground hover:text-primary"
+                                  >
+                                    <Crosshair className="h-3.5 w-3.5" />
+                                  </button>
+                                )}
                               </li>
                             );
                           })}
@@ -316,9 +374,21 @@ export function RegionPickerDialog({
                     </div>
                   </div>
 
-                  <p className="text-xs text-muted-foreground">
-                    Click a region on the map or in the list to select or deselect it.
-                  </p>
+                  <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
+                    <span>
+                      Click a region on the map or in the list to select it
+                      {hiddenByViewport > 0 && `, or zoom out to see ${hiddenByViewport} more`}.
+                    </span>
+                    {hiddenByViewport > 0 && (
+                      <button
+                        type="button"
+                        onClick={resetView}
+                        className="shrink-0 font-medium text-primary hover:underline"
+                      >
+                        Reset view
+                      </button>
+                    )}
+                  </div>
                 </>
               )}
             </div>

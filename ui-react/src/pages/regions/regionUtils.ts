@@ -79,6 +79,22 @@ export function calculateBoundingBox(geometries: RegionGeometryData[]): Bounding
   return { xmin, xmax, ymin, ymax };
 }
 
+/** A map viewport expressed as geographic edges (degrees). */
+export interface ViewportBounds {
+  west: number;
+  south: number;
+  east: number;
+  north: number;
+}
+
+/**
+ * True when a region's bounding box overlaps the given map viewport. Pure
+ * number math (no Leaflet) so it is cheap to run per region and easy to test.
+ */
+export function boundingBoxInViewport(bb: BoundingBox, vp: ViewportBounds): boolean {
+  return !(bb.xmax < vp.west || bb.xmin > vp.east || bb.ymax < vp.south || bb.ymin > vp.north);
+}
+
 function extractCoordinates(geom: GeoJSON.Geometry): Array<[number, number]> {
   const coords: Array<[number, number]> = [];
 
