@@ -33,18 +33,16 @@ export const regionSelectionSchema = z.object({
 
 // ─── Variable presentation row ─────────────────────────────────────────────────
 // An input (DatasetSpecification) can hold zero, one, or many VariablePresentations.
-// Each presentation links to a single standard variable + unit, with optional label
-// overrides. This is the ontological path for "an input has many standard variables".
+// Each presentation links to a single standard variable + unit. The VariablePresentation
+// itself is hidden from the user: its label/long-name/short-name are derived on submit
+// (see mutation-builder), so the form only collects the standard variable + unit.
+// This is the ontological path for "an input has many standard variables".
 
 export const presentationRowSchema = z.object({
   /** Present in edit mode (existing VariablePresentation id). */
   existingPresentationId: z.string().optional(),
   standardVariable: standardVariableSelectionSchema.nullable().default(null),
   unit: unitSelectionSchema.nullable().default(null),
-  /** Optional VariablePresentation overrides (collapsible section). */
-  variableLabel: z.string().optional(),
-  variableLongName: z.string().optional(),
-  variableShortName: z.string().optional(),
 });
 
 export type PresentationRowSchema = z.infer<typeof presentationRowSchema>;
@@ -106,9 +104,6 @@ export function emptyPresentationRow(): PresentationRowSchema {
   return {
     standardVariable: null,
     unit: null,
-    variableLabel: '',
-    variableLongName: '',
-    variableShortName: '',
   };
 }
 

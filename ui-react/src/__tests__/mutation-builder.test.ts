@@ -163,21 +163,11 @@ describe('buildAddInputVariables', () => {
     expect(data?.uses_unit).toBe('https://w3id.org/okn/i/mint/unit-mm');
   });
 
-  it('uses variableLabel as presentation label when provided', () => {
-    const row = makeInputRow({
-      presentations: [makePresentation({ variableLabel: 'Precip Variable Label' })],
-    });
-    const data = inserts(buildAddInputVariables('config-1', row).presentations)[0]?.presentation
-      ?.data;
-    expect(data?.label).toBe('Precip Variable Label');
-  });
-
-  it('derives presentation label from the standard variable when name is blank', () => {
+  it('derives presentation label from the standard variable', () => {
     const row = makeInputRow({
       label: 'Weather file',
       presentations: [
         makePresentation({
-          variableLabel: undefined,
           standardVariable: { id: 'sv-1', label: 'Precipitation' },
         }),
       ],
@@ -187,29 +177,26 @@ describe('buildAddInputVariables', () => {
     expect(data?.label).toBe('Precipitation');
   });
 
-  it('falls back to the input label when name and standard variable are both blank', () => {
+  it('falls back to the input label when the standard variable is blank', () => {
     const row = makeInputRow({
       label: 'Weather file',
-      presentations: [makePresentation({ variableLabel: undefined, standardVariable: null })],
+      presentations: [makePresentation({ standardVariable: null })],
     });
     const data = inserts(buildAddInputVariables('config-1', row).presentations)[0]?.presentation
       ?.data;
     expect(data?.label).toBe('Weather file');
   });
 
-  it('maps variable long/short names', () => {
+  it('leaves long/short names null (the presentation is hidden from the user)', () => {
     const row = makeInputRow({
       presentations: [
-        makePresentation({
-          variableLongName: 'Daily Precipitation Accumulation',
-          variableShortName: 'precip_daily',
-        }),
+        makePresentation({ standardVariable: { id: 'sv-1', label: 'Precipitation' } }),
       ],
     });
     const data = inserts(buildAddInputVariables('config-1', row).presentations)[0]?.presentation
       ?.data;
-    expect(data?.has_long_name).toBe('Daily Precipitation Accumulation');
-    expect(data?.has_short_name).toBe('precip_daily');
+    expect(data?.has_long_name).toBeNull();
+    expect(data?.has_short_name).toBeNull();
   });
 });
 

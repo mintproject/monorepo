@@ -1,23 +1,21 @@
 /**
- * VariablePresentationRow — one variable presentation on an input/output.
+ * VariablePresentationRow — one variable on an input/output.
  *
  * A presentation is the hub linking a dataset variable to its (optional) standard
  * variable and unit. An input can hold zero, one, or many of these.
  *
- * Fields: Name (label, headline), Standard Variable, Unit, and collapsible
- * long-name / short-name overrides. The Name may be left blank — on submit it is
- * derived from the selected standard variable (see mutation-builder).
+ * The VariablePresentation itself is hidden from the user. The row exposes a single
+ * guided "standard variable & unit" picker (phenomenon → property → unit); the
+ * presentation's label / long-name / short-name are derived on submit
+ * (see mutation-builder), so the user never edits them directly.
  */
-import * as React from 'react';
 import { useFormContext } from 'react-hook-form';
 import type { Path } from 'react-hook-form';
-import { ChevronDown, ChevronRight, Trash2 } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 
-import { StandardVariableCombobox } from '@/components/autocomplete/StandardVariableCombobox';
-import { UnitCombobox } from '@/components/autocomplete/UnitCombobox';
+import { StandardVariableUnitPicker } from '@/components/autocomplete/StandardVariableUnitPicker';
 import { Button } from '@/components/ui/button';
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
 import type { ConfigurationFormSchema } from '@/schemas/configuration';
 
 export interface VariablePresentationRowProps {
@@ -34,8 +32,7 @@ export function VariablePresentationRow({
   index,
   onRemove,
 }: VariablePresentationRowProps) {
-  const [overridesOpen, setOverridesOpen] = React.useState(false);
-  const { control } = useFormContext<ConfigurationFormSchema>();
+  const { control, watch, setValue } = useFormContext<ConfigurationFormSchema>();
 
   // RHF's generic is too strict for dynamic template-literal paths, but they are
   // always valid at runtime.
@@ -61,116 +58,33 @@ export function VariablePresentationRow({
         )}
       </div>
 
-      {/* Name (presentation label) */}
+      {/* Standard variable + Unit — single guided picker (the VariablePresentation
+          concept is hidden; label/long/short are derived on submit). */}
       <FormField
         control={control}
-        name={f('variableLabel')}
+        name={f('standardVariable')}
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Name</FormLabel>
+            <FormLabel>Standard variable &amp; unit</FormLabel>
             <FormControl>
-              <Input
-                placeholder="e.g. PREC (defaults to the standard variable)"
-                {...field}
-                value={(field.value as string) ?? ''}
+              <StandardVariableUnitPicker
+                variable={
+                  field.value as Parameters<typeof StandardVariableUnitPicker>[0]['variable']
+                }
+                unit={watch(f('unit')) as Parameters<typeof StandardVariableUnitPicker>[0]['unit']}
+                onResolve={(variable, unit) => {
+                  field.onChange(variable);
+                  setValue(f('unit'), unit as Parameters<typeof setValue>[1], {
+                    shouldDirty: true,
+                    shouldValidate: true,
+                  });
+                }}
               />
             </FormControl>
             <FormMessage />
           </FormItem>
         )}
       />
-
-      {/* Standard Variable + Unit */}
-      <div className="grid grid-cols-2 gap-3">
-        <FormField
-          control={control}
-          name={f('standardVariable')}
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Standard Variable</FormLabel>
-              <FormControl>
-                <StandardVariableCombobox
-                  value={field.value as Parameters<typeof StandardVariableCombobox>[0]['value']}
-                  onChange={field.onChange}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={control}
-          name={f('unit')}
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Unit</FormLabel>
-              <FormControl>
-                <UnitCombobox
-                  value={field.value as Parameters<typeof UnitCombobox>[0]['value']}
-                  onChange={field.onChange}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-      </div>
-
-      {/* Collapsible long/short name overrides */}
-      <div>
-        <button
-          type="button"
-          className="flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
-          onClick={() => setOverridesOpen((v) => !v)}
-          aria-expanded={overridesOpen}
-        >
-          {overridesOpen ? (
-            <ChevronDown className="h-3 w-3" />
-          ) : (
-            <ChevronRight className="h-3 w-3" />
-          )}
-          Long name / short name
-        </button>
-
-        {overridesOpen && (
-          <div className="mt-2 grid grid-cols-2 gap-3">
-            <FormField
-              control={control}
-              name={f('variableLongName')}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-xs">Long Name</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="Long name"
-                      {...field}
-                      value={(field.value as string) ?? ''}
-                      className="h-8 text-sm"
-                    />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={control}
-              name={f('variableShortName')}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-xs">Short Name</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="Short name"
-                      {...field}
-                      value={(field.value as string) ?? ''}
-                      className="h-8 text-sm"
-                    />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-          </div>
-        )}
-      </div>
     </div>
   );
 }
