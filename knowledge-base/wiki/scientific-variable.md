@@ -4,7 +4,7 @@
 
 **Sources**: Peckham_and_Stoica_2022_ICWRER_2022.pdf, stoica-peckham-cwm19.pdf
 
-**Last updated**: 2026-06-06
+**Last updated**: 2026-06-13
 
 ---
 
@@ -29,6 +29,18 @@ The next essential aspect is the **property** being observed or measured. Proper
 ## Value
 
 The **value** is the number associated with a variable (via some method of measurement or estimation and specific units). SVO's goal is only to describe the variable concept, not the value — see the scope boundary in [[scientific-variables-ontology]]. Some variables have a definite value that cannot be measured directly (e.g., the mass of Earth's Moon, the number of carbon atoms in a coffee cup) (source: Peckham_and_Stoica_2022_ICWRER_2022.pdf).
+
+## Units vs. dimensions — does a scientific variable "support units"?
+
+A scientific variable (the SVO **standard variable**) does **not** carry actual measurement units. SVO explicitly excludes them as resource-specific:
+
+> "our goal is only to fully describe the variable concept. When this concept is utilized in some digital resource, there will also be measurement units, a method of measurement, and typically some type of discretization in space and/or time. SVO does not attempt to capture this related information, which may differ from one resource to another." (source: Peckham_and_Stoica_2022_ICWRER_2022.pdf)
+
+What it *does* carry is a **dimension** — the paper calls it "generic units." A Quantitative Property is grounded in the ISQ / ISO 80000 ([[international-system-of-quantities]]) dimension formula `Lᵃ Mᵇ Tᶜ Iᵈ Θᵉ Nᶠ Jᵍ` (e.g. velocity `[L T⁻¹]`, pressure `[L⁻¹ M T⁻²]`). This is a dimension string, not a concrete unit like `m/s` (source: Peckham_and_Stoica_2022_ICWRER_2022.pdf). The dimension string aligns with [[qudt|QUDT]] (source: stoica-peckham-cwm19.pdf).
+
+The actual unit attaches one level down, on the [[variable-presentation]] via `sd:usesUnit`. Keeping the dimension on the variable and the concrete unit on the presentation enables **consistency checking**: MINT can flag when a presentation's unit dimension disagrees with the dimension implied by its standard variable.
+
+This is faithfully reflected in the `modelcatalog_*` schema — `modelcatalog_standard_variable` exposes only `id`, `label`, `description`, `same_as` (no unit column or unit FK); the unit FK (`unit_id` / `usesUnit`) lives only on `modelcatalog_variable_presentation`.
 
 ## Related pages
 
