@@ -31,13 +31,29 @@ export const regionSelectionSchema = z.object({
   label: z.string(),
 });
 
+// ─── Variable presentation row ─────────────────────────────────────────────────
+// An input (DatasetSpecification) can hold zero, one, or many VariablePresentations.
+// Each presentation links to a single standard variable + unit, with optional label
+// overrides. This is the ontological path for "an input has many standard variables".
+
+export const presentationRowSchema = z.object({
+  /** Present in edit mode (existing VariablePresentation id). */
+  existingPresentationId: z.string().optional(),
+  standardVariable: standardVariableSelectionSchema.nullable().default(null),
+  unit: unitSelectionSchema.nullable().default(null),
+  /** Optional VariablePresentation overrides (collapsible section). */
+  variableLabel: z.string().optional(),
+  variableLongName: z.string().optional(),
+  variableShortName: z.string().optional(),
+});
+
+export type PresentationRowSchema = z.infer<typeof presentationRowSchema>;
+
 // ─── Input / Output row ───────────────────────────────────────────────────────
 
 export const inputRowSchema = z.object({
   /** Present in edit mode (existing DatasetSpecification id). */
   existingId: z.string().optional(),
-  /** Present in edit mode (existing VariablePresentation id). */
-  existingPresentationId: z.string().optional(),
   label: z.string().min(1, 'Input label is required'),
   description: z.string().optional(),
   hasFormat: z.string().optional(),
@@ -45,12 +61,8 @@ export const inputRowSchema = z.object({
   position: z.number().int().min(0),
   /** First-class form field — stored on the junction row. */
   isOptional: z.boolean().default(false),
-  standardVariable: standardVariableSelectionSchema.nullable().default(null),
-  unit: unitSelectionSchema.nullable().default(null),
-  /** Optional VariablePresentation overrides (collapsible section). */
-  variableLabel: z.string().optional(),
-  variableLongName: z.string().optional(),
-  variableShortName: z.string().optional(),
+  /** Zero, one, or many standard variables — one per VariablePresentation. */
+  presentations: z.array(presentationRowSchema).default([]),
 });
 
 export type InputRowSchema = z.infer<typeof inputRowSchema>;
@@ -90,6 +102,16 @@ export type ConfigurationFormSchema = z.infer<typeof configurationFormSchema>;
 
 // ─── Default / empty row factories ───────────────────────────────────────────
 
+export function emptyPresentationRow(): PresentationRowSchema {
+  return {
+    standardVariable: null,
+    unit: null,
+    variableLabel: '',
+    variableLongName: '',
+    variableShortName: '',
+  };
+}
+
 export function emptyInputRow(position: number): InputRowSchema {
   return {
     label: '',
@@ -97,11 +119,8 @@ export function emptyInputRow(position: number): InputRowSchema {
     hasFormat: '',
     position,
     isOptional: false,
-    standardVariable: null,
-    unit: null,
-    variableLabel: '',
-    variableLongName: '',
-    variableShortName: '',
+    // Start with zero variables — the user adds them explicitly with "Add Variable".
+    presentations: [],
   };
 }
 

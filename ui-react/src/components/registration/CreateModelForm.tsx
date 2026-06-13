@@ -170,9 +170,9 @@ export function CreateModelForm() {
                 <Separator />
                 <ParameterSection />
                 <Separator />
-                <InputOutputSection prefix="inputs" />
+                <InputOutputSection prefix="inputs" allowMultipleVariables />
                 <Separator />
-                <InputOutputSection prefix="outputs" />
+                <InputOutputSection prefix="outputs" allowMultipleVariables />
                 <Separator />
                 <OptionalDetailsSection />
 

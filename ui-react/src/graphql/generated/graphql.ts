@@ -26218,12 +26218,7 @@ export type AddConfigurationInputMutationVariables = Exact<{
   hasFormat?: InputMaybe<Scalars['String']['input']>;
   hasDimensionality?: InputMaybe<Scalars['Int']['input']>;
   position: Scalars['Int']['input'];
-  presentationId: Scalars['String']['input'];
-  presentationLabel: Scalars['String']['input'];
-  hasLongName?: InputMaybe<Scalars['String']['input']>;
-  hasShortName?: InputMaybe<Scalars['String']['input']>;
-  hasStandardVariable?: InputMaybe<Scalars['String']['input']>;
-  usesUnit?: InputMaybe<Scalars['String']['input']>;
+  presentations: Array<Modelcatalog_Dataset_Specification_Presentation_Insert_Input> | Modelcatalog_Dataset_Specification_Presentation_Insert_Input;
 }>;
 
 
@@ -26237,12 +26232,7 @@ export type AddConfigurationOutputMutationVariables = Exact<{
   hasFormat?: InputMaybe<Scalars['String']['input']>;
   hasDimensionality?: InputMaybe<Scalars['Int']['input']>;
   position: Scalars['Int']['input'];
-  presentationId: Scalars['String']['input'];
-  presentationLabel: Scalars['String']['input'];
-  hasLongName?: InputMaybe<Scalars['String']['input']>;
-  hasShortName?: InputMaybe<Scalars['String']['input']>;
-  hasStandardVariable?: InputMaybe<Scalars['String']['input']>;
-  usesUnit?: InputMaybe<Scalars['String']['input']>;
+  presentations: Array<Modelcatalog_Dataset_Specification_Presentation_Insert_Input> | Modelcatalog_Dataset_Specification_Presentation_Insert_Input;
 }>;
 
 
@@ -26688,9 +26678,9 @@ export type SaveConfigurationMetadataMutationHookResult = ReturnType<typeof useS
 export type SaveConfigurationMetadataMutationResult = Apollo.MutationResult<SaveConfigurationMetadataMutation>;
 export type SaveConfigurationMetadataMutationOptions = Apollo.BaseMutationOptions<SaveConfigurationMetadataMutation, SaveConfigurationMetadataMutationVariables>;
 export const AddConfigurationInputDocument = gql`
-    mutation AddConfigurationInput($configurationId: String!, $isOptional: Boolean!, $inputId: String!, $inputLabel: String!, $inputDescription: String, $hasFormat: String, $hasDimensionality: Int, $position: Int!, $presentationId: String!, $presentationLabel: String!, $hasLongName: String, $hasShortName: String, $hasStandardVariable: String, $usesUnit: String) {
+    mutation AddConfigurationInput($configurationId: String!, $isOptional: Boolean!, $inputId: String!, $inputLabel: String!, $inputDescription: String, $hasFormat: String, $hasDimensionality: Int, $position: Int!, $presentations: [modelcatalog_dataset_specification_presentation_insert_input!]!) {
   insert_modelcatalog_configuration_input_one(
-    object: {configuration_id: $configurationId, is_optional: $isOptional, input: {data: {id: $inputId, label: $inputLabel, description: $inputDescription, has_format: $hasFormat, has_dimensionality: $hasDimensionality, position: $position, presentations: {data: [{presentation: {data: {id: $presentationId, label: $presentationLabel, has_long_name: $hasLongName, has_short_name: $hasShortName, has_standard_variable: $hasStandardVariable, uses_unit: $usesUnit}}}]}}}}
+    object: {configuration_id: $configurationId, is_optional: $isOptional, input: {data: {id: $inputId, label: $inputLabel, description: $inputDescription, has_format: $hasFormat, has_dimensionality: $hasDimensionality, position: $position, presentations: {data: $presentations}}}}
   ) {
     configuration_id
     input_id
@@ -26725,12 +26715,7 @@ export type AddConfigurationInputMutationFn = Apollo.MutationFunction<AddConfigu
  *      hasFormat: // value for 'hasFormat'
  *      hasDimensionality: // value for 'hasDimensionality'
  *      position: // value for 'position'
- *      presentationId: // value for 'presentationId'
- *      presentationLabel: // value for 'presentationLabel'
- *      hasLongName: // value for 'hasLongName'
- *      hasShortName: // value for 'hasShortName'
- *      hasStandardVariable: // value for 'hasStandardVariable'
- *      usesUnit: // value for 'usesUnit'
+ *      presentations: // value for 'presentations'
  *   },
  * });
  */
@@ -26742,9 +26727,9 @@ export type AddConfigurationInputMutationHookResult = ReturnType<typeof useAddCo
 export type AddConfigurationInputMutationResult = Apollo.MutationResult<AddConfigurationInputMutation>;
 export type AddConfigurationInputMutationOptions = Apollo.BaseMutationOptions<AddConfigurationInputMutation, AddConfigurationInputMutationVariables>;
 export const AddConfigurationOutputDocument = gql`
-    mutation AddConfigurationOutput($configurationId: String!, $outputId: String!, $outputLabel: String!, $outputDescription: String, $hasFormat: String, $hasDimensionality: Int, $position: Int!, $presentationId: String!, $presentationLabel: String!, $hasLongName: String, $hasShortName: String, $hasStandardVariable: String, $usesUnit: String) {
+    mutation AddConfigurationOutput($configurationId: String!, $outputId: String!, $outputLabel: String!, $outputDescription: String, $hasFormat: String, $hasDimensionality: Int, $position: Int!, $presentations: [modelcatalog_dataset_specification_presentation_insert_input!]!) {
   insert_modelcatalog_configuration_output_one(
-    object: {configuration_id: $configurationId, output: {data: {id: $outputId, label: $outputLabel, description: $outputDescription, has_format: $hasFormat, has_dimensionality: $hasDimensionality, position: $position, presentations: {data: [{presentation: {data: {id: $presentationId, label: $presentationLabel, has_long_name: $hasLongName, has_short_name: $hasShortName, has_standard_variable: $hasStandardVariable, uses_unit: $usesUnit}}}]}}}}
+    object: {configuration_id: $configurationId, output: {data: {id: $outputId, label: $outputLabel, description: $outputDescription, has_format: $hasFormat, has_dimensionality: $hasDimensionality, position: $position, presentations: {data: $presentations}}}}
   ) {
     configuration_id
     output_id
@@ -26777,12 +26762,7 @@ export type AddConfigurationOutputMutationFn = Apollo.MutationFunction<AddConfig
  *      hasFormat: // value for 'hasFormat'
  *      hasDimensionality: // value for 'hasDimensionality'
  *      position: // value for 'position'
- *      presentationId: // value for 'presentationId'
- *      presentationLabel: // value for 'presentationLabel'
- *      hasLongName: // value for 'hasLongName'
- *      hasShortName: // value for 'hasShortName'
- *      hasStandardVariable: // value for 'hasStandardVariable'
- *      usesUnit: // value for 'usesUnit'
+ *      presentations: // value for 'presentations'
  *   },
  * });
  */

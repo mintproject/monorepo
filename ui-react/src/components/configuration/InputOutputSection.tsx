@@ -13,9 +13,14 @@ import { InputRow } from './InputRow';
 export interface InputOutputSectionProps {
   /** Which field array to manage. */
   prefix: 'inputs' | 'outputs';
+  /** When true, each row exposes an add/remove list of variables. Defaults to false. */
+  allowMultipleVariables?: boolean;
 }
 
-export function InputOutputSection({ prefix }: InputOutputSectionProps) {
+export function InputOutputSection({
+  prefix,
+  allowMultipleVariables = false,
+}: InputOutputSectionProps) {
   const { control } = useFormContext<ConfigurationFormSchema>();
   const { fields, append, remove } = useFieldArray({ control, name: prefix });
 
@@ -45,7 +50,13 @@ export function InputOutputSection({ prefix }: InputOutputSectionProps) {
       ) : (
         <div className="space-y-3">
           {fields.map((field, index) => (
-            <InputRow key={field.id} index={index} prefix={prefix} onRemove={() => remove(index)} />
+            <InputRow
+              key={field.id}
+              index={index}
+              prefix={prefix}
+              onRemove={() => remove(index)}
+              allowMultipleVariables={allowMultipleVariables}
+            />
           ))}
         </div>
       )}

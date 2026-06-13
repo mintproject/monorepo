@@ -1,23 +1,27 @@
 /**
  * InputRow — single row in the inputs or outputs field array.
  *
- * Fields: label, description, format, isOptional (junction field),
- * Standard Variable combobox, Unit combobox, collapsible variable overrides.
+ * Fields: label, description, format, isOptional (junction field), and a
+ * "Variables" subsection — zero, one, or many VariablePresentations, each linking
+ * to an optional standard variable and unit.
  *
  * isOptional is a first-class field — stored on the configuration_input junction row.
+ *
+ * `allowMultipleVariables` gates the multi-variable UI:
+ *   - true  (register): a field array with add/remove — an input can carry many variables.
+ *   - false (edit form): a single fixed presentation editor bound to presentations[0],
+ *                        preserving the legacy one-presentation-per-input behavior.
  */
-import * as React from 'react';
-import { useFormContext } from 'react-hook-form';
-import type { Path } from 'react-hook-form';
-import { ChevronDown, ChevronRight, Trash2 } from 'lucide-react';
+import { useFieldArray, useFormContext } from 'react-hook-form';
+import type { FieldArrayPath, Path } from 'react-hook-form';
+import { PlusCircle, Trash2 } from 'lucide-react';
 
-import { StandardVariableCombobox } from '@/components/autocomplete/StandardVariableCombobox';
-import { UnitCombobox } from '@/components/autocomplete/UnitCombobox';
 import { Button } from '@/components/ui/button';
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import type { ConfigurationFormSchema } from '@/schemas/configuration';
-import { cn } from '@/lib/utils';
+import { emptyPresentationRow } from '@/schemas/configuration';
+import { VariablePresentationRow } from './VariablePresentationRow';
 
 export interface InputRowProps {
   /** Index within the inputs or outputs array (for field array paths). */
@@ -26,15 +30,31 @@ export interface InputRowProps {
   prefix: 'inputs' | 'outputs';
   /** Called when the user removes this row. */
   onRemove: () => void;
+  /** When true, render an add/remove list of variables. Defaults to false. */
+  allowMultipleVariables?: boolean;
 }
 
-export function InputRow({ index, prefix, onRemove }: InputRowProps) {
-  const [overridesOpen, setOverridesOpen] = React.useState(false);
+export function InputRow({
+  index,
+  prefix,
+  onRemove,
+  allowMultipleVariables = false,
+}: InputRowProps) {
   const { control, register } = useFormContext<ConfigurationFormSchema>();
 
   // Cast to Path<ConfigurationFormSchema> — RHF's generic is too strict for
   // dynamic template literals, but the paths are always valid at runtime.
   const p = (field: string) => `${prefix}.${index}.${field}` as Path<ConfigurationFormSchema>;
+
+  const presentationsName = `${prefix}.${index}.presentations`;
+  const {
+    fields: presentationFields,
+    append: appendPresentation,
+    remove: removePresentation,
+  } = useFieldArray({
+    control,
+    name: presentationsName as FieldArrayPath<ConfigurationFormSchema>,
+  });
 
   return (
     <div className="space-y-3 rounded-md border bg-card p-4">
@@ -112,42 +132,6 @@ export function InputRow({ index, prefix, onRemove }: InputRowProps) {
         )}
       />
 
-      {/* Standard Variable + Unit */}
-      <div className="grid grid-cols-2 gap-3">
-        <FormField
-          control={control}
-          name={p('standardVariable')}
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Standard Variable</FormLabel>
-              <FormControl>
-                <StandardVariableCombobox
-                  value={field.value as Parameters<typeof StandardVariableCombobox>[0]['value']}
-                  onChange={field.onChange}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={control}
-          name={p('unit')}
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Unit</FormLabel>
-              <FormControl>
-                <UnitCombobox
-                  value={field.value as Parameters<typeof UnitCombobox>[0]['value']}
-                  onChange={field.onChange}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-      </div>
-
       {/* isOptional */}
       <div className="flex items-center gap-2">
         <input
@@ -164,76 +148,45 @@ export function InputRow({ index, prefix, onRemove }: InputRowProps) {
         </label>
       </div>
 
-      {/* Collapsible variable overrides */}
-      <div>
-        <button
-          type="button"
-          className="flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
-          onClick={() => setOverridesOpen((v) => !v)}
-          aria-expanded={overridesOpen}
-        >
-          {overridesOpen ? (
-            <ChevronDown className="h-3 w-3" />
-          ) : (
-            <ChevronRight className="h-3 w-3" />
+      {/* Variables (presentations) */}
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-semibold">Variables</span>
+          {allowMultipleVariables && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => appendPresentation(emptyPresentationRow())}
+              className="h-7 gap-1.5 text-xs"
+            >
+              <PlusCircle className="h-3.5 w-3.5" />
+              Add Variable
+            </Button>
           )}
-          Variable label overrides
-        </button>
+        </div>
 
-        {overridesOpen && (
-          <div className={cn('mt-2 grid grid-cols-3 gap-3')}>
-            <FormField
-              control={control}
-              name={p('variableLabel')}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-xs">Variable Label</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="Override label"
-                      {...field}
-                      value={(field.value as string) ?? ''}
-                      className="h-8 text-sm"
-                    />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={control}
-              name={p('variableLongName')}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-xs">Long Name</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="Long name"
-                      {...field}
-                      value={(field.value as string) ?? ''}
-                      className="h-8 text-sm"
-                    />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={control}
-              name={p('variableShortName')}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-xs">Short Name</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="Short name"
-                      {...field}
-                      value={(field.value as string) ?? ''}
-                      className="h-8 text-sm"
-                    />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-          </div>
+        {allowMultipleVariables ? (
+          presentationFields.length === 0 ? (
+            <p className="rounded-md border py-3 text-center text-xs text-muted-foreground">
+              No variables. This input carries zero standard variables. Click &ldquo;Add
+              Variable&rdquo; to add one.
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {presentationFields.map((field, pIndex) => (
+                <VariablePresentationRow
+                  key={field.id}
+                  basePath={`${prefix}.${index}.presentations.${pIndex}`}
+                  index={pIndex + 1}
+                  onRemove={() => removePresentation(pIndex)}
+                />
+              ))}
+            </div>
+          )
+        ) : (
+          // Single-presentation mode (edit form): one fixed editor on presentations[0].
+          <VariablePresentationRow basePath={`${prefix}.${index}.presentations.0`} index={1} />
         )}
       </div>
     </div>
