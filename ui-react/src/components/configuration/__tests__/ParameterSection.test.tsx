@@ -70,15 +70,16 @@ describe('ParameterSection', () => {
 });
 
 describe('ParameterRow', () => {
-  it('renders label, data type, default, fixed, min, max fields', async () => {
+  it('renders label, data type and default value; min/max and fixed hidden by default', async () => {
     renderWithProviders(<ParametersFormWrapper />);
     await userEvent.click(screen.getByRole('button', { name: /add parameter/i }));
 
     expect(screen.getByPlaceholderText('e.g. Threshold')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('Default')).toBeInTheDocument();
-    expect(screen.getByPlaceholderText('Fixed (overrides default)')).toBeInTheDocument();
-    expect(screen.getByPlaceholderText('Minimum')).toBeInTheDocument();
-    expect(screen.getByPlaceholderText('Maximum')).toBeInTheDocument();
+    // Untyped (string-like) parameter: min/max are not meaningful, fixed is hidden.
+    expect(screen.queryByPlaceholderText('Minimum')).not.toBeInTheDocument();
+    expect(screen.queryByPlaceholderText('Maximum')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/^fixed value$/i)).not.toBeInTheDocument();
   });
 
   it('renders data type select with options', async () => {
@@ -91,5 +92,50 @@ describe('ParameterRow', () => {
     expect(screen.getByRole('option', { name: 'float' })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: 'integer' })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: 'string' })).toBeInTheDocument();
+  });
+
+  it('shows Min/Max only for ordered types (integer/float/datetime)', async () => {
+    renderWithProviders(<ParametersFormWrapper />);
+    await userEvent.click(screen.getByRole('button', { name: /add parameter/i }));
+
+    const typeSelect = screen.getByRole('combobox');
+
+    // string → no bounds
+    await userEvent.selectOptions(typeSelect, 'string');
+    expect(screen.queryByPlaceholderText('Minimum')).not.toBeInTheDocument();
+
+    // integer → bounds appear
+    await userEvent.selectOptions(typeSelect, 'integer');
+    expect(screen.getByPlaceholderText('Minimum')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Maximum')).toBeInTheDocument();
+
+    // boolean → bounds gone again
+    await userEvent.selectOptions(typeSelect, 'boolean');
+    expect(screen.queryByPlaceholderText('Minimum')).not.toBeInTheDocument();
+  });
+
+  it('locking moves the default into the fixed value and hides default + min/max', async () => {
+    renderWithProviders(<ParametersFormWrapper />);
+    await userEvent.click(screen.getByRole('button', { name: /add parameter/i }));
+
+    // Make it a bounded type and type a default value.
+    await userEvent.selectOptions(screen.getByRole('combobox'), 'integer');
+    const defaultInput = screen.getByPlaceholderText('Default');
+    await userEvent.type(defaultInput, '42');
+    expect(screen.getByPlaceholderText('Minimum')).toBeInTheDocument();
+
+    // Lock it.
+    await userEvent.click(screen.getByRole('switch', { name: /lock to a fixed value/i }));
+
+    // Default + min/max are gone; a single fixed-value input holds the carried-over value.
+    expect(screen.queryByPlaceholderText('Default')).not.toBeInTheDocument();
+    expect(screen.queryByPlaceholderText('Minimum')).not.toBeInTheDocument();
+    const fixedInput = screen.getByPlaceholderText('Fixed value');
+    expect(fixedInput).toHaveValue(42);
+
+    // Unlock restores it to the default.
+    await userEvent.click(screen.getByRole('switch', { name: /lock to a fixed value/i }));
+    expect(screen.queryByPlaceholderText('Fixed value')).not.toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Default')).toHaveValue(42);
   });
 });

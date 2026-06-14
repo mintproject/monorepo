@@ -67,20 +67,47 @@ export type InputRowSchema = z.infer<typeof inputRowSchema>;
 
 // ─── Parameter row ────────────────────────────────────────────────────────────
 
-export const parameterRowSchema = z.object({
-  /** Present in edit mode. */
-  existingId: z.string().optional(),
-  label: z.string().min(1, 'Parameter label is required'),
-  description: z.string().optional(),
-  hasDataType: z.string().optional(),
-  hasDefaultValue: z.string().optional(),
-  hasMinimumAcceptedValue: z.string().optional(),
-  hasMaximumAcceptedValue: z.string().optional(),
-  hasFixedValue: z.string().optional(),
-  hasAcceptedValues: z.array(z.string()).optional(),
-  position: z.number().int().min(0),
-  parameterType: z.string().optional(),
-});
+/** Parse a min/max bound to a comparable number for ordered types. */
+function parseBound(dataType: string | undefined, raw: string): number | null {
+  if (!raw.trim()) return null;
+  if (dataType === 'integer' || dataType === 'float') {
+    const n = Number(raw);
+    return Number.isFinite(n) ? n : null;
+  }
+  if (dataType === 'datetime') {
+    const t = Date.parse(raw);
+    return Number.isNaN(t) ? null : t;
+  }
+  return null;
+}
+
+export const parameterRowSchema = z
+  .object({
+    /** Present in edit mode. */
+    existingId: z.string().optional(),
+    label: z.string().min(1, 'Parameter label is required'),
+    description: z.string().optional(),
+    hasDataType: z.string().optional(),
+    hasDefaultValue: z.string().optional(),
+    hasMinimumAcceptedValue: z.string().optional(),
+    hasMaximumAcceptedValue: z.string().optional(),
+    hasFixedValue: z.string().optional(),
+    hasAcceptedValues: z.array(z.string()).optional(),
+    position: z.number().int().min(0),
+    parameterType: z.string().optional(),
+  })
+  .superRefine((row, ctx) => {
+    // For ordered types, a present min must not exceed a present max.
+    const min = parseBound(row.hasDataType, row.hasMinimumAcceptedValue ?? '');
+    const max = parseBound(row.hasDataType, row.hasMaximumAcceptedValue ?? '');
+    if (min !== null && max !== null && min > max) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Min value must be less than or equal to Max value',
+        path: ['hasMaximumAcceptedValue'],
+      });
+    }
+  });
 
 export type ParameterRowSchema = z.infer<typeof parameterRowSchema>;
 
