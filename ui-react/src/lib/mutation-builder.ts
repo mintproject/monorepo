@@ -42,15 +42,15 @@ export interface RegionSelection {
 /**
  * One variable presentation on an input/output. An input can hold zero, one, or
  * many of these — each links to a single (optional) standard variable and unit.
+ *
+ * The VariablePresentation is hidden from the user: its label/long-name/short-name
+ * are derived here rather than collected in the form.
  */
 export interface PresentationRow {
   /** Existing VariablePresentation id — present in edit mode. */
   existingPresentationId?: string;
   standardVariable: StandardVariableSelection | null;
   unit: UnitSelection | null;
-  variableLabel?: string;
-  variableLongName?: string;
-  variableShortName?: string;
 }
 
 /** One row in the inputs or outputs field array of the configuration form. */
@@ -69,27 +69,19 @@ export interface InputRow {
 
 /**
  * Resolve a presentation's label. VariablePresentation.label is NOT NULL, so every
- * kept presentation must have a non-empty label: prefer the explicit override, then
- * the standard variable's label, then the input label.
+ * kept presentation must have a non-empty label. Since the presentation is hidden
+ * from the user, derive it from the standard variable, falling back to the input label.
  */
 function resolvePresentationLabel(row: InputRow, presentation: PresentationRow): string {
-  return (
-    presentation.variableLabel?.trim() || presentation.standardVariable?.label?.trim() || row.label
-  );
+  return presentation.standardVariable?.label?.trim() || row.label;
 }
 
 /**
- * A presentation row is "empty" — and dropped on submit — when it carries no name,
- * no standard variable, and no unit. Empty rows would otherwise create meaningless VPs.
+ * A presentation row is "empty" — and dropped on submit — when it carries neither a
+ * standard variable nor a unit. Empty rows would otherwise create meaningless VPs.
  */
 function isEmptyPresentation(p: PresentationRow): boolean {
-  return (
-    !p.variableLabel?.trim() &&
-    !p.standardVariable &&
-    !p.unit &&
-    !p.variableLongName?.trim() &&
-    !p.variableShortName?.trim()
-  );
+  return !p.standardVariable && !p.unit;
 }
 
 /**
@@ -107,8 +99,8 @@ function buildPresentationInserts(
         data: {
           id: p.existingPresentationId ?? generateMintUri(),
           label: resolvePresentationLabel(row, p),
-          has_long_name: p.variableLongName ?? null,
-          has_short_name: p.variableShortName ?? null,
+          has_long_name: null,
+          has_short_name: null,
           has_standard_variable: p.standardVariable?.id ?? null,
           uses_unit: p.unit?.id ?? null,
         },
@@ -264,10 +256,7 @@ export function diffInputRows(
       orig.hasFormat !== r.hasFormat ||
       orig.isOptional !== r.isOptional ||
       op?.standardVariable?.id !== mp?.standardVariable?.id ||
-      op?.unit?.id !== mp?.unit?.id ||
-      op?.variableLabel !== mp?.variableLabel ||
-      op?.variableLongName !== mp?.variableLongName ||
-      op?.variableShortName !== mp?.variableShortName
+      op?.unit?.id !== mp?.unit?.id
     );
   });
 

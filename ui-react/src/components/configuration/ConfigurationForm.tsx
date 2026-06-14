@@ -82,9 +82,6 @@ function configToFormData(config: ConfigurationFieldsFragment): ConfigurationFor
           }
         : null,
       unit: vp?.unit ? { id: vp.unit.id, label: vp.unit.label ?? '' } : null,
-      variableLabel: vp?.label ?? '',
-      variableLongName: vp?.has_long_name ?? '',
-      variableShortName: vp?.has_short_name ?? '',
     },
   ];
 
@@ -267,9 +264,9 @@ export function ConfigurationForm({ configurationId, onSaved, onCancel }: Config
           await updateVarPresentation({
             variables: {
               id: vp.existingPresentationId,
-              label: vp.variableLabel || row.label,
-              hasLongName: vp.variableLongName ?? null,
-              hasShortName: vp.variableShortName ?? null,
+              label: vp.standardVariable?.label || row.label,
+              hasLongName: null,
+              hasShortName: null,
               hasStandardVariable: vp.standardVariable?.id ?? null,
               usesUnit: vp.unit?.id ?? null,
             },
@@ -314,9 +311,9 @@ export function ConfigurationForm({ configurationId, onSaved, onCancel }: Config
           await updateVarPresentation({
             variables: {
               id: vp.existingPresentationId,
-              label: vp.variableLabel || row.label,
-              hasLongName: vp.variableLongName ?? null,
-              hasShortName: vp.variableShortName ?? null,
+              label: vp.standardVariable?.label || row.label,
+              hasLongName: null,
+              hasShortName: null,
               hasStandardVariable: vp.standardVariable?.id ?? null,
               usesUnit: vp.unit?.id ?? null,
             },

@@ -334,14 +334,16 @@ describe('ConfigurationForm (toUpdate path — edit mode with existing rows)', (
       },
     };
 
+    // The VariablePresentation is hidden from the user: the form derives label from
+    // the standard variable (here 'Precipitation') and writes null long/short names.
     const updateVPMock = {
       request: {
         query: UpdateVariablePresentationDocument,
         variables: {
           id: 'vp1',
-          label: 'Rainfall VP',
-          hasLongName: 'Precipitation flux',
-          hasShortName: 'precip',
+          label: 'Precipitation',
+          hasLongName: null,
+          hasShortName: null,
           hasStandardVariable: 'sv1',
           usesUnit: 'unit1',
         },
@@ -351,7 +353,7 @@ describe('ConfigurationForm (toUpdate path — edit mode with existing rows)', (
           update_modelcatalog_variable_presentation_by_pk: {
             __typename: 'modelcatalog_variable_presentation' as const,
             id: 'vp1',
-            label: 'Rainfall VP',
+            label: 'Precipitation',
             has_standard_variable: 'sv1',
             uses_unit: 'unit1',
           },

@@ -146,25 +146,6 @@ describe('InputRow', () => {
 
     expect(screen.getByText(/optional \(not required for model execution\)/i)).toBeInTheDocument();
   });
-
-  it('toggles collapsible long name / short name overrides', async () => {
-    renderWithProviders(<InputsFormWrapper prefix="inputs" />, {
-      apolloMocks: [emptyRefDataMock],
-    });
-
-    await userEvent.click(screen.getByRole('button', { name: /add input/i }));
-
-    // Overrides should be hidden initially
-    expect(screen.queryByPlaceholderText('Long name')).not.toBeInTheDocument();
-
-    // Open overrides
-    await userEvent.click(screen.getByText(/long name \/ short name/i));
-    expect(screen.getByPlaceholderText('Long name')).toBeInTheDocument();
-
-    // Close overrides
-    await userEvent.click(screen.getByText(/long name \/ short name/i));
-    expect(screen.queryByPlaceholderText('Long name')).not.toBeInTheDocument();
-  });
 });
 
 describe('InputRow variables (presentations)', () => {
@@ -175,9 +156,11 @@ describe('InputRow variables (presentations)', () => {
 
     await userEvent.click(screen.getByRole('button', { name: /add input/i }));
 
-    // One presentation editor with Standard Variable + Unit fields
-    expect(screen.getByText('Standard Variable')).toBeInTheDocument();
-    expect(screen.getByText('Unit')).toBeInTheDocument();
+    // One presentation editor with the merged standard-variable + unit picker
+    expect(screen.getByText('Standard variable & unit')).toBeInTheDocument();
+    expect(
+      screen.getByRole('combobox', { name: /choose standard variable and unit/i }),
+    ).toBeInTheDocument();
     // No add/remove of variables in single-presentation mode
     expect(screen.queryByRole('button', { name: /add variable/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /remove variable/i })).not.toBeInTheDocument();

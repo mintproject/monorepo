@@ -207,6 +207,16 @@ mutation UpdateVariablePresentation(
   }
 }
 
+mutation CreateStandardVariable($id: String!, $label: String!, $description: String) {
+  insert_modelcatalog_standard_variable_one(
+    object: { id: $id, label: $label, description: $description }
+  ) {
+    id
+    label
+    description
+  }
+}
+
 mutation RegisterModel(
   $softwareId: String!
   $softwareLabel: String!
