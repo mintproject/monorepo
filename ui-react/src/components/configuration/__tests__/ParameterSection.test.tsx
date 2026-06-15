@@ -1,7 +1,7 @@
 /**
  * Tests for ParameterSection and ParameterRow components.
  */
-import { screen } from '@testing-library/react';
+import { fireEvent, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { FormProvider, useForm } from 'react-hook-form';
@@ -112,6 +112,24 @@ describe('ParameterRow', () => {
     // boolean → bounds gone again
     await userEvent.selectOptions(typeSelect, 'boolean');
     expect(screen.queryByPlaceholderText('Minimum')).not.toBeInTheDocument();
+  });
+
+  it('uses date pickers for datetime min/max bounds (start/end of day)', async () => {
+    renderWithProviders(<ParametersFormWrapper />);
+    await userEvent.click(screen.getByRole('button', { name: /add parameter/i }));
+
+    await userEvent.selectOptions(screen.getByRole('combobox'), 'datetime');
+
+    const min = screen.getByPlaceholderText('Minimum');
+    const max = screen.getByPlaceholderText('Maximum');
+    expect(min).toHaveAttribute('type', 'date');
+    expect(max).toHaveAttribute('type', 'date');
+
+    // Entering a date round-trips: stored with a time suffix, displayed date-only.
+    fireEvent.change(min, { target: { value: '2026-06-14' } });
+    fireEvent.change(max, { target: { value: '2026-06-20' } });
+    expect(min).toHaveValue('2026-06-14');
+    expect(max).toHaveValue('2026-06-20');
   });
 
   it('locking moves the default into the fixed value and hides default + min/max', async () => {

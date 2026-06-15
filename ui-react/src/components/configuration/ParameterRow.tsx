@@ -79,9 +79,37 @@ export function ParameterRow({ index, onRemove }: ParameterRowProps) {
     }
   };
 
-  /** Render a value control whose type matches the selected data type. */
-  const renderValueControl = (field: ParameterField, placeholder: string) => {
+  /**
+   * Render a value control whose type matches the selected data type.
+   *
+   * `dateBound` applies to datetime Min/Max: those are date-only pickers whose
+   * stored value is normalized to the start (00:00:00) or end (23:59:59) of the
+   * chosen day, so a range always spans whole days.
+   */
+  const renderValueControl = (
+    field: ParameterField,
+    placeholder: string,
+    dateBound?: 'start' | 'end',
+  ) => {
     const value = (field.value as string) ?? '';
+
+    if (dataType === 'datetime' && dateBound) {
+      const datePart = value.split('T')[0] ?? '';
+      const suffix = dateBound === 'start' ? 'T00:00:00' : 'T23:59:59';
+      return (
+        <Input
+          type="date"
+          placeholder={placeholder}
+          name={field.name}
+          ref={field.ref}
+          value={datePart}
+          onBlur={field.onBlur}
+          onChange={(e) =>
+            field.onChange(e.target.value ? `${e.target.value}${suffix}` : undefined)
+          }
+        />
+      );
+    }
 
     if (dataType === 'boolean') {
       return (
@@ -245,7 +273,7 @@ export function ParameterRow({ index, onRemove }: ParameterRowProps) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Min Value</FormLabel>
-                    <FormControl>{renderValueControl(field, 'Minimum')}</FormControl>
+                    <FormControl>{renderValueControl(field, 'Minimum', 'start')}</FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -256,7 +284,7 @@ export function ParameterRow({ index, onRemove }: ParameterRowProps) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Max Value</FormLabel>
-                    <FormControl>{renderValueControl(field, 'Maximum')}</FormControl>
+                    <FormControl>{renderValueControl(field, 'Maximum', 'end')}</FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
