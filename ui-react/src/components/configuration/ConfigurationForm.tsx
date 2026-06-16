@@ -44,6 +44,7 @@ import {
   buildAddInputVariables,
   buildAddOutputVariables,
   buildAddParameterVariables,
+  toPgTextArray,
   diffInputRows,
   diffParameterRows,
   assignPositions,
@@ -343,7 +344,7 @@ export function ConfigurationForm({ configurationId, onSaved, onCancel }: Config
             hasMinimumAcceptedValue: row.hasMinimumAcceptedValue ?? null,
             hasMaximumAcceptedValue: row.hasMaximumAcceptedValue ?? null,
             hasFixedValue: row.hasFixedValue ?? null,
-            hasAcceptedValues: row.hasAcceptedValues?.length ? row.hasAcceptedValues : null,
+            hasAcceptedValues: toPgTextArray(row.hasAcceptedValues),
             position: row.position,
           },
         });

@@ -183,6 +183,19 @@ export function buildAddOutputVariables(
 }
 
 /**
+ * Serialize a string array into a Postgres array literal (e.g. `{"a","b"}`).
+ *
+ * Hasura's `_text` scalar rejects JSON arrays when passed as a GraphQL variable
+ * ("A string is expected for type: _text"); it expects the Postgres literal as a
+ * string. Returns null for empty/missing input so the column is left unset.
+ */
+export function toPgTextArray(values?: string[] | null): string | null {
+  if (!values || values.length === 0) return null;
+  const escaped = values.map((v) => `"${v.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`);
+  return `{${escaped.join(',')}}`;
+}
+
+/**
  * Build mutation variables for adding a new parameter to a configuration.
  */
 export function buildAddParameterVariables(
@@ -201,7 +214,7 @@ export function buildAddParameterVariables(
     hasMinimumAcceptedValue: row.hasMinimumAcceptedValue ?? null,
     hasMaximumAcceptedValue: row.hasMaximumAcceptedValue ?? null,
     hasFixedValue: row.hasFixedValue ?? null,
-    hasAcceptedValues: row.hasAcceptedValues ?? null,
+    hasAcceptedValues: toPgTextArray(row.hasAcceptedValues),
     position: row.position,
     parameterType: row.parameterType ?? null,
   };

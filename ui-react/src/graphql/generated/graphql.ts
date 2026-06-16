@@ -15,7 +15,7 @@ export type Scalars = {
   Boolean: { input: boolean; output: boolean; }
   Int: { input: number; output: number; }
   Float: { input: number; output: number; }
-  _text: { input: string[]; output: string[]; }
+  _text: { input: string; output: string[]; }
   date: { input: any; output: any; }
   float8: { input: any; output: any; }
   geography: { input: any; output: any; }

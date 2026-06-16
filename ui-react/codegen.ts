@@ -27,7 +27,9 @@ const config: CodegenConfig = {
           uuid: 'string',
           timestamptz: 'string',
           jsonb: 'unknown',
-          _text: 'string[]',
+          // Hasura returns `_text` as a JSON array on read, but on write it expects
+          // a Postgres array-literal string (see toPgTextArray in mutation-builder).
+          _text: { input: 'string', output: 'string[]' },
         },
       },
     },

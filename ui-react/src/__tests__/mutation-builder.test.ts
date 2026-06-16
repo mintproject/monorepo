@@ -3,6 +3,7 @@ import {
   buildAddInputVariables,
   buildAddOutputVariables,
   buildAddParameterVariables,
+  toPgTextArray,
   assignPositions,
   diffInputRows,
   diffParameterRows,
@@ -265,9 +266,50 @@ describe('buildAddParameterVariables', () => {
     expect(vars.hasDefaultValue).toBe('0.5');
     expect(vars.hasMinimumAcceptedValue).toBe('0.0');
     expect(vars.hasMaximumAcceptedValue).toBe('1.0');
-    expect(vars.hasAcceptedValues).toEqual(['0.1', '0.5', '1.0']);
     expect(vars.position).toBe(3);
     expect(vars.parameterType).toBe('calibration');
+  });
+
+  it('serializes accepted values as a Postgres array literal (not a JSON array)', () => {
+    const row = makeParameterRow({ hasAcceptedValues: ['0.1', '0.5', '1.0'] });
+    const vars = buildAddParameterVariables('config-1', row);
+    // Hasura's `_text` scalar rejects JSON arrays — it expects a string literal.
+    expect(vars.hasAcceptedValues).toBe('{"0.1","0.5","1.0"}');
+  });
+
+  it('sends null (not an empty array) when there are no accepted values', () => {
+    const row = makeParameterRow({ hasAcceptedValues: [] });
+    const vars = buildAddParameterVariables('config-1', row);
+    // `[]` was the reported failure: "A string is expected for type: _text".
+    expect(vars.hasAcceptedValues).toBeNull();
+  });
+
+  it('sends null when accepted values are omitted', () => {
+    const row = makeParameterRow({ hasAcceptedValues: undefined });
+    const vars = buildAddParameterVariables('config-1', row);
+    expect(vars.hasAcceptedValues).toBeNull();
+  });
+});
+
+// ─── toPgTextArray ────────────────────────────────────────────────────────────
+
+describe('toPgTextArray', () => {
+  it('returns null for empty/missing input', () => {
+    expect(toPgTextArray(undefined)).toBeNull();
+    expect(toPgTextArray(null)).toBeNull();
+    expect(toPgTextArray([])).toBeNull();
+  });
+
+  it('wraps quoted elements in braces', () => {
+    expect(toPgTextArray(['a', 'b', 'c'])).toBe('{"a","b","c"}');
+  });
+
+  it('escapes backslashes and double quotes', () => {
+    expect(toPgTextArray(['a"b', 'c\\d'])).toBe('{"a\\"b","c\\\\d"}');
+  });
+
+  it('preserves elements containing commas and braces', () => {
+    expect(toPgTextArray(['1,2', '{x}'])).toBe('{"1,2","{x}"}');
   });
 });
 
