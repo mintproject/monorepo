@@ -4,10 +4,10 @@
  * Middle column: text search + facet filters (Region / Category / Output
  * variable) over a server-side-filtered, client-grouped Model -> Config -> Setup
  * list. Right column: read-only detail for the config/setup in the URL
- * (/modelconfigurations/:slugid). URL is the source of truth for filters and
- * selection.
+ * (/modelconfigurations/:slugid). The URL is the source of truth for facet
+ * filters and selection; the text search is local-only and never touches it.
  */
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { Search } from 'lucide-react';
 
@@ -33,20 +33,21 @@ import { useGetConfigurationBySlugQuery } from '@/graphql/generated/graphql';
 export function ModelsBrowsePage() {
   const { slugid } = useParams<{ slugid: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
-  const filters = useMemo(() => parseFilters(searchParams), [searchParams]);
+  // Drop any `q` from the URL — text search is intentionally not URL-driven.
+  const facetFilters = useMemo(() => ({ ...parseFilters(searchParams), q: '' }), [searchParams]);
 
-  const [text, setText] = useState(filters.q);
+  // Text search is local-only — it filters results but never touches the URL.
+  // Only the facets (Region / Category / Output variable) live in the URL.
+  const [text, setText] = useState('');
   const debouncedText = useDebouncedValue(text, 300);
 
-  // Sync the debounced text into the URL (without clobbering facet params).
-  useEffect(() => {
-    if (debouncedText === filters.q) return;
-    setSearchParams(filtersToParams({ ...filters, q: debouncedText }), { replace: true });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedText]);
+  const filters = useMemo(
+    () => ({ ...facetFilters, q: debouncedText }),
+    [facetFilters, debouncedText],
+  );
 
   const updateFacet = (partial: Partial<ModelBrowseFilters>) => {
-    setSearchParams(filtersToParams({ ...filters, ...partial }));
+    setSearchParams(filtersToParams({ ...facetFilters, ...partial }));
   };
 
   const facetOptions = useFacetOptions();
