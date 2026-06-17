@@ -20,6 +20,7 @@ const mockConfig = {
   model_configuration_id: null,
   software_version: {
     __typename: 'modelcatalog_software_version' as const,
+    id: 'ver1',
     version_id: '2.0',
     software: {
       __typename: 'modelcatalog_software' as const,
