@@ -533,3 +533,57 @@ describe('ConfigurationForm (toUpdate path — edit mode with existing rows)', (
     expect(addInputSpy).not.toHaveBeenCalled();
   });
 });
+
+// ─── create mode + error handling ─────────────────────────────────────────────
+
+describe('ConfigurationForm (create mode + error handling)', () => {
+  it('does not save in create mode (guard — creation not yet wired)', async () => {
+    const onSaved = vi.fn();
+    // No configurationId → CREATE mode: the GetConfiguration query is skipped.
+    renderWithProviders(<ConfigurationForm onSaved={onSaved} />, {
+      apolloMocks: [emptyRefDataMock, emptyRegionsMock],
+    });
+
+    const nameInput = await screen.findByPlaceholderText('Configuration name');
+    await userEvent.type(nameInput, 'Brand New Config');
+
+    const createButton = screen.getByRole('button', { name: /create configuration/i });
+    await userEvent.click(createButton);
+
+    // onSubmit returns early when there is no configurationId — nothing is saved.
+    await waitFor(() => expect(createButton).not.toBeDisabled());
+    expect(onSaved).not.toHaveBeenCalled();
+  });
+
+  it('shows an error message and does not call onSaved when a mutation fails', async () => {
+    const onSaved = vi.fn();
+
+    // UpdateConfiguration is the first mutation in the submit sequence; failing it
+    // surfaces saveError and aborts the rest.
+    const failingUpdateConfigMock = {
+      request: {
+        query: UpdateConfigurationDocument,
+        variables: { id: 'cfg1', label: 'Updated Name', description: 'Test desc' },
+      },
+      result: { errors: [{ message: 'Hasura rejected the update' }] },
+    };
+
+    renderWithProviders(<ConfigurationForm configurationId="cfg1" onSaved={onSaved} />, {
+      apolloMocks: [...defaultMocks, failingUpdateConfigMock],
+    });
+
+    await waitFor(() => {
+      const nameInput = screen.getByPlaceholderText('Configuration name') as HTMLInputElement;
+      expect(nameInput.value).toBe('Default Configuration');
+    });
+
+    const nameInput = screen.getByPlaceholderText('Configuration name');
+    await userEvent.clear(nameInput);
+    await userEvent.type(nameInput, 'Updated Name');
+    await userEvent.click(screen.getByRole('button', { name: /save changes/i }));
+
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent(/rejected the update|failed to save/i);
+    expect(onSaved).not.toHaveBeenCalled();
+  });
+});

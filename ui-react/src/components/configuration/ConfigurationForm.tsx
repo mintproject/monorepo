@@ -27,6 +27,7 @@ import {
   useUpdateConfigurationMutation,
   useUpdateDatasetSpecificationMutation,
   useUpdateVariablePresentationMutation,
+  useInsertVariablePresentationMutation,
   useInsertConfigurationInputJunctionMutation,
   useUpdateModelParameterMutation,
   useAddConfigurationAuthorMutation,
@@ -44,6 +45,8 @@ import {
   buildAddInputVariables,
   buildAddOutputVariables,
   buildAddParameterVariables,
+  buildPresentationInsertForExistingDs,
+  toPgTextArray,
   diffInputRows,
   diffParameterRows,
   assignPositions,
@@ -179,6 +182,7 @@ export function ConfigurationForm({ configurationId, onSaved, onCancel }: Config
   const [deleteParameter] = useDeleteConfigurationParameterMutation();
   const [updateDatasetSpec] = useUpdateDatasetSpecificationMutation();
   const [updateVarPresentation] = useUpdateVariablePresentationMutation();
+  const [insertVarPresentation] = useInsertVariablePresentationMutation();
   const [insertInputJunction] = useInsertConfigurationInputJunctionMutation();
   const [updateParameter] = useUpdateModelParameterMutation();
   const [addAuthor] = useAddConfigurationAuthorMutation();
@@ -258,7 +262,8 @@ export function ConfigurationForm({ configurationId, onSaved, onCancel }: Config
             position: row.position,
           },
         });
-        // Update the first VariablePresentation if it exists (single-presentation edit)
+        // Update the first VariablePresentation if it exists, otherwise insert a new
+        // one when the row gained a standard variable/unit (single-presentation edit).
         const vp = row.presentations[0];
         if (vp?.existingPresentationId) {
           await updateVarPresentation({
@@ -271,6 +276,9 @@ export function ConfigurationForm({ configurationId, onSaved, onCancel }: Config
               usesUnit: vp.unit?.id ?? null,
             },
           });
+        } else {
+          const insertVars = buildPresentationInsertForExistingDs(row.existingId!, row);
+          if (insertVars) await insertVarPresentation({ variables: insertVars });
         }
         // Update is_optional on the junction row via upsert (on_conflict sets is_optional)
         await insertInputJunction({
@@ -305,7 +313,8 @@ export function ConfigurationForm({ configurationId, onSaved, onCancel }: Config
             position: row.position,
           },
         });
-        // Update the first VariablePresentation if it exists (single-presentation edit)
+        // Update the first VariablePresentation if it exists, otherwise insert a new
+        // one when the row gained a standard variable/unit (single-presentation edit).
         const vp = row.presentations[0];
         if (vp?.existingPresentationId) {
           await updateVarPresentation({
@@ -318,6 +327,9 @@ export function ConfigurationForm({ configurationId, onSaved, onCancel }: Config
               usesUnit: vp.unit?.id ?? null,
             },
           });
+        } else {
+          const insertVars = buildPresentationInsertForExistingDs(row.existingId!, row);
+          if (insertVars) await insertVarPresentation({ variables: insertVars });
         }
       }
 
@@ -343,7 +355,7 @@ export function ConfigurationForm({ configurationId, onSaved, onCancel }: Config
             hasMinimumAcceptedValue: row.hasMinimumAcceptedValue ?? null,
             hasMaximumAcceptedValue: row.hasMaximumAcceptedValue ?? null,
             hasFixedValue: row.hasFixedValue ?? null,
-            hasAcceptedValues: row.hasAcceptedValues?.length ? row.hasAcceptedValues : null,
+            hasAcceptedValues: toPgTextArray(row.hasAcceptedValues),
             position: row.position,
           },
         });

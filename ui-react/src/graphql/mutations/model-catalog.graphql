@@ -207,6 +207,40 @@ mutation UpdateVariablePresentation(
   }
 }
 
+# Insert a VariablePresentation + its junction row onto an EXISTING dataset
+# specification. Used in edit mode when an input/output that had no presentation
+# gains a standard variable/unit (the update path can only update an existing one).
+mutation InsertVariablePresentation(
+  $datasetSpecificationId: String!
+  $presentationId: String!
+  $label: String!
+  $hasStandardVariable: String
+  $usesUnit: String
+) {
+  insert_modelcatalog_dataset_specification_presentation_one(
+    object: {
+      dataset_specification_id: $datasetSpecificationId
+      presentation: {
+        data: {
+          id: $presentationId
+          label: $label
+          has_long_name: null
+          has_short_name: null
+          has_standard_variable: $hasStandardVariable
+          uses_unit: $usesUnit
+        }
+      }
+    }
+  ) {
+    dataset_specification_id
+    presentation_id
+    presentation {
+      id
+      label
+    }
+  }
+}
+
 mutation CreateStandardVariable($id: String!, $label: String!, $description: String) {
   insert_modelcatalog_standard_variable_one(
     object: { id: $id, label: $label, description: $description }

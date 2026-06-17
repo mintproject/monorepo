@@ -15,7 +15,7 @@ export type Scalars = {
   Boolean: { input: boolean; output: boolean; }
   Int: { input: number; output: number; }
   Float: { input: number; output: number; }
-  _text: { input: string[]; output: string[]; }
+  _text: { input: string; output: string[]; }
   date: { input: any; output: any; }
   float8: { input: any; output: any; }
   geography: { input: any; output: any; }
@@ -26184,15 +26184,15 @@ export type Variable_Updates = {
 
 export type VariablePresentationFieldsFragment = { __typename?: 'modelcatalog_variable_presentation', id: string, label: string, has_long_name?: string | null, has_short_name?: string | null, standard_variable?: { __typename?: 'modelcatalog_standard_variable', id: string, label: string, description?: string | null } | null, unit?: { __typename?: 'modelcatalog_unit', id: string, label: string } | null };
 
-export type DatasetSpecificationFieldsFragment = { __typename?: 'modelcatalog_dataset_specification', id: string, label: string, description?: string | null, has_format?: string | null, has_dimensionality?: number | null, position?: number | null, presentations: Array<{ __typename?: 'modelcatalog_dataset_specification_presentation', presentation: { __typename?: 'modelcatalog_variable_presentation', id: string, label: string, has_long_name?: string | null, has_short_name?: string | null, standard_variable?: { __typename?: 'modelcatalog_standard_variable', id: string, label: string, description?: string | null } | null, unit?: { __typename?: 'modelcatalog_unit', id: string, label: string } | null } }> };
+export type DatasetSpecificationFieldsFragment = { __typename?: 'modelcatalog_dataset_specification', id: string, label: string, description?: string | null, has_format?: string | null, has_dimensionality?: number | null, position?: number | null, presentations: Array<{ __typename?: 'modelcatalog_dataset_specification_presentation', dataset_specification_id: string, presentation_id: string, presentation: { __typename?: 'modelcatalog_variable_presentation', id: string, label: string, has_long_name?: string | null, has_short_name?: string | null, standard_variable?: { __typename?: 'modelcatalog_standard_variable', id: string, label: string, description?: string | null } | null, unit?: { __typename?: 'modelcatalog_unit', id: string, label: string } | null } }> };
 
-export type InputFieldsFragment = { __typename?: 'modelcatalog_configuration_input', is_optional: boolean, input: { __typename?: 'modelcatalog_dataset_specification', id: string, label: string, description?: string | null, has_format?: string | null, has_dimensionality?: number | null, position?: number | null, presentations: Array<{ __typename?: 'modelcatalog_dataset_specification_presentation', presentation: { __typename?: 'modelcatalog_variable_presentation', id: string, label: string, has_long_name?: string | null, has_short_name?: string | null, standard_variable?: { __typename?: 'modelcatalog_standard_variable', id: string, label: string, description?: string | null } | null, unit?: { __typename?: 'modelcatalog_unit', id: string, label: string } | null } }> } };
+export type InputFieldsFragment = { __typename?: 'modelcatalog_configuration_input', configuration_id: string, input_id: string, is_optional: boolean, input: { __typename?: 'modelcatalog_dataset_specification', id: string, label: string, description?: string | null, has_format?: string | null, has_dimensionality?: number | null, position?: number | null, presentations: Array<{ __typename?: 'modelcatalog_dataset_specification_presentation', dataset_specification_id: string, presentation_id: string, presentation: { __typename?: 'modelcatalog_variable_presentation', id: string, label: string, has_long_name?: string | null, has_short_name?: string | null, standard_variable?: { __typename?: 'modelcatalog_standard_variable', id: string, label: string, description?: string | null } | null, unit?: { __typename?: 'modelcatalog_unit', id: string, label: string } | null } }> } };
 
-export type OutputFieldsFragment = { __typename?: 'modelcatalog_configuration_output', output: { __typename?: 'modelcatalog_dataset_specification', id: string, label: string, description?: string | null, has_format?: string | null, has_dimensionality?: number | null, position?: number | null, presentations: Array<{ __typename?: 'modelcatalog_dataset_specification_presentation', presentation: { __typename?: 'modelcatalog_variable_presentation', id: string, label: string, has_long_name?: string | null, has_short_name?: string | null, standard_variable?: { __typename?: 'modelcatalog_standard_variable', id: string, label: string, description?: string | null } | null, unit?: { __typename?: 'modelcatalog_unit', id: string, label: string } | null } }> } };
+export type OutputFieldsFragment = { __typename?: 'modelcatalog_configuration_output', configuration_id: string, output_id: string, output: { __typename?: 'modelcatalog_dataset_specification', id: string, label: string, description?: string | null, has_format?: string | null, has_dimensionality?: number | null, position?: number | null, presentations: Array<{ __typename?: 'modelcatalog_dataset_specification_presentation', dataset_specification_id: string, presentation_id: string, presentation: { __typename?: 'modelcatalog_variable_presentation', id: string, label: string, has_long_name?: string | null, has_short_name?: string | null, standard_variable?: { __typename?: 'modelcatalog_standard_variable', id: string, label: string, description?: string | null } | null, unit?: { __typename?: 'modelcatalog_unit', id: string, label: string } | null } }> } };
 
 export type ParameterFieldsFragment = { __typename?: 'modelcatalog_parameter', id: string, label: string, description?: string | null, has_data_type?: string | null, has_default_value?: string | null, has_minimum_accepted_value?: string | null, has_maximum_accepted_value?: string | null, has_fixed_value?: string | null, has_accepted_values?: string[] | null, position?: number | null, parameter_type?: string | null };
 
-export type ConfigurationFieldsFragment = { __typename?: 'modelcatalog_configuration', id: string, label: string, description?: string | null, software_version_id?: string | null, model_configuration_id?: string | null, software_version?: { __typename?: 'modelcatalog_software_version', id: string, version_id?: string | null, software?: { __typename?: 'modelcatalog_software', id: string, label: string } | null } | null, time_intervals: Array<{ __typename?: 'modelcatalog_configuration_time_interval', time_interval: { __typename?: 'modelcatalog_time_interval', id: string, label: string, description?: string | null, interval_unit?: string | null, interval_value?: string | null } }>, inputs: Array<{ __typename?: 'modelcatalog_configuration_input', is_optional: boolean, input: { __typename?: 'modelcatalog_dataset_specification', id: string, label: string, description?: string | null, has_format?: string | null, has_dimensionality?: number | null, position?: number | null, presentations: Array<{ __typename?: 'modelcatalog_dataset_specification_presentation', presentation: { __typename?: 'modelcatalog_variable_presentation', id: string, label: string, has_long_name?: string | null, has_short_name?: string | null, standard_variable?: { __typename?: 'modelcatalog_standard_variable', id: string, label: string, description?: string | null } | null, unit?: { __typename?: 'modelcatalog_unit', id: string, label: string } | null } }> } }>, outputs: Array<{ __typename?: 'modelcatalog_configuration_output', output: { __typename?: 'modelcatalog_dataset_specification', id: string, label: string, description?: string | null, has_format?: string | null, has_dimensionality?: number | null, position?: number | null, presentations: Array<{ __typename?: 'modelcatalog_dataset_specification_presentation', presentation: { __typename?: 'modelcatalog_variable_presentation', id: string, label: string, has_long_name?: string | null, has_short_name?: string | null, standard_variable?: { __typename?: 'modelcatalog_standard_variable', id: string, label: string, description?: string | null } | null, unit?: { __typename?: 'modelcatalog_unit', id: string, label: string } | null } }> } }>, parameters: Array<{ __typename?: 'modelcatalog_configuration_parameter', parameter: { __typename?: 'modelcatalog_parameter', id: string, label: string, description?: string | null, has_data_type?: string | null, has_default_value?: string | null, has_minimum_accepted_value?: string | null, has_maximum_accepted_value?: string | null, has_fixed_value?: string | null, has_accepted_values?: string[] | null, position?: number | null, parameter_type?: string | null } }>, authors: Array<{ __typename?: 'modelcatalog_configuration_author', person: { __typename?: 'modelcatalog_person', id: string, label: string } }>, regions: Array<{ __typename?: 'modelcatalog_configuration_region', region: { __typename?: 'modelcatalog_region', id: string, label: string } }> };
+export type ConfigurationFieldsFragment = { __typename?: 'modelcatalog_configuration', id: string, label: string, description?: string | null, software_version_id?: string | null, model_configuration_id?: string | null, software_version?: { __typename?: 'modelcatalog_software_version', id: string, version_id?: string | null, software?: { __typename?: 'modelcatalog_software', id: string, label: string } | null } | null, time_intervals: Array<{ __typename?: 'modelcatalog_configuration_time_interval', time_interval: { __typename?: 'modelcatalog_time_interval', id: string, label: string, description?: string | null, interval_unit?: string | null, interval_value?: string | null } }>, inputs: Array<{ __typename?: 'modelcatalog_configuration_input', configuration_id: string, input_id: string, is_optional: boolean, input: { __typename?: 'modelcatalog_dataset_specification', id: string, label: string, description?: string | null, has_format?: string | null, has_dimensionality?: number | null, position?: number | null, presentations: Array<{ __typename?: 'modelcatalog_dataset_specification_presentation', dataset_specification_id: string, presentation_id: string, presentation: { __typename?: 'modelcatalog_variable_presentation', id: string, label: string, has_long_name?: string | null, has_short_name?: string | null, standard_variable?: { __typename?: 'modelcatalog_standard_variable', id: string, label: string, description?: string | null } | null, unit?: { __typename?: 'modelcatalog_unit', id: string, label: string } | null } }> } }>, outputs: Array<{ __typename?: 'modelcatalog_configuration_output', configuration_id: string, output_id: string, output: { __typename?: 'modelcatalog_dataset_specification', id: string, label: string, description?: string | null, has_format?: string | null, has_dimensionality?: number | null, position?: number | null, presentations: Array<{ __typename?: 'modelcatalog_dataset_specification_presentation', dataset_specification_id: string, presentation_id: string, presentation: { __typename?: 'modelcatalog_variable_presentation', id: string, label: string, has_long_name?: string | null, has_short_name?: string | null, standard_variable?: { __typename?: 'modelcatalog_standard_variable', id: string, label: string, description?: string | null } | null, unit?: { __typename?: 'modelcatalog_unit', id: string, label: string } | null } }> } }>, parameters: Array<{ __typename?: 'modelcatalog_configuration_parameter', configuration_id: string, parameter_id: string, parameter: { __typename?: 'modelcatalog_parameter', id: string, label: string, description?: string | null, has_data_type?: string | null, has_default_value?: string | null, has_minimum_accepted_value?: string | null, has_maximum_accepted_value?: string | null, has_fixed_value?: string | null, has_accepted_values?: string[] | null, position?: number | null, parameter_type?: string | null } }>, authors: Array<{ __typename?: 'modelcatalog_configuration_author', configuration_id: string, person_id: string, person: { __typename?: 'modelcatalog_person', id: string, label: string } }>, regions: Array<{ __typename?: 'modelcatalog_configuration_region', configuration_id: string, region_id: string, region: { __typename?: 'modelcatalog_region', id: string, label: string } }> };
 
 export type SoftwareFieldsFragment = { __typename?: 'modelcatalog_software', id: string, label: string, description?: string | null, type?: string | null, author?: { __typename?: 'modelcatalog_person', id: string, label: string } | null };
 
@@ -26303,6 +26303,17 @@ export type UpdateVariablePresentationMutationVariables = Exact<{
 
 
 export type UpdateVariablePresentationMutation = { __typename?: 'mutation_root', update_modelcatalog_variable_presentation_by_pk?: { __typename?: 'modelcatalog_variable_presentation', id: string, label: string, has_standard_variable?: string | null, uses_unit?: string | null } | null };
+
+export type InsertVariablePresentationMutationVariables = Exact<{
+  datasetSpecificationId: Scalars['String']['input'];
+  presentationId: Scalars['String']['input'];
+  label: Scalars['String']['input'];
+  hasStandardVariable?: InputMaybe<Scalars['String']['input']>;
+  usesUnit?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type InsertVariablePresentationMutation = { __typename?: 'mutation_root', insert_modelcatalog_dataset_specification_presentation_one?: { __typename?: 'modelcatalog_dataset_specification_presentation', dataset_specification_id: string, presentation_id: string, presentation: { __typename?: 'modelcatalog_variable_presentation', id: string, label: string } } | null };
 
 export type CreateStandardVariableMutationVariables = Exact<{
   id: Scalars['String']['input'];
@@ -26435,7 +26446,7 @@ export type GetConfigurationQueryVariables = Exact<{
 }>;
 
 
-export type GetConfigurationQuery = { __typename?: 'query_root', modelcatalog_configuration_by_pk?: { __typename?: 'modelcatalog_configuration', id: string, label: string, description?: string | null, software_version_id?: string | null, model_configuration_id?: string | null, software_version?: { __typename?: 'modelcatalog_software_version', id: string, version_id?: string | null, software?: { __typename?: 'modelcatalog_software', id: string, label: string } | null } | null, time_intervals: Array<{ __typename?: 'modelcatalog_configuration_time_interval', time_interval: { __typename?: 'modelcatalog_time_interval', id: string, label: string, description?: string | null, interval_unit?: string | null, interval_value?: string | null } }>, inputs: Array<{ __typename?: 'modelcatalog_configuration_input', is_optional: boolean, input: { __typename?: 'modelcatalog_dataset_specification', id: string, label: string, description?: string | null, has_format?: string | null, has_dimensionality?: number | null, position?: number | null, presentations: Array<{ __typename?: 'modelcatalog_dataset_specification_presentation', presentation: { __typename?: 'modelcatalog_variable_presentation', id: string, label: string, has_long_name?: string | null, has_short_name?: string | null, standard_variable?: { __typename?: 'modelcatalog_standard_variable', id: string, label: string, description?: string | null } | null, unit?: { __typename?: 'modelcatalog_unit', id: string, label: string } | null } }> } }>, outputs: Array<{ __typename?: 'modelcatalog_configuration_output', output: { __typename?: 'modelcatalog_dataset_specification', id: string, label: string, description?: string | null, has_format?: string | null, has_dimensionality?: number | null, position?: number | null, presentations: Array<{ __typename?: 'modelcatalog_dataset_specification_presentation', presentation: { __typename?: 'modelcatalog_variable_presentation', id: string, label: string, has_long_name?: string | null, has_short_name?: string | null, standard_variable?: { __typename?: 'modelcatalog_standard_variable', id: string, label: string, description?: string | null } | null, unit?: { __typename?: 'modelcatalog_unit', id: string, label: string } | null } }> } }>, parameters: Array<{ __typename?: 'modelcatalog_configuration_parameter', parameter: { __typename?: 'modelcatalog_parameter', id: string, label: string, description?: string | null, has_data_type?: string | null, has_default_value?: string | null, has_minimum_accepted_value?: string | null, has_maximum_accepted_value?: string | null, has_fixed_value?: string | null, has_accepted_values?: string[] | null, position?: number | null, parameter_type?: string | null } }>, authors: Array<{ __typename?: 'modelcatalog_configuration_author', person: { __typename?: 'modelcatalog_person', id: string, label: string } }>, regions: Array<{ __typename?: 'modelcatalog_configuration_region', region: { __typename?: 'modelcatalog_region', id: string, label: string } }> } | null };
+export type GetConfigurationQuery = { __typename?: 'query_root', modelcatalog_configuration_by_pk?: { __typename?: 'modelcatalog_configuration', id: string, label: string, description?: string | null, software_version_id?: string | null, model_configuration_id?: string | null, software_version?: { __typename?: 'modelcatalog_software_version', id: string, version_id?: string | null, software?: { __typename?: 'modelcatalog_software', id: string, label: string } | null } | null, time_intervals: Array<{ __typename?: 'modelcatalog_configuration_time_interval', time_interval: { __typename?: 'modelcatalog_time_interval', id: string, label: string, description?: string | null, interval_unit?: string | null, interval_value?: string | null } }>, inputs: Array<{ __typename?: 'modelcatalog_configuration_input', configuration_id: string, input_id: string, is_optional: boolean, input: { __typename?: 'modelcatalog_dataset_specification', id: string, label: string, description?: string | null, has_format?: string | null, has_dimensionality?: number | null, position?: number | null, presentations: Array<{ __typename?: 'modelcatalog_dataset_specification_presentation', dataset_specification_id: string, presentation_id: string, presentation: { __typename?: 'modelcatalog_variable_presentation', id: string, label: string, has_long_name?: string | null, has_short_name?: string | null, standard_variable?: { __typename?: 'modelcatalog_standard_variable', id: string, label: string, description?: string | null } | null, unit?: { __typename?: 'modelcatalog_unit', id: string, label: string } | null } }> } }>, outputs: Array<{ __typename?: 'modelcatalog_configuration_output', configuration_id: string, output_id: string, output: { __typename?: 'modelcatalog_dataset_specification', id: string, label: string, description?: string | null, has_format?: string | null, has_dimensionality?: number | null, position?: number | null, presentations: Array<{ __typename?: 'modelcatalog_dataset_specification_presentation', dataset_specification_id: string, presentation_id: string, presentation: { __typename?: 'modelcatalog_variable_presentation', id: string, label: string, has_long_name?: string | null, has_short_name?: string | null, standard_variable?: { __typename?: 'modelcatalog_standard_variable', id: string, label: string, description?: string | null } | null, unit?: { __typename?: 'modelcatalog_unit', id: string, label: string } | null } }> } }>, parameters: Array<{ __typename?: 'modelcatalog_configuration_parameter', configuration_id: string, parameter_id: string, parameter: { __typename?: 'modelcatalog_parameter', id: string, label: string, description?: string | null, has_data_type?: string | null, has_default_value?: string | null, has_minimum_accepted_value?: string | null, has_maximum_accepted_value?: string | null, has_fixed_value?: string | null, has_accepted_values?: string[] | null, position?: number | null, parameter_type?: string | null } }>, authors: Array<{ __typename?: 'modelcatalog_configuration_author', configuration_id: string, person_id: string, person: { __typename?: 'modelcatalog_person', id: string, label: string } }>, regions: Array<{ __typename?: 'modelcatalog_configuration_region', configuration_id: string, region_id: string, region: { __typename?: 'modelcatalog_region', id: string, label: string } }> } | null };
 
 export type SearchModelConfigurationsQueryVariables = Exact<{
   where: Modelcatalog_Configuration_Bool_Exp;
@@ -26568,6 +26579,8 @@ export const DatasetSpecificationFieldsFragmentDoc = gql`
   has_dimensionality
   position
   presentations {
+    dataset_specification_id
+    presentation_id
     presentation {
       ...VariablePresentationFields
     }
@@ -26576,6 +26589,8 @@ export const DatasetSpecificationFieldsFragmentDoc = gql`
     ${VariablePresentationFieldsFragmentDoc}`;
 export const InputFieldsFragmentDoc = gql`
     fragment InputFields on modelcatalog_configuration_input {
+  configuration_id
+  input_id
   is_optional
   input {
     ...DatasetSpecificationFields
@@ -26584,6 +26599,8 @@ export const InputFieldsFragmentDoc = gql`
     ${DatasetSpecificationFieldsFragmentDoc}`;
 export const OutputFieldsFragmentDoc = gql`
     fragment OutputFields on modelcatalog_configuration_output {
+  configuration_id
+  output_id
   output {
     ...DatasetSpecificationFields
   }
@@ -26635,17 +26652,23 @@ export const ConfigurationFieldsFragmentDoc = gql`
     ...OutputFields
   }
   parameters {
+    configuration_id
+    parameter_id
     parameter {
       ...ParameterFields
     }
   }
   authors {
+    configuration_id
+    person_id
     person {
       id
       label
     }
   }
   regions {
+    configuration_id
+    region_id
     region {
       id
       label
@@ -27078,6 +27101,50 @@ export function useUpdateVariablePresentationMutation(baseOptions?: Apollo.Mutat
 export type UpdateVariablePresentationMutationHookResult = ReturnType<typeof useUpdateVariablePresentationMutation>;
 export type UpdateVariablePresentationMutationResult = Apollo.MutationResult<UpdateVariablePresentationMutation>;
 export type UpdateVariablePresentationMutationOptions = Apollo.BaseMutationOptions<UpdateVariablePresentationMutation, UpdateVariablePresentationMutationVariables>;
+export const InsertVariablePresentationDocument = gql`
+    mutation InsertVariablePresentation($datasetSpecificationId: String!, $presentationId: String!, $label: String!, $hasStandardVariable: String, $usesUnit: String) {
+  insert_modelcatalog_dataset_specification_presentation_one(
+    object: {dataset_specification_id: $datasetSpecificationId, presentation: {data: {id: $presentationId, label: $label, has_long_name: null, has_short_name: null, has_standard_variable: $hasStandardVariable, uses_unit: $usesUnit}}}
+  ) {
+    dataset_specification_id
+    presentation_id
+    presentation {
+      id
+      label
+    }
+  }
+}
+    `;
+export type InsertVariablePresentationMutationFn = Apollo.MutationFunction<InsertVariablePresentationMutation, InsertVariablePresentationMutationVariables>;
+
+/**
+ * __useInsertVariablePresentationMutation__
+ *
+ * To run a mutation, you first call `useInsertVariablePresentationMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useInsertVariablePresentationMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [insertVariablePresentationMutation, { data, loading, error }] = useInsertVariablePresentationMutation({
+ *   variables: {
+ *      datasetSpecificationId: // value for 'datasetSpecificationId'
+ *      presentationId: // value for 'presentationId'
+ *      label: // value for 'label'
+ *      hasStandardVariable: // value for 'hasStandardVariable'
+ *      usesUnit: // value for 'usesUnit'
+ *   },
+ * });
+ */
+export function useInsertVariablePresentationMutation(baseOptions?: Apollo.MutationHookOptions<InsertVariablePresentationMutation, InsertVariablePresentationMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<InsertVariablePresentationMutation, InsertVariablePresentationMutationVariables>(InsertVariablePresentationDocument, options);
+      }
+export type InsertVariablePresentationMutationHookResult = ReturnType<typeof useInsertVariablePresentationMutation>;
+export type InsertVariablePresentationMutationResult = Apollo.MutationResult<InsertVariablePresentationMutation>;
+export type InsertVariablePresentationMutationOptions = Apollo.BaseMutationOptions<InsertVariablePresentationMutation, InsertVariablePresentationMutationVariables>;
 export const CreateStandardVariableDocument = gql`
     mutation CreateStandardVariable($id: String!, $label: String!, $description: String) {
   insert_modelcatalog_standard_variable_one(
