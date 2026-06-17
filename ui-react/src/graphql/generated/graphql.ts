@@ -26304,6 +26304,26 @@ export type UpdateVariablePresentationMutationVariables = Exact<{
 
 export type UpdateVariablePresentationMutation = { __typename?: 'mutation_root', update_modelcatalog_variable_presentation_by_pk?: { __typename?: 'modelcatalog_variable_presentation', id: string, label: string, has_standard_variable?: string | null, uses_unit?: string | null } | null };
 
+export type InsertVariablePresentationMutationVariables = Exact<{
+  datasetSpecificationId: Scalars['String']['input'];
+  presentationId: Scalars['String']['input'];
+  label: Scalars['String']['input'];
+  hasStandardVariable?: InputMaybe<Scalars['String']['input']>;
+  usesUnit?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type InsertVariablePresentationMutation = { __typename?: 'mutation_root', insert_modelcatalog_dataset_specification_presentation_one?: { __typename?: 'modelcatalog_dataset_specification_presentation', dataset_specification_id: string, presentation_id: string, presentation: { __typename?: 'modelcatalog_variable_presentation', id: string, label: string } } | null };
+
+export type CreateStandardVariableMutationVariables = Exact<{
+  id: Scalars['String']['input'];
+  label: Scalars['String']['input'];
+  description?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type CreateStandardVariableMutation = { __typename?: 'mutation_root', insert_modelcatalog_standard_variable_one?: { __typename?: 'modelcatalog_standard_variable', id: string, label: string, description?: string | null } | null };
+
 export type RegisterModelMutationVariables = Exact<{
   softwareId: Scalars['String']['input'];
   softwareLabel: Scalars['String']['input'];
@@ -27028,6 +27048,89 @@ export function useUpdateVariablePresentationMutation(baseOptions?: Apollo.Mutat
 export type UpdateVariablePresentationMutationHookResult = ReturnType<typeof useUpdateVariablePresentationMutation>;
 export type UpdateVariablePresentationMutationResult = Apollo.MutationResult<UpdateVariablePresentationMutation>;
 export type UpdateVariablePresentationMutationOptions = Apollo.BaseMutationOptions<UpdateVariablePresentationMutation, UpdateVariablePresentationMutationVariables>;
+export const InsertVariablePresentationDocument = gql`
+    mutation InsertVariablePresentation($datasetSpecificationId: String!, $presentationId: String!, $label: String!, $hasStandardVariable: String, $usesUnit: String) {
+  insert_modelcatalog_dataset_specification_presentation_one(
+    object: {dataset_specification_id: $datasetSpecificationId, presentation: {data: {id: $presentationId, label: $label, has_long_name: null, has_short_name: null, has_standard_variable: $hasStandardVariable, uses_unit: $usesUnit}}}
+  ) {
+    dataset_specification_id
+    presentation_id
+    presentation {
+      id
+      label
+    }
+  }
+}
+    `;
+export type InsertVariablePresentationMutationFn = Apollo.MutationFunction<InsertVariablePresentationMutation, InsertVariablePresentationMutationVariables>;
+
+/**
+ * __useInsertVariablePresentationMutation__
+ *
+ * To run a mutation, you first call `useInsertVariablePresentationMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useInsertVariablePresentationMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [insertVariablePresentationMutation, { data, loading, error }] = useInsertVariablePresentationMutation({
+ *   variables: {
+ *      datasetSpecificationId: // value for 'datasetSpecificationId'
+ *      presentationId: // value for 'presentationId'
+ *      label: // value for 'label'
+ *      hasStandardVariable: // value for 'hasStandardVariable'
+ *      usesUnit: // value for 'usesUnit'
+ *   },
+ * });
+ */
+export function useInsertVariablePresentationMutation(baseOptions?: Apollo.MutationHookOptions<InsertVariablePresentationMutation, InsertVariablePresentationMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<InsertVariablePresentationMutation, InsertVariablePresentationMutationVariables>(InsertVariablePresentationDocument, options);
+      }
+export type InsertVariablePresentationMutationHookResult = ReturnType<typeof useInsertVariablePresentationMutation>;
+export type InsertVariablePresentationMutationResult = Apollo.MutationResult<InsertVariablePresentationMutation>;
+export type InsertVariablePresentationMutationOptions = Apollo.BaseMutationOptions<InsertVariablePresentationMutation, InsertVariablePresentationMutationVariables>;
+export const CreateStandardVariableDocument = gql`
+    mutation CreateStandardVariable($id: String!, $label: String!, $description: String) {
+  insert_modelcatalog_standard_variable_one(
+    object: {id: $id, label: $label, description: $description}
+  ) {
+    id
+    label
+    description
+  }
+}
+    `;
+export type CreateStandardVariableMutationFn = Apollo.MutationFunction<CreateStandardVariableMutation, CreateStandardVariableMutationVariables>;
+
+/**
+ * __useCreateStandardVariableMutation__
+ *
+ * To run a mutation, you first call `useCreateStandardVariableMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateStandardVariableMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createStandardVariableMutation, { data, loading, error }] = useCreateStandardVariableMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *      label: // value for 'label'
+ *      description: // value for 'description'
+ *   },
+ * });
+ */
+export function useCreateStandardVariableMutation(baseOptions?: Apollo.MutationHookOptions<CreateStandardVariableMutation, CreateStandardVariableMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<CreateStandardVariableMutation, CreateStandardVariableMutationVariables>(CreateStandardVariableDocument, options);
+      }
+export type CreateStandardVariableMutationHookResult = ReturnType<typeof useCreateStandardVariableMutation>;
+export type CreateStandardVariableMutationResult = Apollo.MutationResult<CreateStandardVariableMutation>;
+export type CreateStandardVariableMutationOptions = Apollo.BaseMutationOptions<CreateStandardVariableMutation, CreateStandardVariableMutationVariables>;
 export const RegisterModelDocument = gql`
     mutation RegisterModel($softwareId: String!, $softwareLabel: String!, $softwareDescription: String, $softwareType: String!, $versionId: String!, $versionLabel: String!, $versionVersionId: String, $versionDescription: String, $configurationId: String!, $configurationLabel: String!, $configurationDescription: String) {
   insert_modelcatalog_software_one(

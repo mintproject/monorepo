@@ -3,6 +3,7 @@ import {
   buildAddInputVariables,
   buildAddOutputVariables,
   buildAddParameterVariables,
+  buildPresentationInsertForExistingDs,
   toPgTextArray,
   assignPositions,
   diffInputRows,
@@ -291,6 +292,65 @@ describe('buildAddParameterVariables', () => {
   });
 });
 
+// ─── buildPresentationInsertForExistingDs ─────────────────────────────────────
+
+describe('buildPresentationInsertForExistingDs', () => {
+  const dsId = 'https://w3id.org/okn/i/mint/ds-1';
+
+  it('returns insert variables when a presentation-less row gains a standard variable', () => {
+    const row = makeInputRow({
+      existingId: dsId,
+      presentations: [{ standardVariable: { id: 'sv-1', label: 'Precipitation' }, unit: null }],
+    });
+    const vars = buildPresentationInsertForExistingDs(dsId, row);
+    expect(vars).not.toBeNull();
+    expect(vars!.datasetSpecificationId).toBe(dsId);
+    expect(vars!.presentationId).toMatch(MINT_URI_PATTERN);
+    expect(vars!.hasStandardVariable).toBe('sv-1');
+    expect(vars!.usesUnit).toBeNull();
+    // Hidden presentation: label derives from the standard variable.
+    expect(vars!.label).toBe('Precipitation');
+  });
+
+  it('derives label from the input label when no standard variable name', () => {
+    const row = makeInputRow({
+      label: 'Weather file',
+      existingId: dsId,
+      presentations: [{ standardVariable: null, unit: { id: 'u-1', label: 'mm' } }],
+    });
+    const vars = buildPresentationInsertForExistingDs(dsId, row);
+    expect(vars!.usesUnit).toBe('u-1');
+    expect(vars!.label).toBe('Weather file');
+  });
+
+  it('returns null when the presentation already exists (update path handles it)', () => {
+    const row = makeInputRow({
+      existingId: dsId,
+      presentations: [
+        {
+          existingPresentationId: 'vp-1',
+          standardVariable: { id: 'sv-1', label: 'Precipitation' },
+          unit: null,
+        },
+      ],
+    });
+    expect(buildPresentationInsertForExistingDs(dsId, row)).toBeNull();
+  });
+
+  it('returns null for an empty presentation (no standard variable, no unit)', () => {
+    const row = makeInputRow({
+      existingId: dsId,
+      presentations: [{ standardVariable: null, unit: null }],
+    });
+    expect(buildPresentationInsertForExistingDs(dsId, row)).toBeNull();
+  });
+
+  it('returns null when the row has no presentation at all', () => {
+    const row = makeInputRow({ existingId: dsId, presentations: [] });
+    expect(buildPresentationInsertForExistingDs(dsId, row)).toBeNull();
+  });
+});
+
 // ─── toPgTextArray ────────────────────────────────────────────────────────────
 
 describe('toPgTextArray', () => {
@@ -411,6 +471,13 @@ describe('diffInputRows', () => {
     expect(toUpdate).toHaveLength(1);
     expect(toUpdate[0]!.label).toBe('Updated');
   });
+
+  it('detects a hasDimensionality change as update', () => {
+    const orig = [makeInputRow({ existingId: 'https://id/ds-1', hasDimensionality: 1 })];
+    const modified = [makeInputRow({ existingId: 'https://id/ds-1', hasDimensionality: 2 })];
+    const { toUpdate } = diffInputRows(orig, modified);
+    expect(toUpdate).toHaveLength(1);
+  });
 });
 
 // ─── diffParameterRows ────────────────────────────────────────────────────────
@@ -431,6 +498,35 @@ describe('diffParameterRows', () => {
     const orig = [makeParameterRow({ existingId: 'https://id/param-1', hasDefaultValue: '1.0' })];
     const modified = [
       makeParameterRow({ existingId: 'https://id/param-1', hasDefaultValue: '2.0' }),
+    ];
+    const { toUpdate } = diffParameterRows(orig, modified);
+    expect(toUpdate).toHaveLength(1);
+  });
+
+  it('detects an accepted-values change as update', () => {
+    const orig = [makeParameterRow({ existingId: 'https://id/param-1', hasAcceptedValues: ['a'] })];
+    const modified = [
+      makeParameterRow({ existingId: 'https://id/param-1', hasAcceptedValues: ['a', 'b'] }),
+    ];
+    const { toUpdate } = diffParameterRows(orig, modified);
+    expect(toUpdate).toHaveLength(1);
+  });
+
+  it('does not flag unchanged accepted-values (same contents) as update', () => {
+    const orig = [
+      makeParameterRow({ existingId: 'https://id/param-1', hasAcceptedValues: ['a', 'b'] }),
+    ];
+    const modified = [
+      makeParameterRow({ existingId: 'https://id/param-1', hasAcceptedValues: ['a', 'b'] }),
+    ];
+    const { toUpdate } = diffParameterRows(orig, modified);
+    expect(toUpdate).toHaveLength(0);
+  });
+
+  it('detects a parameterType change as update', () => {
+    const orig = [makeParameterRow({ existingId: 'https://id/param-1', parameterType: undefined })];
+    const modified = [
+      makeParameterRow({ existingId: 'https://id/param-1', parameterType: 'calibration' }),
     ];
     const { toUpdate } = diffParameterRows(orig, modified);
     expect(toUpdate).toHaveLength(1);
