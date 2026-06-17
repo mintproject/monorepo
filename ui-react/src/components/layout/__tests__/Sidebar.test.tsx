@@ -43,6 +43,12 @@ describe('Sidebar', () => {
       // Browse Models link should be visible without clicking
       expect(screen.getByRole('link', { name: /browse models/i })).toBeInTheDocument();
     });
+
+    it('renders the goal-based group captions', () => {
+      renderSidebar(false);
+      expect(screen.getByText('Explore')).toBeInTheDocument();
+      expect(screen.getByText('Decide')).toBeInTheDocument();
+    });
   });
 
   describe('collapsed mode', () => {
@@ -51,6 +57,12 @@ describe('Sidebar', () => {
       // In collapsed mode, section labels are hidden; only buttons via aria-label
       expect(screen.getByRole('button', { name: /models/i })).toBeInTheDocument();
       expect(screen.queryByRole('link', { name: /browse models/i })).not.toBeInTheDocument();
+    });
+
+    it('hides the group captions', () => {
+      renderSidebar(true);
+      expect(screen.queryByText('Explore')).not.toBeInTheDocument();
+      expect(screen.queryByText('Decide')).not.toBeInTheDocument();
     });
   });
 });
