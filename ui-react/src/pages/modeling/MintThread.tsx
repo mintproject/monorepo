@@ -76,8 +76,18 @@ function getRunsStatus(threadData: ThreadExecutionData | null): StepStatus {
 
 // ─── MintThread ────────────────────────────────────────────────────────────────
 
-export function MintThread() {
-  const { id: threadId } = useParams<{ id: string }>();
+interface MintThreadProps {
+  /**
+   * Thread to render. When provided, the component runs embedded (e.g. inside
+   * the problem-statement detail panel) instead of reading the id from the
+   * route. Falls back to the `:id` route param when omitted.
+   */
+  threadId?: string;
+}
+
+export function MintThread({ threadId: threadIdProp }: MintThreadProps = {}) {
+  const { id: routeThreadId } = useParams<{ id: string }>();
+  const threadId = threadIdProp ?? routeThreadId;
   const { user } = useAuth();
   const [maximized, setMaximized] = useState(false);
   const [currentSection, setCurrentSection] = useState<WizardStepId>('framing');

@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import {
   Folder,
   FolderOpen,
@@ -10,12 +10,11 @@ import {
   Pencil,
   Trash2,
   ChevronLeft,
-  ArrowRight,
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { MintThread } from './MintThread';
 import {
   Dialog,
   DialogContent,
@@ -139,7 +138,6 @@ function StatusDot({ active, title }: { active: boolean; title: string }) {
  */
 export function MintProblemStatement() {
   const { id: problemStatementId } = useParams<{ id: string }>();
-  const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -192,8 +190,6 @@ export function MintProblemStatement() {
     const tb = getLatestEvent(b.events)?.timestamp ?? '';
     return ta < tb ? 1 : -1;
   });
-
-  const selectedThread = threads.find((t) => t.id === selectedThreadId) ?? null;
 
   // ── task form helpers ─────────────────────────────────────────────────────
   function openAddTaskDialog() {
@@ -265,9 +261,9 @@ export function MintProblemStatement() {
           },
         );
         toast({ title: 'Task created' });
+        // Select the new task + its default sub-task so the wizard opens inline.
         setSelectedTaskId(taskId);
         setSelectedThreadId(threadId);
-        navigate(`/modeling/thread/${threadId}`);
       }
       setTaskDialogOpen(false);
       setTaskForm(EMPTY_TASK_FORM);
@@ -362,7 +358,6 @@ export function MintProblemStatement() {
       setThreadDialogOpen(false);
       setThreadForm(EMPTY_THREAD_FORM);
       await refetch();
-      navigate(`/modeling/thread/${newId}`);
     } catch (err) {
       console.error(err);
       toast({ title: 'Save failed', description: String(err), variant: 'destructive' });
@@ -559,12 +554,8 @@ export function MintProblemStatement() {
                               )}
                               tabIndex={0}
                               onClick={() => setSelectedThreadId(thread.id)}
-                              onDoubleClick={() => navigate(`/modeling/thread/${thread.id}`)}
                               onKeyDown={(e) => {
-                                if (e.key === 'Enter') {
-                                  e.preventDefault();
-                                  navigate(`/modeling/thread/${thread.id}`);
-                                } else if (e.key === ' ') {
+                                if (e.key === 'Enter' || e.key === ' ') {
                                   e.preventDefault();
                                   setSelectedThreadId(thread.id);
                                 }
@@ -672,16 +663,17 @@ export function MintProblemStatement() {
           </div>
         </div>
 
-        {/* Right panel — adaptive: thread summary (A) when a sub-task is
-            selected, otherwise a problem-statement overview (C). */}
-        <div className="flex-1 overflow-auto p-6">
-          {selectedThread ? (
-            <ThreadSummaryPanel
-              thread={selectedThread}
-              onOpen={() => navigate(`/modeling/thread/${selectedThread.id}`)}
-            />
+        {/* Right panel — the thread wizard inline when a sub-task is selected,
+            otherwise a problem-statement overview. */}
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+          {selectedThreadId ? (
+            <div className="flex-1 overflow-hidden p-4">
+              <MintThread key={selectedThreadId} threadId={selectedThreadId} />
+            </div>
           ) : (
-            <ProblemOverviewPanel tasks={tasks} />
+            <div className="flex-1 overflow-auto p-6">
+              <ProblemOverviewPanel tasks={tasks} />
+            </div>
           )}
         </div>
       </div>
@@ -762,81 +754,6 @@ export function MintProblemStatement() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
-  );
-}
-
-// ─── Right panel: thread summary (A) ──────────────────────────────────────────
-
-function SummaryRow({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <div className="grid grid-cols-[140px_1fr] items-start gap-2">
-      <span className="text-muted-foreground">{label}</span>
-      <span className="text-foreground">{children}</span>
-    </div>
-  );
-}
-
-function ThreadSummaryPanel({ thread, onOpen }: { thread: Thread; onOpen: () => void }) {
-  const configs = (thread.thread_models ?? [])
-    .map((m) => m.modelcatalog_configuration?.label)
-    .filter((l): l is string => !!l);
-  const lastEvent = getLatestEvent(thread.events);
-  const hasModel = threadHasModel(thread);
-  const title = thread.name ?? 'Default sub-task';
-
-  return (
-    <div className="mx-auto w-full max-w-2xl space-y-4">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            <StatusDot active={hasModel} title={hasModel ? 'Model selected' : 'No model yet'} />
-            <h2 className="truncate text-lg font-semibold text-foreground">{title}</h2>
-          </div>
-          <p className="mt-0.5 text-xs text-muted-foreground">
-            {fmtDate(thread.start_date)} – {fmtDate(thread.end_date)}
-          </p>
-        </div>
-        <Button onClick={onOpen} className="shrink-0 gap-1.5">
-          Open thread
-          <ArrowRight className="h-4 w-4" />
-        </Button>
-      </div>
-
-      <Card>
-        <CardContent className="grid gap-3 p-4 text-sm">
-          <SummaryRow label="Model">
-            {configs.length > 0 ? (
-              <div className="flex flex-wrap gap-1.5">
-                {configs.map((c, i) => (
-                  <Badge key={i} variant="secondary">
-                    {c}
-                  </Badge>
-                ))}
-              </div>
-            ) : (
-              <span className="text-muted-foreground">No model selected yet</span>
-            )}
-          </SummaryRow>
-          <SummaryRow label="Response variable">
-            {thread.response_variable?.name ?? <span className="text-muted-foreground">—</span>}
-          </SummaryRow>
-          <SummaryRow label="Driving variable">
-            {thread.driving_variable?.name ?? <span className="text-muted-foreground">—</span>}
-          </SummaryRow>
-          <SummaryRow label="Last activity">
-            {lastEvent ? (
-              `${lastEvent.userid} · ${fmtDateTime(lastEvent.timestamp)}`
-            ) : (
-              <span className="text-muted-foreground">—</span>
-            )}
-          </SummaryRow>
-        </CardContent>
-      </Card>
-
-      <p className="text-xs text-muted-foreground">
-        Dataset and run status are shown inside the thread — open it to view or edit them.
-      </p>
     </div>
   );
 }
