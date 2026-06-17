@@ -26192,7 +26192,7 @@ export type OutputFieldsFragment = { __typename?: 'modelcatalog_configuration_ou
 
 export type ParameterFieldsFragment = { __typename?: 'modelcatalog_parameter', id: string, label: string, description?: string | null, has_data_type?: string | null, has_default_value?: string | null, has_minimum_accepted_value?: string | null, has_maximum_accepted_value?: string | null, has_fixed_value?: string | null, has_accepted_values?: string[] | null, position?: number | null, parameter_type?: string | null };
 
-export type ConfigurationFieldsFragment = { __typename?: 'modelcatalog_configuration', id: string, label: string, description?: string | null, software_version_id?: string | null, model_configuration_id?: string | null, inputs: Array<{ __typename?: 'modelcatalog_configuration_input', is_optional: boolean, input: { __typename?: 'modelcatalog_dataset_specification', id: string, label: string, description?: string | null, has_format?: string | null, has_dimensionality?: number | null, position?: number | null, presentations: Array<{ __typename?: 'modelcatalog_dataset_specification_presentation', presentation: { __typename?: 'modelcatalog_variable_presentation', id: string, label: string, has_long_name?: string | null, has_short_name?: string | null, standard_variable?: { __typename?: 'modelcatalog_standard_variable', id: string, label: string, description?: string | null } | null, unit?: { __typename?: 'modelcatalog_unit', id: string, label: string } | null } }> } }>, outputs: Array<{ __typename?: 'modelcatalog_configuration_output', output: { __typename?: 'modelcatalog_dataset_specification', id: string, label: string, description?: string | null, has_format?: string | null, has_dimensionality?: number | null, position?: number | null, presentations: Array<{ __typename?: 'modelcatalog_dataset_specification_presentation', presentation: { __typename?: 'modelcatalog_variable_presentation', id: string, label: string, has_long_name?: string | null, has_short_name?: string | null, standard_variable?: { __typename?: 'modelcatalog_standard_variable', id: string, label: string, description?: string | null } | null, unit?: { __typename?: 'modelcatalog_unit', id: string, label: string } | null } }> } }>, parameters: Array<{ __typename?: 'modelcatalog_configuration_parameter', parameter: { __typename?: 'modelcatalog_parameter', id: string, label: string, description?: string | null, has_data_type?: string | null, has_default_value?: string | null, has_minimum_accepted_value?: string | null, has_maximum_accepted_value?: string | null, has_fixed_value?: string | null, has_accepted_values?: string[] | null, position?: number | null, parameter_type?: string | null } }>, authors: Array<{ __typename?: 'modelcatalog_configuration_author', person: { __typename?: 'modelcatalog_person', id: string, label: string } }>, regions: Array<{ __typename?: 'modelcatalog_configuration_region', region: { __typename?: 'modelcatalog_region', id: string, label: string } }> };
+export type ConfigurationFieldsFragment = { __typename?: 'modelcatalog_configuration', id: string, label: string, description?: string | null, software_version_id?: string | null, model_configuration_id?: string | null, software_version?: { __typename?: 'modelcatalog_software_version', version_id?: string | null, software?: { __typename?: 'modelcatalog_software', id: string, label: string } | null } | null, time_intervals: Array<{ __typename?: 'modelcatalog_configuration_time_interval', time_interval: { __typename?: 'modelcatalog_time_interval', id: string, label: string, description?: string | null, interval_unit?: string | null, interval_value?: string | null } }>, inputs: Array<{ __typename?: 'modelcatalog_configuration_input', is_optional: boolean, input: { __typename?: 'modelcatalog_dataset_specification', id: string, label: string, description?: string | null, has_format?: string | null, has_dimensionality?: number | null, position?: number | null, presentations: Array<{ __typename?: 'modelcatalog_dataset_specification_presentation', presentation: { __typename?: 'modelcatalog_variable_presentation', id: string, label: string, has_long_name?: string | null, has_short_name?: string | null, standard_variable?: { __typename?: 'modelcatalog_standard_variable', id: string, label: string, description?: string | null } | null, unit?: { __typename?: 'modelcatalog_unit', id: string, label: string } | null } }> } }>, outputs: Array<{ __typename?: 'modelcatalog_configuration_output', output: { __typename?: 'modelcatalog_dataset_specification', id: string, label: string, description?: string | null, has_format?: string | null, has_dimensionality?: number | null, position?: number | null, presentations: Array<{ __typename?: 'modelcatalog_dataset_specification_presentation', presentation: { __typename?: 'modelcatalog_variable_presentation', id: string, label: string, has_long_name?: string | null, has_short_name?: string | null, standard_variable?: { __typename?: 'modelcatalog_standard_variable', id: string, label: string, description?: string | null } | null, unit?: { __typename?: 'modelcatalog_unit', id: string, label: string } | null } }> } }>, parameters: Array<{ __typename?: 'modelcatalog_configuration_parameter', parameter: { __typename?: 'modelcatalog_parameter', id: string, label: string, description?: string | null, has_data_type?: string | null, has_default_value?: string | null, has_minimum_accepted_value?: string | null, has_maximum_accepted_value?: string | null, has_fixed_value?: string | null, has_accepted_values?: string[] | null, position?: number | null, parameter_type?: string | null } }>, authors: Array<{ __typename?: 'modelcatalog_configuration_author', person: { __typename?: 'modelcatalog_person', id: string, label: string } }>, regions: Array<{ __typename?: 'modelcatalog_configuration_region', region: { __typename?: 'modelcatalog_region', id: string, label: string } }> };
 
 export type SoftwareFieldsFragment = { __typename?: 'modelcatalog_software', id: string, label: string, description?: string | null, type?: string | null, author?: { __typename?: 'modelcatalog_person', id: string, label: string } | null };
 
@@ -26303,6 +26303,15 @@ export type UpdateVariablePresentationMutationVariables = Exact<{
 
 
 export type UpdateVariablePresentationMutation = { __typename?: 'mutation_root', update_modelcatalog_variable_presentation_by_pk?: { __typename?: 'modelcatalog_variable_presentation', id: string, label: string, has_standard_variable?: string | null, uses_unit?: string | null } | null };
+
+export type CreateStandardVariableMutationVariables = Exact<{
+  id: Scalars['String']['input'];
+  label: Scalars['String']['input'];
+  description?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type CreateStandardVariableMutation = { __typename?: 'mutation_root', insert_modelcatalog_standard_variable_one?: { __typename?: 'modelcatalog_standard_variable', id: string, label: string, description?: string | null } | null };
 
 export type RegisterModelMutationVariables = Exact<{
   softwareId: Scalars['String']['input'];
@@ -26426,7 +26435,31 @@ export type GetConfigurationQueryVariables = Exact<{
 }>;
 
 
-export type GetConfigurationQuery = { __typename?: 'query_root', modelcatalog_configuration_by_pk?: { __typename?: 'modelcatalog_configuration', id: string, label: string, description?: string | null, software_version_id?: string | null, model_configuration_id?: string | null, inputs: Array<{ __typename?: 'modelcatalog_configuration_input', is_optional: boolean, input: { __typename?: 'modelcatalog_dataset_specification', id: string, label: string, description?: string | null, has_format?: string | null, has_dimensionality?: number | null, position?: number | null, presentations: Array<{ __typename?: 'modelcatalog_dataset_specification_presentation', presentation: { __typename?: 'modelcatalog_variable_presentation', id: string, label: string, has_long_name?: string | null, has_short_name?: string | null, standard_variable?: { __typename?: 'modelcatalog_standard_variable', id: string, label: string, description?: string | null } | null, unit?: { __typename?: 'modelcatalog_unit', id: string, label: string } | null } }> } }>, outputs: Array<{ __typename?: 'modelcatalog_configuration_output', output: { __typename?: 'modelcatalog_dataset_specification', id: string, label: string, description?: string | null, has_format?: string | null, has_dimensionality?: number | null, position?: number | null, presentations: Array<{ __typename?: 'modelcatalog_dataset_specification_presentation', presentation: { __typename?: 'modelcatalog_variable_presentation', id: string, label: string, has_long_name?: string | null, has_short_name?: string | null, standard_variable?: { __typename?: 'modelcatalog_standard_variable', id: string, label: string, description?: string | null } | null, unit?: { __typename?: 'modelcatalog_unit', id: string, label: string } | null } }> } }>, parameters: Array<{ __typename?: 'modelcatalog_configuration_parameter', parameter: { __typename?: 'modelcatalog_parameter', id: string, label: string, description?: string | null, has_data_type?: string | null, has_default_value?: string | null, has_minimum_accepted_value?: string | null, has_maximum_accepted_value?: string | null, has_fixed_value?: string | null, has_accepted_values?: string[] | null, position?: number | null, parameter_type?: string | null } }>, authors: Array<{ __typename?: 'modelcatalog_configuration_author', person: { __typename?: 'modelcatalog_person', id: string, label: string } }>, regions: Array<{ __typename?: 'modelcatalog_configuration_region', region: { __typename?: 'modelcatalog_region', id: string, label: string } }> } | null };
+export type GetConfigurationQuery = { __typename?: 'query_root', modelcatalog_configuration_by_pk?: { __typename?: 'modelcatalog_configuration', id: string, label: string, description?: string | null, software_version_id?: string | null, model_configuration_id?: string | null, software_version?: { __typename?: 'modelcatalog_software_version', version_id?: string | null, software?: { __typename?: 'modelcatalog_software', id: string, label: string } | null } | null, time_intervals: Array<{ __typename?: 'modelcatalog_configuration_time_interval', time_interval: { __typename?: 'modelcatalog_time_interval', id: string, label: string, description?: string | null, interval_unit?: string | null, interval_value?: string | null } }>, inputs: Array<{ __typename?: 'modelcatalog_configuration_input', is_optional: boolean, input: { __typename?: 'modelcatalog_dataset_specification', id: string, label: string, description?: string | null, has_format?: string | null, has_dimensionality?: number | null, position?: number | null, presentations: Array<{ __typename?: 'modelcatalog_dataset_specification_presentation', presentation: { __typename?: 'modelcatalog_variable_presentation', id: string, label: string, has_long_name?: string | null, has_short_name?: string | null, standard_variable?: { __typename?: 'modelcatalog_standard_variable', id: string, label: string, description?: string | null } | null, unit?: { __typename?: 'modelcatalog_unit', id: string, label: string } | null } }> } }>, outputs: Array<{ __typename?: 'modelcatalog_configuration_output', output: { __typename?: 'modelcatalog_dataset_specification', id: string, label: string, description?: string | null, has_format?: string | null, has_dimensionality?: number | null, position?: number | null, presentations: Array<{ __typename?: 'modelcatalog_dataset_specification_presentation', presentation: { __typename?: 'modelcatalog_variable_presentation', id: string, label: string, has_long_name?: string | null, has_short_name?: string | null, standard_variable?: { __typename?: 'modelcatalog_standard_variable', id: string, label: string, description?: string | null } | null, unit?: { __typename?: 'modelcatalog_unit', id: string, label: string } | null } }> } }>, parameters: Array<{ __typename?: 'modelcatalog_configuration_parameter', parameter: { __typename?: 'modelcatalog_parameter', id: string, label: string, description?: string | null, has_data_type?: string | null, has_default_value?: string | null, has_minimum_accepted_value?: string | null, has_maximum_accepted_value?: string | null, has_fixed_value?: string | null, has_accepted_values?: string[] | null, position?: number | null, parameter_type?: string | null } }>, authors: Array<{ __typename?: 'modelcatalog_configuration_author', person: { __typename?: 'modelcatalog_person', id: string, label: string } }>, regions: Array<{ __typename?: 'modelcatalog_configuration_region', region: { __typename?: 'modelcatalog_region', id: string, label: string } }> } | null };
+
+export type SearchModelConfigurationsQueryVariables = Exact<{
+  where: Modelcatalog_Configuration_Bool_Exp;
+}>;
+
+
+export type SearchModelConfigurationsQuery = { __typename?: 'query_root', modelcatalog_configuration: Array<{ __typename?: 'modelcatalog_configuration', id: string, label: string, model_configuration_id?: string | null, software_version?: { __typename?: 'modelcatalog_software_version', version_id?: string | null, software?: { __typename?: 'modelcatalog_software', id: string, label: string } | null } | null, parent_configuration?: { __typename?: 'modelcatalog_configuration', id: string, label: string, software_version?: { __typename?: 'modelcatalog_software_version', version_id?: string | null, software?: { __typename?: 'modelcatalog_software', id: string, label: string } | null } | null } | null }> };
+
+export type GetConfigurationBySlugQueryVariables = Exact<{
+  pattern: Scalars['String']['input'];
+}>;
+
+
+export type GetConfigurationBySlugQuery = { __typename?: 'query_root', modelcatalog_configuration: Array<{ __typename?: 'modelcatalog_configuration', id: string }> };
+
+export type GetModelCategoryOptionsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetModelCategoryOptionsQuery = { __typename?: 'query_root', modelcatalog_model_category: Array<{ __typename?: 'modelcatalog_model_category', id: string, label: string }> };
+
+export type GetOutputVariableOptionsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetOutputVariableOptionsQuery = { __typename?: 'query_root', modelcatalog_configuration_output: Array<{ __typename?: 'modelcatalog_configuration_output', output: { __typename?: 'modelcatalog_dataset_specification', presentations: Array<{ __typename?: 'modelcatalog_dataset_specification_presentation', presentation: { __typename?: 'modelcatalog_variable_presentation', standard_variable?: { __typename?: 'modelcatalog_standard_variable', id: string, label: string } | null } }> } }> };
 
 export type PrefetchReferenceDataQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -26578,6 +26611,22 @@ export const ConfigurationFieldsFragmentDoc = gql`
   description
   software_version_id
   model_configuration_id
+  software_version {
+    version_id
+    software {
+      id
+      label
+    }
+  }
+  time_intervals {
+    time_interval {
+      id
+      label
+      description
+      interval_unit
+      interval_value
+    }
+  }
   inputs {
     ...InputFields
   }
@@ -27028,6 +27077,45 @@ export function useUpdateVariablePresentationMutation(baseOptions?: Apollo.Mutat
 export type UpdateVariablePresentationMutationHookResult = ReturnType<typeof useUpdateVariablePresentationMutation>;
 export type UpdateVariablePresentationMutationResult = Apollo.MutationResult<UpdateVariablePresentationMutation>;
 export type UpdateVariablePresentationMutationOptions = Apollo.BaseMutationOptions<UpdateVariablePresentationMutation, UpdateVariablePresentationMutationVariables>;
+export const CreateStandardVariableDocument = gql`
+    mutation CreateStandardVariable($id: String!, $label: String!, $description: String) {
+  insert_modelcatalog_standard_variable_one(
+    object: {id: $id, label: $label, description: $description}
+  ) {
+    id
+    label
+    description
+  }
+}
+    `;
+export type CreateStandardVariableMutationFn = Apollo.MutationFunction<CreateStandardVariableMutation, CreateStandardVariableMutationVariables>;
+
+/**
+ * __useCreateStandardVariableMutation__
+ *
+ * To run a mutation, you first call `useCreateStandardVariableMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateStandardVariableMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createStandardVariableMutation, { data, loading, error }] = useCreateStandardVariableMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *      label: // value for 'label'
+ *      description: // value for 'description'
+ *   },
+ * });
+ */
+export function useCreateStandardVariableMutation(baseOptions?: Apollo.MutationHookOptions<CreateStandardVariableMutation, CreateStandardVariableMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<CreateStandardVariableMutation, CreateStandardVariableMutationVariables>(CreateStandardVariableDocument, options);
+      }
+export type CreateStandardVariableMutationHookResult = ReturnType<typeof useCreateStandardVariableMutation>;
+export type CreateStandardVariableMutationResult = Apollo.MutationResult<CreateStandardVariableMutation>;
+export type CreateStandardVariableMutationOptions = Apollo.BaseMutationOptions<CreateStandardVariableMutation, CreateStandardVariableMutationVariables>;
 export const RegisterModelDocument = gql`
     mutation RegisterModel($softwareId: String!, $softwareLabel: String!, $softwareDescription: String, $softwareType: String!, $versionId: String!, $versionLabel: String!, $versionVersionId: String, $versionDescription: String, $configurationId: String!, $configurationLabel: String!, $configurationDescription: String) {
   insert_modelcatalog_software_one(
@@ -27593,6 +27681,210 @@ export type GetConfigurationQueryHookResult = ReturnType<typeof useGetConfigurat
 export type GetConfigurationLazyQueryHookResult = ReturnType<typeof useGetConfigurationLazyQuery>;
 export type GetConfigurationSuspenseQueryHookResult = ReturnType<typeof useGetConfigurationSuspenseQuery>;
 export type GetConfigurationQueryResult = Apollo.QueryResult<GetConfigurationQuery, GetConfigurationQueryVariables>;
+export const SearchModelConfigurationsDocument = gql`
+    query SearchModelConfigurations($where: modelcatalog_configuration_bool_exp!) {
+  modelcatalog_configuration(where: $where, order_by: {label: asc}, limit: 500) {
+    id
+    label
+    model_configuration_id
+    software_version {
+      version_id
+      software {
+        id
+        label
+      }
+    }
+    parent_configuration {
+      id
+      label
+      software_version {
+        version_id
+        software {
+          id
+          label
+        }
+      }
+    }
+  }
+}
+    `;
+
+/**
+ * __useSearchModelConfigurationsQuery__
+ *
+ * To run a query within a React component, call `useSearchModelConfigurationsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useSearchModelConfigurationsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useSearchModelConfigurationsQuery({
+ *   variables: {
+ *      where: // value for 'where'
+ *   },
+ * });
+ */
+export function useSearchModelConfigurationsQuery(baseOptions: Apollo.QueryHookOptions<SearchModelConfigurationsQuery, SearchModelConfigurationsQueryVariables> & ({ variables: SearchModelConfigurationsQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<SearchModelConfigurationsQuery, SearchModelConfigurationsQueryVariables>(SearchModelConfigurationsDocument, options);
+      }
+export function useSearchModelConfigurationsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<SearchModelConfigurationsQuery, SearchModelConfigurationsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<SearchModelConfigurationsQuery, SearchModelConfigurationsQueryVariables>(SearchModelConfigurationsDocument, options);
+        }
+// @ts-ignore
+export function useSearchModelConfigurationsSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<SearchModelConfigurationsQuery, SearchModelConfigurationsQueryVariables>): Apollo.UseSuspenseQueryResult<SearchModelConfigurationsQuery, SearchModelConfigurationsQueryVariables>;
+export function useSearchModelConfigurationsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<SearchModelConfigurationsQuery, SearchModelConfigurationsQueryVariables>): Apollo.UseSuspenseQueryResult<SearchModelConfigurationsQuery | undefined, SearchModelConfigurationsQueryVariables>;
+export function useSearchModelConfigurationsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<SearchModelConfigurationsQuery, SearchModelConfigurationsQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<SearchModelConfigurationsQuery, SearchModelConfigurationsQueryVariables>(SearchModelConfigurationsDocument, options);
+        }
+export type SearchModelConfigurationsQueryHookResult = ReturnType<typeof useSearchModelConfigurationsQuery>;
+export type SearchModelConfigurationsLazyQueryHookResult = ReturnType<typeof useSearchModelConfigurationsLazyQuery>;
+export type SearchModelConfigurationsSuspenseQueryHookResult = ReturnType<typeof useSearchModelConfigurationsSuspenseQuery>;
+export type SearchModelConfigurationsQueryResult = Apollo.QueryResult<SearchModelConfigurationsQuery, SearchModelConfigurationsQueryVariables>;
+export const GetConfigurationBySlugDocument = gql`
+    query GetConfigurationBySlug($pattern: String!) {
+  modelcatalog_configuration(
+    where: {id: {_ilike: $pattern}}
+    order_by: {id: asc}
+    limit: 1
+  ) {
+    id
+  }
+}
+    `;
+
+/**
+ * __useGetConfigurationBySlugQuery__
+ *
+ * To run a query within a React component, call `useGetConfigurationBySlugQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetConfigurationBySlugQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetConfigurationBySlugQuery({
+ *   variables: {
+ *      pattern: // value for 'pattern'
+ *   },
+ * });
+ */
+export function useGetConfigurationBySlugQuery(baseOptions: Apollo.QueryHookOptions<GetConfigurationBySlugQuery, GetConfigurationBySlugQueryVariables> & ({ variables: GetConfigurationBySlugQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetConfigurationBySlugQuery, GetConfigurationBySlugQueryVariables>(GetConfigurationBySlugDocument, options);
+      }
+export function useGetConfigurationBySlugLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetConfigurationBySlugQuery, GetConfigurationBySlugQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetConfigurationBySlugQuery, GetConfigurationBySlugQueryVariables>(GetConfigurationBySlugDocument, options);
+        }
+// @ts-ignore
+export function useGetConfigurationBySlugSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetConfigurationBySlugQuery, GetConfigurationBySlugQueryVariables>): Apollo.UseSuspenseQueryResult<GetConfigurationBySlugQuery, GetConfigurationBySlugQueryVariables>;
+export function useGetConfigurationBySlugSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetConfigurationBySlugQuery, GetConfigurationBySlugQueryVariables>): Apollo.UseSuspenseQueryResult<GetConfigurationBySlugQuery | undefined, GetConfigurationBySlugQueryVariables>;
+export function useGetConfigurationBySlugSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetConfigurationBySlugQuery, GetConfigurationBySlugQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetConfigurationBySlugQuery, GetConfigurationBySlugQueryVariables>(GetConfigurationBySlugDocument, options);
+        }
+export type GetConfigurationBySlugQueryHookResult = ReturnType<typeof useGetConfigurationBySlugQuery>;
+export type GetConfigurationBySlugLazyQueryHookResult = ReturnType<typeof useGetConfigurationBySlugLazyQuery>;
+export type GetConfigurationBySlugSuspenseQueryHookResult = ReturnType<typeof useGetConfigurationBySlugSuspenseQuery>;
+export type GetConfigurationBySlugQueryResult = Apollo.QueryResult<GetConfigurationBySlugQuery, GetConfigurationBySlugQueryVariables>;
+export const GetModelCategoryOptionsDocument = gql`
+    query GetModelCategoryOptions {
+  modelcatalog_model_category(order_by: {label: asc}) {
+    id
+    label
+  }
+}
+    `;
+
+/**
+ * __useGetModelCategoryOptionsQuery__
+ *
+ * To run a query within a React component, call `useGetModelCategoryOptionsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetModelCategoryOptionsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetModelCategoryOptionsQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useGetModelCategoryOptionsQuery(baseOptions?: Apollo.QueryHookOptions<GetModelCategoryOptionsQuery, GetModelCategoryOptionsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetModelCategoryOptionsQuery, GetModelCategoryOptionsQueryVariables>(GetModelCategoryOptionsDocument, options);
+      }
+export function useGetModelCategoryOptionsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetModelCategoryOptionsQuery, GetModelCategoryOptionsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetModelCategoryOptionsQuery, GetModelCategoryOptionsQueryVariables>(GetModelCategoryOptionsDocument, options);
+        }
+// @ts-ignore
+export function useGetModelCategoryOptionsSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetModelCategoryOptionsQuery, GetModelCategoryOptionsQueryVariables>): Apollo.UseSuspenseQueryResult<GetModelCategoryOptionsQuery, GetModelCategoryOptionsQueryVariables>;
+export function useGetModelCategoryOptionsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetModelCategoryOptionsQuery, GetModelCategoryOptionsQueryVariables>): Apollo.UseSuspenseQueryResult<GetModelCategoryOptionsQuery | undefined, GetModelCategoryOptionsQueryVariables>;
+export function useGetModelCategoryOptionsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetModelCategoryOptionsQuery, GetModelCategoryOptionsQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetModelCategoryOptionsQuery, GetModelCategoryOptionsQueryVariables>(GetModelCategoryOptionsDocument, options);
+        }
+export type GetModelCategoryOptionsQueryHookResult = ReturnType<typeof useGetModelCategoryOptionsQuery>;
+export type GetModelCategoryOptionsLazyQueryHookResult = ReturnType<typeof useGetModelCategoryOptionsLazyQuery>;
+export type GetModelCategoryOptionsSuspenseQueryHookResult = ReturnType<typeof useGetModelCategoryOptionsSuspenseQuery>;
+export type GetModelCategoryOptionsQueryResult = Apollo.QueryResult<GetModelCategoryOptionsQuery, GetModelCategoryOptionsQueryVariables>;
+export const GetOutputVariableOptionsDocument = gql`
+    query GetOutputVariableOptions {
+  modelcatalog_configuration_output {
+    output {
+      presentations {
+        presentation {
+          standard_variable {
+            id
+            label
+          }
+        }
+      }
+    }
+  }
+}
+    `;
+
+/**
+ * __useGetOutputVariableOptionsQuery__
+ *
+ * To run a query within a React component, call `useGetOutputVariableOptionsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetOutputVariableOptionsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetOutputVariableOptionsQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useGetOutputVariableOptionsQuery(baseOptions?: Apollo.QueryHookOptions<GetOutputVariableOptionsQuery, GetOutputVariableOptionsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetOutputVariableOptionsQuery, GetOutputVariableOptionsQueryVariables>(GetOutputVariableOptionsDocument, options);
+      }
+export function useGetOutputVariableOptionsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetOutputVariableOptionsQuery, GetOutputVariableOptionsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetOutputVariableOptionsQuery, GetOutputVariableOptionsQueryVariables>(GetOutputVariableOptionsDocument, options);
+        }
+// @ts-ignore
+export function useGetOutputVariableOptionsSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetOutputVariableOptionsQuery, GetOutputVariableOptionsQueryVariables>): Apollo.UseSuspenseQueryResult<GetOutputVariableOptionsQuery, GetOutputVariableOptionsQueryVariables>;
+export function useGetOutputVariableOptionsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetOutputVariableOptionsQuery, GetOutputVariableOptionsQueryVariables>): Apollo.UseSuspenseQueryResult<GetOutputVariableOptionsQuery | undefined, GetOutputVariableOptionsQueryVariables>;
+export function useGetOutputVariableOptionsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetOutputVariableOptionsQuery, GetOutputVariableOptionsQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetOutputVariableOptionsQuery, GetOutputVariableOptionsQueryVariables>(GetOutputVariableOptionsDocument, options);
+        }
+export type GetOutputVariableOptionsQueryHookResult = ReturnType<typeof useGetOutputVariableOptionsQuery>;
+export type GetOutputVariableOptionsLazyQueryHookResult = ReturnType<typeof useGetOutputVariableOptionsLazyQuery>;
+export type GetOutputVariableOptionsSuspenseQueryHookResult = ReturnType<typeof useGetOutputVariableOptionsSuspenseQuery>;
+export type GetOutputVariableOptionsQueryResult = Apollo.QueryResult<GetOutputVariableOptionsQuery, GetOutputVariableOptionsQueryVariables>;
 export const PrefetchReferenceDataDocument = gql`
     query PrefetchReferenceData {
   modelcatalog_standard_variable(order_by: {label: asc}) {

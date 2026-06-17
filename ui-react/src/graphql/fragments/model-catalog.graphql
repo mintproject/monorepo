@@ -61,6 +61,22 @@ fragment ConfigurationFields on modelcatalog_configuration {
   description
   software_version_id
   model_configuration_id
+  software_version {
+    version_id
+    software {
+      id
+      label
+    }
+  }
+  time_intervals {
+    time_interval {
+      id
+      label
+      description
+      interval_unit
+      interval_value
+    }
+  }
   inputs {
     ...InputFields
   }

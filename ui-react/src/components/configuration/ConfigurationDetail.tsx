@@ -4,7 +4,8 @@
  * Tabular display of inputs, outputs, parameters with an Edit button
  * that transitions to ConfigurationForm.
  */
-import { Pencil } from 'lucide-react';
+import { ArrowUpRight, Pencil } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 import { useGetConfigurationQuery } from '@/graphql/generated/graphql';
 import { Badge } from '@/components/ui/badge';
@@ -45,15 +46,34 @@ export function ConfigurationDetail({ configurationId, onEdit }: ConfigurationDe
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h2 className="text-base font-semibold">{config.label}</h2>
+          <div className="flex flex-wrap items-center gap-2">
+            {config.software_version?.software?.label && (
+              <span className="text-xs text-muted-foreground">
+                {config.software_version.software.label}
+              </span>
+            )}
+            {config.software_version?.version_id && (
+              <Badge variant="outline" className="text-[10px]">
+                {config.software_version.version_id}
+              </Badge>
+            )}
+          </div>
+          <h2 className="mt-0.5 text-base font-semibold">{config.label}</h2>
           {config.description && (
             <p className="mt-1 text-sm text-muted-foreground">{config.description}</p>
           )}
         </div>
-        {onEdit && (
+        {onEdit ? (
           <Button variant="outline" size="sm" onClick={onEdit} className="shrink-0 gap-1.5">
             <Pencil className="h-3.5 w-3.5" />
             Edit
+          </Button>
+        ) : (
+          <Button asChild variant="outline" size="sm" className="shrink-0 gap-1.5">
+            <Link to={`/models/configure/${encodeURIComponent(config.id)}`}>
+              Configure
+              <ArrowUpRight className="h-3.5 w-3.5" />
+            </Link>
           </Button>
         )}
       </div>
@@ -86,6 +106,26 @@ export function ConfigurationDetail({ configurationId, onEdit }: ConfigurationDe
                 {r.region.label ?? r.region.id}
               </Badge>
             ))}
+          </div>
+        </section>
+      )}
+
+      {/* Time Period */}
+      {config.time_intervals.length > 0 && (
+        <section>
+          <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Time Period
+          </h3>
+          <div className="flex flex-wrap gap-1.5">
+            {config.time_intervals.map((ti) => {
+              const t = ti.time_interval;
+              const value = [t.interval_value, t.interval_unit].filter(Boolean).join(' ');
+              return (
+                <Badge key={t.id} variant="outline">
+                  {t.label ?? (value || t.id)}
+                </Badge>
+              );
+            })}
           </div>
         </section>
       )}

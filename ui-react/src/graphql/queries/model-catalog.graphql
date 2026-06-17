@@ -33,6 +33,67 @@ query GetConfiguration($id: String!) {
   }
 }
 
+# Server-side faceted search over configurations + setups (flat result set,
+# grouped into Model -> Configuration -> Setup on the client). The $where is
+# assembled in TypeScript from the active text/facet filters.
+query SearchModelConfigurations($where: modelcatalog_configuration_bool_exp!) {
+  modelcatalog_configuration(where: $where, order_by: { label: asc }, limit: 500) {
+    id
+    label
+    model_configuration_id
+    software_version {
+      version_id
+      software {
+        id
+        label
+      }
+    }
+    parent_configuration {
+      id
+      label
+      software_version {
+        version_id
+        software {
+          id
+          label
+        }
+      }
+    }
+  }
+}
+
+# Resolve a deep-link slug (trailing URI segment) back to a full configuration id.
+query GetConfigurationBySlug($pattern: String!) {
+  modelcatalog_configuration(where: { id: { _ilike: $pattern } }, order_by: { id: asc }, limit: 1) {
+    id
+  }
+}
+
+# Facet option sources. Counts are intentionally omitted: the runtime anonymous
+# Hasura role exposes no _aggregate fields. Output-variable options are deduped
+# client-side from the configuration_output -> standard_variable path.
+query GetModelCategoryOptions {
+  modelcatalog_model_category(order_by: { label: asc }) {
+    id
+    label
+  }
+}
+
+query GetOutputVariableOptions {
+  modelcatalog_configuration_output {
+    output {
+      presentations {
+        presentation {
+          standard_variable {
+            id
+            label
+          }
+        }
+      }
+    }
+  }
+}
+
 query PrefetchReferenceData {
   modelcatalog_standard_variable(order_by: { label: asc }) {
     id
