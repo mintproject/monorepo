@@ -13,6 +13,7 @@ import type {
   AddConfigurationInputMutationVariables,
   AddConfigurationOutputMutationVariables,
   AddConfigurationParameterMutationVariables,
+  InsertVariablePresentationMutationVariables,
   Modelcatalog_Dataset_Specification_Presentation_Insert_Input,
 } from '../graphql/generated/graphql';
 
@@ -108,6 +109,31 @@ function buildPresentationInserts(
     }));
 }
 
+/**
+ * Build variables to insert a NEW VariablePresentation onto an existing dataset
+ * specification (input/output) in edit mode.
+ *
+ * The update path can only UPDATE a presentation that already exists. When a row
+ * that had no presentation gains a standard variable/unit, there is nothing to
+ * update — without this insert the selection would be silently dropped. Returns
+ * null when no insert is needed: the presentation already exists (update handles
+ * it) or the row is empty (no standard variable and no unit).
+ */
+export function buildPresentationInsertForExistingDs(
+  datasetSpecificationId: string,
+  row: InputRow,
+): InsertVariablePresentationMutationVariables | null {
+  const p = row.presentations[0];
+  if (!p || p.existingPresentationId || isEmptyPresentation(p)) return null;
+  return {
+    datasetSpecificationId,
+    presentationId: generateMintUri(),
+    label: resolvePresentationLabel(row, p),
+    hasStandardVariable: p.standardVariable?.id ?? null,
+    usesUnit: p.unit?.id ?? null,
+  };
+}
+
 /** One row in the parameters field array. */
 export interface ParameterRow {
   /** Existing parameter id — present in edit mode. */
@@ -183,6 +209,19 @@ export function buildAddOutputVariables(
 }
 
 /**
+ * Serialize a string array into a Postgres array literal (e.g. `{"a","b"}`).
+ *
+ * Hasura's `_text` scalar rejects JSON arrays when passed as a GraphQL variable
+ * ("A string is expected for type: _text"); it expects the Postgres literal as a
+ * string. Returns null for empty/missing input so the column is left unset.
+ */
+export function toPgTextArray(values?: string[] | null): string | null {
+  if (!values || values.length === 0) return null;
+  const escaped = values.map((v) => `"${v.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`);
+  return `{${escaped.join(',')}}`;
+}
+
+/**
  * Build mutation variables for adding a new parameter to a configuration.
  */
 export function buildAddParameterVariables(
@@ -201,7 +240,7 @@ export function buildAddParameterVariables(
     hasMinimumAcceptedValue: row.hasMinimumAcceptedValue ?? null,
     hasMaximumAcceptedValue: row.hasMaximumAcceptedValue ?? null,
     hasFixedValue: row.hasFixedValue ?? null,
-    hasAcceptedValues: row.hasAcceptedValues ?? null,
+    hasAcceptedValues: toPgTextArray(row.hasAcceptedValues),
     position: row.position,
     parameterType: row.parameterType ?? null,
   };
@@ -254,6 +293,7 @@ export function diffInputRows(
       orig.label !== r.label ||
       orig.description !== r.description ||
       orig.hasFormat !== r.hasFormat ||
+      orig.hasDimensionality !== r.hasDimensionality ||
       orig.isOptional !== r.isOptional ||
       op?.standardVariable?.id !== mp?.standardVariable?.id ||
       op?.unit?.id !== mp?.unit?.id
@@ -296,7 +336,9 @@ export function diffParameterRows(
       orig.hasDefaultValue !== r.hasDefaultValue ||
       orig.hasMinimumAcceptedValue !== r.hasMinimumAcceptedValue ||
       orig.hasMaximumAcceptedValue !== r.hasMaximumAcceptedValue ||
-      orig.hasFixedValue !== r.hasFixedValue
+      orig.hasFixedValue !== r.hasFixedValue ||
+      orig.parameterType !== r.parameterType ||
+      JSON.stringify(orig.hasAcceptedValues ?? []) !== JSON.stringify(r.hasAcceptedValues ?? [])
     );
   });
 

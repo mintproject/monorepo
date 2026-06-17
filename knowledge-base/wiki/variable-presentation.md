@@ -2,9 +2,9 @@
 
 **Summary**: How a specific variable appears inside a dataset or model file — its label, units, and representation — linked to a standard SVO variable so differently-named variables can be matched.
 
-**Sources**: garijo-etal-escience19.pdf, MINT-tiis.pdf
+**Sources**: garijo-etal-escience19.pdf, MINT-tiis.pdf, SD ontology v1.9.0 (w3id.org/okn/o/sd)
 
-**Last updated**: 2026-06-06
+**Last updated**: 2026-06-13
 
 ---
 
@@ -21,6 +21,32 @@ The key link is `sd:hasStandardVariable`, which connects the presentation to a u
 - **Transformation** — presentations carry the units that drive automated [[data-transformation]] and unit conversion via [[qudt|QUDT]].
 
 A dataset resource also has a **layout** describing the physical placement of variables (e.g., which CSV row/column), distinct from the presentation's semantic metadata (source: MINT-tiis.pdf).
+
+## Authoritative ontology definitions (SD v1.9.0)
+
+Verified against the published SD ontology TTL at `w3id.org/okn/o/sd` (release 1.9.0). `sd:VariablePresentation` is `rdfs:subClassOf sd:Variable` (source: SD ontology v1.9.0):
+
+> "Concept used to represent an instantiation of a variable in an input/output dataset. For example, a model A may use an input file with temperature expressed in Farenheit (variablePresentation1), while a model B may produce an output with temperature in Celsius (variablePresentation2). Both variable presentations refer to the concept of temperature."
+
+Two naming-layer datatype properties (domain `VariablePresentation`, range `xsd:string`) — both sit *below* the precise SVO standard variable in specificity (source: SD ontology v1.9.0):
+
+- **`sd:hasShortName`** — "A short name (e.g., temperature) capturing the high-level concept of the variable."
+- **`sd:hasLongName`** — "Properties that relate the variable representation to its long name. The long name is useful for context (e.g., precipitation is less ambiguous than P) but not as precise as the standard name."
+
+> Caution: `hasShortName` is the *concept-level* label (e.g. `temperature`), not a file column code/symbol. `hasLongName` is a more descriptive/disambiguating label, not merely a "human-readable" variant.
+
+## Realization in the `modelcatalog_*` schema
+
+The migrated `modelcatalog_variable_presentation` table is a **reduced subset** of `sd:VariablePresentation`. ETL maps RDF predicates to columns (source: `etl/extract.py`):
+
+| Column (`TEXT`) | RDF predicate |
+|---|---|
+| `label` | `rdfs:label` |
+| `description` | `sd:description` |
+| `has_long_name` | `sd:hasLongName` |
+| `has_short_name` | `sd:hasShortName` |
+
+Foreign keys live on this table: `standard_variable_id` → `modelcatalog_standard_variable` (`sd:hasStandardVariable`), `unit_id` → `modelcatalog_unit` (`sd:usesUnit`). The model-catalog-api exposes these camelCased (`hasShortName`, `hasLongName`, `hasStandardVariable`, `usesUnit`). The ontology's missing-value handling, collection metadata, and layout are **not** materialized as columns.
 
 ## Related pages
 

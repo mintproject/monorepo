@@ -19,13 +19,13 @@
 - [[okg-soft]] -- open knowledge graph of machine-readable scientific software metadata
 - [[software-description-ontology]] -- the sd/sdm ontology (Software > Version > Configuration > Setup)
 - [[model-catalog]] -- catalog of model metadata (basis of the `modelcatalog_*` schema)
-- [[variable-presentation]] -- how a variable appears in a dataset/file, linked to an SVO standard variable
+- [[variable-presentation]] -- how a variable appears in a dataset/file, linked to an SVO standard variable; includes authoritative SD v1.9.0 property definitions and modelcatalog_variable_presentation column mapping
 - [[qudt]] -- Quantities, Units, Dimensions, Types ontology (+ CCUT) for unit conversion
 - [[linked-data]] -- Web of Data principles followed by OKG-Soft
 
 ### Scientific Variables Ontology (SVO)
 - [[scientific-variables-ontology]] -- the cross-domain, machine-actionable ontology for describing scientific variables
-- [[scientific-variable]] -- anatomy of a variable; the Phenomenon-Property-Variable triad
+- [[scientific-variable]] -- anatomy of a variable; the Phenomenon-Property-Variable triad; units-vs-dimensions scope (standard variable carries a dimension, not actual units)
 - [[svo-automated-population]] -- automated ontology generation from text and concept alignment
 - [[csdms-standard-names]] -- the naming conventions SVO grew out of
 - [[property-names]] -- quantitative vs. qualitative properties; the Property Name Rule
