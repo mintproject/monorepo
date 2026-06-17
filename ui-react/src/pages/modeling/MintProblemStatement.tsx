@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
   Folder,
@@ -10,9 +10,12 @@ import {
   Pencil,
   Trash2,
   ChevronLeft,
+  ArrowRight,
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import {
   Dialog,
   DialogContent,
@@ -36,6 +39,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/use-toast';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/lib/auth/useAuth';
+import { provisionTask } from '@/lib/modeling/provisionTask';
+import { EmptyState } from '@/components/common/EmptyState';
 
 import {
   useGetProblemStatementQuery,
@@ -104,6 +109,26 @@ function fmtDateTime(iso?: string | null): string {
   }
 }
 
+/** A sub-task (thread) has a model when at least one thread_model is selected. */
+function threadHasModel(thread: Pick<Thread, 'thread_models'>): boolean {
+  return (thread.thread_models?.length ?? 0) > 0;
+}
+
+/** Small emerald/amber dot signalling whether a sub-task has a model selected. */
+function StatusDot({ active, title }: { active: boolean; title: string }) {
+  return (
+    <span
+      role="status"
+      aria-label={title}
+      title={title}
+      className={cn(
+        'inline-block h-2 w-2 shrink-0 rounded-full',
+        active ? 'bg-emerald-500' : 'bg-amber-400',
+      )}
+    />
+  );
+}
+
 /**
  * MintProblemStatement — master-detail view for a single problem statement.
  *
@@ -168,6 +193,8 @@ export function MintProblemStatement() {
     return ta < tb ? 1 : -1;
   });
 
+  const selectedThread = threads.find((t) => t.id === selectedThreadId) ?? null;
+
   // ── task form helpers ─────────────────────────────────────────────────────
   function openAddTaskDialog() {
     setTaskForm({
@@ -224,57 +251,23 @@ export function MintProblemStatement() {
         }
         toast({ title: 'Task updated' });
       } else {
-        const newId = generateModelingId('task');
-        await insertTask({
-          variables: {
-            id: newId,
-            name: taskForm.name.trim(),
+        // Create the task + its default thread (+ CREATE provenance for each)
+        // via the shared bootstrap used by the auto-provision path.
+        const { taskId, threadId } = await provisionTask(
+          { insertTask, insertTaskProvenance, insertThread, insertThreadProvenance },
+          {
             problemStatementId: problemStatementId!,
+            taskName: taskForm.name.trim(),
             startDate: taskForm.startDate,
             endDate: taskForm.endDate,
             regionId: taskForm.regionId || null,
+            userId: user?.username,
           },
-        });
-        if (user?.username) {
-          await insertTaskProvenance({
-            variables: {
-              taskId: newId,
-              event: 'CREATE',
-              userid: user.username,
-            },
-          });
-        }
+        );
         toast({ title: 'Task created' });
-
-        // Automatically create a default thread for the new task
-        const defaultThreadId = generateModelingId('thread');
-        await insertThread({
-          variables: {
-            id: defaultThreadId,
-            name: null,
-            taskId: newId,
-            startDate: taskForm.startDate,
-            endDate: taskForm.endDate,
-            regionId: taskForm.regionId || null,
-          },
-        });
-        // A thread is only visible to its creator once it has a CREATE
-        // provenance row (thread SELECT permission filters on events/permissions);
-        // without this the new sub-task returns null from thread_by_pk.
-        if (user?.username) {
-          await insertThreadProvenance({
-            variables: {
-              threadId: defaultThreadId,
-              event: 'CREATE',
-              userid: user.username,
-              notes: null,
-            },
-          });
-        }
-
-        setSelectedTaskId(newId);
-        setSelectedThreadId(defaultThreadId);
-        navigate(`/modeling/thread/${defaultThreadId}`);
+        setSelectedTaskId(taskId);
+        setSelectedThreadId(threadId);
+        navigate(`/modeling/thread/${threadId}`);
       }
       setTaskDialogOpen(false);
       setTaskForm(EMPTY_TASK_FORM);
@@ -416,7 +409,12 @@ export function MintProblemStatement() {
   }
 
   if (!ps) {
-    return <p className="text-sm text-muted-foreground">Problem statement not found.</p>;
+    return (
+      <EmptyState
+        title="Problem statement not found"
+        description="It may have been deleted, or you may not have access to it."
+      />
+    );
   }
 
   return (
@@ -559,9 +557,17 @@ export function MintProblemStatement() {
                                   ? 'bg-accent/60 font-medium text-accent-foreground'
                                   : 'hover:bg-muted/40',
                               )}
-                              onClick={() => {
-                                setSelectedThreadId(thread.id);
-                                navigate(`/modeling/thread/${thread.id}`);
+                              tabIndex={0}
+                              onClick={() => setSelectedThreadId(thread.id)}
+                              onDoubleClick={() => navigate(`/modeling/thread/${thread.id}`)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  navigate(`/modeling/thread/${thread.id}`);
+                                } else if (e.key === ' ') {
+                                  e.preventDefault();
+                                  setSelectedThreadId(thread.id);
+                                }
                               }}
                             >
                               <span className="mt-0.5 shrink-0 text-muted-foreground">
@@ -572,7 +578,15 @@ export function MintProblemStatement() {
                                 )}
                               </span>
                               <div className="min-w-0 flex-1">
-                                <p className="truncate text-sm">{pname}</p>
+                                <p className="flex items-center gap-1.5 truncate text-sm">
+                                  <StatusDot
+                                    active={threadHasModel(thread)}
+                                    title={
+                                      threadHasModel(thread) ? 'Model selected' : 'No model yet'
+                                    }
+                                  />
+                                  {pname}
+                                </p>
                                 {threadLastEvent && (
                                   <p className="text-xs text-muted-foreground/70">
                                     {threadLastEvent.userid} ·{' '}
@@ -658,20 +672,16 @@ export function MintProblemStatement() {
           </div>
         </div>
 
-        {/* Right panel — empty state or thread detail (via child route) */}
-        <div className="flex flex-1 items-center justify-center overflow-auto p-6 text-muted-foreground">
-          {selectedTask ? (
-            <div className="w-full text-sm">
-              <p className="font-medium text-foreground">{selectedTask.name}</p>
-              <p className="mt-1">
-                Select a sub-task from the left panel to view its modeling thread.
-              </p>
-            </div>
+        {/* Right panel — adaptive: thread summary (A) when a sub-task is
+            selected, otherwise a problem-statement overview (C). */}
+        <div className="flex-1 overflow-auto p-6">
+          {selectedThread ? (
+            <ThreadSummaryPanel
+              thread={selectedThread}
+              onOpen={() => navigate(`/modeling/thread/${selectedThread.id}`)}
+            />
           ) : (
-            <div className="flex flex-col items-center gap-2">
-              <Folder className="h-10 w-10 opacity-30" />
-              <p className="text-sm">Select a task from the left panel.</p>
-            </div>
+            <ProblemOverviewPanel tasks={tasks} />
           )}
         </div>
       </div>
@@ -756,6 +766,159 @@ export function MintProblemStatement() {
   );
 }
 
+// ─── Right panel: thread summary (A) ──────────────────────────────────────────
+
+function SummaryRow({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="grid grid-cols-[140px_1fr] items-start gap-2">
+      <span className="text-muted-foreground">{label}</span>
+      <span className="text-foreground">{children}</span>
+    </div>
+  );
+}
+
+function ThreadSummaryPanel({ thread, onOpen }: { thread: Thread; onOpen: () => void }) {
+  const configs = (thread.thread_models ?? [])
+    .map((m) => m.modelcatalog_configuration?.label)
+    .filter((l): l is string => !!l);
+  const lastEvent = getLatestEvent(thread.events);
+  const hasModel = threadHasModel(thread);
+  const title = thread.name ?? 'Default sub-task';
+
+  return (
+    <div className="mx-auto w-full max-w-2xl space-y-4">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            <StatusDot active={hasModel} title={hasModel ? 'Model selected' : 'No model yet'} />
+            <h2 className="truncate text-lg font-semibold text-foreground">{title}</h2>
+          </div>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            {fmtDate(thread.start_date)} – {fmtDate(thread.end_date)}
+          </p>
+        </div>
+        <Button onClick={onOpen} className="shrink-0 gap-1.5">
+          Open thread
+          <ArrowRight className="h-4 w-4" />
+        </Button>
+      </div>
+
+      <Card>
+        <CardContent className="grid gap-3 p-4 text-sm">
+          <SummaryRow label="Model">
+            {configs.length > 0 ? (
+              <div className="flex flex-wrap gap-1.5">
+                {configs.map((c, i) => (
+                  <Badge key={i} variant="secondary">
+                    {c}
+                  </Badge>
+                ))}
+              </div>
+            ) : (
+              <span className="text-muted-foreground">No model selected yet</span>
+            )}
+          </SummaryRow>
+          <SummaryRow label="Response variable">
+            {thread.response_variable?.name ?? <span className="text-muted-foreground">—</span>}
+          </SummaryRow>
+          <SummaryRow label="Driving variable">
+            {thread.driving_variable?.name ?? <span className="text-muted-foreground">—</span>}
+          </SummaryRow>
+          <SummaryRow label="Last activity">
+            {lastEvent ? (
+              `${lastEvent.userid} · ${fmtDateTime(lastEvent.timestamp)}`
+            ) : (
+              <span className="text-muted-foreground">—</span>
+            )}
+          </SummaryRow>
+        </CardContent>
+      </Card>
+
+      <p className="text-xs text-muted-foreground">
+        Dataset and run status are shown inside the thread — open it to view or edit them.
+      </p>
+    </div>
+  );
+}
+
+// ─── Right panel: problem overview (C) ────────────────────────────────────────
+
+function StatCard({ label, value }: { label: string; value: ReactNode }) {
+  return (
+    <Card>
+      <CardContent className="p-4">
+        <p className="text-2xl font-semibold text-foreground">{value}</p>
+        <p className="text-xs text-muted-foreground">{label}</p>
+      </CardContent>
+    </Card>
+  );
+}
+
+function ProblemOverviewPanel({ tasks }: { tasks: TaskWithThreads[] }) {
+  const taskCount = tasks.length;
+  const allThreads = tasks.flatMap((t) => t.threads ?? []);
+  const subtaskCount = allThreads.length;
+  const withModel = allThreads.filter((t) => threadHasModel(t)).length;
+  const empty = subtaskCount - withModel;
+
+  type Activity = {
+    kind: string;
+    name: string;
+    event: { event: string; timestamp: string; userid: string } | null;
+  };
+  const activity = (
+    [
+      ...tasks.map((t) => ({ kind: 'Task', name: t.name, event: getLatestEvent(t.events) })),
+      ...allThreads.map((t) => ({
+        kind: 'Sub-task',
+        name: t.name ?? 'Default sub-task',
+        event: getLatestEvent(t.events),
+      })),
+    ] as Activity[]
+  )
+    .filter((a): a is Activity & { event: NonNullable<Activity['event']> } => a.event !== null)
+    .sort((a, b) => (a.event.timestamp < b.event.timestamp ? 1 : -1))
+    .slice(0, 6);
+
+  return (
+    <div className="mx-auto w-full max-w-2xl space-y-4">
+      <div className="grid grid-cols-3 gap-3">
+        <StatCard label="Tasks" value={taskCount} />
+        <StatCard label="Sub-tasks" value={subtaskCount} />
+        <StatCard label={`with a model · ${empty} empty`} value={withModel} />
+      </div>
+
+      <Card>
+        <CardHeader className="p-4 pb-2">
+          <CardTitle className="text-sm font-semibold">Recent activity</CardTitle>
+        </CardHeader>
+        <CardContent className="p-4 pt-0">
+          {activity.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No activity yet.</p>
+          ) : (
+            <ul className="space-y-2 text-sm">
+              {activity.map((a, i) => (
+                <li key={i} className="flex items-start justify-between gap-3">
+                  <span className="min-w-0 truncate">
+                    <span className="text-muted-foreground">{a.kind}:</span> {a.name}
+                  </span>
+                  <span className="shrink-0 text-xs text-muted-foreground">
+                    {a.event.event} · {fmtDateTime(a.event.timestamp)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </CardContent>
+      </Card>
+
+      <p className="text-xs text-muted-foreground">
+        Select a sub-task to see its model summary, or double-click to open it.
+      </p>
+    </div>
+  );
+}
+
 // ─── Task dialog ──────────────────────────────────────────────────────────────
 
 interface TaskDialogProps {
@@ -786,9 +949,15 @@ function TaskDialog({ open, isEdit, form, saving, onChange, onSubmit, onCancel }
               required
             />
           </div>
-          <div className="grid gap-1.5">
-            <Label>Time period</Label>
-            <div className="flex items-center gap-2">
+          <details className="rounded-md border px-3 py-2">
+            <summary className="cursor-pointer text-sm text-muted-foreground">
+              Adjust time period (optional)
+            </summary>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Inherited from the problem statement. Change only if this task covers a different
+              period.
+            </p>
+            <div className="mt-2 flex items-center gap-2">
               <Input
                 type="date"
                 id="task-start"
@@ -807,7 +976,7 @@ function TaskDialog({ open, isEdit, form, saving, onChange, onSubmit, onCancel }
                 className="flex-1"
               />
             </div>
-          </div>
+          </details>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onCancel} disabled={saving}>
@@ -865,9 +1034,14 @@ function ThreadDialog({
               placeholder="Leave blank for default sub-task"
             />
           </div>
-          <div className="grid gap-1.5">
-            <Label>Time period</Label>
-            <div className="flex items-center gap-2">
+          <details className="rounded-md border px-3 py-2">
+            <summary className="cursor-pointer text-sm text-muted-foreground">
+              Adjust time period (optional)
+            </summary>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Inherited from the task. Change only if this sub-task covers a different period.
+            </p>
+            <div className="mt-2 flex items-center gap-2">
               <Input
                 type="date"
                 id="thread-start"
@@ -886,7 +1060,7 @@ function ThreadDialog({
                 className="flex-1"
               />
             </div>
-          </div>
+          </details>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onCancel} disabled={saving}>

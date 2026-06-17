@@ -23,6 +23,21 @@ if (!Element.prototype.scrollIntoView) {
   Element.prototype.scrollIntoView = function () {};
 }
 
+// ---------------------------------------------------------------------------
+// Pointer-capture polyfills — jsdom does not implement these, but Radix UI
+// primitives (e.g. the Select trigger) call them during pointer interactions.
+// Provide no-op stubs so userEvent can drive Radix components in tests.
+// ---------------------------------------------------------------------------
+if (!Element.prototype.hasPointerCapture) {
+  Element.prototype.hasPointerCapture = () => false;
+}
+if (!Element.prototype.setPointerCapture) {
+  Element.prototype.setPointerCapture = () => {};
+}
+if (!Element.prototype.releasePointerCapture) {
+  Element.prototype.releasePointerCapture = () => {};
+}
+
 import { server } from './msw/server';
 
 // ---------------------------------------------------------------------------
