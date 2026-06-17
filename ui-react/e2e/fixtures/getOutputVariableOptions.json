@@ -1,0 +1,25 @@
+{
+  "data": {
+    "modelcatalog_configuration_output": [
+      {
+        "__typename": "modelcatalog_configuration_output",
+        "output": {
+          "__typename": "modelcatalog_dataset_specification",
+          "presentations": [
+            {
+              "__typename": "modelcatalog_dataset_specification_has_presentation",
+              "presentation": {
+                "__typename": "modelcatalog_variable_presentation",
+                "standard_variable": {
+                  "__typename": "modelcatalog_standard_variable",
+                  "id": "https://w3id.org/okn/i/mint/sv-streamflow",
+                  "label": "Streamflow"
+                }
+              }
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

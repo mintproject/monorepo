@@ -1,0 +1,129 @@
+{
+  "data": {
+    "modelcatalog_configuration_by_pk": {
+      "__typename": "modelcatalog_configuration",
+      "id": "https://w3id.org/okn/i/mint/cfg-modflow",
+      "label": "MODFLOW Barton Springs",
+      "description": "Groundwater flow model calibrated for the Barton Springs segment.",
+      "software_version_id": "https://w3id.org/okn/i/mint/sv-modflow",
+      "model_configuration_id": null,
+      "software_version": {
+        "__typename": "modelcatalog_software_version",
+        "id": "https://w3id.org/okn/i/mint/sv-modflow",
+        "version_id": "2.0",
+        "software": {
+          "__typename": "modelcatalog_software",
+          "id": "https://w3id.org/okn/i/mint/sw-modflow",
+          "label": "MODFLOW"
+        }
+      },
+      "time_intervals": [],
+      "inputs": [
+        {
+          "__typename": "modelcatalog_configuration_input",
+          "configuration_id": "https://w3id.org/okn/i/mint/cfg-modflow",
+          "input_id": "https://w3id.org/okn/i/mint/ds-recharge",
+          "is_optional": false,
+          "input": {
+            "__typename": "modelcatalog_dataset_specification",
+            "id": "https://w3id.org/okn/i/mint/ds-recharge",
+            "label": "Recharge raster",
+            "description": "Spatial recharge input",
+            "has_format": "GeoTIFF",
+            "has_dimensionality": 2,
+            "position": 1,
+            "presentations": [
+              {
+                "__typename": "modelcatalog_dataset_specification_has_presentation",
+                "dataset_specification_id": "https://w3id.org/okn/i/mint/ds-recharge",
+                "presentation_id": "https://w3id.org/okn/i/mint/vp-recharge",
+                "presentation": {
+                  "__typename": "modelcatalog_variable_presentation",
+                  "id": "https://w3id.org/okn/i/mint/vp-recharge",
+                  "label": "Recharge",
+                  "has_long_name": "Groundwater recharge",
+                  "has_short_name": "recharge",
+                  "standard_variable": {
+                    "__typename": "modelcatalog_standard_variable",
+                    "id": "https://w3id.org/okn/i/mint/sv-recharge",
+                    "label": "Recharge",
+                    "description": "Groundwater recharge flux"
+                  },
+                  "unit": {
+                    "__typename": "modelcatalog_unit",
+                    "id": "https://w3id.org/okn/i/mint/unit-mm-day",
+                    "label": "mm/day"
+                  }
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "__typename": "modelcatalog_configuration_output",
+          "configuration_id": "https://w3id.org/okn/i/mint/cfg-modflow",
+          "output_id": "https://w3id.org/okn/i/mint/ds-streamflow",
+          "output": {
+            "__typename": "modelcatalog_dataset_specification",
+            "id": "https://w3id.org/okn/i/mint/ds-streamflow",
+            "label": "Streamflow timeseries",
+            "description": "Simulated streamflow",
+            "has_format": "CSV",
+            "has_dimensionality": 1,
+            "position": 1,
+            "presentations": [
+              {
+                "__typename": "modelcatalog_dataset_specification_has_presentation",
+                "dataset_specification_id": "https://w3id.org/okn/i/mint/ds-streamflow",
+                "presentation_id": "https://w3id.org/okn/i/mint/vp-streamflow",
+                "presentation": {
+                  "__typename": "modelcatalog_variable_presentation",
+                  "id": "https://w3id.org/okn/i/mint/vp-streamflow",
+                  "label": "Streamflow",
+                  "has_long_name": "River discharge",
+                  "has_short_name": "streamflow",
+                  "standard_variable": {
+                    "__typename": "modelcatalog_standard_variable",
+                    "id": "https://w3id.org/okn/i/mint/sv-streamflow",
+                    "label": "Streamflow",
+                    "description": "Volumetric river discharge"
+                  },
+                  "unit": {
+                    "__typename": "modelcatalog_unit",
+                    "id": "https://w3id.org/okn/i/mint/unit-m3-s",
+                    "label": "m^3/s"
+                  }
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "parameters": [
+        {
+          "__typename": "modelcatalog_configuration_has_parameter",
+          "configuration_id": "https://w3id.org/okn/i/mint/cfg-modflow",
+          "parameter_id": "https://w3id.org/okn/i/mint/p-hydraulic-conductivity",
+          "parameter": {
+            "__typename": "modelcatalog_parameter",
+            "id": "https://w3id.org/okn/i/mint/p-hydraulic-conductivity",
+            "label": "Hydraulic conductivity",
+            "description": "Aquifer hydraulic conductivity",
+            "has_data_type": "float",
+            "has_default_value": "10",
+            "has_minimum_accepted_value": "0",
+            "has_maximum_accepted_value": "100",
+            "has_fixed_value": null,
+            "has_accepted_values": null,
+            "position": 1,
+            "parameter_type": null
+          }
+        }
+      ],
+      "authors": [],
+      "regions": []
+    }
+  }
+}

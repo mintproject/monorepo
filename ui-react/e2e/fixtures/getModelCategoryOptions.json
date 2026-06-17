@@ -1,0 +1,16 @@
+{
+  "data": {
+    "modelcatalog_model_category": [
+      {
+        "__typename": "modelcatalog_model_category",
+        "id": "https://w3id.org/okn/i/mint/cat-agriculture",
+        "label": "Agriculture"
+      },
+      {
+        "__typename": "modelcatalog_model_category",
+        "id": "https://w3id.org/okn/i/mint/cat-hydrology",
+        "label": "Hydrology"
+      }
+    ]
+  }
+}

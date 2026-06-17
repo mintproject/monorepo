@@ -1,0 +1,19 @@
+{
+  "data": {
+    "modelcatalog_standard_variable": [
+      {
+        "__typename": "modelcatalog_standard_variable",
+        "id": "https://w3id.org/okn/i/mint/sv-streamflow",
+        "label": "Streamflow",
+        "description": "Volumetric river discharge"
+      }
+    ],
+    "modelcatalog_unit": [
+      {
+        "__typename": "modelcatalog_unit",
+        "id": "https://w3id.org/okn/i/mint/unit-m3-s",
+        "label": "m^3/s"
+      }
+    ]
+  }
+}

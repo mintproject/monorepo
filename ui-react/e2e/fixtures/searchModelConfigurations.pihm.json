@@ -1,0 +1,23 @@
+{
+  "data": {
+    "modelcatalog_configuration": [
+      {
+        "__typename": "modelcatalog_configuration",
+        "id": "https://w3id.org/okn/i/mint/cfg-pihm",
+        "label": "PIHM Default",
+        "model_configuration_id": null,
+        "software_version": {
+          "__typename": "modelcatalog_software_version",
+          "id": "https://w3id.org/okn/i/mint/sv-pihm",
+          "version_id": "1.0",
+          "software": {
+            "__typename": "modelcatalog_software",
+            "id": "https://w3id.org/okn/i/mint/sw-pihm",
+            "label": "PIHM"
+          }
+        },
+        "parent_configuration": null
+      }
+    ]
+  }
+}
