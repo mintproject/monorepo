@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { useState, type ReactNode } from 'react';
+import { Link, useParams } from 'react-router-dom';
 import {
   Folder,
   FolderOpen,
@@ -13,6 +13,8 @@ import {
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { MintThread } from './MintThread';
 import {
   Dialog,
   DialogContent,
@@ -36,6 +38,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/use-toast';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/lib/auth/useAuth';
+import { provisionTask } from '@/lib/modeling/provisionTask';
+import { EmptyState } from '@/components/common/EmptyState';
 
 import {
   useGetProblemStatementQuery,
@@ -104,6 +108,26 @@ function fmtDateTime(iso?: string | null): string {
   }
 }
 
+/** A sub-task (thread) has a model when at least one thread_model is selected. */
+function threadHasModel(thread: Pick<Thread, 'thread_models'>): boolean {
+  return (thread.thread_models?.length ?? 0) > 0;
+}
+
+/** Small emerald/amber dot signalling whether a sub-task has a model selected. */
+function StatusDot({ active, title }: { active: boolean; title: string }) {
+  return (
+    <span
+      role="status"
+      aria-label={title}
+      title={title}
+      className={cn(
+        'inline-block h-2 w-2 shrink-0 rounded-full',
+        active ? 'bg-emerald-500' : 'bg-amber-400',
+      )}
+    />
+  );
+}
+
 /**
  * MintProblemStatement — master-detail view for a single problem statement.
  *
@@ -114,7 +138,6 @@ function fmtDateTime(iso?: string | null): string {
  */
 export function MintProblemStatement() {
   const { id: problemStatementId } = useParams<{ id: string }>();
-  const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -224,57 +247,23 @@ export function MintProblemStatement() {
         }
         toast({ title: 'Task updated' });
       } else {
-        const newId = generateModelingId('task');
-        await insertTask({
-          variables: {
-            id: newId,
-            name: taskForm.name.trim(),
+        // Create the task + its default thread (+ CREATE provenance for each)
+        // via the shared bootstrap used by the auto-provision path.
+        const { taskId, threadId } = await provisionTask(
+          { insertTask, insertTaskProvenance, insertThread, insertThreadProvenance },
+          {
             problemStatementId: problemStatementId!,
+            taskName: taskForm.name.trim(),
             startDate: taskForm.startDate,
             endDate: taskForm.endDate,
             regionId: taskForm.regionId || null,
+            userId: user?.username,
           },
-        });
-        if (user?.username) {
-          await insertTaskProvenance({
-            variables: {
-              taskId: newId,
-              event: 'CREATE',
-              userid: user.username,
-            },
-          });
-        }
+        );
         toast({ title: 'Task created' });
-
-        // Automatically create a default thread for the new task
-        const defaultThreadId = generateModelingId('thread');
-        await insertThread({
-          variables: {
-            id: defaultThreadId,
-            name: null,
-            taskId: newId,
-            startDate: taskForm.startDate,
-            endDate: taskForm.endDate,
-            regionId: taskForm.regionId || null,
-          },
-        });
-        // A thread is only visible to its creator once it has a CREATE
-        // provenance row (thread SELECT permission filters on events/permissions);
-        // without this the new sub-task returns null from thread_by_pk.
-        if (user?.username) {
-          await insertThreadProvenance({
-            variables: {
-              threadId: defaultThreadId,
-              event: 'CREATE',
-              userid: user.username,
-              notes: null,
-            },
-          });
-        }
-
-        setSelectedTaskId(newId);
-        setSelectedThreadId(defaultThreadId);
-        navigate(`/modeling/thread/${defaultThreadId}`);
+        // Select the new task + its default sub-task so the wizard opens inline.
+        setSelectedTaskId(taskId);
+        setSelectedThreadId(threadId);
       }
       setTaskDialogOpen(false);
       setTaskForm(EMPTY_TASK_FORM);
@@ -369,7 +358,6 @@ export function MintProblemStatement() {
       setThreadDialogOpen(false);
       setThreadForm(EMPTY_THREAD_FORM);
       await refetch();
-      navigate(`/modeling/thread/${newId}`);
     } catch (err) {
       console.error(err);
       toast({ title: 'Save failed', description: String(err), variant: 'destructive' });
@@ -416,7 +404,12 @@ export function MintProblemStatement() {
   }
 
   if (!ps) {
-    return <p className="text-sm text-muted-foreground">Problem statement not found.</p>;
+    return (
+      <EmptyState
+        title="Problem statement not found"
+        description="It may have been deleted, or you may not have access to it."
+      />
+    );
   }
 
   return (
@@ -559,9 +552,13 @@ export function MintProblemStatement() {
                                   ? 'bg-accent/60 font-medium text-accent-foreground'
                                   : 'hover:bg-muted/40',
                               )}
-                              onClick={() => {
-                                setSelectedThreadId(thread.id);
-                                navigate(`/modeling/thread/${thread.id}`);
+                              tabIndex={0}
+                              onClick={() => setSelectedThreadId(thread.id)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter' || e.key === ' ') {
+                                  e.preventDefault();
+                                  setSelectedThreadId(thread.id);
+                                }
                               }}
                             >
                               <span className="mt-0.5 shrink-0 text-muted-foreground">
@@ -572,7 +569,15 @@ export function MintProblemStatement() {
                                 )}
                               </span>
                               <div className="min-w-0 flex-1">
-                                <p className="truncate text-sm">{pname}</p>
+                                <p className="flex items-center gap-1.5 truncate text-sm">
+                                  <StatusDot
+                                    active={threadHasModel(thread)}
+                                    title={
+                                      threadHasModel(thread) ? 'Model selected' : 'No model yet'
+                                    }
+                                  />
+                                  {pname}
+                                </p>
                                 {threadLastEvent && (
                                   <p className="text-xs text-muted-foreground/70">
                                     {threadLastEvent.userid} ·{' '}
@@ -658,19 +663,16 @@ export function MintProblemStatement() {
           </div>
         </div>
 
-        {/* Right panel — empty state or thread detail (via child route) */}
-        <div className="flex flex-1 items-center justify-center overflow-auto p-6 text-muted-foreground">
-          {selectedTask ? (
-            <div className="w-full text-sm">
-              <p className="font-medium text-foreground">{selectedTask.name}</p>
-              <p className="mt-1">
-                Select a sub-task from the left panel to view its modeling thread.
-              </p>
+        {/* Right panel — the thread wizard inline when a sub-task is selected,
+            otherwise a problem-statement overview. */}
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+          {selectedThreadId ? (
+            <div className="flex-1 overflow-hidden p-4">
+              <MintThread key={selectedThreadId} threadId={selectedThreadId} />
             </div>
           ) : (
-            <div className="flex flex-col items-center gap-2">
-              <Folder className="h-10 w-10 opacity-30" />
-              <p className="text-sm">Select a task from the left panel.</p>
+            <div className="flex-1 overflow-auto p-6">
+              <ProblemOverviewPanel tasks={tasks} />
             </div>
           )}
         </div>
@@ -756,6 +758,84 @@ export function MintProblemStatement() {
   );
 }
 
+// ─── Right panel: problem overview (C) ────────────────────────────────────────
+
+function StatCard({ label, value }: { label: string; value: ReactNode }) {
+  return (
+    <Card>
+      <CardContent className="p-4">
+        <p className="text-2xl font-semibold text-foreground">{value}</p>
+        <p className="text-xs text-muted-foreground">{label}</p>
+      </CardContent>
+    </Card>
+  );
+}
+
+function ProblemOverviewPanel({ tasks }: { tasks: TaskWithThreads[] }) {
+  const taskCount = tasks.length;
+  const allThreads = tasks.flatMap((t) => t.threads ?? []);
+  const subtaskCount = allThreads.length;
+  const withModel = allThreads.filter((t) => threadHasModel(t)).length;
+  const empty = subtaskCount - withModel;
+
+  type Activity = {
+    kind: string;
+    name: string;
+    event: { event: string; timestamp: string; userid: string } | null;
+  };
+  const activity = (
+    [
+      ...tasks.map((t) => ({ kind: 'Task', name: t.name, event: getLatestEvent(t.events) })),
+      ...allThreads.map((t) => ({
+        kind: 'Sub-task',
+        name: t.name ?? 'Default sub-task',
+        event: getLatestEvent(t.events),
+      })),
+    ] as Activity[]
+  )
+    .filter((a): a is Activity & { event: NonNullable<Activity['event']> } => a.event !== null)
+    .sort((a, b) => (a.event.timestamp < b.event.timestamp ? 1 : -1))
+    .slice(0, 6);
+
+  return (
+    <div className="mx-auto w-full max-w-2xl space-y-4">
+      <div className="grid grid-cols-3 gap-3">
+        <StatCard label="Tasks" value={taskCount} />
+        <StatCard label="Sub-tasks" value={subtaskCount} />
+        <StatCard label={`with a model · ${empty} empty`} value={withModel} />
+      </div>
+
+      <Card>
+        <CardHeader className="p-4 pb-2">
+          <CardTitle className="text-sm font-semibold">Recent activity</CardTitle>
+        </CardHeader>
+        <CardContent className="p-4 pt-0">
+          {activity.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No activity yet.</p>
+          ) : (
+            <ul className="space-y-2 text-sm">
+              {activity.map((a, i) => (
+                <li key={i} className="flex items-start justify-between gap-3">
+                  <span className="min-w-0 truncate">
+                    <span className="text-muted-foreground">{a.kind}:</span> {a.name}
+                  </span>
+                  <span className="shrink-0 text-xs text-muted-foreground">
+                    {a.event.event} · {fmtDateTime(a.event.timestamp)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </CardContent>
+      </Card>
+
+      <p className="text-xs text-muted-foreground">
+        Select a sub-task to see its model summary, or double-click to open it.
+      </p>
+    </div>
+  );
+}
+
 // ─── Task dialog ──────────────────────────────────────────────────────────────
 
 interface TaskDialogProps {
@@ -786,9 +866,15 @@ function TaskDialog({ open, isEdit, form, saving, onChange, onSubmit, onCancel }
               required
             />
           </div>
-          <div className="grid gap-1.5">
-            <Label>Time period</Label>
-            <div className="flex items-center gap-2">
+          <details className="rounded-md border px-3 py-2">
+            <summary className="cursor-pointer text-sm text-muted-foreground">
+              Adjust time period (optional)
+            </summary>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Inherited from the problem statement. Change only if this task covers a different
+              period.
+            </p>
+            <div className="mt-2 flex items-center gap-2">
               <Input
                 type="date"
                 id="task-start"
@@ -807,7 +893,7 @@ function TaskDialog({ open, isEdit, form, saving, onChange, onSubmit, onCancel }
                 className="flex-1"
               />
             </div>
-          </div>
+          </details>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onCancel} disabled={saving}>
@@ -865,9 +951,14 @@ function ThreadDialog({
               placeholder="Leave blank for default sub-task"
             />
           </div>
-          <div className="grid gap-1.5">
-            <Label>Time period</Label>
-            <div className="flex items-center gap-2">
+          <details className="rounded-md border px-3 py-2">
+            <summary className="cursor-pointer text-sm text-muted-foreground">
+              Adjust time period (optional)
+            </summary>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Inherited from the task. Change only if this sub-task covers a different period.
+            </p>
+            <div className="mt-2 flex items-center gap-2">
               <Input
                 type="date"
                 id="thread-start"
@@ -886,7 +977,7 @@ function ThreadDialog({
                 className="flex-1"
               />
             </div>
-          </div>
+          </details>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onCancel} disabled={saving}>

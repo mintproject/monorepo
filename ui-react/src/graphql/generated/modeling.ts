@@ -96,12 +96,23 @@ export type ThreadProvenance = {
   notes?: Maybe<string>;
 };
 
+export type VariableRef = {
+  __typename?: 'variable';
+  id: string;
+  name?: Maybe<string>;
+};
+
 export type ThreadModel = {
   __typename?: 'thread_model';
   id: string;
   thread_id: string;
   model_id?: string | null;
   modelcatalog_configuration_id?: string | null;
+  modelcatalog_configuration?: Maybe<{
+    __typename?: 'modelcatalog_configuration';
+    id: string;
+    label?: Maybe<string>;
+  }>;
 };
 
 export type Thread = {
@@ -114,6 +125,8 @@ export type Thread = {
   region_id?: Maybe<string>;
   driving_variable_id?: Maybe<string>;
   response_variable_id?: Maybe<string>;
+  driving_variable?: Maybe<VariableRef>;
+  response_variable?: Maybe<VariableRef>;
   events: ThreadProvenance[];
   permissions: ThreadPermission[];
   thread_models?: ThreadModel[];
@@ -269,11 +282,23 @@ const THREAD_INFO = gql`
       read
       write
     }
+    driving_variable {
+      id
+      name
+    }
+    response_variable {
+      id
+      name
+    }
     thread_models {
       id
       thread_id
       model_id
       modelcatalog_configuration_id
+      modelcatalog_configuration {
+        id
+        label
+      }
     }
   }
 `;
@@ -297,6 +322,15 @@ export const ListProblemStatementsDocument = gql`
       order_by: { id: desc }
     ) {
       ...problem_statement_info
+      tasks {
+        id
+        threads {
+          id
+          thread_models {
+            id
+          }
+        }
+      }
     }
   }
 `;

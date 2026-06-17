@@ -25,10 +25,18 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/use-toast';
 
 import { useAuth } from '@/lib/auth/useAuth';
+import { EmptyState } from '@/components/common/EmptyState';
 
 import {
   useListProblemStatementsQuery,
@@ -36,12 +44,17 @@ import {
   useUpdateProblemStatementMutation,
   useDeleteProblemStatementMutation,
   useInsertProblemStatementProvenanceMutation,
+  useInsertTaskMutation,
+  useInsertTaskProvenanceMutation,
+  useInsertThreadMutation,
+  useInsertThreadProvenanceMutation,
   getUserPermission,
   getLatestEvent,
   getLatestEventOfType,
   generateModelingId,
   type ProblemStatement,
 } from '@/graphql/generated/modeling';
+import { provisionTask } from '@/lib/modeling/provisionTask';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -137,6 +150,10 @@ export function ProblemStatementsList({ regionId = 'DEFAULT' }: ProblemStatement
   const [updatePS] = useUpdateProblemStatementMutation();
   const [deletePS] = useDeleteProblemStatementMutation();
   const [insertProvenance] = useInsertProblemStatementProvenanceMutation();
+  const [insertTask] = useInsertTaskMutation();
+  const [insertTaskProvenance] = useInsertTaskProvenanceMutation();
+  const [insertThread] = useInsertThreadMutation();
+  const [insertThreadProvenance] = useInsertThreadProvenanceMutation();
 
   // ── local state ───────────────────────────────────────────────────────────
   const [filter, setFilter] = useState('');
@@ -247,6 +264,20 @@ export function ProblemStatementsList({ regionId = 'DEFAULT' }: ProblemStatement
             },
           });
         }
+        // Silently bootstrap a first task + default thread so the user lands on
+        // a populated detail page instead of an empty "Add new task" prompt.
+        // The task name is seeded from the problem-statement name (editable).
+        await provisionTask(
+          { insertTask, insertTaskProvenance, insertThread, insertThreadProvenance },
+          {
+            problemStatementId: newId,
+            taskName: form.name.trim(),
+            startDate: form.startDate,
+            endDate: form.endDate,
+            regionId: form.regionId || null,
+            userId: user?.username,
+          },
+        );
         toast({ title: 'Problem statement created' });
         navigate(`/modeling/problem-statement/${newId}`);
       }
@@ -314,19 +345,22 @@ export function ProblemStatementsList({ regionId = 'DEFAULT' }: ProblemStatement
             </button>
           )}
         </div>
-        <select
-          aria-label="Filter by region"
+        <Select
           value={selectedRegionId ?? ''}
-          onChange={(e) => setSelectedRegionId(e.target.value)}
-          className="flex h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+          onValueChange={(v) => setSelectedRegionId(v)}
           disabled={regions.length === 0}
         >
-          {regions.map((r) => (
-            <option key={r.id} value={r.id}>
-              {r.name}
-            </option>
-          ))}
-        </select>
+          <SelectTrigger className="w-[180px]" aria-label="Filter by region">
+            <SelectValue placeholder="Region" />
+          </SelectTrigger>
+          <SelectContent>
+            {regions.map((r) => (
+              <SelectItem key={r.id} value={r.id}>
+                {r.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         <Button onClick={openAddDialog} aria-label="Add problem statement">
           <Plus className="mr-1.5 h-4 w-4" />
           Add
@@ -351,14 +385,15 @@ export function ProblemStatementsList({ regionId = 'DEFAULT' }: ProblemStatement
 
       {/* ── Empty state ───────────────────────────────────────────────────── */}
       {!loading && filtered.length === 0 && (
-        <div className="flex flex-col items-center gap-2 py-16 text-muted-foreground">
-          <ClipboardList className="h-10 w-10 opacity-40" />
-          <p className="text-sm">
-            {filter
+        <EmptyState
+          icon={<ClipboardList className="h-10 w-10 opacity-40" />}
+          title={filter ? 'No matches' : 'No problem statements yet'}
+          description={
+            filter
               ? 'No problem statements match your search.'
-              : 'No problem statements yet. Click Add to create one.'}
-          </p>
-        </div>
+              : 'Click Add to create your first problem statement.'
+          }
+        />
       )}
 
       {/* ── Grid of cards ─────────────────────────────────────────────────── */}
@@ -433,6 +468,12 @@ function ProblemStatementCard({ ps, currentUserId, onSelect, onEdit, onDelete }:
   const createEvent = getLatestEventOfType(['CREATE'], ps.events);
   const lastEvent = getLatestEvent(ps.events);
 
+  // Size/progress signal from the nested tasks/threads (visible to this user).
+  const taskCount = ps.tasks?.length ?? 0;
+  const allThreads = (ps.tasks ?? []).flatMap((t) => t.threads ?? []);
+  const subtaskCount = allThreads.length;
+  const withModel = allThreads.filter((t) => (t.thread_models?.length ?? 0) > 0).length;
+
   return (
     <div
       role="listitem"
@@ -488,6 +529,17 @@ function ProblemStatementCard({ ps, currentUserId, onSelect, onEdit, onDelete }:
 
         {/* Metadata */}
         <div className="space-y-1 text-sm text-muted-foreground">
+          <p className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-xs">
+            <span className="font-medium text-foreground">{taskCount}</span> tasks
+            <span aria-hidden>·</span>
+            <span className="font-medium text-foreground">{subtaskCount}</span> sub-tasks
+            {subtaskCount > 0 && (
+              <>
+                <span aria-hidden>·</span>
+                <span className="font-medium text-emerald-700">{withModel}</span> with a model
+              </>
+            )}
+          </p>
           <p>
             <span className="font-medium">Time period:</span> {formatDate(ps.start_date)} to{' '}
             {formatDate(ps.end_date)}
@@ -563,23 +615,21 @@ function ProblemStatementDialog({
           {/* Region */}
           <div className="grid gap-1.5">
             <Label htmlFor="ps-region">Region</Label>
-            <select
-              id="ps-region"
-              aria-label="Region"
-              value={form.regionId}
-              onChange={(e) => onChange('regionId', e.target.value)}
-              className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-              required
+            <Select
+              value={form.regionId || undefined}
+              onValueChange={(v) => onChange('regionId', v)}
             >
-              <option value="" disabled>
-                Select a region…
-              </option>
-              {regions.map((r) => (
-                <option key={r.id} value={r.id}>
-                  {r.name}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger id="ps-region" aria-label="Region">
+                <SelectValue placeholder="Select a region…" />
+              </SelectTrigger>
+              <SelectContent>
+                {regions.map((r) => (
+                  <SelectItem key={r.id} value={r.id}>
+                    {r.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Time period */}
