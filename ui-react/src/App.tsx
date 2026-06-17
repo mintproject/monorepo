@@ -8,7 +8,7 @@ import { ModelSelectionProvider } from './contexts/ModelSelectionContext';
 
 // Pages — model catalog
 import { AppHome } from './pages/AppHome';
-import { ModelsPage } from './pages/ModelsPage';
+import { ModelsBrowsePage } from './components/models-browse/ModelsBrowsePage';
 import { ConfigurePage } from './pages/ConfigurePage';
 import { RegisterPage } from './pages/RegisterPage';
 
@@ -54,7 +54,8 @@ export function App() {
             <Route path="/" element={<AppHome />} />
 
             {/* Models */}
-            <Route path="/models" element={<ModelsPage />} />
+            <Route path="/models" element={<ModelsBrowsePage />} />
+            <Route path="/modelconfigurations/:slugid" element={<ModelsBrowsePage />} />
             <Route path="/models/configure/:id" element={<ConfigurePage />} />
             <Route
               path="/models/register"

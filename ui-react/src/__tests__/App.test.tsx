@@ -29,14 +29,12 @@ describe('App', () => {
     expect(screen.getByText(/welcome to mint model catalog/i)).toBeInTheDocument();
   });
 
-  it('renders ModelsPage at /models', () => {
+  it('renders the models browse page at /models', () => {
     renderApp(['/models']);
-    // The Models page renders the model tree with a search/filter input
-    expect(screen.getByPlaceholderText(/filter models/i)).toBeInTheDocument();
-    // ...and the selection-detail placeholder until a tree node is picked.
-    expect(
-      screen.getByText('Select a model, version, or configuration on the left.'),
-    ).toBeInTheDocument();
+    // The browse page renders a model-name filter input...
+    expect(screen.getByPlaceholderText(/filter by model name/i)).toBeInTheDocument();
+    // ...and the detail placeholder until a config/setup is selected.
+    expect(screen.getByText('Select a configuration or setup on the left.')).toBeInTheDocument();
   });
 
   it('renders NotFoundPage for unknown routes', () => {

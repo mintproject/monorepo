@@ -30,6 +30,17 @@ const mockConfig = {
   description: 'Test desc',
   software_version_id: 'ver1',
   model_configuration_id: null,
+  software_version: {
+    __typename: 'modelcatalog_software_version' as const,
+    id: 'ver1',
+    version_id: 'v1.0',
+    software: {
+      __typename: 'modelcatalog_software' as const,
+      id: 'sw1',
+      label: 'Test Model',
+    },
+  },
+  time_intervals: [],
   inputs: [],
   outputs: [],
   parameters: [],
@@ -43,6 +54,8 @@ const mockConfigWithInput = {
   inputs: [
     {
       __typename: 'modelcatalog_configuration_input' as const,
+      configuration_id: 'cfg1',
+      input_id: 'ds1',
       is_optional: false,
       input: {
         __typename: 'modelcatalog_dataset_specification' as const,
@@ -55,6 +68,8 @@ const mockConfigWithInput = {
         presentations: [
           {
             __typename: 'modelcatalog_dataset_specification_presentation' as const,
+            dataset_specification_id: 'ds1',
+            presentation_id: 'vp1',
             presentation: {
               __typename: 'modelcatalog_variable_presentation' as const,
               id: 'vp1',
@@ -86,6 +101,8 @@ const mockConfigWithParameter = {
   parameters: [
     {
       __typename: 'modelcatalog_configuration_parameter' as const,
+      configuration_id: 'cfg1',
+      parameter_id: 'param1',
       parameter: {
         __typename: 'modelcatalog_parameter' as const,
         id: 'param1',
@@ -98,6 +115,7 @@ const mockConfigWithParameter = {
         has_fixed_value: null,
         has_accepted_values: null,
         position: 0,
+        parameter_type: null,
       },
     },
   ],
@@ -219,9 +237,11 @@ describe('ConfigurationForm (edit mode)', () => {
       () => {
         expect(screen.getByText('Configuration name is required')).toBeInTheDocument();
       },
-      { timeout: 5000 },
+      { timeout: 4000 },
     );
-  });
+    // testTimeout must exceed the inner waitFor; the userEvent interactions above
+    // plus the 4s wait can otherwise overrun the 5s default under CI load.
+  }, 15000);
 
   it('calls onCancel when Cancel button is clicked', async () => {
     const onCancel = vi.fn();

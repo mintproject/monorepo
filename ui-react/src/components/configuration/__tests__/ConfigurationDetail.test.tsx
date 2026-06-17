@@ -18,6 +18,29 @@ const mockConfig = {
   description: 'A test configuration',
   software_version_id: 'ver1',
   model_configuration_id: null,
+  software_version: {
+    __typename: 'modelcatalog_software_version' as const,
+    id: 'ver1',
+    version_id: '2.0',
+    software: {
+      __typename: 'modelcatalog_software' as const,
+      id: 'm1',
+      label: 'TopoFlow',
+    },
+  },
+  time_intervals: [
+    {
+      __typename: 'modelcatalog_configuration_time_interval' as const,
+      time_interval: {
+        __typename: 'modelcatalog_time_interval' as const,
+        id: 'ti1',
+        label: 'Daily',
+        description: null,
+        interval_unit: 'day',
+        interval_value: '1',
+      },
+    },
+  ],
   inputs: [
     {
       __typename: 'modelcatalog_configuration_input' as const,
@@ -161,6 +184,29 @@ describe('ConfigurationDetail', () => {
 
     await userEvent.click(screen.getByRole('button', { name: /edit/i }));
     expect(onEdit).toHaveBeenCalledOnce();
+  });
+
+  it('shows a Configure link to the configure page when onEdit is absent', async () => {
+    renderWithProviders(<ConfigurationDetail configurationId="cfg1" />, {
+      apolloMocks: [configQueryMock],
+    });
+
+    const link = await screen.findByRole('link', { name: /configure/i });
+    expect(link).toHaveAttribute('href', expect.stringContaining('/models/configure/'));
+    expect(screen.queryByRole('button', { name: /edit/i })).not.toBeInTheDocument();
+  });
+
+  it('renders model name, version badge, and time period', async () => {
+    renderWithProviders(<ConfigurationDetail configurationId="cfg1" />, {
+      apolloMocks: [configQueryMock],
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('TopoFlow')).toBeInTheDocument();
+    });
+    expect(screen.getByText('2.0')).toBeInTheDocument();
+    expect(screen.getByText('Time Period')).toBeInTheDocument();
+    expect(screen.getByText('Daily')).toBeInTheDocument();
   });
 
   it('renders parameter details', async () => {
