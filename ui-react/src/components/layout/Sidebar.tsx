@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { ChevronRight, Database, FlaskConical, Home, Map, Variable, Workflow } from 'lucide-react';
 
+import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 
 interface SidebarProps {
@@ -17,54 +18,68 @@ interface NavSection {
   items?: { href: string; label: string }[];
 }
 
-const NAV_SECTIONS: NavSection[] = [
+interface NavGroup {
+  /** Caption shown above the group; omit for the pinned, ungrouped items (Home). */
+  caption?: string;
+  sections: NavSection[];
+}
+
+const NAV_GROUPS: NavGroup[] = [
   {
-    label: 'Home',
-    icon: Home,
-    href: '/',
+    sections: [{ label: 'Home', icon: Home, href: '/' }],
   },
   {
-    label: 'Models',
-    icon: FlaskConical,
-    items: [
-      { href: '/models', label: 'Browse Models' },
-      { href: '/models/register', label: 'Register Model' },
-    ],
-  },
-  {
-    label: 'Modeling',
-    icon: Workflow,
-    items: [
-      { href: '/modeling', label: 'Overview' },
+    caption: 'Explore',
+    sections: [
       {
-        href: '/modeling/problem-statements',
-        label: 'Problem Statements',
+        label: 'Models',
+        icon: FlaskConical,
+        items: [
+          { href: '/models', label: 'Browse Models' },
+          { href: '/models/register', label: 'Register Model' },
+        ],
+      },
+      {
+        label: 'Datasets',
+        icon: Database,
+        items: [
+          { href: '/datasets', label: 'Overview' },
+          { href: '/datasets/browse', label: 'Browse' },
+          { href: '/datasets/search', label: 'Search' },
+          { href: '/datasets/register', label: 'Register' },
+          { href: '/datasets/transformations', label: 'Transformations' },
+        ],
+      },
+      {
+        label: 'Regions',
+        icon: Map,
+        items: [
+          { href: '/regions', label: 'Overview' },
+          { href: '/regions/editor', label: 'Region Editor' },
+        ],
+      },
+      {
+        label: 'Variables',
+        icon: Variable,
+        href: '/variables',
       },
     ],
   },
   {
-    label: 'Datasets',
-    icon: Database,
-    items: [
-      { href: '/datasets', label: 'Overview' },
-      { href: '/datasets/browse', label: 'Browse' },
-      { href: '/datasets/search', label: 'Search' },
-      { href: '/datasets/register', label: 'Register' },
-      { href: '/datasets/transformations', label: 'Transformations' },
+    caption: 'Decide',
+    sections: [
+      {
+        label: 'Modeling',
+        icon: Workflow,
+        items: [
+          { href: '/modeling', label: 'Overview' },
+          {
+            href: '/modeling/problem-statements',
+            label: 'Problem Statements',
+          },
+        ],
+      },
     ],
-  },
-  {
-    label: 'Regions',
-    icon: Map,
-    items: [
-      { href: '/regions', label: 'Overview' },
-      { href: '/regions/editor', label: 'Region Editor' },
-    ],
-  },
-  {
-    label: 'Variables',
-    icon: Variable,
-    href: '/variables',
   },
 ];
 
@@ -79,24 +94,34 @@ export function Sidebar({ collapsed }: SidebarProps) {
       )}
       aria-label="Main navigation"
     >
-      <nav className="flex flex-col gap-1 p-2">
-        {NAV_SECTIONS.map((section) =>
-          section.href ? (
-            <DirectLink
-              key={section.label}
-              section={section}
-              collapsed={collapsed}
-              active={location.pathname === section.href}
-            />
-          ) : (
-            <SectionGroup
-              key={section.label}
-              section={section}
-              collapsed={collapsed}
-              currentPath={location.pathname}
-            />
-          ),
-        )}
+      <nav className="flex flex-col p-2">
+        {NAV_GROUPS.map((group, index) => (
+          <div key={group.caption ?? index} className="flex flex-col gap-1">
+            {index > 0 && <Separator className="my-2" />}
+            {!collapsed && group.caption && (
+              <p className="px-2 pb-1 pt-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                {group.caption}
+              </p>
+            )}
+            {group.sections.map((section) =>
+              section.href ? (
+                <DirectLink
+                  key={section.label}
+                  section={section}
+                  collapsed={collapsed}
+                  active={location.pathname === section.href}
+                />
+              ) : (
+                <SectionGroup
+                  key={section.label}
+                  section={section}
+                  collapsed={collapsed}
+                  currentPath={location.pathname}
+                />
+              ),
+            )}
+          </div>
+        ))}
       </nav>
     </aside>
   );
