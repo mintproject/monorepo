@@ -22,6 +22,8 @@ fragment DatasetSpecificationFields on modelcatalog_dataset_specification {
   has_dimensionality
   position
   presentations {
+    dataset_specification_id
+    presentation_id
     presentation {
       ...VariablePresentationFields
     }
