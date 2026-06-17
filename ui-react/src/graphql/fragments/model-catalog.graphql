@@ -31,6 +31,8 @@ fragment DatasetSpecificationFields on modelcatalog_dataset_specification {
 }
 
 fragment InputFields on modelcatalog_configuration_input {
+  configuration_id
+  input_id
   is_optional
   input {
     ...DatasetSpecificationFields
@@ -38,6 +40,8 @@ fragment InputFields on modelcatalog_configuration_input {
 }
 
 fragment OutputFields on modelcatalog_configuration_output {
+  configuration_id
+  output_id
   output {
     ...DatasetSpecificationFields
   }
@@ -70,17 +74,23 @@ fragment ConfigurationFields on modelcatalog_configuration {
     ...OutputFields
   }
   parameters {
+    configuration_id
+    parameter_id
     parameter {
       ...ParameterFields
     }
   }
   authors {
+    configuration_id
+    person_id
     person {
       id
       label
     }
   }
   regions {
+    configuration_id
+    region_id
     region {
       id
       label
