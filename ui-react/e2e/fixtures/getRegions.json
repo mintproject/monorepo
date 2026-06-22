@@ -1,0 +1,16 @@
+{
+  "data": {
+    "modelcatalog_region": [
+      {
+        "__typename": "modelcatalog_region",
+        "id": "https://w3id.org/okn/i/mint/region-ethiopia",
+        "label": "Ethiopia"
+      },
+      {
+        "__typename": "modelcatalog_region",
+        "id": "https://w3id.org/okn/i/mint/region-texas",
+        "label": "Texas"
+      }
+    ]
+  }
+}

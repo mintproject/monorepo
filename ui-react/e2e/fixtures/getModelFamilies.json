@@ -1,0 +1,19 @@
+{
+  "data": {
+    "modelcatalog_software": [
+      {
+        "__typename": "modelcatalog_software",
+        "id": "https://w3id.org/okn/i/mint/sw-modflow",
+        "label": "MODFLOW",
+        "versions": [
+          {
+            "__typename": "modelcatalog_software_version",
+            "id": "https://w3id.org/okn/i/mint/sv-modflow",
+            "label": "MODFLOW 2.0",
+            "version_id": "2.0"
+          }
+        ]
+      }
+    ]
+  }
+}

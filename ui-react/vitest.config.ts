@@ -1,13 +1,16 @@
 import path from 'path';
 
 import react from '@vitejs/plugin-react';
-import { defineConfig } from 'vitest/config';
+import { configDefaults, defineConfig } from 'vitest/config';
 
 export default defineConfig({
   plugins: [react()],
   test: {
     globals: true,
     environment: 'jsdom',
+    // Playwright E2E specs live in e2e/ and use the same .spec.ts suffix Vitest
+    // matches by default — exclude them so the two runners never collide.
+    exclude: [...configDefaults.exclude, 'e2e/**'],
     environmentOptions: {
       jsdom: {
         // Enable Web Storage API (localStorage, sessionStorage) in jsdom
