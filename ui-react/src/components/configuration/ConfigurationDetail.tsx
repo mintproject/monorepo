@@ -8,6 +8,7 @@ import { ArrowUpRight, Pencil } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 import { useGetConfigurationQuery } from '@/graphql/generated/graphql';
+import { slugFromUri } from '@/lib/uri';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
@@ -70,7 +71,7 @@ export function ConfigurationDetail({ configurationId, onEdit }: ConfigurationDe
           </Button>
         ) : (
           <Button asChild variant="outline" size="sm" className="shrink-0 gap-1.5">
-            <Link to={`/models/configure/${encodeURIComponent(config.id)}`}>
+            <Link to={`/models/configure/${slugFromUri(config.id)}`}>
               Configure
               <ArrowUpRight className="h-3.5 w-3.5" />
             </Link>

@@ -46,7 +46,7 @@ import {
   assignPositions,
 } from '@/lib/mutation-builder';
 import { resolveSubmitPlan } from '@/lib/create-model';
-import { generateMintUri } from '@/lib/uri';
+import { generateMintUri, slugFromUri } from '@/lib/uri';
 import { UPSERT_MODELCATALOG_REGION } from '@/graphql/region-picker';
 import {
   createModelSchema,
@@ -134,7 +134,7 @@ export function CreateModelForm() {
       // no mutation target exists for standalone configs. Tracked as a follow-up.
 
       toast({ title: 'Model created', description: `${data.label} was created successfully.` });
-      navigate(`/models/configure/${encodeURIComponent(configurationId)}`);
+      navigate(`/models/configure/${slugFromUri(configurationId)}`);
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : 'Creation failed');
     }
