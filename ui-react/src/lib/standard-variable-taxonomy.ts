@@ -94,3 +94,33 @@ export function categorizeStandardVariable(
   }
   return 'Unnamed / Other';
 }
+
+/** Presentation fields derived from a standard variable's label and description. */
+export interface StandardVariableDisplayFields {
+  category: StandardVariableCategory;
+  isUnnamed: boolean;
+  /**
+   * What to show as the row's primary label: the description when the raw label
+   * is an unnamed/UUID row (so scientists never see a bare UUID), otherwise the
+   * label itself.
+   */
+  displayLabel: string;
+}
+
+/**
+ * Derive the shared taxonomy/presentation fields for a standard variable. Used
+ * by both the /variables table and the standard-variable combobox so the two
+ * display paths stay in sync.
+ */
+export function deriveDisplayFields(
+  label: string | null | undefined,
+  description?: string | null,
+): StandardVariableDisplayFields {
+  const normalizedLabel = label ?? '';
+  const isUnnamed = isUnnamedLabel(normalizedLabel);
+  return {
+    isUnnamed,
+    category: categorizeStandardVariable(normalizedLabel, description),
+    displayLabel: isUnnamed ? (description ?? 'Unnamed variable') : normalizedLabel,
+  };
+}

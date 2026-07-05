@@ -25,8 +25,7 @@ import type { GetStandardVariablesWithUnitsQuery } from '@/graphql/generated/gra
 import { highlightRanges } from '@/lib/standard-variable-search';
 import {
   CATEGORY_ORDER,
-  categorizeStandardVariable,
-  isUnnamedLabel,
+  deriveDisplayFields,
   type StandardVariableCategory,
 } from '@/lib/standard-variable-taxonomy';
 import { searchVariableRows } from '@/lib/variable-catalog-search';
@@ -282,19 +281,11 @@ export function VariablesHome() {
 
   const rows = useMemo<StandardVariableRow[]>(
     () =>
-      (data?.modelcatalog_standard_variable ?? []).map((variable) => {
-        const label = variable.label ?? '';
-        const isUnnamed = isUnnamedLabel(label);
-        return {
-          ...variable,
-          units: dedupeUnits(variable),
-          category: categorizeStandardVariable(label, variable.description),
-          isUnnamed,
-          // Fall back to the description so an unnamed/UUID row is readable and
-          // still findable by its description text (never a raw UUID).
-          displayLabel: isUnnamed ? (variable.description ?? 'Unnamed variable') : label,
-        };
-      }),
+      (data?.modelcatalog_standard_variable ?? []).map((variable) => ({
+        ...variable,
+        units: dedupeUnits(variable),
+        ...deriveDisplayFields(variable.label, variable.description),
+      })),
     [data],
   );
 
