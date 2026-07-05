@@ -48,6 +48,16 @@ describe('ModelGroupList', () => {
     expect(setupLink).toHaveAttribute('href', '/modelconfigurations/setup-1');
   });
 
+  it('links rows under a custom basePath (configure mode)', () => {
+    renderWithProviders(
+      <ModelGroupList groups={groups} selectedSlug={null} expandAll basePath="/models/configure" />,
+    );
+    const configLink = screen.getByText('Calibration').closest('a');
+    expect(configLink).toHaveAttribute('href', '/models/configure/cfg-1');
+    const setupLink = screen.getByText('Travis Co.').closest('a');
+    expect(setupLink).toHaveAttribute('href', '/models/configure/setup-1');
+  });
+
   it('dims a synthesized container config', () => {
     renderWithProviders(<ModelGroupList groups={groups} selectedSlug={null} expandAll />);
     const link = screen.getByText('Forecast (container)').closest('a');

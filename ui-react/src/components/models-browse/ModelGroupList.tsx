@@ -3,7 +3,7 @@
  *
  * Renders Model (accordion group, expand/collapse only) -> Configuration
  * (+ version badge, dimmed when synthesized) -> Setups nested beneath. Selecting
- * a configuration or setup navigates to /modelconfigurations/:slug.
+ * a configuration or setup navigates to `${basePath}/:slug`.
  */
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -25,9 +25,16 @@ export interface ModelGroupListProps {
   selectedSlug: string | null;
   /** Expand every group (used while a search/facet filter is active). */
   expandAll: boolean;
+  /** Route prefix for row links (the slug is appended). */
+  basePath?: string;
 }
 
-export function ModelGroupList({ groups, selectedSlug, expandAll }: ModelGroupListProps) {
+export function ModelGroupList({
+  groups,
+  selectedSlug,
+  expandAll,
+  basePath = '/modelconfigurations',
+}: ModelGroupListProps) {
   const signature = groups.map((g) => g.softwareId).join('|');
   const [open, setOpen] = useState<string[]>([]);
 
@@ -55,7 +62,12 @@ export function ModelGroupList({ groups, selectedSlug, expandAll }: ModelGroupLi
           <AccordionContent className="pb-1">
             <div className="flex flex-col gap-0.5">
               {group.configs.map((config) => (
-                <ConfigBlock key={config.id} config={config} selectedSlug={selectedSlug} />
+                <ConfigBlock
+                  key={config.id}
+                  config={config}
+                  selectedSlug={selectedSlug}
+                  basePath={basePath}
+                />
               ))}
             </div>
           </AccordionContent>
@@ -68,13 +80,20 @@ export function ModelGroupList({ groups, selectedSlug, expandAll }: ModelGroupLi
 function ConfigBlock({
   config,
   selectedSlug,
+  basePath,
 }: {
   config: ConfigNode;
   selectedSlug: string | null;
+  basePath: string;
 }) {
   return (
     <div>
-      <RowLink id={config.id} selectedSlug={selectedSlug} dimmed={config.synthesized}>
+      <RowLink
+        id={config.id}
+        selectedSlug={selectedSlug}
+        basePath={basePath}
+        dimmed={config.synthesized}
+      >
         <span className="truncate">{config.label}</span>
         {config.versionId && (
           <Badge variant="outline" className="ml-auto shrink-0 text-[10px]">
@@ -85,7 +104,12 @@ function ConfigBlock({
       {config.setups.length > 0 && (
         <div className="ml-3 flex flex-col gap-0.5 border-l pl-2">
           {config.setups.map((setup) => (
-            <SetupRow key={setup.id} setup={setup} selectedSlug={selectedSlug} />
+            <SetupRow
+              key={setup.id}
+              setup={setup}
+              selectedSlug={selectedSlug}
+              basePath={basePath}
+            />
           ))}
         </div>
       )}
@@ -93,9 +117,17 @@ function ConfigBlock({
   );
 }
 
-function SetupRow({ setup, selectedSlug }: { setup: SetupNode; selectedSlug: string | null }) {
+function SetupRow({
+  setup,
+  selectedSlug,
+  basePath,
+}: {
+  setup: SetupNode;
+  selectedSlug: string | null;
+  basePath: string;
+}) {
   return (
-    <RowLink id={setup.id} selectedSlug={selectedSlug}>
+    <RowLink id={setup.id} selectedSlug={selectedSlug} basePath={basePath}>
       <span className="truncate text-muted-foreground">{setup.label}</span>
     </RowLink>
   );
@@ -104,18 +136,20 @@ function SetupRow({ setup, selectedSlug }: { setup: SetupNode; selectedSlug: str
 function RowLink({
   id,
   selectedSlug,
+  basePath,
   dimmed,
   children,
 }: {
   id: string;
   selectedSlug: string | null;
+  basePath: string;
   dimmed?: boolean;
   children: React.ReactNode;
 }) {
   const slug = slugFromUri(id);
   return (
     <Link
-      to={`/modelconfigurations/${slug}`}
+      to={`${basePath}/${slug}`}
       className={cn(
         'flex items-center gap-2 rounded-md px-2 py-1 text-sm transition-colors hover:bg-accent',
         slug === selectedSlug && 'bg-accent font-medium',

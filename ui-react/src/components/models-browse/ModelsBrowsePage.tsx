@@ -1,11 +1,16 @@
 /**
- * ModelsBrowsePage — the /models find-models experience.
+ * ModelsBrowsePage — the model find/configure experience.
  *
- * Middle column: text search + facet filters (Region / Category / Output
+ * Left column: text search + facet filters (Region / Category / Output
  * variable) over a server-side-filtered, client-grouped Model -> Config -> Setup
- * list. Right column: read-only detail for the config/setup in the URL
- * (/modelconfigurations/:slugid). The URL is the source of truth for facet
- * filters and selection; the text search is local-only and never touches it.
+ * list. Right column: detail for the config/setup in the URL. The URL is the
+ * source of truth for facet filters and selection; the text search is
+ * local-only and never touches it.
+ *
+ * Mounted at two routes that share the same left panel:
+ *   - /models + /modelconfigurations/:slugid — read-only browse.
+ *   - /models/configure/:slugid (editable)   — same panel, but the detail pane
+ *     exposes an Edit button that opens the inline ConfigurationForm.
  */
 import { useMemo, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
@@ -25,12 +30,23 @@ import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ConfigurationDetail } from '@/components/configuration/ConfigurationDetail';
+import { ConfigurationForm } from '@/components/configuration/ConfigurationForm';
 import { FacetSelect } from './FacetSelect';
 import { ModelGroupList } from './ModelGroupList';
 import { useFacetOptions } from './useFacetOptions';
 import { useGetConfigurationBySlugQuery } from '@/graphql/generated/graphql';
 
-export function ModelsBrowsePage() {
+export interface ModelsBrowsePageProps {
+  /** When true, the detail pane allows editing the selected configuration. */
+  editable?: boolean;
+  /** Route prefix for left-panel row links (the slug is appended). */
+  basePath?: string;
+}
+
+export function ModelsBrowsePage({
+  editable = false,
+  basePath = '/modelconfigurations',
+}: ModelsBrowsePageProps = {}) {
   const { slugid } = useParams<{ slugid: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
   // Drop any `q` from the URL — text search is intentionally not URL-driven.
@@ -101,19 +117,24 @@ export function ModelsBrowsePage() {
           ) : error ? (
             <p className="px-1 py-8 text-center text-sm text-destructive">{error.message}</p>
           ) : (
-            <ModelGroupList groups={groups} selectedSlug={slugid ?? null} expandAll={active} />
+            <ModelGroupList
+              groups={groups}
+              selectedSlug={slugid ?? null}
+              expandAll={active}
+              basePath={basePath}
+            />
           )}
         </div>
       </aside>
 
       <main className="flex-1 overflow-auto p-6">
-        <DetailPane slug={slugid} />
+        <DetailPane slug={slugid} editable={editable} />
       </main>
     </div>
   );
 }
 
-function DetailPane({ slug }: { slug?: string }) {
+function DetailPane({ slug, editable }: { slug?: string; editable: boolean }) {
   const { data, loading } = useGetConfigurationBySlugQuery({
     variables: { pattern: slug ? slugMatchPattern(slug) : '' },
     skip: !slug,
@@ -133,7 +154,32 @@ function DetailPane({ slug }: { slug?: string }) {
   if (!id) {
     return <p className="text-sm text-destructive">Configuration not found.</p>;
   }
-  return <ConfigurationDetail configurationId={id} />;
+  return editable ? (
+    <EditableDetail key={id} configurationId={id} />
+  ) : (
+    <ConfigurationDetail configurationId={id} />
+  );
+}
+
+/**
+ * Read-only detail first, with an Edit button that opens the inline form.
+ * Keyed by configurationId so switching selection resets edit state.
+ */
+function EditableDetail({ configurationId }: { configurationId: string }) {
+  const [isEditing, setIsEditing] = useState(false);
+
+  if (isEditing) {
+    return (
+      <ConfigurationForm
+        configurationId={configurationId}
+        onSaved={() => setIsEditing(false)}
+        onCancel={() => setIsEditing(false)}
+      />
+    );
+  }
+  return (
+    <ConfigurationDetail configurationId={configurationId} onEdit={() => setIsEditing(true)} />
+  );
 }
 
 function ListSkeleton() {
