@@ -67,6 +67,40 @@ const successMock = makeQueryMock(
   { modelcatalog_standard_variable: mockData.modelcatalog_standard_variable },
 );
 
+// Fixture where one row matches a query on its name and another only on its
+// description, so relevance ordering (name above description) is observable.
+const rankingMockData: GetStandardVariablesWithUnitsQuery = {
+  modelcatalog_standard_variable: [
+    {
+      __typename: 'modelcatalog_standard_variable',
+      id: 'r1',
+      label: 'runoff',
+      description: 'Surface water routed downhill',
+      same_as: null,
+      variable_presentations: [
+        {
+          __typename: 'modelcatalog_variable_presentation',
+          unit: { __typename: 'modelcatalog_unit', id: 'ru', label: 'mm/day' },
+        },
+      ],
+    },
+    {
+      __typename: 'modelcatalog_standard_variable',
+      id: 'r2',
+      label: 'water_flow',
+      description: 'Volumetric discharge',
+      same_as: null,
+      variable_presentations: [],
+    },
+  ],
+};
+
+const rankingMock = makeQueryMock(
+  GetStandardVariablesWithUnitsDocument,
+  {},
+  { modelcatalog_standard_variable: rankingMockData.modelcatalog_standard_variable },
+);
+
 const emptyMock = makeQueryMock(
   GetStandardVariablesWithUnitsDocument,
   {},
@@ -82,6 +116,12 @@ const networkErrorMock = makeNetworkErrorMock(
 function renderVariablesHome(mocks = [successMock]) {
   return renderWithProviders(<VariablesHome />, { apolloMocks: mocks });
 }
+
+// While searching, the matched substring is wrapped in a <mark>, so a label like
+// "wind_speed" is split across text nodes and a plain getByText fails. Match on
+// the element whose full text content equals the label instead.
+const wholeText = (full: string) => (_content: string, el: Element | null) =>
+  el?.textContent === full;
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
@@ -140,7 +180,7 @@ describe('VariablesHome', () => {
     await user.type(input, 'wind');
 
     await waitFor(() => {
-      expect(screen.getByText('wind_speed')).toBeInTheDocument();
+      expect(screen.getByText(wholeText('wind_speed'))).toBeInTheDocument();
       expect(screen.queryByText('temperature')).not.toBeInTheDocument();
       expect(screen.queryByText('precipitation')).not.toBeInTheDocument();
     });
@@ -220,6 +260,72 @@ describe('VariablesHome', () => {
     renderVariablesHome();
     await waitFor(() => {
       expect(screen.getByRole('table', { name: /standard variables/i })).toBeInTheDocument();
+    });
+  });
+
+  // ─── Relevance-ranked search ─────────────────────────────────────────────────
+
+  it('ranks a name match above a description-only match', async () => {
+    const user = userEvent.setup();
+    renderVariablesHome([rankingMock]);
+
+    const input = await screen.findByPlaceholderText(/search standard variables/i);
+    await user.type(input, 'water');
+
+    await waitFor(() => {
+      expect(screen.getByText(wholeText('water_flow'))).toBeInTheDocument();
+    });
+    // 'water_flow' matches on name -> ranks above 'runoff' (description only).
+    const rowLabels = screen
+      .getAllByRole('row')
+      .map((r) => r.textContent ?? '')
+      .filter((t) => t.includes('water_flow') || t.includes('runoff'));
+    const flowIdx = rowLabels.findIndex((t) => t.includes('water_flow'));
+    const runoffIdx = rowLabels.findIndex((t) => t.includes('runoff'));
+    expect(flowIdx).toBeLessThan(runoffIdx);
+  });
+
+  it('surfaces a variable by its unit label and highlights the matching chip', async () => {
+    const user = userEvent.setup();
+    renderVariablesHome();
+
+    const input = await screen.findByPlaceholderText(/search standard variables/i);
+    // 'mm' appears only as precipitation's unit label, not in any name/description.
+    await user.type(input, 'mm');
+
+    await waitFor(() => {
+      expect(screen.getByText('precipitation')).toBeInTheDocument();
+      expect(screen.queryByText('temperature')).not.toBeInTheDocument();
+      expect(screen.queryByText('wind_speed')).not.toBeInTheDocument();
+    });
+
+    // The matching unit chip is highlighted (rendered inside a <mark>).
+    const mark = screen.getByText('mm');
+    expect(mark.tagName).toBe('MARK');
+  });
+
+  it('disables column sorting while searching and re-enables it when cleared', async () => {
+    const user = userEvent.setup();
+    renderVariablesHome();
+
+    // Empty box: the Standard Variable column header is a sort button. Use the
+    // exact accessible name so it does not also match the per-row copy buttons
+    // ("Copy standard variable name").
+    expect(await screen.findByRole('button', { name: 'Standard Variable' })).toBeInTheDocument();
+
+    const input = screen.getByPlaceholderText(/search standard variables/i);
+    await user.type(input, 'temp');
+
+    // While searching, the header is no longer a sortable button.
+    await waitFor(() => {
+      expect(screen.queryByRole('button', { name: 'Standard Variable' })).not.toBeInTheDocument();
+    });
+    expect(screen.getByText('Standard Variable')).toBeInTheDocument();
+
+    // Clearing the box restores sortable column headers.
+    await user.clear(input);
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Standard Variable' })).toBeInTheDocument();
     });
   });
 });

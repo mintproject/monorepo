@@ -1,22 +1,22 @@
 import {
   flexRender,
   getCoreRowModel,
-  getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
   type ColumnDef,
   type SortingState,
-  type ColumnFiltersState,
 } from '@tanstack/react-table';
 import { ChevronDown, ChevronUp, ChevronsUpDown, Copy, ChevronRight } from 'lucide-react';
-import { useMemo, useState, useCallback } from 'react';
+import { useEffect, useMemo, useState, useCallback, type ReactNode } from 'react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useGetStandardVariablesWithUnitsQuery } from '@/graphql/generated/graphql';
 import type { GetStandardVariablesWithUnitsQuery } from '@/graphql/generated/graphql';
+import { highlightRanges } from '@/lib/standard-variable-search';
+import { searchVariableRows } from '@/lib/variable-catalog-search';
 
 type StandardVariable =
   GetStandardVariablesWithUnitsQuery['modelcatalog_standard_variable'][number];
@@ -41,55 +41,84 @@ function dedupeUnits(variable: StandardVariable): StandardVariableUnit[] {
   return Array.from(seen.values());
 }
 
+// ─── Highlight helper ─────────────────────────────────────────────────────────
+
+/** Render `text` with the case-insensitive query substrings wrapped in <mark>. */
+function Highlighted({ text, query }: { text: string; query: string }) {
+  const ranges = highlightRanges(text, query);
+  if (ranges.length === 0) return <>{text}</>;
+  const parts: ReactNode[] = [];
+  let cursor = 0;
+  ranges.forEach(([start, end], i) => {
+    if (cursor < start) parts.push(text.slice(cursor, start));
+    parts.push(
+      <mark key={i} className="rounded-sm bg-yellow-200 px-0.5 text-inherit">
+        {text.slice(start, end)}
+      </mark>,
+    );
+    cursor = end;
+  });
+  if (cursor < text.length) parts.push(text.slice(cursor));
+  return <>{parts}</>;
+}
+
 // ─── Column definition ────────────────────────────────────────────────────────
 
-const columns: ColumnDef<StandardVariableRow>[] = [
-  {
-    id: 'copy',
-    header: '',
-    cell: ({ row }) => <CopyButton value={row.original.label ?? ''} />,
-    enableSorting: false,
-    enableColumnFilter: false,
-    size: 48,
-  },
-  {
-    id: 'standard_variable',
-    accessorFn: (row) => row.label ?? '',
-    header: 'Standard Variable',
-    cell: ({ row }) => {
-      const label = row.original.label ?? 'Unnamed';
-      const description = row.original.description ?? 'No description available';
-      return (
-        <div>
-          <div className="font-medium text-[#2c3e50]">{label}</div>
-          <div className="break-words pr-4 text-sm leading-relaxed text-[#6c757d]">
-            {description}
+/**
+ * Columns are built per-query so cells can highlight the matched substrings.
+ * `query` is the trimmed search string ('' when not searching).
+ */
+function buildColumns(query: string): ColumnDef<StandardVariableRow>[] {
+  return [
+    {
+      id: 'copy',
+      header: '',
+      cell: ({ row }) => <CopyButton value={row.original.label ?? ''} />,
+      enableSorting: false,
+      enableColumnFilter: false,
+      size: 48,
+    },
+    {
+      id: 'standard_variable',
+      accessorFn: (row) => row.label ?? '',
+      header: 'Standard Variable',
+      cell: ({ row }) => {
+        const label = row.original.label ?? 'Unnamed';
+        const description = row.original.description ?? 'No description available';
+        return (
+          <div>
+            <div className="font-medium text-[#2c3e50]">
+              <Highlighted text={label} query={query} />
+            </div>
+            <div className="break-words pr-4 text-sm leading-relaxed text-[#6c757d]">
+              <Highlighted text={description} query={query} />
+            </div>
           </div>
-        </div>
-      );
+        );
+      },
     },
-  },
-  {
-    id: 'units',
-    header: 'Units',
-    enableSorting: false,
-    cell: ({ row }) => {
-      const units = row.original.units;
-      if (units.length === 0) {
-        return <span className="text-sm italic text-[#adb5bd]">No units</span>;
-      }
-      return (
-        <div className="flex flex-wrap gap-1">
-          {units.map((unit) => (
-            <Badge key={unit.id} variant="secondary" className="font-normal">
-              {unit.label}
-            </Badge>
-          ))}
-        </div>
-      );
+    {
+      id: 'units',
+      header: 'Units',
+      enableSorting: false,
+      cell: ({ row }) => {
+        const units = row.original.units;
+        if (units.length === 0) {
+          return <span className="text-sm italic text-[#adb5bd]">No units</span>;
+        }
+        return (
+          <div className="flex flex-wrap gap-1">
+            {units.map((unit) => (
+              <Badge key={unit.id} variant="secondary" className="font-normal">
+                <Highlighted text={unit.label} query={query} />
+              </Badge>
+            ))}
+          </div>
+        );
+      },
     },
-  },
-];
+  ];
+}
 
 // ─── Copy button ──────────────────────────────────────────────────────────────
 
@@ -204,9 +233,11 @@ export function VariablesHome() {
   const { data, loading, error } = useGetStandardVariablesWithUnitsQuery();
 
   const [sorting, setSorting] = useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-  const [globalFilter, setGlobalFilter] = useState('');
+  const [search, setSearch] = useState('');
   const [explanationExpanded, setExplanationExpanded] = useState(true);
+
+  const query = search.trim();
+  const isSearching = query !== '';
 
   const rows = useMemo<StandardVariableRow[]>(
     () =>
@@ -217,25 +248,38 @@ export function VariablesHome() {
     [data],
   );
 
+  // While searching, results are relevance-ranked (name > description > unit
+  // label) and column sorting is disabled; otherwise the full list is shown and
+  // columns are sortable. Pagination applies to the resulting list in both states.
+  const displayRows = useMemo<StandardVariableRow[]>(
+    () => (isSearching ? searchVariableRows(rows, query) : rows),
+    [rows, query, isSearching],
+  );
+
+  const columns = useMemo(() => buildColumns(query), [query]);
+
   const table = useReactTable({
-    data: rows,
+    data: displayRows,
     columns,
-    state: { sorting, columnFilters, globalFilter },
+    state: { sorting: isSearching ? [] : sorting },
     onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
-    onGlobalFilterChange: setGlobalFilter,
-    globalFilterFn: (row, _columnId, filterValue: string) => {
-      const q = filterValue.toLowerCase();
-      const name = (row.original.label ?? '').toLowerCase();
-      const desc = (row.original.description ?? '').toLowerCase();
-      return name.includes(q) || desc.includes(q);
-    },
+    enableSorting: !isSearching,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     initialState: { pagination: { pageSize: 25 } },
+    // The ranked `displayRows` reference changes whenever the query changes;
+    // react-table's default autoReset would resync page state on every data
+    // change, which combined with Apollo's fresh result objects can loop. Manage
+    // the page reset explicitly instead (see below).
+    autoResetPageIndex: false,
   });
+
+  // Start each new/changed search (and each return to the unfiltered list) at
+  // the first page so pagination applies from the top of the ranked results.
+  useEffect(() => {
+    table.setPageIndex(0);
+  }, [query, table]);
 
   return (
     <div>
@@ -260,8 +304,8 @@ export function VariablesHome() {
         <Input
           type="text"
           placeholder="Search standard variables..."
-          value={globalFilter}
-          onChange={(e) => setGlobalFilter(e.target.value)}
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
           className="border-none text-[#495057] shadow-none placeholder:text-[#adb5bd] focus-visible:ring-0"
           aria-label="Search standard variables"
         />
@@ -338,7 +382,7 @@ export function VariablesHome() {
         <div className="mt-4 flex items-center justify-between">
           <span className="text-sm text-[#6c757d]">
             Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()} (
-            {table.getFilteredRowModel().rows.length} rows)
+            {table.getPrePaginationRowModel().rows.length} rows)
           </span>
           <div className="flex items-center gap-2">
             <Button
