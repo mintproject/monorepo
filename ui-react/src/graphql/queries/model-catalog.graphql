@@ -148,6 +148,7 @@ query GetStandardVariablesWithUnits {
     description
     same_as
     variable_presentations {
+      id
       unit {
         id
         label

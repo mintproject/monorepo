@@ -26497,7 +26497,7 @@ export type GetVariablePresentationsQuery = { __typename?: 'query_root', modelca
 export type GetStandardVariablesWithUnitsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetStandardVariablesWithUnitsQuery = { __typename?: 'query_root', modelcatalog_standard_variable: Array<{ __typename?: 'modelcatalog_standard_variable', id: string, label: string, description?: string | null, same_as?: Array<string> | null, variable_presentations: Array<{ __typename?: 'modelcatalog_variable_presentation', unit?: { __typename?: 'modelcatalog_unit', id: string, label: string } | null }> }> };
+export type GetStandardVariablesWithUnitsQuery = { __typename?: 'query_root', modelcatalog_standard_variable: Array<{ __typename?: 'modelcatalog_standard_variable', id: string, label: string, description?: string | null, same_as?: Array<string> | null, variable_presentations: Array<{ __typename?: 'modelcatalog_variable_presentation', id: string, unit?: { __typename?: 'modelcatalog_unit', id: string, label: string } | null }> }> };
 
 export type GetModelFamiliesQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -28162,6 +28162,7 @@ export const GetStandardVariablesWithUnitsDocument = gql`
     description
     same_as
     variable_presentations {
+      id
       unit {
         id
         label
