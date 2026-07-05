@@ -13,9 +13,22 @@ import { useEffect, useMemo, useState, useCallback, type ReactNode } from 'react
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { useGetStandardVariablesWithUnitsQuery } from '@/graphql/generated/graphql';
 import type { GetStandardVariablesWithUnitsQuery } from '@/graphql/generated/graphql';
 import { highlightRanges } from '@/lib/standard-variable-search';
+import {
+  CATEGORY_ORDER,
+  categorizeStandardVariable,
+  isUnnamedLabel,
+  type StandardVariableCategory,
+} from '@/lib/standard-variable-taxonomy';
 import { searchVariableRows } from '@/lib/variable-catalog-search';
 
 type StandardVariable =
@@ -23,8 +36,21 @@ type StandardVariable =
 
 type StandardVariableUnit = { id: string; label: string };
 
-/** A standard variable enriched with its deduplicated set of units. */
-type StandardVariableRow = StandardVariable & { units: StandardVariableUnit[] };
+/**
+ * A standard variable enriched with its deduplicated set of units and its
+ * derived taxonomy fields: a domain `category`, whether the label is
+ * unnamed/UUID-shaped, and the `displayLabel` to show (the description when the
+ * raw label is an unnamed UUID, so scientists never see a bare UUID).
+ */
+type StandardVariableRow = StandardVariable & {
+  units: StandardVariableUnit[];
+  category: StandardVariableCategory;
+  isUnnamed: boolean;
+  displayLabel: string;
+};
+
+/** Sentinel value for the "all categories" option (Radix Select forbids ''). */
+const ALL_CATEGORIES = '__all__';
 
 /**
  * Gather the units a standard variable is available in through its
@@ -80,22 +106,36 @@ function buildColumns(query: string): ColumnDef<StandardVariableRow>[] {
     },
     {
       id: 'standard_variable',
-      accessorFn: (row) => row.label ?? '',
+      accessorFn: (row) => row.displayLabel,
       header: 'Standard Variable',
       cell: ({ row }) => {
-        const label = row.original.label ?? 'Unnamed';
+        // Unnamed/UUID rows are shown by their description (displayLabel); their
+        // raw UUID is never rendered. Named rows show label above description.
+        const { displayLabel, isUnnamed } = row.original;
         const description = row.original.description ?? 'No description available';
         return (
           <div>
             <div className="font-medium text-[#2c3e50]">
-              <Highlighted text={label} query={query} />
+              <Highlighted text={displayLabel} query={query} />
             </div>
-            <div className="break-words pr-4 text-sm leading-relaxed text-[#6c757d]">
-              <Highlighted text={description} query={query} />
-            </div>
+            {!isUnnamed && (
+              <div className="break-words pr-4 text-sm leading-relaxed text-[#6c757d]">
+                <Highlighted text={description} query={query} />
+              </div>
+            )}
           </div>
         );
       },
+    },
+    {
+      id: 'category',
+      accessorFn: (row) => row.category,
+      header: 'Category',
+      cell: ({ row }) => (
+        <Badge variant="outline" className="whitespace-nowrap font-normal text-[#495057]">
+          {row.original.category}
+        </Badge>
+      ),
     },
     {
       id: 'units',
@@ -234,6 +274,7 @@ export function VariablesHome() {
 
   const [sorting, setSorting] = useState<SortingState>([]);
   const [search, setSearch] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string>(ALL_CATEGORIES);
   const [explanationExpanded, setExplanationExpanded] = useState(true);
 
   const query = search.trim();
@@ -241,19 +282,52 @@ export function VariablesHome() {
 
   const rows = useMemo<StandardVariableRow[]>(
     () =>
-      (data?.modelcatalog_standard_variable ?? []).map((variable) => ({
-        ...variable,
-        units: dedupeUnits(variable),
-      })),
+      (data?.modelcatalog_standard_variable ?? []).map((variable) => {
+        const label = variable.label ?? '';
+        const isUnnamed = isUnnamedLabel(label);
+        return {
+          ...variable,
+          units: dedupeUnits(variable),
+          category: categorizeStandardVariable(label, variable.description),
+          isUnnamed,
+          // Fall back to the description so an unnamed/UUID row is readable and
+          // still findable by its description text (never a raw UUID).
+          displayLabel: isUnnamed ? (variable.description ?? 'Unnamed variable') : label,
+        };
+      }),
     [data],
   );
 
+  // Demote unnamed/UUID rows below named rows in the default (unsorted) order.
+  // Stable partition preserves the query order within each group; they are
+  // demoted, never hidden.
+  const demotedRows = useMemo<StandardVariableRow[]>(
+    () => [...rows.filter((r) => !r.isUnnamed), ...rows.filter((r) => r.isUnnamed)],
+    [rows],
+  );
+
+  // Category options follow the canonical order (with "Unnamed / Other" last),
+  // restricted to categories actually present in the data.
+  const categoryOptions = useMemo<StandardVariableCategory[]>(() => {
+    const present = new Set(demotedRows.map((r) => r.category));
+    return CATEGORY_ORDER.filter((c) => present.has(c));
+  }, [demotedRows]);
+
+  const categoryFiltered = useMemo<StandardVariableRow[]>(
+    () =>
+      selectedCategory === ALL_CATEGORIES
+        ? demotedRows
+        : demotedRows.filter((r) => r.category === selectedCategory),
+    [demotedRows, selectedCategory],
+  );
+
   // While searching, results are relevance-ranked (name > description > unit
-  // label) and column sorting is disabled; otherwise the full list is shown and
-  // columns are sortable. Pagination applies to the resulting list in both states.
+  // label) and column sorting is disabled; otherwise the (demoted, category-
+  // filtered) list is shown and columns are sortable. Pagination applies to the
+  // resulting list in both states.
   const displayRows = useMemo<StandardVariableRow[]>(
-    () => (isSearching ? searchVariableRows(rows, query) : rows),
-    [rows, query, isSearching],
+    () => (isSearching ? searchVariableRows(categoryFiltered, query) : categoryFiltered),
+    [categoryFiltered, query, isSearching],
   );
 
   const columns = useMemo(() => buildColumns(query), [query]);
@@ -279,7 +353,7 @@ export function VariablesHome() {
   // the first page so pagination applies from the top of the ranked results.
   useEffect(() => {
     table.setPageIndex(0);
-  }, [query, table]);
+  }, [query, selectedCategory, table]);
 
   return (
     <div>
@@ -299,16 +373,31 @@ export function VariablesHome() {
         onToggle={() => setExplanationExpanded((v) => !v)}
       />
 
-      {/* Search bar */}
-      <div className="mb-4 flex items-center rounded-lg bg-white px-4 py-2 shadow-sm">
-        <Input
-          type="text"
-          placeholder="Search standard variables..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="border-none text-[#495057] shadow-none placeholder:text-[#adb5bd] focus-visible:ring-0"
-          aria-label="Search standard variables"
-        />
+      {/* Search bar + category filter */}
+      <div className="mb-4 flex items-center gap-3">
+        <div className="flex flex-1 items-center rounded-lg bg-white px-4 py-2 shadow-sm">
+          <Input
+            type="text"
+            placeholder="Search standard variables..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="border-none text-[#495057] shadow-none placeholder:text-[#adb5bd] focus-visible:ring-0"
+            aria-label="Search standard variables"
+          />
+        </div>
+        <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+          <SelectTrigger className="w-[220px] bg-white shadow-sm" aria-label="Filter by category">
+            <SelectValue placeholder="All categories" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={ALL_CATEGORIES}>All categories</SelectItem>
+            {categoryOptions.map((category) => (
+              <SelectItem key={category} value={category}>
+                {category}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Table */}

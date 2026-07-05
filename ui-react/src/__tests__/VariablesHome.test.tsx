@@ -23,15 +23,18 @@ const mockData: GetStandardVariablesWithUnitsQuery = {
       variable_presentations: [
         {
           __typename: 'modelcatalog_variable_presentation',
+          id: 'vp1',
           unit: { __typename: 'modelcatalog_unit', id: 'u1', label: 'Celsius' },
         },
         {
           __typename: 'modelcatalog_variable_presentation',
+          id: 'vp2',
           unit: { __typename: 'modelcatalog_unit', id: 'u2', label: 'Fahrenheit' },
         },
         // Duplicate unit id — must be deduplicated client-side.
         {
           __typename: 'modelcatalog_variable_presentation',
+          id: 'vp3',
           unit: { __typename: 'modelcatalog_unit', id: 'u1', label: 'Celsius' },
         },
       ],
@@ -45,6 +48,7 @@ const mockData: GetStandardVariablesWithUnitsQuery = {
       variable_presentations: [
         {
           __typename: 'modelcatalog_variable_presentation',
+          id: 'vp4',
           unit: { __typename: 'modelcatalog_unit', id: 'u3', label: 'mm' },
         },
       ],
@@ -80,6 +84,7 @@ const rankingMockData: GetStandardVariablesWithUnitsQuery = {
       variable_presentations: [
         {
           __typename: 'modelcatalog_variable_presentation',
+          id: 'vp5',
           unit: { __typename: 'modelcatalog_unit', id: 'ru', label: 'mm/day' },
         },
       ],
@@ -99,6 +104,44 @@ const rankingMock = makeQueryMock(
   GetStandardVariablesWithUnitsDocument,
   {},
   { modelcatalog_standard_variable: rankingMockData.modelcatalog_standard_variable },
+);
+
+// Fixture spanning multiple categories plus one unnamed/UUID row (its label is
+// a raw UUID, its description carries the real meaning).
+const UNNAMED_UUID = '3f2504e0-4f89-41d3-9a0c-0305e82c3301';
+const categoryMockData: GetStandardVariablesWithUnitsQuery = {
+  modelcatalog_standard_variable: [
+    {
+      __typename: 'modelcatalog_standard_variable',
+      id: 'c1',
+      label: 'air_temperature',
+      description: 'Near-surface air temperature',
+      same_as: null,
+      variable_presentations: [],
+    },
+    {
+      __typename: 'modelcatalog_standard_variable',
+      id: 'c2',
+      label: 'soil_moisture_content',
+      description: 'Volumetric water in soil',
+      same_as: null,
+      variable_presentations: [],
+    },
+    {
+      __typename: 'modelcatalog_standard_variable',
+      id: 'c3',
+      label: UNNAMED_UUID,
+      description: 'Downhill routed runoff depth',
+      same_as: null,
+      variable_presentations: [],
+    },
+  ],
+};
+
+const categoryMock = makeQueryMock(
+  GetStandardVariablesWithUnitsDocument,
+  {},
+  { modelcatalog_standard_variable: categoryMockData.modelcatalog_standard_variable },
 );
 
 const emptyMock = makeQueryMock(
@@ -302,6 +345,84 @@ describe('VariablesHome', () => {
     // The matching unit chip is highlighted (rendered inside a <mark>).
     const mark = screen.getByText('mm');
     expect(mark.tagName).toBe('MARK');
+  });
+
+  // ─── Category column, filter, and unnamed-row demotion ───────────────────────
+
+  it('renders a Category column with each row derived category', async () => {
+    renderVariablesHome([categoryMock]);
+    await waitFor(() => {
+      expect(screen.getByText('Category')).toBeInTheDocument();
+    });
+    expect(screen.getByText('Atmosphere & Climate')).toBeInTheDocument();
+    expect(screen.getByText('Soil')).toBeInTheDocument();
+    expect(screen.getByText('Unnamed / Other')).toBeInTheDocument();
+  });
+
+  it('narrows the table to the selected category', async () => {
+    const user = userEvent.setup();
+    renderVariablesHome([categoryMock]);
+
+    await screen.findByText('soil_moisture_content');
+
+    const filter = screen.getByRole('combobox', { name: /filter by category/i });
+    await user.click(filter);
+    await user.click(await screen.findByRole('option', { name: 'Soil' }));
+
+    await waitFor(() => {
+      expect(screen.getByText('soil_moisture_content')).toBeInTheDocument();
+      expect(screen.queryByText('air_temperature')).not.toBeInTheDocument();
+      expect(screen.queryByText('Downhill routed runoff depth')).not.toBeInTheDocument();
+    });
+  });
+
+  it('lists category options in canonical order with "Unnamed / Other" last', async () => {
+    const user = userEvent.setup();
+    renderVariablesHome([categoryMock]);
+
+    await screen.findByText('soil_moisture_content');
+
+    await user.click(screen.getByRole('combobox', { name: /filter by category/i }));
+
+    const optionNames = screen
+      .getAllByRole('option')
+      .map((o) => o.textContent ?? '')
+      .filter((t) => t !== 'All categories');
+    expect(optionNames).toEqual(['Atmosphere & Climate', 'Soil', 'Unnamed / Other']);
+  });
+
+  it('renders an unnamed variable by its description and demotes it below named rows', async () => {
+    renderVariablesHome([categoryMock]);
+
+    await waitFor(() => {
+      expect(screen.getByText('Downhill routed runoff depth')).toBeInTheDocument();
+    });
+    // The raw UUID is never rendered.
+    expect(screen.queryByText(UNNAMED_UUID)).not.toBeInTheDocument();
+
+    // The unnamed row sorts after the named rows in the default order.
+    const rows = screen.getAllByRole('row').map((r) => r.textContent ?? '');
+    const airIdx = rows.findIndex((t) => t.includes('air_temperature'));
+    const unnamedIdx = rows.findIndex((t) => t.includes('Downhill routed runoff depth'));
+    expect(airIdx).toBeGreaterThanOrEqual(0);
+    expect(airIdx).toBeLessThan(unnamedIdx);
+  });
+
+  it('finds an unnamed variable by searching its description', async () => {
+    const user = userEvent.setup();
+    renderVariablesHome([categoryMock]);
+
+    const input = await screen.findByPlaceholderText(/search standard variables/i);
+    await user.type(input, 'runoff');
+
+    await waitFor(() => {
+      // The unnamed row surfaces via its description (rendered as the label,
+      // with the match highlighted); the named rows drop out.
+      const mark = screen.getByText('runoff');
+      expect(mark.tagName).toBe('MARK');
+      expect(screen.queryByText('air_temperature')).not.toBeInTheDocument();
+      expect(screen.queryByText('soil_moisture_content')).not.toBeInTheDocument();
+    });
   });
 
   it('disables column sorting while searching and re-enables it when cleared', async () => {
