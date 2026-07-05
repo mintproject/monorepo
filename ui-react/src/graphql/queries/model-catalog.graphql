@@ -109,11 +109,7 @@ query PrefetchReferenceData {
 }
 
 query GetPersons($search: String) {
-  modelcatalog_person(
-    order_by: { label: asc }
-    where: { label: { _ilike: $search } }
-    limit: 50
-  ) {
+  modelcatalog_person(order_by: { label: asc }, where: { label: { _ilike: $search } }, limit: 50) {
     id
     label
     name
@@ -141,6 +137,21 @@ query GetVariablePresentations {
     unit {
       id
       label
+    }
+  }
+}
+
+query GetStandardVariablesWithUnits {
+  modelcatalog_standard_variable(order_by: { label: asc }) {
+    id
+    label
+    description
+    same_as
+    variable_presentations {
+      unit {
+        id
+        label
+      }
     }
   }
 }

@@ -26494,6 +26494,11 @@ export type GetVariablePresentationsQueryVariables = Exact<{ [key: string]: neve
 
 export type GetVariablePresentationsQuery = { __typename?: 'query_root', modelcatalog_variable_presentation: Array<{ __typename?: 'modelcatalog_variable_presentation', id: string, label: string, has_long_name?: string | null, has_short_name?: string | null, standard_variable?: { __typename?: 'modelcatalog_standard_variable', id: string, label: string, description?: string | null } | null, unit?: { __typename?: 'modelcatalog_unit', id: string, label: string } | null }> };
 
+export type GetStandardVariablesWithUnitsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetStandardVariablesWithUnitsQuery = { __typename?: 'query_root', modelcatalog_standard_variable: Array<{ __typename?: 'modelcatalog_standard_variable', id: string, label: string, description?: string | null, same_as?: Array<string> | null, variable_presentations: Array<{ __typename?: 'modelcatalog_variable_presentation', unit?: { __typename?: 'modelcatalog_unit', id: string, label: string } | null }> }> };
+
 export type GetModelFamiliesQueryVariables = Exact<{ [key: string]: never; }>;
 
 
@@ -28149,6 +28154,57 @@ export type GetVariablePresentationsQueryHookResult = ReturnType<typeof useGetVa
 export type GetVariablePresentationsLazyQueryHookResult = ReturnType<typeof useGetVariablePresentationsLazyQuery>;
 export type GetVariablePresentationsSuspenseQueryHookResult = ReturnType<typeof useGetVariablePresentationsSuspenseQuery>;
 export type GetVariablePresentationsQueryResult = Apollo.QueryResult<GetVariablePresentationsQuery, GetVariablePresentationsQueryVariables>;
+export const GetStandardVariablesWithUnitsDocument = gql`
+    query GetStandardVariablesWithUnits {
+  modelcatalog_standard_variable(order_by: {label: asc}) {
+    id
+    label
+    description
+    same_as
+    variable_presentations {
+      unit {
+        id
+        label
+      }
+    }
+  }
+}
+    `;
+
+/**
+ * __useGetStandardVariablesWithUnitsQuery__
+ *
+ * To run a query within a React component, call `useGetStandardVariablesWithUnitsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetStandardVariablesWithUnitsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetStandardVariablesWithUnitsQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useGetStandardVariablesWithUnitsQuery(baseOptions?: Apollo.QueryHookOptions<GetStandardVariablesWithUnitsQuery, GetStandardVariablesWithUnitsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetStandardVariablesWithUnitsQuery, GetStandardVariablesWithUnitsQueryVariables>(GetStandardVariablesWithUnitsDocument, options);
+      }
+export function useGetStandardVariablesWithUnitsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetStandardVariablesWithUnitsQuery, GetStandardVariablesWithUnitsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetStandardVariablesWithUnitsQuery, GetStandardVariablesWithUnitsQueryVariables>(GetStandardVariablesWithUnitsDocument, options);
+        }
+// @ts-ignore
+export function useGetStandardVariablesWithUnitsSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetStandardVariablesWithUnitsQuery, GetStandardVariablesWithUnitsQueryVariables>): Apollo.UseSuspenseQueryResult<GetStandardVariablesWithUnitsQuery, GetStandardVariablesWithUnitsQueryVariables>;
+export function useGetStandardVariablesWithUnitsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetStandardVariablesWithUnitsQuery, GetStandardVariablesWithUnitsQueryVariables>): Apollo.UseSuspenseQueryResult<GetStandardVariablesWithUnitsQuery | undefined, GetStandardVariablesWithUnitsQueryVariables>;
+export function useGetStandardVariablesWithUnitsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetStandardVariablesWithUnitsQuery, GetStandardVariablesWithUnitsQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetStandardVariablesWithUnitsQuery, GetStandardVariablesWithUnitsQueryVariables>(GetStandardVariablesWithUnitsDocument, options);
+        }
+export type GetStandardVariablesWithUnitsQueryHookResult = ReturnType<typeof useGetStandardVariablesWithUnitsQuery>;
+export type GetStandardVariablesWithUnitsLazyQueryHookResult = ReturnType<typeof useGetStandardVariablesWithUnitsLazyQuery>;
+export type GetStandardVariablesWithUnitsSuspenseQueryHookResult = ReturnType<typeof useGetStandardVariablesWithUnitsSuspenseQuery>;
+export type GetStandardVariablesWithUnitsQueryResult = Apollo.QueryResult<GetStandardVariablesWithUnitsQuery, GetStandardVariablesWithUnitsQueryVariables>;
 export const GetModelFamiliesDocument = gql`
     query GetModelFamilies {
   modelcatalog_software(

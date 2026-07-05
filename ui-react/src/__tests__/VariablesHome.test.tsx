@@ -1,75 +1,80 @@
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { VariablesHome } from '../pages/variables/VariablesHome';
 import {
-  GetVariablePresentationsDocument,
-  type GetVariablePresentationsQuery,
+  GetStandardVariablesWithUnitsDocument,
+  type GetStandardVariablesWithUnitsQuery,
 } from '../graphql/generated/graphql';
 import { makeQueryMock, makeNetworkErrorMock } from '../test/utils/apollo-mocks';
 import { renderWithProviders } from '../test/utils/render';
 
 // ─── Test fixtures ────────────────────────────────────────────────────────────
 
-const mockData: GetVariablePresentationsQuery = {
-  modelcatalog_variable_presentation: [
+const mockData: GetStandardVariablesWithUnitsQuery = {
+  modelcatalog_standard_variable: [
     {
-      __typename: 'modelcatalog_variable_presentation',
-      id: 'vp1',
-      label: 'Temperature (Celsius)',
-      has_long_name: 'Temperature in Celsius',
-      has_short_name: 'temp_c',
-      standard_variable: {
-        __typename: 'modelcatalog_standard_variable',
-        id: 'sv1',
-        label: 'temperature',
-        description: 'Atmospheric temperature measurement',
-      },
-      unit: {
-        __typename: 'modelcatalog_unit',
-        id: 'u1',
-        label: 'Celsius',
-      },
+      __typename: 'modelcatalog_standard_variable',
+      id: 'sv1',
+      label: 'temperature',
+      description: 'Atmospheric temperature measurement',
+      same_as: ['http://example.org/temperature'],
+      variable_presentations: [
+        {
+          __typename: 'modelcatalog_variable_presentation',
+          unit: { __typename: 'modelcatalog_unit', id: 'u1', label: 'Celsius' },
+        },
+        {
+          __typename: 'modelcatalog_variable_presentation',
+          unit: { __typename: 'modelcatalog_unit', id: 'u2', label: 'Fahrenheit' },
+        },
+        // Duplicate unit id — must be deduplicated client-side.
+        {
+          __typename: 'modelcatalog_variable_presentation',
+          unit: { __typename: 'modelcatalog_unit', id: 'u1', label: 'Celsius' },
+        },
+      ],
     },
     {
-      __typename: 'modelcatalog_variable_presentation',
-      id: 'vp2',
-      label: 'Precipitation (mm)',
-      has_long_name: 'Daily precipitation in millimetres',
-      has_short_name: 'precip',
-      standard_variable: {
-        __typename: 'modelcatalog_standard_variable',
-        id: 'sv2',
-        label: 'precipitation',
-        description: 'Rainfall and snowfall accumulation',
-      },
-      unit: {
-        __typename: 'modelcatalog_unit',
-        id: 'u2',
-        label: 'mm',
-      },
+      __typename: 'modelcatalog_standard_variable',
+      id: 'sv2',
+      label: 'precipitation',
+      description: 'Rainfall and snowfall accumulation',
+      same_as: null,
+      variable_presentations: [
+        {
+          __typename: 'modelcatalog_variable_presentation',
+          unit: { __typename: 'modelcatalog_unit', id: 'u3', label: 'mm' },
+        },
+      ],
     },
     {
-      __typename: 'modelcatalog_variable_presentation',
-      id: 'vp3',
-      label: 'Wind Speed',
-      has_long_name: null,
-      has_short_name: null,
-      standard_variable: null,
-      unit: null,
+      __typename: 'modelcatalog_standard_variable',
+      id: 'sv3',
+      label: 'wind_speed',
+      description: 'Speed of wind',
+      same_as: null,
+      // No presentations -> "no units".
+      variable_presentations: [],
     },
   ],
 };
 
 const successMock = makeQueryMock(
-  GetVariablePresentationsDocument,
+  GetStandardVariablesWithUnitsDocument,
   {},
-  { modelcatalog_variable_presentation: mockData.modelcatalog_variable_presentation },
+  { modelcatalog_standard_variable: mockData.modelcatalog_standard_variable },
+);
+
+const emptyMock = makeQueryMock(
+  GetStandardVariablesWithUnitsDocument,
+  {},
+  { modelcatalog_standard_variable: [] },
 );
 
 const networkErrorMock = makeNetworkErrorMock(
-  GetVariablePresentationsDocument,
+  GetStandardVariablesWithUnitsDocument,
   {},
   'Network request failed',
 );
@@ -83,7 +88,7 @@ function renderVariablesHome(mocks = [successMock]) {
 describe('VariablesHome', () => {
   it('renders loading state initially', () => {
     renderVariablesHome();
-    expect(screen.getByText(/loading variable presentations/i)).toBeInTheDocument();
+    expect(screen.getByText(/loading standard variables/i)).toBeInTheDocument();
   });
 
   it('renders the page heading', async () => {
@@ -93,135 +98,128 @@ describe('VariablesHome', () => {
     });
   });
 
-  it('renders variable presentation rows after data loads', async () => {
-    renderVariablesHome();
-    await waitFor(() => {
-      expect(screen.getByText('Temperature (Celsius)')).toBeInTheDocument();
-      expect(screen.getByText('Precipitation (mm)')).toBeInTheDocument();
-      expect(screen.getByText('Wind Speed')).toBeInTheDocument();
-    });
-  });
-
-  it('renders standard variable labels', async () => {
+  it('renders one row per standard variable with its name and description', async () => {
     renderVariablesHome();
     await waitFor(() => {
       expect(screen.getByText('temperature')).toBeInTheDocument();
+      expect(screen.getByText('Atmospheric temperature measurement')).toBeInTheDocument();
       expect(screen.getByText('precipitation')).toBeInTheDocument();
+      expect(screen.getByText('wind_speed')).toBeInTheDocument();
     });
   });
 
-  it('renders unit labels', async () => {
+  it('renders deduplicated unit chips gathered from presentations', async () => {
     renderVariablesHome();
     await waitFor(() => {
-      expect(screen.getByText('Celsius')).toBeInTheDocument();
+      // temperature has Celsius, Fahrenheit, Celsius (dup) -> Celsius appears once.
+      expect(screen.getAllByText('Celsius')).toHaveLength(1);
+      expect(screen.getByText('Fahrenheit')).toBeInTheDocument();
       expect(screen.getByText('mm')).toBeInTheDocument();
     });
   });
 
-  it('shows dash for missing standard variable and unit', async () => {
+  it('shows a "no units" indication for a variable with no presentations', async () => {
     renderVariablesHome();
     await waitFor(() => {
-      // Wind Speed row has null standard_variable and null unit — both render as '-'
-      const dashes = screen.getAllByText('-');
-      expect(dashes.length).toBeGreaterThanOrEqual(2);
+      expect(screen.getByText(/no units/i)).toBeInTheDocument();
     });
   });
 
   it('renders the search input', async () => {
     renderVariablesHome();
     await waitFor(() => {
-      expect(screen.getByPlaceholderText('Search variable presentations...')).toBeInTheDocument();
+      expect(screen.getByPlaceholderText(/search standard variables/i)).toBeInTheDocument();
     });
   });
 
-  it('filters rows by search query matching label', async () => {
+  it('filters rows by search query matching name', async () => {
     const user = userEvent.setup();
     renderVariablesHome();
 
-    const input = await screen.findByPlaceholderText('Search variable presentations...');
-    await user.type(input, 'Wind');
+    const input = await screen.findByPlaceholderText(/search standard variables/i);
+    await user.type(input, 'wind');
 
     await waitFor(() => {
-      expect(screen.getByText('Wind Speed')).toBeInTheDocument();
-      expect(screen.queryByText('Temperature (Celsius)')).not.toBeInTheDocument();
-      expect(screen.queryByText('Precipitation (mm)')).not.toBeInTheDocument();
+      expect(screen.getByText('wind_speed')).toBeInTheDocument();
+      expect(screen.queryByText('temperature')).not.toBeInTheDocument();
+      expect(screen.queryByText('precipitation')).not.toBeInTheDocument();
     });
   });
 
-  it('filters rows by search query matching standard variable label', async () => {
+  it('filters rows by search query matching description', async () => {
     const user = userEvent.setup();
     renderVariablesHome();
 
-    const input = await screen.findByPlaceholderText('Search variable presentations...');
-    await user.type(input, 'precipitation');
+    const input = await screen.findByPlaceholderText(/search standard variables/i);
+    await user.type(input, 'Rainfall');
 
     await waitFor(() => {
-      expect(screen.getByText('Precipitation (mm)')).toBeInTheDocument();
-      expect(screen.queryByText('Temperature (Celsius)')).not.toBeInTheDocument();
+      expect(screen.getByText('precipitation')).toBeInTheDocument();
+      expect(screen.queryByText('temperature')).not.toBeInTheDocument();
     });
   });
 
-  it('shows "no results" message when search yields nothing', async () => {
+  it('shows an empty-result message when search yields nothing', async () => {
     const user = userEvent.setup();
     renderVariablesHome();
 
-    const input = await screen.findByPlaceholderText('Search variable presentations...');
+    const input = await screen.findByPlaceholderText(/search standard variables/i);
     await user.type(input, 'zzz_no_match_zzz');
 
     await waitFor(() => {
-      expect(screen.getByText(/no variable presentations found/i)).toBeInTheDocument();
+      expect(screen.getByText(/no standard variables found/i)).toBeInTheDocument();
     });
   });
 
-  it('renders table column headers', async () => {
+  it('shows an empty-result message when there are no standard variables', async () => {
+    renderVariablesHome([emptyMock]);
+    await waitFor(() => {
+      expect(screen.getByText(/no standard variables found/i)).toBeInTheDocument();
+    });
+  });
+
+  it('renders table column headers without a Variable Presentation column', async () => {
     renderVariablesHome();
     await waitFor(() => {
-      expect(screen.getByText('Standard Variables')).toBeInTheDocument();
-      expect(screen.getByText('Variable Presentation')).toBeInTheDocument();
+      expect(screen.getByText('Standard Variable')).toBeInTheDocument();
       expect(screen.getByText('Units')).toBeInTheDocument();
     });
+    expect(screen.queryByText('Variable Presentation')).not.toBeInTheDocument();
   });
 
-  it('renders copy buttons for each row', async () => {
+  it('does not render the "What is a Variable Presentation?" explanation card', async () => {
+    renderVariablesHome();
+    await screen.findByText('temperature');
+    expect(screen.queryByText(/what is a variable presentation/i)).not.toBeInTheDocument();
+  });
+
+  it('copies the standard variable name when the copy button is clicked', async () => {
+    const user = userEvent.setup();
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', {
+      value: { writeText },
+      configurable: true,
+    });
+
     renderVariablesHome();
     const buttons = await screen.findAllByRole('button', { name: /copy standard variable name/i });
-    expect(buttons).toHaveLength(mockData.modelcatalog_variable_presentation.length);
-  });
+    expect(buttons).toHaveLength(mockData.modelcatalog_standard_variable.length);
 
-  it('shows the collapsible explanation section expanded by default', async () => {
-    renderVariablesHome();
-    await waitFor(() => {
-      expect(screen.getByText('What is a Standard Variable?')).toBeInTheDocument();
-      expect(screen.getByText('What is a Variable Presentation?')).toBeInTheDocument();
-    });
-  });
-
-  it('collapses the explanation section when toggle is clicked', async () => {
-    const user = userEvent.setup();
-    renderVariablesHome();
-
-    // Wait for data so the toggle is visible
-    await screen.findByText('What is a Standard Variable?');
-
-    const toggle = screen.getByRole('button', { name: /hide explanation/i });
-    await user.click(toggle);
-
-    await waitFor(() => {
-      expect(screen.queryByText('What is a Standard Variable?')).not.toBeInTheDocument();
-    });
+    await user.click(buttons[0]!);
+    expect(writeText).toHaveBeenCalledWith('temperature');
   });
 
   it('shows error message on network failure', async () => {
     renderVariablesHome([networkErrorMock]);
     await waitFor(() => {
-      expect(screen.getByText(/failed to load variable presentations/i)).toBeInTheDocument();
+      expect(screen.getByText(/failed to load standard variables/i)).toBeInTheDocument();
     });
   });
 
   it('renders an accessible table with aria-label', async () => {
     renderVariablesHome();
     await waitFor(() => {
-      expect(screen.getByRole('table', { name: /variable presentations/i })).toBeInTheDocument();
+      expect(screen.getByRole('table', { name: /standard variables/i })).toBeInTheDocument();
     });
   });
 });

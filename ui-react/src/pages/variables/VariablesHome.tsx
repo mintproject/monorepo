@@ -10,42 +10,55 @@ import {
   type ColumnFiltersState,
 } from '@tanstack/react-table';
 import { ChevronDown, ChevronUp, ChevronsUpDown, Copy, ChevronRight } from 'lucide-react';
-import { useState, useCallback } from 'react';
+import { useMemo, useState, useCallback } from 'react';
 
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useGetVariablePresentationsQuery } from '@/graphql/generated/graphql';
-import type { GetVariablePresentationsQuery } from '@/graphql/generated/graphql';
+import { useGetStandardVariablesWithUnitsQuery } from '@/graphql/generated/graphql';
+import type { GetStandardVariablesWithUnitsQuery } from '@/graphql/generated/graphql';
 
-type VariablePresentation =
-  GetVariablePresentationsQuery['modelcatalog_variable_presentation'][number];
+type StandardVariable =
+  GetStandardVariablesWithUnitsQuery['modelcatalog_standard_variable'][number];
+
+type StandardVariableUnit = { id: string; label: string };
+
+/** A standard variable enriched with its deduplicated set of units. */
+type StandardVariableRow = StandardVariable & { units: StandardVariableUnit[] };
+
+/**
+ * Gather the units a standard variable is available in through its
+ * variable_presentations reverse relationship, deduplicated by unit id.
+ */
+function dedupeUnits(variable: StandardVariable): StandardVariableUnit[] {
+  const seen = new Map<string, StandardVariableUnit>();
+  for (const presentation of variable.variable_presentations) {
+    const unit = presentation.unit;
+    if (unit && !seen.has(unit.id)) {
+      seen.set(unit.id, { id: unit.id, label: unit.label });
+    }
+  }
+  return Array.from(seen.values());
+}
 
 // ─── Column definition ────────────────────────────────────────────────────────
 
-const columns: ColumnDef<VariablePresentation>[] = [
+const columns: ColumnDef<StandardVariableRow>[] = [
   {
     id: 'copy',
     header: '',
-    cell: ({ row }) => (
-      <CopyButton value={row.original.standard_variable?.label ?? row.original.label ?? ''} />
-    ),
+    cell: ({ row }) => <CopyButton value={row.original.label ?? ''} />,
     enableSorting: false,
     enableColumnFilter: false,
     size: 48,
   },
   {
     id: 'standard_variable',
-    accessorFn: (row) => row.standard_variable?.label ?? '',
-    header: 'Standard Variables',
-    cell: ({ getValue }) => <span className="text-[#6c757d]">{(getValue() as string) || '-'}</span>,
-  },
-  {
-    id: 'label',
     accessorFn: (row) => row.label ?? '',
-    header: 'Variable Presentation',
+    header: 'Standard Variable',
     cell: ({ row }) => {
       const label = row.original.label ?? 'Unnamed';
-      const description = row.original.standard_variable?.description ?? 'No description available';
+      const description = row.original.description ?? 'No description available';
       return (
         <div>
           <div className="font-medium text-[#2c3e50]">{label}</div>
@@ -55,21 +68,26 @@ const columns: ColumnDef<VariablePresentation>[] = [
         </div>
       );
     },
-    filterFn: (row, _columnId, filterValue: string) => {
-      const q = filterValue.toLowerCase();
-      const name = (row.original.label ?? '').toLowerCase();
-      const desc = (row.original.standard_variable?.description ?? '').toLowerCase();
-      const sv = (row.original.standard_variable?.label ?? '').toLowerCase();
-      return name.includes(q) || desc.includes(q) || sv.includes(q);
-    },
   },
   {
-    id: 'unit',
-    accessorFn: (row) => row.unit?.label ?? '',
+    id: 'units',
     header: 'Units',
-    cell: ({ getValue }) => (
-      <span className="italic text-[#6c757d]">{(getValue() as string) || '-'}</span>
-    ),
+    enableSorting: false,
+    cell: ({ row }) => {
+      const units = row.original.units;
+      if (units.length === 0) {
+        return <span className="text-sm italic text-[#adb5bd]">No units</span>;
+      }
+      return (
+        <div className="flex flex-wrap gap-1">
+          {units.map((unit) => (
+            <Badge key={unit.id} variant="secondary" className="font-normal">
+              {unit.label}
+            </Badge>
+          ))}
+        </div>
+      );
+    },
   },
 ];
 
@@ -148,20 +166,17 @@ function ExplanationSection({ expanded, onToggle }: { expanded: boolean; onToggl
               >
                 SVO variable
               </a>
-              . Standard variables serve as the common language that connects different variable
-              presentations of the same concept.
+              . Standard variables serve as the common language that connects data and models across
+              the catalog.
             </p>
           </div>
 
           <div className="rounded-lg bg-white p-4 shadow-sm">
-            <h4 className="mb-2 text-sm font-semibold text-[#2c3e50]">
-              What is a Variable Presentation?
-            </h4>
+            <h4 className="mb-2 text-sm font-semibold text-[#2c3e50]">What are Units?</h4>
             <p className="text-sm leading-relaxed text-[#6c757d]">
-              A variable presentation is a concept used to represent an instantiation of a variable
-              in an input/output dataset. This allows different models to use the same variable
-              concept with different units or representations while maintaining semantic
-              interoperability.
+              The Units column lists the units a standard variable has been used with across the
+              catalog. A variable can appear in several units; a variable with no recorded usage
+              shows no units.
             </p>
           </div>
 
@@ -184,16 +199,23 @@ function ExplanationSection({ expanded, onToggle }: { expanded: boolean; onToggl
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
-/** Variables overview — searchable, sortable, paginated variable presentation table. */
+/** Explore Variables — searchable, sortable, paginated standard-variable catalog. */
 export function VariablesHome() {
-  const { data, loading, error } = useGetVariablePresentationsQuery();
+  const { data, loading, error } = useGetStandardVariablesWithUnitsQuery();
 
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [globalFilter, setGlobalFilter] = useState('');
   const [explanationExpanded, setExplanationExpanded] = useState(true);
 
-  const rows = data?.modelcatalog_variable_presentation ?? [];
+  const rows = useMemo<StandardVariableRow[]>(
+    () =>
+      (data?.modelcatalog_standard_variable ?? []).map((variable) => ({
+        ...variable,
+        units: dedupeUnits(variable),
+      })),
+    [data],
+  );
 
   const table = useReactTable({
     data: rows,
@@ -205,9 +227,8 @@ export function VariablesHome() {
     globalFilterFn: (row, _columnId, filterValue: string) => {
       const q = filterValue.toLowerCase();
       const name = (row.original.label ?? '').toLowerCase();
-      const sv = (row.original.standard_variable?.label ?? '').toLowerCase();
-      const desc = (row.original.standard_variable?.description ?? '').toLowerCase();
-      return name.includes(q) || sv.includes(q) || desc.includes(q);
+      const desc = (row.original.description ?? '').toLowerCase();
+      return name.includes(q) || desc.includes(q);
     },
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
@@ -223,7 +244,7 @@ export function VariablesHome() {
         <div>
           <h1 className="text-2xl font-semibold text-[#212529]">Explore Variables</h1>
           <p className="mt-1 text-base text-[#6c757d]">
-            Standard variables and variable presentations
+            Standard variables and the units they are used in
           </p>
         </div>
       </div>
@@ -238,32 +259,28 @@ export function VariablesHome() {
       <div className="mb-4 flex items-center rounded-lg bg-white px-4 py-2 shadow-sm">
         <Input
           type="text"
-          placeholder="Search variable presentations..."
+          placeholder="Search standard variables..."
           value={globalFilter}
           onChange={(e) => setGlobalFilter(e.target.value)}
           className="border-none text-[#495057] shadow-none placeholder:text-[#adb5bd] focus-visible:ring-0"
-          aria-label="Search variable presentations"
+          aria-label="Search standard variables"
         />
       </div>
 
       {/* Table */}
       <div className="relative overflow-visible rounded-lg bg-white shadow-sm">
         {loading && (
-          <div className="p-8 text-center text-[#6c757d]">Loading variable presentations…</div>
+          <div className="p-8 text-center text-[#6c757d]">Loading standard variables…</div>
         )}
 
         {error && (
           <div className="p-8 text-center text-red-600">
-            Failed to load variable presentations. {error.message}
+            Failed to load standard variables. {error.message}
           </div>
         )}
 
         {!loading && !error && (
-          <table
-            className="w-full border-collapse"
-            role="table"
-            aria-label="Variable presentations"
-          >
+          <table className="w-full border-collapse" role="table" aria-label="Standard variables">
             <thead>
               {table.getHeaderGroups().map((headerGroup) => (
                 <tr key={headerGroup.id}>
@@ -294,7 +311,7 @@ export function VariablesHome() {
               {table.getRowModel().rows.length === 0 ? (
                 <tr>
                   <td colSpan={columns.length} className="px-4 py-8 text-center text-[#6c757d]">
-                    No variable presentations found.
+                    No standard variables found.
                   </td>
                 </tr>
               ) : (
