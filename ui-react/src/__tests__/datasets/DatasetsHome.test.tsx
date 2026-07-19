@@ -14,18 +14,15 @@ describe('DatasetsHome', () => {
     renderWithProviders(<DatasetsHome />);
     expect(screen.getByRole('link', { name: /browse datasets/i })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /search datasets/i })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /data transformations/i })).toBeInTheDocument();
   });
 
   it('links point to correct hrefs', () => {
     renderWithProviders(<DatasetsHome />);
     const browseLink = screen.getByRole('link', { name: /browse datasets/i });
     const searchLink = screen.getByRole('link', { name: /search datasets/i });
-    const transformLink = screen.getByRole('link', { name: /data transformations/i });
 
     expect(browseLink).toHaveAttribute('href', '/datasets/browse');
     expect(searchLink).toHaveAttribute('href', '/datasets/search');
-    expect(transformLink).toHaveAttribute('href', '/datasets/transformations');
   });
 
   it('renders the nav region with accessible label', () => {

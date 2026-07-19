@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Database, RefreshCw, Search } from 'lucide-react';
+import { Database, Search } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 
@@ -20,11 +20,6 @@ const NAV_ITEMS: NavItem[] = [
     icon: Search,
     label: 'Search Datasets',
   },
-  {
-    href: '/datasets/transformations',
-    icon: RefreshCw,
-    label: 'Data Transformations',
-  },
 ];
 
 /** Datasets overview page with icon-grid sub-navigation. */
@@ -33,9 +28,7 @@ export function DatasetsHome() {
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-bold tracking-tight">Datasets</h2>
-        <p className="mt-1 text-muted-foreground">
-          Browse, search, and manage datasets and data transformations.
-        </p>
+        <p className="mt-1 text-muted-foreground">Browse and search datasets.</p>
       </div>
 
       <div

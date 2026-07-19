@@ -108,3 +108,4 @@ See `.planning/PROJECT.md` for full migration status and decisions. Key points:
 
 - Never indicate code was authored/co-authored by Claude or Anthropic in commit messages
 - Keep commit messages clean and simple, no emoji
+- Open pull requests against `develop`, not `main`
