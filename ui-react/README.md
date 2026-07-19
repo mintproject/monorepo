@@ -34,9 +34,9 @@ npm run build      # outputs to dist/
 ```bash
 docker build -t mintproject/mint-ui-react:dev .
 docker run --rm -p 8080:80 \
-  -e HASURA_ENDPOINT=https://graphql.mint.isi.edu/v1/graphql \
+  -e HASURA_ENDPOINT=http://graphql.mint.local/v1/graphql \
   -e AUTH_CLIENT_ID=mint-local \
-  -e ENSEMBLE_MANAGER_API=https://ensemble.mint.isi.edu \
+  -e ENSEMBLE_MANAGER_API=http://ensemble-manager.mint.local \
   mintproject/mint-ui-react:dev
 ```
 
@@ -56,8 +56,8 @@ is treated as unset):
 | `AUTH_REALM` | `` (Keycloak only) |
 | `AUTH_PROVIDER` | `tapis` |
 | `GOOGLE_MAPS_KEY` | (shared development key) |
-| `DATA_CATALOG_API` | `https://data.mint.isi.edu` |
-| `MODEL_CATALOG_API` | `https://api.models.mint.isi.edu/v1.8.0` |
+| `DATA_CATALOG_API` | `http://datacatalog.mint.local` |
+| `MODEL_CATALOG_API` | `http://api.models.mint.local/v1.8.0` |
 | `ENSEMBLE_MANAGER_API` | omitted when unset |
 | `AUTH_CALLBACK_ORIGIN` | omitted when unset |
 | `AUTH_PREVIEW_ORIGIN_ALLOWLIST` | omitted when unset |

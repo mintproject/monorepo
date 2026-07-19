@@ -46,10 +46,10 @@ export function buildEnvConfig(env = process.env) {
       pick(env, 'GOOGLE_MAPS_KEY', 'VITE_GOOGLE_MAPS_KEY') ??
       'AIzaSyDf8bXwyV7v9whOpZl64SRVWKdE6yBbt2k',
     DATA_CATALOG_API:
-      pick(env, 'DATA_CATALOG_API', 'VITE_DATA_CATALOG_API') ?? 'https://data.mint.isi.edu',
+      pick(env, 'DATA_CATALOG_API', 'VITE_DATA_CATALOG_API') ?? 'http://datacatalog.mint.local',
     MODEL_CATALOG_API:
       pick(env, 'MODEL_CATALOG_API', 'VITE_MODEL_CATALOG_API') ??
-      'https://api.models.mint.isi.edu/v1.8.0',
+      'http://api.models.mint.local/v1.8.0',
   });
 
   // No sensible default — the ensemble manager is deployment-specific, and the
