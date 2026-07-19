@@ -7,35 +7,37 @@ import { http, HttpResponse } from 'msw';
 import { server } from '@/test/msw/server';
 import { useDataCatalogDatasets } from '../useDataCatalog';
 
+/** A CKAN package_search envelope, matching the live ckan.tacc.utexas.edu shape. */
 const mockResponse = {
-  result: 'success',
-  datasets: [
-    {
-      dataset_id: 'ds-001',
-      dataset_name: 'Test Dataset',
-      dataset_metadata: {
-        dataset_description: 'A test dataset',
+  success: true,
+  result: {
+    count: 1,
+    results: [
+      {
+        id: '85a6781e-5ee6-41cc-957b-9eb7678454f1',
+        name: 'ds-001',
+        title: 'Test Dataset',
+        notes: 'A test dataset',
         version: '1.0',
-        limitations: '',
-        source: 'Test Source',
-        source_url: 'https://test.example.com',
-        source_type: 'remote',
-        category_tags: ['climate'],
-        resource_count: 5,
-        datatype: 'NetCDF',
-        temporal_coverage: {
-          start_time: '2023-01-01',
-          end_time: '2023-12-31',
-        },
+        url: 'https://test.example.com',
+        license_title: '',
+        num_resources: 5,
+        organization: { name: 'test-source', title: 'Test Source' },
+        tags: [{ name: 'climate' }],
+        temporal_coverage_start: '2023-01-01',
+        temporal_coverage_end: '2023-12-31',
+        resources: [
+          { id: 'r-1', name: 'part-1', url: 'https://test.example.com/1', format: 'NetCDF' },
+        ],
       },
-    },
-  ],
+    ],
+  },
 };
 
 describe('useDataCatalogDatasets', () => {
   beforeEach(() => {
     server.use(
-      http.post('*/datasets/find', () => {
+      http.get('*/api/3/action/package_search', () => {
         return HttpResponse.json(mockResponse);
       }),
     );
@@ -82,7 +84,7 @@ describe('useDataCatalogDatasets', () => {
 
   it('returns an error when the fetch fails', async () => {
     server.use(
-      http.post('*/datasets/find', () => {
+      http.get('*/api/3/action/package_search', () => {
         return new HttpResponse(null, { status: 500 });
       }),
     );

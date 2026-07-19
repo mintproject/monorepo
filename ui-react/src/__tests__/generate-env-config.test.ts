@@ -41,7 +41,7 @@ describe('buildEnvConfig', () => {
 
   it('emits the service endpoint keys the application reads', () => {
     const c = buildEnvConfig({});
-    expect(c.DATA_CATALOG_API).toBe('http://datacatalog.mint.local');
+    expect(c.DATA_CATALOG_API).toBe('https://ckan.tacc.utexas.edu');
     expect(c.MODEL_CATALOG_API).toBe('http://api.models.mint.local/v1.8.0');
   });
 
@@ -66,7 +66,7 @@ describe('buildEnvConfig', () => {
 
   it('treats an empty service endpoint as unset', () => {
     const c = buildEnvConfig({ DATA_CATALOG_API: '', ENSEMBLE_MANAGER_API: '' });
-    expect(c.DATA_CATALOG_API).toBe('http://datacatalog.mint.local');
+    expect(c.DATA_CATALOG_API).toBe('https://ckan.tacc.utexas.edu');
     expect('ENSEMBLE_MANAGER_API' in c).toBe(false);
   });
 
