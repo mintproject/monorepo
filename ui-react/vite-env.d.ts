@@ -8,7 +8,7 @@ interface MintConfig {
   AUTH_PROVIDER: 'keycloak' | 'tapis';
   GOOGLE_MAPS_KEY?: string;
   WELCOME_MESSAGE?: string;
-  /** Data Catalog REST API base URL (e.g. https://datacatalog.mint.isi.edu/api/v1) */
+  /** CKAN data catalog base URL, no /api suffix (e.g. https://ckan.tacc.utexas.edu) */
   DATA_CATALOG_API?: string;
   /** Model Catalog REST API base URL. */
   MODEL_CATALOG_API?: string;
