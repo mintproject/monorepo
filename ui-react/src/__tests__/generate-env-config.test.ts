@@ -36,6 +36,38 @@ describe('buildEnvConfig', () => {
     const c = buildEnvConfig({});
     expect('AUTH_PREVIEW_ORIGIN_ALLOWLIST' in c).toBe(false);
     expect('WELCOME_MESSAGE' in c).toBe(false);
+    expect('ENSEMBLE_MANAGER_API' in c).toBe(false);
+  });
+
+  it('emits the service endpoint keys the application reads', () => {
+    const c = buildEnvConfig({});
+    expect(c.DATA_CATALOG_API).toBe('http://datacatalog.mint.local');
+    expect(c.MODEL_CATALOG_API).toBe('http://api.models.mint.local/v1.8.0');
+  });
+
+  it('overrides the service endpoints from env, bare or VITE_-prefixed', () => {
+    const c = buildEnvConfig({
+      DATA_CATALOG_API: 'https://data.example.org',
+      VITE_MODEL_CATALOG_API: 'https://models.example.org/v2',
+      ENSEMBLE_MANAGER_API: 'https://ensemble.example.org',
+    });
+    expect(c.DATA_CATALOG_API).toBe('https://data.example.org');
+    expect(c.MODEL_CATALOG_API).toBe('https://models.example.org/v2');
+    expect(c.ENSEMBLE_MANAGER_API).toBe('https://ensemble.example.org');
+  });
+
+  it('prefers the bare name over the VITE_-prefixed one', () => {
+    const c = buildEnvConfig({
+      DATA_CATALOG_API: 'https://bare.example.org',
+      VITE_DATA_CATALOG_API: 'https://prefixed.example.org',
+    });
+    expect(c.DATA_CATALOG_API).toBe('https://bare.example.org');
+  });
+
+  it('treats an empty service endpoint as unset', () => {
+    const c = buildEnvConfig({ DATA_CATALOG_API: '', ENSEMBLE_MANAGER_API: '' });
+    expect(c.DATA_CATALOG_API).toBe('http://datacatalog.mint.local');
+    expect('ENSEMBLE_MANAGER_API' in c).toBe(false);
   });
 
   it('includes optional allowlist + welcome when provided', () => {

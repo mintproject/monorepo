@@ -2,7 +2,7 @@ name: UI React — Build & Test
 
 on:
   push:
-    branches: [develop, main]
+    branches: ['**']
     paths:
       - 'ui-react/**'
       - '.github/workflows/ui-react.yml'
@@ -11,6 +11,12 @@ on:
     paths:
       - 'ui-react/**'
       - '.github/workflows/ui-react.yml'
+
+env:
+  DOCKER_IMAGE_REPOSITORY: mintproject
+  # Deliberately distinct from the legacy UI's mint-ui-lit image, so the two are
+  # unmistakable while both exist.
+  DOCKER_IMAGE_NAME: mint-ui-react
 
 defaults:
   run:
@@ -100,3 +106,45 @@ jobs:
           name: ui-react-dist
           path: ui-react/dist/
           retention-days: 7
+
+  publish:
+    name: Publish image
+    needs: [lint, typecheck, test]
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Compute image tags
+        id: tags
+        run: |
+          # Docker tags forbid '/', so feature branches publish rather than fail.
+          SAFE_BRANCH="${GITHUB_REF_NAME//\//-}"
+          echo "safe_branch=${SAFE_BRANCH}" >> "$GITHUB_OUTPUT"
+          TAGS="${DOCKER_IMAGE_REPOSITORY}/${DOCKER_IMAGE_NAME}:${SAFE_BRANCH}"
+          TAGS="${TAGS},${DOCKER_IMAGE_REPOSITORY}/${DOCKER_IMAGE_NAME}:${GITHUB_SHA}"
+          if [ "${GITHUB_REF_NAME}" = "${{ github.event.repository.default_branch }}" ]; then
+            TAGS="${TAGS},${DOCKER_IMAGE_REPOSITORY}/${DOCKER_IMAGE_NAME}:latest"
+          fi
+          echo "tags=${TAGS}" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-qemu-action@v3
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          push: true
+          context: ui-react
+          file: ui-react/Dockerfile
+          tags: ${{ steps.tags.outputs.tags }}
+          platforms: linux/amd64,linux/arm64
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
