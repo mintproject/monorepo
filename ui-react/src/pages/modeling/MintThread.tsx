@@ -148,9 +148,7 @@ export function MintThread({ threadId: threadIdProp }: MintThreadProps = {}) {
   const handleSubmitRuns = useCallback(
     async (modelId: string) => {
       // POST to the ensemble manager REST API
-      const ensembleManagerApi =
-        (window.__MINT_CONFIG__ as { ENSEMBLE_MANAGER_API?: string } | undefined)
-          ?.ENSEMBLE_MANAGER_API ?? '';
+      const ensembleManagerApi = window.__MINT_CONFIG__?.ENSEMBLE_MANAGER_API ?? '';
       const executionEngine = 'localex';
       const token = localStorage.getItem('access-token');
       const resp = await fetch(`${ensembleManagerApi}/executionEngines/${executionEngine}`, {
@@ -289,10 +287,7 @@ export function MintThread({ threadId: threadIdProp }: MintThreadProps = {}) {
             executions={modelExecutions}
             canWrite={perm.write}
             canExecute={perm.write}
-            ensembleManagerApi={
-              (window.__MINT_CONFIG__ as { ENSEMBLE_MANAGER_API?: string } | undefined)
-                ?.ENSEMBLE_MANAGER_API ?? ''
-            }
+            ensembleManagerApi={window.__MINT_CONFIG__?.ENSEMBLE_MANAGER_API ?? ''}
             executionEngine="localex"
             onContinue={goNext}
             onFetchRuns={handleFetchRuns}

@@ -145,8 +145,16 @@ ui-react/
 
 ### Runtime configuration
 
-Production: `window.__MINT_CONFIG__` is injected by the Docker entrypoint at startup.
-Development: falls back to `import.meta.env.VITE_*` variables (or hardcoded defaults).
+`scripts/generate-env-config.mjs` is the single source of truth for the config
+shape. It is invoked in three contexts, and a new key must be added there:
+
+- Vercel build (`npm run build`, gated on `VERCEL`) — rewrites `dist/env-config.js`
+- Container startup (`docker/entrypoint.sh`) — same module with an explicit
+  output path argument, which is what puts it in runtime mode
+- Local development — the committed `public/env-config.js` is served as-is
+
+`window.__MINT_CONFIG__` is what the app reads; `import.meta.env.VITE_*` is only
+a fallback for `npm run dev` without a config file.
 
 Keys:
 - `HASURA_ENDPOINT` — Hasura GraphQL endpoint URL
@@ -154,8 +162,14 @@ Keys:
 - `AUTH_CLIENT_ID` — OAuth2 client ID
 - `AUTH_REALM` — Keycloak realm (Keycloak only)
 - `AUTH_PROVIDER` — `'keycloak'` | `'tapis'`
+- `GOOGLE_MAPS_KEY`, `WELCOME_MESSAGE`
+- `DATA_CATALOG_API`, `MODEL_CATALOG_API`, `ENSEMBLE_MANAGER_API`
+- `AUTH_CALLBACK_ORIGIN`, `AUTH_PREVIEW_ORIGIN_ALLOWLIST`
 
-Type declaration is in `vite-env.d.ts`.
+Each key accepts a bare or `VITE_`-prefixed env var name; empty string is
+treated as unset; optional keys are omitted rather than emitted empty. See the
+README for defaults. Type declarations are in `vite-env.d.ts` and
+`scripts/generate-env-config.d.ts` — keep both in step.
 
 ### Authentication
 

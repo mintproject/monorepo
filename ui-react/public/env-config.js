@@ -1,7 +1,9 @@
-// Runtime configuration — injected by Docker entrypoint at container startup.
-// In development, Vite env vars (VITE_*) are used as fallbacks.
-// In production, this file is generated from environment variables by the
-// Docker entrypoint script (scripts/entrypoint.sh).
+// Runtime configuration defaults, used as-is for local development.
+//
+// In a container these values are overwritten at startup by
+// docker/entrypoint.sh, and on Vercel at build time — both via
+// scripts/generate-env-config.mjs, which owns the configuration shape and
+// carries the same defaults. Update both together.
 window.__MINT_CONFIG__ = {
   HASURA_ENDPOINT: "http://graphql.mint.local/v1/graphql",
   AUTH_SERVER: "https://portals.tapis.io",
