@@ -84,8 +84,6 @@ ui-react/
         DatasetsBrowse.tsx        # /datasets/browse
         DatasetsSearch.tsx        # /datasets/search
         DatasetDetail.tsx         # /datasets/detail/:id
-        DatasetsRegister.tsx      # /datasets/register
-        DatasetsTransformations.tsx # /datasets/transformations
       regions/
         RegionsHome.tsx           # /regions
         RegionsEditor.tsx         # /regions/editor
@@ -261,8 +259,6 @@ All routes are declared in `src/App.tsx`. Current routes:
 | `/datasets/browse` | DatasetsBrowse |
 | `/datasets/search` | DatasetsSearch |
 | `/datasets/detail/:id` | DatasetDetail |
-| `/datasets/register` | DatasetsRegister |
-| `/datasets/transformations` | DatasetsTransformations |
 | `/regions` | RegionsHome |
 | `/regions/editor` | RegionsEditor |
 | `/regions/:id/datasets` | RegionDatasets |

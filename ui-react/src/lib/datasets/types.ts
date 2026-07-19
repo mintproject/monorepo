@@ -57,13 +57,6 @@ export interface Dataset {
   spatial_coverage?: SpatialCoverage;
 }
 
-export interface DataTransformation {
-  id: string;
-  label?: string;
-  description?: string;
-  type?: string;
-}
-
 /** Query parameter shape for the data catalog search endpoint. */
 export interface DatasetQueryParameters {
   name?: string;

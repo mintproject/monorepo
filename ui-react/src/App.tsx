@@ -21,8 +21,6 @@ import { DatasetsHome } from './pages/datasets/DatasetsHome';
 import { DatasetsBrowse } from './pages/datasets/DatasetsBrowse';
 import { DatasetsSearch } from './pages/datasets/DatasetsSearch';
 import { DatasetDetail } from './pages/datasets/DatasetDetail';
-import { DatasetsRegister } from './pages/datasets/DatasetsRegister';
-import { DatasetsTransformations } from './pages/datasets/DatasetsTransformations';
 
 // Pages — regions
 import { RegionsHome } from './pages/regions/RegionsHome';
@@ -110,8 +108,6 @@ export function App() {
           <Route path="/datasets/browse/:id" element={<DatasetsBrowse />} />
           <Route path="/datasets/search" element={<DatasetsSearch />} />
           <Route path="/datasets/detail/:id" element={<DatasetDetail />} />
-          <Route path="/datasets/register" element={<DatasetsRegister />} />
-          <Route path="/datasets/transformations" element={<DatasetsTransformations />} />
 
           {/* Regions */}
           <Route path="/regions" element={<RegionsHome />} />
