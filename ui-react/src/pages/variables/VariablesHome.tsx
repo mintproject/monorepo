@@ -1,77 +1,163 @@
 import {
   flexRender,
   getCoreRowModel,
-  getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
   type ColumnDef,
   type SortingState,
-  type ColumnFiltersState,
 } from '@tanstack/react-table';
 import { ChevronDown, ChevronUp, ChevronsUpDown, Copy, ChevronRight } from 'lucide-react';
-import { useState, useCallback } from 'react';
+import { useEffect, useMemo, useState, useCallback, type ReactNode } from 'react';
 
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useGetVariablePresentationsQuery } from '@/graphql/generated/graphql';
-import type { GetVariablePresentationsQuery } from '@/graphql/generated/graphql';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { useGetStandardVariablesWithUnitsQuery } from '@/graphql/generated/graphql';
+import type { GetStandardVariablesWithUnitsQuery } from '@/graphql/generated/graphql';
+import { highlightRanges } from '@/lib/standard-variable-search';
+import {
+  CATEGORY_ORDER,
+  deriveDisplayFields,
+  type StandardVariableCategory,
+} from '@/lib/standard-variable-taxonomy';
+import { searchVariableRows } from '@/lib/variable-catalog-search';
 
-type VariablePresentation =
-  GetVariablePresentationsQuery['modelcatalog_variable_presentation'][number];
+type StandardVariable =
+  GetStandardVariablesWithUnitsQuery['modelcatalog_standard_variable'][number];
+
+type StandardVariableUnit = { id: string; label: string };
+
+/**
+ * A standard variable enriched with its deduplicated set of units and its
+ * derived taxonomy fields: a domain `category`, whether the label is
+ * unnamed/UUID-shaped, and the `displayLabel` to show (the description when the
+ * raw label is an unnamed UUID, so scientists never see a bare UUID).
+ */
+type StandardVariableRow = StandardVariable & {
+  units: StandardVariableUnit[];
+  category: StandardVariableCategory;
+  isUnnamed: boolean;
+  displayLabel: string;
+};
+
+/** Sentinel value for the "all categories" option (Radix Select forbids ''). */
+const ALL_CATEGORIES = '__all__';
+
+/**
+ * Gather the units a standard variable is available in through its
+ * variable_presentations reverse relationship, deduplicated by unit id.
+ */
+function dedupeUnits(variable: StandardVariable): StandardVariableUnit[] {
+  const seen = new Map<string, StandardVariableUnit>();
+  for (const presentation of variable.variable_presentations) {
+    const unit = presentation.unit;
+    if (unit && !seen.has(unit.id)) {
+      seen.set(unit.id, { id: unit.id, label: unit.label });
+    }
+  }
+  return Array.from(seen.values());
+}
+
+// ─── Highlight helper ─────────────────────────────────────────────────────────
+
+/** Render `text` with the case-insensitive query substrings wrapped in <mark>. */
+function Highlighted({ text, query }: { text: string; query: string }) {
+  const ranges = highlightRanges(text, query);
+  if (ranges.length === 0) return <>{text}</>;
+  const parts: ReactNode[] = [];
+  let cursor = 0;
+  ranges.forEach(([start, end], i) => {
+    if (cursor < start) parts.push(text.slice(cursor, start));
+    parts.push(
+      <mark key={i} className="rounded-sm bg-yellow-200 px-0.5 text-inherit">
+        {text.slice(start, end)}
+      </mark>,
+    );
+    cursor = end;
+  });
+  if (cursor < text.length) parts.push(text.slice(cursor));
+  return <>{parts}</>;
+}
 
 // ─── Column definition ────────────────────────────────────────────────────────
 
-const columns: ColumnDef<VariablePresentation>[] = [
-  {
-    id: 'copy',
-    header: '',
-    cell: ({ row }) => (
-      <CopyButton value={row.original.standard_variable?.label ?? row.original.label ?? ''} />
-    ),
-    enableSorting: false,
-    enableColumnFilter: false,
-    size: 48,
-  },
-  {
-    id: 'standard_variable',
-    accessorFn: (row) => row.standard_variable?.label ?? '',
-    header: 'Standard Variables',
-    cell: ({ getValue }) => <span className="text-[#6c757d]">{(getValue() as string) || '-'}</span>,
-  },
-  {
-    id: 'label',
-    accessorFn: (row) => row.label ?? '',
-    header: 'Variable Presentation',
-    cell: ({ row }) => {
-      const label = row.original.label ?? 'Unnamed';
-      const description = row.original.standard_variable?.description ?? 'No description available';
-      return (
-        <div>
-          <div className="font-medium text-[#2c3e50]">{label}</div>
-          <div className="break-words pr-4 text-sm leading-relaxed text-[#6c757d]">
-            {description}
+/**
+ * Columns are built per-query so cells can highlight the matched substrings.
+ * `query` is the trimmed search string ('' when not searching).
+ */
+function buildColumns(query: string): ColumnDef<StandardVariableRow>[] {
+  return [
+    {
+      id: 'copy',
+      header: '',
+      cell: ({ row }) => <CopyButton value={row.original.label ?? ''} />,
+      enableSorting: false,
+      enableColumnFilter: false,
+      size: 48,
+    },
+    {
+      id: 'standard_variable',
+      accessorFn: (row) => row.displayLabel,
+      header: 'Standard Variable',
+      cell: ({ row }) => {
+        // Unnamed/UUID rows are shown by their description (displayLabel); their
+        // raw UUID is never rendered. Named rows show label above description.
+        const { displayLabel, isUnnamed } = row.original;
+        const description = row.original.description ?? 'No description available';
+        return (
+          <div>
+            <div className="font-medium text-[#2c3e50]">
+              <Highlighted text={displayLabel} query={query} />
+            </div>
+            {!isUnnamed && (
+              <div className="break-words pr-4 text-sm leading-relaxed text-[#6c757d]">
+                <Highlighted text={description} query={query} />
+              </div>
+            )}
           </div>
-        </div>
-      );
+        );
+      },
     },
-    filterFn: (row, _columnId, filterValue: string) => {
-      const q = filterValue.toLowerCase();
-      const name = (row.original.label ?? '').toLowerCase();
-      const desc = (row.original.standard_variable?.description ?? '').toLowerCase();
-      const sv = (row.original.standard_variable?.label ?? '').toLowerCase();
-      return name.includes(q) || desc.includes(q) || sv.includes(q);
+    {
+      id: 'category',
+      accessorFn: (row) => row.category,
+      header: 'Category',
+      cell: ({ row }) => (
+        <Badge variant="outline" className="whitespace-nowrap font-normal text-[#495057]">
+          {row.original.category}
+        </Badge>
+      ),
     },
-  },
-  {
-    id: 'unit',
-    accessorFn: (row) => row.unit?.label ?? '',
-    header: 'Units',
-    cell: ({ getValue }) => (
-      <span className="italic text-[#6c757d]">{(getValue() as string) || '-'}</span>
-    ),
-  },
-];
+    {
+      id: 'units',
+      header: 'Units',
+      enableSorting: false,
+      cell: ({ row }) => {
+        const units = row.original.units;
+        if (units.length === 0) {
+          return <span className="text-sm italic text-[#adb5bd]">No units</span>;
+        }
+        return (
+          <div className="flex flex-wrap gap-1">
+            {units.map((unit) => (
+              <Badge key={unit.id} variant="secondary" className="font-normal">
+                <Highlighted text={unit.label} query={query} />
+              </Badge>
+            ))}
+          </div>
+        );
+      },
+    },
+  ];
+}
 
 // ─── Copy button ──────────────────────────────────────────────────────────────
 
@@ -148,20 +234,17 @@ function ExplanationSection({ expanded, onToggle }: { expanded: boolean; onToggl
               >
                 SVO variable
               </a>
-              . Standard variables serve as the common language that connects different variable
-              presentations of the same concept.
+              . Standard variables serve as the common language that connects data and models across
+              the catalog.
             </p>
           </div>
 
           <div className="rounded-lg bg-white p-4 shadow-sm">
-            <h4 className="mb-2 text-sm font-semibold text-[#2c3e50]">
-              What is a Variable Presentation?
-            </h4>
+            <h4 className="mb-2 text-sm font-semibold text-[#2c3e50]">What are Units?</h4>
             <p className="text-sm leading-relaxed text-[#6c757d]">
-              A variable presentation is a concept used to represent an instantiation of a variable
-              in an input/output dataset. This allows different models to use the same variable
-              concept with different units or representations while maintaining semantic
-              interoperability.
+              The Units column lists the units a standard variable has been used with across the
+              catalog. A variable can appear in several units; a variable with no recorded usage
+              shows no units.
             </p>
           </div>
 
@@ -184,37 +267,84 @@ function ExplanationSection({ expanded, onToggle }: { expanded: boolean; onToggl
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
-/** Variables overview — searchable, sortable, paginated variable presentation table. */
+/** Explore Variables — searchable, sortable, paginated standard-variable catalog. */
 export function VariablesHome() {
-  const { data, loading, error } = useGetVariablePresentationsQuery();
+  const { data, loading, error } = useGetStandardVariablesWithUnitsQuery();
 
   const [sorting, setSorting] = useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-  const [globalFilter, setGlobalFilter] = useState('');
+  const [search, setSearch] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string>(ALL_CATEGORIES);
   const [explanationExpanded, setExplanationExpanded] = useState(true);
 
-  const rows = data?.modelcatalog_variable_presentation ?? [];
+  const query = search.trim();
+  const isSearching = query !== '';
+
+  const rows = useMemo<StandardVariableRow[]>(
+    () =>
+      (data?.modelcatalog_standard_variable ?? []).map((variable) => ({
+        ...variable,
+        units: dedupeUnits(variable),
+        ...deriveDisplayFields(variable.label, variable.description),
+      })),
+    [data],
+  );
+
+  // Demote unnamed/UUID rows below named rows in the default (unsorted) order.
+  // Stable partition preserves the query order within each group; they are
+  // demoted, never hidden.
+  const demotedRows = useMemo<StandardVariableRow[]>(
+    () => [...rows.filter((r) => !r.isUnnamed), ...rows.filter((r) => r.isUnnamed)],
+    [rows],
+  );
+
+  // Category options follow the canonical order (with "Unnamed / Other" last),
+  // restricted to categories actually present in the data.
+  const categoryOptions = useMemo<StandardVariableCategory[]>(() => {
+    const present = new Set(demotedRows.map((r) => r.category));
+    return CATEGORY_ORDER.filter((c) => present.has(c));
+  }, [demotedRows]);
+
+  const categoryFiltered = useMemo<StandardVariableRow[]>(
+    () =>
+      selectedCategory === ALL_CATEGORIES
+        ? demotedRows
+        : demotedRows.filter((r) => r.category === selectedCategory),
+    [demotedRows, selectedCategory],
+  );
+
+  // While searching, results are relevance-ranked (name > description > unit
+  // label) and column sorting is disabled; otherwise the (demoted, category-
+  // filtered) list is shown and columns are sortable. Pagination applies to the
+  // resulting list in both states.
+  const displayRows = useMemo<StandardVariableRow[]>(
+    () => (isSearching ? searchVariableRows(categoryFiltered, query) : categoryFiltered),
+    [categoryFiltered, query, isSearching],
+  );
+
+  const columns = useMemo(() => buildColumns(query), [query]);
 
   const table = useReactTable({
-    data: rows,
+    data: displayRows,
     columns,
-    state: { sorting, columnFilters, globalFilter },
+    state: { sorting: isSearching ? [] : sorting },
     onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
-    onGlobalFilterChange: setGlobalFilter,
-    globalFilterFn: (row, _columnId, filterValue: string) => {
-      const q = filterValue.toLowerCase();
-      const name = (row.original.label ?? '').toLowerCase();
-      const sv = (row.original.standard_variable?.label ?? '').toLowerCase();
-      const desc = (row.original.standard_variable?.description ?? '').toLowerCase();
-      return name.includes(q) || sv.includes(q) || desc.includes(q);
-    },
+    enableSorting: !isSearching,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     initialState: { pagination: { pageSize: 25 } },
+    // The ranked `displayRows` reference changes whenever the query changes;
+    // react-table's default autoReset would resync page state on every data
+    // change, which combined with Apollo's fresh result objects can loop. Manage
+    // the page reset explicitly instead (see below).
+    autoResetPageIndex: false,
   });
+
+  // Start each new/changed search (and each return to the unfiltered list) at
+  // the first page so pagination applies from the top of the ranked results.
+  useEffect(() => {
+    table.setPageIndex(0);
+  }, [query, selectedCategory, table]);
 
   return (
     <div>
@@ -223,7 +353,7 @@ export function VariablesHome() {
         <div>
           <h1 className="text-2xl font-semibold text-[#212529]">Explore Variables</h1>
           <p className="mt-1 text-base text-[#6c757d]">
-            Standard variables and variable presentations
+            Standard variables and the units they are used in
           </p>
         </div>
       </div>
@@ -234,36 +364,47 @@ export function VariablesHome() {
         onToggle={() => setExplanationExpanded((v) => !v)}
       />
 
-      {/* Search bar */}
-      <div className="mb-4 flex items-center rounded-lg bg-white px-4 py-2 shadow-sm">
-        <Input
-          type="text"
-          placeholder="Search variable presentations..."
-          value={globalFilter}
-          onChange={(e) => setGlobalFilter(e.target.value)}
-          className="border-none text-[#495057] shadow-none placeholder:text-[#adb5bd] focus-visible:ring-0"
-          aria-label="Search variable presentations"
-        />
+      {/* Search bar + category filter */}
+      <div className="mb-4 flex items-center gap-3">
+        <div className="flex flex-1 items-center rounded-lg bg-white px-4 py-2 shadow-sm">
+          <Input
+            type="text"
+            placeholder="Search standard variables..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="border-none text-[#495057] shadow-none placeholder:text-[#adb5bd] focus-visible:ring-0"
+            aria-label="Search standard variables"
+          />
+        </div>
+        <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+          <SelectTrigger className="w-[220px] bg-white shadow-sm" aria-label="Filter by category">
+            <SelectValue placeholder="All categories" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={ALL_CATEGORIES}>All categories</SelectItem>
+            {categoryOptions.map((category) => (
+              <SelectItem key={category} value={category}>
+                {category}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Table */}
       <div className="relative overflow-visible rounded-lg bg-white shadow-sm">
         {loading && (
-          <div className="p-8 text-center text-[#6c757d]">Loading variable presentations…</div>
+          <div className="p-8 text-center text-[#6c757d]">Loading standard variables…</div>
         )}
 
         {error && (
           <div className="p-8 text-center text-red-600">
-            Failed to load variable presentations. {error.message}
+            Failed to load standard variables. {error.message}
           </div>
         )}
 
         {!loading && !error && (
-          <table
-            className="w-full border-collapse"
-            role="table"
-            aria-label="Variable presentations"
-          >
+          <table className="w-full border-collapse" role="table" aria-label="Standard variables">
             <thead>
               {table.getHeaderGroups().map((headerGroup) => (
                 <tr key={headerGroup.id}>
@@ -294,7 +435,7 @@ export function VariablesHome() {
               {table.getRowModel().rows.length === 0 ? (
                 <tr>
                   <td colSpan={columns.length} className="px-4 py-8 text-center text-[#6c757d]">
-                    No variable presentations found.
+                    No standard variables found.
                   </td>
                 </tr>
               ) : (
@@ -321,7 +462,7 @@ export function VariablesHome() {
         <div className="mt-4 flex items-center justify-between">
           <span className="text-sm text-[#6c757d]">
             Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()} (
-            {table.getFilteredRowModel().rows.length} rows)
+            {table.getPrePaginationRowModel().rows.length} rows)
           </span>
           <div className="flex items-center gap-2">
             <Button

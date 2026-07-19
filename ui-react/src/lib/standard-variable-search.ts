@@ -10,20 +10,16 @@ import { matchSorter, rankings } from 'match-sorter';
 import type { StandardVariableOption } from '@/components/autocomplete/StandardVariableCombobox';
 import {
   CATEGORY_ORDER,
-  categorizeStandardVariable,
-  isUnnamedLabel,
+  deriveDisplayFields,
   type StandardVariableCategory,
+  type StandardVariableDisplayFields,
 } from '@/lib/standard-variable-taxonomy';
 
 /** Group heading used for the recently-used pins. */
 export const RECENT_GROUP_KEY = 'Recently used';
 
-export interface DisplayStandardVariable extends StandardVariableOption {
-  category: StandardVariableCategory;
-  isUnnamed: boolean;
-  /** Description when the label is an unnamed/UUID row, else the label. */
-  displayLabel: string;
-}
+export interface DisplayStandardVariable
+  extends StandardVariableOption, StandardVariableDisplayFields {}
 
 export interface StandardVariableGroup {
   /** Category name, or RECENT_GROUP_KEY for the pinned recent group. */
@@ -91,10 +87,7 @@ export function highlightRanges(text: string, query: string): Array<[number, num
 }
 
 function toDisplay(option: StandardVariableOption): DisplayStandardVariable {
-  const isUnnamed = isUnnamedLabel(option.label);
-  const category = categorizeStandardVariable(option.label, option.description);
-  const displayLabel = isUnnamed ? (option.description ?? 'Unnamed variable') : option.label;
-  return { ...option, category, isUnnamed, displayLabel };
+  return { ...option, ...deriveDisplayFields(option.label, option.description) };
 }
 
 /** Rank, group by category (canonical order), demote UUIDs, pin recents. */
