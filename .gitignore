@@ -55,3 +55,6 @@ Temporary Items
 # Local working clones (not submodules of this repo)
 dynamo/
 metalearn/
+
+# Dependencies and build caches
+node_modules/

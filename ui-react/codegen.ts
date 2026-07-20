@@ -13,6 +13,12 @@ const config: CodegenConfig = {
   documents: 'src/graphql/**/*.graphql',
   ignoreNoDocuments: true,
   generates: {
+    // SDL snapshot of the Hasura schema, committed so offline tests can resolve
+    // the type of every selection set (see junction-key-fields.test.ts) without
+    // needing a reachable Hasura.
+    'src/graphql/generated/schema.graphql': {
+      plugins: ['schema-ast'],
+    },
     'src/graphql/generated/graphql.ts': {
       plugins: [
         'typescript',

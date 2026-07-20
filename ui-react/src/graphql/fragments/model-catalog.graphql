@@ -76,6 +76,8 @@ fragment ConfigurationFields on modelcatalog_configuration {
     }
   }
   time_intervals {
+    configuration_id
+    time_interval_id
     time_interval {
       id
       label
