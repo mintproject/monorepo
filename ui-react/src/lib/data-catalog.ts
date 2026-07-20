@@ -6,7 +6,9 @@
  * ui/src/screens/datasets/actions.ts behaviour, projected onto CKAN's Action
  * API. See lib/datasets/ckan.ts for the transport and the concept mapping.
  *
- * Endpoint: window.__MINT_CONFIG__.DATA_CATALOG_API (or VITE_DATA_CATALOG_API)
+ * Endpoint: resolved via getDataCatalogApiUrl() in lib/config.ts, which reads
+ * window.__MINT_CONFIG__.DATA_CATALOG_API (or VITE_DATA_CATALOG_API). The
+ * transport in lib/datasets/ckan.ts owns that lookup.
  */
 
 import {
@@ -21,16 +23,6 @@ import {
   type CkanPackage,
   type CkanResource,
 } from './datasets/ckan';
-
-// ─── Runtime config ───────────────────────────────────────────────────────────
-
-export function getDataCatalogUrl(): string {
-  return (
-    window.__MINT_CONFIG__?.DATA_CATALOG_API ??
-    import.meta.env.VITE_DATA_CATALOG_API ??
-    'https://ckan.tacc.utexas.edu'
-  );
-}
 
 // ─── Domain types ─────────────────────────────────────────────────────────────
 

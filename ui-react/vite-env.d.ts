@@ -8,8 +8,10 @@ interface MintConfig {
   AUTH_PROVIDER: 'keycloak' | 'tapis';
   GOOGLE_MAPS_KEY?: string;
   WELCOME_MESSAGE?: string;
-  /** CKAN data catalog base URL, no /api suffix (e.g. https://ckan.tacc.utexas.edu) */
+  /** CKAN data catalog REST API base URL, no /api suffix (e.g. https://ckan.tacc.utexas.edu) */
   DATA_CATALOG_API?: string;
+  /** Human-browsable data catalog UI URL, used as the datasets browse iframe src. */
+  DATA_CATALOG_BROWSE_URL?: string;
   /** Model Catalog REST API base URL. */
   MODEL_CATALOG_API?: string;
   /** Ensemble Manager REST API base URL. */

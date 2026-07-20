@@ -42,7 +42,17 @@ describe('buildEnvConfig', () => {
   it('emits the service endpoint keys the application reads', () => {
     const c = buildEnvConfig({});
     expect(c.DATA_CATALOG_API).toBe('https://ckan.tacc.utexas.edu');
+    expect(c.DATA_CATALOG_BROWSE_URL).toBe('https://ckan.tacc.utexas.edu');
     expect(c.MODEL_CATALOG_API).toBe('http://api.models.mint.local/v1.8.0');
+  });
+
+  it('resolves the browse URL independently of the API base', () => {
+    const c = buildEnvConfig({
+      DATA_CATALOG_API: 'https://ckan.example.org',
+      DATA_CATALOG_BROWSE_URL: 'https://catalog.example.org',
+    });
+    expect(c.DATA_CATALOG_API).toBe('https://ckan.example.org');
+    expect(c.DATA_CATALOG_BROWSE_URL).toBe('https://catalog.example.org');
   });
 
   it('overrides the service endpoints from env, bare or VITE_-prefixed', () => {

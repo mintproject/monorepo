@@ -4,9 +4,9 @@ import { describe, expect, it, vi } from 'vitest';
 import { DatasetsBrowse } from '../../pages/datasets/DatasetsBrowse';
 import { renderWithProviders } from '../../test/utils/render';
 
-// Mock the config so getDataCatalogApiUrl returns a predictable value
+// Mock the config so getDataCatalogBrowseUrl returns a predictable value
 vi.mock('../../lib/config', () => ({
-  getDataCatalogApiUrl: () => 'https://data.mint.isi.edu',
+  getDataCatalogBrowseUrl: () => 'https://data.mint.isi.edu',
 }));
 
 describe('DatasetsBrowse', () => {

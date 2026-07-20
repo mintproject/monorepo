@@ -12,5 +12,6 @@ window.__MINT_CONFIG__ = {
   AUTH_PROVIDER: "tapis",
   GOOGLE_MAPS_KEY: "AIzaSyDf8bXwyV7v9whOpZl64SRVWKdE6yBbt2k",
   DATA_CATALOG_API: "https://ckan.tacc.utexas.edu",
+  DATA_CATALOG_BROWSE_URL: "https://ckan.tacc.utexas.edu",
   MODEL_CATALOG_API: "http://api.models.mint.local/v1.8.0",
 };

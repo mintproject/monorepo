@@ -1,6 +1,6 @@
 import { useParams } from 'react-router-dom';
 
-import { getDataCatalogApiUrl } from '@/lib/config';
+import { getDataCatalogBrowseUrl } from '@/lib/config';
 
 import { DatasetDetail } from './DatasetDetail';
 
@@ -21,7 +21,7 @@ export function DatasetsBrowse() {
     );
   }
 
-  const catalogUrl = getDataCatalogApiUrl();
+  const catalogUrl = getDataCatalogBrowseUrl();
 
   return (
     <div

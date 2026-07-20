@@ -47,6 +47,9 @@ export function buildEnvConfig(env = process.env) {
       'AIzaSyDf8bXwyV7v9whOpZl64SRVWKdE6yBbt2k',
     DATA_CATALOG_API:
       pick(env, 'DATA_CATALOG_API', 'VITE_DATA_CATALOG_API') ?? 'https://ckan.tacc.utexas.edu',
+    DATA_CATALOG_BROWSE_URL:
+      pick(env, 'DATA_CATALOG_BROWSE_URL', 'VITE_DATA_CATALOG_BROWSE_URL') ??
+      'https://ckan.tacc.utexas.edu',
     MODEL_CATALOG_API:
       pick(env, 'MODEL_CATALOG_API', 'VITE_MODEL_CATALOG_API') ??
       'http://api.models.mint.local/v1.8.0',
