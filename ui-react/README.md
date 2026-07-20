@@ -56,7 +56,8 @@ is treated as unset):
 | `AUTH_REALM` | `` (Keycloak only) |
 | `AUTH_PROVIDER` | `tapis` |
 | `GOOGLE_MAPS_KEY` | (shared development key) |
-| `DATA_CATALOG_API` | `https://ckan.tacc.utexas.edu` (CKAN base URL, no `/api` suffix) |
+| `DATA_CATALOG_API` | `https://ckan.tacc.utexas.edu` (CKAN REST API base, no `/api` suffix) |
+| `DATA_CATALOG_BROWSE_URL` | `https://ckan.tacc.utexas.edu` (human-browsable catalog UI, iframe src) |
 | `MODEL_CATALOG_API` | `http://api.models.mint.local/v1.8.0` |
 | `ENSEMBLE_MANAGER_API` | omitted when unset |
 | `AUTH_CALLBACK_ORIGIN` | omitted when unset |
