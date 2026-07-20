@@ -13,7 +13,7 @@ export function getRuntimeConfig() {
       AUTH_CLIENT_ID: import.meta.env.VITE_AUTH_CLIENT_ID ?? '',
       AUTH_REALM: import.meta.env.VITE_AUTH_REALM ?? '',
       AUTH_PROVIDER: (import.meta.env.VITE_AUTH_PROVIDER as 'keycloak' | 'tapis') ?? 'keycloak',
-      DATA_CATALOG_API: import.meta.env.VITE_DATA_CATALOG_API ?? 'https://data.mint.isi.edu',
+      DATA_CATALOG_API: import.meta.env.VITE_DATA_CATALOG_API ?? 'https://ckan.tacc.utexas.edu',
       MODEL_CATALOG_API:
         import.meta.env.VITE_MODEL_CATALOG_API ?? 'https://api.models.mint.isi.edu/v1.8.0',
     }
@@ -22,7 +22,7 @@ export function getRuntimeConfig() {
 
 /** Returns the Data Catalog REST API base URL (no trailing slash). */
 export function getDataCatalogApiUrl(): string {
-  const url = getRuntimeConfig().DATA_CATALOG_API ?? 'https://data.mint.isi.edu';
+  const url = getRuntimeConfig().DATA_CATALOG_API ?? 'https://ckan.tacc.utexas.edu';
   return url.replace(/\/$/, '');
 }
 

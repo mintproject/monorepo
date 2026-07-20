@@ -1,12 +1,26 @@
 /**
- * Data Catalog REST API client.
+ * Data Catalog client, backed by CKAN.
  *
- * The MINT Data Catalog is a separate REST API (not Hasura/GraphQL).
- * This module provides typed fetch helpers and data-shaping utilities
- * that mirror the legacy ui/src/screens/datasets/actions.ts behaviour.
+ * The data catalog is a CKAN instance (not Hasura/GraphQL). This module
+ * provides typed helpers and data-shaping utilities that mirror the legacy
+ * ui/src/screens/datasets/actions.ts behaviour, projected onto CKAN's Action
+ * API. See lib/datasets/ckan.ts for the transport and the concept mapping.
  *
  * Endpoint: window.__MINT_CONFIG__.DATA_CATALOG_API (or VITE_DATA_CATALOG_API)
  */
+
+import {
+  buildSearchQuery,
+  cleanString,
+  overlapsDateRange,
+  packageTags,
+  packageTimePeriod,
+  parseDate as parseCkanDate,
+  searchPackages,
+  showPackage,
+  type CkanPackage,
+  type CkanResource,
+} from './datasets/ckan';
 
 // ─── Runtime config ───────────────────────────────────────────────────────────
 
@@ -14,7 +28,7 @@ export function getDataCatalogUrl(): string {
   return (
     window.__MINT_CONFIG__?.DATA_CATALOG_API ??
     import.meta.env.VITE_DATA_CATALOG_API ??
-    'https://datacatalog.mint.isi.edu/api/v1'
+    'https://ckan.tacc.utexas.edu'
   );
 }
 
@@ -77,86 +91,95 @@ export interface DatasetQueryParams {
 
 // ─── Internal shape helpers ───────────────────────────────────────────────────
 
-function parseDate(val: unknown): Date | null {
-  if (!val) return null;
-  const d = new Date(val as string);
-  return isNaN(d.getTime()) ? null : d;
-}
-
-function datasetFromDCResponse(
-  ds: Record<string, unknown>,
-  variables: string[],
-): DataCatalogDataset {
-  const dmeta = (ds['dataset_metadata'] as Record<string, unknown>) ?? {};
-  const tc = dmeta['temporal_coverage'] as Record<string, unknown> | undefined;
+function datasetFromCkanPackage(pkg: CkanPackage, variables: string[]): DataCatalogDataset {
+  const resources = pkg.resources ?? [];
   return {
-    id: (ds['dataset_id'] as string) ?? '',
-    name: (ds['dataset_name'] as string) ?? '',
+    // Prefer the name slug: it is what CKAN URLs use and package_show accepts.
+    id: cleanString(pkg.name) || cleanString(pkg.id),
+    name: cleanString(pkg.title) || cleanString(pkg.name),
     region: '',
     variables,
-    datatype: (dmeta['datatype'] as string) ?? (dmeta['data_type'] as string) ?? '',
-    time_period: tc
-      ? {
-          start_date: parseDate(tc['start_time']),
-          end_date: parseDate(tc['end_time']),
-        }
-      : null,
-    description: (dmeta['dataset_description'] as string) ?? '',
-    version: (dmeta['version'] as string) ?? '',
-    limitations: (dmeta['limitations'] as string) ?? '',
+    // CKAN has no datatype field; resource formats are the closest analogue.
+    datatype: cleanString(resources[0]?.format),
+    time_period: packageTimePeriod(pkg),
+    description: cleanString(pkg.notes),
+    version: cleanString(pkg.version),
+    // CKAN models usage restrictions as a licence rather than free-text limitations.
+    limitations: cleanString(pkg.license_title),
     source: {
-      name: (dmeta['source'] as string) ?? '',
-      url: (dmeta['source_url'] as string) ?? '',
-      type: (dmeta['source_type'] as string) ?? '',
+      name: cleanString(pkg.organization?.title ?? pkg.organization?.name ?? pkg.author),
+      url: cleanString(pkg.url),
+      type: '',
     },
-    categories: (dmeta['category_tags'] as string[]) ?? [],
-    resource_count: (dmeta['resource_count'] as number) ?? 0,
+    categories: packageTags(pkg),
+    resource_count: pkg.num_resources ?? resources.length,
     resources: [],
     resources_loaded: false,
   };
 }
 
-function resourceFromDCResponse(row: Record<string, unknown>): DataCatalogResource {
-  const dmeta = (row['resource_metadata'] as Record<string, unknown>) ?? {};
-  const tc = dmeta['temporal_coverage'] as Record<string, unknown> | undefined;
+/**
+ * CKAN resources carry no coverage metadata of their own, so they inherit the
+ * parent package's temporal coverage.
+ */
+function resourceFromCkanResource(row: CkanResource, parent: CkanPackage): DataCatalogResource {
+  const created = parseCkanDate(row.last_modified) ?? parseCkanDate(row.created);
+  const inherited = packageTimePeriod(parent);
   return {
-    id: (row['resource_id'] as string) ?? '',
-    name: (row['resource_name'] as string) ?? '',
-    url: (dmeta['resource_data_url'] as string) ?? '',
-    time_period: tc
-      ? {
-          start_date: parseDate(tc['start_time']),
-          end_date: parseDate(tc['end_time']),
-        }
-      : null,
+    id: cleanString(row.id),
+    name: cleanString(row.name) || cleanString(row.description) || cleanString(row.format),
+    url: cleanString(row.url),
+    time_period: inherited ?? (created ? { start_date: created, end_date: created } : null),
     selected: true,
   };
 }
 
 // ─── API functions ────────────────────────────────────────────────────────────
 
-async function post<T>(url: string, body: unknown): Promise<T> {
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
+/**
+ * Find datasets by standard variable names, optional spatial + temporal filters.
+ *
+ * CKAN has no standard-variable vocabulary, so variable names are matched as
+ * free text against title, description and tags.
+ */
+export async function findDatasets(params: DatasetQueryParams): Promise<DataCatalogDataset[]> {
+  const variables = params.standard_variable_names__in ?? [];
+  const query = buildSearchQuery({ variables });
+  const boundingBox = toBoundingBox(params.spatial_coverage__intersects);
+
+  const packages = await searchPackages({
+    ...(query ? { q: query } : {}),
+    ...(boundingBox ? { boundingBox } : {}),
+    ...(params.limit ? { rows: params.limit } : {}),
   });
-  if (!res.ok) {
-    throw new Error(`Data Catalog request failed: ${res.status} ${res.statusText}`);
-  }
-  return res.json() as Promise<T>;
+
+  // CKAN cannot filter reliably on temporal extras, so narrow the window here.
+  const start = params.end_time__lte ? new Date(params.end_time__lte) : null;
+  const end = params.start_time__gte ? new Date(params.start_time__gte) : null;
+
+  return packages
+    .filter((pkg) => overlapsDateRange(pkg, start, end))
+    .map((pkg) => datasetFromCkanPackage(pkg, variables));
 }
 
 /**
- * Find datasets by standard variable names, optional spatial + temporal filters.
+ * Coax the legacy `spatial_coverage__intersects` payload into a bounding box.
+ * Callers pass either a bare {xmin,xmax,ymin,ymax} or the MINT
+ * `{ type: 'BoundingBox', value: {...} }` envelope; anything else is ignored.
  */
-export async function findDatasets(params: DatasetQueryParams): Promise<DataCatalogDataset[]> {
-  const baseUrl = getDataCatalogUrl();
-  const obj = await post<Record<string, unknown>>(`${baseUrl}/datasets/find`, params);
-  if (!obj || obj['result'] !== 'success') return [];
-  const rawList = (obj['datasets'] as Record<string, unknown>[]) ?? [];
-  const variables = (params.standard_variable_names__in as string[] | undefined) ?? [];
-  return rawList.map((ds) => datasetFromDCResponse(ds, variables));
+function toBoundingBox(
+  raw: unknown,
+): { xmin: number; xmax: number; ymin: number; ymax: number } | undefined {
+  if (!raw || typeof raw !== 'object') return undefined;
+  const obj = raw as Record<string, unknown>;
+  const candidate = (
+    obj['value'] && typeof obj['value'] === 'object' ? obj['value'] : obj
+  ) as Record<string, unknown>;
+
+  const coords = ['xmin', 'xmax', 'ymin', 'ymax'].map((k) => Number(candidate[k]));
+  if (coords.some((n) => !isFinite(n))) return undefined;
+  const [xmin, xmax, ymin, ymax] = coords as [number, number, number, number];
+  return { xmin, xmax, ymin, ymax };
 }
 
 /**
@@ -197,27 +220,10 @@ export async function loadDatasetResources(params: {
   startDate?: Date | null;
   endDate?: Date | null;
 }): Promise<DataCatalogResource[]> {
-  const baseUrl = getDataCatalogUrl();
-  const filter: Record<string, unknown> = {};
-  if (params.regionGeometry) {
-    filter['spatial_coverage__intersects'] = params.regionGeometry;
-  }
-  if (params.startDate) {
-    filter['end_time__gte'] = params.startDate.toISOString().replace(/\.\d{3}Z$/, '');
-  }
-  if (params.endDate) {
-    filter['start_time__lte'] = params.endDate.toISOString().replace(/\.\d{3}Z$/, '');
-  }
-
-  const obj = await post<Record<string, unknown>>(`${baseUrl}/datasets/dataset_resources`, {
-    dataset_id: params.datasetId,
-    filter,
-    limit: 5000,
-  });
-
-  if (!obj || !obj['resources']) return [];
-  const rawList = obj['resources'] as Record<string, unknown>[];
-  const resources = rawList.map(resourceFromDCResponse);
+  // Region and date filters cannot be applied: CKAN resources carry no coverage
+  // of their own, so all resources of the dataset are returned.
+  const pkg = await showPackage(params.datasetId);
+  const resources = (pkg.resources ?? []).map((r) => resourceFromCkanResource(r, pkg));
   // Sort by name
   resources.sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
   return resources;

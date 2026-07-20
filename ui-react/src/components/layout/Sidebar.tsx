@@ -46,8 +46,6 @@ const NAV_GROUPS: NavGroup[] = [
           { href: '/datasets', label: 'Overview' },
           { href: '/datasets/browse', label: 'Browse' },
           { href: '/datasets/search', label: 'Search' },
-          { href: '/datasets/register', label: 'Register' },
-          { href: '/datasets/transformations', label: 'Transformations' },
         ],
       },
       {

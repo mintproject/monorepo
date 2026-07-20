@@ -68,58 +68,57 @@ const mockEnsembles: Record<string, ThreadModelEnsemble> = {
 
 const mockThreadData: Record<string, PersistedDataslice> = {};
 
-// Data Catalog REST mock response
+// CKAN package_search mock response
 const mockFindDatasetsResponse = {
-  result: 'success',
-  datasets: [
-    {
-      dataset_id: 'ds-001',
-      dataset_name: 'Ethiopia Precipitation 2023',
-      dataset_metadata: {
-        dataset_description: 'Daily precipitation data',
+  success: true,
+  result: {
+    count: 2,
+    results: [
+      {
+        id: 'e1f2a3b4-0000-0000-0000-000000000001',
+        name: 'ds-001',
+        title: 'Ethiopia Precipitation 2023',
+        notes: 'Daily precipitation data',
         version: '1.0',
-        limitations: '',
-        source: 'CHIRPS',
-        source_url: 'https://chirps.ucsb.edu',
-        source_type: 'remote',
-        category_tags: ['climate'],
-        resource_count: 12,
-        datatype: 'NetCDF',
-        temporal_coverage: {
-          start_time: '2023-01-01',
-          end_time: '2023-12-31',
-        },
+        url: 'https://chirps.ucsb.edu',
+        license_title: '',
+        num_resources: 12,
+        organization: { name: 'chirps', title: 'CHIRPS' },
+        tags: [{ name: 'climate' }],
+        temporal_coverage_start: '2023-01-01',
+        temporal_coverage_end: '2023-12-31',
+        resources: [
+          { id: 'r-1', name: 'precip-01', url: 'https://chirps.ucsb.edu/1', format: 'NetCDF' },
+        ],
       },
-    },
-    {
-      dataset_id: 'ds-002',
-      dataset_name: 'Ethiopia NDVI 2023',
-      dataset_metadata: {
-        dataset_description: 'NDVI data',
+      {
+        id: 'e1f2a3b4-0000-0000-0000-000000000002',
+        name: 'ds-002',
+        title: 'Ethiopia NDVI 2023',
+        notes: 'NDVI data',
         version: '1.0',
-        limitations: '',
-        source: 'MODIS',
-        source_url: 'https://modis.gsfc.nasa.gov',
-        source_type: 'remote',
-        category_tags: ['vegetation'],
-        resource_count: 4,
-        datatype: 'GeoTIFF',
-        temporal_coverage: {
-          start_time: '2023-01-01',
-          end_time: '2023-12-31',
-        },
+        url: 'https://modis.gsfc.nasa.gov',
+        license_title: '',
+        num_resources: 4,
+        organization: { name: 'modis', title: 'MODIS' },
+        tags: [{ name: 'vegetation' }],
+        temporal_coverage_start: '2023-01-01',
+        temporal_coverage_end: '2023-12-31',
+        resources: [
+          { id: 'r-2', name: 'ndvi-01', url: 'https://modis.gsfc.nasa.gov/1', format: 'GeoTIFF' },
+        ],
       },
-    },
-  ],
+    ],
+  },
 };
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
 describe('MintDatasets', () => {
   beforeEach(() => {
-    // Mock the data catalog /datasets/find endpoint
+    // Mock the CKAN package_search endpoint
     server.use(
-      http.post('*/datasets/find', () => {
+      http.get('*/api/3/action/package_search', () => {
         return HttpResponse.json(mockFindDatasetsResponse);
       }),
     );
