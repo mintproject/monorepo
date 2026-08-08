@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "config:local": "sh scripts/config-local.sh",
     "build": "tsc -b && vite build && node scripts/generate-env-config.mjs",
     "preview": "vite preview",
     "lint": "eslint .",

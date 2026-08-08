@@ -12,8 +12,6 @@ interface MintConfig {
   DATA_CATALOG_API?: string;
   /** Human-browsable data catalog UI URL, used as the datasets browse iframe src. */
   DATA_CATALOG_BROWSE_URL?: string;
-  /** Model Catalog REST API base URL. */
-  MODEL_CATALOG_API?: string;
   /** Ensemble Manager REST API base URL. */
   ENSEMBLE_MANAGER_API?: string;
   /** Fixed origin to register as the single Tapis callback_url (Vercel prod). */

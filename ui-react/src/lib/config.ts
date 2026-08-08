@@ -2,8 +2,13 @@
  * Runtime config accessor.
  *
  * Reads window.__MINT_CONFIG__ at call time so that changes to env-config.js
- * between page loads are always reflected. Falls back to VITE_ env vars for
- * local development without a Docker setup.
+ * between page loads are always reflected.
+ *
+ * The VITE_ branch is a whole-object fallback for the one context where no
+ * env-config.js is served: the jsdom test environment. It does NOT apply to
+ * `npm run dev` — index.html always loads public/env-config.js, so
+ * window.__MINT_CONFIG__ is defined there and shadows every value below. Edit
+ * public/env-config.js (or run `npm run config:local`) to change local dev.
  */
 export function getRuntimeConfig() {
   return (
@@ -16,8 +21,6 @@ export function getRuntimeConfig() {
       DATA_CATALOG_API: import.meta.env.VITE_DATA_CATALOG_API ?? 'https://ckan.tacc.utexas.edu',
       DATA_CATALOG_BROWSE_URL:
         import.meta.env.VITE_DATA_CATALOG_BROWSE_URL ?? 'https://ckan.tacc.utexas.edu',
-      MODEL_CATALOG_API:
-        import.meta.env.VITE_MODEL_CATALOG_API ?? 'https://api.models.mint.isi.edu/v1.8.0',
     }
   );
 }
@@ -48,11 +51,5 @@ export function getDataCatalogBrowseUrl(): string {
     getRuntimeConfig().DATA_CATALOG_BROWSE_URL ??
     getRuntimeConfig().DATA_CATALOG_API ??
     'https://ckan.tacc.utexas.edu';
-  return url.replace(/\/$/, '');
-}
-
-/** Returns the Model Catalog REST API base URL (no trailing slash). */
-export function getModelCatalogApiUrl(): string {
-  const url = getRuntimeConfig().MODEL_CATALOG_API ?? 'https://api.models.mint.isi.edu/v1.8.0';
   return url.replace(/\/$/, '');
 }

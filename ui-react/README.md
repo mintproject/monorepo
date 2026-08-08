@@ -7,12 +7,44 @@ New React/TypeScript frontend for the MINT Model Catalog, replacing the legacy L
 - Node 20+
 - npm 10+
 
-## Development
+## Running locally
 
 ```bash
 npm install
-npm run dev        # http://localhost:5173
+npm run dev        # http://localhost:3000
 ```
+
+That is the whole setup — there is nothing to configure first. The committed
+`public/env-config.js` points at TACC's public endpoints, whose Hasura
+`anonymous` role serves read-only queries and whose CKAN allows the `localhost`
+origin, so a fresh clone browses real data with no cluster access.
+
+**Where local configuration comes from.** `index.html` loads `/env-config.js`
+before the app, and Vite serves `public/` as-is, so `window.__MINT_CONFIG__` is
+always defined under `npm run dev`. The `import.meta.env.VITE_*` fallbacks in
+`src/` are whole-object defaults that apply only when `window.__MINT_CONFIG__`
+is *absent* — which locally it never is. **Setting a `VITE_*` variable in a
+`.env` will not change the dev server.** Change `public/env-config.js` instead:
+
+```bash
+cp .env.example .env
+$EDITOR .env
+npm run config:local   # regenerates public/env-config.js from .env
+```
+
+`public/env-config.js` is tracked, so that overwrites a committed file; restore
+the defaults with `git checkout -- public/env-config.js`. Editing it by hand is
+equally fine — the `.env` route exists so the same key names work for local dev,
+the container and Vercel.
+
+`.env.example` documents every key. Two notes on what local dev does *not* get
+by default:
+
+- **Signing in.** The identity provider allows one callback URL per client, so
+  `http://localhost:3000/oauth2/callback` needs its own OAuth2 client id in
+  `AUTH_CLIENT_ID`. Anonymous browsing works without it; writes do not.
+- **Model execution.** `ENSEMBLE_MANAGER_API` is deliberately left unset, and
+  the thread pages check for its absence rather than calling a wrong host.
 
 ## Testing
 
@@ -58,7 +90,6 @@ is treated as unset):
 | `GOOGLE_MAPS_KEY` | (shared development key) |
 | `DATA_CATALOG_API` | `https://ckan.tacc.utexas.edu` (CKAN REST API base, no `/api` suffix) |
 | `DATA_CATALOG_BROWSE_URL` | `https://ckan.tacc.utexas.edu` (human-browsable catalog UI, iframe src) |
-| `MODEL_CATALOG_API` | `http://api.models.mint.local/v1.8.0` |
 | `ENSEMBLE_MANAGER_API` | omitted when unset |
 | `AUTH_CALLBACK_ORIGIN` | omitted when unset |
 | `AUTH_PREVIEW_ORIGIN_ALLOWLIST` | omitted when unset |
