@@ -1,9 +1,10 @@
 /**
  * Tests for MintRuns — execution lifecycle step.
  */
-import { describe, expect, it, vi } from 'vitest';
-import { screen, fireEvent } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
+import { screen, fireEvent, waitFor } from '@testing-library/react';
 import { renderWithProviders } from '@/test/utils/render';
+import { storeTokens } from '@/lib/auth/token-store';
 import { MintRuns } from '../MintRuns';
 import type { ThreadExecutionData, ModelExecutionsMap } from '@/graphql/generated/execution';
 
@@ -67,6 +68,21 @@ const noParamsDoneThread: ThreadExecutionData = {
 };
 
 const emptyExecutions: ModelExecutionsMap = {};
+const executionsWithOneRun: ModelExecutionsMap = {
+  'model-1': {
+    loading: false,
+    executions: [
+      {
+        id: 'exec-1',
+        modelid: 'model-1',
+        status: 'SUCCESS',
+        run_progress: 1,
+        bindings: {},
+        results: {},
+      },
+    ],
+  },
+};
 const loadingExecutions: ModelExecutionsMap = {
   'model-1': { executions: [], loading: true },
 };
@@ -238,5 +254,69 @@ describe('MintRuns', () => {
     );
     expect(screen.queryByTestId('submit-runs-model-1')).not.toBeInTheDocument();
     expect(screen.getByText(/don't have permission/i)).toBeInTheDocument();
+  });
+});
+
+// ─── Log fetch authentication ─────────────────────────────────────────────────
+//
+// Regression guard for #85: the log request read a localStorage key that nothing
+// writes, so it went out with no Authorization header and failed silently. These
+// assert the outgoing header, not the storage key — a key rename in token-store
+// must not be able to break the call again.
+
+describe('MintRuns log fetch authentication', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({ ok: true, text: () => Promise.resolve('log line') }),
+    );
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    localStorage.clear();
+  });
+
+  function renderWithOneExecution() {
+    renderWithProviders(
+      <MintRuns
+        threadData={mockThreadDataSubmitted}
+        executions={executionsWithOneRun}
+        canWrite
+        canExecute
+        ensembleManagerApi="http://ensemble"
+        executionEngine="localex"
+        onContinue={vi.fn()}
+        onFetchRuns={vi.fn()}
+        onSubmitRuns={vi.fn()}
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: /view log/i }));
+  }
+
+  function fetchInit(): RequestInit {
+    const call = (globalThis.fetch as unknown as Mock).mock.calls[0] as [string, RequestInit];
+    return call[1];
+  }
+
+  it('sends the stored access token as a Bearer header', async () => {
+    storeTokens({ accessToken: 'stored-jwt' });
+    renderWithOneExecution();
+
+    await waitFor(() => expect(globalThis.fetch).toHaveBeenCalledOnce());
+
+    expect((globalThis.fetch as unknown as Mock).mock.calls[0]?.[0]).toBe(
+      'http://ensemble/executions/exec-1/logs',
+    );
+    expect(fetchInit().headers).toMatchObject({ Authorization: 'Bearer stored-jwt' });
+  });
+
+  it('omits the Authorization header when no token is stored', async () => {
+    renderWithOneExecution();
+
+    await waitFor(() => expect(globalThis.fetch).toHaveBeenCalledOnce());
+
+    expect(fetchInit().headers).not.toHaveProperty('Authorization');
   });
 });

@@ -23,6 +23,7 @@ import {
   ModelExecutionsMap,
   ThreadExecutionData,
 } from '@/graphql/generated/execution';
+import { submitRuns } from '@/lib/ensemble-manager';
 import { useAuth } from '@/lib/auth/useAuth';
 import { cn } from '@/lib/utils';
 
@@ -149,22 +150,10 @@ export function MintThread({ threadId: threadIdProp }: MintThreadProps = {}) {
     async (modelId: string) => {
       // POST to the ensemble manager REST API
       const ensembleManagerApi = window.__MINT_CONFIG__?.ENSEMBLE_MANAGER_API ?? '';
-      const executionEngine = 'localex';
-      const token = localStorage.getItem('access-token');
-      const resp = await fetch(`${ensembleManagerApi}/executionEngines/${executionEngine}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify({
-          thread_id: threadId,
-          model_id: modelId,
-        }),
+      await submitRuns(ensembleManagerApi, 'localex', {
+        thread_id: threadId,
+        model_id: modelId,
       });
-      if (!resp.ok) {
-        throw new Error(`Ensemble manager returned ${resp.status}`);
-      }
       // Mark submitted
       setThreadExecutionData((prev) =>
         prev
