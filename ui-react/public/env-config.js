@@ -31,6 +31,12 @@ window.__MINT_CONFIG__ = {
   GOOGLE_MAPS_KEY: "AIzaSyDf8bXwyV7v9whOpZl64SRVWKdE6yBbt2k",
   DATA_CATALOG_API: "https://ckan.tacc.utexas.edu",
   DATA_CATALOG_BROWSE_URL: "https://ckan.tacc.utexas.edu",
+  // Which backend the Ensemble Manager you point at runs: 'tapis', 'localex'
+  // or 'wings'. It picks the submission route, so a value that disagrees with
+  // that deployment reaches the wrong handler or none. 'tapis' rather than the
+  // generator's 'localex' default, to match the TACC endpoints above — set it
+  // to your own engine if you point ENSEMBLE_MANAGER_API elsewhere.
+  EXECUTION_ENGINE: "tapis",
   // ENSEMBLE_MANAGER_API is deliberately omitted: the thread pages check for
   // its absence and degrade rather than call a wrong host. Set it here if you
   // are working on model execution.

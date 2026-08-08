@@ -125,7 +125,6 @@ interface MintRunsProps {
   canWrite: boolean;
   canExecute: boolean;
   ensembleManagerApi: string;
-  executionEngine: string;
   onContinue: () => void;
   onFetchRuns: (modelId: string, page: number, pageSize: number) => void;
   onSubmitRuns: (modelId: string) => Promise<void>;
@@ -142,7 +141,6 @@ export function MintRuns({
   canWrite,
   canExecute,
   ensembleManagerApi,
-  executionEngine: _executionEngine,
   onContinue,
   onFetchRuns,
   onSubmitRuns,

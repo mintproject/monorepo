@@ -45,6 +45,12 @@ describe('buildEnvConfig', () => {
     expect(c.DATA_CATALOG_BROWSE_URL).toBe('https://ckan.tacc.utexas.edu');
   });
 
+  it('defaults the execution engine to the chart default, overridable from env', () => {
+    expect(buildEnvConfig({}).EXECUTION_ENGINE).toBe('localex');
+    expect(buildEnvConfig({ EXECUTION_ENGINE: 'tapis' }).EXECUTION_ENGINE).toBe('tapis');
+    expect(buildEnvConfig({ VITE_EXECUTION_ENGINE: 'wings' }).EXECUTION_ENGINE).toBe('wings');
+  });
+
   it('does not emit MODEL_CATALOG_API — the v1.8.0 SPARQL API has no callers', () => {
     const c = buildEnvConfig({ MODEL_CATALOG_API: 'https://models.example.org/v2' });
     expect('MODEL_CATALOG_API' in c).toBe(false);

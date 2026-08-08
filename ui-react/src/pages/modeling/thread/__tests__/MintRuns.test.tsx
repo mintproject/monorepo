@@ -98,7 +98,6 @@ describe('MintRuns', () => {
         canWrite
         canExecute
         ensembleManagerApi="http://ensemble"
-        executionEngine="localex"
         onContinue={vi.fn()}
         onFetchRuns={vi.fn()}
         onSubmitRuns={vi.fn()}
@@ -115,7 +114,6 @@ describe('MintRuns', () => {
         canWrite
         canExecute
         ensembleManagerApi="http://ensemble"
-        executionEngine="localex"
         onContinue={vi.fn()}
         onFetchRuns={vi.fn()}
         onSubmitRuns={vi.fn()}
@@ -132,7 +130,6 @@ describe('MintRuns', () => {
         canWrite
         canExecute
         ensembleManagerApi="http://ensemble"
-        executionEngine="localex"
         onContinue={vi.fn()}
         onFetchRuns={vi.fn()}
         onSubmitRuns={vi.fn()}
@@ -149,7 +146,6 @@ describe('MintRuns', () => {
         canWrite
         canExecute
         ensembleManagerApi="http://ensemble"
-        executionEngine="localex"
         onContinue={vi.fn()}
         onFetchRuns={vi.fn()}
         onSubmitRuns={vi.fn()}
@@ -168,7 +164,6 @@ describe('MintRuns', () => {
         canWrite
         canExecute
         ensembleManagerApi="http://ensemble"
-        executionEngine="localex"
         onContinue={vi.fn()}
         onFetchRuns={vi.fn()}
         onSubmitRuns={onSubmit}
@@ -186,7 +181,6 @@ describe('MintRuns', () => {
         canWrite
         canExecute
         ensembleManagerApi="http://ensemble"
-        executionEngine="localex"
         onContinue={vi.fn()}
         onFetchRuns={vi.fn()}
         onSubmitRuns={vi.fn()}
@@ -210,7 +204,6 @@ describe('MintRuns', () => {
         canWrite
         canExecute
         ensembleManagerApi="http://ensemble"
-        executionEngine="localex"
         onContinue={vi.fn()}
         onFetchRuns={vi.fn()}
         onSubmitRuns={vi.fn()}
@@ -228,7 +221,6 @@ describe('MintRuns', () => {
         canWrite
         canExecute
         ensembleManagerApi="http://ensemble"
-        executionEngine="localex"
         onContinue={onContinue}
         onFetchRuns={vi.fn()}
         onSubmitRuns={vi.fn()}
@@ -246,7 +238,6 @@ describe('MintRuns', () => {
         canWrite={false}
         canExecute={false}
         ensembleManagerApi="http://ensemble"
-        executionEngine="localex"
         onContinue={vi.fn()}
         onFetchRuns={vi.fn()}
         onSubmitRuns={vi.fn()}
@@ -286,7 +277,6 @@ describe('MintRuns log fetch authentication', () => {
         canWrite
         canExecute
         ensembleManagerApi="http://ensemble"
-        executionEngine="localex"
         onContinue={vi.fn()}
         onFetchRuns={vi.fn()}
         onSubmitRuns={vi.fn()}
