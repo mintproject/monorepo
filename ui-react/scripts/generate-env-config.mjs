@@ -43,7 +43,7 @@ export function buildEnvConfig(env = process.env) {
     HASURA_ENDPOINT:
       pick(env, 'HASURA_ENDPOINT', 'VITE_HASURA_ENDPOINT') ?? 'http://graphql.mint.local/v1/graphql',
     AUTH_SERVER: pick(env, 'AUTH_SERVER', 'VITE_AUTH_SERVER') ?? 'https://portals.tapis.io',
-    AUTH_CLIENT_ID: pick(env, 'AUTH_CLIENT_ID', 'VITE_AUTH_CLIENT_ID') ?? 'mint-local',
+    AUTH_CLIENT_ID: pick(env, 'AUTH_CLIENT_ID', 'VITE_AUTH_CLIENT_ID') ?? 'mint-localhost-3000',
     AUTH_REALM: pick(env, 'AUTH_REALM', 'VITE_AUTH_REALM') ?? '',
     AUTH_PROVIDER: pick(env, 'AUTH_PROVIDER', 'VITE_AUTH_PROVIDER') ?? 'tapis',
     GOOGLE_MAPS_KEY:
