@@ -16,6 +16,7 @@ import {
   ModelExecutionsMap,
   ThreadExecutionData,
 } from '@/graphql/generated/execution';
+import { fetchExecutionLog } from '@/lib/ensemble-manager';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -215,13 +216,7 @@ export function MintRuns({
       const ctrl = new AbortController();
       logAbortRef.current = ctrl;
       try {
-        const token = localStorage.getItem('access-token');
-        const resp = await fetch(`${ensembleManagerApi}/executions/${executionId}/logs`, {
-          signal: ctrl.signal,
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-        });
-        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-        let text = await resp.text();
+        let text = await fetchExecutionLog(ensembleManagerApi, executionId, ctrl.signal);
         // Clean ANSI / escape sequences
         text = text.replace(/\\n/g, '\n').replace(/\\r/g, '').replace(/\\t/g, '\t');
         text = text.replace(/\\u001b.+?m/g, '').replace(/^"|"$/g, '');
