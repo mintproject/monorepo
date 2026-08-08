@@ -43,7 +43,11 @@ describe('buildEnvConfig', () => {
     const c = buildEnvConfig({});
     expect(c.DATA_CATALOG_API).toBe('https://ckan.tacc.utexas.edu');
     expect(c.DATA_CATALOG_BROWSE_URL).toBe('https://ckan.tacc.utexas.edu');
-    expect(c.MODEL_CATALOG_API).toBe('http://api.models.mint.local/v1.8.0');
+  });
+
+  it('does not emit MODEL_CATALOG_API — the v1.8.0 SPARQL API has no callers', () => {
+    const c = buildEnvConfig({ MODEL_CATALOG_API: 'https://models.example.org/v2' });
+    expect('MODEL_CATALOG_API' in c).toBe(false);
   });
 
   it('resolves the browse URL independently of the API base', () => {
@@ -58,11 +62,11 @@ describe('buildEnvConfig', () => {
   it('overrides the service endpoints from env, bare or VITE_-prefixed', () => {
     const c = buildEnvConfig({
       DATA_CATALOG_API: 'https://data.example.org',
-      VITE_MODEL_CATALOG_API: 'https://models.example.org/v2',
+      VITE_DATA_CATALOG_BROWSE_URL: 'https://catalog.example.org',
       ENSEMBLE_MANAGER_API: 'https://ensemble.example.org',
     });
     expect(c.DATA_CATALOG_API).toBe('https://data.example.org');
-    expect(c.MODEL_CATALOG_API).toBe('https://models.example.org/v2');
+    expect(c.DATA_CATALOG_BROWSE_URL).toBe('https://catalog.example.org');
     expect(c.ENSEMBLE_MANAGER_API).toBe('https://ensemble.example.org');
   });
 

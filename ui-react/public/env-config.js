@@ -1,11 +1,29 @@
-// Runtime configuration defaults, used as-is for local development.
+// Runtime configuration for LOCAL DEVELOPMENT ONLY.
 //
-// In a container these values are overwritten at startup by
-// docker/entrypoint.sh, and on Vercel at build time — both via
-// scripts/generate-env-config.mjs, which owns the configuration shape and
-// carries the same defaults. Update both together.
+// index.html loads this file before the app, and Vite serves public/ as-is, so
+// window.__MINT_CONFIG__ is ALWAYS defined under `npm run dev`. The
+// `import.meta.env.VITE_*` fallbacks in src/ read a whole-object default that
+// only applies when window.__MINT_CONFIG__ is absent — so they never fire
+// locally. This file, not a .env, is what configures the dev server.
+//
+// Every deployed context overwrites it via scripts/generate-env-config.mjs:
+// the container entrypoint at startup, Vercel at build time. Nothing set here
+// reaches a deployment.
+//
+// To point local dev elsewhere: edit this file directly, or put the values in a
+// .env (copy .env.example) and run `npm run config:local` to regenerate it.
+//
+// These values intentionally DIFFER from the defaults in
+// scripts/generate-env-config.mjs. Those target an in-cluster MINT deployment
+// (*.mint.local); a laptop is not in that cluster, so the same default cannot
+// serve both. The values below target TACC's public deployment so that a fresh
+// clone runs with no cluster access at all: Hasura's `anonymous` role serves
+// read-only queries and sends CORS `*`, and CKAN allowlists the localhost
+// origin. Signing in is the one thing this does not buy you — that additionally
+// needs an OAuth2 client whose registered callback is
+// http://localhost:3000/oauth2/callback.
 window.__MINT_CONFIG__ = {
-  HASURA_ENDPOINT: "http://graphql.mint.local/v1/graphql",
+  HASURA_ENDPOINT: "https://graphql.mint.tacc.utexas.edu/v1/graphql",
   AUTH_SERVER: "https://portals.tapis.io",
   AUTH_CLIENT_ID: "mint-local",
   AUTH_REALM: "",
@@ -13,5 +31,7 @@ window.__MINT_CONFIG__ = {
   GOOGLE_MAPS_KEY: "AIzaSyDf8bXwyV7v9whOpZl64SRVWKdE6yBbt2k",
   DATA_CATALOG_API: "https://ckan.tacc.utexas.edu",
   DATA_CATALOG_BROWSE_URL: "https://ckan.tacc.utexas.edu",
-  MODEL_CATALOG_API: "http://api.models.mint.local/v1.8.0",
+  // ENSEMBLE_MANAGER_API is deliberately omitted: the thread pages check for
+  // its absence and degrade rather than call a wrong host. Set it here if you
+  // are working on model execution.
 };

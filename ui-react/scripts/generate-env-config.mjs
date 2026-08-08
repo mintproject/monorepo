@@ -34,7 +34,11 @@ function pick(env, ...names) {
  * @returns {Record<string, string | undefined>}
  */
 export function buildEnvConfig(env = process.env) {
-  // NOTE: these defaults must mirror public/env-config.js — update both together.
+  // NOTE: these defaults intentionally DIFFER from public/env-config.js. They
+  // target an in-cluster MINT deployment (*.mint.local); public/env-config.js
+  // serves a developer's laptop, which is not in that cluster, and points at
+  // TACC's publicly reachable endpoints instead. Keep the *shape* in step —
+  // adding a key here means adding it there — but not the values.
   const config = /** @type {Record<string, string | undefined>} */ ({
     HASURA_ENDPOINT:
       pick(env, 'HASURA_ENDPOINT', 'VITE_HASURA_ENDPOINT') ?? 'http://graphql.mint.local/v1/graphql',
@@ -50,9 +54,6 @@ export function buildEnvConfig(env = process.env) {
     DATA_CATALOG_BROWSE_URL:
       pick(env, 'DATA_CATALOG_BROWSE_URL', 'VITE_DATA_CATALOG_BROWSE_URL') ??
       'https://ckan.tacc.utexas.edu',
-    MODEL_CATALOG_API:
-      pick(env, 'MODEL_CATALOG_API', 'VITE_MODEL_CATALOG_API') ??
-      'http://api.models.mint.local/v1.8.0',
   });
 
   // No sensible default — the ensemble manager is deployment-specific, and the

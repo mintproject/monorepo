@@ -149,10 +149,16 @@ shape. It is invoked in three contexts, and a new key must be added there:
 - Vercel build (`npm run build`, gated on `VERCEL`) — rewrites `dist/env-config.js`
 - Container startup (`docker/entrypoint.sh`) — same module with an explicit
   output path argument, which is what puts it in runtime mode
-- Local development — the committed `public/env-config.js` is served as-is
+- Local development — the committed `public/env-config.js` is served as-is, and
+  `npm run config:local` regenerates it from a `.env` (see `.env.example`)
 
-`window.__MINT_CONFIG__` is what the app reads; `import.meta.env.VITE_*` is only
-a fallback for `npm run dev` without a config file.
+`window.__MINT_CONFIG__` is what the app reads. `import.meta.env.VITE_*` is a
+whole-object fallback that fires only when `window.__MINT_CONFIG__` is absent —
+i.e. in the jsdom tests, **not** under `npm run dev`, where `index.html` always
+loads `public/env-config.js`. Setting a `VITE_*` var does not change the dev
+server; edit `public/env-config.js`. `generate-env-config.mjs` defaults target
+`*.mint.local` (in-cluster) and `public/env-config.js` targets TACC's public
+endpoints (laptop) — the shape is shared, the values deliberately are not.
 
 Keys:
 - `HASURA_ENDPOINT` — Hasura GraphQL endpoint URL
@@ -161,7 +167,7 @@ Keys:
 - `AUTH_REALM` — Keycloak realm (Keycloak only)
 - `AUTH_PROVIDER` — `'keycloak'` | `'tapis'`
 - `GOOGLE_MAPS_KEY`, `WELCOME_MESSAGE`
-- `DATA_CATALOG_API`, `MODEL_CATALOG_API`, `ENSEMBLE_MANAGER_API`
+- `DATA_CATALOG_API`, `DATA_CATALOG_BROWSE_URL`, `ENSEMBLE_MANAGER_API`
 - `AUTH_CALLBACK_ORIGIN`, `AUTH_PREVIEW_ORIGIN_ALLOWLIST`
 
 Each key accepts a bare or `VITE_`-prefixed env var name; empty string is
