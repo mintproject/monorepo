@@ -2,3 +2,11 @@ node_modules/
 dist/
 .env
 src/generated/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
