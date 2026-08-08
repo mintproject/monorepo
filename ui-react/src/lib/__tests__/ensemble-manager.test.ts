@@ -10,7 +10,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
 
 import { storeTokens } from '@/lib/auth/token-store';
-import { ensembleManagerHeaders, fetchExecutionLog, submitRuns } from '@/lib/ensemble-manager';
+import {
+  ensembleManagerHeaders,
+  executionEnginePath,
+  fetchExecutionLog,
+  submitRuns,
+} from '@/lib/ensemble-manager';
 
 function lastRequest(): [string, RequestInit] {
   const calls = (globalThis.fetch as unknown as Mock).mock.calls;
@@ -50,16 +55,43 @@ describe('ensemble-manager', () => {
     });
   });
 
+  describe('executionEnginePath', () => {
+    // Regression guard for #88: the app posted every engine to
+    // /executionEngines/<engine>, but the Ensemble Manager registers that
+    // prefix for Tapis only and keeps the two older backends on their own
+    // paths. Submission 404'd before authentication mattered.
+    it('routes localex to its own path, not the executionEngines prefix', () => {
+      expect(executionEnginePath('localex')).toBe('/executionsLocal');
+    });
+
+    it('routes wings to its own path', () => {
+      expect(executionEnginePath('wings')).toBe('/executions');
+    });
+
+    it('routes tapis under the executionEngines prefix', () => {
+      expect(executionEnginePath('tapis')).toBe('/executionEngines/tapis');
+    });
+
+    it('routes an unknown engine under the executionEngines prefix', () => {
+      expect(executionEnginePath('slurm')).toBe('/executionEngines/slurm');
+    });
+  });
+
   describe('submitRuns', () => {
+    it('posts to the route the named engine is served on', async () => {
+      await submitRuns('http://ensemble', 'localex', { thread_id: 't', model_id: 'm' });
+      expect(lastRequest()[0]).toBe('http://ensemble/executionsLocal');
+    });
+
     it('sends the access token as a Bearer header', async () => {
       storeTokens({ accessToken: 'stored-jwt' });
-      await submitRuns('http://ensemble', 'localex', {
+      await submitRuns('http://ensemble', 'tapis', {
         thread_id: 'thread-1',
         model_id: 'model-1',
       });
 
       const [url, init] = lastRequest();
-      expect(url).toBe('http://ensemble/executionEngines/localex');
+      expect(url).toBe('http://ensemble/executionEngines/tapis');
       expect(init.method).toBe('POST');
       expect(init.headers).toMatchObject({
         'Content-Type': 'application/json',
@@ -72,7 +104,7 @@ describe('ensemble-manager', () => {
     });
 
     it('sends no Authorization header when logged out', async () => {
-      await submitRuns('http://ensemble', 'localex', {
+      await submitRuns('http://ensemble', 'tapis', {
         thread_id: 'thread-1',
         model_id: 'model-1',
       });
@@ -82,7 +114,7 @@ describe('ensemble-manager', () => {
     it('throws on a non-ok response', async () => {
       (globalThis.fetch as unknown as Mock).mockResolvedValue({ ok: false, status: 401 });
       await expect(
-        submitRuns('http://ensemble', 'localex', { thread_id: 't', model_id: 'm' }),
+        submitRuns('http://ensemble', 'tapis', { thread_id: 't', model_id: 'm' }),
       ).rejects.toThrow('Ensemble manager returned 401');
     });
   });

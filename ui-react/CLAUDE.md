@@ -168,6 +168,9 @@ Keys:
 - `AUTH_PROVIDER` — `'keycloak'` | `'tapis'`
 - `GOOGLE_MAPS_KEY`, `WELCOME_MESSAGE`
 - `DATA_CATALOG_API`, `DATA_CATALOG_BROWSE_URL`, `ENSEMBLE_MANAGER_API`
+- `EXECUTION_ENGINE` — `'tapis'` | `'localex'` | `'wings'`; the backend the
+  deployment's Ensemble Manager runs. Selects the run-submission route, which
+  differs per backend (see `executionEnginePath` in `src/lib/ensemble-manager.ts`)
 - `AUTH_CALLBACK_ORIGIN`, `AUTH_PREVIEW_ORIGIN_ALLOWLIST`
 
 Each key accepts a bare or `VITE_`-prefixed env var name; empty string is

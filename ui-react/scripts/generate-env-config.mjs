@@ -54,6 +54,18 @@ export function buildEnvConfig(env = process.env) {
     DATA_CATALOG_BROWSE_URL:
       pick(env, 'DATA_CATALOG_BROWSE_URL', 'VITE_DATA_CATALOG_BROWSE_URL') ??
       'https://ckan.tacc.utexas.edu',
+    // Which execution backend the deployment's Ensemble Manager runs, so the
+    // app posts run submissions to the route that backend actually serves. It
+    // is a property of that deployment, not a user choice: the chart configures
+    // the Ensemble Manager and the UI from one value
+    // (components.ensemble_manager.config.execution_engine.type), the way
+    // ui-config.yaml already does for the legacy UI.
+    //
+    // 'localex' matches what the chart defaults the Ensemble Manager itself to
+    // (components.ensemble_manager.config.execution_engine.type) and what the
+    // legacy UI falls back to, so an unset value describes the same deployment
+    // in all three places. A Tapis deployment — TACC's is one — must say so.
+    EXECUTION_ENGINE: pick(env, 'EXECUTION_ENGINE', 'VITE_EXECUTION_ENGINE') ?? 'localex',
   });
 
   // No sensible default — the ensemble manager is deployment-specific, and the

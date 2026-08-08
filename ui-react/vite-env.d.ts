@@ -14,6 +14,13 @@ interface MintConfig {
   DATA_CATALOG_BROWSE_URL?: string;
   /** Ensemble Manager REST API base URL. */
   ENSEMBLE_MANAGER_API?: string;
+  /**
+   * Execution backend the deployment's Ensemble Manager runs — 'tapis',
+   * 'localex' or 'wings'. Selects the submission route; see
+   * {@link submitRuns}. Left as `string` because the Ensemble Manager can gain
+   * an engine without this app changing.
+   */
+  EXECUTION_ENGINE?: string;
   /** Fixed origin to register as the single Tapis callback_url (Vercel prod). */
   AUTH_CALLBACK_ORIGIN?: string;
   /** Regex source overriding the default preview-origin allowlist. */

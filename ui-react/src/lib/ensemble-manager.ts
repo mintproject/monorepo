@@ -22,6 +22,26 @@ export function ensembleManagerHeaders(base: Record<string, string> = {}): Recor
   return { ...base, ...(token ? { Authorization: `Bearer ${token}` } : {}) };
 }
 
+/**
+ * Submission route for an execution engine.
+ *
+ * The Ensemble Manager does not serve one route per engine under a common
+ * prefix: the two older backends predate `/executionEngines` and kept their
+ * own paths (`server.ts` mounts `/executionsLocal`, `/executions` and
+ * `/executionEngines` separately, and the last registers `/tapis` alone). So
+ * `/executionEngines/${engine}` is right for Tapis and a 404 for the other
+ * two — which is what #88 was. Same mapping the legacy UI makes in
+ * `ui/src/screens/modeling/thread/mint-runs.ts`.
+ *
+ * An unrecognised engine falls through to `/executionEngines/<engine>`, where
+ * any newer backend is mounted.
+ */
+export function executionEnginePath(executionEngine: string): string {
+  if (executionEngine === 'localex') return '/executionsLocal';
+  if (executionEngine === 'wings') return '/executions';
+  return `/executionEngines/${executionEngine}`;
+}
+
 /** Submit a thread's model runs to an execution engine. */
 export async function submitRuns(
   ensembleManagerApi: string,
@@ -29,7 +49,7 @@ export async function submitRuns(
   /** `thread_id` is optional only so an absent route param serialises as it did before. */
   body: { thread_id: string | undefined; model_id: string },
 ): Promise<void> {
-  const resp = await fetch(`${ensembleManagerApi}/executionEngines/${executionEngine}`, {
+  const resp = await fetch(`${ensembleManagerApi}${executionEnginePath(executionEngine)}`, {
     method: 'POST',
     headers: ensembleManagerHeaders({ 'Content-Type': 'application/json' }),
     body: JSON.stringify(body),

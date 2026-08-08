@@ -44,7 +44,9 @@ by default:
   `http://localhost:3000/oauth2/callback` needs its own OAuth2 client id in
   `AUTH_CLIENT_ID`. Anonymous browsing works without it; writes do not.
 - **Model execution.** `ENSEMBLE_MANAGER_API` is deliberately left unset, and
-  the thread pages check for its absence rather than calling a wrong host.
+  the thread pages check for its absence rather than calling a wrong host. Set
+  `EXECUTION_ENGINE` alongside it: run submission posts to a different route per
+  backend, so the wrong value reaches the wrong handler or none.
 
 ## Testing
 
@@ -91,6 +93,7 @@ is treated as unset):
 | `DATA_CATALOG_API` | `https://ckan.tacc.utexas.edu` (CKAN REST API base, no `/api` suffix) |
 | `DATA_CATALOG_BROWSE_URL` | `https://ckan.tacc.utexas.edu` (human-browsable catalog UI, iframe src) |
 | `ENSEMBLE_MANAGER_API` | omitted when unset |
+| `EXECUTION_ENGINE` | `localex` (`tapis` / `localex` / `wings` — the backend that Ensemble Manager runs) |
 | `AUTH_CALLBACK_ORIGIN` | omitted when unset |
 | `AUTH_PREVIEW_ORIGIN_ALLOWLIST` | omitted when unset |
 | `WELCOME_MESSAGE` | omitted when unset |

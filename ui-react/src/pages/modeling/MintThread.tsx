@@ -150,7 +150,12 @@ export function MintThread({ threadId: threadIdProp }: MintThreadProps = {}) {
     async (modelId: string) => {
       // POST to the ensemble manager REST API
       const ensembleManagerApi = window.__MINT_CONFIG__?.ENSEMBLE_MANAGER_API ?? '';
-      await submitRuns(ensembleManagerApi, 'localex', {
+      // Which backend this deployment's Ensemble Manager runs. Read at call
+      // time, like the API base above. The fallback matches the one in
+      // scripts/generate-env-config.mjs, and only fires against an env-config.js
+      // generated before this key existed.
+      const executionEngine = window.__MINT_CONFIG__?.EXECUTION_ENGINE ?? 'localex';
+      await submitRuns(ensembleManagerApi, executionEngine, {
         thread_id: threadId,
         model_id: modelId,
       });
@@ -277,7 +282,6 @@ export function MintThread({ threadId: threadIdProp }: MintThreadProps = {}) {
             canWrite={perm.write}
             canExecute={perm.write}
             ensembleManagerApi={window.__MINT_CONFIG__?.ENSEMBLE_MANAGER_API ?? ''}
-            executionEngine="localex"
             onContinue={goNext}
             onFetchRuns={handleFetchRuns}
             onSubmitRuns={handleSubmitRuns}
