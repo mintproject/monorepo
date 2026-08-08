@@ -14,7 +14,7 @@ function getConfig() {
       HASURA_ENDPOINT:
         import.meta.env.VITE_HASURA_ENDPOINT ?? 'http://graphql.mint.local/v1/graphql',
       AUTH_SERVER: import.meta.env.VITE_AUTH_SERVER ?? 'https://portals.tapis.io',
-      AUTH_CLIENT_ID: import.meta.env.VITE_AUTH_CLIENT_ID ?? 'mint-local',
+      AUTH_CLIENT_ID: import.meta.env.VITE_AUTH_CLIENT_ID ?? 'mint-localhost-3000',
       AUTH_REALM: import.meta.env.VITE_AUTH_REALM ?? '',
       AUTH_PROVIDER: (import.meta.env.VITE_AUTH_PROVIDER as 'keycloak' | 'tapis') ?? 'tapis',
     }

@@ -25,7 +25,7 @@
 window.__MINT_CONFIG__ = {
   HASURA_ENDPOINT: "https://graphql.mint.tacc.utexas.edu/v1/graphql",
   AUTH_SERVER: "https://portals.tapis.io",
-  AUTH_CLIENT_ID: "mint-local",
+  AUTH_CLIENT_ID: "mint-localhost-3000",
   AUTH_REALM: "",
   AUTH_PROVIDER: "tapis",
   GOOGLE_MAPS_KEY: "AIzaSyDf8bXwyV7v9whOpZl64SRVWKdE6yBbt2k",

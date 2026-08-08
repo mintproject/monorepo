@@ -5,7 +5,7 @@ import { buildEnvConfig, renderEnvConfig } from '../../scripts/generate-env-conf
 describe('buildEnvConfig', () => {
   it('uses committed defaults when env is empty', () => {
     const c = buildEnvConfig({});
-    expect(c.AUTH_CLIENT_ID).toBe('mint-local');
+    expect(c.AUTH_CLIENT_ID).toBe('mint-localhost-3000');
     expect(c.AUTH_SERVER).toBe('https://portals.tapis.io');
     expect(c.AUTH_PROVIDER).toBe('tapis');
     expect(c.AUTH_REALM).toBe('');
@@ -29,7 +29,7 @@ describe('buildEnvConfig', () => {
 
   it('treats empty string as unset (falls back to default)', () => {
     const c = buildEnvConfig({ AUTH_CLIENT_ID: '' });
-    expect(c.AUTH_CLIENT_ID).toBe('mint-local');
+    expect(c.AUTH_CLIENT_ID).toBe('mint-localhost-3000');
   });
 
   it('omits optional keys when unset', () => {

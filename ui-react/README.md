@@ -84,7 +84,7 @@ is treated as unset):
 |-----|---------|
 | `HASURA_ENDPOINT` | `http://graphql.mint.local/v1/graphql` |
 | `AUTH_SERVER` | `https://portals.tapis.io` |
-| `AUTH_CLIENT_ID` | `mint-local` |
+| `AUTH_CLIENT_ID` | `mint-localhost-3000` |
 | `AUTH_REALM` | `` (Keycloak only) |
 | `AUTH_PROVIDER` | `tapis` |
 | `GOOGLE_MAPS_KEY` | (shared development key) |

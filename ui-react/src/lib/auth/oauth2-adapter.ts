@@ -20,7 +20,7 @@ function getConfig() {
   return (
     window.__MINT_CONFIG__ ?? {
       AUTH_SERVER: import.meta.env.VITE_AUTH_SERVER ?? 'https://portals.tapis.io',
-      AUTH_CLIENT_ID: import.meta.env.VITE_AUTH_CLIENT_ID ?? 'mint-local',
+      AUTH_CLIENT_ID: import.meta.env.VITE_AUTH_CLIENT_ID ?? 'mint-localhost-3000',
       AUTH_REALM: import.meta.env.VITE_AUTH_REALM ?? '',
       AUTH_PROVIDER: (import.meta.env.VITE_AUTH_PROVIDER ?? 'tapis') as 'keycloak' | 'tapis',
       AUTH_CALLBACK_ORIGIN: import.meta.env.VITE_AUTH_CALLBACK_ORIGIN as string | undefined,
