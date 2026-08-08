@@ -49,13 +49,13 @@ export function DatasetsSearch() {
 
   const runSearch = useCallback(async (text: string, type: SearchType) => {
     const trimmed = text.trim();
-    if (!trimmed) {
-      setDatasets(null);
-      return;
-    }
 
-    const params: DatasetQueryParameters =
-      type === 'dataset_names' ? { name: `*${trimmed}*` } : { variables: [`*${trimmed}*`] };
+    // An empty term is a valid search: it lists every dataset in the catalog.
+    const params: DatasetQueryParameters = !trimmed
+      ? {}
+      : type === 'dataset_names'
+        ? { name: `*${trimmed}*` }
+        : { variables: [`*${trimmed}*`] };
 
     setLoading(true);
     setError(null);

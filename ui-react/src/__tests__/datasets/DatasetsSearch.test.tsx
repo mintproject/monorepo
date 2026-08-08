@@ -70,6 +70,35 @@ describe('DatasetsSearch', () => {
     expect(searchDatasets).toHaveBeenCalledWith({ name: '*GLDAS*' });
   });
 
+  it('searches the whole catalog when the term is empty', async () => {
+    vi.mocked(searchDatasets).mockResolvedValue(mockDatasets);
+    const user = userEvent.setup();
+
+    renderWithProviders(<DatasetsSearch />);
+
+    await user.click(screen.getByRole('button', { name: /search/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText('GLDAS Dataset')).toBeInTheDocument();
+    });
+
+    expect(searchDatasets).toHaveBeenCalledWith({});
+  });
+
+  it('ignores a whitespace-only term instead of searching for it', async () => {
+    vi.mocked(searchDatasets).mockResolvedValue(mockDatasets);
+    const user = userEvent.setup();
+
+    renderWithProviders(<DatasetsSearch />);
+
+    await user.type(screen.getByLabelText(/search datasets/i), '   ');
+    await user.click(screen.getByRole('button', { name: /search/i }));
+
+    await waitFor(() => {
+      expect(searchDatasets).toHaveBeenCalledWith({});
+    });
+  });
+
   it('shows error message when search fails', async () => {
     vi.mocked(searchDatasets).mockRejectedValue(new Error('Network error'));
     const user = userEvent.setup();
