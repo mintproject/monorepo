@@ -21,7 +21,8 @@ MINT (Model INTegration) platform - a scientific modeling system. This monorepo 
 | `model-catalog-fastapi/` | Legacy REST API v1.8.0 (RDF) | Python/FastAPI |
 | `model-catalog-endpoint/` | Apache Fuseki RDF store (deprecated) | - |
 | `mint-ensemble-manager/` | Execution orchestration | TypeScript/Express |
-| `ui/` | Frontend | TypeScript/LitElement |
+| `ui-react/` | Frontend (current) | TypeScript/React + Vite |
+| `ui/` | Legacy frontend (deprecated, being replaced by `ui-react/`) | TypeScript/LitElement |
 | `graphql_engine/` | Hasura schema, migrations, metadata | SQL/YAML |
 | `etl/` | RDF-to-PostgreSQL migration pipeline | Python |
 | `helm-charts/` | Kubernetes deployment | Helm |
@@ -65,7 +66,17 @@ npm run codegen                     # GraphQL type generation
 npm run eslint:fix && npm run prettier:fix
 ```
 
-### UI
+### UI (ui-react — current frontend)
+```bash
+cd ui-react
+npm install && npm run dev          # Vite dev server
+npm test                            # Vitest
+npm run build                       # Production build
+npm run codegen                     # GraphQL type generation (needs HASURA_ADMIN_SECRET)
+```
+
+### UI (ui — deprecated LitElement frontend)
+Only touch this for maintenance of the old app; new frontend work goes in `ui-react/`.
 ```bash
 cd ui
 yarn install && yarn start          # Development with hot reload
@@ -103,6 +114,7 @@ See `.planning/PROJECT.md` for full migration status and decisions. Key points:
 - v2.0.0 API runs alongside legacy v1.8.0
 - Old model/model_io/model_parameter tables kept for FK compatibility
 - Submodules: `model-catalog-api`, `mint-ensemble-manager`, `ui` each have their own CLAUDE.md
+- `ui-react/` is NOT a submodule — it lives directly in this repo and has its own CLAUDE.md
 
 ## Git Guidelines
 
