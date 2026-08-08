@@ -13,7 +13,7 @@ import {
   UpdateConfigurationDocument,
   UpdateDatasetSpecificationDocument,
   UpdateVariablePresentationDocument,
-  InsertConfigurationInputJunctionDocument,
+  SetConfigurationInputOptionalDocument,
   UpdateModelParameterDocument,
   GetRegionsDocument,
   AddConfigurationInputDocument,
@@ -381,25 +381,30 @@ describe('ConfigurationForm (toUpdate path — edit mode with existing rows)', (
       },
     };
 
-    const insertJunctionMock = {
+    // The junction row must NOT be touched: only the label changed, and is_optional is
+    // the sole junction field. Rewriting it on every edit is what broke every save (#91).
+    const junctionSpy = vi.fn().mockReturnValue({
+      data: {
+        delete_modelcatalog_configuration_input_by_pk: {
+          __typename: 'modelcatalog_configuration_input' as const,
+          configuration_id: 'cfg1',
+          input_id: 'ds1',
+        },
+        insert_modelcatalog_configuration_input_one: {
+          __typename: 'modelcatalog_configuration_input' as const,
+          configuration_id: 'cfg1',
+          input_id: 'ds1',
+          is_optional: false,
+        },
+      },
+    });
+
+    const junctionMock = {
       request: {
-        query: InsertConfigurationInputJunctionDocument,
-        variables: {
-          configurationId: 'cfg1',
-          inputId: 'ds1',
-          isOptional: false,
-        },
+        query: SetConfigurationInputOptionalDocument,
+        variables: { configurationId: 'cfg1', inputId: 'ds1', isOptional: false },
       },
-      result: {
-        data: {
-          insert_modelcatalog_configuration_input_one: {
-            __typename: 'modelcatalog_configuration_input' as const,
-            configuration_id: 'cfg1',
-            input_id: 'ds1',
-            is_optional: false,
-          },
-        },
-      },
+      result: junctionSpy,
     };
 
     renderWithProviders(<ConfigurationForm configurationId="cfg1" onSaved={onSaved} />, {
@@ -410,7 +415,9 @@ describe('ConfigurationForm (toUpdate path — edit mode with existing rows)', (
         updateConfigForInputTest,
         updateDatasetSpecMock,
         updateVPMock,
-        insertJunctionMock,
+        junctionMock,
+        // Consumed by the post-save refetch.
+        configWithInputQueryMock,
       ],
     });
 
@@ -420,29 +427,183 @@ describe('ConfigurationForm (toUpdate path — edit mode with existing rows)', (
     });
 
     // Find the input row's label field using its placeholder (InputRow uses "e.g. Precipitation")
-    const inputRowLabel = screen.queryByPlaceholderText(
+    const inputRowLabel = (await screen.findByPlaceholderText(
       /e\.g\. Precipitation/i,
-    ) as HTMLInputElement | null;
+    )) as HTMLInputElement;
 
-    if (inputRowLabel) {
-      // Row is rendered — change its label to trigger toUpdate path on submit
-      await userEvent.clear(inputRowLabel);
-      await userEvent.type(inputRowLabel, 'Rainfall Updated');
+    // Change its label to trigger the toUpdate path on submit
+    await userEvent.clear(inputRowLabel);
+    await userEvent.type(inputRowLabel, 'Rainfall Updated');
 
-      // Submit — config label not changed so form is only dirty from input row change
-      // Note: the save button only enables when form is dirty
-      const saveButton = screen.queryByRole('button', { name: /save changes/i });
-      if (saveButton && !saveButton.hasAttribute('disabled')) {
-        await userEvent.click(saveButton);
-        await waitFor(() => {
-          expect(onSaved).toHaveBeenCalledWith('cfg1');
-        });
-      }
-    } else {
-      // The input row section renders but without the specific placeholder visible yet;
-      // just verify the component renders without errors — the update-path hooks are wired.
-      expect(screen.getByLabelText('Inputs')).toBeInTheDocument();
-    }
+    // Submit — the config label is unchanged, so the form is dirty only from the row
+    const saveButton = screen.getByRole('button', { name: /save changes/i });
+    expect(saveButton).not.toBeDisabled();
+    await userEvent.click(saveButton);
+
+    await waitFor(() => {
+      expect(onSaved).toHaveBeenCalledWith('cfg1');
+    });
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(junctionSpy).not.toHaveBeenCalled();
+  });
+
+  it('rewrites the junction row when Optional is toggled on an existing input', async () => {
+    const onSaved = vi.fn();
+
+    const updateConfigUnchanged = {
+      request: {
+        query: UpdateConfigurationDocument,
+        variables: { id: 'cfg1', label: 'Default Configuration', description: 'Test desc' },
+      },
+      result: {
+        data: {
+          update_modelcatalog_configuration_by_pk: {
+            __typename: 'modelcatalog_configuration' as const,
+            id: 'cfg1',
+            label: 'Default Configuration',
+            description: 'Test desc',
+            software_version_id: 'ver1',
+            model_configuration_id: null,
+          },
+        },
+      },
+    };
+
+    const updateDatasetSpecUnchanged = {
+      request: {
+        query: UpdateDatasetSpecificationDocument,
+        variables: {
+          id: 'ds1',
+          label: 'Rainfall',
+          description: 'Daily rainfall',
+          hasFormat: 'netcdf',
+          hasDimensionality: 2,
+          position: 0,
+        },
+      },
+      result: {
+        data: {
+          update_modelcatalog_dataset_specification_by_pk: {
+            __typename: 'modelcatalog_dataset_specification' as const,
+            id: 'ds1',
+            label: 'Rainfall',
+            description: 'Daily rainfall',
+            has_format: 'netcdf',
+            has_dimensionality: 2,
+            position: 0,
+          },
+        },
+      },
+    };
+
+    const updateVPUnchanged = {
+      request: {
+        query: UpdateVariablePresentationDocument,
+        variables: {
+          id: 'vp1',
+          label: 'Precipitation',
+          hasLongName: null,
+          hasShortName: null,
+          hasStandardVariable: 'sv1',
+          usesUnit: 'unit1',
+        },
+      },
+      result: {
+        data: {
+          update_modelcatalog_variable_presentation_by_pk: {
+            __typename: 'modelcatalog_variable_presentation' as const,
+            id: 'vp1',
+            label: 'Precipitation',
+            has_standard_variable: 'sv1',
+            uses_unit: 'unit1',
+          },
+        },
+      },
+    };
+
+    // Delete + insert in one document — the junction row has no update permission.
+    const junctionSpy = vi.fn().mockReturnValue({
+      data: {
+        delete_modelcatalog_configuration_input_by_pk: {
+          __typename: 'modelcatalog_configuration_input' as const,
+          configuration_id: 'cfg1',
+          input_id: 'ds1',
+        },
+        insert_modelcatalog_configuration_input_one: {
+          __typename: 'modelcatalog_configuration_input' as const,
+          configuration_id: 'cfg1',
+          input_id: 'ds1',
+          is_optional: true,
+        },
+      },
+    });
+
+    const junctionMock = {
+      request: {
+        query: SetConfigurationInputOptionalDocument,
+        variables: { configurationId: 'cfg1', inputId: 'ds1', isOptional: true },
+      },
+      result: junctionSpy,
+    };
+
+    renderWithProviders(<ConfigurationForm configurationId="cfg1" onSaved={onSaved} />, {
+      apolloMocks: [
+        configWithInputQueryMock,
+        emptyRefDataMock,
+        emptyRegionsMock,
+        updateConfigUnchanged,
+        updateDatasetSpecUnchanged,
+        updateVPUnchanged,
+        junctionMock,
+        configWithInputQueryMock,
+      ],
+    });
+
+    const optionalCheckbox = await screen.findByLabelText(/optional \(not required/i);
+    expect(optionalCheckbox).not.toBeChecked();
+    await userEvent.click(optionalCheckbox);
+
+    await userEvent.click(screen.getByRole('button', { name: /save changes/i }));
+
+    await waitFor(() => {
+      expect(junctionSpy).toHaveBeenCalled();
+    });
+    await waitFor(() => {
+      expect(onSaved).toHaveBeenCalledWith('cfg1');
+    });
+  });
+
+  it('refetches the configuration before onSaved so the detail view is not stale', async () => {
+    const onSaved = vi.fn();
+    const refetchSpy = vi.fn().mockReturnValue({
+      data: { modelcatalog_configuration_by_pk: mockConfig },
+    });
+
+    renderWithProviders(<ConfigurationForm configurationId="cfg1" onSaved={onSaved} />, {
+      apolloMocks: [
+        ...defaultMocks,
+        updateConfigMock,
+        {
+          request: { query: GetConfigurationDocument, variables: { id: 'cfg1' } },
+          result: refetchSpy,
+        },
+      ],
+    });
+
+    await waitFor(() => {
+      const nameInput = screen.getByPlaceholderText('Configuration name') as HTMLInputElement;
+      expect(nameInput.value).toBe('Default Configuration');
+    });
+
+    const nameInput = screen.getByPlaceholderText('Configuration name');
+    await userEvent.clear(nameInput);
+    await userEvent.type(nameInput, 'Updated Name');
+    await userEvent.click(screen.getByRole('button', { name: /save changes/i }));
+
+    await waitFor(() => {
+      expect(onSaved).toHaveBeenCalledWith('cfg1');
+    });
+    expect(refetchSpy).toHaveBeenCalled();
   });
 
   it('calls UpdateModelParameter when an existing parameter label changes', async () => {

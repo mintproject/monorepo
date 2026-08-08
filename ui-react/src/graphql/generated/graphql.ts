@@ -26403,14 +26403,14 @@ export type CreateConfigurationMutationVariables = Exact<{
 
 export type CreateConfigurationMutation = { __typename?: 'mutation_root', insert_modelcatalog_configuration_one?: { __typename?: 'modelcatalog_configuration', id: string, label: string, software_version_id?: string | null } | null };
 
-export type InsertConfigurationInputJunctionMutationVariables = Exact<{
+export type SetConfigurationInputOptionalMutationVariables = Exact<{
   configurationId: Scalars['String']['input'];
   inputId: Scalars['String']['input'];
   isOptional: Scalars['Boolean']['input'];
 }>;
 
 
-export type InsertConfigurationInputJunctionMutation = { __typename?: 'mutation_root', insert_modelcatalog_configuration_input_one?: { __typename?: 'modelcatalog_configuration_input', configuration_id: string, input_id: string, is_optional: boolean } | null };
+export type SetConfigurationInputOptionalMutation = { __typename?: 'mutation_root', delete_modelcatalog_configuration_input_by_pk?: { __typename?: 'modelcatalog_configuration_input', configuration_id: string, input_id: string } | null, insert_modelcatalog_configuration_input_one?: { __typename?: 'modelcatalog_configuration_input', configuration_id: string, input_id: string, is_optional: boolean } | null };
 
 export type InsertConfigurationOutputJunctionMutationVariables = Exact<{
   configurationId: Scalars['String']['input'];
@@ -27523,11 +27523,17 @@ export function useCreateConfigurationMutation(baseOptions?: Apollo.MutationHook
 export type CreateConfigurationMutationHookResult = ReturnType<typeof useCreateConfigurationMutation>;
 export type CreateConfigurationMutationResult = Apollo.MutationResult<CreateConfigurationMutation>;
 export type CreateConfigurationMutationOptions = Apollo.BaseMutationOptions<CreateConfigurationMutation, CreateConfigurationMutationVariables>;
-export const InsertConfigurationInputJunctionDocument = gql`
-    mutation InsertConfigurationInputJunction($configurationId: String!, $inputId: String!, $isOptional: Boolean!) {
+export const SetConfigurationInputOptionalDocument = gql`
+    mutation SetConfigurationInputOptional($configurationId: String!, $inputId: String!, $isOptional: Boolean!) {
+  delete_modelcatalog_configuration_input_by_pk(
+    configuration_id: $configurationId
+    input_id: $inputId
+  ) {
+    configuration_id
+    input_id
+  }
   insert_modelcatalog_configuration_input_one(
     object: {configuration_id: $configurationId, input_id: $inputId, is_optional: $isOptional}
-    on_conflict: {constraint: modelcatalog_configuration_input_pkey, update_columns: [is_optional]}
   ) {
     configuration_id
     input_id
@@ -27535,20 +27541,20 @@ export const InsertConfigurationInputJunctionDocument = gql`
   }
 }
     `;
-export type InsertConfigurationInputJunctionMutationFn = Apollo.MutationFunction<InsertConfigurationInputJunctionMutation, InsertConfigurationInputJunctionMutationVariables>;
+export type SetConfigurationInputOptionalMutationFn = Apollo.MutationFunction<SetConfigurationInputOptionalMutation, SetConfigurationInputOptionalMutationVariables>;
 
 /**
- * __useInsertConfigurationInputJunctionMutation__
+ * __useSetConfigurationInputOptionalMutation__
  *
- * To run a mutation, you first call `useInsertConfigurationInputJunctionMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useInsertConfigurationInputJunctionMutation` returns a tuple that includes:
+ * To run a mutation, you first call `useSetConfigurationInputOptionalMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useSetConfigurationInputOptionalMutation` returns a tuple that includes:
  * - A mutate function that you can call at any time to execute the mutation
  * - An object with fields that represent the current status of the mutation's execution
  *
  * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
  *
  * @example
- * const [insertConfigurationInputJunctionMutation, { data, loading, error }] = useInsertConfigurationInputJunctionMutation({
+ * const [setConfigurationInputOptionalMutation, { data, loading, error }] = useSetConfigurationInputOptionalMutation({
  *   variables: {
  *      configurationId: // value for 'configurationId'
  *      inputId: // value for 'inputId'
@@ -27556,13 +27562,13 @@ export type InsertConfigurationInputJunctionMutationFn = Apollo.MutationFunction
  *   },
  * });
  */
-export function useInsertConfigurationInputJunctionMutation(baseOptions?: Apollo.MutationHookOptions<InsertConfigurationInputJunctionMutation, InsertConfigurationInputJunctionMutationVariables>) {
+export function useSetConfigurationInputOptionalMutation(baseOptions?: Apollo.MutationHookOptions<SetConfigurationInputOptionalMutation, SetConfigurationInputOptionalMutationVariables>) {
         const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<InsertConfigurationInputJunctionMutation, InsertConfigurationInputJunctionMutationVariables>(InsertConfigurationInputJunctionDocument, options);
+        return Apollo.useMutation<SetConfigurationInputOptionalMutation, SetConfigurationInputOptionalMutationVariables>(SetConfigurationInputOptionalDocument, options);
       }
-export type InsertConfigurationInputJunctionMutationHookResult = ReturnType<typeof useInsertConfigurationInputJunctionMutation>;
-export type InsertConfigurationInputJunctionMutationResult = Apollo.MutationResult<InsertConfigurationInputJunctionMutation>;
-export type InsertConfigurationInputJunctionMutationOptions = Apollo.BaseMutationOptions<InsertConfigurationInputJunctionMutation, InsertConfigurationInputJunctionMutationVariables>;
+export type SetConfigurationInputOptionalMutationHookResult = ReturnType<typeof useSetConfigurationInputOptionalMutation>;
+export type SetConfigurationInputOptionalMutationResult = Apollo.MutationResult<SetConfigurationInputOptionalMutation>;
+export type SetConfigurationInputOptionalMutationOptions = Apollo.BaseMutationOptions<SetConfigurationInputOptionalMutation, SetConfigurationInputOptionalMutationVariables>;
 export const InsertConfigurationOutputJunctionDocument = gql`
     mutation InsertConfigurationOutputJunction($configurationId: String!, $outputId: String!) {
   insert_modelcatalog_configuration_output_one(
