@@ -16,21 +16,13 @@ import {
   ModelParameter,
   ThreadExecutionData,
 } from '@/graphql/generated/execution';
+import { parametersComplete, totalConfigs } from '@/lib/thread-execution';
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
 
 const MAX_PARAMETER_COMBINATIONS = 100000;
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
-
-function totalConfigs(bindings: Record<string, string[]>, parameters: ModelParameter[]): number {
-  return parameters
-    .filter((p) => !p.value)
-    .reduce((acc, p) => {
-      const vals = bindings[p.id ?? ''] ?? [];
-      return acc * Math.max(vals.length, 1);
-    }, 1);
-}
 
 function formatDate(ts: number): string {
   const date = new Date(ts);
@@ -69,16 +61,10 @@ export function MintParameters({
   const modelIds = Object.keys(threadData.models ?? {});
   const isConfigured = modelIds.length > 0;
 
-  // Derive whether parameters have been selected: every adjustable param has a binding
-  const isDone =
-    isConfigured &&
-    modelIds.every((mid) => {
-      const model = threadData.models[mid]!;
-      const bindings = threadData.model_ensembles[mid]?.bindings ?? {};
-      return model.input_parameters
-        .filter((p) => !p.value)
-        .every((p) => (bindings[p.id ?? ''] ?? []).length > 0);
-    });
+  // Shared with the wizard rail. Note it also requires an execution summary: a
+  // model with no adjustable parameters would otherwise read as done before the
+  // step had written anything, and the Runs step would have nothing to submit.
+  const isDone = parametersComplete(threadData);
 
   const [editMode, setEditMode] = useState(!isDone);
   const [waiting, setWaiting] = useState(false);
@@ -156,7 +142,7 @@ export function MintParameters({
         }
       }
 
-      const cfg = totalConfigs(newEnsembles[mid]?.bindings ?? {}, model.input_parameters);
+      const cfg = totalConfigs(model, newEnsembles[mid]?.bindings ?? {}, threadData.data);
       if (cfg > MAX_PARAMETER_COMBINATIONS) {
         alert(
           `Too many parameter combinations (${cfg}) for the model '${model.name}'. Please reduce the number of values.`,

@@ -5,24 +5,42 @@
  * Parameters → Runs → Results → Summary) and renders the appropriate atomic
  * step component based on the active section.
  *
- * This component loads thread data via Apollo and handles step transitions.
+ * Two queries feed it. GetThread holds the thread's metadata and permissions;
+ * GetThreadExecution holds the execution pipeline — the selected models with
+ * their catalog I/O, the data and parameter bindings, and the run summaries.
+ * Everything downstream of the Models step reads the second one, so a step is
+ * only ever as complete as what the database actually holds.
  */
 import { Maximize2, Minimize2 } from 'lucide-react';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useApolloClient } from '@apollo/client';
 import { useParams } from 'react-router-dom';
 
 import { Skeleton } from '@/components/ui/skeleton';
-import {
-  getUserPermission,
-  useGetThreadQuery,
-  useGetModelTreeWithRegionsQuery,
-} from '@/graphql/generated/modeling';
+import { getUserPermission, useGetThreadQuery } from '@/graphql/generated/modeling';
 import {
   ExecutionSummaryMap,
   ModelEnsembleMap,
   ModelExecutionsMap,
   ThreadExecutionData,
 } from '@/graphql/generated/execution';
+import {
+  GetThreadModelExecutionsDocument,
+  useGetThreadExecutionQuery,
+  useUpdateThreadParametersMutation,
+  type GetThreadModelExecutionsQuery,
+  type GetThreadModelExecutionsQueryVariables,
+  type ThreadModelParameterInsert,
+  type ThreadModelSummaryInsert,
+} from '@/graphql/generated/thread-execution';
+import {
+  datasetsComplete,
+  executionFromGQL,
+  hasUnfinishedRuns,
+  parametersComplete,
+  runsComplete,
+  threadExecutionFromGQL,
+} from '@/lib/thread-execution';
 import { submitRuns } from '@/lib/ensemble-manager';
 import { useAuth } from '@/lib/auth/useAuth';
 import { cn } from '@/lib/utils';
@@ -38,42 +56,13 @@ import { FramingStep } from './thread/wizard/FramingStep';
 import { VariablesStep } from './thread/wizard/VariablesStep';
 import { ModelsStep } from './thread/wizard/ModelsStep';
 import { DatasetsStep } from './thread/wizard/DatasetsStep';
-import { buildThreadModels } from './thread/wizard/buildThreadModels';
 
 // ─── Step order (module scope so nav helpers have a stable reference) ───────────
 
 const stepOrder = WIZARD_STEPS.map((s) => s.id);
 
-// ─── Status helpers ────────────────────────────────────────────────────────────
-
-type StepStatus = 'not_started' | 'in_progress' | 'done';
-
-function getParametersStatus(threadData: ThreadExecutionData | null): StepStatus {
-  if (!threadData) return 'not_started';
-  const modelIds = Object.keys(threadData.models ?? {});
-  if (modelIds.length === 0) return 'not_started';
-  const allBound = modelIds.every((mid) => {
-    const model = threadData.models[mid]!;
-    const bindings = threadData.model_ensembles[mid]?.bindings ?? {};
-    return model.input_parameters
-      .filter((p) => !p.value)
-      .every((p) => (bindings[p.id ?? ''] ?? []).length > 0);
-  });
-  return allBound ? 'done' : 'not_started';
-}
-
-function getRunsStatus(threadData: ThreadExecutionData | null): StepStatus {
-  if (!threadData) return 'not_started';
-  const modelIds = Object.keys(threadData.execution_summary ?? {});
-  if (modelIds.length === 0) return 'not_started';
-  const allDone = modelIds.every((mid) => {
-    const s = threadData.execution_summary[mid]!;
-    return (
-      s.submitted_runs > 0 && s.successful_runs + s.failed_runs >= s.total_runs && s.total_runs > 0
-    );
-  });
-  return allDone ? 'done' : 'not_started';
-}
+/** How often to re-read the execution summary while runs are still in flight. */
+const RUN_POLL_MS = 10_000;
 
 // ─── MintThread ────────────────────────────────────────────────────────────────
 
@@ -90,6 +79,7 @@ export function MintThread({ threadId: threadIdProp }: MintThreadProps = {}) {
   const { id: routeThreadId } = useParams<{ id: string }>();
   const threadId = threadIdProp ?? routeThreadId;
   const { user } = useAuth();
+  const apollo = useApolloClient();
   const [maximized, setMaximized] = useState(false);
   const [currentSection, setCurrentSection] = useState<WizardStepId>('framing');
 
@@ -102,10 +92,6 @@ export function MintThread({ threadId: threadIdProp }: MintThreadProps = {}) {
     setCurrentSection((cur) => stepOrder[Math.max(stepOrder.indexOf(cur) - 1, 0)]!);
   }, []);
 
-  // ── Execution state (local for this 1:1 port) ────────────────────────────
-  // In the legacy app this state lives in Redux. Here we keep it local so the
-  // component can function without a Hasura subscription for execution tables.
-  const [threadExecutionData, setThreadExecutionData] = useState<ThreadExecutionData | null>(null);
   const [modelExecutions, setModelExecutions] = useState<ModelExecutionsMap>({});
 
   const { data, loading, error, refetch } = useGetThreadQuery({
@@ -116,35 +102,119 @@ export function MintThread({ threadId: threadIdProp }: MintThreadProps = {}) {
 
   const thread = data?.thread_by_pk ?? null;
 
-  const { data: modelTree } = useGetModelTreeWithRegionsQuery();
+  const {
+    data: execRaw,
+    refetch: refetchExecution,
+    startPolling,
+    stopPolling,
+  } = useGetThreadExecutionQuery({
+    variables: { id: threadId! },
+    skip: !threadId,
+    fetchPolicy: 'cache-and-network',
+  });
 
-  const handleThreadUpdated = useCallback(() => {
-    void refetch();
-  }, [refetch]);
+  const threadExecutionData = useMemo(
+    () => threadExecutionFromGQL(execRaw?.thread_by_pk),
+    [execRaw],
+  );
+
+  // The execution engine writes the run counters; nothing pushes them back, so
+  // poll while a submitted run is still unfinished and stop as soon as it is.
+  const runsInFlight = hasUnfinishedRuns(threadExecutionData?.execution_summary ?? {});
+  useEffect(() => {
+    if (runsInFlight) startPolling(RUN_POLL_MS);
+    else stopPolling();
+    return () => stopPolling();
+  }, [runsInFlight, startPolling, stopPolling]);
+
+  const handleThreadUpdated = useCallback(async () => {
+    await Promise.all([refetch(), refetchExecution()]);
+  }, [refetch, refetchExecution]);
+
+  const [updateThreadParameters] = useUpdateThreadParametersMutation();
 
   // ── Execution handlers ──────────────────────────────────────────────────
 
   const handleSaveParameters = useCallback(
-    async (ensembles: ModelEnsembleMap, summary: ExecutionSummaryMap, _notes: string) => {
-      setThreadExecutionData((prev) =>
-        prev ? { ...prev, model_ensembles: ensembles, execution_summary: summary } : prev,
-      );
-      // In production, also persist to Hasura via mutation
+    async (ensembles: ModelEnsembleMap, summary: ExecutionSummaryMap, notes: string) => {
+      if (!threadId || !threadExecutionData) return;
+      const modelParams: ThreadModelParameterInsert[] = [];
+      const summaries: ThreadModelSummaryInsert[] = [];
+
+      for (const [modelId, ensemble] of Object.entries(ensembles)) {
+        const model = threadExecutionData.models[modelId];
+        // `bindings` holds data and parameter bindings side by side; only the
+        // adjustable parameters belong in thread_model_parameter.
+        if (!model || !ensemble.id) continue;
+        for (const param of model.input_parameters.filter((p) => !p.value)) {
+          for (const value of ensemble.bindings[param.id] ?? []) {
+            modelParams.push({
+              thread_model_id: ensemble.id,
+              model_parameter_id: param.id,
+              parameter_value: value,
+            });
+          }
+        }
+        const counters = summary[modelId];
+        summaries.push({
+          thread_model_id: ensemble.id,
+          total_runs: counters?.total_runs ?? 0,
+          submitted_runs: 0,
+          successful_runs: 0,
+          failed_runs: 0,
+        });
+      }
+
+      await updateThreadParameters({
+        variables: {
+          threadId,
+          event: {
+            thread_id: threadId,
+            event: 'SELECT_PARAMETERS',
+            userid: user?.username ?? 'anonymous',
+            notes: notes || null,
+          },
+          summaries,
+          modelParams,
+        },
+      });
+      await handleThreadUpdated();
     },
-    [],
+    [threadId, threadExecutionData, updateThreadParameters, user, handleThreadUpdated],
   );
 
-  const handleFetchRuns = useCallback((modelId: string, page: number, pageSize: number) => {
-    // In a full port this dispatches a Hasura query / Apollo query with pagination.
-    // Placeholder: mark as loading
-    void modelId;
-    void page;
-    void pageSize;
-    setModelExecutions((prev) => ({
-      ...prev,
-      [modelId]: prev[modelId] ?? { executions: [], loading: false },
-    }));
-  }, []);
+  const handleFetchRuns = useCallback(
+    (modelId: string, page: number, pageSize: number) => {
+      const threadModelId = threadExecutionData?.model_ensembles[modelId]?.id;
+      if (!threadModelId) return;
+      setModelExecutions((prev) => ({
+        ...prev,
+        [modelId]: { executions: prev[modelId]?.executions ?? [], loading: true },
+      }));
+      apollo
+        .query<GetThreadModelExecutionsQuery, GetThreadModelExecutionsQueryVariables>({
+          query: GetThreadModelExecutionsDocument,
+          variables: { threadModelId, offset: (page - 1) * pageSize, limit: pageSize },
+          fetchPolicy: 'network-only',
+        })
+        .then((res) => {
+          setModelExecutions((prev) => ({
+            ...prev,
+            [modelId]: {
+              executions: (res.data?.execution ?? []).map(executionFromGQL),
+              loading: false,
+            },
+          }));
+        })
+        .catch(() => {
+          setModelExecutions((prev) => ({
+            ...prev,
+            [modelId]: { executions: prev[modelId]?.executions ?? [], loading: false },
+          }));
+        });
+    },
+    [apollo, threadExecutionData],
+  );
 
   const handleSubmitRuns = useCallback(
     async (modelId: string) => {
@@ -159,29 +229,11 @@ export function MintThread({ threadId: threadIdProp }: MintThreadProps = {}) {
         thread_id: threadId,
         model_id: modelId,
       });
-      // Mark submitted
-      setThreadExecutionData((prev) =>
-        prev
-          ? {
-              ...prev,
-              execution_summary: {
-                ...prev.execution_summary,
-                [modelId]: {
-                  ...(prev.execution_summary[modelId] ?? {
-                    total_runs: 0,
-                    submitted_runs: 0,
-                    failed_runs: 0,
-                    successful_runs: 0,
-                  }),
-                  submitted_for_execution: true,
-                  submission_time: new Date().toISOString(),
-                },
-              },
-            }
-          : prev,
-      );
+      // The engine writes the counters itself; read them back rather than
+      // guessing at them locally.
+      await refetchExecution();
     },
-    [threadId],
+    [threadId, refetchExecution],
   );
 
   // ── render ─────────────────────────────────────────────────────────────────
@@ -211,7 +263,8 @@ export function MintThread({ threadId: threadIdProp }: MintThreadProps = {}) {
 
   const perm = getUserPermission(thread.permissions, thread.events, user?.username ?? null);
 
-  // Derive a minimal threadExecutionData for parameter/run/result steps
+  // Until the execution query resolves, the pipeline is empty rather than
+  // wrong: the steps that read it show their "nothing selected yet" state.
   const execData: ThreadExecutionData = threadExecutionData ?? {
     id: thread.id,
     models: {},
@@ -221,25 +274,27 @@ export function MintThread({ threadId: threadIdProp }: MintThreadProps = {}) {
     response_variables: thread.response_variable_id ? [thread.response_variable_id] : [],
   };
 
-  const datasetsComplete = Object.values(threadExecutionData?.model_ensembles ?? {}).some((ens) =>
-    Object.values(ens.bindings ?? {}).some((b) => b.length > 0),
-  );
   const stepStates = deriveStepStates(thread, {
-    datasetsComplete,
-    parametersComplete: getParametersStatus(threadExecutionData) === 'done',
-    runsComplete: getRunsStatus(threadExecutionData) === 'done',
+    datasetsComplete: datasetsComplete(threadExecutionData),
+    parametersComplete: parametersComplete(threadExecutionData),
+    runsComplete: runsComplete(threadExecutionData),
   });
-  const builtModels = buildThreadModels(thread, modelTree);
 
   function renderStep() {
     switch (currentSection) {
       case 'framing':
-        return <FramingStep thread={thread!} onUpdated={handleThreadUpdated} onContinue={goNext} />;
+        return (
+          <FramingStep
+            thread={thread!}
+            onUpdated={() => void handleThreadUpdated()}
+            onContinue={goNext}
+          />
+        );
       case 'variables':
         return (
           <VariablesStep
             thread={thread!}
-            onUpdated={handleThreadUpdated}
+            onUpdated={() => void handleThreadUpdated()}
             onContinue={goNext}
             onBack={goBack}
           />
@@ -248,7 +303,7 @@ export function MintThread({ threadId: threadIdProp }: MintThreadProps = {}) {
         return (
           <ModelsStep
             thread={thread!}
-            onUpdated={handleThreadUpdated}
+            onUpdated={() => void handleThreadUpdated()}
             onContinue={goNext}
             onBack={goBack}
             onEditIndicator={() => setCurrentSection('variables')}
@@ -258,7 +313,9 @@ export function MintThread({ threadId: threadIdProp }: MintThreadProps = {}) {
         return (
           <DatasetsStep
             thread={thread!}
-            models={builtModels}
+            models={execData.models}
+            ensembles={execData.model_ensembles}
+            persistedData={execData.data}
             onUpdated={handleThreadUpdated}
             onContinue={goNext}
             onBack={goBack}
