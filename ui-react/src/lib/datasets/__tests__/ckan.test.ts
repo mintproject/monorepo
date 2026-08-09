@@ -15,8 +15,12 @@ import {
   packageExtraFlag,
   packageSpatialCoverage,
   packageTags,
+  packagesMatchingVariables,
   packageTimePeriod,
   parseDate,
+  resourceMatchesVariables,
+  resourceStandardVariables,
+  searchAllPackages,
   searchPackages,
   showPackage,
   type CkanPackage,
@@ -98,6 +102,65 @@ describe('searchPackages', () => {
       http.get('*/api/3/action/package_search', () => HttpResponse.json({ success: true })),
     );
     await expect(searchPackages({})).rejects.toThrow(/package_search failed/);
+  });
+});
+
+describe('searchAllPackages', () => {
+  /** Serve `total` packages in pages of `rows`, honouring `start`. */
+  function stubPagedSearch(total: number, requests: URL[]) {
+    server.use(
+      http.get('*/api/3/action/package_search', ({ request }) => {
+        const url = new URL(request.url);
+        requests.push(url);
+        const start = Number(url.searchParams.get('start') ?? 0);
+        const rows = Number(url.searchParams.get('rows') ?? 100);
+        const results = Array.from(
+          { length: Math.max(0, Math.min(rows, total - start)) },
+          (_, i) => ({
+            id: `pkg-${start + i}`,
+          }),
+        );
+        return HttpResponse.json({ success: true, result: { count: total, results } });
+      }),
+    );
+  }
+
+  it('makes a single request when the catalog fits in one page', async () => {
+    const requests: URL[] = [];
+    stubPagedSearch(215, requests);
+    const packages = await searchAllPackages({});
+    expect(packages).toHaveLength(215);
+    expect(requests).toHaveLength(1);
+    expect(requests[0]?.searchParams.get('rows')).toBe('1000');
+  });
+
+  it('pages past CKANs 1000-row cap rather than truncating silently', async () => {
+    const requests: URL[] = [];
+    stubPagedSearch(2300, requests);
+    const packages = await searchAllPackages({});
+    expect(packages).toHaveLength(2300);
+    expect(requests.map((u) => u.searchParams.get('start'))).toEqual([null, '1000', '2000']);
+    // Every package is distinct: the pages were offset, not refetched.
+    expect(new Set(packages.map((p) => p.id)).size).toBe(2300);
+  });
+
+  it('stops rather than looping forever when CKAN reports a count it will not serve', async () => {
+    server.use(
+      http.get('*/api/3/action/package_search', () =>
+        HttpResponse.json({ success: true, result: { count: 5000, results: [] } }),
+      ),
+    );
+    await expect(searchAllPackages({})).resolves.toEqual([]);
+  });
+
+  it('carries the bounding box onto every page', async () => {
+    const requests: URL[] = [];
+    stubPagedSearch(1500, requests);
+    await searchAllPackages({ boundingBox: { xmin: -100, xmax: -97, ymin: 29, ymax: 31 } });
+    expect(requests.map((u) => u.searchParams.get('ext_bbox'))).toEqual([
+      '-100,29,-97,31',
+      '-100,29,-97,31',
+    ]);
   });
 });
 
@@ -245,6 +308,113 @@ describe('packageSpatialCoverage', () => {
 
   it('returns undefined when the geometry has no type', () => {
     expect(packageSpatialCoverage({ spatial: '{"coordinates":[]}' })).toBeUndefined();
+  });
+});
+
+// ─── Standard variable matching ───────────────────────────────────────────────
+
+describe('resourceStandardVariables', () => {
+  it('splits the comma-separated string TACC writes', () => {
+    expect(
+      resourceStandardVariables({
+        mint_standard_variables: 'groundwater__hydraulic_head,aquifer__transmissivity',
+      }),
+    ).toEqual(['groundwater__hydraulic_head', 'aquifer__transmissivity']);
+  });
+
+  it('trims whitespace around each name', () => {
+    expect(resourceStandardVariables({ mint_standard_variables: ' a , b ' })).toEqual(['a', 'b']);
+  });
+
+  it('is empty for an unannotated resource', () => {
+    expect(resourceStandardVariables({})).toEqual([]);
+    expect(resourceStandardVariables({ mint_standard_variables: null })).toEqual([]);
+    // CKAN writes the empty string on resources that were never annotated.
+    expect(resourceStandardVariables({ mint_standard_variables: '' })).toEqual([]);
+  });
+
+  it('accepts a list, and splits list entries that themselves hold commas', () => {
+    expect(resourceStandardVariables({ mint_standard_variables: ['a', 'b,c'] })).toEqual([
+      'a',
+      'b',
+      'c',
+    ]);
+  });
+});
+
+describe('resourceMatchesVariables', () => {
+  const annotated = { mint_standard_variables: 'groundwater__hydraulic_head' };
+
+  it('matches on the exact name', () => {
+    expect(resourceMatchesVariables(annotated, ['groundwater__hydraulic_head'])).toBe(true);
+  });
+
+  it('does not match a name that merely shares tokens', () => {
+    // Solr splits on _ and ~, which is exactly how the free-text search went wrong.
+    expect(resourceMatchesVariables(annotated, ['groundwater__initial_head'])).toBe(false);
+    expect(resourceMatchesVariables(annotated, ['groundwater'])).toBe(false);
+  });
+
+  it('matches when any one of several requested variables is carried', () => {
+    expect(resourceMatchesVariables(annotated, ['nope', 'groundwater__hydraulic_head'])).toBe(true);
+  });
+
+  it('never matches an unannotated resource against a real request', () => {
+    expect(resourceMatchesVariables({ format: 'CSV' }, ['groundwater__hydraulic_head'])).toBe(
+      false,
+    );
+  });
+
+  it('passes everything through when no variable is requested', () => {
+    expect(resourceMatchesVariables({ format: 'CSV' }, [])).toBe(true);
+  });
+});
+
+describe('packagesMatchingVariables', () => {
+  const wanted = ['groundwater__initial_head'];
+
+  const carrier: CkanPackage = {
+    name: 'capitan-reef-complex-aquifer-gam-files',
+    resources: [
+      { id: 'r1', mint_standard_variables: 'groundwater__initial_head' },
+      { id: 'r2', mint_standard_variables: 'aquifer__transmissivity' },
+      { id: 'r3' },
+    ],
+  };
+
+  /** Matches the words of the variable name in prose, but carries no annotation. */
+  const falsePositive: CkanPackage = {
+    name: 'groundwater-initial-head-report',
+    notes: 'A report on groundwater initial head across the basin.',
+    resources: [{ id: 'r4', mint_standard_variables: '' }],
+  };
+
+  it('keeps a package whose resource carries the variable', () => {
+    expect(packagesMatchingVariables([carrier], wanted).map((p) => p.name)).toEqual([carrier.name]);
+  });
+
+  it('drops the prose match that free-text search returned', () => {
+    expect(packagesMatchingVariables([falsePositive], wanted)).toEqual([]);
+  });
+
+  it('narrows the kept package to the resources that carry the variable', () => {
+    const [pkg] = packagesMatchingVariables([carrier], wanted);
+    expect(pkg?.resources?.map((r) => r.id)).toEqual(['r1']);
+  });
+
+  it('leaves the input package untouched', () => {
+    packagesMatchingVariables([carrier], wanted);
+    expect(carrier.resources).toHaveLength(3);
+  });
+
+  it('passes everything through when no variable is requested', () => {
+    const all = [carrier, falsePositive];
+    expect(packagesMatchingVariables(all, [])).toBe(all);
+    expect(packagesMatchingVariables(all, [''])).toBe(all);
+  });
+
+  it('drops a package with no resources at all', () => {
+    expect(packagesMatchingVariables([{ name: 'empty' }], wanted)).toEqual([]);
   });
 });
 

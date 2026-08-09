@@ -27,7 +27,15 @@ const mockResponse = {
         temporal_coverage_start: '2023-01-01',
         temporal_coverage_end: '2023-12-31',
         resources: [
-          { id: 'r-1', name: 'part-1', url: 'https://test.example.com/1', format: 'NetCDF' },
+          {
+            id: 'r-1',
+            name: 'part-1',
+            url: 'https://test.example.com/1',
+            format: 'NetCDF',
+            // The annotation is what the lookup matches on — a package whose
+            // resources carry none is not a hit, however well its prose reads.
+            mint_standard_variables: 'precipitation__daily',
+          },
         ],
       },
     ],

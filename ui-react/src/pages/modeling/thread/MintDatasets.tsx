@@ -421,6 +421,7 @@ function InputDatasetPicker({
       try {
         const res = await loadDatasetResources({
           datasetId: ds.id,
+          variableNames: input.variables,
           regionGeometry,
           startDate: thread.start_date ? new Date(thread.start_date) : null,
           endDate: thread.end_date ? new Date(thread.end_date) : null,
