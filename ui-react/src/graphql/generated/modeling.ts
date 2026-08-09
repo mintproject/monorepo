@@ -1389,12 +1389,13 @@ export function extractModelIO(config: ModelIOConfig): ModelIO {
   return { inputs, outputs, producesVariableIds };
 }
 
+// No type predicate — deliberate. `modelcatalog_software.type` classifies a model
+// (Empirical, Coupled, Theory-Guided, ...); it does not say whether a row is a model.
+// Filtering on `sdm#Model` showed the thread wizard 18 of TACC's 175 runnable leaf
+// configurations, and none of the 61 that have data annotated. See #98.
 export const GetModelTreeWithRegionsDocument = gql`
   query GetModelTreeWithRegions {
-    modelcatalog_software(
-      order_by: { label: asc }
-      where: { type: { _eq: "https://w3id.org/okn/o/sdm#Model" } }
-    ) {
+    modelcatalog_software(order_by: { label: asc }) {
       id
       label
       versions(order_by: { label: asc }) {

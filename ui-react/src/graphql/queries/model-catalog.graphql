@@ -1,11 +1,13 @@
 #import "../fragments/model-catalog.graphql"
 #import "../fragments/region.graphql"
 
+# No type predicate — deliberate. `modelcatalog_software.type` classifies a model
+# (Empirical, Coupled, Theory-Guided, ...); it does not say whether a row is a model.
+# The ETL only migrated `?id a sdm:Model` and stored the most specific subtype, and
+# rows created through the REST API's generic `softwares` resource carry the
+# superclass `sd#Software`. Filtering on any one value hides real models. See #98.
 query GetModelTree {
-  modelcatalog_software(
-    order_by: { label: asc }
-    where: { type: { _eq: "https://w3id.org/okn/o/sdm#Model" } }
-  ) {
+  modelcatalog_software(order_by: { label: asc }) {
     id
     label
     versions(order_by: { label: asc }) {
@@ -163,11 +165,11 @@ query GetStandardVariablesWithUnits {
   }
 }
 
+# No type predicate — same rule as GetModelTree above (#98). This feeds the
+# "Model Family" picker on registration; filtering it made it impossible to
+# register a new version under any model whose type is a subtype of sdm#Model.
 query GetModelFamilies {
-  modelcatalog_software(
-    order_by: { label: asc }
-    where: { type: { _eq: "https://w3id.org/okn/o/sdm#Model" } }
-  ) {
+  modelcatalog_software(order_by: { label: asc }) {
     id
     label
     versions(order_by: { label: asc }) {
