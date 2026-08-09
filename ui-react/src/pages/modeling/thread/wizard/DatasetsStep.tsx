@@ -5,18 +5,47 @@ import {
   getUserPermission,
   useUpdateThreadDataMutation,
 } from '@/graphql/generated/modeling';
+import type {
+  ModelEnsembleMap,
+  ThreadExecutionData,
+  ThreadModel,
+} from '@/graphql/generated/execution';
 import { useDataCatalogDatasets } from '@/hooks/useDataCatalog';
-import type { DataCatalogDataset, DataCatalogTimePeriod } from '@/lib/data-catalog';
+import type {
+  DataCatalogDataset,
+  DataCatalogResource,
+  DataCatalogTimePeriod,
+} from '@/lib/data-catalog';
+import { loadDatasetResources } from '@/lib/data-catalog';
+import {
+  buildThreadDataInsert,
+  newDatasliceId,
+  type ThreadDataInsert,
+} from '@/lib/thread-datasets';
 import { useAuth } from '@/lib/auth/useAuth';
 import { useToast } from '@/components/ui/use-toast';
 import { cn } from '@/lib/utils';
-import type { ThreadModel } from '../MintDatasets';
 import { StepShell } from './StepShell';
 import { FilteredByBanner } from './FilteredByBanner';
 
 interface RequestedRange {
   start: Date;
   end: Date;
+}
+
+/**
+ * A dataset bound to one model input.
+ *
+ * `resources` is present when the binding was read back from Hasura — the
+ * dataslice already holds the exact files that were bound, so re-saving it does
+ * not have to ask the catalog again. A freshly picked dataset leaves it unset
+ * and the files are fetched at save time.
+ */
+interface Assignment {
+  datasetId: string;
+  datasetName: string;
+  timePeriod?: DataCatalogTimePeriod | null;
+  resources?: DataCatalogResource[];
 }
 
 /** Classify a dataset's temporal coverage against the requested window. */
@@ -38,12 +67,42 @@ function toPeriod(
   return { start: tp.start_date, end: tp.end_date };
 }
 
+/**
+ * Bindings already written for this thread, as the assignment map the step
+ * renders: model id -> input id -> the dataset behind the bound dataslice.
+ */
+export function assignmentsFromBindings(
+  ensembles: ModelEnsembleMap,
+  data: ThreadExecutionData['data'],
+): Record<string, Record<string, Assignment>> {
+  const out: Record<string, Record<string, Assignment>> = {};
+  for (const [modelId, ensemble] of Object.entries(ensembles ?? {})) {
+    for (const [inputId, sliceIds] of Object.entries(ensemble.bindings ?? {})) {
+      const slice = data?.[sliceIds[0] ?? ''];
+      // A parameter binding shares this map and has no dataslice behind it.
+      if (!slice) continue;
+      const dataset = slice['dataset'] as { id: string; name: string } | undefined;
+      if (!dataset) continue;
+      (out[modelId] ??= {})[inputId] = {
+        datasetId: dataset.id,
+        datasetName: dataset.name,
+        resources: (slice['resources'] as DataCatalogResource[] | undefined) ?? [],
+      };
+    }
+  }
+  return out;
+}
+
 interface DatasetsStepProps {
   thread: Thread;
-  /** Built via buildThreadModels(thread, modelTreeData). */
+  /** Selected models, keyed by configuration id (from the thread execution query). */
   models: Record<string, ThreadModel>;
+  /** Existing bindings, keyed the same way — supplies each model's thread_model id. */
+  ensembles: ModelEnsembleMap;
+  /** Dataslices already persisted for this thread, keyed by dataslice id. */
+  persistedData: ThreadExecutionData['data'];
   regionGeometry?: unknown;
-  onUpdated: () => void;
+  onUpdated: () => void | Promise<void>;
   onContinue: () => void;
   onBack?: () => void;
 }
@@ -110,6 +169,8 @@ function InputPicker({
 export function DatasetsStep({
   thread,
   models,
+  ensembles,
+  persistedData,
   regionGeometry,
   onUpdated,
   onContinue,
@@ -120,14 +181,26 @@ export function DatasetsStep({
   const perm = getUserPermission(thread.permissions, thread.events, user?.username ?? null);
   const [saving, setSaving] = useState(false);
 
-  // assignments: modelId -> inputId -> { datasetId, dataset }
-  const [assignments, setAssignments] = useState<
-    Record<string, Record<string, { datasetId: string; dataset?: DataCatalogDataset }>>
-  >({});
+  // What the database already holds. Recomputed whenever the thread execution
+  // query refetches, so a save is reflected without remounting the step.
+  const persisted = useMemo(
+    () => assignmentsFromBindings(ensembles, persistedData),
+    [ensembles, persistedData],
+  );
+
+  // Edits made in this session. `null` is a deliberate clear, which is why the
+  // lookup below tests for `undefined` rather than falsiness.
+  const [overrides, setOverrides] = useState<Record<string, Record<string, Assignment | null>>>({});
 
   const [updateThreadData] = useUpdateThreadDataMutation();
 
   const modelIds = Object.keys(models);
+
+  function assignmentFor(modelId: string, inputId: string): Assignment | null {
+    const override = overrides[modelId]?.[inputId];
+    if (override !== undefined) return override;
+    return persisted[modelId]?.[inputId] ?? null;
+  }
 
   const requested: RequestedRange | null = useMemo(() => {
     if (!thread.start_date || !thread.end_date) return null;
@@ -143,14 +216,10 @@ export function DatasetsStep({
     [modelIds, models],
   );
 
-  const assignedCount = useMemo(
-    () =>
-      modelIds.reduce((acc, mid) => {
-        const reqInputs = models[mid]?.input_files.filter((i) => !i.isOptional) ?? [];
-        return acc + reqInputs.filter((i) => assignments[mid]?.[i.id]).length;
-      }, 0),
-    [modelIds, models, assignments],
-  );
+  const assignedCount = modelIds.reduce((acc, mid) => {
+    const reqInputs = models[mid]?.input_files.filter((i) => !i.isOptional) ?? [];
+    return acc + reqInputs.filter((i) => assignmentFor(mid, i.id)).length;
+  }, 0);
 
   const allAssigned = requiredInputCount > 0 && assignedCount === requiredInputCount;
 
@@ -160,10 +229,12 @@ export function DatasetsStep({
     datasetId: string | null,
     dataset?: DataCatalogDataset,
   ) {
-    setAssignments((prev) => {
+    setOverrides((prev) => {
       const bucket = { ...(prev[modelId] ?? {}) };
-      if (!datasetId) delete bucket[inputId];
-      else bucket[inputId] = { datasetId, dataset };
+      bucket[inputId] =
+        datasetId && dataset
+          ? { datasetId, datasetName: dataset.name, timePeriod: dataset.time_period }
+          : null;
       return { ...prev, [modelId]: bucket };
     });
   }
@@ -172,9 +243,67 @@ export function DatasetsStep({
     if (!allAssigned) return;
     setSaving(true);
     try {
-      // NOTE: writes a minimal SELECT_DATA provenance event; full dataslice/resource
-      // persistence is lifted from MintDatasets.handleSubmit in a follow-up once per-resource
-      // filtering is wired. For the core chain we persist the event and advance.
+      const data: ThreadDataInsert[] = [];
+      const modelIO: Array<{
+        thread_model_id: string;
+        model_io_id: string;
+        dataslice_id: string;
+      }> = [];
+
+      for (const modelId of modelIds) {
+        const model = models[modelId];
+        // The thread_model row id, not the configuration id — thread_model_io
+        // is keyed by the former.
+        const threadModelId = ensembles[modelId]?.id;
+        if (!model || !threadModelId) continue;
+
+        for (const input of model.input_files) {
+          const assignment = assignmentFor(modelId, input.id);
+          if (!assignment) continue;
+
+          // The mutation drops every dataslice for the thread before inserting,
+          // so a binding that is being carried over has to be rebuilt too. A
+          // binding read back from Hasura already carries its files; a freshly
+          // picked dataset does not, and the catalog only narrows resources to
+          // the input's variables on demand.
+          const resources =
+            assignment.resources ??
+            (await loadDatasetResources({
+              datasetId: assignment.datasetId,
+              variableNames: input.variables ?? [],
+            }));
+
+          if (resources.length === 0) {
+            toast({
+              title: `No matching files in ${assignment.datasetName}`,
+              description: `Nothing in this dataset carries ${(input.variables ?? []).join(', ') || 'the input variable'}.`,
+              variant: 'destructive',
+            });
+            setSaving(false);
+            return;
+          }
+
+          const datasliceId = newDatasliceId();
+          data.push(
+            buildThreadDataInsert({
+              threadId: thread.id,
+              threadName: thread.name,
+              regionId: thread.region_id,
+              startDate: thread.start_date,
+              endDate: thread.end_date,
+              datasliceId,
+              dataset: { id: assignment.datasetId, name: assignment.datasetName },
+              resources,
+            }),
+          );
+          modelIO.push({
+            thread_model_id: threadModelId,
+            model_io_id: input.id,
+            dataslice_id: datasliceId,
+          });
+        }
+      }
+
       await updateThreadData({
         variables: {
           threadId: thread.id,
@@ -184,11 +313,12 @@ export function DatasetsStep({
             userid: user?.username ?? 'anonymous',
             notes: null,
           },
-          data: [],
-          modelIO: [],
+          data,
+          modelIO,
         },
       });
-      onUpdated();
+      setOverrides({});
+      await onUpdated();
       onContinue();
     } catch (err) {
       toast({ title: 'Save failed', description: String(err), variant: 'destructive' });
@@ -238,7 +368,7 @@ export function DatasetsStep({
         {modelIds.map((modelId) => {
           const model = models[modelId]!;
           const reqInputs = model.input_files.filter((i) => !i.isOptional);
-          const doneForModel = reqInputs.filter((i) => assignments[modelId]?.[i.id]).length;
+          const doneForModel = reqInputs.filter((i) => assignmentFor(modelId, i.id)).length;
           return (
             <div key={modelId} className="rounded border p-3 text-sm">
               <div className="mb-2 flex items-center justify-between">
@@ -252,8 +382,8 @@ export function DatasetsStep({
               </div>
               <ul className="space-y-2">
                 {model.input_files.map((input) => {
-                  const current = assignments[modelId]?.[input.id];
-                  const cov = dateCoverage(requested, toPeriod(current?.dataset?.time_period));
+                  const current = assignmentFor(modelId, input.id);
+                  const cov = dateCoverage(requested, toPeriod(current?.timePeriod));
                   return (
                     <li key={input.id} className="flex flex-wrap items-center gap-2">
                       <span className="w-40 shrink-0 text-gray-700">
@@ -279,7 +409,7 @@ export function DatasetsStep({
                       )}
                       <InputPicker
                         thread={thread}
-                        variables={input.variables}
+                        variables={input.variables ?? []}
                         regionGeometry={regionGeometry}
                         requested={requested}
                         assignedId={current?.datasetId ?? null}

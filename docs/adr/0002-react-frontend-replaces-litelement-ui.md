@@ -96,7 +96,7 @@ Do **not** port LitElement patterns — Redux, Webpack, Lit decorators,
 `@lit/reactive-element` — into `ui-react`. Screens ported "1:1" mean behaviour parity,
 not structural parity.
 
-## Current state (2026-08-08)
+## Current state (2026-08-09)
 
 **Ported and merged** (route → page): `/` home, `/models` faceted configuration browser,
 `/models/register` and `/models/configure/:slug` (config-first registration replacing the
@@ -104,6 +104,14 @@ not structural parity.
 thread wizard and the datasets/parameters/runs/results steps, `/datasets/*`, `/regions/*`
 including the editor, `/variables` as a standard-variable-primary searchable catalog,
 plus OAuth2 callback and login-required routes.
+
+> **Correction (2026-08-09, issue #104).** Until this date the parameters, runs and results
+> steps were listed above but were **stubs**: their component was rendered, and nothing ever
+> loaded the execution state it reads, so the wizard dead-ended at Parameters. The Datasets
+> step wrote no binding either. Both are fixed — `GetThreadExecution` loads the pipeline and
+> the two steps persist what they collect. Do not read the paragraph above as a porting
+> inventory: a route being listed means a component exists at it, not that its data path is
+> wired.
 
 **Not ported** (still Lit-only): Analysis, Emulators, Messages, `models-compare` /
 `models-calibrate` / `models-cromo`, thread Visualize and Summary, and the 3,256-LOC

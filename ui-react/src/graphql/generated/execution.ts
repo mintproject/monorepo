@@ -39,6 +39,8 @@ export interface ModelInputFile {
     resources?: Array<{ id: string; name: string; url?: string | null; selected?: boolean | null }>;
   } | null;
   variables?: string[];
+  /** The model runs without this input bound; the Datasets step may skip it. */
+  isOptional?: boolean;
 }
 
 /** Mirrors ModelIO (output file) from ui legacy */

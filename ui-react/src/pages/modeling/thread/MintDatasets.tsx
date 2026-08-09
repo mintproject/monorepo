@@ -21,6 +21,7 @@ import {
 } from '@/graphql/generated/modeling';
 import { useDataCatalogDatasets } from '@/hooks/useDataCatalog';
 import { DataCatalogDataset, DataCatalogResource, loadDatasetResources } from '@/lib/data-catalog';
+import { hashResourceId, newDatasliceId as newId } from '@/lib/thread-datasets';
 import { useAuth } from '@/lib/auth/useAuth';
 import { useToast } from '@/components/ui/use-toast';
 
@@ -85,25 +86,6 @@ function safeId(id: string): string {
 function formatDate(d: Date | null | undefined): string {
   if (!d) return '';
   return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
-}
-
-/** Deterministic UUID v4 substitute — mirrors legacy uuidv4() */
-function newId(): string {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-    const r = (Math.random() * 16) | 0;
-    return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16);
-  });
-}
-
-/** MD5-like hash for resource IDs (mirrors legacy getMd5Hash — use URL as the unique key) */
-function hashResourceId(url: string): string {
-  // Simple djb2 hash converted to hex — not cryptographic, just ID-stable
-  let h = 5381;
-  for (let i = 0; i < url.length; i++) {
-    h = ((h << 5) + h) ^ url.charCodeAt(i);
-    h = h >>> 0;
-  }
-  return h.toString(16).padStart(8, '0');
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────

@@ -52,7 +52,10 @@ interface StatusBarProps {
 }
 
 function StatusBar({ status, progress }: StatusBarProps) {
-  const pct = status === 'FAILURE' ? 100 : (progress ?? 0);
+  // `execution.run_progress` is a fraction, not a percentage — a finished run
+  // stores 1. Read live from TACC, where every completed run reads 1. Treating
+  // it as a percentage drew every running job as a 1%-wide sliver.
+  const pct = status === 'FAILURE' ? 100 : Math.min(100, Math.max(0, (progress ?? 0) * 100));
   const color = STATUS_BAR_CLASSES[status] ?? 'bg-gray-300';
   return (
     <div

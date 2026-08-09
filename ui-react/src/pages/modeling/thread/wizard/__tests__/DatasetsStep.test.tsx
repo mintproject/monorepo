@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderWithProviders, screen } from '@/test/utils/render';
 import type { Thread } from '@/graphql/generated/modeling';
-import type { ThreadModel } from '../../MintDatasets';
-import { DatasetsStep, dateCoverage } from '../DatasetsStep';
+import type { ModelEnsembleMap, ThreadModel } from '@/graphql/generated/execution';
+import { DatasetsStep, assignmentsFromBindings, dateCoverage } from '../DatasetsStep';
 
 beforeEach(() => {
   vi.stubGlobal(
@@ -45,8 +45,12 @@ const models: Record<string, ThreadModel> = {
     input_files: [
       { id: 'inA', name: 'precipitation', variables: ['sv-precip'], isOptional: false },
     ],
+    output_files: [],
+    input_parameters: [],
   },
 };
+
+const ensembles: ModelEnsembleMap = { cfgA: { id: 'tm-1', bindings: {} } };
 
 describe('dateCoverage', () => {
   const req = { start: new Date('2000-01-01'), end: new Date('2026-01-01') };
@@ -67,12 +71,67 @@ describe('dateCoverage', () => {
   });
 });
 
+describe('assignmentsFromBindings', () => {
+  it('reads the dataset behind each bound dataslice', () => {
+    const out = assignmentsFromBindings(
+      { cfgA: { id: 'tm-1', bindings: { inA: ['slice-1'] } } },
+      {
+        'slice-1': {
+          id: 'slice-1',
+          name: 'Rainfall for thread',
+          dataset: { id: 'ckan-precip', name: 'Rainfall' },
+          selected_resources: 2,
+          resources: [{ id: 'r1', name: 'a.tif', url: 'http://x/a.tif', selected: true }],
+        },
+      },
+    );
+    expect(out['cfgA']?.['inA']).toMatchObject({
+      datasetId: 'ckan-precip',
+      datasetName: 'Rainfall',
+    });
+    expect(out['cfgA']?.['inA']?.resources).toHaveLength(1);
+  });
+
+  it('ignores a parameter binding, which has no dataslice behind it', () => {
+    const out = assignmentsFromBindings(
+      { cfgA: { id: 'tm-1', bindings: { 'param-x': ['0.5'] } } },
+      {},
+    );
+    expect(out['cfgA']).toBeUndefined();
+  });
+});
+
 describe('DatasetsStep', () => {
+  it('counts a binding already written to the database', async () => {
+    renderWithProviders(
+      <DatasetsStep
+        thread={makeThread()}
+        models={models}
+        ensembles={{ cfgA: { id: 'tm-1', bindings: { inA: ['slice-1'] } } }}
+        persistedData={{
+          'slice-1': {
+            id: 'slice-1',
+            name: 'Rainfall for thread',
+            dataset: { id: 'ckan-precip', name: 'Rainfall' },
+            selected_resources: 1,
+            resources: [],
+          },
+        }}
+        onUpdated={vi.fn()}
+        onContinue={vi.fn()}
+        onBack={vi.fn()}
+      />,
+    );
+    expect(await screen.findByText(/1 \/ 1 inputs/i)).toBeInTheDocument();
+  });
+
   it('renders one card per selected model with an inputs counter', async () => {
     renderWithProviders(
       <DatasetsStep
         thread={makeThread()}
         models={models}
+        ensembles={ensembles}
+        persistedData={{}}
         onUpdated={vi.fn()}
         onContinue={vi.fn()}
         onBack={vi.fn()}
@@ -87,6 +146,8 @@ describe('DatasetsStep', () => {
       <DatasetsStep
         thread={makeThread()}
         models={models}
+        ensembles={ensembles}
+        persistedData={{}}
         onUpdated={vi.fn()}
         onContinue={vi.fn()}
         onBack={vi.fn()}
@@ -101,6 +162,8 @@ describe('DatasetsStep', () => {
       <DatasetsStep
         thread={makeThread()}
         models={models}
+        ensembles={ensembles}
+        persistedData={{}}
         onUpdated={vi.fn()}
         onContinue={vi.fn()}
         onBack={vi.fn()}
@@ -116,6 +179,8 @@ describe('DatasetsStep', () => {
       <DatasetsStep
         thread={makeThread()}
         models={{}}
+        ensembles={{}}
+        persistedData={{}}
         onUpdated={vi.fn()}
         onContinue={vi.fn()}
         onBack={vi.fn()}

@@ -1335,7 +1335,10 @@ export type ModelConfigInfo = {
 };
 
 /** A configuration or setup that carries inputs/outputs — the unit extractModelIO consumes. */
-export type ModelIOConfig = Pick<ModelConfigInfo, 'id' | 'label' | 'regions' | 'inputs' | 'outputs'> & {
+// `regions` is optional: the thread execution query reads a configuration's I/O
+// without its regions, and extractModelIO never looks at them.
+export type ModelIOConfig = Pick<ModelConfigInfo, 'id' | 'label' | 'inputs' | 'outputs'> & {
+  regions?: ConfigRegionRef[];
   child_configurations?: ModelSetupInfo[];
 };
 
@@ -1370,8 +1373,10 @@ export type ModelIO = {
 };
 
 function specToVar(spec: DatasetSpecRef, optional: boolean): ModelInputVar {
-  const svs = spec.presentations
-    .map((p) => p.presentation.standard_variable)
+  // An input with no variable presentation is a real state in the catalog, and
+  // it must not take the whole step down with it.
+  const svs = (spec.presentations ?? [])
+    .map((p) => p.presentation?.standard_variable)
     .filter((sv): sv is StandardVariableRef => !!sv);
   return {
     id: spec.id,
