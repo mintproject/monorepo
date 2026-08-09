@@ -16,9 +16,11 @@ import {
   packageSpatialCoverage,
   packageTags,
   packagesMatchingVariables,
+  packagesMatchingVariableSubstring,
   packageTimePeriod,
   parseDate,
   resourceMatchesVariables,
+  resourceMatchesVariableSubstring,
   resourceStandardVariables,
   searchAllPackages,
   searchPackages,
@@ -192,35 +194,15 @@ describe('showPackage', () => {
 describe('buildSearchQuery', () => {
   it('returns undefined when there is nothing to search on', () => {
     expect(buildSearchQuery({})).toBeUndefined();
-    expect(buildSearchQuery({ variables: [] })).toBeUndefined();
+    expect(buildSearchQuery({ name: '' })).toBeUndefined();
   });
 
   it('quotes a single name as a phrase', () => {
     expect(buildSearchQuery({ name: 'soil moisture' })).toBe('"soil moisture"');
   });
 
-  it('ORs multiple variables inside parentheses', () => {
-    expect(buildSearchQuery({ variables: ['precipitation', 'temperature'] })).toBe(
-      '("precipitation" OR "temperature")',
-    );
-  });
-
-  it('does not parenthesise a lone variable', () => {
-    expect(buildSearchQuery({ variables: ['precipitation'] })).toBe('"precipitation"');
-  });
-
-  it('ANDs a name together with the variable clause', () => {
-    expect(buildSearchQuery({ name: 'ethiopia', variables: ['a', 'b'] })).toBe(
-      '"ethiopia" AND ("a" OR "b")',
-    );
-  });
-
   it('escapes embedded quotes so Solr does not see an unbalanced phrase', () => {
     expect(buildSearchQuery({ name: 'say "hi"' })).toBe('"say \\"hi\\""');
-  });
-
-  it('drops empty variable entries', () => {
-    expect(buildSearchQuery({ variables: ['', 'real'] })).toBe('"real"');
   });
 });
 
@@ -415,6 +397,102 @@ describe('packagesMatchingVariables', () => {
 
   it('drops a package with no resources at all', () => {
     expect(packagesMatchingVariables([{ name: 'empty' }], wanted)).toEqual([]);
+  });
+});
+
+describe('resourceMatchesVariableSubstring', () => {
+  const annotated = { mint_standard_variables: 'groundwater__hydraulic_head' };
+
+  it('matches a fragment of the variable name', () => {
+    expect(resourceMatchesVariableSubstring(annotated, 'hydraulic')).toBe(true);
+    expect(resourceMatchesVariableSubstring(annotated, 'groundwater')).toBe(true);
+  });
+
+  it('matches across the underscores Solr tokenises on', () => {
+    // The whole point: `q` cannot find this, because Solr splits the name up.
+    expect(resourceMatchesVariableSubstring(annotated, 'water__hydraulic')).toBe(true);
+  });
+
+  it('ignores case on both sides', () => {
+    expect(resourceMatchesVariableSubstring(annotated, 'Hydraulic HEAD'.slice(0, 9))).toBe(true);
+    expect(
+      resourceMatchesVariableSubstring({ mint_standard_variables: 'Corpus_NLP' }, 'corpus_nlp'),
+    ).toBe(true);
+  });
+
+  it('does not match a term absent from the annotation', () => {
+    expect(resourceMatchesVariableSubstring(annotated, 'porosity')).toBe(false);
+  });
+
+  it('never matches an unannotated resource against a real term', () => {
+    expect(resourceMatchesVariableSubstring({ format: 'CSV' }, 'groundwater')).toBe(false);
+  });
+
+  it('passes everything through when the term is empty or blank', () => {
+    expect(resourceMatchesVariableSubstring({ format: 'CSV' }, '')).toBe(true);
+    expect(resourceMatchesVariableSubstring({ format: 'CSV' }, '   ')).toBe(true);
+  });
+});
+
+describe('packagesMatchingVariableSubstring', () => {
+  const carrier: CkanPackage = {
+    name: 'capitan-reef-complex-aquifer-gam-files',
+    resources: [
+      { id: 'r1', mint_standard_variables: 'groundwater__initial_head' },
+      { id: 'r2', mint_standard_variables: 'aquifer__transmissivity' },
+      { id: 'r3' },
+    ],
+  };
+
+  /** Reads as a match in prose, carries no annotation. This is what `q` returned. */
+  const falsePositive: CkanPackage = {
+    name: 'groundwater-initial-head-report',
+    notes: 'A report on groundwater initial head across the basin.',
+    resources: [{ id: 'r4', mint_standard_variables: '' }],
+  };
+
+  it('keeps a package whose resource carries a variable containing the term', () => {
+    expect(packagesMatchingVariableSubstring([carrier], 'head').map((p) => p.name)).toEqual([
+      carrier.name,
+    ]);
+  });
+
+  it('drops the prose match that free-text search returned', () => {
+    expect(packagesMatchingVariableSubstring([falsePositive], 'groundwater')).toEqual([]);
+  });
+
+  it('finds an underscored name that free-text search cannot', () => {
+    // `corpus_nlp` returned 0 through Solr while 17 TACC datasets carried it.
+    const pkg: CkanPackage = {
+      name: 'nlp-corpus',
+      resources: [{ id: 'r5', mint_standard_variables: 'corpus_nlp' }],
+    };
+    expect(packagesMatchingVariableSubstring([pkg], 'corpus_nlp')).toHaveLength(1);
+  });
+
+  it('narrows the kept package to the resources that carry the term', () => {
+    const [pkg] = packagesMatchingVariableSubstring([carrier], 'transmissivity');
+    expect(pkg?.resources?.map((r) => r.id)).toEqual(['r2']);
+  });
+
+  it('keeps every resource whose annotation contains the term', () => {
+    const [pkg] = packagesMatchingVariableSubstring([carrier], 'a');
+    expect(pkg?.resources?.map((r) => r.id)).toEqual(['r1', 'r2']);
+  });
+
+  it('leaves the input package untouched', () => {
+    packagesMatchingVariableSubstring([carrier], 'head');
+    expect(carrier.resources).toHaveLength(3);
+  });
+
+  it('passes everything through when the term is empty', () => {
+    const all = [carrier, falsePositive];
+    expect(packagesMatchingVariableSubstring(all, '')).toBe(all);
+    expect(packagesMatchingVariableSubstring(all, '  ')).toBe(all);
+  });
+
+  it('drops a package with no resources at all', () => {
+    expect(packagesMatchingVariableSubstring([{ name: 'empty' }], 'head')).toEqual([]);
   });
 });
 

@@ -60,7 +60,13 @@ export interface Dataset {
 /** Query parameter shape for the data catalog search endpoint. */
 export interface DatasetQueryParameters {
   name?: string;
-  variables?: string[];
+  /**
+   * A fragment of a standard variable name, as typed into the search box. Kept
+   * separate from an exact list of names because it is matched against the
+   * `mint_standard_variables` annotation client-side, never sent to CKAN as a
+   * query — Solr cannot answer it.
+   */
+  variableSubstring?: string;
   spatialCoverage?: {
     xmin: number;
     xmax: number;

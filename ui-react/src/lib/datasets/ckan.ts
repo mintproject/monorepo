@@ -195,26 +195,18 @@ function formatBbox(bbox: BoundingBox): string {
 }
 
 /**
- * Build a CKAN `q` string from a name and/or a set of standard variable names.
- * Variables are OR-ed, since a dataset matching any requested variable is a
- * candidate. Returns undefined when there is nothing to search on, which CKAN
- * treats as "match everything".
+ * Build a CKAN `q` string from a dataset name. Returns undefined when there is
+ * nothing to search on, which CKAN treats as "match everything".
+ *
+ * Standard variable names deliberately have no place here. Solr does not index
+ * `mint_standard_variables`, so putting a variable name in `q` matches prose
+ * instead — which returned datasets carrying no such annotation, and nothing at
+ * all for a name holding an `_`. Match variables against the annotation
+ * instead: see `packagesMatchingVariables` and `packagesMatchingVariableSubstring`.
  */
-export function buildSearchQuery(opts: {
-  name?: string;
-  variables?: string[];
-}): string | undefined {
-  const terms: string[] = [];
-  if (opts.name) terms.push(quote(opts.name));
-
-  const variables = (opts.variables ?? []).filter(Boolean);
-  if (variables.length) {
-    const clause = variables.map(quote).join(' OR ');
-    terms.push(variables.length > 1 ? `(${clause})` : clause);
-  }
-
-  if (!terms.length) return undefined;
-  return terms.join(' AND ');
+export function buildSearchQuery(opts: { name?: string }): string | undefined {
+  if (!opts.name) return undefined;
+  return quote(opts.name);
 }
 
 /** Quote a term so Solr treats it as a phrase and does not choke on its syntax. */
@@ -283,6 +275,22 @@ export function resourceMatchesVariables(row: CkanResource, variables: string[])
 }
 
 /**
+ * Does this resource carry a standard variable whose name contains `term`?
+ *
+ * The substring counterpart of `resourceMatchesVariables`, for the search box
+ * where a person types a fragment rather than picking a whole name. Matching is
+ * case-insensitive and runs against the raw annotation, so it spans the `_` and
+ * `~` that Solr would have split the name on.
+ *
+ * A blank term means "no variable filter" and matches everything.
+ */
+export function resourceMatchesVariableSubstring(row: CkanResource, term: string): boolean {
+  const needle = term.trim().toLowerCase();
+  if (!needle) return true;
+  return resourceStandardVariables(row).some((v) => v.toLowerCase().includes(needle));
+}
+
+/**
  * Keep only the packages that carry one of `variables`, narrowing each to the
  * resources that actually carry it. This is the standard-variable lookup: CKAN
  * cannot do it server-side (see the module header), so it happens here, as the
@@ -297,13 +305,43 @@ export function packagesMatchingVariables(
 ): CkanPackage[] {
   const wanted = variables.filter(Boolean);
   if (!wanted.length) return packages;
+  return narrowToMatchingResources(packages, (r) => resourceMatchesVariables(r, wanted));
+}
 
-  const matched: CkanPackage[] = [];
+/**
+ * Keep only the packages carrying a standard variable whose name contains
+ * `term`, narrowing each to the resources that carry it. The substring
+ * counterpart of `packagesMatchingVariables`.
+ *
+ * A blank term passes everything through untouched.
+ */
+export function packagesMatchingVariableSubstring(
+  packages: CkanPackage[],
+  term: string,
+): CkanPackage[] {
+  if (!term.trim()) return packages;
+  return narrowToMatchingResources(packages, (r) => resourceMatchesVariableSubstring(r, term));
+}
+
+/**
+ * Drop packages with no matching resource, and narrow the survivors to the
+ * resources that matched. Narrowing is not cosmetic: a package matches because
+ * *some* of its resources carry the variable, and binding the rest hands a model
+ * input files it cannot read (see #94 — one TACC package holds 35 resources, of
+ * which 1 is annotated).
+ *
+ * Copies rather than mutates, so callers keep the packages they passed in.
+ */
+function narrowToMatchingResources(
+  packages: CkanPackage[],
+  matches: (row: CkanResource) => boolean,
+): CkanPackage[] {
+  const kept: CkanPackage[] = [];
   for (const pkg of packages) {
-    const resources = (pkg.resources ?? []).filter((r) => resourceMatchesVariables(r, wanted));
-    if (resources.length) matched.push({ ...pkg, resources });
+    const resources = (pkg.resources ?? []).filter(matches);
+    if (resources.length) kept.push({ ...pkg, resources });
   }
-  return matched;
+  return kept;
 }
 
 export function packageTags(pkg: CkanPackage): string[] {
