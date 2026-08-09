@@ -401,19 +401,31 @@ mutation CreateConfiguration(
   }
 }
 
-# Re-insert the configuration_input junction row after deleting it (for is_optional update).
-# Requires an existing DatasetSpecification — does NOT nest-create a new one.
-mutation InsertConfigurationInputJunction(
+# Change is_optional on an existing configuration_input junction row.
+#
+# Delete-then-insert, NOT an upsert. Role `user` holds insert/select/delete on
+# modelcatalog_configuration_input and no update permission, so under that role Hasura
+# emits `modelcatalog_configuration_input_update_column` with `_PLACEHOLDER` alone and
+# any `on_conflict.update_columns: [is_optional]` fails validation before it runs.
+# The committed SDL snapshot is the *admin* schema, where the column does exist — which
+# is why codegen accepts an upsert here that no signed-in user can execute.
+#
+# Both root fields run in one Hasura transaction, in the order written, so the row is
+# never left missing. Requires an existing DatasetSpecification — does NOT create one.
+mutation SetConfigurationInputOptional(
   $configurationId: String!
   $inputId: String!
   $isOptional: Boolean!
 ) {
+  delete_modelcatalog_configuration_input_by_pk(
+    configuration_id: $configurationId
+    input_id: $inputId
+  ) {
+    configuration_id
+    input_id
+  }
   insert_modelcatalog_configuration_input_one(
     object: { configuration_id: $configurationId, input_id: $inputId, is_optional: $isOptional }
-    on_conflict: {
-      constraint: modelcatalog_configuration_input_pkey
-      update_columns: [is_optional]
-    }
   ) {
     configuration_id
     input_id

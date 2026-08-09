@@ -28,7 +28,7 @@ import {
   useUpdateDatasetSpecificationMutation,
   useUpdateVariablePresentationMutation,
   useInsertVariablePresentationMutation,
-  useInsertConfigurationInputJunctionMutation,
+  useSetConfigurationInputOptionalMutation,
   useUpdateModelParameterMutation,
   useAddConfigurationAuthorMutation,
   useDeleteConfigurationAuthorMutation,
@@ -166,7 +166,11 @@ export function ConfigurationForm({ configurationId, onSaved, onCancel }: Config
   const isEdit = !!configurationId;
 
   // ─── Queries ────────────────────────────────────────────────────────────────
-  const { data: configData, loading: configLoading } = useGetConfigurationQuery({
+  const {
+    data: configData,
+    loading: configLoading,
+    refetch: refetchConfig,
+  } = useGetConfigurationQuery({
     variables: { id: configurationId! },
     skip: !configurationId,
     fetchPolicy: 'cache-first',
@@ -183,7 +187,7 @@ export function ConfigurationForm({ configurationId, onSaved, onCancel }: Config
   const [updateDatasetSpec] = useUpdateDatasetSpecificationMutation();
   const [updateVarPresentation] = useUpdateVariablePresentationMutation();
   const [insertVarPresentation] = useInsertVariablePresentationMutation();
-  const [insertInputJunction] = useInsertConfigurationInputJunctionMutation();
+  const [setInputOptional] = useSetConfigurationInputOptionalMutation();
   const [updateParameter] = useUpdateModelParameterMutation();
   const [addAuthor] = useAddConfigurationAuthorMutation();
   const [deleteAuthor] = useDeleteConfigurationAuthorMutation();
@@ -244,6 +248,13 @@ export function ConfigurationForm({ configurationId, onSaved, onCancel }: Config
         ? diffInputRows(originalData.inputs, inputsWithPos)
         : { toAdd: inputsWithPos, toRemove: [], toUpdate: inputsWithPos };
 
+      // is_optional lives on the junction row, not the DatasetSpecification, and is the
+      // only junction field the form can change. Look the original up to rewrite the row
+      // only when that flag actually moved.
+      const originalInputById = new Map(
+        (originalData?.inputs ?? []).filter((r) => r.existingId).map((r) => [r.existingId!, r]),
+      );
+
       for (const id of inputDiff.toRemove) {
         await deleteInput({ variables: { configurationId, inputId: id } });
       }
@@ -280,14 +291,19 @@ export function ConfigurationForm({ configurationId, onSaved, onCancel }: Config
           const insertVars = buildPresentationInsertForExistingDs(row.existingId!, row);
           if (insertVars) await insertVarPresentation({ variables: insertVars });
         }
-        // Update is_optional on the junction row via upsert (on_conflict sets is_optional)
-        await insertInputJunction({
-          variables: {
-            configurationId,
-            inputId: row.existingId!,
-            isOptional: row.isOptional,
-          },
-        });
+        // Rewrite the junction row only when is_optional changed. Touching it on every
+        // edit is what made every save fail: the junction row cannot be updated in place
+        // under the `user` role, so this replaces it instead (see the mutation's comment).
+        const originalInput = originalInputById.get(row.existingId!);
+        if (originalInput && originalInput.isOptional !== row.isOptional) {
+          await setInputOptional({
+            variables: {
+              configurationId,
+              inputId: row.existingId!,
+              isOptional: row.isOptional,
+            },
+          });
+        }
       }
 
       // 3. Outputs diff
@@ -389,6 +405,16 @@ export function ConfigurationForm({ configurationId, onSaved, onCancel }: Config
         if (!origRegionIds.has(region.id)) {
           await addRegion({ variables: { configurationId, regionId: region.id } });
         }
+      }
+
+      // ConfigurationDetail reads the same GetConfiguration cache entry this form does,
+      // and nothing above writes to the cache. Without this refresh the detail view
+      // renders the pre-save entry and the save looks as though it did nothing.
+      // A failed refresh must not report a successful save as failed.
+      try {
+        await refetchConfig();
+      } catch {
+        // Ignored: every write above already succeeded.
       }
 
       onSaved?.(configurationId);
