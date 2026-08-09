@@ -12,13 +12,14 @@
  */
 
 import {
-  buildSearchQuery,
   cleanString,
   overlapsDateRange,
+  packagesMatchingVariables,
   packageTags,
   packageTimePeriod,
   parseDate as parseCkanDate,
-  searchPackages,
+  resourceMatchesVariables,
+  searchAllPackages,
   showPackage,
   type CkanPackage,
   type CkanResource,
@@ -131,27 +132,32 @@ function resourceFromCkanResource(row: CkanResource, parent: CkanPackage): DataC
 /**
  * Find datasets by standard variable names, optional spatial + temporal filters.
  *
- * CKAN has no standard-variable vocabulary, so variable names are matched as
- * free text against title, description and tags.
+ * The variable names are NOT sent as a CKAN `q`. They live on each resource in
+ * `mint_standard_variables`, which Solr neither indexes nor tokenises usefully,
+ * so a free-text query matches prose instead of the annotation. Fetch the
+ * bbox-filtered catalog and match the field here, as the legacy Lit client does.
  */
 export async function findDatasets(params: DatasetQueryParams): Promise<DataCatalogDataset[]> {
   const variables = params.standard_variable_names__in ?? [];
-  const query = buildSearchQuery({ variables });
   const boundingBox = toBoundingBox(params.spatial_coverage__intersects);
 
-  const packages = await searchPackages({
-    ...(query ? { q: query } : {}),
+  const packages = await searchAllPackages({
     ...(boundingBox ? { boundingBox } : {}),
-    ...(params.limit ? { rows: params.limit } : {}),
   });
 
   // CKAN cannot filter reliably on temporal extras, so narrow the window here.
   const start = params.end_time__lte ? new Date(params.end_time__lte) : null;
   const end = params.start_time__gte ? new Date(params.start_time__gte) : null;
 
-  return packages
-    .filter((pkg) => overlapsDateRange(pkg, start, end))
-    .map((pkg) => datasetFromCkanPackage(pkg, variables));
+  const matched = packagesMatchingVariables(
+    packages.filter((pkg) => overlapsDateRange(pkg, start, end)),
+    variables,
+  );
+
+  // `limit` caps the datasets handed back, not the pages fetched: the whole
+  // catalog has to be read before the variable filter can be applied.
+  const capped = params.limit ? matched.slice(0, params.limit) : matched;
+  return capped.map((pkg) => datasetFromCkanPackage(pkg, variables));
 }
 
 /**
@@ -204,18 +210,24 @@ export async function findDatasetsByVariables(params: {
 }
 
 /**
- * Load resources for a dataset, filtered by region and date range.
+ * Load resources for a dataset, narrowed to the standard variables asked for.
  */
 export async function loadDatasetResources(params: {
   datasetId: string;
+  variableNames?: string[];
   regionGeometry?: unknown;
   startDate?: Date | null;
   endDate?: Date | null;
 }): Promise<DataCatalogResource[]> {
   // Region and date filters cannot be applied: CKAN resources carry no coverage
-  // of their own, so all resources of the dataset are returned.
+  // of their own. The standard variable filter can be, and must be — a dataset
+  // matches because *some* of its resources carry the variable, so handing back
+  // all of them would bind files the model input cannot read.
   const pkg = await showPackage(params.datasetId);
-  const resources = (pkg.resources ?? []).map((r) => resourceFromCkanResource(r, pkg));
+  const variables = (params.variableNames ?? []).filter(Boolean);
+  const resources = (pkg.resources ?? [])
+    .filter((r) => resourceMatchesVariables(r, variables))
+    .map((r) => resourceFromCkanResource(r, pkg));
   // Sort by name
   resources.sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
   return resources;

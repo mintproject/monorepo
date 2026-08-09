@@ -96,6 +96,7 @@ export interface UseDatasetResourcesResult {
 
 export function useDatasetResources(params: {
   datasetId: string | null;
+  variableNames?: string[];
   regionGeometry?: unknown;
   startDate?: Date | null;
   endDate?: Date | null;
@@ -111,6 +112,7 @@ export function useDatasetResources(params: {
     try {
       const res = await loadDatasetResources({
         datasetId: params.datasetId,
+        ...(params.variableNames ? { variableNames: params.variableNames } : {}),
         regionGeometry: params.regionGeometry,
         startDate: params.startDate,
         endDate: params.endDate,
@@ -124,6 +126,8 @@ export function useDatasetResources(params: {
     }
   }, [
     params.datasetId,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    JSON.stringify(params.variableNames),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     JSON.stringify(params.regionGeometry),
     params.startDate?.toISOString(),

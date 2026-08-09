@@ -68,7 +68,11 @@ const mockEnsembles: Record<string, ThreadModelEnsemble> = {
 
 const mockThreadData: Record<string, PersistedDataslice> = {};
 
-// CKAN package_search mock response
+// CKAN package_search mock response.
+//
+// `mint_standard_variables` on each resource is what the lookup matches on; both
+// packages carry the weather input's variables, so both are hits. A package
+// whose resources carry none is not returned, however well its prose reads.
 const mockFindDatasetsResponse = {
   success: true,
   result: {
@@ -88,7 +92,13 @@ const mockFindDatasetsResponse = {
         temporal_coverage_start: '2023-01-01',
         temporal_coverage_end: '2023-12-31',
         resources: [
-          { id: 'r-1', name: 'precip-01', url: 'https://chirps.ucsb.edu/1', format: 'NetCDF' },
+          {
+            id: 'r-1',
+            name: 'precip-01',
+            url: 'https://chirps.ucsb.edu/1',
+            format: 'NetCDF',
+            mint_standard_variables: 'precipitation__daily',
+          },
         ],
       },
       {
@@ -105,7 +115,13 @@ const mockFindDatasetsResponse = {
         temporal_coverage_start: '2023-01-01',
         temporal_coverage_end: '2023-12-31',
         resources: [
-          { id: 'r-2', name: 'ndvi-01', url: 'https://modis.gsfc.nasa.gov/1', format: 'GeoTIFF' },
+          {
+            id: 'r-2',
+            name: 'ndvi-01',
+            url: 'https://modis.gsfc.nasa.gov/1',
+            format: 'GeoTIFF',
+            mint_standard_variables: 'temperature__max,precipitation__daily',
+          },
         ],
       },
     ],

@@ -15,8 +15,11 @@
  *   datasets/{id}        -> package_show    (id accepts a UUID or a name slug)
  *   resources/find       -> package_show, then read `resources[]`
  *
- * CKAN has no standard-variable vocabulary, so MINT standard variable names are
- * mapped onto CKAN free-text search rather than an exact field match. Likewise
+ * MINT standard variables live on each *resource*, in `mint_standard_variables`
+ * — a comma-separated string. Solr does not index it, and it tokenises the names
+ * on `_` and `~`, so a free-text `q` matches prose rather than the annotation.
+ * Match it client-side instead: see `packagesMatchingVariables`.
+ *
  * CKAN resources carry no per-resource spatial/temporal coverage, so resources
  * inherit their parent package's coverage.
  */
@@ -35,6 +38,12 @@ export interface CkanResource {
   format?: string;
   created?: string;
   last_modified?: string;
+  /**
+   * MINT standard variable names carried by this resource. TACC writes a single
+   * comma-separated string; the field is typed loosely because CKAN does not
+   * enforce a shape and other instances have been seen to write a list.
+   */
+  mint_standard_variables?: string | string[] | null;
 }
 
 export interface CkanPackage {
@@ -116,20 +125,61 @@ export async function searchPackages(opts: {
   q?: string;
   boundingBox?: BoundingBox;
   rows?: number;
+  start?: number;
   signal?: AbortSignal;
 }): Promise<CkanPackage[]> {
+  const { results } = await searchPackagesPage(opts);
+  return results;
+}
+
+/** One page of `package_search`, with CKAN's total `count` alongside it. */
+async function searchPackagesPage(opts: {
+  q?: string;
+  boundingBox?: BoundingBox;
+  rows?: number;
+  start?: number;
+  signal?: AbortSignal;
+}): Promise<{ results: CkanPackage[]; count: number }> {
   const params: Record<string, string | number | undefined> = {
     rows: opts.rows ?? 100,
   };
   if (opts.q) params['q'] = opts.q;
   if (opts.boundingBox) params['ext_bbox'] = formatBbox(opts.boundingBox);
+  if (opts.start) params['start'] = opts.start;
 
   const result = await ckanAction<CkanSearchResult>(
     'package_search',
     params,
     opts.signal ? { signal: opts.signal } : undefined,
   );
-  return result.results ?? [];
+  return { results: result.results ?? [], count: result.count ?? 0 };
+}
+
+/** CKAN's default `ckan.search.rows_max`; asking for more is silently clamped. */
+const CKAN_MAX_ROWS = 1000;
+
+/**
+ * Every package matching the filters, paging until CKAN's reported `count` is
+ * exhausted. Callers that filter client-side need the whole catalog, and a
+ * single `rows=1000` request truncates without saying so once an instance grows
+ * past that. TACC holds ~215 packages, so in practice this is one request.
+ */
+export async function searchAllPackages(opts: {
+  q?: string;
+  boundingBox?: BoundingBox;
+  signal?: AbortSignal;
+}): Promise<CkanPackage[]> {
+  const all: CkanPackage[] = [];
+  let count = Infinity;
+
+  while (all.length < count) {
+    const page = await searchPackagesPage({ ...opts, rows: CKAN_MAX_ROWS, start: all.length });
+    if (!page.results.length) break; // a short page means CKAN has no more to give
+    all.push(...page.results);
+    count = page.count;
+  }
+
+  return all;
 }
 
 /** `package_show` — a single package, including its resources. */
@@ -207,6 +257,53 @@ export function packageSpatialCoverage(pkg: CkanPackage): SpatialCoverage | unde
 export function cleanString(val: unknown): string {
   if (val === undefined || val === null || val === 'None') return '';
   return String(val);
+}
+
+// ─── Standard variable matching ───────────────────────────────────────────────
+
+/**
+ * The MINT standard variable names on a resource. TACC writes them as one
+ * comma-separated string; a list of strings is tolerated, and each entry is
+ * split again because CKAN does not stop a list entry containing commas.
+ */
+export function resourceStandardVariables(row: CkanResource): string[] {
+  const raw = row.mint_standard_variables;
+  const parts = Array.isArray(raw)
+    ? raw.flatMap((v) => (typeof v === 'string' ? v.split(',') : []))
+    : typeof raw === 'string'
+      ? raw.split(',')
+      : [];
+  return parts.map((v) => v.trim()).filter(Boolean);
+}
+
+/** Does this resource carry any of the requested standard variables? */
+export function resourceMatchesVariables(row: CkanResource, variables: string[]): boolean {
+  if (!variables.length) return true;
+  return resourceStandardVariables(row).some((v) => variables.includes(v));
+}
+
+/**
+ * Keep only the packages that carry one of `variables`, narrowing each to the
+ * resources that actually carry it. This is the standard-variable lookup: CKAN
+ * cannot do it server-side (see the module header), so it happens here, as the
+ * legacy Lit client does in `ui/src/util/datacatalog/ckan-data-catalog.ts`.
+ *
+ * An empty `variables` list means "no variable filter" and passes everything
+ * through untouched.
+ */
+export function packagesMatchingVariables(
+  packages: CkanPackage[],
+  variables: string[],
+): CkanPackage[] {
+  const wanted = variables.filter(Boolean);
+  if (!wanted.length) return packages;
+
+  const matched: CkanPackage[] = [];
+  for (const pkg of packages) {
+    const resources = (pkg.resources ?? []).filter((r) => resourceMatchesVariables(r, wanted));
+    if (resources.length) matched.push({ ...pkg, resources });
+  }
+  return matched;
 }
 
 export function packageTags(pkg: CkanPackage): string[] {
