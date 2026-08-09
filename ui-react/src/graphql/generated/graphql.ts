@@ -27659,10 +27659,7 @@ export type UpdateModelParameterMutationResult = Apollo.MutationResult<UpdateMod
 export type UpdateModelParameterMutationOptions = Apollo.BaseMutationOptions<UpdateModelParameterMutation, UpdateModelParameterMutationVariables>;
 export const GetModelTreeDocument = gql`
     query GetModelTree {
-  modelcatalog_software(
-    order_by: {label: asc}
-    where: {type: {_eq: "https://w3id.org/okn/o/sdm#Model"}}
-  ) {
+  modelcatalog_software(order_by: {label: asc}) {
     id
     label
     versions(order_by: {label: asc}) {
@@ -28222,10 +28219,7 @@ export type GetStandardVariablesWithUnitsSuspenseQueryHookResult = ReturnType<ty
 export type GetStandardVariablesWithUnitsQueryResult = Apollo.QueryResult<GetStandardVariablesWithUnitsQuery, GetStandardVariablesWithUnitsQueryVariables>;
 export const GetModelFamiliesDocument = gql`
     query GetModelFamilies {
-  modelcatalog_software(
-    order_by: {label: asc}
-    where: {type: {_eq: "https://w3id.org/okn/o/sdm#Model"}}
-  ) {
+  modelcatalog_software(order_by: {label: asc}) {
     id
     label
     versions(order_by: {label: asc}) {
