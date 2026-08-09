@@ -51,11 +51,13 @@ export function DatasetsSearch() {
     const trimmed = text.trim();
 
     // An empty term is a valid search: it lists every dataset in the catalog.
+    // A variable term is a bare substring — the client matches it against the
+    // `mint_standard_variables` annotation, so there is no wildcard to express.
     const params: DatasetQueryParameters = !trimmed
       ? {}
       : type === 'dataset_names'
         ? { name: `*${trimmed}*` }
-        : { variables: [`*${trimmed}*`] };
+        : { variableSubstring: trimmed };
 
     setLoading(true);
     setError(null);
