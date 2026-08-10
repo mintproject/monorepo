@@ -107,6 +107,48 @@ interface DatasetsStepProps {
   onBack?: () => void;
 }
 
+/**
+ * How a dataset reads in the picker: its name, plus what is *missing* from it.
+ *
+ * Missing metadata is stated rather than hidden. A dataset with no declared
+ * extent is a candidate — it makes no claim to be elsewhere — but the person
+ * choosing it should know the region and date filters could not speak for it.
+ */
+export function datasetOptionLabel(
+  ds: Pick<DataCatalogDataset, 'name' | 'region_match' | 'time_period'>,
+  requested: RequestedRange | null,
+): string {
+  const notes: string[] = [];
+  if (ds.region_match === 'unknown') notes.push('! no location');
+  if (!ds.time_period) notes.push('! no dates');
+  else {
+    const cov = dateCoverage(requested, toPeriod(ds.time_period));
+    if (cov === 'full') notes.push('dates full');
+    else if (cov === 'partial') notes.push('dates partial');
+  }
+  return notes.length ? `${ds.name} · ${notes.join(' · ')}` : ds.name;
+}
+
+/**
+ * Split the candidates by what the region filter can say about them.
+ *
+ * Three buckets, because there are three answers. `outside` is a positive claim
+ * — the dataset declares a location and it is not here — and is the only one
+ * worth hiding. `unknown` declares nothing, so hiding it would be an assertion
+ * the data does not support.
+ */
+export function splitByRegion(datasets: DataCatalogDataset[]): {
+  inRegion: DataCatalogDataset[];
+  noLocation: DataCatalogDataset[];
+  outside: DataCatalogDataset[];
+} {
+  return {
+    inRegion: datasets.filter((d) => d.region_match === 'inside'),
+    noLocation: datasets.filter((d) => d.region_match === 'unknown'),
+    outside: datasets.filter((d) => d.region_match === 'outside'),
+  };
+}
+
 /** Per-input dataset picker — lists candidates and assigns one dataset id. Isolated per model. */
 function InputPicker({
   thread,
@@ -123,6 +165,7 @@ function InputPicker({
   assignedId: string | null;
   onAssign: (datasetId: string | null, dataset?: DataCatalogDataset) => void;
 }) {
+  const [showOutside, setShowOutside] = useState(false);
   const { datasets, loading } = useDataCatalogDatasets({
     variableNames: variables,
     regionGeometry,
@@ -131,38 +174,62 @@ function InputPicker({
     skip: false,
   });
 
+  const { inRegion, noLocation, outside } = useMemo(() => splitByRegion(datasets), [datasets]);
+  const offered = showOutside ? datasets : [...inRegion, ...noLocation];
+
+  // An already-bound dataset stays selectable even when the region now rules it
+  // out, so the control keeps showing what the thread actually holds.
+  const options =
+    assignedId && !offered.some((d) => d.id === assignedId)
+      ? [...offered, ...datasets.filter((d) => d.id === assignedId)]
+      : offered;
+
+  const outsideToggle = outside.length > 0 && (
+    <button
+      type="button"
+      onClick={() => setShowOutside((v) => !v)}
+      className="text-xs text-blue-600 hover:underline"
+    >
+      {showOutside ? 'Hide' : 'Show'} {outside.length} dataset{outside.length !== 1 ? 's' : ''}{' '}
+      outside this region
+    </button>
+  );
+
   if (loading) {
     return <span className="text-xs text-gray-400">Loading datasets…</span>;
   }
-  if (datasets.length === 0) {
-    return <span className="text-xs text-gray-400">No matching datasets.</span>;
+  if (options.length === 0) {
+    return (
+      <span className="flex items-center gap-2 text-xs text-gray-400">
+        No matching datasets in this region.
+        {outsideToggle}
+      </span>
+    );
   }
 
   return (
-    <select
-      aria-label="Choose dataset"
-      value={assignedId ?? ''}
-      onChange={(e) => {
-        const id = e.target.value || null;
-        onAssign(
-          id,
-          datasets.find((d) => d.id === id),
-        );
-      }}
-      className="rounded border border-gray-300 px-2 py-1 text-xs"
-    >
-      <option value="">Choose · {datasets.length} options</option>
-      {datasets.map((ds) => {
-        const cov = dateCoverage(requested, toPeriod(ds.time_period));
-        const tag = cov === 'full' ? ' [full]' : cov === 'partial' ? ' [partial]' : '';
-        return (
+    <span className="flex items-center gap-2">
+      <select
+        aria-label="Choose dataset"
+        value={assignedId ?? ''}
+        onChange={(e) => {
+          const id = e.target.value || null;
+          onAssign(
+            id,
+            datasets.find((d) => d.id === id),
+          );
+        }}
+        className="rounded border border-gray-300 px-2 py-1 text-xs"
+      >
+        <option value="">Choose · {options.length} options</option>
+        {options.map((ds) => (
           <option key={ds.id} value={ds.id}>
-            {ds.name}
-            {tag}
+            {datasetOptionLabel(ds, requested)}
           </option>
-        );
-      })}
-    </select>
+        ))}
+      </select>
+      {outsideToggle}
+    </span>
   );
 }
 
@@ -335,10 +402,22 @@ export function DatasetsStep({
     );
   }
 
+  // A region with no geometry cannot narrow anything; say so rather than
+  // implying a filter that never ran.
+  const regionHasExtent = Array.isArray(regionGeometry)
+    ? regionGeometry.length > 0
+    : Boolean(regionGeometry);
   const chips = [
     { icon: '📦', label: 'Input', value: 'per model input' },
     ...(thread.region_id
-      ? [{ icon: '⌖', label: 'Region', value: thread.region_id, source: 'from Framing' }]
+      ? [
+          {
+            icon: '⌖',
+            label: 'Region',
+            value: thread.region?.name ?? thread.region_id,
+            source: regionHasExtent ? 'from Framing' : 'from Framing · no extent, not applied',
+          },
+        ]
       : []),
     ...(requested
       ? [

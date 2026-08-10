@@ -2,12 +2,9 @@
  * Shared types and utilities for region-related pages.
  */
 
-export interface BoundingBox {
-  xmin: number;
-  xmax: number;
-  ymin: number;
-  ymax: number;
-}
+import { unionBoundingBox, type BoundingBox } from '@/lib/geo/bbox';
+
+export type { BoundingBox };
 
 export interface RegionGeometryData {
   id: number;
@@ -54,29 +51,15 @@ export function parseGeometry(
   }
 }
 
-/** Calculate a bounding box from an array of geometry strings. */
+/**
+ * Calculate a bounding box from an array of region geometries.
+ *
+ * The walk lives in lib/geo/bbox so the Datasets step and the region map read
+ * the same GeoJSON the same way; this used to miss `Feature` and
+ * `FeatureCollection`, which CKAN and uploaded region files both produce.
+ */
 export function calculateBoundingBox(geometries: RegionGeometryData[]): BoundingBox | null {
-  let xmin = 99999;
-  let ymin = 99999;
-  let xmax = -99999;
-  let ymax = -99999;
-  let hasCoords = false;
-
-  geometries.forEach((geomObj) => {
-    const geom = parseGeometry(geomObj.geometry);
-    if (!geom) return;
-    const coords = extractCoordinates(geom);
-    coords.forEach(([lon, lat]) => {
-      if (lon < xmin) xmin = lon;
-      if (lon > xmax) xmax = lon;
-      if (lat < ymin) ymin = lat;
-      if (lat > ymax) ymax = lat;
-      hasCoords = true;
-    });
-  });
-
-  if (!hasCoords) return null;
-  return { xmin, xmax, ymin, ymax };
+  return unionBoundingBox(geometries.map((g) => g.geometry));
 }
 
 /** A map viewport expressed as geographic edges (degrees). */
@@ -93,27 +76,6 @@ export interface ViewportBounds {
  */
 export function boundingBoxInViewport(bb: BoundingBox, vp: ViewportBounds): boolean {
   return !(bb.xmax < vp.west || bb.xmin > vp.east || bb.ymax < vp.south || bb.ymin > vp.north);
-}
-
-function extractCoordinates(geom: GeoJSON.Geometry): Array<[number, number]> {
-  const coords: Array<[number, number]> = [];
-
-  function recurse(obj: unknown) {
-    if (Array.isArray(obj)) {
-      if (obj.length >= 2 && typeof obj[0] === 'number' && typeof obj[1] === 'number') {
-        coords.push([obj[0], obj[1]]);
-      } else {
-        obj.forEach(recurse);
-      }
-    } else if (obj && typeof obj === 'object' && 'coordinates' in obj) {
-      recurse((obj as GeoJSON.Geometry & { coordinates: unknown }).coordinates);
-    } else if (obj && typeof obj === 'object' && 'geometries' in obj) {
-      (obj as GeoJSON.GeometryCollection).geometries.forEach(recurse);
-    }
-  }
-
-  recurse(geom);
-  return coords;
 }
 
 /** Generate a unique region ID from the parent region ID. */
