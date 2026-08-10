@@ -567,26 +567,23 @@ export type DeleteProblemStatementMutation = {
   delete_problem_statement_by_pk?: { id: string } | null;
 };
 
+/**
+ * Deletes bottom-up, and never deletes a provenance or permission row.
+ *
+ * Every `user`-role delete on this tree is authorised by the subject's own
+ * CREATE provenance event (or a permission row). Removing those first — which
+ * this document used to do, copied from the Lit app — revoked the permission
+ * for everything that came after, so the whole cascade silently matched 0 rows
+ * (#99). Provenance and permission rows now go by ON DELETE CASCADE, once the
+ * row they authorise is gone.
+ *
+ * Order is load-bearing: `dataslice` is filtered through `thread_data`, so it
+ * must go before `thread_data` does. `thread_data.dataslice_id` is DEFERRABLE
+ * INITIALLY DEFERRED, so that order is legal inside the one transaction Hasura
+ * runs these root fields in.
+ */
 export const DeleteProblemStatementDocument = gql`
   mutation DeleteProblemStatement($id: String!) {
-    delete_thread_permission(
-      where: { thread: { task: { problem_statement_id: { _eq: $id } } } }
-    ) { affected_rows }
-    delete_thread_provenance(
-      where: { thread: { task: { problem_statement_id: { _eq: $id } } } }
-    ) { affected_rows }
-    delete_task_permission(
-      where: { task: { problem_statement_id: { _eq: $id } } }
-    ) { affected_rows }
-    delete_task_provenance(
-      where: { task: { problem_statement_id: { _eq: $id } } }
-    ) { affected_rows }
-    delete_problem_statement_permission(
-      where: { problem_statement_id: { _eq: $id } }
-    ) { affected_rows }
-    delete_problem_statement_provenance(
-      where: { problem_statement_id: { _eq: $id } }
-    ) { affected_rows }
     delete_thread_model_execution_summary(
       where: { thread_model: { thread: { task: { problem_statement_id: { _eq: $id } } } } }
     ) { affected_rows }
@@ -598,6 +595,15 @@ export const DeleteProblemStatementDocument = gql`
     ) { affected_rows }
     delete_thread_model_parameter(
       where: { thread_model: { thread: { task: { problem_statement_id: { _eq: $id } } } } }
+    ) { affected_rows }
+    delete_dataslice_resource(
+      where: { dataslice: { thread_data: { thread: { task: { problem_statement_id: { _eq: $id } } } } } }
+    ) { affected_rows }
+    delete_dataslice(
+      where: { thread_data: { thread: { task: { problem_statement_id: { _eq: $id } } } } }
+    ) { affected_rows }
+    delete_thread_data(
+      where: { thread: { task: { problem_statement_id: { _eq: $id } } } }
     ) { affected_rows }
     delete_thread_model(
       where: { thread: { task: { problem_statement_id: { _eq: $id } } } }
@@ -750,20 +756,9 @@ export type DeleteTaskMutation = {
   delete_task_by_pk?: { id: string } | null;
 };
 
+/** Bottom-up, provenance and permission left to cascade. See DeleteProblemStatementDocument. */
 export const DeleteTaskDocument = gql`
   mutation DeleteTask($id: String!) {
-    delete_thread_permission(
-      where: { thread: { task_id: { _eq: $id } } }
-    ) { affected_rows }
-    delete_thread_provenance(
-      where: { thread: { task_id: { _eq: $id } } }
-    ) { affected_rows }
-    delete_task_permission(where: { task_id: { _eq: $id } }) {
-      affected_rows
-    }
-    delete_task_provenance(where: { task_id: { _eq: $id } }) {
-      affected_rows
-    }
     delete_thread_model_execution_summary(
       where: { thread_model: { thread: { task_id: { _eq: $id } } } }
     ) { affected_rows }
@@ -775,6 +770,15 @@ export const DeleteTaskDocument = gql`
     ) { affected_rows }
     delete_thread_model_parameter(
       where: { thread_model: { thread: { task_id: { _eq: $id } } } }
+    ) { affected_rows }
+    delete_dataslice_resource(
+      where: { dataslice: { thread_data: { thread: { task_id: { _eq: $id } } } } }
+    ) { affected_rows }
+    delete_dataslice(
+      where: { thread_data: { thread: { task_id: { _eq: $id } } } }
+    ) { affected_rows }
+    delete_thread_data(
+      where: { thread: { task_id: { _eq: $id } } }
     ) { affected_rows }
     delete_thread_model(
       where: { thread: { task_id: { _eq: $id } } }
@@ -908,14 +912,9 @@ export type DeleteThreadMutation = {
   delete_thread_by_pk?: { id: string } | null;
 };
 
+/** Bottom-up, provenance and permission left to cascade. See DeleteProblemStatementDocument. */
 export const DeleteThreadDocument = gql`
   mutation DeleteThread($id: String!) {
-    delete_thread_permission(where: { thread_id: { _eq: $id } }) {
-      affected_rows
-    }
-    delete_thread_provenance(where: { thread_id: { _eq: $id } }) {
-      affected_rows
-    }
     delete_thread_model_execution_summary(
       where: { thread_model: { thread_id: { _eq: $id } } }
     ) { affected_rows }
@@ -928,6 +927,15 @@ export const DeleteThreadDocument = gql`
     delete_thread_model_parameter(
       where: { thread_model: { thread_id: { _eq: $id } } }
     ) { affected_rows }
+    delete_dataslice_resource(
+      where: { dataslice: { thread_data: { thread_id: { _eq: $id } } } }
+    ) { affected_rows }
+    delete_dataslice(where: { thread_data: { thread_id: { _eq: $id } } }) {
+      affected_rows
+    }
+    delete_thread_data(where: { thread_id: { _eq: $id } }) {
+      affected_rows
+    }
     delete_thread_model(where: { thread_id: { _eq: $id } }) {
       affected_rows
     }
