@@ -59,6 +59,92 @@ const PROSE_MATCH: CkanPackage = {
   resources: [{ id: 'r4', format: 'pdf', mint_standard_variables: '' }],
 };
 
+// ─── Region fixtures (issue #97) ──────────────────────────────────────────────
+//
+// Every geometry shape below is one TACC actually holds in `spatial`. The old
+// extractor read `coordinates[0]` and understood a bare Polygon only, so a
+// client-side region filter built on it would have dropped the rest in silence.
+
+/** Texas, near enough — the bounding box measured off the region's geometry. */
+const TEXAS = { xmin: -106.64, xmax: -93.52, ymin: 25.84, ymax: 36.5 };
+
+const TEXAS_POLYGON = JSON.stringify({
+  type: 'Polygon',
+  coordinates: [
+    [
+      [-106.64, 25.84],
+      [-93.52, 25.84],
+      [-93.52, 36.5],
+      [-106.64, 36.5],
+      [-106.64, 25.84],
+    ],
+  ],
+});
+
+function annotated(name: string, spatial?: string): CkanPackage {
+  return {
+    id: `uuid-${name}`,
+    name,
+    title: name,
+    ...(spatial ? { spatial } : {}),
+    resources: [{ id: `r-${name}`, format: 'csv', mint_standard_variables: 'a' }],
+  };
+}
+
+const IN_TEXAS = annotated('in-texas', TEXAS_POLYGON);
+const IN_ALASKA = annotated(
+  'in-alaska',
+  JSON.stringify({
+    type: 'Polygon',
+    coordinates: [
+      [
+        [-150, 60],
+        [-149, 60],
+        [-149, 61],
+        [-150, 61],
+        [-150, 60],
+      ],
+    ],
+  }),
+);
+const NO_LOCATION = annotated('no-location');
+const FEATURE_IN_TEXAS = annotated(
+  'feature-in-texas',
+  JSON.stringify({
+    type: 'Feature',
+    properties: {},
+    geometry: JSON.parse(TEXAS_POLYGON) as unknown,
+  }),
+);
+const FEATURE_COLLECTION_IN_TEXAS = annotated(
+  'feature-collection-in-texas',
+  JSON.stringify({
+    type: 'FeatureCollection',
+    features: [{ type: 'Feature', properties: {}, geometry: JSON.parse(TEXAS_POLYGON) as unknown }],
+  }),
+);
+const POINT_IN_TEXAS = annotated(
+  'point-in-texas',
+  JSON.stringify({ type: 'Point', coordinates: [-97.74, 30.27] }),
+);
+const MULTI_IN_ALASKA = annotated(
+  'multipolygon-in-alaska',
+  JSON.stringify({
+    type: 'MultiPolygon',
+    coordinates: [
+      [
+        [
+          [-150, 60],
+          [-149, 60],
+          [-149, 61],
+          [-150, 61],
+          [-150, 60],
+        ],
+      ],
+    ],
+  }),
+);
+
 beforeEach(() => {
   searchRequests = [];
   window.__MINT_CONFIG__ = { DATA_CATALOG_API: CKAN_HOST } as never;
@@ -120,13 +206,13 @@ describe('findDatasets', () => {
     expect(found).toHaveLength(1);
   });
 
-  it('keeps the bounding box on the request', async () => {
+  it('never sends ext_bbox: the region is applied here, so nothing is dropped for it', async () => {
     stubSearch([]);
     await findDatasets({
       standard_variable_names__in: ['a'],
       spatial_coverage__intersects: { xmin: -100, xmax: -97, ymin: 29, ymax: 31 },
     });
-    expect(searchRequests[0]?.searchParams.get('ext_bbox')).toBe('-100,29,-97,31');
+    expect(searchRequests[0]?.searchParams.has('ext_bbox')).toBe(false);
   });
 
   it('still narrows by date range', async () => {
@@ -146,6 +232,52 @@ describe('findDatasets', () => {
     stubSearch([CARRIER, PROSE_MATCH]);
     const found = await findDatasets({});
     expect(found).toHaveLength(2);
+  });
+
+  it('labels a dataset inside the region, and one outside it, without dropping either', async () => {
+    stubSearch([IN_TEXAS, IN_ALASKA]);
+    const found = await findDatasets({ spatial_coverage__intersects: TEXAS });
+    expect(found.map((d) => [d.id, d.region_match])).toEqual([
+      [IN_TEXAS.name, 'inside'],
+      [IN_ALASKA.name, 'outside'],
+    ]);
+  });
+
+  it('labels a dataset with no spatial field unknown, not outside', async () => {
+    // The defect this guards: ext_bbox filtered on *having* a location, so
+    // these never reached the client — 11 of TACC's 33 annotated packages.
+    stubSearch([NO_LOCATION]);
+    const found = await findDatasets({ spatial_coverage__intersects: TEXAS });
+    expect(found).toHaveLength(1);
+    expect(found[0]?.region_match).toBe('unknown');
+  });
+
+  it('places a Feature and a FeatureCollection, which ext_bbox drops entirely', async () => {
+    stubSearch([FEATURE_IN_TEXAS, FEATURE_COLLECTION_IN_TEXAS, POINT_IN_TEXAS, MULTI_IN_ALASKA]);
+    const found = await findDatasets({ spatial_coverage__intersects: TEXAS });
+    expect(found.map((d) => d.region_match)).toEqual(['inside', 'inside', 'inside', 'outside']);
+  });
+
+  it('calls everything inside when no region is asked for', async () => {
+    stubSearch([IN_TEXAS, IN_ALASKA, NO_LOCATION]);
+    const found = await findDatasets({});
+    expect(found.every((d) => d.region_match === 'inside')).toBe(true);
+  });
+
+  it('accepts a regions list of geometries as the region', async () => {
+    stubSearch([IN_TEXAS, IN_ALASKA]);
+    const found = await findDatasets({
+      spatial_coverage__intersects: [JSON.parse(TEXAS_POLYGON) as unknown],
+    });
+    expect(found.map((d) => d.region_match)).toEqual(['inside', 'outside']);
+  });
+
+  it('applies no region filter when the region carries no usable extent', async () => {
+    // An empty geometry list must not read as an empty box, which would call
+    // the whole catalog "elsewhere".
+    stubSearch([IN_TEXAS, IN_ALASKA]);
+    const found = await findDatasets({ spatial_coverage__intersects: [] });
+    expect(found.map((d) => d.region_match)).toEqual(['inside', 'inside']);
   });
 
   it('caps the datasets returned by limit, without capping what it fetches', async () => {

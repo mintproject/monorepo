@@ -25,6 +25,7 @@
  */
 
 import { getDataCatalogApiUrl } from '../config';
+import { boundingBoxesOverlap, geoJsonBoundingBox, type BoundingBox } from '../geo/bbox';
 
 import type { DateRange, SpatialCoverage } from './types';
 
@@ -78,13 +79,7 @@ interface CkanSearchResult {
   results?: CkanPackage[];
 }
 
-/** Bounding box in the order CKAN's `ext_bbox` expects. */
-export interface BoundingBox {
-  xmin: number;
-  xmax: number;
-  ymin: number;
-  ymax: number;
-}
+export type { BoundingBox };
 
 // ─── Transport ────────────────────────────────────────────────────────────────
 
@@ -243,6 +238,45 @@ export function packageSpatialCoverage(pkg: CkanPackage): SpatialCoverage | unde
   } catch {
     return undefined;
   }
+}
+
+/**
+ * Where a package sits relative to the region asked for.
+ *
+ * Three answers, not two: "no location declared" and "a location, elsewhere"
+ * are different claims about the data and the Datasets step treats them
+ * differently — the first is shown and badged, the second hidden and counted.
+ * Collapsing them is what made a third of TACC's annotated catalog invisible.
+ */
+export type RegionMatch = 'inside' | 'outside' | 'unknown';
+
+/**
+ * A package's bounding box, from ckanext-spatial's stringified GeoJSON.
+ *
+ * Handles every shape TACC actually holds — Polygon, MultiPolygon, Point,
+ * Feature and FeatureCollection — unlike `packageSpatialCoverage`, which reads
+ * `coordinates[0]` and understands a bare Polygon only.
+ */
+export function packageBoundingBox(pkg: CkanPackage): BoundingBox | null {
+  return geoJsonBoundingBox(pkg.spatial);
+}
+
+/**
+ * Classify a package against a region's bounding box.
+ *
+ * With no region asked for, everything is `inside`: there is no claim to fail.
+ *
+ * This is deliberately more forgiving than CKAN's own `ext_bbox`, which is not
+ * merely a server-side version of the same test. ckanext-spatial indexes bare
+ * geometries only, so `ext_bbox` also drops packages whose `spatial` is a
+ * `Feature` or a `FeatureCollection` — at TACC, two annotated packages that are
+ * squarely inside Texas.
+ */
+export function packageRegionMatch(pkg: CkanPackage, region?: BoundingBox | null): RegionMatch {
+  if (!region) return 'inside';
+  const box = packageBoundingBox(pkg);
+  if (!box) return 'unknown';
+  return boundingBoxesOverlap(box, region) ? 'inside' : 'outside';
 }
 
 /** CKAN's `version` is often the literal string "None". */

@@ -12,7 +12,7 @@
  * - Allow filtering/selecting individual resources for a dataset.
  * - On "Select & Continue", write selections to Hasura via UpdateThreadData mutation.
  */
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   Thread,
@@ -342,7 +342,7 @@ function InputDatasetPicker({
   onChange,
 }: InputDatasetPickerProps) {
   const skip = !editMode && existingBindings.length > 0;
-  const { datasets, loading } = useDataCatalogDatasets({
+  const { datasets: allDatasets, loading } = useDataCatalogDatasets({
     variableNames: input.variables,
     regionGeometry,
     startDate: thread.start_date ? new Date(thread.start_date) : null,
@@ -362,6 +362,16 @@ function InputDatasetPicker({
     loading: boolean;
   } | null>(null);
   const [compareDialog, setCompareDialog] = useState<DataCatalogDataset[] | null>(null);
+
+  // `findDatasets` no longer drops datasets for the region — it labels them, so
+  // the wizard's Datasets step can show what has no location and count what is
+  // elsewhere (#97). This panel has no such affordance, so it keeps the older
+  // behaviour and hides the ones the region positively rules out. Datasets with
+  // no declared location are kept, as they always were.
+  const datasets = useMemo(
+    () => allDatasets.filter((ds) => ds.region_match !== 'outside'),
+    [allDatasets],
+  );
 
   // Pre-select existing bindings
   useEffect(() => {

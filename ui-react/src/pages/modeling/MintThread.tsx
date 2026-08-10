@@ -118,6 +118,13 @@ export function MintThread({ threadId: threadIdProp }: MintThreadProps = {}) {
     [execRaw],
   );
 
+  // The geometries the Datasets step narrows on. A thread with no region hands
+  // down undefined, which means "no region filter" rather than an empty extent.
+  const regionGeometry = useMemo(
+    () => (thread?.region?.geometries ?? []).map((g) => g.geometry).filter(Boolean),
+    [thread?.region],
+  );
+
   // The execution engine writes the run counters; nothing pushes them back, so
   // poll while a submitted run is still unfinished and stop as soon as it is.
   const runsInFlight = hasUnfinishedRuns(threadExecutionData?.execution_summary ?? {});
@@ -316,6 +323,7 @@ export function MintThread({ threadId: threadIdProp }: MintThreadProps = {}) {
             models={execData.models}
             ensembles={execData.model_ensembles}
             persistedData={execData.data}
+            regionGeometry={regionGeometry}
             onUpdated={handleThreadUpdated}
             onContinue={goNext}
             onBack={goBack}

@@ -14,6 +14,7 @@
 import {
   cleanString,
   overlapsDateRange,
+  packageRegionMatch,
   packagesMatchingVariables,
   packageTags,
   packageTimePeriod,
@@ -23,7 +24,9 @@ import {
   showPackage,
   type CkanPackage,
   type CkanResource,
+  type RegionMatch,
 } from './datasets/ckan';
+import { geoJsonBoundingBox, unionBoundingBox, type BoundingBox } from './geo/bbox';
 
 // ─── Domain types ─────────────────────────────────────────────────────────────
 
@@ -50,6 +53,12 @@ export interface DataCatalogDataset {
   id: string;
   name: string;
   region: string;
+  /**
+   * Where this dataset sits relative to the region asked for. `unknown` means
+   * the dataset declares no location at all — it is not a claim that the
+   * dataset is elsewhere, and the UI must not hide it as though it were.
+   */
+  region_match: RegionMatch;
   variables: string[];
   datatype: string;
   time_period: DataCatalogTimePeriod | null;
@@ -84,13 +93,18 @@ export interface DatasetQueryParams {
 
 // ─── Internal shape helpers ───────────────────────────────────────────────────
 
-function datasetFromCkanPackage(pkg: CkanPackage, variables: string[]): DataCatalogDataset {
+function datasetFromCkanPackage(
+  pkg: CkanPackage,
+  variables: string[],
+  regionMatch: RegionMatch,
+): DataCatalogDataset {
   const resources = pkg.resources ?? [];
   return {
     // Prefer the name slug: it is what CKAN URLs use and package_show accepts.
     id: cleanString(pkg.name) || cleanString(pkg.id),
     name: cleanString(pkg.title) || cleanString(pkg.name),
     region: '',
+    region_match: regionMatch,
     variables,
     // CKAN has no datatype field; resource formats are the closest analogue.
     datatype: cleanString(resources[0]?.format),
@@ -134,16 +148,21 @@ function resourceFromCkanResource(row: CkanResource, parent: CkanPackage): DataC
  *
  * The variable names are NOT sent as a CKAN `q`. They live on each resource in
  * `mint_standard_variables`, which Solr neither indexes nor tokenises usefully,
- * so a free-text query matches prose instead of the annotation. Fetch the
- * bbox-filtered catalog and match the field here, as the legacy Lit client does.
+ * so a free-text query matches prose instead of the annotation. Fetch the whole
+ * catalog and match the field here, as the legacy Lit client does.
+ *
+ * The region is applied here too, and **nothing is dropped for it**. Every
+ * dataset comes back carrying `region_match`, so the caller can show what has
+ * no location and count what is elsewhere. `ext_bbox` cannot express that: it
+ * filters on *having* a location, so a dataset with no `spatial` field never
+ * reaches the client to be reasoned about — 11 of TACC's 33 annotated packages,
+ * for every region.
  */
 export async function findDatasets(params: DatasetQueryParams): Promise<DataCatalogDataset[]> {
   const variables = params.standard_variable_names__in ?? [];
-  const boundingBox = toBoundingBox(params.spatial_coverage__intersects);
+  const region = toBoundingBox(params.spatial_coverage__intersects);
 
-  const packages = await searchAllPackages({
-    ...(boundingBox ? { boundingBox } : {}),
-  });
+  const packages = await searchAllPackages({});
 
   // CKAN cannot filter reliably on temporal extras, so narrow the window here.
   const start = params.end_time__lte ? new Date(params.end_time__lte) : null;
@@ -157,27 +176,38 @@ export async function findDatasets(params: DatasetQueryParams): Promise<DataCata
   // `limit` caps the datasets handed back, not the pages fetched: the whole
   // catalog has to be read before the variable filter can be applied.
   const capped = params.limit ? matched.slice(0, params.limit) : matched;
-  return capped.map((pkg) => datasetFromCkanPackage(pkg, variables));
+  return capped.map((pkg) =>
+    datasetFromCkanPackage(pkg, variables, packageRegionMatch(pkg, region)),
+  );
 }
 
 /**
- * Coax the legacy `spatial_coverage__intersects` payload into a bounding box.
- * Callers pass either a bare {xmin,xmax,ymin,ymax} or the MINT
- * `{ type: 'BoundingBox', value: {...} }` envelope; anything else is ignored.
+ * Coax the `spatial_coverage__intersects` payload into a bounding box.
+ *
+ * Callers pass a region's GeoJSON geometries, a bare {xmin,xmax,ymin,ymax}, or
+ * the MINT `{ type: 'BoundingBox', value: {...} }` envelope. Anything with no
+ * usable extent yields undefined, which means "no region filter" — never an
+ * empty box, which would classify the whole catalog as elsewhere.
  */
-function toBoundingBox(
-  raw: unknown,
-): { xmin: number; xmax: number; ymin: number; ymax: number } | undefined {
+function toBoundingBox(raw: unknown): BoundingBox | undefined {
   if (!raw || typeof raw !== 'object') return undefined;
+
+  // A region carries a list of geometries; take the box that encloses them all.
+  if (Array.isArray(raw)) return unionBoundingBox(raw) ?? undefined;
+
   const obj = raw as Record<string, unknown>;
   const candidate = (
     obj['value'] && typeof obj['value'] === 'object' ? obj['value'] : obj
   ) as Record<string, unknown>;
 
   const coords = ['xmin', 'xmax', 'ymin', 'ymax'].map((k) => Number(candidate[k]));
-  if (coords.some((n) => !isFinite(n))) return undefined;
-  const [xmin, xmax, ymin, ymax] = coords as [number, number, number, number];
-  return { xmin, xmax, ymin, ymax };
+  if (!coords.some((n) => !isFinite(n))) {
+    const [xmin, xmax, ymin, ymax] = coords as [number, number, number, number];
+    return { xmin, xmax, ymin, ymax };
+  }
+
+  // Not a bounding box — try to read it as GeoJSON.
+  return geoJsonBoundingBox(raw) ?? undefined;
 }
 
 /**

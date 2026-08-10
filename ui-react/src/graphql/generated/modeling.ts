@@ -127,9 +127,23 @@ export type Thread = {
   response_variable_id?: Maybe<string>;
   driving_variable?: Maybe<VariableRef>;
   response_variable?: Maybe<VariableRef>;
+  /**
+   * The thread's region, with the geometries the Datasets step narrows on.
+   * `region_id` alone cannot do that job — it names the region without saying
+   * where it is.
+   */
+  region?: Maybe<ThreadRegion>;
   events: ThreadProvenance[];
   permissions: ThreadPermission[];
   thread_models?: ThreadModel[];
+};
+
+export type ThreadRegion = {
+  __typename?: 'region';
+  id: string;
+  name?: Maybe<string>;
+  /** Hasura returns the jsonb `geometry` column already parsed. */
+  geometries: Array<{ id: number; geometry?: Maybe<unknown> }>;
 };
 
 export type Task = {
@@ -289,6 +303,14 @@ const THREAD_INFO = gql`
     response_variable {
       id
       name
+    }
+    region {
+      id
+      name
+      geometries {
+        id
+        geometry
+      }
     }
     thread_models {
       id
