@@ -55,6 +55,7 @@ import {
   type ProblemStatement,
 } from '@/graphql/generated/modeling';
 import { provisionTask } from '@/lib/modeling/provisionTask';
+import { assertDeleted } from '@/lib/modeling/assertDeleted';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -295,7 +296,8 @@ export function ProblemStatementsList({ regionId = 'DEFAULT' }: ProblemStatement
   async function handleDelete() {
     if (!deleteTarget) return;
     try {
-      await deletePS({ variables: { id: deleteTarget.id } });
+      const { data: deleted } = await deletePS({ variables: { id: deleteTarget.id } });
+      assertDeleted(deleted?.delete_problem_statement_by_pk, 'Problem statement');
       toast({ title: 'Problem statement deleted' });
       await refetch();
     } catch (err) {

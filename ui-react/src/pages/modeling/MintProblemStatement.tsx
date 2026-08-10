@@ -39,6 +39,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/lib/auth/useAuth';
 import { provisionTask } from '@/lib/modeling/provisionTask';
+import { assertDeleted } from '@/lib/modeling/assertDeleted';
 import { EmptyState } from '@/components/common/EmptyState';
 
 import {
@@ -279,7 +280,8 @@ export function MintProblemStatement() {
   async function handleDeleteTask() {
     if (!deleteTaskTarget) return;
     try {
-      await deleteTask({ variables: { id: deleteTaskTarget.id } });
+      const { data: deleted } = await deleteTask({ variables: { id: deleteTaskTarget.id } });
+      assertDeleted(deleted?.delete_task_by_pk, 'Task');
       toast({ title: 'Task deleted' });
       if (selectedTaskId === deleteTaskTarget.id) {
         setSelectedTaskId(null);
@@ -369,7 +371,10 @@ export function MintProblemStatement() {
   async function handleDeleteThread() {
     if (!deleteThreadTarget) return;
     try {
-      await deleteThread({ variables: { id: deleteThreadTarget.id } });
+      const { data: deleted } = await deleteThread({
+        variables: { id: deleteThreadTarget.id },
+      });
+      assertDeleted(deleted?.delete_thread_by_pk, 'Sub-task');
       toast({ title: 'Sub-task deleted' });
       if (selectedThreadId === deleteThreadTarget.id) {
         setSelectedThreadId(null);
