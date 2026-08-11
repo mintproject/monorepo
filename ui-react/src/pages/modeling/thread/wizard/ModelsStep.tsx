@@ -13,6 +13,8 @@ import {
   useSetThreadModelsMutation,
 } from '@/graphql/generated/modeling';
 import { useAuth } from '@/lib/auth/useAuth';
+import { diffThreadModels } from '@/lib/thread-models';
+import { useToast } from '@/components/ui/use-toast';
 import { cn } from '@/lib/utils';
 import { StepShell } from './StepShell';
 import { FilteredByBanner } from './FilteredByBanner';
@@ -123,6 +125,7 @@ export function ModelsStep({
   onEditIndicator,
 }: ModelsStepProps) {
   const { user } = useAuth();
+  const { toast } = useToast();
   const perm = getUserPermission(thread.permissions, thread.events, user?.username ?? null);
 
   const [searchText, setSearchText] = useState('');
@@ -185,17 +188,30 @@ export function ModelsStep({
 
   async function handleContinue() {
     if (!user?.username || selectedIds.size === 0) return;
+
+    const changes = diffThreadModels(thread.id, thread.thread_models ?? [], selectedIds);
+    // Nothing to write: walking back through the step must not touch the
+    // bindings the later steps have already stored against these rows.
+    if (changes.unchanged) {
+      onContinue();
+      return;
+    }
+
     setSaving(true);
     try {
-      const models = Array.from(selectedIds).map((cfgId) => ({
-        thread_id: thread.id,
-        modelcatalog_configuration_id: cfgId,
-      }));
       await setThreadModels({
-        variables: { threadId: thread.id, models, userid: user.username, notes: null },
+        variables: {
+          threadId: thread.id,
+          removedIds: changes.removedIds,
+          models: changes.added,
+          userid: user.username,
+          notes: null,
+        },
       });
       onUpdated();
       onContinue();
+    } catch (err) {
+      toast({ title: 'Save failed', description: String(err), variant: 'destructive' });
     } finally {
       setSaving(false);
     }

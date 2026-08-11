@@ -22,6 +22,8 @@ import {
   useSetThreadModelsMutation,
 } from '@/graphql/generated/modeling';
 import { useAuth } from '@/lib/auth/useAuth';
+import { diffThreadModels } from '@/lib/thread-models';
+import { useToast } from '@/components/ui/use-toast';
 import { cn } from '@/lib/utils';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
@@ -209,6 +211,7 @@ interface MintModelsProps {
 
 export function MintModels({ thread, onContinue, onThreadUpdated }: MintModelsProps) {
   const { user } = useAuth();
+  const { toast } = useToast();
   const perm = getUserPermission(thread.permissions, thread.events, user?.username ?? null);
 
   const [editMode, setEditMode] = useState(() => {
@@ -300,16 +303,21 @@ export function MintModels({ thread, onContinue, onThreadUpdated }: MintModelsPr
 
   async function handleSave() {
     if (!user?.username) return;
+
+    const changes = diffThreadModels(thread.id, thread.thread_models ?? [], selectedIds);
+    if (changes.unchanged) {
+      setEditMode(false);
+      if (onContinue) onContinue();
+      return;
+    }
+
     setSaving(true);
     try {
-      const models = Array.from(selectedIds).map((cfgId) => ({
-        thread_id: thread.id,
-        modelcatalog_configuration_id: cfgId,
-      }));
       await setThreadModels({
         variables: {
           threadId: thread.id,
-          models,
+          removedIds: changes.removedIds,
+          models: changes.added,
           userid: user.username,
           notes: notes || null,
         },
@@ -317,6 +325,8 @@ export function MintModels({ thread, onContinue, onThreadUpdated }: MintModelsPr
       setEditMode(false);
       onThreadUpdated?.();
       if (onContinue) onContinue();
+    } catch (err) {
+      toast({ title: 'Save failed', description: String(err), variant: 'destructive' });
     } finally {
       setSaving(false);
     }
