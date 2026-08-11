@@ -14,6 +14,7 @@ import {
   ensembleManagerHeaders,
   executionEnginePath,
   fetchExecutionLog,
+  publishResults,
   submitRuns,
 } from '@/lib/ensemble-manager';
 
@@ -116,6 +117,49 @@ describe('ensemble-manager', () => {
       await expect(
         submitRuns('http://ensemble', 'tapis', { thread_id: 't', model_id: 'm' }),
       ).rejects.toThrow('Ensemble manager returned 401');
+    });
+  });
+
+  describe('publishResults', () => {
+    const ids = { problemStatementId: 'ps-1', taskId: 'task-1', threadId: 'thread-1' };
+
+    it('posts to the subtask outputs route the legacy UI calls', async () => {
+      await publishResults('http://ensemble', ids);
+      expect(lastRequest()[0]).toBe(
+        'http://ensemble/problemStatements/ps-1/tasks/task-1/subtasks/thread-1/outputs',
+      );
+      expect(lastRequest()[1].method).toBe('POST');
+    });
+
+    it('sends the access token as a Bearer header', async () => {
+      storeTokens({ accessToken: 'stored-jwt' });
+      await publishResults('http://ensemble', ids);
+      expect(lastRequest()[1].headers).toMatchObject({
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer stored-jwt',
+      });
+    });
+
+    it("surfaces the server's own message, so a dead credential is not a bare 400", async () => {
+      (globalThis.fetch as unknown as Mock).mockResolvedValue({
+        ok: false,
+        status: 400,
+        json: () => Promise.resolve({ message: 'No executions found to publish' }),
+      });
+      await expect(publishResults('http://ensemble', ids)).rejects.toThrow(
+        'Ensemble manager returned 400: No executions found to publish',
+      );
+    });
+
+    it('still reports the status when the body carries no message', async () => {
+      (globalThis.fetch as unknown as Mock).mockResolvedValue({
+        ok: false,
+        status: 500,
+        json: () => Promise.reject(new Error('not json')),
+      });
+      await expect(publishResults('http://ensemble', ids)).rejects.toThrow(
+        'Ensemble manager returned 500',
+      );
     });
   });
 

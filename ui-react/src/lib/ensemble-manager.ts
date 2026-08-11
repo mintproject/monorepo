@@ -59,6 +59,50 @@ export async function submitRuns(
   }
 }
 
+/**
+ * Register a thread's run outputs in the data catalog, so the Results step can
+ * show them.
+ *
+ * The route publishes every execution under the *subtask* (thread), not under
+ * one model, which is why `modelId` is not a parameter — the legacy UI calls
+ * the same route from its own per-model button
+ * (`ui/src/screens/modeling/thread/mint-results.ts:_fetchAllResults`).
+ *
+ * The server answers 400 `No executions found to publish` when every
+ * per-execution registration threw, because it catches each one and counts
+ * successes — so a 400 here means "all of them failed", not "there were none".
+ * The caller surfaces the message rather than dropping it (#110).
+ */
+export async function publishResults(
+  ensembleManagerApi: string,
+  ids: { problemStatementId: string; taskId: string; threadId: string },
+): Promise<void> {
+  const { problemStatementId, taskId, threadId } = ids;
+  // Each id is one path segment. TACC's are opaque and need no escaping, but
+  // the legacy `mint://…/…` form carries slashes, which would otherwise split
+  // into extra segments and miss the route entirely.
+  const url =
+    `${ensembleManagerApi}/problemStatements/${encodeURIComponent(problemStatementId)}` +
+    `/tasks/${encodeURIComponent(taskId)}` +
+    `/subtasks/${encodeURIComponent(threadId)}/outputs`;
+  const resp = await fetch(url, {
+    method: 'POST',
+    headers: ensembleManagerHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify({}),
+  });
+  if (!resp.ok) {
+    const detail = await resp
+      .json()
+      .then((body: { message?: string }) => body?.message)
+      .catch(() => undefined);
+    throw new Error(
+      detail
+        ? `Ensemble manager returned ${resp.status}: ${detail}`
+        : `Ensemble manager returned ${resp.status}`,
+    );
+  }
+}
+
 /** Fetch the raw log text for one execution. Caller handles ANSI cleanup. */
 export async function fetchExecutionLog(
   ensembleManagerApi: string,
