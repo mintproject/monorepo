@@ -43,6 +43,7 @@ Temporary Items
 .wolf/
 
 # Local environment files (secrets, runtime overrides)
+.env
 .env.local
 .env.*.local
 

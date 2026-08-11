@@ -41,7 +41,7 @@ import {
   runsComplete,
   threadExecutionFromGQL,
 } from '@/lib/thread-execution';
-import { submitRuns } from '@/lib/ensemble-manager';
+import { publishResults, submitRuns } from '@/lib/ensemble-manager';
 import { useAuth } from '@/lib/auth/useAuth';
 import { cn } from '@/lib/utils';
 
@@ -243,6 +243,24 @@ export function MintThread({ threadId: threadIdProp }: MintThreadProps = {}) {
     [threadId, refetchExecution],
   );
 
+  /**
+   * Register this thread's run outputs, then read the counters back.
+   *
+   * `MintResults` treats the absence of this prop as "publishing is not
+   * available" and returns before making any request, so leaving it unpassed
+   * makes the Fetch results button silently dead — which is what #110 was.
+   */
+  const handlePublishResults = useCallback(async () => {
+    const ensembleManagerApi = window.__MINT_CONFIG__?.ENSEMBLE_MANAGER_API ?? '';
+    const problemStatementId = thread?.task?.problem_statement_id;
+    const taskId = thread?.task_id;
+    if (!ensembleManagerApi || !problemStatementId || !taskId || !threadId) return;
+    await publishResults(ensembleManagerApi, { problemStatementId, taskId, threadId });
+    // The server writes published_runs and the execution_result rows; read them
+    // back rather than guessing at them locally.
+    await refetchExecution();
+  }, [thread, threadId, refetchExecution]);
+
   // ── render ─────────────────────────────────────────────────────────────────
 
   if (loading && !data) {
@@ -361,6 +379,7 @@ export function MintThread({ threadId: threadIdProp }: MintThreadProps = {}) {
             ingestionApiAvailable={false}
             onContinue={goNext}
             onFetchRuns={handleFetchRuns}
+            onPublishResults={handlePublishResults}
           />
         );
       case 'summary':

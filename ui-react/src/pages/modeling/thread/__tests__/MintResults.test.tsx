@@ -2,7 +2,7 @@
  * Tests for MintResults — results browsing step.
  */
 import { describe, expect, it, vi } from 'vitest';
-import { screen, fireEvent } from '@testing-library/react';
+import { screen, fireEvent, waitFor } from '@testing-library/react';
 import { renderWithProviders } from '@/test/utils/render';
 import { MintResults } from '../MintResults';
 import type { ThreadExecutionData, ModelExecutionsMap } from '@/graphql/generated/execution';
@@ -227,6 +227,60 @@ describe('MintResults', () => {
       />,
     );
     expect(screen.getByTestId('fetch-results-model-1')).toBeInTheDocument();
+  });
+
+  // ── #110: the button used to make no request, and a failure said nothing ──
+
+  const threadDataFinished: ThreadExecutionData = {
+    ...mockThreadDataSubmitted,
+    execution_summary: {
+      'model-1': {
+        total_runs: 2,
+        submitted_runs: 2,
+        failed_runs: 0,
+        successful_runs: 2,
+        submitted_for_execution: true,
+        submission_time: '2024-01-01T00:00:00Z',
+      },
+    },
+  };
+
+  function renderFinished(onPublishResults?: () => Promise<void>) {
+    return renderWithProviders(
+      <MintResults
+        threadData={threadDataFinished}
+        executions={{ 'model-1': { executions: [], loading: false } }}
+        canWrite
+        ingestionApiAvailable={false}
+        onContinue={vi.fn()}
+        onFetchRuns={vi.fn()}
+        onPublishResults={onPublishResults}
+      />,
+    );
+  }
+
+  it('calls onPublishResults when Fetch results is clicked', async () => {
+    const onPublishResults = vi.fn().mockResolvedValue(undefined);
+    renderFinished(onPublishResults);
+
+    fireEvent.click(screen.getByTestId('fetch-results-model-1'));
+
+    await waitFor(() => expect(onPublishResults).toHaveBeenCalledWith('model-1'));
+  });
+
+  it('shows the failure instead of dropping it', async () => {
+    const onPublishResults = vi
+      .fn()
+      .mockRejectedValue(
+        new Error('Ensemble manager returned 400: No executions found to publish'),
+      );
+    renderFinished(onPublishResults);
+
+    fireEvent.click(screen.getByTestId('fetch-results-model-1'));
+
+    expect(await screen.findByTestId('publish-error-model-1')).toHaveTextContent(
+      'No executions found to publish',
+    );
   });
 
   it('shows ingestion button when ingestion API is available and runs are finished', () => {

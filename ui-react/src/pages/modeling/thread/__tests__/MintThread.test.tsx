@@ -1,7 +1,7 @@
 /**
  * Tests for MintThread — step workflow container.
  */
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { screen, waitFor } from '@testing-library/react';
 import { Route, Routes } from 'react-router-dom';
 import { MockedProvider } from '@apollo/client/testing';
@@ -21,6 +21,11 @@ const mockThread = {
   id: 'test-thread-id',
   name: 'Test thread',
   task_id: 'mint://task/t1',
+  task: {
+    __typename: 'task' as const,
+    id: 'mint://task/t1',
+    problem_statement_id: 'mint://ps/p1',
+  },
   start_date: '2023-01-01',
   end_date: '2023-12-31',
   region_id: 'Ethiopia',
@@ -184,6 +189,43 @@ const executionMock = {
   },
 };
 
+/**
+ * The same thread once its runs have finished, which is the only state that
+ * renders the Results step's Fetch results button.
+ */
+const executionFinishedMock = {
+  request: { query: GetThreadExecutionDocument, variables: { id: 'test-thread-id' } },
+  result: {
+    data: {
+      thread_by_pk: {
+        ...executionMock.result.data.thread_by_pk,
+        thread_models: executionMock.result.data.thread_by_pk.thread_models.map((tm) => ({
+          ...tm,
+          execution_summary: [
+            {
+              __typename: 'execution_summary',
+              total_runs: 1,
+              submitted_runs: 1,
+              successful_runs: 1,
+              failed_runs: 0,
+              ingested_runs: 0,
+              registered_runs: 0,
+              published_runs: 0,
+              fetched_run_outputs: 0,
+              submission_time: 1700000000,
+              submitted_for_execution: true,
+              submitted_for_ingestion: false,
+              submitted_for_publishing: false,
+              submitted_for_registration: false,
+              workflow_name: null,
+            },
+          ],
+        })),
+      },
+    },
+  },
+};
+
 const regionsMock = {
   request: { query: LIST_TOP_REGIONS },
   result: { data: { region: [] } },
@@ -303,6 +345,37 @@ describe('MintThread', () => {
     await waitFor(() => expect(datasets).toHaveTextContent(/all inputs assigned/i), {
       timeout: 3000,
     });
+  });
+
+  it('wires Fetch results to the ensemble manager', async () => {
+    // The regression this guards: MintThread rendered MintResults without
+    // onPublishResults, and MintResults returns on its first line when that
+    // prop is absent — so the button made no request at all (#110). Asserting
+    // the outgoing request, not the prop, is what makes this a real guard.
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true, status: 200 });
+    vi.stubGlobal('fetch', fetchMock);
+    window.__MINT_CONFIG__ = { ENSEMBLE_MANAGER_API: 'http://ensemble/v1' } as never;
+
+    try {
+      renderMintThread([getThreadWithModelMock, executionFinishedMock, regionsMock, modelTreeMock]);
+
+      const resultsStep = await screen.findByTestId('rail-step-results');
+      await waitFor(() => expect(resultsStep).not.toBeDisabled(), { timeout: 3000 });
+      resultsStep.click();
+
+      const button = await screen.findByTestId('fetch-results-cfgA');
+      button.click();
+
+      await waitFor(() =>
+        expect(fetchMock).toHaveBeenCalledWith(
+          'http://ensemble/v1/problemStatements/mint%3A%2F%2Fps%2Fp1/tasks/mint%3A%2F%2Ftask%2Ft1/subtasks/test-thread-id/outputs',
+          expect.objectContaining({ method: 'POST' }),
+        ),
+      );
+    } finally {
+      vi.unstubAllGlobals();
+      delete (window as { __MINT_CONFIG__?: unknown }).__MINT_CONFIG__;
+    }
   });
 
   it('shows the mint-thread container after data loads', async () => {

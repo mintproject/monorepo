@@ -97,6 +97,7 @@ export function MintResults({
   const [pages, setPages] = useState<Record<string, number>>({});
   const [showAllOutputs, setShowAllOutputs] = useState(true);
   const [publishWaiting, setPublishWaiting] = useState<Record<string, boolean>>({});
+  const [publishError, setPublishError] = useState<Record<string, string>>({});
 
   useEffect(() => {
     for (const mid of modelIds) {
@@ -121,8 +122,17 @@ export function MintResults({
     async (mid: string) => {
       if (!onPublishResults) return;
       setPublishWaiting((w) => ({ ...w, [mid]: true }));
+      setPublishError((e) => ({ ...e, [mid]: '' }));
       try {
         await onPublishResults(mid);
+      } catch (err) {
+        // Registration reaches Tapis and CKAN, so it fails for reasons the user
+        // cannot guess at — an expired data-catalog credential reads as a bare
+        // 403. Show the server's own message instead of dropping it (#110).
+        setPublishError((e) => ({
+          ...e,
+          [mid]: err instanceof Error ? err.message : 'Could not fetch results',
+        }));
       } finally {
         setPublishWaiting((w) => ({ ...w, [mid]: false }));
       }
@@ -301,6 +311,16 @@ export function MintResults({
                     </p>
                   )}
                 </div>
+
+                {publishError[mid] && (
+                  <p
+                    role="alert"
+                    data-testid={`publish-error-${mid}`}
+                    className="text-xs text-red-600"
+                  >
+                    {publishError[mid]}
+                  </p>
+                )}
 
                 {/* Pagination + controls */}
                 <div className="flex flex-wrap items-center gap-2 border border-gray-200 px-2 py-1 text-xs">
