@@ -120,6 +120,12 @@ export type Thread = {
   id: string;
   name?: Maybe<string>;
   task_id: string;
+  /**
+   * The owning task, carried only for `problem_statement_id`: publishing a
+   * thread's results is a REST call whose path needs the problem statement and
+   * task ids, and `task_id` alone cannot name the problem statement (#110).
+   */
+  task?: Maybe<{ __typename?: 'task'; id: string; problem_statement_id: string }>;
   start_date: string;
   end_date: string;
   region_id?: Maybe<string>;
@@ -280,6 +286,10 @@ const THREAD_INFO = gql`
     id
     name
     task_id
+    task {
+      id
+      problem_statement_id
+    }
     start_date
     end_date
     region_id
