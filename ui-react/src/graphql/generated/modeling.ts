@@ -1239,17 +1239,32 @@ export function generateModelingId(_type: 'problem_statement' | 'task' | 'thread
 // ─── Mutation: SetThreadModels ────────────────────────────────────────────────
 
 /**
- * Replace all model selections for a thread in a single transaction.
- * Deletes existing thread_model rows then inserts the new selection.
+ * Apply a change of model selection for a thread in a single transaction.
+ *
+ * `$removedIds` are the `thread_model.id` values that are no longer selected.
+ * Rows that stay selected are not named here, so they keep their id and the
+ * dataset and parameter bindings that hang off it.
+ *
+ * The four child tables are deleted first, scoped to the removed rows only:
+ * every one of them references `thread_model.id` with `ON DELETE RESTRICT`, so
+ * without this the delete is refused for any thread that has been through the
+ * Datasets or Parameters step (monorepo#107). Hasura runs a mutation's root
+ * fields in order inside one transaction, so the ordering here is the ordering
+ * Postgres sees.
  */
 export type SetThreadModelsMutationVariables = {
   threadId: string;
+  removedIds: string[];
   models: Array<{ thread_id: string; modelcatalog_configuration_id: string }>;
   userid: string;
   notes?: string | null;
 };
 
 export type SetThreadModelsMutation = {
+  delete_thread_model_execution_summary?: { affected_rows: number } | null;
+  delete_thread_model_execution?: { affected_rows: number } | null;
+  delete_thread_model_io?: { affected_rows: number } | null;
+  delete_thread_model_parameter?: { affected_rows: number } | null;
   delete_thread_model?: { affected_rows: number } | null;
   insert_thread_model?: {
     returning: Array<{ id: string; thread_id: string; modelcatalog_configuration_id?: string | null }>;
@@ -1260,11 +1275,26 @@ export type SetThreadModelsMutation = {
 export const SetThreadModelsDocument = gql`
   mutation SetThreadModels(
     $threadId: String!
+    $removedIds: [uuid!]!
     $models: [thread_model_insert_input!]!
     $userid: String!
     $notes: String
   ) {
-    delete_thread_model(where: { thread_id: { _eq: $threadId } }) {
+    delete_thread_model_execution_summary(
+      where: { thread_model_id: { _in: $removedIds } }
+    ) {
+      affected_rows
+    }
+    delete_thread_model_execution(where: { thread_model_id: { _in: $removedIds } }) {
+      affected_rows
+    }
+    delete_thread_model_io(where: { thread_model_id: { _in: $removedIds } }) {
+      affected_rows
+    }
+    delete_thread_model_parameter(where: { thread_model_id: { _in: $removedIds } }) {
+      affected_rows
+    }
+    delete_thread_model(where: { id: { _in: $removedIds } }) {
       affected_rows
     }
     insert_thread_model(objects: $models) {
