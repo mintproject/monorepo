@@ -12,7 +12,8 @@ set -euo pipefail
 # Usage:
 #   ./scripts/backup-hasura.sh [--out-dir DIR] [--namespace NS] [--keep-days N]
 #                              [--db-pod POD] [--db-user USER] [--db-name NAME]
-#                              [--no-metadata] [--log-file FILE] [--dry-run]
+#                              [--no-metadata] [--retries N] [--retry-delay S]
+#                              [--websockets] [--log-file FILE] [--dry-run]
 #
 # Flags:
 #   --out-dir DIR    Where dumps land (default: /var/backups/mint-hasura).
@@ -22,6 +23,10 @@ set -euo pipefail
 #   --db-user USER   Postgres role (default: hasura).
 #   --db-name NAME   Database (default: hasura).
 #   --no-metadata    Skip the Hasura metadata export.
+#   --retries N      Dump attempts before giving up (default: 3).
+#   --retry-delay S  Seconds between attempts (default: 15).
+#   --websockets     Use kubectl's WebSocket exec protocol (default: SPDY, which
+#                    survives long streams better on resets).
 #   --log-file FILE  Append all output to FILE as well as stdout.
 #   --dry-run        Print the commands; write nothing.
 #
@@ -44,6 +49,9 @@ DB_NAME="hasura"
 DO_METADATA=1
 LOG_FILE=""
 DRY_RUN=0
+RETRIES=3
+RETRY_DELAY=15
+WEBSOCKETS=0
 TS="$(date +%Y%m%d-%H%M%S)"
 
 # ---- arg parse --------------------------------------------------------------
@@ -56,6 +64,9 @@ while [[ $# -gt 0 ]]; do
     --db-user)     DB_USER="$2"; shift 2 ;;
     --db-name)     DB_NAME="$2"; shift 2 ;;
     --no-metadata) DO_METADATA=0; shift ;;
+    --retries)     RETRIES="$2"; shift 2 ;;
+    --retry-delay) RETRY_DELAY="$2"; shift 2 ;;
+    --websockets)  WEBSOCKETS=1; shift ;;
     --log-file)    LOG_FILE="$2"; shift 2 ;;
     --dry-run)     DRY_RUN=1; shift ;;
     -h|--help)     sed -n '1,40p' "$0"; exit 0 ;;
@@ -64,6 +75,14 @@ while [[ $# -gt 0 ]]; do
 done
 
 [[ "$KEEP_DAYS" =~ ^[0-9]+$ ]] || { echo "--keep-days must be an integer" >&2; exit 2; }
+[[ "$RETRIES" =~ ^[1-9][0-9]*$ ]] || { echo "--retries must be >= 1" >&2; exit 2; }
+
+# kubectl 1.30+ speaks a WebSocket exec protocol that some ingress paths reset
+# mid-stream ("next reader: ... read: connection reset by peer"). The older SPDY
+# path survives long streams more often, so prefer it. --websockets opts back in.
+if [[ $WEBSOCKETS -eq 0 ]]; then
+  export KUBECTL_REMOTE_COMMAND_WEBSOCKETS=false
+fi
 
 # ---- logging ----------------------------------------------------------------
 if [[ -n "$LOG_FILE" ]]; then
@@ -84,7 +103,8 @@ log "kubectl context: $(kubectl config current-context 2>/dev/null || echo unkno
 
 if [[ $DRY_RUN -eq 1 ]]; then
   log "DRY: mkdir -p $OUT_DIR"
-  log "DRY: kubectl exec -n $NAMESPACE $DB_POD -- pg_dump -U $DB_USER -d $DB_NAME --no-owner --no-acl | gzip -9 > $OUT_DIR/hasura-db-$TS.sql.gz"
+  log "DRY: kubectl exec -n $NAMESPACE $DB_POD -- bash -c 'pg_dump -U $DB_USER -d $DB_NAME --no-owner --no-acl | gzip -9' > $OUT_DIR/hasura-db-$TS.sql.gz"
+  log "DRY: up to $RETRIES attempt(s), ${RETRY_DELAY}s apart; KUBECTL_REMOTE_COMMAND_WEBSOCKETS=${KUBECTL_REMOTE_COMMAND_WEBSOCKETS:-default}"
   [[ $DO_METADATA -eq 1 ]] && log "DRY: export hasura metadata -> $OUT_DIR/hasura-metadata-$TS.json"
   [[ "$KEEP_DAYS" -gt 0 ]] && log "DRY: find $OUT_DIR -name 'hasura-*' -mtime +$KEEP_DAYS -delete"
   exit 0
@@ -114,27 +134,73 @@ fi
 # ---- 1. database dump -------------------------------------------------------
 DUMP="$OUT_DIR/hasura-db-$TS.sql.gz"
 PART="$DUMP.part"
-log "dumping $DB_NAME from $DB_POD -> $DUMP"
 
-# Write to .part first so a failed run never leaves a file that looks complete.
-if ! kubectl exec -n "$NAMESPACE" "$DB_POD" -- \
-       pg_dump -U "$DB_USER" -d "$DB_NAME" --no-owner --no-acl \
-     | gzip -9 > "$PART"; then
-  rm -f "$PART"
-  fail "pg_dump failed"
+# Compress INSIDE the pod. The exec connection to the API server is the fragile
+# part of this backup: long streams get reset by load balancers and idle
+# timeouts. A SQL dump compresses roughly 20-40x, so gzipping in the pod cuts
+# both the bytes on the wire and the time the stream must stay open. Gzipping
+# client-side (the obvious way) streams the full uncompressed dump instead.
+POD_GZIP=1
+if ! kubectl exec -n "$NAMESPACE" "$DB_POD" -- sh -c 'command -v gzip >/dev/null' 2>/dev/null; then
+  warn "no gzip in $DB_POD; falling back to client-side compression (longer, more fragile stream)"
+  POD_GZIP=0
 fi
 
-# Three checks, cheapest first. The completion marker is the one that matters:
-# a dump killed mid-write still gunzips cleanly and still looks plausibly sized.
-[[ -s "$PART" ]] || { rm -f "$PART"; fail "dump is empty"; }
-gzip -t "$PART" 2>/dev/null || { rm -f "$PART"; fail "dump is not valid gzip"; }
+dump_once() {
+  if [[ $POD_GZIP -eq 1 ]]; then
+    # pipefail so a failing pg_dump is not masked by gzip exiting 0.
+    kubectl exec -n "$NAMESPACE" "$DB_POD" -- bash -c \
+      "set -o pipefail; pg_dump -U '$DB_USER' -d '$DB_NAME' --no-owner --no-acl | gzip -9" \
+      > "$PART"
+  else
+    kubectl exec -n "$NAMESPACE" "$DB_POD" -- \
+      pg_dump -U "$DB_USER" -d "$DB_NAME" --no-owner --no-acl \
+      | gzip -9 > "$PART"
+  fi
+}
+
+# Prints the rejection reason and returns 1, or returns 0 silently.
+verify_dump() {
+  [[ -s "$PART" ]]            || { echo "file is empty"; return 1; }
+  gzip -t "$PART" 2>/dev/null || { echo "not valid gzip"; return 1; }
+  # The check that matters: a dump cut short by a reset connection is still
+  # valid gzip and still plausibly sized. Only the marker proves pg_dump ran out.
+  gunzip -c "$PART" | tail -5 | grep -q "PostgreSQL database dump complete" \
+    || { echo "truncated - no pg_dump completion marker ($(gunzip -c "$PART" | wc -c | tr -d ' ') bytes raw)"; return 1; }
+  return 0
+}
+
+DUMP_OK=0
+ATTEMPT=1
+while [[ $ATTEMPT -le $RETRIES ]]; do
+  log "dumping $DB_NAME from $DB_POD -> $DUMP (attempt $ATTEMPT/$RETRIES, pod-gzip=$POD_GZIP)"
+  rm -f "$PART"
+
+  RC=0
+  dump_once || RC=$?
+
+  if [[ $RC -ne 0 ]]; then
+    warn "kubectl exec / pg_dump exited $RC"
+  elif REASON="$(verify_dump)"; then
+    DUMP_OK=1
+    break
+  else
+    warn "dump rejected: $REASON"
+  fi
+
+  ATTEMPT=$((ATTEMPT + 1))
+  if [[ $ATTEMPT -le $RETRIES ]]; then
+    log "retrying in ${RETRY_DELAY}s"
+    sleep "$RETRY_DELAY"
+  fi
+done
+
+if [[ $DUMP_OK -ne 1 ]]; then
+  rm -f "$PART"
+  fail "dump failed after $RETRIES attempt(s). If the cause is a reset exec stream, raise --retries/--retry-delay, or dump to a file inside the pod and kubectl cp it out (see --help)."
+fi
 
 RAW_BYTES=$(gunzip -c "$PART" | wc -c | tr -d ' ')
-if ! gunzip -c "$PART" | tail -5 | grep -q "PostgreSQL database dump complete"; then
-  rm -f "$PART"
-  fail "dump is truncated: no pg_dump completion marker (${RAW_BYTES} bytes uncompressed)"
-fi
-
 mv "$PART" "$DUMP"
 ln -sfn "$(basename "$DUMP")" "$OUT_DIR/latest-db.sql.gz"
 log "database dump ok: $DUMP ($(du -h "$DUMP" | cut -f1) compressed, ${RAW_BYTES} bytes raw)"
