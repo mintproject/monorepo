@@ -135,3 +135,7 @@ The five canonical triage roles, each label string equal to its name. See `docs/
 ### Domain docs
 
 Single-context: `CONTEXT.md` and `docs/adr/` at the repo root. See `docs/agents/domain.md`.
+
+### Kubernetes dev instance
+
+Shared MicroK8s cluster: kubectl context `microk8s`, namespace `mint`, helm release `mint` (NOT `testing-mint`, despite `helm-charts/README.md`). Every branch push builds a deployable image, so a branch can be tested before merge. Use the `test-on-k8s-dev` skill.
