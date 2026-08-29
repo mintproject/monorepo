@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased
+
+### New features
+
+- `GET /standardvariables` accepts `label_contains=<term>`: a case-insensitive substring filter on the label. `%` and `_` in the term are matched literally, so underscore-heavy labels such as `land_surface_wind__speed` search as typed. Available on every list endpoint; documented on `/standardvariables`.
+- `GET /standardvariables` accepts `enable_ckan=true`, returning the CKAN autocomplete shape `{"ResultSet": {"Result": [{"Name": "..."}]}}` instead of the default array. Restores the v1.8.0 behaviour that the CKAN dataset form's standard-variable autocomplete depends on.
+
+### Notes
+
+- `label` is unchanged and still an exact match. Use `label_contains` for prefix/substring search.
+
 ## v2.1.0 — 2026-05-09
 
 ### Breaking changes

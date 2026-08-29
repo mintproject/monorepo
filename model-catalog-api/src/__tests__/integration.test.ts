@@ -266,6 +266,146 @@ describe('label filter', () => {
     // The query string should include the label where clause
     expect(callArgs.query).toContain('label: { _eq: $label }')
   })
+
+  it('leaves label as an exact match (no ilike) so existing callers are unaffected', async () => {
+    mockQuery.mockResolvedValueOnce({ data: { modelcatalog_software: [] } })
+
+    const req = makeReq({ query: { label: 'CYCLES' } })
+    await (CatalogService as any).softwares_get(req, makeReply())
+
+    const callArgs = mockQuery.mock.calls[0][0]
+    expect(callArgs.query).not.toContain('_ilike')
+    expect(callArgs.variables).not.toHaveProperty('labelContains')
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Test 5b: label_contains - substring filter used by autocomplete widgets
+// ---------------------------------------------------------------------------
+describe('label_contains filter', () => {
+  beforeEach(() => { mockQuery.mockReset() })
+
+  it('builds a case-insensitive %term% ilike filter', async () => {
+    mockQuery.mockResolvedValueOnce({ data: { modelcatalog_standard_variable: [] } })
+
+    const req = makeReq({ query: { label_contains: 'wind' } })
+    await (CatalogService as any).standardvariables_get(req, makeReply())
+
+    const callArgs = mockQuery.mock.calls[0][0]
+    expect(callArgs.query).toContain('label: { _ilike: $labelContains }')
+    expect(callArgs.query).toContain('$labelContains: String!')
+    expect(callArgs.variables).toMatchObject({ labelContains: '%wind%' })
+  })
+
+  it('escapes underscores so they are literal, not single-char wildcards', async () => {
+    mockQuery.mockResolvedValueOnce({ data: { modelcatalog_standard_variable: [] } })
+
+    const req = makeReq({ query: { label_contains: 'land_surface' } })
+    await (CatalogService as any).standardvariables_get(req, makeReply())
+
+    const callArgs = mockQuery.mock.calls[0][0]
+    expect(callArgs.variables).toMatchObject({ labelContains: '%land\\_surface%' })
+  })
+
+  it('escapes percent signs in the search term', async () => {
+    mockQuery.mockResolvedValueOnce({ data: { modelcatalog_standard_variable: [] } })
+
+    const req = makeReq({ query: { label_contains: '50%' } })
+    await (CatalogService as any).standardvariables_get(req, makeReply())
+
+    const callArgs = mockQuery.mock.calls[0][0]
+    expect(callArgs.variables).toMatchObject({ labelContains: '%50\\%%' })
+  })
+
+  it('can be combined with label without dropping either condition', async () => {
+    mockQuery.mockResolvedValueOnce({ data: { modelcatalog_standard_variable: [] } })
+
+    const req = makeReq({ query: { label: 'exact_one', label_contains: 'exact' } })
+    await (CatalogService as any).standardvariables_get(req, makeReply())
+
+    const callArgs = mockQuery.mock.calls[0][0]
+    expect(callArgs.query).toContain('label: { _eq: $label }')
+    expect(callArgs.query).toContain('label: { _ilike: $labelContains }')
+    expect(callArgs.variables).toMatchObject({
+      label: 'exact_one',
+      labelContains: '%exact%',
+    })
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Test 5c: enable_ckan - CKAN autocomplete response shape
+// ---------------------------------------------------------------------------
+describe('enable_ckan response shape', () => {
+  beforeEach(() => { mockQuery.mockReset() })
+
+  const twoVariables = {
+    data: {
+      modelcatalog_standard_variable: [
+        { id: 'https://w3id.org/okn/i/mint/A', label: 'land_surface_wind__speed', description: null },
+        { id: 'https://w3id.org/okn/i/mint/B', label: 'soil_water__temperature', description: null },
+      ],
+    },
+  }
+
+  it('wraps results as ResultSet.Result[].Name when enable_ckan=true', async () => {
+    mockQuery.mockResolvedValueOnce(twoVariables)
+
+    const req = makeReq({ query: { enable_ckan: 'true', label_contains: 'w' } })
+    const reply = makeReply()
+    await (CatalogService as any).standardvariables_get(req, reply)
+
+    expect(reply._status).toBe(200)
+    expect(reply._body).toEqual({
+      ResultSet: {
+        Result: [
+          { Name: 'land_surface_wind__speed' },
+          { Name: 'soil_water__temperature' },
+        ],
+      },
+    })
+  })
+
+  it('accepts a real boolean true (Fastify coerces the declared param)', async () => {
+    mockQuery.mockResolvedValueOnce(twoVariables)
+
+    const req = makeReq({ query: { enable_ckan: true } as any })
+    const reply = makeReply()
+    await (CatalogService as any).standardvariables_get(req, reply)
+
+    expect(reply._body).toHaveProperty('ResultSet.Result')
+  })
+
+  it('returns the plain array when enable_ckan is absent', async () => {
+    mockQuery.mockResolvedValueOnce(twoVariables)
+
+    const req = makeReq({ query: {} })
+    const reply = makeReply()
+    await (CatalogService as any).standardvariables_get(req, reply)
+
+    expect(Array.isArray(reply._body)).toBe(true)
+    expect((reply._body as any[])[0]).toMatchObject({ label: ['land_surface_wind__speed'] })
+  })
+
+  it('treats enable_ckan=false as off rather than truthy', async () => {
+    mockQuery.mockResolvedValueOnce(twoVariables)
+
+    const req = makeReq({ query: { enable_ckan: 'false' } })
+    const reply = makeReply()
+    await (CatalogService as any).standardvariables_get(req, reply)
+
+    expect(Array.isArray(reply._body)).toBe(true)
+  })
+
+  it('returns an empty Result list rather than an array when there are no matches', async () => {
+    mockQuery.mockResolvedValueOnce({ data: { modelcatalog_standard_variable: [] } })
+
+    const req = makeReq({ query: { enable_ckan: 'true', label_contains: 'zzzz' } })
+    const reply = makeReply()
+    await (CatalogService as any).standardvariables_get(req, reply)
+
+    expect(reply._body).toEqual({ ResultSet: { Result: [] } })
+  })
 })
 
 // ---------------------------------------------------------------------------

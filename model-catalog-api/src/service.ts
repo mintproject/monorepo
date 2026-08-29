@@ -52,6 +52,53 @@ function findBadBodyRelationshipId(
 
 
 /**
+ * Escape Postgres LIKE/ILIKE wildcards in user input so that a literal `%` or
+ * `_` in a search term is matched as itself. Standard variable labels are full
+ * of underscores (`land_surface_wind__speed`), so leaving `_` unescaped would
+ * make every underscore a single-character wildcard.
+ */
+export function escapeLikeWildcards(value: string): string {
+  return value.replace(/[\\%_]/g, (ch) => `\\${ch}`)
+}
+
+/**
+ * Interpret a query-string flag. Fastify coerces a declared boolean param, but
+ * be defensive: an undeclared or hand-built request can still deliver a raw
+ * string, and `Boolean("false")` is `true`.
+ */
+export function isTruthyFlag(value: unknown): boolean {
+  if (typeof value === 'boolean') return value
+  if (typeof value === 'string') {
+    const v = value.trim().toLowerCase()
+    return v === 'true' || v === '1' || v === 'yes'
+  }
+  return false
+}
+
+/**
+ * Shape a transformed row list into the response CKAN's autocomplete widget
+ * expects: `{ ResultSet: { Result: [{ Name: "..." }] } }`.
+ *
+ * CKAN's client-side `parseCompletions` reads `item.name || item.Name ||
+ * item.Format`; our normal rows expose the label under `label` as an array, so
+ * without this projection every suggestion collapses to an empty string.
+ */
+export function toCkanResultSet(
+  rows: Record<string, unknown>[],
+): { ResultSet: { Result: { Name: string }[] } } {
+  const results = rows
+    .map((row) => {
+      const label = row['label']
+      if (Array.isArray(label)) return label.length > 0 ? String(label[0]) : ''
+      return label == null ? '' : String(label)
+    })
+    .filter((name) => name !== '')
+    .map((name) => ({ Name: name }))
+
+  return { ResultSet: { Result: results } }
+}
+
+/**
  * Build where clause for software subtype filtering.
  * Software subtypes (models, emulators, etc.) share the modelcatalog_software table.
  * The type is stored in a `type` column in Hasura.
@@ -88,21 +135,37 @@ class CatalogServiceImpl {
     }
     if (!resourceConfig.hasuraTable) {
       // No backing table -- return empty list (matches v1.8.0 behavior for empty named graphs)
-      reply.code(200).send([])
+      const emptyCkan = isTruthyFlag((req.query || {}).enable_ckan)
+      reply.code(200).send(emptyCkan ? toCkanResultSet([]) : [])
       return
     }
 
-    const { username, label, page = 1, per_page = 25 } = req.query || {}
+    const {
+      username,
+      label,
+      label_contains,
+      enable_ckan,
+      page = 1,
+      per_page = 25,
+    } = req.query || {}
     const limit = parseInt(String(per_page), 10) || 25
     const offset = (parseInt(String(page), 10) - 1) * limit || 0
+    const ckanOutput = isTruthyFlag(enable_ckan)
 
     // Build dynamic where clause
     const whereConditions: string[] = []
     const variables: Record<string, unknown> = { limit, offset }
 
+    // `label` stays an exact match (unchanged, existing callers depend on it).
+    // `label_contains` is the substring form autocomplete widgets need.
     if (label) {
       whereConditions.push('label: { _eq: $label }')
       variables['label'] = label
+    }
+
+    if (label_contains) {
+      whereConditions.push('label: { _ilike: $labelContains }')
+      variables['labelContains'] = `%${escapeLikeWildcards(String(label_contains))}%`
     }
 
     // Software subtype filter
@@ -125,6 +188,7 @@ class CatalogServiceImpl {
     // Build variable declarations for query signature
     let varDecls = '$limit: Int!, $offset: Int!'
     if (label) varDecls += ', $label: String!'
+    if (label_contains) varDecls += ', $labelContains: String!'
     if (typeFilter) {
       varDecls += Array.isArray(typeFilter) ? ', $typeFilter: [String!]!' : ', $typeFilter: String!'
     }
@@ -149,7 +213,10 @@ class CatalogServiceImpl {
       const data = result.data as Record<string, unknown>
       const dataKey = `modelcatalog_${resourceConfig.hasuraTable.replace('modelcatalog_', '')}`
       const rows: Record<string, unknown>[] = (data[dataKey] as Record<string, unknown>[]) || []
-      reply.code(200).send(transformList(rows, resourceConfig))
+      const transformed = transformList(rows, resourceConfig)
+      reply
+        .code(200)
+        .send(ckanOutput ? toCkanResultSet(transformed) : transformed)
     } catch (err: any) {
       req.log.error({ err }, 'GraphQL list query failed')
       reply.code(500).send({ error: 'Internal server error', details: err?.message })

@@ -3868,10 +3868,20 @@ paths:
           schema:
             type: string
           style: form
-        - description: Filter by label
+        - description: Filter by label (exact match)
           explode: true
           in: query
           name: label
+          required: false
+          schema:
+            type: string
+          style: form
+        - description: >-
+            Filter by label substring (case-insensitive). Intended for
+            autocomplete widgets that send a partial term as the user types.
+          explode: true
+          in: query
+          name: label_contains
           required: false
           schema:
             type: string
@@ -3898,6 +3908,18 @@ paths:
             minimum: 1
             type: integer
           style: form
+        - description: >-
+            Return the CKAN autocomplete response shape instead of the default
+            array of StandardVariable objects. The CKAN shape nests a Result
+            list of objects with a Name property under a ResultSet key.
+          explode: true
+          in: query
+          name: enable_ckan
+          required: false
+          schema:
+            default: false
+            type: boolean
+          style: form
       responses:
         "200":
           content:
@@ -3906,9 +3928,10 @@ paths:
                 items:
                   $ref: "#/components/schemas/StandardVariable"
                 type: array
-          description:
+          description: >-
             Successful response - returns an array with the instances of
-            StandardVariable.
+            StandardVariable. When enable_ckan is true the response is instead
+            a CKAN autocomplete ResultSet object.
       summary: List all instances of StandardVariable
       tags:
         - StandardVariable
