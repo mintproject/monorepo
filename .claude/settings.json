@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"$CLAUDE_PROJECT_DIR/.wolf/hooks/session-start.js\"",
+            "command": "if [ -f \"$CLAUDE_PROJECT_DIR/.wolf/hooks/session-start.js\" ]; then node \"$CLAUDE_PROJECT_DIR/.wolf/hooks/session-start.js\"; fi",
             "timeout": 5
           }
         ]
@@ -18,7 +18,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"$CLAUDE_PROJECT_DIR/.wolf/hooks/pre-read.js\"",
+            "command": "if [ -f \"$CLAUDE_PROJECT_DIR/.wolf/hooks/pre-read.js\" ]; then node \"$CLAUDE_PROJECT_DIR/.wolf/hooks/pre-read.js\"; fi",
             "timeout": 5
           }
         ]
@@ -28,7 +28,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"$CLAUDE_PROJECT_DIR/.wolf/hooks/pre-write.js\"",
+            "command": "if [ -f \"$CLAUDE_PROJECT_DIR/.wolf/hooks/pre-write.js\" ]; then node \"$CLAUDE_PROJECT_DIR/.wolf/hooks/pre-write.js\"; fi",
             "timeout": 5
           }
         ]
@@ -40,7 +40,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"$CLAUDE_PROJECT_DIR/.wolf/hooks/post-read.js\"",
+            "command": "if [ -f \"$CLAUDE_PROJECT_DIR/.wolf/hooks/post-read.js\" ]; then node \"$CLAUDE_PROJECT_DIR/.wolf/hooks/post-read.js\"; fi",
             "timeout": 5
           }
         ]
@@ -50,7 +50,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"$CLAUDE_PROJECT_DIR/.wolf/hooks/post-write.js\"",
+            "command": "if [ -f \"$CLAUDE_PROJECT_DIR/.wolf/hooks/post-write.js\" ]; then node \"$CLAUDE_PROJECT_DIR/.wolf/hooks/post-write.js\"; fi",
             "timeout": 10
           }
         ]
@@ -62,7 +62,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"$CLAUDE_PROJECT_DIR/.wolf/hooks/stop.js\"",
+            "command": "if [ -f \"$CLAUDE_PROJECT_DIR/.wolf/hooks/stop.js\" ]; then node \"$CLAUDE_PROJECT_DIR/.wolf/hooks/stop.js\"; fi",
             "timeout": 10
           }
         ]

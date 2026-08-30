@@ -1,0 +1,126 @@
+/**
+ * Standard Variable taxonomy.
+ *
+ * Pure, framework-free helpers that derive a domain category from a standard
+ * variable's SVO/CSDMS name grammar (`object__quantity`) and detect
+ * "unnamed" labels (raw UUIDs or structureless strings) so the UI can demote
+ * them. First-matching rule wins; rules are ordered so specific domains beat
+ * cross-cutting tokens (e.g. Fire & Fuel before the soil/moisture overlap,
+ * Soil before the hydrology rules).
+ */
+
+export type StandardVariableCategory =
+  | 'Atmosphere & Climate'
+  | 'Hydrology — Surface Water'
+  | 'Hydrology — Groundwater'
+  | 'Soil'
+  | 'Fire & Fuel'
+  | 'Land Cover & Vegetation'
+  | 'Topography & Surface'
+  | 'Energy & Carbon Flux'
+  | 'Unnamed / Other';
+
+/** Fixed display order for category groups; "Unnamed / Other" is always last. */
+export const CATEGORY_ORDER: StandardVariableCategory[] = [
+  'Atmosphere & Climate',
+  'Hydrology — Surface Water',
+  'Hydrology — Groundwater',
+  'Soil',
+  'Fire & Fuel',
+  'Land Cover & Vegetation',
+  'Topography & Surface',
+  'Energy & Carbon Flux',
+  'Unnamed / Other',
+];
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * True only for labels with no human meaning — UUID-shaped or empty. A bare
+ * single word (`Precipitation`) or a hyphenated name
+ * (`Modflow-Spatially-Distributed-Grid`) is a real, usable label and must NOT
+ * be flagged: it stays selectable and shows its own text (it may still land in
+ * "Unnamed / Other" when no category rule matches, but it is not demoted).
+ */
+export function isUnnamedLabel(label: string): boolean {
+  const trimmed = label.trim();
+  if (trimmed === '') return true;
+  if (UUID_RE.test(trimmed)) return true;
+  return false;
+}
+
+interface CategoryRule {
+  category: StandardVariableCategory;
+  test: RegExp;
+}
+
+// Ordered: first match wins. Specific domains first; cross-cutting tokens
+// (bare "moisture", "flux", "water") are deliberately omitted as triggers.
+const RULES: CategoryRule[] = [
+  {
+    category: 'Fire & Fuel',
+    test: /fire|fuel|_dead_|_live_|burn|flame|combust|\d+hr_dead|\d+hr_live/i,
+  },
+  { category: 'Soil', test: /soil|sediment|infiltration|porosity/i },
+  { category: 'Hydrology — Groundwater', test: /groundwater|aquifer|water_table|recharge/i },
+  {
+    category: 'Hydrology — Surface Water',
+    test: /surface_water|channel|stream|river|runoff|discharge|flood|lake|reservoir/i,
+  },
+  {
+    category: 'Land Cover & Vegetation',
+    test: /vegetation|canopy|crop|forest|biomass|\bleaf|\blai\b|ndvi|land_cover|land_use/i,
+  },
+  { category: 'Topography & Surface', test: /elevation|slope|terrain|topograph|\bdem\b/i },
+  {
+    category: 'Energy & Carbon Flux',
+    test: /energy|\bheat|carbon|\bco2\b|evapotranspiration|latent|sensible/i,
+  },
+  {
+    category: 'Atmosphere & Climate',
+    test: /atmosphere|\bair|precipitation|wind|temperature|radiation|humidity|vapor/i,
+  },
+];
+
+/** Map a standard variable to a domain category. */
+export function categorizeStandardVariable(
+  label: string,
+  description?: string | null,
+): StandardVariableCategory {
+  if (isUnnamedLabel(label)) return 'Unnamed / Other';
+  const haystack = `${label} ${description ?? ''}`;
+  for (const rule of RULES) {
+    if (rule.test.test(haystack)) return rule.category;
+  }
+  return 'Unnamed / Other';
+}
+
+/** Presentation fields derived from a standard variable's label and description. */
+export interface StandardVariableDisplayFields {
+  category: StandardVariableCategory;
+  isUnnamed: boolean;
+  /**
+   * What to show as the row's primary label: the description when the raw label
+   * is an unnamed/UUID row (so scientists never see a bare UUID), otherwise the
+   * label itself.
+   */
+  displayLabel: string;
+}
+
+/**
+ * Derive the shared taxonomy/presentation fields for a standard variable. Used
+ * by both the /variables table and the standard-variable combobox so the two
+ * display paths stay in sync.
+ */
+export function deriveDisplayFields(
+  label: string | null | undefined,
+  description?: string | null,
+): StandardVariableDisplayFields {
+  const normalizedLabel = label ?? '';
+  const isUnnamed = isUnnamedLabel(normalizedLabel);
+  return {
+    isUnnamed,
+    category: categorizeStandardVariable(normalizedLabel, description),
+    displayLabel: isUnnamed ? (description ?? 'Unnamed variable') : normalizedLabel,
+  };
+}

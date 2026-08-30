@@ -1,0 +1,129 @@
+fragment VariablePresentationFields on modelcatalog_variable_presentation {
+  id
+  label
+  has_long_name
+  has_short_name
+  standard_variable {
+    id
+    label
+    description
+  }
+  unit {
+    id
+    label
+  }
+}
+
+fragment DatasetSpecificationFields on modelcatalog_dataset_specification {
+  id
+  label
+  description
+  has_format
+  has_dimensionality
+  position
+  presentations {
+    dataset_specification_id
+    presentation_id
+    presentation {
+      ...VariablePresentationFields
+    }
+  }
+}
+
+fragment InputFields on modelcatalog_configuration_input {
+  configuration_id
+  input_id
+  is_optional
+  input {
+    ...DatasetSpecificationFields
+  }
+}
+
+fragment OutputFields on modelcatalog_configuration_output {
+  configuration_id
+  output_id
+  output {
+    ...DatasetSpecificationFields
+  }
+}
+
+fragment ParameterFields on modelcatalog_parameter {
+  id
+  label
+  description
+  has_data_type
+  has_default_value
+  has_minimum_accepted_value
+  has_maximum_accepted_value
+  has_fixed_value
+  has_accepted_values
+  position
+  parameter_type
+}
+
+fragment ConfigurationFields on modelcatalog_configuration {
+  id
+  label
+  description
+  software_version_id
+  model_configuration_id
+  software_version {
+    id
+    version_id
+    software {
+      id
+      label
+    }
+  }
+  time_intervals {
+    configuration_id
+    time_interval_id
+    time_interval {
+      id
+      label
+      description
+      interval_unit
+      interval_value
+    }
+  }
+  inputs {
+    ...InputFields
+  }
+  outputs {
+    ...OutputFields
+  }
+  parameters {
+    configuration_id
+    parameter_id
+    parameter {
+      ...ParameterFields
+    }
+  }
+  authors {
+    configuration_id
+    person_id
+    person {
+      id
+      label
+    }
+  }
+  regions {
+    configuration_id
+    region_id
+    region {
+      id
+      label
+    }
+  }
+}
+
+fragment SoftwareFields on modelcatalog_software {
+  id
+  label
+  description
+  type
+  author {
+    id
+    label
+  }
+}

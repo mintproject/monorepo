@@ -6,7 +6,7 @@ set -euo pipefail
 
 # component_key|github_owner/repo|branch
 COMPONENTS=(
-  "hasura|mintproject/graphql_engine|master"
+  "hasura|mintproject/graphql_engine|main"
   "model_catalog_api|mintproject/model-catalog-api|main"
   "ui|mintproject/mint-ui-lit|master"
   "ensemble_manager|mintproject/mint-ensemble-manager|master"

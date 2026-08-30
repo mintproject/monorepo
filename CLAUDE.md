@@ -18,13 +18,17 @@ MINT (Model INTegration) platform - a scientific modeling system. This monorepo 
 | Directory | Purpose | Language |
 |-----------|---------|----------|
 | `model-catalog-api/` | REST API v2.0.0 backed by Hasura | TypeScript/Fastify |
-| `model-catalog-fastapi/` | Legacy REST API v1.8.0 (RDF) | Python/FastAPI |
 | `model-catalog-endpoint/` | Apache Fuseki RDF store (deprecated) | - |
 | `mint-ensemble-manager/` | Execution orchestration | TypeScript/Express |
-| `ui/` | Frontend | TypeScript/LitElement |
+| `ui-react/` | Frontend (current) | TypeScript/React + Vite |
+| `ui/` | Legacy frontend (deprecated, being replaced by `ui-react/`) | TypeScript/LitElement |
 | `graphql_engine/` | Hasura schema, migrations, metadata | SQL/YAML |
 | `etl/` | RDF-to-PostgreSQL migration pipeline | Python |
 | `helm-charts/` | Kubernetes deployment | Helm |
+
+> **Deprecated (2026-08-29):** `model-catalog-fastapi` (legacy REST API v1.8.0, RDF/SPARQL)
+> is retired. The GitHub repo `mintproject/model-catalog-fastapi` is archived and the
+> directory is no longer checked out here. Use `model-catalog-api/` (v2.0.0).
 
 ## Architecture
 
@@ -65,7 +69,17 @@ npm run codegen                     # GraphQL type generation
 npm run eslint:fix && npm run prettier:fix
 ```
 
-### UI
+### UI (ui-react — current frontend)
+```bash
+cd ui-react
+npm install && npm run dev          # Vite dev server
+npm test                            # Vitest
+npm run build                       # Production build
+npm run codegen                     # GraphQL type generation (needs HASURA_ADMIN_SECRET)
+```
+
+### UI (ui — deprecated LitElement frontend)
+Only touch this for maintenance of the old app; new frontend work goes in `ui-react/`.
 ```bash
 cd ui
 yarn install && yarn start          # Development with hot reload
@@ -100,11 +114,31 @@ hasura metadata reload
 ## Migration Context
 
 See `.planning/PROJECT.md` for full migration status and decisions. Key points:
-- v2.0.0 API runs alongside legacy v1.8.0
+- v2.0.0 API is the only maintained REST API; legacy v1.8.0 (`model-catalog-fastapi`) is archived
 - Old model/model_io/model_parameter tables kept for FK compatibility
 - Submodules: `model-catalog-api`, `mint-ensemble-manager`, `ui` each have their own CLAUDE.md
+- `ui-react/` is NOT a submodule — it lives directly in this repo and has its own CLAUDE.md
 
 ## Git Guidelines
 
 - Never indicate code was authored/co-authored by Claude or Anthropic in commit messages
 - Keep commit messages clean and simple, no emoji
+- Open pull requests against `develop`, not `main`
+
+## Agent skills
+
+### Issue tracker
+
+Issues live in the `mintproject/monorepo` GitHub Issues, managed with the `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+The five canonical triage roles, each label string equal to its name. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: `CONTEXT.md` and `docs/adr/` at the repo root. See `docs/agents/domain.md`.
+
+### Kubernetes dev instance
+
+Shared MicroK8s cluster: kubectl context `microk8s`, namespace `mint`, helm release `mint` (NOT `testing-mint`, despite `helm-charts/README.md`). Every branch push builds a deployable image, so a branch can be tested before merge. Use the `test-on-k8s-dev` skill.

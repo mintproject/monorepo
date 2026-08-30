@@ -30,7 +30,7 @@ Examples:
 
 | Component key (yaml) | Source repo | Branch |
 |---|---|---|
-| `components.hasura` | `mintproject/graphql_engine` | `master` |
+| `components.hasura` | `mintproject/graphql_engine` | `main` |
 | `components.model_catalog_api` | `mintproject/model-catalog-api` | `main` |
 | `components.ui` | `mintproject/mint-ui-lit` | `master` |
 | `components.ensemble_manager` | `mintproject/mint-ensemble-manager` | `master` |

@@ -1,84 +1,105 @@
-# DYNAMO - Model Catalog GraphQL Migration
+# MINT Model Catalog UI Modernization
 
 ## What This Is
 
-Architectural migration of the MINT Model Catalog from Apache Fuseki (RDF/SPARQL triplestore) to PostgreSQL/Hasura GraphQL. The migration is complete (v2.0): model catalog data now lives in properly structured `modelcatalog_*` PostgreSQL tables, served through a new Node.js/TypeScript REST API at /v2.0.0/ backed by Hasura GraphQL. The old Fuseki-based API remains at /v1.8.0/ for parallel validation. Execution and thread FK tables now reference the new `modelcatalog_*` tables directly. The `@mintproject/modelcatalog_client` SDK has been removed from Ensemble Manager.
+Migration of the MINT Model Catalog UI from LitElement (Web Components) to React.
+Scope is the **model configuration screens only** — not the rest of the platform.
+Funded under TWDB / SUBSIDE via TACC. SOW lives at
+`metalearn/MINT Model Catalog UI Modernization.md` (180 hrs, Apr 4 – Jun 30, 2026,
+$9,000 NTE).
 
 ## Core Value
 
-All model catalog data accessible through a single GraphQL endpoint, eliminating the Fuseki dependency and external transformation layers while maintaining REST API compatibility for external consumers.
+Domain scientists (groundwater, subsidence, hydrology) currently navigate a
+5-level nested modal workflow to associate a variable with a model input:
 
-## Requirements
+    ModelConfiguration → DatasetSpecification → VariablePresentation
+                       → StandardVariable → Unit
 
-### Validated
+The new React UI flattens this into a **single unified form** with autocomplete
+for the 303 Standard Variables and 107 Units. The underlying ontology entities
+(DatasetSpecification, VariablePresentation, links to StandardVariable / Unit)
+are created automatically from the form data via Hasura.
 
-- ✓ Model execution orchestration via Ensemble Manager — existing (pre-v2.0)
-- ✓ Problem statement / task / thread workflow via GraphQL — existing (pre-v2.0)
-- ✓ Execution tracking and result storage via Hasura — existing (pre-v2.0)
-- ✓ Region management with spatial queries — existing (pre-v2.0)
-- ✓ Dataset and dataslice management — existing (pre-v2.0)
-- ✓ HPC job submission via Tapis — existing (pre-v2.0)
-- ✓ Local execution via Docker — existing (pre-v2.0)
-- ✓ OAuth2/Keycloak authentication — existing (pre-v2.0)
-- ✓ LitElement UI with Redux state management — existing (pre-v2.0)
-- ✓ Design `modelcatalog_*` PostgreSQL schema reflecting 4-level hierarchy — v2.0 (SCHM-01 through SCHM-08)
-- ✓ Create Hasura migration for new `modelcatalog_*` tables with proper relationships and metadata — v2.0
-- ✓ Export and migrate model catalog data from TriG dump — v2.0 (DATA-01 through DATA-09)
-- ✓ New FastAPI-compatible REST API querying Hasura/PostgreSQL, maintaining same REST endpoints — v2.0 (API-01, API-02, API-03)
-- ✓ Classify existing `model` table rows and migrate FKs to new `modelcatalog_*` tables — v2.0 (FKMG-01 through FKMG-08)
-- ✓ Remove Fuseki dependency from the deployment stack — v2.0 (CLNP-01)
-- ✓ Update Ensemble Manager model catalog integration to use GraphQL — v2.0 (API-04, CLNP-02)
+This is the SOW's hard acceptance criterion (§8): *a user can configure a model
+input with variable, standard variable, and unit in a single form submission*.
 
-### Active
+## Phases
 
-- ✓ Analyze TriG data for Variable entities, create StandardVariable and Unit tables, ETL pipeline, FK constraints — Validated in Phase 05: Variable Migration Analysis
+| Phase   | Dates              | Profile(s)              | Deliverable                                              |
+|---------|--------------------|-------------------------|----------------------------------------------------------|
+| Task 1  | Apr 4 – Apr 18     | mint-planner, mint-researcher     | Design Document + ADRs in `.planning/design/`            |
+| Task 2  | Apr 21 – May 30    | mint-implementer, mint-reviewer   | Functional React app under `ui-react/`                   |
+| Task 3  | Jun 1 – Jun 13     | mint-reviewer, mint-implementer   | Test report; UAT-resolved defects                        |
+| Task 4  | Jun 16 – Jun 21    | mint-devops                       | Production deployment                                    |
 
-### Out of Scope
+Routing is performed by the **mint-orchestrator** profile on Kanban board
+`mint-ui-react`. See `.planning/hermes-fleet/README.md` for the roster.
 
-- UI migration to GraphQL for model data — separate effort, UI still uses REST client
-- Changes to execution engine backends (Tapis, LocalEx)
-- Data Catalog (CKAN) migration
-- Docker Compose and CI/CD Fuseki reference cleanup — deferred to future phase
-- Old model/model_io/model_parameter table cleanup — deferred (kept for FK compatibility during transition)
-- GraphQL subscriptions for real-time model catalog updates — future enhancement
-- Full-text search across model catalog metadata — future enhancement
+## Stack Decisions (to be ratified in Task 1 ADRs)
 
-## Context
+| Area              | Direction                                                         |
+|-------------------|-------------------------------------------------------------------|
+| Framework         | React 18 + TypeScript (strict)                                    |
+| Build             | Vite (fast HMR; SPA scope; simpler than Webpack 4 / Next.js)      |
+| State             | TBD in ADR — likely React Query + Apollo cache; no Redux          |
+| GraphQL client    | Apollo Client (same endpoint as legacy)                           |
+| Forms             | React Hook Form + Zod for validation                              |
+| Component lib     | TBD in ADR — candidates: shadcn/ui, MUI, Mantine                  |
+| Autocomplete      | Server-side typeahead against Hasura (303 vars, 107 units)        |
+| Auth              | OAuth2 with existing Keycloak/Tapis providers                     |
+| Tests             | Vitest + React Testing Library                                    |
+| Deploy            | Multi-stage Docker (build → nginx static serve), Helm chart       |
 
-**Current state (post Phase 05):** Model catalog data lives in `modelcatalog_*` PostgreSQL tables (38 tables: 6 entity + junction + extended schema + StandardVariable + Unit). New Node.js/TypeScript API (`model-catalog-api-v2`) serves /v2.0.0/ endpoints backed by Hasura. Old FastAPI (`model-catalog-fastapi`) still serves /v1.8.0/ for parallel validation. Execution and thread tables now have FK columns pointing to `modelcatalog_model_configuration` and `modelcatalog_model_configuration_setup`. Ensemble Manager uses direct GraphQL queries (no SDK). StandardVariable and Unit entities are fully migrated with ETL support and FK constraints from variable_presentation.
+## Layout
 
-**Tech stack:** PostgreSQL + Hasura GraphQL (data layer), Node.js/TypeScript + Fastify + openapi-glue (new API), Python ETL pipeline (one-time migration), Helm chart (deployment).
+    /ui                       # legacy LitElement UI (untouched)
+    /ui-react                 # new React app (created in Task 2.1)
+    /model-catalog-api        # existing v2.0 REST → Hasura (untouched)
+    /graphql_engine           # Hasura migrations/metadata (read-only here)
+    /helm-charts              # updated in Task 4
 
-**Known tech debt:**
-- Phase 3 has no VERIFICATION.md (unverified phase)
-- model-catalog-api lives in separate repo; no pinned image tag in Helm chart (uses 'latest')
-- `model_catalog_api_v2.environment.hasura_graphql_url` is empty string in values.yaml — must be set per environment
-- 1 unmatched model_io row (135/136) — documented as acceptable data quality issue
-- Docker Compose and CI/CD Fuseki references not yet cleaned up
-- Old model/model_io/model_parameter tables still exist (kept for FK compatibility)
+## Git Strategy
 
-## Constraints
+- Base branch for ALL work: **`develop`**.
+- `main` is release-only.
+- Every Kanban card creates an isolated worktree under `.worktrees/<task-id>`.
+- PRs target `develop`. Release PRs target `main` and are tagged
+  (`ui-react-vX.Y.Z`).
+- See SOUL.md files under `.planning/hermes-fleet/souls/` for the per-role
+  branching rules.
 
-- **Backward compatibility**: REST endpoints at /v1.8.0/ must remain functional permanently (external consumers)
-- **Existing FKs**: `execution`, `thread_model` families now reference `modelcatalog_*` tables — future cleanup of old model tables requires care
-- **Schema prefix**: `modelcatalog_` prefix used to avoid collision with existing tables
+## Out of Scope (SOW §6 — DO NOT fan out cards for these)
 
-## Key Decisions
+- Model browsing, search, and discovery views
+- Migration of non-model-catalog screens (datasets, analysis, emulators, messaging)
+- Backend changes beyond what the flattened form strictly requires
+- ETL pipeline changes
+- CLI tooling for bulk loading Standard Variables / Units
+- User training and workshop facilitation
 
-| Decision | Rationale | Outcome |
-|----------|-----------|---------|
-| Fresh `modelcatalog_*` tables over fixing existing | Current model tables are poorly structured (flat, mixed types) | ✓ Good — clean 4-level hierarchy, no migration baggage |
-| 4-level hierarchy: Software > Version > Config > Setup | Mirrors the RDF Model Catalog ontology | ✓ Good — maps cleanly to SDM ontology |
-| FastAPI as thin REST layer over Hasura (new Node.js API) | External consumers need REST, but data should live in one place | ✓ Good — v2.0.0 API live alongside v1.8.0 |
-| Keep old model tables during migration | Execution/thread FKs need gradual migration, not a big bang | ✓ Good — zero-downtime migration; tables still exist post-v2.0 |
-| UI migration out of scope | Reduces blast radius; UI can switch to GraphQL independently | ✓ Good — isolated migration, UI unaffected |
-| Junction tables FK-pair-only get insert+delete only | Entity tables get full CRUD; junction just links | ✓ Good — cleaner permissions model |
-| OpenAPI spec pre-processed before openapi-glue registration | Prevents AJV compile errors, reduces startup from 31s to <1s | ✓ Good — critical perf optimization |
-| Bearer token forwarded to Hasura (not validated at API layer) | Hasura validates JWT via row-level permissions | ✓ Good — single auth enforcement point |
-| username param accepted but ignored (no-op) | No user_id column in modelcatalog_* tables | ⚠ Revisit — future user-owned catalog entries may need this |
-| Delete-before-FK-add for tables where FK is part of PK | Cannot null a PK column; DELETE orphans before ADD CONSTRAINT | ✓ Good — 0 orphans confirmed before migration |
-| has_accepted_values TEXT[] not string | Adapter fallback is [] not empty string | ✓ Good — fixes E2E model run GraphQL errors |
+## Backend Context (assumed stable per SOW §5)
+
+- Hasura GraphQL endpoint exposing `modelcatalog_*` tables (4-level hierarchy:
+  Software > Version > Configuration > Setup).
+- Model Catalog API v2.0 (Fastify/TypeScript) at `/v2.0.0/` proxying to Hasura.
+- StandardVariable (303 entries) and Unit (107 entries) tables are pre-loaded.
+- New Hasura mutations or Actions may be added by this project if required by
+  the flattened form (SOW §5.4).
+
+For the underlying DYNAMO v2.0 migration that produced this backend, see
+`.planning/_archive/2026-dynamo-v2/`.
+
+## Key References
+
+- SOW: `metalearn/MINT Model Catalog UI Modernization.md`
+- Repo CLAUDE.md: `/CLAUDE.md`
+- OpenWolf context: `.wolf/OPENWOLF.md`, `.wolf/cerebrum.md`, `.wolf/anatomy.md`
+- Codebase snapshots (as-is): `.planning/codebase/`
+- Fleet config: `.planning/hermes-fleet/`
+- Design artifacts (Task 1 output): `.planning/design/` (to be created by planner)
+- Research dossiers (Task 1 input): `.planning/research/` (to be created by researcher)
 
 ---
 
-_Last updated: 2026-03-29 after Phase 05 completion_
+_Last updated: 2026-05-20 — initial UI modernization PROJECT.md._

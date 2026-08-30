@@ -1,0 +1,480 @@
+mutation SaveConfigurationMetadata($id: String!, $label: String!, $description: String) {
+  update_modelcatalog_configuration_by_pk(
+    pk_columns: { id: $id }
+    _set: { label: $label, description: $description }
+  ) {
+    id
+    label
+    description
+  }
+}
+
+mutation AddConfigurationInput(
+  $configurationId: String!
+  $isOptional: Boolean!
+  $inputId: String!
+  $inputLabel: String!
+  $inputDescription: String
+  $hasFormat: String
+  $hasDimensionality: Int
+  $position: Int!
+  $presentations: [modelcatalog_dataset_specification_presentation_insert_input!]!
+) {
+  insert_modelcatalog_configuration_input_one(
+    object: {
+      configuration_id: $configurationId
+      is_optional: $isOptional
+      input: {
+        data: {
+          id: $inputId
+          label: $inputLabel
+          description: $inputDescription
+          has_format: $hasFormat
+          has_dimensionality: $hasDimensionality
+          position: $position
+          presentations: { data: $presentations }
+        }
+      }
+    }
+  ) {
+    configuration_id
+    input_id
+    is_optional
+    input {
+      id
+      label
+    }
+  }
+}
+
+mutation AddConfigurationOutput(
+  $configurationId: String!
+  $outputId: String!
+  $outputLabel: String!
+  $outputDescription: String
+  $hasFormat: String
+  $hasDimensionality: Int
+  $position: Int!
+  $presentations: [modelcatalog_dataset_specification_presentation_insert_input!]!
+) {
+  insert_modelcatalog_configuration_output_one(
+    object: {
+      configuration_id: $configurationId
+      output: {
+        data: {
+          id: $outputId
+          label: $outputLabel
+          description: $outputDescription
+          has_format: $hasFormat
+          has_dimensionality: $hasDimensionality
+          position: $position
+          presentations: { data: $presentations }
+        }
+      }
+    }
+  ) {
+    configuration_id
+    output_id
+    output {
+      id
+      label
+    }
+  }
+}
+
+mutation AddConfigurationParameter(
+  $configurationId: String!
+  $parameterId: String!
+  $label: String!
+  $description: String
+  $hasDataType: String
+  $hasDefaultValue: String
+  $hasMinimumAcceptedValue: String
+  $hasMaximumAcceptedValue: String
+  $hasFixedValue: String
+  $hasAcceptedValues: _text
+  $position: Int!
+  $parameterType: String
+) {
+  insert_modelcatalog_configuration_parameter_one(
+    object: {
+      configuration_id: $configurationId
+      parameter: {
+        data: {
+          id: $parameterId
+          label: $label
+          description: $description
+          has_data_type: $hasDataType
+          has_default_value: $hasDefaultValue
+          has_minimum_accepted_value: $hasMinimumAcceptedValue
+          has_maximum_accepted_value: $hasMaximumAcceptedValue
+          has_fixed_value: $hasFixedValue
+          has_accepted_values: $hasAcceptedValues
+          position: $position
+          parameter_type: $parameterType
+        }
+      }
+    }
+  ) {
+    configuration_id
+    parameter_id
+    parameter {
+      id
+      label
+    }
+  }
+}
+
+mutation DeleteConfigurationInput($configurationId: String!, $inputId: String!) {
+  delete_modelcatalog_configuration_input_by_pk(
+    configuration_id: $configurationId
+    input_id: $inputId
+  ) {
+    configuration_id
+    input_id
+  }
+}
+
+mutation DeleteConfigurationOutput($configurationId: String!, $outputId: String!) {
+  delete_modelcatalog_configuration_output_by_pk(
+    configuration_id: $configurationId
+    output_id: $outputId
+  ) {
+    configuration_id
+    output_id
+  }
+}
+
+mutation DeleteConfigurationParameter($configurationId: String!, $parameterId: String!) {
+  delete_modelcatalog_configuration_parameter_by_pk(
+    configuration_id: $configurationId
+    parameter_id: $parameterId
+  ) {
+    configuration_id
+    parameter_id
+  }
+}
+
+mutation UpdateDatasetSpecification(
+  $id: String!
+  $label: String!
+  $description: String
+  $hasFormat: String
+  $hasDimensionality: Int
+  $position: Int!
+) {
+  update_modelcatalog_dataset_specification_by_pk(
+    pk_columns: { id: $id }
+    _set: {
+      label: $label
+      description: $description
+      has_format: $hasFormat
+      has_dimensionality: $hasDimensionality
+      position: $position
+    }
+  ) {
+    id
+    label
+    description
+    has_format
+    has_dimensionality
+    position
+  }
+}
+
+mutation UpdateVariablePresentation(
+  $id: String!
+  $label: String!
+  $hasLongName: String
+  $hasShortName: String
+  $hasStandardVariable: String
+  $usesUnit: String
+) {
+  update_modelcatalog_variable_presentation_by_pk(
+    pk_columns: { id: $id }
+    _set: {
+      label: $label
+      has_long_name: $hasLongName
+      has_short_name: $hasShortName
+      has_standard_variable: $hasStandardVariable
+      uses_unit: $usesUnit
+    }
+  ) {
+    id
+    label
+    has_standard_variable
+    uses_unit
+  }
+}
+
+# Insert a VariablePresentation + its junction row onto an EXISTING dataset
+# specification. Used in edit mode when an input/output that had no presentation
+# gains a standard variable/unit (the update path can only update an existing one).
+mutation InsertVariablePresentation(
+  $datasetSpecificationId: String!
+  $presentationId: String!
+  $label: String!
+  $hasStandardVariable: String
+  $usesUnit: String
+) {
+  insert_modelcatalog_dataset_specification_presentation_one(
+    object: {
+      dataset_specification_id: $datasetSpecificationId
+      presentation: {
+        data: {
+          id: $presentationId
+          label: $label
+          has_long_name: null
+          has_short_name: null
+          has_standard_variable: $hasStandardVariable
+          uses_unit: $usesUnit
+        }
+      }
+    }
+  ) {
+    dataset_specification_id
+    presentation_id
+    presentation {
+      id
+      label
+    }
+  }
+}
+
+mutation CreateStandardVariable($id: String!, $label: String!, $description: String) {
+  insert_modelcatalog_standard_variable_one(
+    object: { id: $id, label: $label, description: $description }
+  ) {
+    id
+    label
+    description
+  }
+}
+
+mutation RegisterModel(
+  $softwareId: String!
+  $softwareLabel: String!
+  $softwareDescription: String
+  $softwareType: String!
+  $versionId: String!
+  $versionLabel: String!
+  $versionVersionId: String
+  $versionDescription: String
+  $configurationId: String!
+  $configurationLabel: String!
+  $configurationDescription: String
+) {
+  insert_modelcatalog_software_one(
+    object: {
+      id: $softwareId
+      label: $softwareLabel
+      description: $softwareDescription
+      type: $softwareType
+      versions: {
+        data: [
+          {
+            id: $versionId
+            label: $versionLabel
+            version_id: $versionVersionId
+            description: $versionDescription
+            configurations: {
+              data: [
+                {
+                  id: $configurationId
+                  label: $configurationLabel
+                  description: $configurationDescription
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  ) {
+    id
+    label
+    versions {
+      id
+      label
+      configurations {
+        id
+        label
+      }
+    }
+  }
+}
+
+mutation UpdateConfiguration($id: String!, $label: String!, $description: String) {
+  update_modelcatalog_configuration_by_pk(
+    pk_columns: { id: $id }
+    _set: { label: $label, description: $description }
+  ) {
+    id
+    label
+    description
+    software_version_id
+    model_configuration_id
+  }
+}
+
+mutation AddConfigurationAuthor($configurationId: String!, $personId: String!) {
+  insert_modelcatalog_configuration_author_one(
+    object: { configuration_id: $configurationId, person_id: $personId }
+    on_conflict: { constraint: modelcatalog_configuration_author_pkey, update_columns: [] }
+  ) {
+    configuration_id
+    person_id
+  }
+}
+
+mutation DeleteConfigurationAuthor($configurationId: String!, $personId: String!) {
+  delete_modelcatalog_configuration_author_by_pk(
+    configuration_id: $configurationId
+    person_id: $personId
+  ) {
+    configuration_id
+    person_id
+  }
+}
+
+mutation AddConfigurationRegion($configurationId: String!, $regionId: String!) {
+  insert_modelcatalog_configuration_region_one(
+    object: { configuration_id: $configurationId, region_id: $regionId }
+    on_conflict: { constraint: modelcatalog_configuration_region_pkey, update_columns: [] }
+  ) {
+    configuration_id
+    region_id
+  }
+}
+
+mutation DeleteConfigurationRegion($configurationId: String!, $regionId: String!) {
+  delete_modelcatalog_configuration_region_by_pk(
+    configuration_id: $configurationId
+    region_id: $regionId
+  ) {
+    configuration_id
+    region_id
+  }
+}
+
+mutation CreateModelFamily(
+  $softwareId: String!
+  $softwareLabel: String!
+  $softwareType: String!
+  $versionId: String!
+  $versionLabel: String!
+) {
+  insert_modelcatalog_software_one(
+    object: {
+      id: $softwareId
+      label: $softwareLabel
+      type: $softwareType
+      versions: { data: [{ id: $versionId, label: $versionLabel }] }
+    }
+  ) {
+    id
+    label
+    versions {
+      id
+      label
+    }
+  }
+}
+
+mutation CreateConfiguration(
+  $id: String!
+  $label: String!
+  $description: String
+  $softwareVersionId: String
+) {
+  insert_modelcatalog_configuration_one(
+    object: {
+      id: $id
+      label: $label
+      description: $description
+      software_version_id: $softwareVersionId
+    }
+  ) {
+    id
+    label
+    software_version_id
+  }
+}
+
+# Change is_optional on an existing configuration_input junction row.
+#
+# Delete-then-insert, NOT an upsert. Role `user` holds insert/select/delete on
+# modelcatalog_configuration_input and no update permission, so under that role Hasura
+# emits `modelcatalog_configuration_input_update_column` with `_PLACEHOLDER` alone and
+# any `on_conflict.update_columns: [is_optional]` fails validation before it runs.
+# The committed SDL snapshot is the *admin* schema, where the column does exist — which
+# is why codegen accepts an upsert here that no signed-in user can execute.
+#
+# Both root fields run in one Hasura transaction, in the order written, so the row is
+# never left missing. Requires an existing DatasetSpecification — does NOT create one.
+mutation SetConfigurationInputOptional(
+  $configurationId: String!
+  $inputId: String!
+  $isOptional: Boolean!
+) {
+  delete_modelcatalog_configuration_input_by_pk(
+    configuration_id: $configurationId
+    input_id: $inputId
+  ) {
+    configuration_id
+    input_id
+  }
+  insert_modelcatalog_configuration_input_one(
+    object: { configuration_id: $configurationId, input_id: $inputId, is_optional: $isOptional }
+  ) {
+    configuration_id
+    input_id
+    is_optional
+  }
+}
+
+# Re-insert the configuration_output junction row after deleting it (for is_optional update).
+mutation InsertConfigurationOutputJunction($configurationId: String!, $outputId: String!) {
+  insert_modelcatalog_configuration_output_one(
+    object: { configuration_id: $configurationId, output_id: $outputId }
+    on_conflict: { constraint: modelcatalog_configuration_output_pkey, update_columns: [] }
+  ) {
+    configuration_id
+    output_id
+  }
+}
+
+mutation UpdateModelParameter(
+  $id: String!
+  $label: String!
+  $description: String
+  $hasDataType: String
+  $hasDefaultValue: String
+  $hasMinimumAcceptedValue: String
+  $hasMaximumAcceptedValue: String
+  $hasFixedValue: String
+  $hasAcceptedValues: _text
+  $position: Int!
+) {
+  update_modelcatalog_parameter_by_pk(
+    pk_columns: { id: $id }
+    _set: {
+      label: $label
+      description: $description
+      has_data_type: $hasDataType
+      has_default_value: $hasDefaultValue
+      has_minimum_accepted_value: $hasMinimumAcceptedValue
+      has_maximum_accepted_value: $hasMaximumAcceptedValue
+      has_fixed_value: $hasFixedValue
+      has_accepted_values: $hasAcceptedValues
+      position: $position
+    }
+  ) {
+    id
+    label
+    description
+    has_data_type
+    has_default_value
+    position
+  }
+}

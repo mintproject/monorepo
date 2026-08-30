@@ -1,0 +1,26 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Environment files with secrets.
+# .env.example is the tracked template; .env is per-developer and is the input
+# to `npm run config:local`.
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+
+# GraphQL codegen output — tracked as bootstrap until Hasura admin secret is available in CI
+# Regenerate with: HASURA_ENDPOINT=<url> HASURA_ADMIN_SECRET=<secret> npm run codegen
+# src/graphql/generated/graphql.ts
+
+# Test coverage
+coverage/
