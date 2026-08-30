@@ -1,7 +1,7 @@
 # Runbook: superproject to single-repo cutover
 
-Status: **Phases 0 to 9 are done.** Phase 10 (archive) and Phase 11 (`dynamo`)
-remain.
+Status: **Phases 0 to 10 are done**, except two Phase 10 steps that need
+credentials this machine does not hold. Phase 11 (`dynamo`) remains.
 
 | Phase | State | Evidence |
 |---|---|---|
@@ -13,7 +13,7 @@ remain.
 | 7 Merge to `main` and publish | done | monorepo#166, `main` at `3bbaa28` |
 | 8 The first release | done | `v0.1.0`, release commit `971622cc` |
 | 9 Dev-cluster proof | **passed** | helm revision 70, chart `9.0.0-beta.8` |
-| 10 Archive the source repositories | not started | |
+| 10 Archive the source repositories | done, 2 steps deferred | 12 issues moved to monorepo#171 to #182; 4 repos archived |
 | 11 `dynamo` | not started | the point of no return |
 
 Corrections found while executing are marked **Correction** in place. Trust
@@ -746,17 +746,46 @@ reversible, so a soak buys nothing.
 ([#144](https://github.com/mintproject/monorepo/issues/144)) An archived
 repository is read-only. **Do every write first, in this order.**
 
+Steps 1, 2, 3 and 6 ran on 2026-08-30. Steps 4 and 5 are deferred — see the
+correction after step 6.
+
 1. **Transfer the 12 open issues to `mintproject/monorepo`.** 11 from
    `mint-ensemble-manager`, 1 from `graphql_engine`, 0 from `model-catalog-api`.
    Two are live work: `graphql_engine#13`, a grant bug on the junction tables,
    and `mint-ensemble-manager#108`, the model catalog GraphQL migration.
    **This step is irreversible.** Transferring back does not restore the numbers
    or the inbound links.
+
+   **A transfer silently drops a label the target repository does not have.**
+   `tapis` existed only in `mint-ensemble-manager` and carried 2 of the 12
+   issues. Create every missing label in `mintproject/monorepo` **before** the
+   transfer. Afterwards you cannot tell from the moved issue that a label was
+   lost.
+
+   ```bash
+   # Compare before transferring.
+   gh issue list --repo mintproject/<source> --state open --limit 100 \
+     --json labels --jq '[.[].labels[].name] | unique[]' | sort -u
+   gh label list --repo mintproject/monorepo --limit 100 --json name --jq '.[].name' | sort
+   ```
+
+   Done: `mint-ensemble-manager` 110, 109, 108, 105, 102, 101, 52, 40, 22, 14, 1
+   and `graphql_engine#13` became **monorepo#171 to #182**, in that order.
+   `enhancement` and `tapis` both survived.
 2. Close `mint-ensemble-manager#106`, "Add Claude Code GitHub Workflow",
    superseded by Phase 5c. Do not replay it.
+
+   **Correction: #106 is a pull request, not an issue.** So it is not one of the
+   12, and the arithmetic in step 1 already excludes it. `gh issue list` does not
+   show it, but `gh issue view 106` does — which reads as a missing issue unless
+   you check `.pull_request`. Close it with `gh pr close`.
 3. Commit one README line per source repository: the code moved to
    `mintproject/monorepo`, and this repository is read-only history. The GitHub
    archive banner says "archived", not "moved here".
+
+   `model-catalog-fetch-api-client` needs different wording. Its code did **not**
+   move into the single-repo — it was a dead submodule dropped in Phase 1. Point
+   it at `model-catalog-api/` and name the npm deprecation instead.
 4. Add a deprecation note to the Docker Hub repositories `ensemble-manager`,
    `mint-ui-lit` and `mint-ui-react`. They keep their last image and their pull
    history — 21,436 and 18,076 pulls.
@@ -766,6 +795,22 @@ repository is read-only. **Do every write first, in this order.**
    [#81](https://github.com/mintproject/monorepo/issues/81) is open.
 6. Archive `model-catalog-api`, `mint-ensemble-manager`, `graphql_engine` and
    `model-catalog-fetch-api-client`.
+
+**Correction: steps 4 and 5 need credentials, and the runbook does not say so.**
+Neither is on the GitHub token. `npm whoami` returns `ENEEDAUTH`, and
+`~/.docker/config.json` holds no auths. Both steps are cosmetic and neither
+gates Phase 11, so the archive proceeded without them. They stay open:
+
+```bash
+npm login && npm deprecate @mintproject/modelcatalog_client \
+  "Unmaintained. Use the REST API in mintproject/monorepo at model-catalog-api/."
+# Docker Hub descriptions are edited in the web UI, or via the Hub API with a PAT.
+```
+
+Order the writes so the credential-gated ones come first next time. An archived
+repository still allows an npm or Docker Hub write, so nothing was lost here —
+but a step that needs a login you do not have should surface before the
+irreversible one, not after it.
 
 **Why archive and not leave open.** Each repository holds a workflow that writes
 `<sha>`, `<safe-branch>` and `latest` to the same GHCR names the single-repo now
@@ -854,3 +899,7 @@ State these plainly. Do not let a reader assume otherwise.
   rewrites its version downwards. Nothing publishes it today.
 - **`ui` stays a submodule** until
   [#81](https://github.com/mintproject/monorepo/issues/81) removes Lit from TACC.
+- **The Docker Hub and npm deprecation notes are not posted.** Phase 10 steps 4
+  and 5. Both need a login this cutover did not have. Neither gates Phase 11, and
+  an archived repository does not block either write, so they can be done at any
+  time.
