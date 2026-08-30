@@ -1,0 +1,28 @@
+name: Release Please
+
+# One version for the whole repository. Every single-repo commit builds all
+# four services, so one tag names the whole system state.
+#
+# Two settings come off after the first release:
+#   - `release-as` in release-please-config.json, which fixes 0.1.0. ui-react
+#     sets that floor: it is 0.1.0 today and it ships in the chart.
+#   - `bootstrap-sha`, which stops the changelog walk at the last commit before
+#     the three service histories were imported. Without it the first changelog
+#     replays 700 commits from the source repositories.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: googleapis/release-please-action@v4
+        with:
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json

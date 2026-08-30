@@ -1,0 +1,58 @@
+name: Release Re-tag
+
+# Add the release version to the manifests that already built and passed.
+# It does not rebuild: a rebuild would ship an artifact no test saw.
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version to add, without a leading v (e.g. 0.1.0)
+        required: true
+      sha:
+        description: Full commit SHA whose images already passed
+        required: true
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  retag:
+    name: Re-tag
+    runs-on: ubuntu-latest
+    steps:
+      - name: Resolve the version and the SHA
+        run: |
+          if [ "${{ github.event_name }}" = "release" ]; then
+            VERSION="${GITHUB_REF_NAME#v}"
+            SHA="${GITHUB_SHA}"
+          else
+            VERSION="${{ inputs.version }}"
+            SHA="${{ inputs.sha }}"
+          fi
+          echo "VERSION=${VERSION}" >> "$GITHUB_ENV"
+          echo "SHA=${SHA}" >> "$GITHUB_ENV"
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Add the version tag to each manifest
+        run: |
+          set -euo pipefail
+          for image in graphql-engine model-catalog-api mint-ui-react ensemble-manager; do
+            src="ghcr.io/mintproject/${image}:${SHA}"
+            dst="ghcr.io/mintproject/${image}:${VERSION}"
+            echo "::group::${image}"
+            docker buildx imagetools create --tag "${dst}" "${src}"
+            # Same digest, or the release names an image nobody tested.
+            got=$(docker buildx imagetools inspect --format '{{.Manifest.Digest}}' "${dst}")
+            want=$(docker buildx imagetools inspect --format '{{.Manifest.Digest}}' "${src}")
+            [ "${got}" = "${want}" ] || { echo "digest mismatch: ${got} != ${want}"; exit 1; }
+            echo "${dst} -> ${got}"
+            echo "::endgroup::"
+          done
