@@ -1,12 +1,38 @@
-# Model Catalog ETL Pipeline
+# Model Catalog ETL
 
-Extracts model catalog entities from the RDF TriG dump, transforms them into relational rows, and loads them into the `modelcatalog_*` PostgreSQL tables via Hasura.
+**A one-time migration tool. The migration is finished.**
+
+MINT v1.x kept the model catalog in an RDF triplestore (Apache Jena Fuseki) and queried
+it with SPARQL. v2.0 keeps it in PostgreSQL and serves it as GraphQL through Hasura. This
+pipeline is what moved the data across. It reads the RDF TriG dump, turns the triples into
+relational rows, and loads them into the `modelcatalog_*` tables.
+
+The v2.0 platform reads PostgreSQL directly. No service and no deployment runs this
+pipeline. It is kept because three jobs still need it:
+
+- **Seed a new database.** A fresh cluster, or a local development stack, starts empty.
+- **Reload after a schema change.** Run with `--clear` to truncate and load again.
+- **Audit the migration.** Run with `--validate-only` to compare the RDF source against
+  the tables.
+
+Use it for those. Do not add it to a deployment.
+
+## Getting the TriG source file
+
+The file is not in this repository, and the Fuseki endpoint it came from
+(`endpoint.models.mint.tacc.utexas.edu`) is retired. The surviving copy lives in
+[`mintproject/model-catalog-endpoint`](https://github.com/mintproject/model-catalog-endpoint)
+at `data/model-catalog.trig` (about 25 MB). That repository is not archived. Download the
+file and pass its path with `--trig-path`.
+
+Do not rely on the built-in default. It still names `model-catalog-endpoint/`, a submodule
+the single-repo cutover removed.
 
 ## Prerequisites
 
 - Python 3.9+
 - PostgreSQL with the `modelcatalog_*` schema applied (see `graphql_engine/migrations/`)
-- The TriG data file at `model-catalog-endpoint/data/model-catalog.trig`
+- The TriG file, from above
 
 ## Setup
 
@@ -35,14 +61,24 @@ kubectl -n mint get secret mint-secrets -o jsonpath='{.data.HASURA_GRAPHQL_DATAB
 Run the full pipeline (extract, transform, load, validate):
 
 ```bash
-python3 etl/run.py --trig-path model-catalog-endpoint/data/model-catalog.trig
+python3 etl/run.py --trig-path <path>/model-catalog.trig
 ```
+
+Three wrappers in `scripts/` drive this against a real database. They handle the
+port-forward, the credentials and, for production, a backup first. Prefer them over calling
+`run.py` by hand:
+
+| Script | Target |
+|--------|--------|
+| `scripts/test-migration-local.sh` | Local Docker stack |
+| `scripts/test-migration-devel.sh` | The MicroK8s development cluster |
+| `scripts/run-migration-prod.sh` | TACC production. Takes a backup, pins the dump by md5 |
 
 ### Options
 
 | Flag | Description |
 |------|-------------|
-| `--trig-path PATH` | Path to TriG file (default: `../model-catalog-endpoint/data/model-catalog.trig`) |
+| `--trig-path PATH` | Path to the TriG file. Always pass it; the built-in default names a removed directory |
 | `--clear` | Truncate all tables before loading (useful for reruns) |
 | `--validate-only` | Skip ETL, only run validation against existing data |
 | `--db-host HOST` | Database host (default: `localhost`) |

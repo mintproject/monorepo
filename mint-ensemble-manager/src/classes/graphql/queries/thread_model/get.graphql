@@ -1,0 +1,11 @@
+query GetThreadModel($threadId: String!, $executionId: uuid!) {
+    thread_model(
+        where: {
+            thread_id: { _eq: $threadId }
+            executions: { execution_id: { _eq: $executionId } }
+        }
+    ) {
+        id
+        thread_id
+    }
+}

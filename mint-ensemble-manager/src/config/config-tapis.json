@@ -1,0 +1,25 @@
+{
+    "data_catalog_api": "http://datacatalog.mint.local",
+    "ensemble_manager_api": "http://localhost:3000/v1",
+    "graphql": {
+        "endpoint": "graphql.mint.local/v1/graphql",
+        "enable_ssl": false,
+        "secret": "CHANGEME",
+        "use_secret": true
+    },
+    "execution_engine": "localex",
+    "localex": {
+        "codedir": "/tmp/mintproject/data/code",
+        "datadir": "/tmp/mintproject/data/data",
+        "tempdir": "/tmp/mintproject/data/temp",
+        "logdir": "/tmp/mintproject/data/logs",
+        "dataurl": "http://file:///tmp/mintproject/data",
+        "logurl": "http://file:///tmp/mintproject/logs",
+        "parallelism": 2
+    },
+    "auth_server": "https://auth.mint.isi.edu/",
+    "auth_realm": "production",
+    "auth_client_id": "mint-ui",
+    "visualization_url": "",
+    "ingestion_api": ""
+}

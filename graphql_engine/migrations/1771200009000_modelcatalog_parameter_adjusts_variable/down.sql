@@ -1,0 +1,1 @@
+DROP TABLE IF EXISTS modelcatalog_parameter_adjusts_variable;

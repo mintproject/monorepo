@@ -85,7 +85,7 @@ sleep 3
 
 # ETL defaults are postgres/postgres/postgres — override for hasura DB
 DB_NAME=hasura DB_USER=hasura DB_PASSWORD="$HASURA_PWD" \
-  python3 etl/run.py --trig-path model-catalog-endpoint/data/model-catalog.trig --clear
+  python3 etl/run.py --trig-path <path>/model-catalog.trig --clear
 
 kill $PF_PID
 ```

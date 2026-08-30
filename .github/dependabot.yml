@@ -1,0 +1,45 @@
+# Monthly, and every entry grouped. Dependabot groups within one ecosystem and
+# one directory, so this is four pull requests a month, not four per dependency.
+# Ungrouped weekly updates are what produced 8 open and 0 merged on mint-ui-lit.
+#
+# No `target-branch` anywhere below. Dependabot then opens against the
+# repository default branch, which is `develop`, the integration line. Bumps
+# must not land on `main`, which is production.
+version: 2
+updates:
+  # The case for this file. mint-ensemble-manager arrived pinned to
+  # actions/checkout@v2 and docker/login-action@v1.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    groups:
+      github-actions:
+        patterns: ['*']
+
+  - package-ecosystem: npm
+    directory: /model-catalog-api
+    schedule:
+      interval: monthly
+    groups:
+      model-catalog-api:
+        patterns: ['*']
+
+  - package-ecosystem: npm
+    directory: /mint-ensemble-manager
+    schedule:
+      interval: monthly
+    groups:
+      mint-ensemble-manager:
+        patterns: ['*']
+
+  - package-ecosystem: npm
+    directory: /ui-react
+    schedule:
+      interval: monthly
+    groups:
+      ui-react:
+        patterns: ['*']
+
+  # graphql_engine has no package manifest. Its Dockerfile pins the Hasura
+  # base image by hand.
