@@ -18,7 +18,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### Code Quality
 - `npm run eslint:fix` - Run ESLint and fix issues
 - `npm run prettier:fix` - Format code with Prettier
-- `npm run lint-staged` - Run lint-staged (used in pre-commit hooks)
 
 ### GraphQL Code Generation
 - `npm run codegen` - Generate TypeScript types from GraphQL schema and operations
