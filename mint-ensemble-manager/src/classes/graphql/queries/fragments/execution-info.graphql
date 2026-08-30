@@ -1,0 +1,33 @@
+fragment execution_info on execution {
+    id
+    start_time
+    end_time
+    status
+    run_progress
+    run_id
+    execution_engine
+    modelcatalog_configuration_id
+    parameter_bindings {
+        model_parameter_id
+        parameter_value
+    }
+    data_bindings {
+        model_io_id
+        resource {
+            id
+            name
+            url
+            spatial_coverage
+            start_date
+            end_date            
+        }
+    }
+    results {
+        model_io_id
+        resource {
+            id
+            name
+            url
+        }
+    }
+}

@@ -1,0 +1,144 @@
+import { Apps, Jobs } from "@tapis/tapis-typescript";
+import { DataResource, Model } from "@/classes/mint/mint-types";
+import { TapisComponentSeed } from "@/classes/tapis/typing";
+
+export class TapisJobService {
+    private static readonly ALLOCATION = "PT2050-DataX";
+    private static readonly SYSTEM_LOGICAL_QUEUE = "development";
+    private static readonly SYSTEM_ID = "ls6";
+
+    constructor(
+        private jobsClient: Jobs.JobsApi,
+        private subscriptionsClient: Jobs.SubscriptionsApi,
+        private jobShareClient: Jobs.ShareApi
+    ) {}
+
+    async shareJob(jobId: string) {
+        await this.jobShareClient.shareJob({
+            jobUuid: jobId,
+            reqShareJob: {
+                jobResource: [Jobs.ReqShareJobJobResourceEnum.Output],
+                jobPermission: Jobs.ReqShareJobJobPermissionEnum.Read
+            }
+        });
+    }
+
+    createJobRequest = (
+        app: Apps.TapisApp,
+        seed: TapisComponentSeed,
+        model: Model,
+        name: string,
+        description: string
+    ): Jobs.ReqSubmitJob => {
+        const jobFileInputs = this.createJobFileInputsFromSeed(seed, app, model);
+        const jobParameterSet: Jobs.JobParameterSet = {
+            appArgs: this.getAppArgs(seed, app, model),
+            containerArgs: [],
+            schedulerOptions: [
+                {
+                    name: "TACC Allocation",
+                    description: "The TACC allocation associated with this job execution",
+                    include: true,
+                    arg: `-A ${TapisJobService.ALLOCATION}`
+                }
+            ],
+            envVariables: []
+        };
+
+        const request: Jobs.ReqSubmitJob = {
+            name: name,
+            description: description,
+            appId: app.id,
+            appVersion: app.version,
+            fileInputs: jobFileInputs,
+            nodeCount: app.jobAttributes?.nodeCount || 1,
+            coresPerNode: app.jobAttributes?.coresPerNode || 1,
+            maxMinutes: 60,
+            archiveSystemId: "ls6",
+            archiveSystemDir:
+                "HOST_EVAL($WORK)/tapis-jobs-archive/${JobCreateDate}/${JobName}-${JobUUID}",
+            archiveOnAppError: true,
+            execSystemId: app.jobAttributes?.execSystemId || TapisJobService.SYSTEM_ID,
+            execSystemLogicalQueue:
+                app.jobAttributes?.execSystemLogicalQueue || TapisJobService.SYSTEM_LOGICAL_QUEUE,
+            parameterSet: jobParameterSet
+        };
+
+        return request;
+    };
+
+    public createJobParameterSetFromSeed(
+        seed: TapisComponentSeed,
+        app: Apps.TapisApp,
+        model: Model
+    ): Jobs.JobParameterSet {
+        return {
+            appArgs: this.getAppArgs(seed, app, model)
+        };
+    }
+
+    public getAppArgs(
+        seed: TapisComponentSeed,
+        app: Apps.TapisApp,
+        model: Model
+    ): Jobs.JobArgSpec[] {
+        const jobArgs = app.jobAttributes;
+        return jobArgs.parameterSet.appArgs.flatMap((parameterSet) => {
+            const modelParameter = model.input_parameters.find(
+                (parameter) => parameter.name === parameterSet.name
+            );
+            const arg = modelParameter ? seed.parameters[modelParameter.id] : parameterSet.arg;
+            if (arg === undefined) {
+                throw new Error(
+                    `Tapis Job Input Parameter value ${parameterSet.name} could not be found. Tapis Job (app ${app.id}/${app.version}) requires this parameter. The model ${model.id} (${model.name}) has the following parameters: ${model.input_parameters.map((p) => p.name).join(", ")}`
+                );
+            }
+            return {
+                name: parameterSet.name,
+                arg: arg
+            } as Jobs.JobArgSpec;
+        });
+    }
+
+    public createJobFileInputsFromSeed(
+        seed: TapisComponentSeed,
+        app: Apps.TapisApp,
+        model: Model
+    ): Jobs.JobFileInput[] {
+        const jobInputs =
+            app.jobAttributes?.fileInputs?.flatMap((fileInput) => {
+                if (fileInput.inputMode === Apps.FileInputModeEnum.Fixed) {
+                    // FIXED inputs are locked by the app definition; Tapis injects
+                    // them from the app at submission. No model component input or
+                    // user-provided dataset is required.
+                    return [];
+                }
+
+                const modelInput = model.input_files.find((input) => input.name === fileInput.name);
+
+                if (!modelInput) {
+                    throw new Error(`Component input not found for ${fileInput.name}`);
+                }
+
+                const datasets = seed.datasets[modelInput.id] || [];
+
+                if (datasets.length === 0 && modelInput.is_optional) {
+                    // Skip optional input — no datasets bound, safe to omit from Tapis submission
+                    console.info(
+                        `Skipping optional input ${modelInput.name} — no datasets bound`
+                    );
+                    return [];
+                }
+
+                return datasets.map(
+                    (dataset: DataResource) =>
+                        ({
+                            name: modelInput.name,
+                            sourceUrl: dataset.url
+                        }) as Jobs.JobFileInput
+                );
+            }) || [];
+
+        return jobInputs;
+    }
+}

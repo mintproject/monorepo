@@ -1,0 +1,28 @@
+{
+    "compilerOptions": {
+        "skipLibCheck": true,
+        "module": "commonjs",
+        "esModuleInterop": true,
+        "target": "es6",
+        "noImplicitAny": false,
+        "moduleResolution": "node",
+        "sourceMap": true,
+        "outDir": "dist",
+        "baseUrl": ".",
+
+        "experimentalDecorators": true,
+        "emitDecoratorMetadata": true,
+        "lib": ["dom", "esnext"],
+
+        "paths": {
+            "*": ["node_modules/*"],
+            "@/api/*": ["src/api/*"],
+            "@/classes/*": ["src/classes/*"],
+            "@/config/*": ["src/config/*"],
+            "@/utils/*": ["src/utils/*"],
+            "@/interfaces/*": ["src/interfaces/*"]
+        }
+    },
+    "include": ["src/typings/**/*.d.ts", "src/**/*.ts", "paths"],
+    "exclude": ["node_modules", ".vscode"]
+}
