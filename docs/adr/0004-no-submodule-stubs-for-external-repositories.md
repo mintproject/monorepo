@@ -65,13 +65,13 @@ already. Dropping it changes no behaviour.
 
 ### 2. The deployed chart version needs a home, and the gitlink was not it
 
-`CHART_VERSION` in that script is the local-test default, and it is `9.0.0-beta.9`.
+`CHART_VERSION` in that script is the local-test default, and it is `9.0.0-beta.10`.
 `dynamo` remains the record of what production deploys. Neither is derived from this
 repository, and neither ever was.
 
 Removing the gitlink exposed three versions that disagreed. The `test-on-k8s-dev` skill
 recorded `MINT-9.0.0-beta.6`, commit `5c90da6` pinned `9.0.0-beta.8`, and the published
-release was `9.0.0-beta.9`. `helm list` then showed the dev cluster on `9.0.0-beta.8`, so
+release was `9.0.0-beta.10`. `helm list` then showed the dev cluster on `9.0.0-beta.8`, so
 the skill was stale by two releases. The disagreement was invisible while a gitlink looked
 authoritative. Finding it is the point.
 

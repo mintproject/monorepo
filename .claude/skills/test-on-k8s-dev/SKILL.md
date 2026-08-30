@@ -17,7 +17,7 @@ Verified 2026-08-30:
 |---|---|
 | kubectl context | `microk8s` (cluster `microk8s-cluster`, node `pop-os`, k8s v1.31.14) |
 | Namespace | `mint` (already the context default) |
-| Helm release | `mint`. Chart `MINT-9.0.0-beta.8` deployed on 2026-08-30. `9.0.0-beta.9` is the current release, and is what the scripts install. |
+| Helm release | `mint`. Chart `MINT-9.0.0-beta.8` deployed on 2026-08-30. `9.0.0-beta.10` is the current release, and is what the scripts install. |
 
 The cluster is remote, not on the laptop. `kubectl get nodes` is the fastest liveness check.
 

@@ -25,7 +25,7 @@ NAMESPACE="${3:-mint}"
 CHART_REPO_NAME="mintproject"
 CHART_REPO_URL="https://mintproject.github.io/mint"
 CHART_NAME="MINT"
-CHART_VERSION="${CHART_VERSION:-9.0.0-beta.9}"
+CHART_VERSION="${CHART_VERSION:-9.0.0-beta.10}"
 
 # Resolve SQL backup relative to repo root if not absolute
 if [[ "$SQL_BACKUP" != /* ]]; then

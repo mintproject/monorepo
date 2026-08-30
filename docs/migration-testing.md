@@ -37,7 +37,7 @@ helm repo update mintproject
 
 # NOTE: do NOT use --reuse-values. Without it the chart defaults apply, which is
 # what you want here. Add -f only for values you deliberately override.
-helm upgrade mint mintproject/MINT -n $NAMESPACE --version 9.0.0-beta.9
+helm upgrade mint mintproject/MINT -n $NAMESPACE --version 9.0.0-beta.10
 
 # Wait for the new database pod to be ready
 kubectl rollout status statefulset/mint-hasura-db -n $NAMESPACE --timeout=120s
