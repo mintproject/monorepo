@@ -780,13 +780,18 @@ but the archive is their only copy.
 Off the critical path, after the archive. `dynamo` is private and MFA-gated.
 
 Replace the per-service tag keys with one `global.imageTag: 0.1.0`, and bump the
-chart pin to **`9.0.0-beta.9`** — `beta.7` ignores `global.imageTag`, so pinning
+chart pin to **`9.0.0-beta.10`** — `beta.7` ignores `global.imageTag`, so pinning
 it would leave production on whatever the per-service keys said.
 
-Before this ships, check whether `dynamo` relies on `components.ui.enabled`
-defaulting to `true`. From `9.0.0-beta.9` the default is `false`, so a chart bump
-silently removes the legacy UI at TACC.
-[#81](https://github.com/mintproject/monorepo/issues/81) is still open.
+Two defaults changed under that pin, so read `dynamo` before it ships.
+
+- `components.ui.enabled` is `false` from `9.0.0-beta.9`. If `dynamo` relies on
+  the old `true`, the bump silently removes the legacy UI at TACC.
+  [#81](https://github.com/mintproject/monorepo/issues/81) is still open.
+- `components.ui_react` is enabled from `9.0.0-beta.10`, at host `mint.local`
+  with `client_id: mint-local`. If `dynamo` does not set its own
+  `components.ui_react.ingress.hosts` and `config.client_id`, the bump points the
+  React UI at the wrong host with the wrong OAuth2 client.
 
 **This is the point of no return.** Once production pins a single-repo tag,
 redoing the import means a new history, which invalidates every published SHA tag
@@ -838,9 +843,11 @@ State these plainly. Do not let a reader assume otherwise.
   tip of `main`. `dynamo` overrides every tag, so TACC is safe. Only fresh chart
   installs get stale code. The dev accepted this risk.
 - **The release re-tag is a manual step on every release.** See Phase 8.
-- **A bare chart install ships no frontend** from `9.0.0-beta.9`. `ui` is off by
-  default and `ui_react` cannot be on by default, because it hard-fails to render
-  without a `client_id`. A deployment must choose and configure one.
+- **A bare chart install shipped no frontend** in `9.0.0-beta.9`. `ui` was off by
+  default and `ui_react` could not be on by default, because it hard-failed to
+  render without a `client_id`. `9.0.0-beta.10` closes this: `client_id` defaults
+  to `mint-local` and `ui_react` is on, at host `mint.local`.
+  [`mintproject/mint#113`](https://github.com/mintproject/mint/pull/113).
 - **`model-catalog-api/package.json` has no `"private": true`.** release-please
   rewrites its version downwards. Nothing publishes it today.
 - **`ui` stays a submodule** until
