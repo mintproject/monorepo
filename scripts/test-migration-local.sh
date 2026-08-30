@@ -12,11 +12,20 @@ set -euo pipefail
 #   trig-path        /Users/mosorio/repos/mint/backups/dynamo-2025-04-08.trig
 #   sql-backup-path  backups/production-backup.sql (relative to repo root)
 #   namespace        mint
+#
+# The MINT chart is not in this repository. It installs from the published Helm
+# repository. Override the version with CHART_VERSION.
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 TRIG_PATH="${1:-/Users/mosorio/repos/mint/backups/dynamo-2025-04-08.trig}"
 SQL_BACKUP="${2:-backups/production-backup.sql}"
 NAMESPACE="${3:-mint}"
+
+# The MINT chart, published from mintproject/mint
+CHART_REPO_NAME="mintproject"
+CHART_REPO_URL="https://mintproject.github.io/mint"
+CHART_NAME="MINT"
+CHART_VERSION="${CHART_VERSION:-9.0.0-beta.9}"
 
 # Resolve SQL backup relative to repo root if not absolute
 if [[ "$SQL_BACKUP" != /* ]]; then
@@ -41,6 +50,7 @@ echo "Repo root:    $REPO_ROOT"
 echo "TriG:         $TRIG_PATH"
 echo "SQL backup:   $SQL_BACKUP"
 echo "Namespace:    $NAMESPACE"
+echo "Chart:        $CHART_REPO_NAME/$CHART_NAME $CHART_VERSION"
 
 # ---------------------------------------------------------------------------
 # Step 2: Reset local Hasura DB
@@ -51,8 +61,11 @@ kubectl patch deployment mint-hasura -n "$NAMESPACE" --type=merge -p '{"spec":{"
 kubectl delete statefulset mint-hasura-db -n "$NAMESPACE" --ignore-not-found
 kubectl delete pvc data-mint-hasura-db-0 -n "$NAMESPACE" --ignore-not-found
 
-helm upgrade mint "$REPO_ROOT/helm-charts/charts/mint" -n "$NAMESPACE" \
-  -f "$REPO_ROOT/helm-charts/charts/mint/values.yaml"
+helm repo add "$CHART_REPO_NAME" "$CHART_REPO_URL" --force-update >/dev/null
+helm repo update "$CHART_REPO_NAME" >/dev/null
+
+helm upgrade mint "$CHART_REPO_NAME/$CHART_NAME" -n "$NAMESPACE" \
+  --version "$CHART_VERSION"
 
 kubectl rollout status statefulset/mint-hasura-db -n "$NAMESPACE" --timeout=180s
 

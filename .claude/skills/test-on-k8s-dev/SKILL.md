@@ -17,11 +17,11 @@ Verified 2026-08-30:
 |---|---|
 | kubectl context | `microk8s` (cluster `microk8s-cluster`, node `pop-os`, k8s v1.31.14) |
 | Namespace | `mint` (already the context default) |
-| Helm release | `mint`, chart `MINT-9.0.0-beta.6` |
+| Helm release | `mint`. Chart `MINT-9.0.0-beta.8` deployed on 2026-08-30. `9.0.0-beta.9` is the current release, and is what the scripts install. |
 
 The cluster is remote, not on the laptop. `kubectl get nodes` is the fastest liveness check.
 
-**Two stale names to ignore.** `helm-charts/README.md` documents installing the release as `testing-mint`, and `model-catalog-api/src/hasura/client.ts` defaults `HASURA_GRAPHQL_URL` to `http://testing-mint-hasura.mint.svc.cluster.local/v1/graphql`. Neither matches this cluster, where the release is `mint` and the in-cluster URL is `http://mint-hasura/v1/graphql`. Resource names are `mint-*`, not `testing-mint-*`.
+**Two stale names to ignore.** The MINT chart's own README (in [`mintproject/mint`](https://github.com/mintproject/mint), not in this repository) documents installing the release as `testing-mint`, and `model-catalog-api/src/hasura/client.ts` defaults `HASURA_GRAPHQL_URL` to `http://testing-mint-hasura.mint.svc.cluster.local/v1/graphql`. Neither matches this cluster, where the release is `mint` and the in-cluster URL is `http://mint-hasura/v1/graphql`. Resource names are `mint-*`, not `testing-mint-*`.
 
 ## Component map
 
@@ -34,7 +34,7 @@ The four services that ship from `mintproject/monorepo`:
 | `mint-ensemble-manager` | `mint-ensemble-manager` | `head` | `ensemble-manager.mint.local` | `ghcr.io/mintproject/ensemble-manager` |
 | `ui-react` | `mint-ui-react` | `ui-react` | `mint.local` | `ghcr.io/mintproject/mint-ui-react` |
 
-`ui` (mint-ui-lit) is still its own repository: deployment `mint-ui`, host `legacy.mint.local`.
+`ui` (mint-ui-lit) is an external repository, with no directory here: deployment `mint-ui`, host `legacy.mint.local`.
 
 The `*.mint.local` hosts only resolve if the node IP is in your `/etc/hosts`. Port-forwarding avoids that entirely and is the better default for a quick check.
 

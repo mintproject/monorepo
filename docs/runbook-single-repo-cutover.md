@@ -40,14 +40,16 @@ See [`CONTEXT.md`](../CONTEXT.md) for **superproject**, **single-repo**,
 | `mint-ensemble-manager` | submodule | plain directory, full history |
 | `graphql_engine` | submodule | plain directory, full history |
 | `ui-react` | plain directory | unchanged |
-| `ui` | submodule | submodule, until [#81](https://github.com/mintproject/monorepo/issues/81) |
-| `helm-charts` | submodule | submodule. The chart has external consumers. |
+| `ui` | submodule | gone. External repository. See [ADR-0004](adr/0004-no-submodule-stubs-for-external-repositories.md) |
+| `helm-charts` | submodule | gone. External repository, published Helm repo. See [ADR-0004](adr/0004-no-submodule-stubs-for-external-repositories.md) |
 | `model-catalog-ontology` | submodule | gone. Repository stays maintained. |
 | `MINT_USERGUIDE` | submodule | gone. Repository stays maintained. |
 | `dynamo-experiment-may` | submodule | gone. Another organisation owns it. |
 | `model-catalog-fetch-api-client` | submodule | gone. Repository archived. |
 
-`.gitmodules` ends with two stanzas: `ui` and `helm-charts`.
+`.gitmodules` ended with two stanzas, `ui` and `helm-charts`.
+[ADR-0004](adr/0004-no-submodule-stubs-for-external-repositories.md) removed both and
+deleted the file. Neither repository is imported; both are consumed where they live.
 
 Every image publishes to GHCR. Docker Hub is dropped. Every single-repo commit
 builds an image for every service, so one tag names the whole system state.
@@ -333,7 +335,7 @@ all four after Phase 5.
 After the **last** import, add a fifth:
 
 ```bash
-# 5. Only ui and helm-charts remain as gitlinks.
+# 5. No gitlinks remain. This prints nothing.
 git ls-files -s | awk '$1 == 160000 {print $4}'
 ```
 
