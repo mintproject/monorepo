@@ -10299,9 +10299,105 @@ export type Modelcatalog_Standard_Variable = {
   label: Scalars['String']['output'];
   same_as?: Maybe<Scalars['_text']['output']>;
   /** An array relationship */
+  tasksByDrivingVariable: Array<Task>;
+  /** An aggregate relationship */
+  tasksByDrivingVariable_aggregate: Task_Aggregate;
+  /** An array relationship */
+  tasksByResponseVariable: Array<Task>;
+  /** An aggregate relationship */
+  tasksByResponseVariable_aggregate: Task_Aggregate;
+  /** An array relationship */
+  threadsByDrivingVariable: Array<Thread>;
+  /** An aggregate relationship */
+  threadsByDrivingVariable_aggregate: Thread_Aggregate;
+  /** An array relationship */
+  threadsByResponseVariable: Array<Thread>;
+  /** An aggregate relationship */
+  threadsByResponseVariable_aggregate: Thread_Aggregate;
+  /** An array relationship */
   variable_presentations: Array<Modelcatalog_Variable_Presentation>;
   /** An aggregate relationship */
   variable_presentations_aggregate: Modelcatalog_Variable_Presentation_Aggregate;
+};
+
+
+/** columns and relationships of "modelcatalog_standard_variable" */
+export type Modelcatalog_Standard_VariableTasksByDrivingVariableArgs = {
+  distinct_on?: InputMaybe<Array<Task_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Task_Order_By>>;
+  where?: InputMaybe<Task_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_standard_variable" */
+export type Modelcatalog_Standard_VariableTasksByDrivingVariable_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Task_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Task_Order_By>>;
+  where?: InputMaybe<Task_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_standard_variable" */
+export type Modelcatalog_Standard_VariableTasksByResponseVariableArgs = {
+  distinct_on?: InputMaybe<Array<Task_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Task_Order_By>>;
+  where?: InputMaybe<Task_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_standard_variable" */
+export type Modelcatalog_Standard_VariableTasksByResponseVariable_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Task_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Task_Order_By>>;
+  where?: InputMaybe<Task_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_standard_variable" */
+export type Modelcatalog_Standard_VariableThreadsByDrivingVariableArgs = {
+  distinct_on?: InputMaybe<Array<Thread_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Thread_Order_By>>;
+  where?: InputMaybe<Thread_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_standard_variable" */
+export type Modelcatalog_Standard_VariableThreadsByDrivingVariable_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Thread_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Thread_Order_By>>;
+  where?: InputMaybe<Thread_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_standard_variable" */
+export type Modelcatalog_Standard_VariableThreadsByResponseVariableArgs = {
+  distinct_on?: InputMaybe<Array<Thread_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Thread_Order_By>>;
+  where?: InputMaybe<Thread_Bool_Exp>;
+};
+
+
+/** columns and relationships of "modelcatalog_standard_variable" */
+export type Modelcatalog_Standard_VariableThreadsByResponseVariable_AggregateArgs = {
+  distinct_on?: InputMaybe<Array<Thread_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<Array<Thread_Order_By>>;
+  where?: InputMaybe<Thread_Bool_Exp>;
 };
 
 
@@ -10355,6 +10451,10 @@ export type Modelcatalog_Standard_Variable_Bool_Exp = {
   id?: InputMaybe<String_Comparison_Exp>;
   label?: InputMaybe<String_Comparison_Exp>;
   same_as?: InputMaybe<_Text_Comparison_Exp>;
+  tasksByDrivingVariable?: InputMaybe<Task_Bool_Exp>;
+  tasksByResponseVariable?: InputMaybe<Task_Bool_Exp>;
+  threadsByDrivingVariable?: InputMaybe<Thread_Bool_Exp>;
+  threadsByResponseVariable?: InputMaybe<Thread_Bool_Exp>;
   variable_presentations?: InputMaybe<Modelcatalog_Variable_Presentation_Bool_Exp>;
 };
 
@@ -10370,6 +10470,10 @@ export type Modelcatalog_Standard_Variable_Insert_Input = {
   id?: InputMaybe<Scalars['String']['input']>;
   label?: InputMaybe<Scalars['String']['input']>;
   same_as?: InputMaybe<Scalars['_text']['input']>;
+  tasksByDrivingVariable?: InputMaybe<Task_Arr_Rel_Insert_Input>;
+  tasksByResponseVariable?: InputMaybe<Task_Arr_Rel_Insert_Input>;
+  threadsByDrivingVariable?: InputMaybe<Thread_Arr_Rel_Insert_Input>;
+  threadsByResponseVariable?: InputMaybe<Thread_Arr_Rel_Insert_Input>;
   variable_presentations?: InputMaybe<Modelcatalog_Variable_Presentation_Arr_Rel_Insert_Input>;
 };
 
@@ -10418,6 +10522,10 @@ export type Modelcatalog_Standard_Variable_Order_By = {
   id?: InputMaybe<Order_By>;
   label?: InputMaybe<Order_By>;
   same_as?: InputMaybe<Order_By>;
+  tasksByDrivingVariable_aggregate?: InputMaybe<Task_Aggregate_Order_By>;
+  tasksByResponseVariable_aggregate?: InputMaybe<Task_Aggregate_Order_By>;
+  threadsByDrivingVariable_aggregate?: InputMaybe<Thread_Aggregate_Order_By>;
+  threadsByResponseVariable_aggregate?: InputMaybe<Thread_Aggregate_Order_By>;
   variable_presentations_aggregate?: InputMaybe<Modelcatalog_Variable_Presentation_Aggregate_Order_By>;
 };
 
@@ -22636,7 +22744,7 @@ export type Subscription_RootVariable_Category_By_PkArgs = {
 export type Task = {
   __typename?: 'task';
   /** An object relationship */
-  driving_variable?: Maybe<Variable>;
+  driving_variable?: Maybe<Modelcatalog_Standard_Variable>;
   driving_variable_id?: Maybe<Scalars['String']['output']>;
   end_date: Scalars['date']['output'];
   /** An array relationship */
@@ -22656,7 +22764,7 @@ export type Task = {
   region?: Maybe<Region>;
   region_id?: Maybe<Scalars['String']['output']>;
   /** An object relationship */
-  response_variable?: Maybe<Variable>;
+  response_variable?: Maybe<Modelcatalog_Standard_Variable>;
   response_variable_id?: Maybe<Scalars['String']['output']>;
   start_date: Scalars['date']['output'];
   /** An array relationship */
@@ -22766,7 +22874,7 @@ export type Task_Bool_Exp = {
   _and?: InputMaybe<Array<Task_Bool_Exp>>;
   _not?: InputMaybe<Task_Bool_Exp>;
   _or?: InputMaybe<Array<Task_Bool_Exp>>;
-  driving_variable?: InputMaybe<Variable_Bool_Exp>;
+  driving_variable?: InputMaybe<Modelcatalog_Standard_Variable_Bool_Exp>;
   driving_variable_id?: InputMaybe<String_Comparison_Exp>;
   end_date?: InputMaybe<Date_Comparison_Exp>;
   events?: InputMaybe<Task_Provenance_Bool_Exp>;
@@ -22777,7 +22885,7 @@ export type Task_Bool_Exp = {
   problem_statement_id?: InputMaybe<String_Comparison_Exp>;
   region?: InputMaybe<Region_Bool_Exp>;
   region_id?: InputMaybe<String_Comparison_Exp>;
-  response_variable?: InputMaybe<Variable_Bool_Exp>;
+  response_variable?: InputMaybe<Modelcatalog_Standard_Variable_Bool_Exp>;
   response_variable_id?: InputMaybe<String_Comparison_Exp>;
   start_date?: InputMaybe<Date_Comparison_Exp>;
   threads?: InputMaybe<Thread_Bool_Exp>;
@@ -22804,7 +22912,7 @@ export type Task_Events_Comparison_Exp = {
 
 /** input type for inserting data into table "task" */
 export type Task_Insert_Input = {
-  driving_variable?: InputMaybe<Variable_Obj_Rel_Insert_Input>;
+  driving_variable?: InputMaybe<Modelcatalog_Standard_Variable_Obj_Rel_Insert_Input>;
   driving_variable_id?: InputMaybe<Scalars['String']['input']>;
   end_date?: InputMaybe<Scalars['date']['input']>;
   events?: InputMaybe<Task_Provenance_Arr_Rel_Insert_Input>;
@@ -22815,7 +22923,7 @@ export type Task_Insert_Input = {
   problem_statement_id?: InputMaybe<Scalars['String']['input']>;
   region?: InputMaybe<Region_Obj_Rel_Insert_Input>;
   region_id?: InputMaybe<Scalars['String']['input']>;
-  response_variable?: InputMaybe<Variable_Obj_Rel_Insert_Input>;
+  response_variable?: InputMaybe<Modelcatalog_Standard_Variable_Obj_Rel_Insert_Input>;
   response_variable_id?: InputMaybe<Scalars['String']['input']>;
   start_date?: InputMaybe<Scalars['date']['input']>;
   threads?: InputMaybe<Thread_Arr_Rel_Insert_Input>;
@@ -22896,7 +23004,7 @@ export type Task_On_Conflict = {
 
 /** Ordering options when selecting data from "task". */
 export type Task_Order_By = {
-  driving_variable?: InputMaybe<Variable_Order_By>;
+  driving_variable?: InputMaybe<Modelcatalog_Standard_Variable_Order_By>;
   driving_variable_id?: InputMaybe<Order_By>;
   end_date?: InputMaybe<Order_By>;
   events_aggregate?: InputMaybe<Task_Provenance_Aggregate_Order_By>;
@@ -22907,7 +23015,7 @@ export type Task_Order_By = {
   problem_statement_id?: InputMaybe<Order_By>;
   region?: InputMaybe<Region_Order_By>;
   region_id?: InputMaybe<Order_By>;
-  response_variable?: InputMaybe<Variable_Order_By>;
+  response_variable?: InputMaybe<Modelcatalog_Standard_Variable_Order_By>;
   response_variable_id?: InputMaybe<Order_By>;
   start_date?: InputMaybe<Order_By>;
   threads_aggregate?: InputMaybe<Thread_Aggregate_Order_By>;
@@ -23341,7 +23449,7 @@ export type Thread = {
   __typename?: 'thread';
   dataset_id?: Maybe<Scalars['String']['output']>;
   /** An object relationship */
-  driving_variable?: Maybe<Variable>;
+  driving_variable?: Maybe<Modelcatalog_Standard_Variable>;
   driving_variable_id?: Maybe<Scalars['String']['output']>;
   end_date: Scalars['date']['output'];
   /** An array relationship */
@@ -23358,7 +23466,7 @@ export type Thread = {
   region?: Maybe<Region>;
   region_id?: Maybe<Scalars['String']['output']>;
   /** An object relationship */
-  response_variable?: Maybe<Variable>;
+  response_variable?: Maybe<Modelcatalog_Standard_Variable>;
   response_variable_id?: Maybe<Scalars['String']['output']>;
   start_date: Scalars['date']['output'];
   /** An object relationship */
@@ -23496,7 +23604,7 @@ export type Thread_Bool_Exp = {
   _not?: InputMaybe<Thread_Bool_Exp>;
   _or?: InputMaybe<Array<Thread_Bool_Exp>>;
   dataset_id?: InputMaybe<String_Comparison_Exp>;
-  driving_variable?: InputMaybe<Variable_Bool_Exp>;
+  driving_variable?: InputMaybe<Modelcatalog_Standard_Variable_Bool_Exp>;
   driving_variable_id?: InputMaybe<String_Comparison_Exp>;
   end_date?: InputMaybe<Date_Comparison_Exp>;
   events?: InputMaybe<Thread_Provenance_Bool_Exp>;
@@ -23505,7 +23613,7 @@ export type Thread_Bool_Exp = {
   permissions?: InputMaybe<Thread_Permission_Bool_Exp>;
   region?: InputMaybe<Region_Bool_Exp>;
   region_id?: InputMaybe<String_Comparison_Exp>;
-  response_variable?: InputMaybe<Variable_Bool_Exp>;
+  response_variable?: InputMaybe<Modelcatalog_Standard_Variable_Bool_Exp>;
   response_variable_id?: InputMaybe<String_Comparison_Exp>;
   start_date?: InputMaybe<Date_Comparison_Exp>;
   task?: InputMaybe<Task_Bool_Exp>;
@@ -23692,7 +23800,7 @@ export type Thread_Events_Comparison_Exp = {
 /** input type for inserting data into table "thread" */
 export type Thread_Insert_Input = {
   dataset_id?: InputMaybe<Scalars['String']['input']>;
-  driving_variable?: InputMaybe<Variable_Obj_Rel_Insert_Input>;
+  driving_variable?: InputMaybe<Modelcatalog_Standard_Variable_Obj_Rel_Insert_Input>;
   driving_variable_id?: InputMaybe<Scalars['String']['input']>;
   end_date?: InputMaybe<Scalars['date']['input']>;
   events?: InputMaybe<Thread_Provenance_Arr_Rel_Insert_Input>;
@@ -23701,7 +23809,7 @@ export type Thread_Insert_Input = {
   permissions?: InputMaybe<Thread_Permission_Arr_Rel_Insert_Input>;
   region?: InputMaybe<Region_Obj_Rel_Insert_Input>;
   region_id?: InputMaybe<Scalars['String']['input']>;
-  response_variable?: InputMaybe<Variable_Obj_Rel_Insert_Input>;
+  response_variable?: InputMaybe<Modelcatalog_Standard_Variable_Obj_Rel_Insert_Input>;
   response_variable_id?: InputMaybe<Scalars['String']['input']>;
   start_date?: InputMaybe<Scalars['date']['input']>;
   task?: InputMaybe<Task_Obj_Rel_Insert_Input>;
@@ -25161,7 +25269,7 @@ export type Thread_On_Conflict = {
 /** Ordering options when selecting data from "thread". */
 export type Thread_Order_By = {
   dataset_id?: InputMaybe<Order_By>;
-  driving_variable?: InputMaybe<Variable_Order_By>;
+  driving_variable?: InputMaybe<Modelcatalog_Standard_Variable_Order_By>;
   driving_variable_id?: InputMaybe<Order_By>;
   end_date?: InputMaybe<Order_By>;
   events_aggregate?: InputMaybe<Thread_Provenance_Aggregate_Order_By>;
@@ -25170,7 +25278,7 @@ export type Thread_Order_By = {
   permissions_aggregate?: InputMaybe<Thread_Permission_Aggregate_Order_By>;
   region?: InputMaybe<Region_Order_By>;
   region_id?: InputMaybe<Order_By>;
-  response_variable?: InputMaybe<Variable_Order_By>;
+  response_variable?: InputMaybe<Modelcatalog_Standard_Variable_Order_By>;
   response_variable_id?: InputMaybe<Order_By>;
   start_date?: InputMaybe<Order_By>;
   task?: InputMaybe<Task_Order_By>;
@@ -25674,22 +25782,6 @@ export type Variable = {
   /** An aggregate relationship */
   model_ios_aggregate: Model_Io_Variable_Aggregate;
   name?: Maybe<Scalars['String']['output']>;
-  /** An array relationship */
-  tasksByDrivingVariable: Array<Task>;
-  /** An aggregate relationship */
-  tasksByDrivingVariable_aggregate: Task_Aggregate;
-  /** An array relationship */
-  tasksByResponseVariable: Array<Task>;
-  /** An aggregate relationship */
-  tasksByResponseVariable_aggregate: Task_Aggregate;
-  /** An array relationship */
-  threadsByDrivingVariable: Array<Thread>;
-  /** An aggregate relationship */
-  threadsByDrivingVariable_aggregate: Thread_Aggregate;
-  /** An array relationship */
-  threadsByResponseVariable: Array<Thread>;
-  /** An aggregate relationship */
-  threadsByResponseVariable_aggregate: Thread_Aggregate;
   url?: Maybe<Scalars['String']['output']>;
 };
 
@@ -25731,86 +25823,6 @@ export type VariableModel_Ios_AggregateArgs = {
   offset?: InputMaybe<Scalars['Int']['input']>;
   order_by?: InputMaybe<Array<Model_Io_Variable_Order_By>>;
   where?: InputMaybe<Model_Io_Variable_Bool_Exp>;
-};
-
-
-/** columns and relationships of "variable" */
-export type VariableTasksByDrivingVariableArgs = {
-  distinct_on?: InputMaybe<Array<Task_Select_Column>>;
-  limit?: InputMaybe<Scalars['Int']['input']>;
-  offset?: InputMaybe<Scalars['Int']['input']>;
-  order_by?: InputMaybe<Array<Task_Order_By>>;
-  where?: InputMaybe<Task_Bool_Exp>;
-};
-
-
-/** columns and relationships of "variable" */
-export type VariableTasksByDrivingVariable_AggregateArgs = {
-  distinct_on?: InputMaybe<Array<Task_Select_Column>>;
-  limit?: InputMaybe<Scalars['Int']['input']>;
-  offset?: InputMaybe<Scalars['Int']['input']>;
-  order_by?: InputMaybe<Array<Task_Order_By>>;
-  where?: InputMaybe<Task_Bool_Exp>;
-};
-
-
-/** columns and relationships of "variable" */
-export type VariableTasksByResponseVariableArgs = {
-  distinct_on?: InputMaybe<Array<Task_Select_Column>>;
-  limit?: InputMaybe<Scalars['Int']['input']>;
-  offset?: InputMaybe<Scalars['Int']['input']>;
-  order_by?: InputMaybe<Array<Task_Order_By>>;
-  where?: InputMaybe<Task_Bool_Exp>;
-};
-
-
-/** columns and relationships of "variable" */
-export type VariableTasksByResponseVariable_AggregateArgs = {
-  distinct_on?: InputMaybe<Array<Task_Select_Column>>;
-  limit?: InputMaybe<Scalars['Int']['input']>;
-  offset?: InputMaybe<Scalars['Int']['input']>;
-  order_by?: InputMaybe<Array<Task_Order_By>>;
-  where?: InputMaybe<Task_Bool_Exp>;
-};
-
-
-/** columns and relationships of "variable" */
-export type VariableThreadsByDrivingVariableArgs = {
-  distinct_on?: InputMaybe<Array<Thread_Select_Column>>;
-  limit?: InputMaybe<Scalars['Int']['input']>;
-  offset?: InputMaybe<Scalars['Int']['input']>;
-  order_by?: InputMaybe<Array<Thread_Order_By>>;
-  where?: InputMaybe<Thread_Bool_Exp>;
-};
-
-
-/** columns and relationships of "variable" */
-export type VariableThreadsByDrivingVariable_AggregateArgs = {
-  distinct_on?: InputMaybe<Array<Thread_Select_Column>>;
-  limit?: InputMaybe<Scalars['Int']['input']>;
-  offset?: InputMaybe<Scalars['Int']['input']>;
-  order_by?: InputMaybe<Array<Thread_Order_By>>;
-  where?: InputMaybe<Thread_Bool_Exp>;
-};
-
-
-/** columns and relationships of "variable" */
-export type VariableThreadsByResponseVariableArgs = {
-  distinct_on?: InputMaybe<Array<Thread_Select_Column>>;
-  limit?: InputMaybe<Scalars['Int']['input']>;
-  offset?: InputMaybe<Scalars['Int']['input']>;
-  order_by?: InputMaybe<Array<Thread_Order_By>>;
-  where?: InputMaybe<Thread_Bool_Exp>;
-};
-
-
-/** columns and relationships of "variable" */
-export type VariableThreadsByResponseVariable_AggregateArgs = {
-  distinct_on?: InputMaybe<Array<Thread_Select_Column>>;
-  limit?: InputMaybe<Scalars['Int']['input']>;
-  offset?: InputMaybe<Scalars['Int']['input']>;
-  order_by?: InputMaybe<Array<Thread_Order_By>>;
-  where?: InputMaybe<Thread_Bool_Exp>;
 };
 
 /** aggregated selection of "variable" */
@@ -25863,10 +25875,6 @@ export type Variable_Bool_Exp = {
   is_indicator?: InputMaybe<Boolean_Comparison_Exp>;
   model_ios?: InputMaybe<Model_Io_Variable_Bool_Exp>;
   name?: InputMaybe<String_Comparison_Exp>;
-  tasksByDrivingVariable?: InputMaybe<Task_Bool_Exp>;
-  tasksByResponseVariable?: InputMaybe<Task_Bool_Exp>;
-  threadsByDrivingVariable?: InputMaybe<Thread_Bool_Exp>;
-  threadsByResponseVariable?: InputMaybe<Thread_Bool_Exp>;
   url?: InputMaybe<String_Comparison_Exp>;
 };
 
@@ -26038,10 +26046,6 @@ export type Variable_Insert_Input = {
   is_indicator?: InputMaybe<Scalars['Boolean']['input']>;
   model_ios?: InputMaybe<Model_Io_Variable_Arr_Rel_Insert_Input>;
   name?: InputMaybe<Scalars['String']['input']>;
-  tasksByDrivingVariable?: InputMaybe<Task_Arr_Rel_Insert_Input>;
-  tasksByResponseVariable?: InputMaybe<Task_Arr_Rel_Insert_Input>;
-  threadsByDrivingVariable?: InputMaybe<Thread_Arr_Rel_Insert_Input>;
-  threadsByResponseVariable?: InputMaybe<Thread_Arr_Rel_Insert_Input>;
   url?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -26117,10 +26121,6 @@ export type Variable_Order_By = {
   is_indicator?: InputMaybe<Order_By>;
   model_ios_aggregate?: InputMaybe<Model_Io_Variable_Aggregate_Order_By>;
   name?: InputMaybe<Order_By>;
-  tasksByDrivingVariable_aggregate?: InputMaybe<Task_Aggregate_Order_By>;
-  tasksByResponseVariable_aggregate?: InputMaybe<Task_Aggregate_Order_By>;
-  threadsByDrivingVariable_aggregate?: InputMaybe<Thread_Aggregate_Order_By>;
-  threadsByResponseVariable_aggregate?: InputMaybe<Thread_Aggregate_Order_By>;
   url?: InputMaybe<Order_By>;
 };
 
