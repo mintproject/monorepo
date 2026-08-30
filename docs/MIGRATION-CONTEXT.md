@@ -18,7 +18,7 @@ BEFORE                                           AFTER
 ──────                                           ─────
 Fuseki (RDF/TriG)                                PostgreSQL  modelcatalog_*
    │ SPARQL .rq templates                           │
-model-catalog-fastapi  v1.8.0  ─── still up ───▶  Hasura GraphQL
+model-catalog-fastapi  v1.8.0  ─── retired ────▶  Hasura GraphQL
    │ REST                                           │
 @mintproject/modelcatalog_client                  model-catalog-api  v2.0.0 (REST facade)
    │                                                │
@@ -45,8 +45,9 @@ frontend migration is not what moved the data. Do not describe one as a phase of
 | Client | `@mintproject/modelcatalog_client` SDK | GraphQL, or REST facade |
 | Load | — | `etl/run.py`, TriG → Postgres, idempotent |
 
-**Both APIs are still live, on purpose.** `v1.8.0` stays indefinitely for external
-consumers. Fuseki itself is disabled in the chart (`model_catalog_endpoint.enabled: false`).
+**`v1.8.0` is deprecated (2026-08-29).** The `model-catalog-fastapi` repo is archived and
+unmaintained; `v2.0.0` is the only maintained REST API. Fuseki itself is disabled in the
+chart (`model_catalog_endpoint.enabled: false`).
 
 ### The data model you must know before writing a query
 
@@ -176,9 +177,9 @@ MINT monorepo context. Two migrations define the current state; they are INDEPEN
 
 1) MODEL CATALOG BACKEND — DONE (DYNAMO v2.0, shipped 2026-03-15).
    Apache Fuseki (RDF/TriG, SPARQL) → PostgreSQL `modelcatalog_*` + Hasura GraphQL.
-   - Legacy `model-catalog-fastapi` v1.8.0 (SPARQL) is STILL LIVE for external
-     consumers, indefinitely. New `model-catalog-api` v2.0.0 (TS/Fastify) is a thin
-     REST facade over Hasura.
+   - Legacy `model-catalog-fastapi` v1.8.0 (SPARQL) is DEPRECATED (2026-08-29); its
+     repo is archived and unmaintained. `model-catalog-api` v2.0.0 (TS/Fastify) is a
+     thin REST facade over Hasura and the only maintained REST API.
    - Hierarchy: Software > Version > Configuration > Setup. A "Setup" is NOT its own
      table — it is a `modelcatalog_configuration` row with non-null
      `model_configuration_id`. No type column.

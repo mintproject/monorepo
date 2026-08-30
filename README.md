@@ -90,7 +90,9 @@ This monorepo uses git submodules for major components:
 | `MINT_USERGUIDE/` | User documentation | MkDocs |
 | `scripts/` | Deployment and maintenance utilities | Shell, SQL |
 
-> **Note:** The `model-catalog-fastapi/` and `model-catalog-endpoint/` directories are legacy components from the old RDF/Fuseki-based architecture. They are no longer actively maintained and can be ignored. The platform now uses PostgreSQL with Hasura GraphQL as its data backend.
+> **Note:** `model-catalog-endpoint/` is a legacy component from the old RDF/Fuseki-based architecture. It is no longer actively maintained and can be ignored. The platform now uses PostgreSQL with Hasura GraphQL as its data backend.
+>
+> `model-catalog-fastapi` (legacy REST API v1.8.0) was deprecated on 2026-08-29. Its repository is archived and it is no longer part of this checkout.
 
 ## Getting Started
 

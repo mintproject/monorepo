@@ -3,6 +3,7 @@
 - **Status:** Accepted — implemented and shipped (DYNAMO v2.0, 2026-03-15)
 - **Deciders:** MINT platform engineering (ISI)
 - **Supersedes:** the RDF triplestore data path (`model-catalog-endpoint` + `model-catalog-fastapi`)
+- **Amended:** 2026-08-29 — part 4 reversed, `v1.8.0` deprecated (see [Amendment](#amendment-2026-08-29-v180-deprecated))
 - **Related:** [ADR-0002](0002-react-frontend-replaces-litelement-ui.md), `.planning/_archive/2026-dynamo-v2/`
 
 ---
@@ -95,6 +96,10 @@ Design points that are load-bearing and easy to break:
 
 ### 4. `v1.8.0` stays up, permanently
 
+> **Reversed on 2026-08-29.** This part no longer holds — see
+> [Amendment](#amendment-2026-08-29-v180-deprecated). The original text is kept below as
+> the record of what was decided in 2026-03.
+
 External consumers depend on the FastAPI contract. It remains served for parallel
 validation and backward compatibility. Fuseki itself is now disabled by default in the
 Helm chart (`model_catalog_endpoint.enabled: false`).
@@ -128,8 +133,9 @@ creates and leak orphans. v2.1.0 changed the write contract:
 
 **Costs and open debt**
 
-- Two REST APIs are alive at once (`v1.8.0` FastAPI/SPARQL, `v2.0.0` Fastify/Hasura).
-  This is deliberate and indefinite, not a transitional state anyone is racing to end.
+- ~~Two REST APIs are alive at once (`v1.8.0` FastAPI/SPARQL, `v2.0.0` Fastify/Hasura).
+  This is deliberate and indefinite, not a transitional state anyone is racing to end.~~
+  **Resolved 2026-08-29:** `v1.8.0` is deprecated; `v2.0.0` is the only maintained REST API.
 - Old `model` / `model_io` / `model_parameter` tables still exist for FK compatibility.
 - Docker Compose and CI still carry Fuseki references that were never cleaned up.
 - One `model_io` row of 136 did not match during migration — accepted as a data quality issue.
@@ -150,6 +156,27 @@ creates and leak orphans. v2.1.0 changed the write contract:
 - `npm run codegen` needs both `HASURA_ENDPOINT` and `HASURA_ADMIN_SECRET`. Without the
   secret, introspection returns no `modelcatalog_*` types and silently generates a
   broken file.
+
+## Amendment (2026-08-29): `v1.8.0` deprecated
+
+Part 4 of the decision is reversed. `model-catalog-fastapi` is retired.
+
+- The repository `mintproject/model-catalog-fastapi` is **archived** (read-only). Its
+  README carries a deprecation banner pointing at `model-catalog-api` `v2.0.0`.
+- The clone was removed from the monorepo working tree. It was never a submodule, so no
+  `.gitmodules` entry changed.
+- `model-catalog-api` `v2.0.0` is the only maintained REST API.
+
+**Why.** The parallel-validation window closed. Nobody maintains the per-resource SPARQL
+templates, and Fuseki — the store they query — has been disabled in the chart since v2.0.
+Keeping a public repository alive implied a support commitment that did not exist.
+
+**What this does not do.**
+
+- Archiving a repository does not stop a running service. The Helm chart deploys only
+  `ghcr.io/mintproject/model-catalog-api`, but any `v1.8.0` deployment running outside
+  the chart survives this change. That teardown is separate and not tracked here.
+- No migration notice was sent to external consumers as part of this change.
 
 ## References
 
