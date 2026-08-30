@@ -1,16 +1,10 @@
 [submodule "graphql_engine"]
 	path = graphql_engine
 	url = https://github.com/mintproject/graphql_engine.git
-[submodule "MINT_USERGUIDE"]
-	path = MINT_USERGUIDE
-	url = https://github.com/mintproject/MINT_USERGUIDE.git
 [submodule "mint-ensemble-manager"]
 	path = mint-ensemble-manager
 	url = https://github.com/mintproject/mint-ensemble-manager.git
 	branch = model-catalog-migration
-[submodule "model-catalog-fetch-api-client"]
-	path = model-catalog-fetch-api-client
-	url = https://github.com/mintproject/model-catalog-fetch-api-client.git
 [submodule "ui"]
 	path = ui
 	url = https://github.com/mintproject/mint-ui-lit.git
@@ -20,9 +14,3 @@
 [submodule "model-catalog-api"]
 	path = model-catalog-api
 	url = https://github.com/mintproject/model-catalog-api.git
-[submodule "model-catalog-ontology"]
-	path = model-catalog-ontology
-	url = https://github.com/mintproject/Mint-ModelCatalog-Ontology.git
-[submodule "dynamo-experiment-may"]
-	path = dynamo-experiment-may
-	url = https://github.com/In-For-Disaster-Analytics/dynamo-experiment-may.git
