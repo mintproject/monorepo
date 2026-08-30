@@ -1,0 +1,3 @@
+INSERT INTO public.intervention (id, name, description) VALUES ('weed_control', 'Weed control', 'Interventions concerning weed control and weed management practices can be reflected in the model by indicating the fraction of weeds that will remain after the weed treatments applied by farmers');
+INSERT INTO public.intervention (id, name, description) VALUES ('planting_windows', 'Planting windows', 'Interventions that force specific target planting windows can be expressed in this model as start and end planting dates');
+INSERT INTO public.intervention (id, name, description) VALUES ('fertilizer_subsidies', 'Fertilizer Subsidies', 'Interventions concerning fertilizer subsidies can be expressed in this model as a percentage of fertilizer prices');

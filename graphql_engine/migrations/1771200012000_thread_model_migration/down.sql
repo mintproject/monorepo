@@ -1,0 +1,4 @@
+-- Irreversible: data migration cannot be undone without backup.
+-- The public.model table and its dependents (model_input, model_output, model_parameter)
+-- have been dropped, and modelcatalog_setup_id columns have been removed from
+-- thread_model and execution. These changes require a database restore to reverse.

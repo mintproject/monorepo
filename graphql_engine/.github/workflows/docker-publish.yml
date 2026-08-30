@@ -1,0 +1,113 @@
+name: hasura
+
+on:
+  push:
+    branches:
+      - "**"
+    tags:
+      - v*
+  pull_request:
+
+env:
+  IMAGE_NAME: graphql-engine
+  #variables related with the repository
+  REPOSITORY_MAIN_BRANCH: "master"
+  #variables related with the docker image registry
+  DOCKER_IMAGE_REPOSITORY: ghcr.io/mintproject
+  DOCKER_IMAGE_NAME: graphql-engine
+  DOCKER_FILE: "Dockerfile"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    outputs:
+      docker_tag: ${{ steps.exposeValue.outputs.docker_tag }}
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Get branch name
+        id: branch-name
+        uses: tj-actions/branch-names@v6
+
+      - uses: actions/checkout@v4
+
+      - name: Compute sanitized branch tag
+        run: |
+          SAFE_BRANCH="${GITHUB_REF_NAME}"
+          # Docker tag spec forbids '/'; replace with '-' so slash-containing branches build
+          echo "SAFE_BRANCH=${SAFE_BRANCH//\//-}" >> $GITHUB_ENV
+
+      - name: Create environment variable with the commit id
+        run: |
+          echo "DOCKER_TAG=${GITHUB_SHA}" >> $GITHUB_ENV
+
+      - name: Expose the commit id
+        id: exposeValue
+        run: |
+          echo "docker_tag=${{ env.DOCKER_TAG }}" >> $GITHUB_OUTPUT
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          push: true
+          context: .
+          tags: ${{ env.DOCKER_IMAGE_REPOSITORY }}/${{ env.DOCKER_IMAGE_NAME }}:${{ env.SAFE_BRANCH }}, ${{ env.DOCKER_IMAGE_REPOSITORY }}/${{ env.DOCKER_IMAGE_NAME }}:${{ env.DOCKER_TAG }}
+          file: ${{ env.DOCKER_FILE}}
+          platforms: linux/amd64,linux/arm64
+
+      - name: Running on the default branch.
+        if: steps.branch-name.outputs.is_default == 'true'
+        uses: docker/build-push-action@v5
+        with:
+          push: true
+          context: .
+          tags: ${{ env.DOCKER_IMAGE_REPOSITORY }}/${{ env.DOCKER_IMAGE_NAME }}:latest
+          file: ${{ env.DOCKER_FILE}}
+          platforms: linux/amd64,linux/arm64
+
+  security:
+    permissions:
+      contents: read
+      security-events: write
+      packages: read
+    name: "Scan vulnerabilities in the image"
+    needs: [build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.DOCKER_IMAGE_REPOSITORY }}/${{ env.DOCKER_IMAGE_NAME }}:${{ needs.build.outputs.docker_tag }}
+          format: "sarif"
+          output: "trivy-results.sarif"
+          severity: "HIGH,CRITICAL"
+          exit-code: "0"
+          ignore-unfixed: "true"
+
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v4
+        if: always()
+        with:
+          sarif_file: "trivy-results.sarif"
