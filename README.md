@@ -7,12 +7,15 @@
 The four services build from this repository. `ui/` and `helm-charts/` are still submodules
 and build from their own.
 
+The four service badges track `main`, the production branch. `develop` is the integration
+branch — see `CLAUDE.md` § Branch model.
+
 | Component | Build |
 |-----------|-------|
-| Model Catalog API | [![Model Catalog API](https://github.com/mintproject/monorepo/actions/workflows/model-catalog-api.yml/badge.svg)](https://github.com/mintproject/monorepo/actions/workflows/model-catalog-api.yml) |
-| Ensemble Manager | [![Ensemble Manager](https://github.com/mintproject/monorepo/actions/workflows/mint-ensemble-manager.yml/badge.svg)](https://github.com/mintproject/monorepo/actions/workflows/mint-ensemble-manager.yml) |
-| UI (React) | [![UI React](https://github.com/mintproject/monorepo/actions/workflows/ui-react.yml/badge.svg)](https://github.com/mintproject/monorepo/actions/workflows/ui-react.yml) |
-| Hasura GraphQL engine | [![GraphQL Engine](https://github.com/mintproject/monorepo/actions/workflows/graphql_engine.yml/badge.svg)](https://github.com/mintproject/monorepo/actions/workflows/graphql_engine.yml) |
+| Model Catalog API | [![Model Catalog API](https://github.com/mintproject/monorepo/actions/workflows/model-catalog-api.yml/badge.svg?branch=main)](https://github.com/mintproject/monorepo/actions/workflows/model-catalog-api.yml) |
+| Ensemble Manager | [![Ensemble Manager](https://github.com/mintproject/monorepo/actions/workflows/mint-ensemble-manager.yml/badge.svg?branch=main)](https://github.com/mintproject/monorepo/actions/workflows/mint-ensemble-manager.yml) |
+| UI (React) | [![UI React](https://github.com/mintproject/monorepo/actions/workflows/ui-react.yml/badge.svg?branch=main)](https://github.com/mintproject/monorepo/actions/workflows/ui-react.yml) |
+| Hasura GraphQL engine | [![GraphQL Engine](https://github.com/mintproject/monorepo/actions/workflows/graphql_engine.yml/badge.svg?branch=main)](https://github.com/mintproject/monorepo/actions/workflows/graphql_engine.yml) |
 | UI (LitElement, submodule [mint-ui-lit](https://github.com/mintproject/mint-ui-lit)) | [![ui](https://github.com/mintproject/mint-ui-lit/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/mintproject/mint-ui-lit/actions/workflows/docker-publish.yml) |
 | Helm charts (submodule [mint](https://github.com/mintproject/mint)) | [![Lint and Test Charts](https://github.com/mintproject/mint/actions/workflows/linter.yaml/badge.svg)](https://github.com/mintproject/mint/actions/workflows/linter.yaml) [![Helm Docs](https://github.com/mintproject/mint/actions/workflows/docs.yaml/badge.svg)](https://github.com/mintproject/mint/actions/workflows/docs.yaml) |
 
