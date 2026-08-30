@@ -11,6 +11,3 @@
 [submodule "helm-charts"]
 	path = helm-charts
 	url = https://github.com/mintproject/mint.git
-[submodule "model-catalog-api"]
-	path = model-catalog-api
-	url = https://github.com/mintproject/model-catalog-api.git
