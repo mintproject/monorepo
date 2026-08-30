@@ -78,39 +78,55 @@ echo "  Checking cluster connectivity..."
 run kubectl get namespace "${NAMESPACE}" --request-timeout=10s > /dev/null
 echo "  Cluster: reachable (namespace '${NAMESPACE}' exists)"
 
-# Step 0.5 - Check submodule changes are pushed
-step "Checking that submodule changes are pushed"
+# Step 0.5 - Check that changes are pushed
+step "Checking that changes are pushed"
 
-UNPUSHED_SUBS=()
+# The single-repo cutover turns model-catalog-api and graphql_engine into plain
+# directories. `git -C <dir>` then resolves to this repository, so the old loop
+# reported *this* repository's branch and unpushed commits under the service's
+# name, and offered to push them. That is a lie that looks like a pass. Check a
+# path only while it is still its own repository.
+UNPUSHED_DIRS=()
+
+check_repo() {
+  local label="$1" dir="$2" branch unpushed
+  branch=$(git -C "$dir" rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown")
+  unpushed=$(git -C "$dir" log --oneline "@{upstream}..HEAD" 2>/dev/null || echo "")
+  if [[ -n "$unpushed" ]]; then
+    echo "  FAIL: ${label} has unpushed commits on '${branch}':" >&2
+    echo "$unpushed" | sed 's/^/    /' >&2
+    UNPUSHED_DIRS+=("$dir")
+  else
+    echo "  ${label} (${branch}): all commits pushed"
+  fi
+}
+
+is_own_repo() {
+  local dir="$1" top
+  top=$(git -C "$dir" rev-parse --show-toplevel 2>/dev/null) || return 1
+  [[ "$top" == "$(cd "$dir" && pwd -P)" ]]
+}
+
+REPO_ROOT=$(git rev-parse --show-toplevel)
+check_repo "this repository" "$REPO_ROOT"
+
 for sub in model-catalog-api graphql_engine; do
-  if [[ -d "$sub" ]]; then
-    pushd "$sub" > /dev/null
-    BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown")
-    UNPUSHED=$(git log --oneline "@{upstream}..HEAD" 2>/dev/null || echo "")
-    if [[ -n "$UNPUSHED" ]]; then
-      echo "  FAIL: ${sub} has unpushed commits on '${BRANCH}':" >&2
-      echo "$UNPUSHED" | sed 's/^/    /' >&2
-      UNPUSHED_SUBS+=("$sub")
-    else
-      echo "  ${sub} (${BRANCH}): all commits pushed"
-    fi
-    popd > /dev/null
+  if [[ -d "$sub" ]] && is_own_repo "$sub"; then
+    check_repo "$sub" "$sub"
   fi
 done
 
-if [[ ${#UNPUSHED_SUBS[@]} -gt 0 ]]; then
+if [[ ${#UNPUSHED_DIRS[@]} -gt 0 ]]; then
   echo ""
   read -rp "  Push unpushed changes now? [y/N] " answer
   if [[ "$answer" =~ ^[Yy]$ ]]; then
-    for sub in "${UNPUSHED_SUBS[@]}"; do
-      echo "  Pushing ${sub}..."
-      pushd "$sub" > /dev/null
-      run git push
-      popd > /dev/null
+    for dir in "${UNPUSHED_DIRS[@]}"; do
+      echo "  Pushing ${dir}..."
+      run git -C "$dir" push
     done
-    echo "  All submodules pushed."
+    echo "  All repositories pushed."
   else
-    echo "ERROR: Aborting — push changes first, then re-run." >&2
+    echo "ERROR: Aborting - push changes first, then re-run." >&2
     exit 1
   fi
 fi
