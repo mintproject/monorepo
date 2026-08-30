@@ -1,0 +1,5 @@
+mutation update_execution_run_id($id: uuid!, $run_id: String!) {
+    update_execution_by_pk(pk_columns: { id: $id }, _set: { run_id: $run_id }) {
+        id
+    }
+}

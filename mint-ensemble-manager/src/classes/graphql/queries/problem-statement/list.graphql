@@ -1,0 +1,11 @@
+#import "../fragments/problem-statement-info.graphql"
+
+query ListProblemStatements {
+    problem_statement {
+        ...problem_statement_info
+        tasks {
+            id
+            name
+        }
+    }
+}

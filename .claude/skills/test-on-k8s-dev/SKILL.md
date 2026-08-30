@@ -1,23 +1,23 @@
 ---
 name: test-on-k8s-dev
-description: Deploy and test a submodule branch build on the shared MicroK8s development cluster (release `mint`, namespace `mint`) before opening a helm PR. Use when asked to test a change on Kubernetes, verify a fix on the dev instance, check whether a deployed image actually contains a change, or reach Hasura / the model catalog API running in-cluster.
+description: Deploy and test a `mintproject/monorepo` branch build on the shared MicroK8s development cluster (release `mint`, namespace `mint`) before pinning a tag. Use when asked to test a change on Kubernetes, verify a fix on the dev instance, check whether a deployed image actually contains a change, or reach Hasura / the model catalog API running in-cluster.
 ---
 
 # test-on-k8s-dev
 
-How to exercise a change on the shared MicroK8s dev cluster. This is the gap between "CI is green" and "open a helm PR": CI proves the image builds, this proves it works against real data.
+How to exercise a change on the shared MicroK8s dev cluster. This is the gap between "CI is green" and "pin the tag": CI proves the image builds, this proves it works against real data.
 
 For local-only work use the `run-e2e-hasura` skill in `model-catalog-api/` instead. That runs against a local Hasura and needs no cluster.
 
 ## The cluster
 
-Verified 2026-08-27:
+Verified 2026-08-30:
 
 | | |
 |---|---|
 | kubectl context | `microk8s` (cluster `microk8s-cluster`, node `pop-os`, k8s v1.31.14) |
 | Namespace | `mint` (already the context default) |
-| Helm release | `mint`, chart `MINT-9.0.0-beta.2` |
+| Helm release | `mint`, chart `MINT-9.0.0-beta.6` |
 
 The cluster is remote, not on the laptop. `kubectl get nodes` is the fastest liveness check.
 
@@ -25,12 +25,16 @@ The cluster is remote, not on the laptop. `kubectl get nodes` is the fastest liv
 
 ## Component map
 
-| Submodule | Deployment | Container | Service | Ingress host | Chart values key |
-|---|---|---|---|---|---|
-| `model-catalog-api` | `mint-model-catalog` | `model-catalog` | `mint-model-catalog:80` | `api.models.mint.local` | `components.model_catalog_api.image.tag` |
-| `graphql_engine` | `mint-hasura` | | `mint-hasura:80` | `graphql.mint.local` | `components.hasura.image.tag` |
-| `mint-ensemble-manager` | `mint-ensemble-manager` | | | `ensemble-manager.mint.local` | `components.ensemble_manager.image.tag` |
-| `ui` (mint-ui-lit) | `mint-ui` | | | `mint.local` | `components.ui.image.tag` |
+The four services that ship from `mintproject/monorepo`:
+
+| Directory | Deployment | Container | Ingress host | Image |
+|---|---|---|---|---|
+| `model-catalog-api` | `mint-model-catalog` | `model-catalog` | `api.models.mint.local` | `ghcr.io/mintproject/model-catalog-api` |
+| `graphql_engine` | `mint-hasura` | `hasura` | `graphql.mint.local` | `ghcr.io/mintproject/graphql-engine` |
+| `mint-ensemble-manager` | `mint-ensemble-manager` | `head` | `ensemble-manager.mint.local` | `ghcr.io/mintproject/ensemble-manager` |
+| `ui-react` | `mint-ui-react` | `ui-react` | `mint.local` | `ghcr.io/mintproject/mint-ui-react` |
+
+`ui` (mint-ui-lit) is still its own repository: deployment `mint-ui`, host `legacy.mint.local`.
 
 The `*.mint.local` hosts only resolve if the node IP is in your `/etc/hosts`. Port-forwarding avoids that entirely and is the better default for a quick check.
 
@@ -47,23 +51,25 @@ Read-only, safe on a shared cluster, and enough to characterise current behaviou
 
 ## Deploying a branch build
 
-CI in `model-catalog-api` pushes on **every branch push**, so a branch image exists as soon as `build-and-push` is green — you do not need to merge to test:
+CI in `mintproject/monorepo` builds **all four services on every branch push**, with no path filter, so one commit gives you a whole consistent system. A branch image exists as soon as its `publish` job is green — you do not need to merge to test:
 
-- `ghcr.io/mintproject/model-catalog-api:<full-commit-sha>`
-- `ghcr.io/mintproject/model-catalog-api:<branch-name-with-slashes-as-dashes>`
-- `:latest` is only republished on `main`.
+- `ghcr.io/mintproject/<image>:<full-commit-sha>`
+- `ghcr.io/mintproject/<image>:<branch-name-with-slashes-as-dashes>`
+- `:latest` is only republished on the default branch.
 
 Confirm the image is really in the registry before deploying it:
 
 ```bash
-TOKEN=$(curl -s "https://ghcr.io/token?scope=repository:mintproject/model-catalog-api:pull&service=ghcr.io" \
+IMAGE=model-catalog-api
+SHA=<full-sha>
+TOKEN=$(curl -s "https://ghcr.io/token?scope=repository:mintproject/${IMAGE}:pull&service=ghcr.io" \
   | python3 -c "import sys,json;print(json.load(sys.stdin)['token'])")
 curl -s -o /dev/null -w "%{http_code}\n" -H "Authorization: Bearer $TOKEN" \
   -H "Accept: application/vnd.oci.image.index.v1+json" \
-  "https://ghcr.io/v2/mintproject/model-catalog-api/manifests/<sha>"
+  "https://ghcr.io/v2/mintproject/${IMAGE}/manifests/${SHA}"
 ```
 
-`200` means present.
+`200` means present. Brace the variable as `${IMAGE}`. In zsh, `"$IMAGE:latest"` applies the `:l` lowercase modifier instead of appending a tag, and the probe silently reports the wrong thing.
 
 Then point the deployment at it. **This mutates a shared cluster — ask the user first.**
 
@@ -84,6 +90,8 @@ kubectl rollout undo -n mint deploy/mint-model-catalog
 ```
 
 Helm will also overwrite this on its next `helm upgrade`, so a forgotten `set image` is not permanent — but do not leave the shared instance on a branch build.
+
+**A helm upgrade does not run Hasura migrations.** The migration job is a post-install hook only, so a `graphql_engine` schema change needs a hand-run step ([#117](https://github.com/mintproject/monorepo/issues/117)).
 
 ## Verifying the change is actually live
 
@@ -124,4 +132,4 @@ Two corollaries when adding a query param to this API:
 1. Push the branch, wait for CI (`gh pr checks <n>`).
 2. Confirm the image is in GHCR.
 3. Deploy it here and verify differentially (this skill).
-4. Only then pin the SHA in helm and open the PR — via the `update-helm-image-tags` or `dynamo-bump-from-branch` skill.
+4. Only then pin the tag and open the PR — the `bump-image-tag` skill.

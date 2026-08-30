@@ -1,0 +1,5 @@
+query CheckVariableById($id: String!) {
+    variable(where: { id: { _eq: $id } }) {
+        id
+    }
+}
