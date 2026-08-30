@@ -125,6 +125,12 @@ export function MintResults({
       setPublishError((e) => ({ ...e, [mid]: '' }));
       try {
         await onPublishResults(mid);
+        // Registration writes the execution_result rows server-side, and this
+        // table renders the executions held in the parent's state — which
+        // `onPublishResults` does not reload. Without this the rows only appear
+        // on a later Reload, so a successful fetch still reads
+        // "No results available" (#110).
+        onFetchRuns(mid, pages[mid] ?? 1, PAGE_SIZE);
       } catch (err) {
         // Registration reaches Tapis and CKAN, so it fails for reasons the user
         // cannot guess at — an expired data-catalog credential reads as a bare
@@ -137,7 +143,7 @@ export function MintResults({
         setPublishWaiting((w) => ({ ...w, [mid]: false }));
       }
     },
-    [onPublishResults],
+    [onPublishResults, onFetchRuns, pages],
   );
 
   // ─ CSV download ─────────────────────────────────────────────────────────
