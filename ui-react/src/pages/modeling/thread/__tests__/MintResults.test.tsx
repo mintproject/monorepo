@@ -245,7 +245,10 @@ describe('MintResults', () => {
     },
   };
 
-  function renderFinished(onPublishResults?: () => Promise<void>) {
+  function renderFinished(
+    onPublishResults?: () => Promise<void>,
+    onFetchRuns: (modelId: string, page: number, pageSize: number) => void = vi.fn(),
+  ) {
     return renderWithProviders(
       <MintResults
         threadData={threadDataFinished}
@@ -253,7 +256,7 @@ describe('MintResults', () => {
         canWrite
         ingestionApiAvailable={false}
         onContinue={vi.fn()}
-        onFetchRuns={vi.fn()}
+        onFetchRuns={onFetchRuns}
         onPublishResults={onPublishResults}
       />,
     );
@@ -266,6 +269,34 @@ describe('MintResults', () => {
     fireEvent.click(screen.getByTestId('fetch-results-model-1'));
 
     await waitFor(() => expect(onPublishResults).toHaveBeenCalledWith('model-1'));
+  });
+
+  // The server writes the execution_result rows; this table renders the
+  // executions the parent holds. Without a reload after publishing, a
+  // successful fetch still reads "No results available" (#110).
+  it('reloads the executions after a successful publish', async () => {
+    const onFetchRuns = vi.fn();
+    renderFinished(vi.fn().mockResolvedValue(undefined), onFetchRuns);
+
+    // The mount effect loads page 1 once; the publish must load it again.
+    await waitFor(() => expect(onFetchRuns).toHaveBeenCalledTimes(1));
+
+    fireEvent.click(screen.getByTestId('fetch-results-model-1'));
+
+    await waitFor(() => expect(onFetchRuns).toHaveBeenCalledTimes(2));
+    expect(onFetchRuns).toHaveBeenLastCalledWith('model-1', 1, expect.any(Number));
+  });
+
+  it('does not reload the executions when publishing fails', async () => {
+    const onFetchRuns = vi.fn();
+    renderFinished(vi.fn().mockRejectedValue(new Error('boom')), onFetchRuns);
+
+    await waitFor(() => expect(onFetchRuns).toHaveBeenCalledTimes(1));
+
+    fireEvent.click(screen.getByTestId('fetch-results-model-1'));
+
+    expect(await screen.findByTestId('publish-error-model-1')).toBeInTheDocument();
+    expect(onFetchRuns).toHaveBeenCalledTimes(1);
   });
 
   it('shows the failure instead of dropping it', async () => {
