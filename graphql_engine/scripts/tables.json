@@ -1,0 +1,5305 @@
+{
+	"tables": [
+		{
+			"table": {
+				"name": "dataset",
+				"schema": "public"
+			},
+			"array_relationships": [
+				{
+					"name": "dataslices",
+					"using": {
+						"foreign_key_constraint_on": {
+							"column": "dataset_id",
+							"table": {
+								"name": "dataslice",
+								"schema": "public"
+							}
+						}
+					}
+				}
+			],
+			"insert_permissions": [
+				{
+					"role": "user",
+					"permission": {
+						"check": {},
+						"columns": [
+							"id",
+							"name",
+							"description",
+							"categories",
+							"datatype",
+							"start_date",
+							"end_date",
+							"spatial_coverage"
+						]
+					}
+				}
+			],
+			"select_permissions": [
+				{
+					"role": "user",
+					"permission": {
+						"columns": [
+							"end_date",
+							"start_date",
+							"spatial_coverage",
+							"categories",
+							"datatype",
+							"description",
+							"id",
+							"name"
+						],
+						"filter": {}
+					}
+				}
+			],
+			"update_permissions": [
+				{
+					"role": "user",
+					"permission": {
+						"columns": [
+							"name"
+						],
+						"filter": {},
+						"check": null
+					}
+				}
+			]
+		},
+		{
+			"table": {
+				"name": "dataslice",
+				"schema": "public"
+			},
+			"object_relationships": [
+				{
+					"name": "dataset",
+					"using": {
+						"foreign_key_constraint_on": "dataset_id"
+					}
+				},
+				{
+					"name": "region",
+					"using": {
+						"foreign_key_constraint_on": "region_id"
+					}
+				}
+			],
+			"array_relationships": [
+				{
+					"name": "resources",
+					"using": {
+						"foreign_key_constraint_on": {
+							"column": "dataslice_id",
+							"table": {
+								"name": "dataslice_resource",
+								"schema": "public"
+							}
+						}
+					}
+				},
+				{
+					"name": "thread_data",
+					"using": {
+						"foreign_key_constraint_on": {
+							"column": "dataslice_id",
+							"table": {
+								"name": "thread_data",
+								"schema": "public"
+							}
+						}
+					}
+				},
+				{
+					"name": "thread_model_ios",
+					"using": {
+						"foreign_key_constraint_on": {
+							"column": "dataslice_id",
+							"table": {
+								"name": "thread_model_io",
+								"schema": "public"
+							}
+						}
+					}
+				}
+			],
+			"insert_permissions": [
+				{
+					"role": "user",
+					"permission": {
+						"check": {},
+						"columns": [
+							"id",
+							"name",
+							"dataset_id",
+							"start_date",
+							"end_date",
+							"region_id",
+							"resource_count"
+						]
+					}
+				}
+			],
+			"select_permissions": [
+				{
+					"role": "anonymous",
+					"permission": {
+						"columns": [
+							"id",
+							"name",
+							"dataset_id",
+							"start_date",
+							"end_date",
+							"region_id",
+							"resource_count"
+						],
+						"filter": {},
+						"allow_aggregations": true
+					}
+				},
+				{
+					"role": "user",
+					"permission": {
+						"columns": [
+							"end_date",
+							"start_date",
+							"resource_count",
+							"dataset_id",
+							"name",
+							"region_id",
+							"id"
+						],
+						"filter": {},
+						"allow_aggregations": true
+					}
+				}
+			],
+			"update_permissions": [
+				{
+					"role": "user",
+					"permission": {
+						"columns": [
+							"id",
+							"name",
+							"dataset_id",
+							"start_date",
+							"end_date",
+							"region_id",
+							"resource_count"
+						],
+						"filter": {
+							"thread_data": {
+								"thread": {
+									"_or": [
+										{
+											"permissions": {
+												"_and": [
+													{
+														"user_id": {
+															"_in": [
+																"X-Hasura-User-Id",
+																"*"
+															]
+														}
+													},
+													{
+														"write": {
+															"_eq": true
+														}
+													}
+												]
+											}
+										},
+										{
+											"events": {
+												"_and": [
+													{
+														"event": {
+															"_eq": "CREATE"
+														}
+													},
+													{
+														"userid": {
+															"_eq": "X-Hasura-User-Id"
+														}
+													}
+												]
+											}
+										}
+									]
+								}
+							}
+						},
+						"check": null
+					}
+				}
+			],
+			"delete_permissions": [
+				{
+					"role": "user",
+					"permission": {
+						"backend_only": false,
+						"filter": {
+							"thread_data": {
+								"thread": {
+									"_or": [
+										{
+											"permissions": {
+												"_and": [
+													{
+														"user_id": {
+															"_in": [
+																"X-Hasura-User-Id",
+																"*"
+															]
+														}
+													},
+													{
+														"read": {
+															"_eq": true
+														}
+													}
+												]
+											}
+										},
+										{
+											"events": {
+												"_and": [
+													{
+														"event": {
+															"_eq": "CREATE"
+														}
+													},
+													{
+														"userid": {
+															"_eq": "X-Hasura-User-Id"
+														}
+													}
+												]
+											}
+										}
+									]
+								}
+							}
+						}
+					}
+				}
+			]
+		},
+		{
+			"table": {
+				"name": "dataslice_resource",
+				"schema": "public"
+			},
+			"object_relationships": [
+				{
+					"name": "dataslice",
+					"using": {
+						"foreign_key_constraint_on": "dataslice_id"
+					}
+				},
+				{
+					"name": "resource",
+					"using": {
+						"foreign_key_constraint_on": "resource_id"
+					}
+				}
+			],
+			"insert_permissions": [
+				{
+					"role": "user",
+					"permission": {
+						"check": {},
+						"columns": [
+							"dataslice_id",
+							"resource_id",
+							"selected"
+						]
+					}
+				}
+			],
+			"select_permissions": [
+				{
+					"role": "anonymous",
+					"permission": {
+						"columns": [
+							"dataslice_id",
+							"resource_id",
+							"selected"
+						],
+						"filter": {},
+						"allow_aggregations": true
+					}
+				},
+				{
+					"role": "user",
+					"permission": {
+						"columns": [
+							"selected",
+							"resource_id",
+							"dataslice_id"
+						],
+						"filter": {},
+						"allow_aggregations": true
+					}
+				}
+			],
+			"update_permissions": [
+				{
+					"role": "user",
+					"permission": {
+						"columns": [
+							"dataslice_id",
+							"resource_id",
+							"selected"
+						],
+						"filter": {
+							"dataslice": {
+								"thread_data": {
+									"thread": {
+										"_or": [
+											{
+												"permissions": {
+													"_and": [
+														{
+															"user_id": {
+																"_in": [
+																	"X-Hasura-User-Id",
+																	"*"
+																]
+															}
+														},
+														{
+															"write": {
+																"_eq": true
+															}
+														}
+													]
+												}
+											},
+											{
+												"events": {
+													"_and": [
+														{
+															"event": {
+																"_eq": "CREATE"
+															}
+														},
+														{
+															"userid": {
+																"_eq": "X-Hasura-User-Id"
+															}
+														}
+													]
+												}
+											}
+										]
+									}
+								}
+							}
+						},
+						"check": null
+					}
+				}
+			],
+			"delete_permissions": [
+				{
+					"role": "user",
+					"permission": {
+						"backend_only": false,
+						"filter": {
+							"dataslice": {
+								"thread_data": {
+									"thread": {
+										"_or": [
+											{
+												"permissions": {
+													"_and": [
+														{
+															"user_id": {
+																"_in": [
+																	"X-Hasura-User-Id",
+																	"*"
+																]
+															}
+														},
+														{
+															"write": {
+																"_eq": true
+															}
+														}
+													]
+												}
+											},
+											{
+												"events": {
+													"_and": [
+														{
+															"event": {
+																"_eq": "CREATE"
+															}
+														},
+														{
+															"userid": {
+																"_eq": "X-Hasura-User-Id"
+															}
+														}
+													]
+												}
+											}
+										]
+									}
+								}
+							}
+						}
+					}
+				}
+			]
+		},
+		{
+			"table": {
+				"name": "execution",
+				"schema": "public"
+			},
+			"object_relationships": [
+				{
+					"name": "model",
+					"using": {
+						"foreign_key_constraint_on": "model_id"
+					}
+				}
+			],
+			"array_relationships": [
+				{
+					"name": "data_bindings",
+					"using": {
+						"foreign_key_constraint_on": {
+							"column": "execution_id",
+							"table": {
+								"name": "execution_data_binding",
+								"schema": "public"
+							}
+						}
+					}
+				},
+				{
+					"name": "parameter_bindings",
+					"using": {
+						"foreign_key_constraint_on": {
+							"column": "execution_id",
+							"table": {
+								"name": "execution_parameter_binding",
+								"schema": "public"
+							}
+						}
+					}
+				},
+				{
+					"name": "results",
+					"using": {
+						"foreign_key_constraint_on": {
+							"column": "execution_id",
+							"table": {
+								"name": "execution_result",
+								"schema": "public"
+							}
+						}
+					}
+				},
+				{
+					"name": "thread_model_executions",
+					"using": {
+						"foreign_key_constraint_on": {
+							"column": "execution_id",
+							"table": {
+								"name": "thread_model_execution",
+								"schema": "public"
+							}
+						}
+					}
+				}
+			],
+			"insert_permissions": [
+				{
+					"role": "user",
+					"permission": {
+						"check": {},
+						"columns": [
+							"id",
+							"status",
+							"execution_engine",
+							"model_id",
+							"start_time",
+							"end_time",
+							"run_progress",
+							"run_id"
+						]
+					}
+				}
+			],
+			"select_permissions": [
+				{
+					"role": "anonymous",
+					"permission": {
+						"columns": [
+							"id",
+							"status",
+							"execution_engine",
+							"model_id",
+							"start_time",
+							"end_time",
+							"run_progress",
+							"run_id"
+						],
+						"filter": {},
+						"allow_aggregations": true
+					}
+				},
+				{
+					"role": "user",
+					"permission": {
+						"columns": [
+							"id",
+							"status",
+							"execution_engine",
+							"model_id",
+							"start_time",
+							"end_time",
+							"run_progress",
+							"run_id"
+						],
+						"filter": {},
+						"allow_aggregations": true
+					}
+				}
+			],
+			"update_permissions": [
+				{
+					"role": "user",
+					"permission": {
+						"columns": [
+							"run_progress",
+							"execution_engine",
+							"model_id",
+							"run_id",
+							"status",
+							"end_time",
+							"start_time",
+							"id"
+						],
+						"filter": {},
+						"check": {}
+					}
+				}
+			],
+			"delete_permissions": [
+				{
+					"role": "user",
+					"permission": {
+						"backend_only": false,
+						"filter": {}
+					}
+				}
+			]
+		},
+		{
+			"table": {
+				"name": "execution_data_binding",
+				"schema": "public"
+			},
+			"object_relationships": [
+				{
+					"name": "execution",
+					"using": {
+						"foreign_key_constraint_on": "execution_id"
+					}
+				},
+				{
+					"name": "model_io",
+					"using": {
+						"foreign_key_constraint_on": "model_io_id"
+					}
+				},
+				{
+					"name": "resource",
+					"using": {
+						"foreign_key_constraint_on": "resource_id"
+					}
+				}
+			],
+			"insert_permissions": [
+				{
+					"role": "user",
+					"permission": {
+						"check": {},
+						"columns": [
+							"execution_id",
+							"model_io_id",
+							"resource_id"
+						]
+					}
+				}
+			],
+			"select_permissions": [
+				{
+					"role": "anonymous",
+					"permission": {
+						"columns": [
+							"execution_id",
+							"model_io_id",
+							"resource_id"
+						],
+						"filter": {},
+						"allow_aggregations": true
+					}
+				},
+				{
+					"role": "user",
+					"permission": {
+						"columns": [
+							"execution_id",
+							"model_io_id",
+							"resource_id"
+						],
+						"filter": {},
+						"allow_aggregations": true
+					}
+				}
+			],
+			"update_permissions": [
+				{
+					"role": "user",
+					"permission": {
+						"columns": [
+							"execution_id",
+							"model_io_id",
+							"resource_id"
+						],
+						"filter": {},
+						"check": {}
+					}
+				}
+			],
+			"delete_permissions": [
+				{
+					"role": "user",
+					"permission": {
+						"backend_only": false,
+						"filter": {}
+					}
+				}
+			]
+		},
+		{
+			"table": {
+				"name": "execution_parameter_binding",
+				"schema": "public"
+			},
+			"object_relationships": [
+				{
+					"name": "execution",
+					"using": {
+						"foreign_key_constraint_on": "execution_id"
+					}
+				},
+				{
+					"name": "model_parameter",
+					"using": {
+						"foreign_key_constraint_on": "model_parameter_id"
+					}
+				}
+			],
+			"insert_permissions": [
+				{
+					"role": "user",
+					"permission": {
+						"check": {},
+						"columns": [
+							"model_parameter_id",
+							"parameter_value",
+							"execution_id"
+						]
+					}
+				}
+			],
+			"select_permissions": [
+				{
+					"role": "anonymous",
+					"permission": {
+						"columns": [
+							"execution_id",
+							"model_parameter_id",
+							"parameter_value"
+						],
+						"filter": {},
+						"allow_aggregations": true
+					}
+				},
+				{
+					"role": "user",
+					"permission": {
+						"columns": [
+							"execution_id",
+							"model_parameter_id",
+							"parameter_value"
+						],
+						"filter": {},
+						"allow_aggregations": true
+					}
+				}
+			],
+			"update_permissions": [
+				{
+					"role": "user",
+					"permission": {
+						"columns": [
+							"model_parameter_id",
+							"parameter_value",
+							"execution_id"
+						],
+						"filter": {},
+						"check": {}
+					}
+				}
+			],
+			"delete_permissions": [
+				{
+					"role": "user",
+					"permission": {
+						"backend_only": false,
+						"filter": {}
+					}
+				}
+			]
+		},
+		{
+			"table": {
+				"name": "execution_result",
+				"schema": "public"
+			},
+			"object_relationships": [
+				{
+					"name": "execution",
+					"using": {
+						"foreign_key_constraint_on": "execution_id"
+					}
+				},
+				{
+					"name": "model_output",
+					"using": {
+						"foreign_key_constraint_on": "model_io_id"
+					}
+				},
+				{
+					"name": "resource",
+					"using": {
+						"foreign_key_constraint_on": "resource_id"
+					}
+				}
+			],
+			"insert_permissions": [
+				{
+					"role": "user",
+					"permission": {
+						"check": {},
+						"columns": [
+							"execution_id",
+							"model_io_id",
+							"resource_id"
+						]
+					}
+				}
+			],
+			"select_permissions": [
+				{
+					"role": "anonymous",
+					"permission": {
+						"columns": [
+							"execution_id",
+							"model_io_id",
+							"resource_id"
+						],
+						"filter": {},
+						"allow_aggregations": true
+					}
+				},
+				{
+					"role": "user",
+					"permission": {
+						"columns": [
+							"execution_id",
+							"model_io_id",
+							"resource_id"
+						],
+						"filter": {},
+						"allow_aggregations": true
+					}
+				}
+			],
+			"update_permissions": [
+				{
+					"role": "user",
+					"permission": {
+						"columns": [
+							"execution_id",
+							"model_io_id",
+							"resource_id"
+						],
+						"filter": {},
+						"check": {}
+					}
+				}
+			],
+			"delete_permissions": [
+				{
+					"role": "user",
+					"permission": {
+						"backend_only": false,
+						"filter": {}
+					}
+				}
+			]
+		},
+		{
+			"table": {
+				"name": "intervention",
+				"schema": "public"
+			},
+			"array_relationships": [
+				{
+					"name": "variables",
+					"using": {
+						"foreign_key_constraint_on": {
+							"column": "intervention_id",
+							"table": {
+								"name": "variable",
+								"schema": "public"
+							}
+						}
+					}
+				}
+			],
+			"select_permissions": [
+				{
+					"role": "anonymous",
+					"permission": {
+						"columns": [
+							"id",
+							"name",
+							"description"
+						],
+						"filter": {},
+						"allow_aggregations": true
+					}
+				},
+				{
+					"role": "user",
+					"permission": {
+						"columns": [
+							"id",
+							"name",
+							"description"
+						],
+						"filter": {},
+						"allow_aggregations": true
+					}
+				}
+			]
+		},
+		{
+			"table": {
+				"name": "model",
+				"schema": "public"
+			},
+			"array_relationships": [
+				{
+					"name": "executions",
+					"using": {
+						"foreign_key_constraint_on": {
+							"column": "model_id",
+							"table": {
+								"name": "execution",
+								"schema": "public"
+							}
+						}
+					}
+				},
+				{
+					"name": "inputs",
+					"using": {
+						"foreign_key_constraint_on": {
+							"column": "model_id",
+							"table": {
+								"name": "model_input",
+								"schema": "public"
+							}
+						}
+					}
+				},
+				{
+					"name": "outputs",
+					"using": {
+						"foreign_key_constraint_on": {
+							"column": "model_id",
+							"table": {
+								"name": "model_output",
+								"schema": "public"
+							}
+						}
+					}
+				},
+				{
+					"name": "parameters",
+					"using": {
+						"foreign_key_constraint_on": {
+							"column": "model_id",
+							"table": {
+								"name": "model_parameter",
+								"schema": "public"
+							}
+						}
+					}
+				},
+				{
+					"name": "thread_models",
+					"using": {
+						"foreign_key_constraint_on": {
+							"column": "model_id",
+							"table": {
+								"name": "thread_model",
+								"schema": "public"
+							}
+						}
+					}
+				}
+			],
+			"insert_permissions": [
+				{
+					"role": "user",
+					"permission": {
+						"check": {},
+						"columns": [
+							"id",
+							"name",
+							"description",
+							"category",
+							"type",
+							"model_version",
+							"model_name",
+							"region_name",
+							"dimensionality",
+							"parameter_assignment",
+							"parameter_assignment_details",
+							"calibration_target_variable",
+							"spatial_grid_type",
+							"spatial_grid_resolution",
+							"usage_notes",
+							"code_url",
+							"output_time_interval",
+							"model_configuration",
+							"software_image",
+							"user_id"
+						]
+					}
+				}
+			],
+			"select_permissions": [
+				{
+					"role": "anonymous",
+					"permission": {
+						"columns": [
+							"id",
+							"name",
+							"description",
+							"category",
+							"type",
+							"model_version",
+							"model_name",
+							"region_name",
+							"dimensionality",
+							"parameter_assignment",
+							"parameter_assignment_details",
+							"calibration_target_variable",
+							"spatial_grid_type",
+							"spatial_grid_resolution",
+							"usage_notes",
+							"code_url",
+							"output_time_interval",
+							"model_configuration",
+							"software_image",
+							"user_id"
+						],
+						"filter": {},
+						"allow_aggregations": true
+					}
+				},
+				{
+					"role": "user",
+					"permission": {
+						"columns": [
+							"calibration_target_variable",
+							"category",
+							"code_url",
+							"description",
+							"dimensionality",
+							"id",
+							"model_configuration",
+							"model_name",
+							"model_version",
+							"name",
+							"output_time_interval",
+							"parameter_assignment",
+							"parameter_assignment_details",
+							"region_name",
+							"software_image",
+							"spatial_grid_resolution",
+							"spatial_grid_type",
+							"type",
+							"usage_notes",
+							"user_id"
+						],
+						"filter": {}
+					}
+				}
+			],
+			"update_permissions": [
+				{
+					"role": "user",
+					"permission": {
+						"columns": [
+							"name"
+						],
+						"filter": {},
+						"check": null
+					}
+				}
+			]
+		},
+		{
+			"table": {
+				"name": "model_input",
+				"schema": "public"
+			},
+			"object_relationships": [
+				{
+					"name": "model",
+					"using": {
+						"foreign_key_constraint_on": "model_id"
+					}
+				},
+				{
+					"name": "model_io",
+					"using": {
+						"foreign_key_constraint_on": "model_io_id"
+					}
+				}
+			],
+			"insert_permissions": [
+				{
+					"role": "user",
+					"permission": {
+						"check": {},
+						"columns": [
+							"model_id",
+							"model_io_id",
+							"position"
+						]
+					}
+				}
+			],
+			"select_permissions": [
+				{
+					"role": "anonymous",
+					"permission": {
+						"columns": [
+							"model_id",
+							"model_io_id",
+							"position"
+						],
+						"filter": {},
+						"allow_aggregations": true
+					}
+				},
+				{
+					"role": "user",
+					"permission": {
+						"columns": [
+							"position",
+							"model_id",
+							"model_io_id"
+						],
+						"filter": {}
+					}
+				}
+			],
+			"update_permissions": [
+				{
+					"role": "user",
+					"permission": {
+						"columns": [
+							"model_id"
+						],
+						"filter": {},
+						"check": null
+					}
+				}
+			]
+		},
+		{
+			"table": {
+				"name": "model_input_fixed_binding",
+				"schema": "public"
+			},
+			"object_relationships": [
+				{
+					"name": "model_io",
+					"using": {
+						"foreign_key_constraint_on": "model_io_id"
+					}
+				},
+				{
+					"name": "resource",
+					"using": {
+						"foreign_key_constraint_on": "resource_id"
+					}
+				}
+			],
+			"insert_permissions": [
+				{
+					"role": "user",
+					"permission": {
+						"check": {},
+						"columns": [
+							"model_io_id",
+							"resource_id"
+						]
+					}
+				}
+			],
+			"select_permissions": [
+				{
+					"role": "anonymous",
+					"permission": {
+						"columns": [
+							"model_io_id",
+							"resource_id"
+						],
+						"filter": {},
+						"allow_aggregations": true
+					}
+				},
+				{
+					"role": "user",
+					"permission": {
+						"columns": [
+							"model_io_id",
+							"resource_id"
+						],
+						"filter": {}
+					}
+				}
+			],
+			"update_permissions": [
+				{
+					"role": "user",
+					"permission": {
+						"columns": [
+							"resource_id"
+						],
+						"filter": {},
+						"check": null
+					}
+				}
+			]
+		},
+		{
+			"table": {
+				"name": "model_io",
+				"schema": "public"
+			},
+			"array_relationships": [
+				{
+					"name": "execution_data_bindings",
+					"using": {
+						"foreign_key_constraint_on": {
+							"column": "model_io_id",
+							"table": {
+								"name": "execution_data_binding",
+								"schema": "public"
+							}
+						}
+					}
+				},
+				{
+					"name": "execution_results",
+					"using": {
+						"foreign_key_constraint_on": {
+							"column": "model_io_id",
+							"table": {
+								"name": "execution_result",
+								"schema": "public"
+							}
+						}
+					}
+				},
+				{
+					"name": "fixed_bindings",
+					"using": {
+						"foreign_key_constraint_on": {
+							"column": "model_io_id",
+							"table": {
+								"name": "model_input_fixed_binding",
+								"schema": "public"
+							}
+						}
+					}
+				},
+				{
+					"name": "model_inputs",
+					"using": {
+						"foreign_key_constraint_on": {
+							"column": "model_io_id",
+							"table": {
+								"name": "model_input",
+								"schema": "public"
+							}
+						}
+					}
+				},
+				{
+					"name": "model_outputs",
+					"using": {
+						"foreign_key_constraint_on": {
+							"column": "model_io_id",
+							"table": {
+								"name": "model_output",
+								"schema": "public"
+							}
+						}
+					}
+				},
+				{
+					"name": "thread_model_ios",
+					"using": {
+						"foreign_key_constraint_on": {
+							"column": "model_io_id",
+							"table": {
+								"name": "thread_model_io",
+								"schema": "public"
+							}
+						}
+					}
+				},
+				{
+					"name": "variables",
+					"using": {
+						"foreign_key_constraint_on": {
+							"column": "model_io_id",
+							"table": {
+								"name": "model_io_variable",
+								"schema": "public"
+							}
+						}
+					}
+				}
+			],
+			"insert_permissions": [
+				{
+					"role": "user",
+					"permission": {
+						"check": {},
+						"columns": [
+							"id",
+							"name",
+							"type",
+							"description",
+							"format"
+						]
+					}
+				}
+			],
+			"select_permissions": [
+				{
+					"role": "anonymous",
+					"permission": {
+						"columns": [
+							"id",
+							"name",
+							"type",
+							"description",
+							"format"
+						],
+						"filter": {},
+						"allow_aggregations": true
+					}
+				},
+				{
+					"role": "user",
+					"permission": {
+						"columns": [
+							"description",
+							"format",
+							"id",
+							"name",
+							"type"
+						],
+						"filter": {}
+					}
+				}
+			],
+			"update_permissions": [
+				{
+					"role": "user",
+					"permission": {
+						"columns": [
+							"id"
+						],
+						"filter": {},
+						"check": null
+					}
+				}
+			]
+		},
+		{
+			"table": {
+				"name": "model_io_variable",
+				"schema": "public"
+			},
+			"object_relationships": [
+				{
+					"name": "model_io",
+					"using": {
+						"foreign_key_constraint_on": "model_io_id"
+					}
+				},
+				{
+					"name": "variable",
+					"using": {
+						"foreign_key_constraint_on": "variable_id"
+					}
+				}
+			],
+			"insert_permissions": [
+				{
+					"role": "user",
+					"permission": {
+						"check": {},
+						"columns": [
+							"model_io_id",
+							"variable_id"
+						]
+					}
+				}
+			],
+			"select_permissions": [
+				{
+					"role": "user",
+					"permission": {
+						"columns": [
+							"model_io_id",
+							"variable_id"
+						],
+						"filter": {}
+					}
+				}
+			],
+			"update_permissions": [
+				{
+					"role": "user",
+					"permission": {
+						"columns": [
+							"variable_id"
+						],
+						"filter": {},
+						"check": null
+					}
+				}
+			]
+		},
+		{
+			"table": {
+				"name": "model_output",
+				"schema": "public"
+			},
+			"object_relationships": [
+				{
+					"name": "model",
+					"using": {
+						"foreign_key_constraint_on": "model_id"
+					}
+				},
+				{
+					"name": "model_io",
+					"using": {
+						"foreign_key_constraint_on": "model_io_id"
+					}
+				}
+			],
+			"insert_permissions": [
+				{
+					"role": "user",
+					"permission": {
+						"check": {},
+						"columns": [
+							"model_id",
+							"model_io_id",
+							"position"
+						]
+					}
+				}
+			],
+			"select_permissions": [
+				{
+					"role": "anonymous",
+					"permission": {
+						"columns": [
+							"model_id",
+							"model_io_id",
+							"position"
+						],
+						"filter": {},
+						"allow_aggregations": true
+					}
+				},
+				{
+					"role": "user",
+					"permission": {
+						"columns": [
+							"position",
+							"model_id",
+							"model_io_id"
+						],
+						"filter": {}
+					}
+				}
+			],
+			"update_permissions": [
+				{
+					"role": "user",
+					"permission": {
+						"columns": [
+							"model_id"
+						],
+						"filter": {},
+						"check": null
+					}
+				}
+			]
+		},
+		{
+			"table": {
+				"name": "model_parameter",
+				"schema": "public"
+			},
+			"object_relationships": [
+				{
+					"name": "model",
+					"using": {
+						"foreign_key_constraint_on": "model_id"
+					}
+				}
+			],
+			"array_relationships": [
+				{
+					"name": "execution_parameter_bindings",
+					"using": {
+						"foreign_key_constraint_on": {
+							"column": "model_parameter_id",
+							"table": {
+								"name": "execution_parameter_binding",
+								"schema": "public"
+							}
+						}
+					}
+				},
+				{
+					"name": "thread_model_parameters",
+					"using": {
+						"foreign_key_constraint_on": {
+							"column": "model_parameter_id",
+							"table": {
+								"name": "thread_model_parameter",
+								"schema": "public"
+							}
+						}
+					}
+				}
+			],
+			"insert_permissions": [
+				{
+					"role": "user",
+					"permission": {
+						"check": {},
+						"columns": [
+							"id",
+							"name",
+							"description",
+							"default",
+							"fixed_value",
+							"unit",
+							"min",
+							"max",
+							"accepted_values",
+							"type",
+							"adjustment_variable",
+							"model_id",
+							"position",
+							"datatype"
+						]
+					}
+				}
+			],
+			"select_permissions": [
+				{
+					"role": "anonymous",
+					"permission": {
+						"columns": [
+							"id",
+							"name",
+							"description",
+							"default",
+							"fixed_value",
+							"unit",
+							"min",
+							"max",
+							"accepted_values",
+							"type",
+							"adjustment_variable",
+							"model_id",
+							"position",
+							"datatype"
+						],
+						"filter": {},
+						"allow_aggregations": true
+					}
+				},
+				{
+					"role": "user",
+					"permission": {
+						"columns": [
+							"position",
+							"accepted_values",
+							"adjustment_variable",
+							"datatype",
+							"default",
+							"description",
+							"fixed_value",
+							"id",
+							"max",
+							"min",
+							"model_id",
+							"name",
+							"type",
+							"unit"
+						],
+						"filter": {}
+					}
+				}
+			],
+			"update_permissions": [
+				{
+					"role": "user",
+					"permission": {
+						"columns": [
+							"model_id"
+						],
+						"filter": {},
+						"check": null
+					}
+				}
+			]
+		},
+		{
+			"table": {
+				"name": "problem_statement",
+				"schema": "public"
+			},
+			"object_relationships": [
+				{
+					"name": "region",
+					"using": {
+						"foreign_key_constraint_on": "region_id"
+					}
+				}
+			],
+			"array_relationships": [
+				{
+					"name": "events",
+					"using": {
+						"foreign_key_constraint_on": {
+							"column": "problem_statement_id",
+							"table": {
+								"name": "problem_statement_provenance",
+								"schema": "public"
+							}
+						}
+					}
+				},
+				{
+					"name": "permissions",
+					"using": {
+						"foreign_key_constraint_on": {
+							"column": "problem_statement_id",
+							"table": {
+								"name": "problem_statement_permission",
+								"schema": "public"
+							}
+						}
+					}
+				},
+				{
+					"name": "tasks",
+					"using": {
+						"foreign_key_constraint_on": {
+							"column": "problem_statement_id",
+							"table": {
+								"name": "task",
+								"schema": "public"
+							}
+						}
+					}
+				}
+			],
+			"insert_permissions": [
+				{
+					"role": "user",
+					"permission": {
+						"check": {},
+						"columns": [
+							"end_date",
+							"id",
+							"name",
+							"region_id",
+							"start_date"
+						]
+					}
+				}
+			],
+			"select_permissions": [
+				{
+					"role": "anonymous",
+					"permission": {
+						"columns": [
+							"id",
+							"name",
+							"start_date",
+							"end_date",
+							"region_id"
+						],
+						"filter": {},
+						"allow_aggregations": true
+					}
+				},
+				{
+					"role": "user",
+					"permission": {
+						"columns": [
+							"end_date",
+							"start_date",
+							"id",
+							"name",
+							"region_id"
+						],
+						"filter": {
+							"_or": [
+								{
+									"permissions": {
+										"_and": [
+											{
+												"user_id": {
+													"_in": [
+														"X-Hasura-User-Id",
+														"*"
+													]
+												}
+											},
+											{
+												"read": {
+													"_eq": true
+												}
+											}
+										]
+									}
+								},
+								{
+									"events": {
+										"_and": [
+											{
+												"event": {
+													"_eq": "CREATE"
+												}
+											},
+											{
+												"userid": {
+													"_eq": "X-Hasura-User-Id"
+												}
+											}
+										]
+									}
+								}
+							]
+						},
+						"allow_aggregations": true
+					}
+				}
+			],
+			"update_permissions": [
+				{
+					"role": "user",
+					"permission": {
+						"columns": [
+							"end_date",
+							"name",
+							"region_id",
+							"start_date"
+						],
+						"filter": {
+							"_or": [
+								{
+									"permissions": {
+										"_and": [
+											{
+												"user_id": {
+													"_in": [
+														"X-Hasura-User-Id",
+														"*"
+													]
+												}
+											},
+											{
+												"write": {
+													"_eq": true
+												}
+											}
+										]
+									}
+								},
+								{
+									"events": {
+										"_and": [
+											{
+												"event": {
+													"_eq": "CREATE"
+												}
+											},
+											{
+												"userid": {
+													"_eq": "X-Hasura-User-Id"
+												}
+											}
+										]
+									}
+								}
+							]
+						},
+						"check": null
+					}
+				}
+			],
+			"delete_permissions": [
+				{
+					"role": "user",
+					"permission": {
+						"backend_only": false,
+						"filter": {
+							"events": {
+								"_and": [
+									{
+										"event": {
+											"_eq": "CREATE"
+										}
+									},
+									{
+										"userid": {
+											"_eq": "X-Hasura-User-Id"
+										}
+									}
+								]
+							}
+						}
+					}
+				}
+			]
+		},
+		{
+			"table": {
+				"name": "problem_statement_permission",
+				"schema": "public"
+			},
+			"object_relationships": [
+				{
+					"name": "problem_statement",
+					"using": {
+						"foreign_key_constraint_on": "problem_statement_id"
+					}
+				}
+			],
+			"insert_permissions": [
+				{
+					"role": "user",
+					"permission": {
+						"check": {
+							"problem_statement": {
+								"events": {
+									"_and": [
+										{
+											"event": {
+												"_eq": "CREATE"
+											}
+										},
+										{
+											"userid": {
+												"_eq": "X-Hasura-User-Id"
+											}
+										}
+									]
+								}
+							}
+						},
+						"columns": [
+							"problem_statement_id",
+							"read",
+							"write",
+							"user_id"
+						]
+					}
+				}
+			],
+			"select_permissions": [
+				{
+					"role": "user",
+					"permission": {
+						"columns": [
+							"read",
+							"write",
+							"problem_statement_id",
+							"user_id"
+						],
+						"filter": {}
+					}
+				}
+			],
+			"update_permissions": [
+				{
+					"role": "user",
+					"permission": {
+						"columns": [
+							"read",
+							"write",
+							"problem_statement_id",
+							"user_id"
+						],
+						"filter": {
+							"problem_statement": {
+								"events": {
+									"_and": [
+										{
+											"event": {
+												"_eq": "CREATE"
+											}
+										},
+										{
+											"userid": {
+												"_eq": "X-Hasura-User-Id"
+											}
+										}
+									]
+								}
+							}
+						},
+						"check": null
+					}
+				}
+			],
+			"delete_permissions": [
+				{
+					"role": "user",
+					"permission": {
+						"backend_only": false,
+						"filter": {
+							"problem_statement": {
+								"events": {
+									"_and": [
+										{
+											"event": {
+												"_eq": "CREATE"
+											}
+										},
+										{
+											"userid": {
+												"_eq": "X-Hasura-User-Id"
+											}
+										}
+									]
+								}
+							}
+						}
+					}
+				}
+			]
+		},
+		{
+			"table": {
+				"name": "problem_statement_provenance",
+				"schema": "public"
+			},
+			"object_relationships": [
+				{
+					"name": "problem_statement",
+					"using": {
+						"foreign_key_constraint_on": "problem_statement_id"
+					}
+				}
+			],
+			"insert_permissions": [
+				{
+					"role": "user",
+					"permission": {
+						"check": {},
+						"columns": [
+							"event",
+							"notes",
+							"problem_statement_id",
+							"userid",
+							"timestamp"
+						]
+					}
+				}
+			],
+			"select_permissions": [
+				{
+					"role": "user",
+					"permission": {
+						"columns": [
+							"event",
+							"notes",
+							"problem_statement_id",
+							"userid",
+							"timestamp"
+						],
+						"filter": {
+							"problem_statement": {
+								"_or": [
+									{
+										"permissions": {
+											"_and": [
+												{
+													"user_id": {
+														"_in": [
+															"X-Hasura-User-Id",
+															"*"
+														]
+													}
+												},
+												{
+													"read": {
+														"_eq": true
+													}
+												}
+											]
+										}
+									},
+									{
+										"events": {
+											"_and": [
+												{
+													"event": {
+														"_eq": "CREATE"
+													}
+												},
+												{
+													"userid": {
+														"_eq": "X-Hasura-User-Id"
+													}
+												}
+											]
+										}
+									}
+								]
+							}
+						}
+					}
+				}
+			],
+			"delete_permissions": [
+				{
+					"role": "user",
+					"permission": {
+						"backend_only": false,
+						"filter": {
+							"problem_statement": {
+								"events": {
+									"_and": [
+										{
+											"event": {
+												"_eq": "CREATE"
+											}
+										},
+										{
+											"userid": {
+												"_eq": "X-Hasura-User-Id"
+											}
+										}
+									]
+								}
+							}
+						}
+					}
+				}
+			]
+		},
+		{
+			"table": {
+				"name": "profile",
+				"schema": "public"
+			}
+		},
+		{
+			"table": {
+				"name": "region",
+				"schema": "public"
+			},
+			"object_relationships": [
+				{
+					"name": "parent_region",
+					"using": {
+						"foreign_key_constraint_on": "parent_region_id"
+					}
+				},
+				{
+					"name": "region_category",
+					"using": {
+						"foreign_key_constraint_on": "category_id"
+					}
+				}
+			],
+			"array_relationships": [
+				{
+					"name": "dataslices",
+					"using": {
+						"foreign_key_constraint_on": {
+							"column": "region_id",
+							"table": {
+								"name": "dataslice",
+								"schema": "public"
+							}
+						}
+					}
+				},
+				{
+					"name": "geometries",
+					"using": {
+						"foreign_key_constraint_on": {
+							"column": "region_id",
+							"table": {
+								"name": "region_geometry",
+								"schema": "public"
+							}
+						}
+					}
+				},
+				{
+					"name": "problem_statements",
+					"using": {
+						"foreign_key_constraint_on": {
+							"column": "region_id",
+							"table": {
+								"name": "problem_statement",
+								"schema": "public"
+							}
+						}
+					}
+				},
+				{
+					"name": "subregions",
+					"using": {
+						"foreign_key_constraint_on": {
+							"column": "parent_region_id",
+							"table": {
+								"name": "region",
+								"schema": "public"
+							}
+						}
+					}
+				},
+				{
+					"name": "tasks",
+					"using": {
+						"foreign_key_constraint_on": {
+							"column": "region_id",
+							"table": {
+								"name": "task",
+								"schema": "public"
+							}
+						}
+					}
+				},
+				{
+					"name": "threads",
+					"using": {
+						"foreign_key_constraint_on": {
+							"column": "region_id",
+							"table": {
+								"name": "thread",
+								"schema": "public"
+							}
+						}
+					}
+				}
+			],
+			"insert_permissions": [
+				{
+					"role": "user",
+					"permission": {
+						"check": {},
+						"columns": [
+							"id",
+							"name",
+							"parent_region_id",
+							"category_id",
+							"model_catalog_uri"
+						]
+					}
+				}
+			],
+			"select_permissions": [
+				{
+					"role": "anonymous",
+					"permission": {
+						"columns": [
+							"id",
+							"name",
+							"parent_region_id",
+							"category_id",
+							"model_catalog_uri"
+						],
+						"filter": {}
+					}
+				},
+				{
+					"role": "user",
+					"permission": {
+						"columns": [
+							"category_id",
+							"id",
+							"model_catalog_uri",
+							"name",
+							"parent_region_id"
+						],
+						"filter": {}
+					}
+				}
+			]
+		},
+		{
+			"table": {
+				"name": "region_category",
+				"schema": "public"
+			},
+			"array_relationships": [
+				{
+					"name": "category_trees",
+					"using": {
+						"foreign_key_constraint_on": {
+							"column": "region_category_id",
+							"table": {
+								"name": "region_category_tree",
+								"schema": "public"
+							}
+						}
+					}
+				},
+				{
+					"name": "regions",
+					"using": {
+						"foreign_key_constraint_on": {
+							"column": "category_id",
+							"table": {
+								"name": "region",
+								"schema": "public"
+							}
+						}
+					}
+				},
+				{
+					"name": "sub_categories",
+					"using": {
+						"foreign_key_constraint_on": {
+							"column": "region_category_parent_id",
+							"table": {
+								"name": "region_category_tree",
+								"schema": "public"
+							}
+						}
+					}
+				}
+			],
+			"insert_permissions": [
+				{
+					"role": "user",
+					"permission": {
+						"check": {},
+						"columns": [
+							"id",
+							"name",
+							"citation"
+						]
+					}
+				}
+			],
+			"select_permissions": [
+				{
+					"role": "anonymous",
+					"permission": {
+						"columns": [
+							"id",
+							"name",
+							"citation"
+						],
+						"filter": {}
+					}
+				},
+				{
+					"role": "user",
+					"permission": {
+						"columns": [
+							"id",
+							"name",
+							"citation"
+						],
+						"filter": {}
+					}
+				}
+			]
+		},
+		{
+			"table": {
+				"name": "region_category_tree",
+				"schema": "public"
+			},
+			"object_relationships": [
+				{
+					"name": "parent_region_category",
+					"using": {
+						"foreign_key_constraint_on": "region_category_parent_id"
+					}
+				},
+				{
+					"name": "region_category",
+					"using": {
+						"foreign_key_constraint_on": "region_category_id"
+					}
+				}
+			],
+			"insert_permissions": [
+				{
+					"role": "user",
+					"permission": {
+						"check": {},
+						"columns": [
+							"region_category_id",
+							"region_category_parent_id"
+						]
+					}
+				}
+			],
+			"select_permissions": [
+				{
+					"role": "anonymous",
+					"permission": {
+						"columns": [
+							"region_category_id",
+							"region_category_parent_id"
+						],
+						"filter": {}
+					}
+				},
+				{
+					"role": "user",
+					"permission": {
+						"columns": [
+							"region_category_id",
+							"region_category_parent_id"
+						],
+						"filter": {}
+					}
+				}
+			]
+		},
+		{
+			"table": {
+				"name": "region_geometry",
+				"schema": "public"
+			},
+			"object_relationships": [
+				{
+					"name": "region",
+					"using": {
+						"foreign_key_constraint_on": "region_id"
+					}
+				}
+			],
+			"insert_permissions": [
+				{
+					"role": "user",
+					"permission": {
+						"check": {},
+						"columns": [
+							"id",
+							"region_id",
+							"geometry"
+						]
+					}
+				}
+			],
+			"select_permissions": [
+				{
+					"role": "anonymous",
+					"permission": {
+						"columns": [
+							"id",
+							"region_id",
+							"geometry"
+						],
+						"filter": {}
+					}
+				},
+				{
+					"role": "user",
+					"permission": {
+						"columns": [
+							"geometry",
+							"id",
+							"region_id"
+						],
+						"filter": {}
+					}
+				}
+			]
+		},
+		{
+			"table": {
+				"name": "regions_containing_point",
+				"schema": "public"
+			}
+		},
+		{
+			"table": {
+				"name": "resource",
+				"schema": "public"
+			},
+			"array_relationships": [
+				{
+					"name": "dataslice_resources",
+					"using": {
+						"foreign_key_constraint_on": {
+							"column": "resource_id",
+							"table": {
+								"name": "dataslice_resource",
+								"schema": "public"
+							}
+						}
+					}
+				},
+				{
+					"name": "execution_data_bindings",
+					"using": {
+						"foreign_key_constraint_on": {
+							"column": "resource_id",
+							"table": {
+								"name": "execution_data_binding",
+								"schema": "public"
+							}
+						}
+					}
+				},
+				{
+					"name": "execution_results",
+					"using": {
+						"foreign_key_constraint_on": {
+							"column": "resource_id",
+							"table": {
+								"name": "execution_result",
+								"schema": "public"
+							}
+						}
+					}
+				},
+				{
+					"name": "model_input_fixed_bindings",
+					"using": {
+						"foreign_key_constraint_on": {
+							"column": "resource_id",
+							"table": {
+								"name": "model_input_fixed_binding",
+								"schema": "public"
+							}
+						}
+					}
+				}
+			],
+			"insert_permissions": [
+				{
+					"role": "user",
+					"permission": {
+						"check": {},
+						"columns": [
+							"id",
+							"name",
+							"url",
+							"start_date",
+							"end_date",
+							"spatial_coverage",
+							"dcid"
+						]
+					}
+				}
+			],
+			"select_permissions": [
+				{
+					"role": "anonymous",
+					"permission": {
+						"columns": [
+							"id",
+							"name",
+							"url",
+							"start_date",
+							"end_date",
+							"spatial_coverage",
+							"dcid"
+						],
+						"filter": {},
+						"allow_aggregations": true
+					}
+				},
+				{
+					"role": "user",
+					"permission": {
+						"columns": [
+							"end_date",
+							"start_date",
+							"spatial_coverage",
+							"dcid",
+							"id",
+							"name",
+							"url"
+						],
+						"filter": {},
+						"allow_aggregations": true
+					}
+				}
+			],
+			"update_permissions": [
+				{
+					"role": "user",
+					"permission": {
+						"columns": [
+							"name"
+						],
+						"filter": {},
+						"check": null
+					}
+				}
+			]
+		},
+		{
+			"table": {
+				"name": "task",
+				"schema": "public"
+			},
+			"object_relationships": [
+				{
+					"name": "driving_variable",
+					"using": {
+						"foreign_key_constraint_on": "driving_variable_id"
+					}
+				},
+				{
+					"name": "problem_statement",
+					"using": {
+						"foreign_key_constraint_on": "problem_statement_id"
+					}
+				},
+				{
+					"name": "region",
+					"using": {
+						"foreign_key_constraint_on": "region_id"
+					}
+				},
+				{
+					"name": "response_variable",
+					"using": {
+						"foreign_key_constraint_on": "response_variable_id"
+					}
+				}
+			],
+			"array_relationships": [
+				{
+					"name": "events",
+					"using": {
+						"foreign_key_constraint_on": {
+							"column": "task_id",
+							"table": {
+								"name": "task_provenance",
+								"schema": "public"
+							}
+						}
+					}
+				},
+				{
+					"name": "permissions",
+					"using": {
+						"foreign_key_constraint_on": {
+							"column": "task_id",
+							"table": {
+								"name": "task_permission",
+								"schema": "public"
+							}
+						}
+					}
+				},
+				{
+					"name": "threads",
+					"using": {
+						"foreign_key_constraint_on": {
+							"column": "task_id",
+							"table": {
+								"name": "thread",
+								"schema": "public"
+							}
+						}
+					}
+				}
+			],
+			"insert_permissions": [
+				{
+					"role": "user",
+					"permission": {
+						"check": {
+							"_or": [
+								{
+									"problem_statement": {
+										"permissions": {
+											"_and": [
+												{
+													"user_id": {
+														"_in": [
+															"X-Hasura-User-Id",
+															"*"
+														]
+													}
+												},
+												{
+													"write": {
+														"_eq": true
+													}
+												}
+											]
+										}
+									}
+								},
+								{
+									"problem_statement": {
+										"events": {
+											"_and": [
+												{
+													"event": {
+														"_eq": "CREATE"
+													}
+												},
+												{
+													"userid": {
+														"_eq": "X-Hasura-User-Id"
+													}
+												}
+											]
+										}
+									}
+								}
+							]
+						},
+						"columns": [
+							"id",
+							"name",
+							"response_variable_id",
+							"driving_variable_id",
+							"problem_statement_id",
+							"region_id",
+							"start_date",
+							"end_date"
+						]
+					}
+				}
+			],
+			"select_permissions": [
+				{
+					"role": "anonymous",
+					"permission": {
+						"columns": [
+							"id",
+							"name",
+							"response_variable_id",
+							"driving_variable_id",
+							"problem_statement_id",
+							"region_id",
+							"start_date",
+							"end_date"
+						],
+						"filter": {},
+						"allow_aggregations": true
+					}
+				},
+				{
+					"role": "user",
+					"permission": {
+						"columns": [
+							"id",
+							"name",
+							"response_variable_id",
+							"driving_variable_id",
+							"problem_statement_id",
+							"region_id",
+							"start_date",
+							"end_date"
+						],
+						"filter": {
+							"_or": [
+								{
+									"permissions": {
+										"_and": [
+											{
+												"user_id": {
+													"_in": [
+														"X-Hasura-User-Id",
+														"*"
+													]
+												}
+											},
+											{
+												"read": {
+													"_eq": true
+												}
+											}
+										]
+									}
+								},
+								{
+									"events": {
+										"_and": [
+											{
+												"event": {
+													"_eq": "CREATE"
+												}
+											},
+											{
+												"userid": {
+													"_eq": "X-Hasura-User-Id"
+												}
+											}
+										]
+									}
+								}
+							]
+						}
+					}
+				}
+			],
+			"update_permissions": [
+				{
+					"role": "user",
+					"permission": {
+						"columns": [
+							"driving_variable_id",
+							"end_date",
+							"name",
+							"region_id",
+							"response_variable_id",
+							"start_date"
+						],
+						"filter": {
+							"_or": [
+								{
+									"permissions": {
+										"_and": [
+											{
+												"user_id": {
+													"_in": [
+														"X-Hasura-User-Id",
+														"*"
+													]
+												}
+											},
+											{
+												"write": {
+													"_eq": true
+												}
+											}
+										]
+									}
+								},
+								{
+									"events": {
+										"_and": [
+											{
+												"event": {
+													"_eq": "CREATE"
+												}
+											},
+											{
+												"userid": {
+													"_eq": "X-Hasura-User-Id"
+												}
+											}
+										]
+									}
+								}
+							]
+						},
+						"check": null
+					}
+				}
+			],
+			"delete_permissions": [
+				{
+					"role": "user",
+					"permission": {
+						"backend_only": false,
+						"filter": {
+							"events": {
+								"_and": [
+									{
+										"event": {
+											"_eq": "CREATE"
+										}
+									},
+									{
+										"userid": {
+											"_eq": "X-Hasura-User-Id"
+										}
+									}
+								]
+							}
+						}
+					}
+				}
+			]
+		},
+		{
+			"table": {
+				"name": "task_permission",
+				"schema": "public"
+			},
+			"object_relationships": [
+				{
+					"name": "task",
+					"using": {
+						"foreign_key_constraint_on": "task_id"
+					}
+				}
+			],
+			"insert_permissions": [
+				{
+					"role": "user",
+					"permission": {
+						"check": {
+							"task": {
+								"events": {
+									"_and": [
+										{
+											"event": {
+												"_eq": "CREATE"
+											}
+										},
+										{
+											"userid": {
+												"_eq": "X-Hasura-User-Id"
+											}
+										}
+									]
+								}
+							}
+						},
+						"columns": [
+							"task_id",
+							"read",
+							"write",
+							"user_id"
+						]
+					}
+				}
+			],
+			"select_permissions": [
+				{
+					"role": "user",
+					"permission": {
+						"columns": [
+							"read",
+							"write",
+							"task_id",
+							"user_id"
+						],
+						"filter": {}
+					}
+				}
+			],
+			"update_permissions": [
+				{
+					"role": "user",
+					"permission": {
+						"columns": [
+							"read",
+							"write",
+							"task_id",
+							"user_id"
+						],
+						"filter": {
+							"task": {
+								"events": {
+									"_and": [
+										{
+											"event": {
+												"_eq": "CREATE"
+											}
+										},
+										{
+											"userid": {
+												"_eq": "X-Hasura-User-Id"
+											}
+										}
+									]
+								}
+							}
+						},
+						"check": null
+					}
+				}
+			],
+			"delete_permissions": [
+				{
+					"role": "user",
+					"permission": {
+						"backend_only": false,
+						"filter": {
+							"task": {
+								"events": {
+									"_and": [
+										{
+											"event": {
+												"_eq": "CREATE"
+											}
+										},
+										{
+											"userid": {
+												"_eq": "X-Hasura-User-Id"
+											}
+										}
+									]
+								}
+							}
+						}
+					}
+				}
+			]
+		},
+		{
+			"table": {
+				"name": "task_provenance",
+				"schema": "public"
+			},
+			"object_relationships": [
+				{
+					"name": "task",
+					"using": {
+						"foreign_key_constraint_on": "task_id"
+					}
+				}
+			],
+			"insert_permissions": [
+				{
+					"role": "user",
+					"permission": {
+						"check": {},
+						"columns": [
+							"event",
+							"notes",
+							"task_id",
+							"userid",
+							"timestamp"
+						]
+					}
+				}
+			],
+			"select_permissions": [
+				{
+					"role": "user",
+					"permission": {
+						"columns": [
+							"event",
+							"notes",
+							"task_id",
+							"userid",
+							"timestamp"
+						],
+						"filter": {
+							"task": {
+								"_or": [
+									{
+										"permissions": {
+											"_and": [
+												{
+													"user_id": {
+														"_in": [
+															"X-Hasura-User-Id",
+															"*"
+														]
+													}
+												},
+												{
+													"read": {
+														"_eq": true
+													}
+												}
+											]
+										}
+									},
+									{
+										"events": {
+											"_and": [
+												{
+													"event": {
+														"_eq": "CREATE"
+													}
+												},
+												{
+													"userid": {
+														"_eq": "X-Hasura-User-Id"
+													}
+												}
+											]
+										}
+									}
+								]
+							}
+						}
+					}
+				}
+			],
+			"delete_permissions": [
+				{
+					"role": "user",
+					"permission": {
+						"backend_only": false,
+						"filter": {
+							"task": {
+								"events": {
+									"_and": [
+										{
+											"event": {
+												"_eq": "CREATE"
+											}
+										},
+										{
+											"userid": {
+												"_eq": "X-Hasura-User-Id"
+											}
+										}
+									]
+								}
+							}
+						}
+					}
+				}
+			]
+		},
+		{
+			"table": {
+				"name": "thread",
+				"schema": "public"
+			},
+			"object_relationships": [
+				{
+					"name": "driving_variable",
+					"using": {
+						"foreign_key_constraint_on": "driving_variable_id"
+					}
+				},
+				{
+					"name": "region",
+					"using": {
+						"foreign_key_constraint_on": "region_id"
+					}
+				},
+				{
+					"name": "response_variable",
+					"using": {
+						"foreign_key_constraint_on": "response_variable_id"
+					}
+				},
+				{
+					"name": "task",
+					"using": {
+						"foreign_key_constraint_on": "task_id"
+					}
+				}
+			],
+			"array_relationships": [
+				{
+					"name": "events",
+					"using": {
+						"foreign_key_constraint_on": {
+							"column": "thread_id",
+							"table": {
+								"name": "thread_provenance",
+								"schema": "public"
+							}
+						}
+					}
+				},
+				{
+					"name": "permissions",
+					"using": {
+						"foreign_key_constraint_on": {
+							"column": "thread_id",
+							"table": {
+								"name": "thread_permission",
+								"schema": "public"
+							}
+						}
+					}
+				},
+				{
+					"name": "thread_data",
+					"using": {
+						"foreign_key_constraint_on": {
+							"column": "thread_id",
+							"table": {
+								"name": "thread_data",
+								"schema": "public"
+							}
+						}
+					}
+				},
+				{
+					"name": "thread_models",
+					"using": {
+						"foreign_key_constraint_on": {
+							"column": "thread_id",
+							"table": {
+								"name": "thread_model",
+								"schema": "public"
+							}
+						}
+					}
+				}
+			],
+			"insert_permissions": [
+				{
+					"role": "user",
+					"permission": {
+						"check": {
+							"_or": [
+								{
+									"task": {
+										"permissions": {
+											"_and": [
+												{
+													"user_id": {
+														"_in": [
+															"X-Hasura-User-Id",
+															"*"
+														]
+													}
+												},
+												{
+													"write": {
+														"_eq": true
+													}
+												}
+											]
+										}
+									}
+								},
+								{
+									"task": {
+										"events": {
+											"_and": [
+												{
+													"event": {
+														"_eq": "CREATE"
+													}
+												},
+												{
+													"userid": {
+														"_eq": "X-Hasura-User-Id"
+													}
+												}
+											]
+										}
+									}
+								}
+							]
+						},
+						"columns": [
+							"id",
+							"name",
+							"response_variable_id",
+							"driving_variable_id",
+							"start_date",
+							"end_date",
+							"region_id",
+							"task_id"
+						]
+					}
+				}
+			],
+			"select_permissions": [
+				{
+					"role": "anonymous",
+					"permission": {
+						"columns": [
+							"id",
+							"name",
+							"response_variable_id",
+							"driving_variable_id",
+							"start_date",
+							"end_date",
+							"region_id",
+							"task_id"
+						],
+						"filter": {},
+						"allow_aggregations": true
+					}
+				},
+				{
+					"role": "user",
+					"permission": {
+						"columns": [
+							"end_date",
+							"start_date",
+							"driving_variable_id",
+							"id",
+							"name",
+							"region_id",
+							"response_variable_id",
+							"task_id"
+						],
+						"filter": {
+							"_or": [
+								{
+									"permissions": {
+										"_and": [
+											{
+												"user_id": {
+													"_in": [
+														"X-Hasura-User-Id",
+														"*"
+													]
+												}
+											},
+											{
+												"read": {
+													"_eq": true
+												}
+											}
+										]
+									}
+								},
+								{
+									"events": {
+										"_and": [
+											{
+												"event": {
+													"_eq": "CREATE"
+												}
+											},
+											{
+												"userid": {
+													"_eq": "X-Hasura-User-Id"
+												}
+											}
+										]
+									}
+								}
+							]
+						},
+						"allow_aggregations": true
+					}
+				}
+			],
+			"update_permissions": [
+				{
+					"role": "user",
+					"permission": {
+						"columns": [
+							"driving_variable_id",
+							"end_date",
+							"name",
+							"region_id",
+							"response_variable_id",
+							"start_date"
+						],
+						"filter": {
+							"_or": [
+								{
+									"permissions": {
+										"_and": [
+											{
+												"user_id": {
+													"_in": [
+														"X-Hasura-User-Id",
+														"*"
+													]
+												}
+											},
+											{
+												"write": {
+													"_eq": true
+												}
+											}
+										]
+									}
+								},
+								{
+									"events": {
+										"_and": [
+											{
+												"event": {
+													"_eq": "CREATE"
+												}
+											},
+											{
+												"userid": {
+													"_eq": "X-Hasura-User-Id"
+												}
+											}
+										]
+									}
+								}
+							]
+						},
+						"check": null
+					}
+				}
+			],
+			"delete_permissions": [
+				{
+					"role": "user",
+					"permission": {
+						"backend_only": false,
+						"filter": {
+							"events": {
+								"_and": [
+									{
+										"event": {
+											"_eq": "CREATE"
+										}
+									},
+									{
+										"userid": {
+											"_eq": "X-Hasura-User-Id"
+										}
+									}
+								]
+							}
+						}
+					}
+				}
+			]
+		},
+		{
+			"table": {
+				"name": "thread_data",
+				"schema": "public"
+			},
+			"object_relationships": [
+				{
+					"name": "dataslice",
+					"using": {
+						"foreign_key_constraint_on": "dataslice_id"
+					}
+				},
+				{
+					"name": "thread",
+					"using": {
+						"foreign_key_constraint_on": "thread_id"
+					}
+				}
+			],
+			"insert_permissions": [
+				{
+					"role": "user",
+					"permission": {
+						"check": {
+							"thread": {
+								"_or": [
+									{
+										"permissions": {
+											"_and": [
+												{
+													"user_id": {
+														"_in": [
+															"X-Hasura-User-Id",
+															"*"
+														]
+													}
+												},
+												{
+													"write": {
+														"_eq": true
+													}
+												}
+											]
+										}
+									},
+									{
+										"events": {
+											"_and": [
+												{
+													"event": {
+														"_eq": "CREATE"
+													}
+												},
+												{
+													"userid": {
+														"_eq": "X-Hasura-User-Id"
+													}
+												}
+											]
+										}
+									}
+								]
+							}
+						},
+						"columns": [
+							"thread_id",
+							"dataslice_id"
+						]
+					}
+				}
+			],
+			"select_permissions": [
+				{
+					"role": "user",
+					"permission": {
+						"columns": [
+							"thread_id",
+							"dataslice_id"
+						],
+						"filter": {
+							"thread": {
+								"_or": [
+									{
+										"permissions": {
+											"_and": [
+												{
+													"user_id": {
+														"_in": [
+															"X-Hasura-User-Id",
+															"*"
+														]
+													}
+												},
+												{
+													"read": {
+														"_eq": true
+													}
+												}
+											]
+										}
+									},
+									{
+										"events": {
+											"_and": [
+												{
+													"event": {
+														"_eq": "CREATE"
+													}
+												},
+												{
+													"userid": {
+														"_eq": "X-Hasura-User-Id"
+													}
+												}
+											]
+										}
+									}
+								]
+							}
+						},
+						"allow_aggregations": true
+					}
+				}
+			],
+			"update_permissions": [
+				{
+					"role": "user",
+					"permission": {
+						"columns": [
+							"thread_id",
+							"dataslice_id"
+						],
+						"filter": {
+							"thread": {
+								"_or": [
+									{
+										"permissions": {
+											"_and": [
+												{
+													"user_id": {
+														"_in": [
+															"X-Hasura-User-Id",
+															"*"
+														]
+													}
+												},
+												{
+													"write": {
+														"_eq": true
+													}
+												}
+											]
+										}
+									},
+									{
+										"events": {
+											"_and": [
+												{
+													"event": {
+														"_eq": "CREATE"
+													}
+												},
+												{
+													"userid": {
+														"_eq": "X-Hasura-User-Id"
+													}
+												}
+											]
+										}
+									}
+								]
+							}
+						},
+						"check": null
+					}
+				}
+			],
+			"delete_permissions": [
+				{
+					"role": "user",
+					"permission": {
+						"backend_only": false,
+						"filter": {
+							"thread": {
+								"_or": [
+									{
+										"permissions": {
+											"_and": [
+												{
+													"user_id": {
+														"_in": [
+															"X-Hasura-User-Id",
+															"*"
+														]
+													}
+												},
+												{
+													"write": {
+														"_eq": true
+													}
+												}
+											]
+										}
+									},
+									{
+										"events": {
+											"_and": [
+												{
+													"event": {
+														"_eq": "CREATE"
+													}
+												},
+												{
+													"userid": {
+														"_eq": "X-Hasura-User-Id"
+													}
+												}
+											]
+										}
+									}
+								]
+							}
+						}
+					}
+				}
+			]
+		},
+		{
+			"table": {
+				"name": "thread_model",
+				"schema": "public"
+			},
+			"object_relationships": [
+				{
+					"name": "model",
+					"using": {
+						"foreign_key_constraint_on": "model_id"
+					}
+				},
+				{
+					"name": "thread",
+					"using": {
+						"foreign_key_constraint_on": "thread_id"
+					}
+				}
+			],
+			"array_relationships": [
+				{
+					"name": "data_bindings",
+					"using": {
+						"foreign_key_constraint_on": {
+							"column": "thread_model_id",
+							"table": {
+								"name": "thread_model_io",
+								"schema": "public"
+							}
+						}
+					}
+				},
+				{
+					"name": "execution_summary",
+					"using": {
+						"foreign_key_constraint_on": {
+							"column": "thread_model_id",
+							"table": {
+								"name": "thread_model_execution_summary",
+								"schema": "public"
+							}
+						}
+					}
+				},
+				{
+					"name": "executions",
+					"using": {
+						"foreign_key_constraint_on": {
+							"column": "thread_model_id",
+							"table": {
+								"name": "thread_model_execution",
+								"schema": "public"
+							}
+						}
+					}
+				},
+				{
+					"name": "parameter_bindings",
+					"using": {
+						"foreign_key_constraint_on": {
+							"column": "thread_model_id",
+							"table": {
+								"name": "thread_model_parameter",
+								"schema": "public"
+							}
+						}
+					}
+				}
+			],
+			"insert_permissions": [
+				{
+					"role": "user",
+					"permission": {
+						"check": {
+							"thread": {
+								"_or": [
+									{
+										"permissions": {
+											"_and": [
+												{
+													"user_id": {
+														"_in": [
+															"X-Hasura-User-Id",
+															"*"
+														]
+													}
+												},
+												{
+													"write": {
+														"_eq": true
+													}
+												}
+											]
+										}
+									},
+									{
+										"events": {
+											"_and": [
+												{
+													"event": {
+														"_eq": "CREATE"
+													}
+												},
+												{
+													"userid": {
+														"_eq": "X-Hasura-User-Id"
+													}
+												}
+											]
+										}
+									}
+								]
+							}
+						},
+						"columns": [
+							"model_id",
+							"thread_id",
+							"id"
+						]
+					}
+				}
+			],
+			"select_permissions": [
+				{
+					"role": "anonymous",
+					"permission": {
+						"columns": [
+							"id",
+							"thread_id",
+							"model_id"
+						],
+						"filter": {},
+						"allow_aggregations": true
+					}
+				},
+				{
+					"role": "user",
+					"permission": {
+						"columns": [
+							"model_id",
+							"thread_id",
+							"id"
+						],
+						"filter": {
+							"thread": {
+								"_or": [
+									{
+										"permissions": {
+											"_and": [
+												{
+													"user_id": {
+														"_in": [
+															"X-Hasura-User-Id",
+															"*"
+														]
+													}
+												},
+												{
+													"read": {
+														"_eq": true
+													}
+												}
+											]
+										}
+									},
+									{
+										"events": {
+											"_and": [
+												{
+													"event": {
+														"_eq": "CREATE"
+													}
+												},
+												{
+													"userid": {
+														"_eq": "X-Hasura-User-Id"
+													}
+												}
+											]
+										}
+									}
+								]
+							}
+						},
+						"allow_aggregations": true
+					}
+				}
+			],
+			"update_permissions": [
+				{
+					"role": "user",
+					"permission": {
+						"columns": [
+							"model_id",
+							"thread_id",
+							"id"
+						],
+						"filter": {
+							"thread": {
+								"_or": [
+									{
+										"permissions": {
+											"_and": [
+												{
+													"user_id": {
+														"_in": [
+															"X-Hasura-User-Id",
+															"*"
+														]
+													}
+												},
+												{
+													"write": {
+														"_eq": true
+													}
+												}
+											]
+										}
+									},
+									{
+										"events": {
+											"_and": [
+												{
+													"event": {
+														"_eq": "CREATE"
+													}
+												},
+												{
+													"userid": {
+														"_eq": "X-Hasura-User-Id"
+													}
+												}
+											]
+										}
+									}
+								]
+							}
+						},
+						"check": null
+					}
+				}
+			],
+			"delete_permissions": [
+				{
+					"role": "user",
+					"permission": {
+						"backend_only": false,
+						"filter": {
+							"thread": {
+								"_or": [
+									{
+										"permissions": {
+											"_and": [
+												{
+													"user_id": {
+														"_in": [
+															"X-Hasura-User-Id",
+															"*"
+														]
+													}
+												},
+												{
+													"write": {
+														"_eq": true
+													}
+												}
+											]
+										}
+									},
+									{
+										"events": {
+											"_and": [
+												{
+													"event": {
+														"_eq": "CREATE"
+													}
+												},
+												{
+													"userid": {
+														"_eq": "X-Hasura-User-Id"
+													}
+												}
+											]
+										}
+									}
+								]
+							}
+						}
+					}
+				}
+			]
+		},
+		{
+			"table": {
+				"name": "thread_model_execution",
+				"schema": "public"
+			},
+			"object_relationships": [
+				{
+					"name": "execution",
+					"using": {
+						"foreign_key_constraint_on": "execution_id"
+					}
+				},
+				{
+					"name": "thread_model",
+					"using": {
+						"foreign_key_constraint_on": "thread_model_id"
+					}
+				}
+			],
+			"insert_permissions": [
+				{
+					"role": "user",
+					"permission": {
+						"check": {
+							"thread_model": {
+								"thread": {
+									"_or": [
+										{
+											"permissions": {
+												"_and": [
+													{
+														"user_id": {
+															"_in": [
+																"X-Hasura-User-Id",
+																"*"
+															]
+														}
+													},
+													{
+														"write": {
+															"_eq": true
+														}
+													}
+												]
+											}
+										},
+										{
+											"events": {
+												"_and": [
+													{
+														"event": {
+															"_eq": "CREATE"
+														}
+													},
+													{
+														"userid": {
+															"_eq": "X-Hasura-User-Id"
+														}
+													}
+												]
+											}
+										}
+									]
+								}
+							}
+						},
+						"columns": [
+							"thread_model_id",
+							"execution_id"
+						]
+					}
+				}
+			],
+			"select_permissions": [
+				{
+					"role": "anonymous",
+					"permission": {
+						"columns": [
+							"thread_model_id",
+							"execution_id"
+						],
+						"filter": {},
+						"allow_aggregations": true
+					}
+				},
+				{
+					"role": "user",
+					"permission": {
+						"columns": [
+							"execution_id",
+							"thread_model_id"
+						],
+						"filter": {
+							"thread_model": {
+								"thread": {
+									"_or": [
+										{
+											"permissions": {
+												"_and": [
+													{
+														"user_id": {
+															"_in": [
+																"X-Hasura-User-Id",
+																"*"
+															]
+														}
+													},
+													{
+														"read": {
+															"_eq": true
+														}
+													}
+												]
+											}
+										},
+										{
+											"events": {
+												"_and": [
+													{
+														"event": {
+															"_eq": "CREATE"
+														}
+													},
+													{
+														"userid": {
+															"_eq": "X-Hasura-User-Id"
+														}
+													}
+												]
+											}
+										}
+									]
+								}
+							}
+						},
+						"allow_aggregations": true
+					}
+				}
+			],
+			"update_permissions": [
+				{
+					"role": "user",
+					"permission": {
+						"columns": [
+							"execution_id",
+							"thread_model_id"
+						],
+						"filter": {
+							"thread_model": {
+								"thread": {
+									"_or": [
+										{
+											"permissions": {
+												"_and": [
+													{
+														"user_id": {
+															"_in": [
+																"X-Hasura-User-Id",
+																"*"
+															]
+														}
+													},
+													{
+														"write": {
+															"_eq": true
+														}
+													}
+												]
+											}
+										},
+										{
+											"events": {
+												"_and": [
+													{
+														"event": {
+															"_eq": "CREATE"
+														}
+													},
+													{
+														"userid": {
+															"_eq": "X-Hasura-User-Id"
+														}
+													}
+												]
+											}
+										}
+									]
+								}
+							}
+						},
+						"check": null
+					}
+				}
+			],
+			"delete_permissions": [
+				{
+					"role": "user",
+					"permission": {
+						"backend_only": false,
+						"filter": {
+							"thread_model": {
+								"thread": {
+									"_or": [
+										{
+											"permissions": {
+												"_and": [
+													{
+														"user_id": {
+															"_in": [
+																"X-Hasura-User-Id",
+																"*"
+															]
+														}
+													},
+													{
+														"write": {
+															"_eq": true
+														}
+													}
+												]
+											}
+										},
+										{
+											"events": {
+												"_and": [
+													{
+														"event": {
+															"_eq": "CREATE"
+														}
+													},
+													{
+														"userid": {
+															"_eq": "X-Hasura-User-Id"
+														}
+													}
+												]
+											}
+										}
+									]
+								}
+							}
+						}
+					}
+				}
+			]
+		},
+		{
+			"table": {
+				"name": "thread_model_execution_summary",
+				"schema": "public"
+			},
+			"object_relationships": [
+				{
+					"name": "thread_model",
+					"using": {
+						"foreign_key_constraint_on": "thread_model_id"
+					}
+				}
+			],
+			"insert_permissions": [
+				{
+					"role": "user",
+					"permission": {
+						"check": {
+							"thread_model": {
+								"thread": {
+									"_or": [
+										{
+											"permissions": {
+												"_and": [
+													{
+														"user_id": {
+															"_in": [
+																"X-Hasura-User-Id",
+																"*"
+															]
+														}
+													},
+													{
+														"write": {
+															"_eq": true
+														}
+													}
+												]
+											}
+										},
+										{
+											"events": {
+												"_and": [
+													{
+														"event": {
+															"_eq": "CREATE"
+														}
+													},
+													{
+														"userid": {
+															"_eq": "X-Hasura-User-Id"
+														}
+													}
+												]
+											}
+										}
+									]
+								}
+							}
+						},
+						"columns": [
+							"submitted_for_execution",
+							"submitted_for_ingestion",
+							"submitted_for_publishing",
+							"submitted_for_registration",
+							"failed_runs",
+							"fetched_run_outputs",
+							"ingested_runs",
+							"published_runs",
+							"registered_runs",
+							"submitted_runs",
+							"successful_runs",
+							"total_runs",
+							"workflow_name",
+							"ingestion_time",
+							"publishing_time",
+							"registration_time",
+							"submission_time",
+							"thread_model_id"
+						]
+					}
+				}
+			],
+			"select_permissions": [
+				{
+					"role": "anonymous",
+					"permission": {
+						"columns": [
+							"submitted_for_execution",
+							"submitted_for_ingestion",
+							"submitted_for_publishing",
+							"submitted_for_registration",
+							"submission_time",
+							"ingestion_time",
+							"publishing_time",
+							"registration_time",
+							"total_runs",
+							"submitted_runs",
+							"successful_runs",
+							"failed_runs",
+							"ingested_runs",
+							"registered_runs",
+							"published_runs",
+							"thread_model_id",
+							"fetched_run_outputs",
+							"workflow_name"
+						],
+						"filter": {},
+						"allow_aggregations": true
+					}
+				},
+				{
+					"role": "user",
+					"permission": {
+						"columns": [
+							"submitted_for_execution",
+							"submitted_for_ingestion",
+							"submitted_for_publishing",
+							"submitted_for_registration",
+							"failed_runs",
+							"fetched_run_outputs",
+							"ingested_runs",
+							"published_runs",
+							"registered_runs",
+							"submitted_runs",
+							"successful_runs",
+							"total_runs",
+							"workflow_name",
+							"ingestion_time",
+							"publishing_time",
+							"registration_time",
+							"submission_time",
+							"thread_model_id"
+						],
+						"filter": {
+							"thread_model": {
+								"thread": {
+									"_or": [
+										{
+											"permissions": {
+												"_and": [
+													{
+														"user_id": {
+															"_in": [
+																"X-Hasura-User-Id",
+																"*"
+															]
+														}
+													},
+													{
+														"read": {
+															"_eq": true
+														}
+													}
+												]
+											}
+										},
+										{
+											"events": {
+												"_and": [
+													{
+														"event": {
+															"_eq": "CREATE"
+														}
+													},
+													{
+														"userid": {
+															"_eq": "X-Hasura-User-Id"
+														}
+													}
+												]
+											}
+										}
+									]
+								}
+							}
+						}
+					}
+				}
+			],
+			"update_permissions": [
+				{
+					"role": "user",
+					"permission": {
+						"columns": [
+							"submitted_for_execution",
+							"submitted_for_ingestion",
+							"submitted_for_publishing",
+							"submitted_for_registration",
+							"failed_runs",
+							"fetched_run_outputs",
+							"ingested_runs",
+							"published_runs",
+							"registered_runs",
+							"submitted_runs",
+							"successful_runs",
+							"total_runs",
+							"workflow_name",
+							"ingestion_time",
+							"publishing_time",
+							"registration_time",
+							"submission_time",
+							"thread_model_id"
+						],
+						"filter": {
+							"thread_model": {
+								"thread": {
+									"_or": [
+										{
+											"permissions": {
+												"_and": [
+													{
+														"user_id": {
+															"_in": [
+																"X-Hasura-User-Id",
+																"*"
+															]
+														}
+													},
+													{
+														"write": {
+															"_eq": true
+														}
+													}
+												]
+											}
+										},
+										{
+											"events": {
+												"_and": [
+													{
+														"event": {
+															"_eq": "CREATE"
+														}
+													},
+													{
+														"userid": {
+															"_eq": "X-Hasura-User-Id"
+														}
+													}
+												]
+											}
+										}
+									]
+								}
+							}
+						},
+						"check": null
+					}
+				}
+			],
+			"delete_permissions": [
+				{
+					"role": "user",
+					"permission": {
+						"backend_only": false,
+						"filter": {
+							"thread_model": {
+								"thread": {
+									"_or": [
+										{
+											"permissions": {
+												"_and": [
+													{
+														"user_id": {
+															"_in": [
+																"X-Hasura-User-Id",
+																"*"
+															]
+														}
+													},
+													{
+														"write": {
+															"_eq": true
+														}
+													}
+												]
+											}
+										},
+										{
+											"events": {
+												"_and": [
+													{
+														"event": {
+															"_eq": "CREATE"
+														}
+													},
+													{
+														"userid": {
+															"_eq": "X-Hasura-User-Id"
+														}
+													}
+												]
+											}
+										}
+									]
+								}
+							}
+						}
+					}
+				}
+			]
+		},
+		{
+			"table": {
+				"name": "thread_model_io",
+				"schema": "public"
+			},
+			"object_relationships": [
+				{
+					"name": "dataslice",
+					"using": {
+						"foreign_key_constraint_on": "dataslice_id"
+					}
+				},
+				{
+					"name": "model_io",
+					"using": {
+						"foreign_key_constraint_on": "model_io_id"
+					}
+				},
+				{
+					"name": "thread_model",
+					"using": {
+						"foreign_key_constraint_on": "thread_model_id"
+					}
+				}
+			],
+			"insert_permissions": [
+				{
+					"role": "user",
+					"permission": {
+						"check": {
+							"thread_model": {
+								"thread": {
+									"_or": [
+										{
+											"permissions": {
+												"_and": [
+													{
+														"user_id": {
+															"_in": [
+																"X-Hasura-User-Id",
+																"*"
+															]
+														}
+													},
+													{
+														"write": {
+															"_eq": true
+														}
+													}
+												]
+											}
+										},
+										{
+											"events": {
+												"_and": [
+													{
+														"event": {
+															"_eq": "CREATE"
+														}
+													},
+													{
+														"userid": {
+															"_eq": "X-Hasura-User-Id"
+														}
+													}
+												]
+											}
+										}
+									]
+								}
+							}
+						},
+						"columns": [
+							"thread_model_id",
+							"model_io_id",
+							"dataslice_id"
+						]
+					}
+				}
+			],
+			"select_permissions": [
+				{
+					"role": "anonymous",
+					"permission": {
+						"columns": [
+							"thread_model_id",
+							"model_io_id",
+							"dataslice_id"
+						],
+						"filter": {},
+						"allow_aggregations": true
+					}
+				},
+				{
+					"role": "user",
+					"permission": {
+						"columns": [
+							"model_io_id",
+							"dataslice_id",
+							"thread_model_id"
+						],
+						"filter": {
+							"thread_model": {
+								"thread": {
+									"_or": [
+										{
+											"permissions": {
+												"_and": [
+													{
+														"user_id": {
+															"_in": [
+																"X-Hasura-User-Id",
+																"*"
+															]
+														}
+													},
+													{
+														"read": {
+															"_eq": true
+														}
+													}
+												]
+											}
+										},
+										{
+											"events": {
+												"_and": [
+													{
+														"event": {
+															"_eq": "CREATE"
+														}
+													},
+													{
+														"userid": {
+															"_eq": "X-Hasura-User-Id"
+														}
+													}
+												]
+											}
+										}
+									]
+								}
+							}
+						},
+						"allow_aggregations": true
+					}
+				}
+			],
+			"update_permissions": [
+				{
+					"role": "user",
+					"permission": {
+						"columns": [
+							"model_io_id",
+							"dataslice_id",
+							"thread_model_id"
+						],
+						"filter": {
+							"thread_model": {
+								"thread": {
+									"_or": [
+										{
+											"permissions": {
+												"_and": [
+													{
+														"user_id": {
+															"_in": [
+																"X-Hasura-User-Id",
+																"*"
+															]
+														}
+													},
+													{
+														"write": {
+															"_eq": true
+														}
+													}
+												]
+											}
+										},
+										{
+											"events": {
+												"_and": [
+													{
+														"event": {
+															"_eq": "CREATE"
+														}
+													},
+													{
+														"userid": {
+															"_eq": "X-Hasura-User-Id"
+														}
+													}
+												]
+											}
+										}
+									]
+								}
+							}
+						},
+						"check": null
+					}
+				}
+			],
+			"delete_permissions": [
+				{
+					"role": "user",
+					"permission": {
+						"backend_only": false,
+						"filter": {
+							"thread_model": {
+								"thread": {
+									"_or": [
+										{
+											"permissions": {
+												"_and": [
+													{
+														"user_id": {
+															"_in": [
+																"X-Hasura-User-Id",
+																"*"
+															]
+														}
+													},
+													{
+														"write": {
+															"_eq": true
+														}
+													}
+												]
+											}
+										},
+										{
+											"events": {
+												"_and": [
+													{
+														"event": {
+															"_eq": "CREATE"
+														}
+													},
+													{
+														"userid": {
+															"_eq": "X-Hasura-User-Id"
+														}
+													}
+												]
+											}
+										}
+									]
+								}
+							}
+						}
+					}
+				}
+			]
+		},
+		{
+			"table": {
+				"name": "thread_model_parameter",
+				"schema": "public"
+			},
+			"object_relationships": [
+				{
+					"name": "model_parameter",
+					"using": {
+						"foreign_key_constraint_on": "model_parameter_id"
+					}
+				},
+				{
+					"name": "thread_model",
+					"using": {
+						"foreign_key_constraint_on": "thread_model_id"
+					}
+				}
+			],
+			"insert_permissions": [
+				{
+					"role": "user",
+					"permission": {
+						"check": {
+							"thread_model": {
+								"thread": {
+									"_or": [
+										{
+											"permissions": {
+												"_and": [
+													{
+														"user_id": {
+															"_in": [
+																"X-Hasura-User-Id",
+																"*"
+															]
+														}
+													},
+													{
+														"write": {
+															"_eq": true
+														}
+													}
+												]
+											}
+										},
+										{
+											"events": {
+												"_and": [
+													{
+														"event": {
+															"_eq": "CREATE"
+														}
+													},
+													{
+														"userid": {
+															"_eq": "X-Hasura-User-Id"
+														}
+													}
+												]
+											}
+										}
+									]
+								}
+							}
+						},
+						"columns": [
+							"thread_model_id",
+							"model_parameter_id",
+							"parameter_value"
+						]
+					}
+				}
+			],
+			"select_permissions": [
+				{
+					"role": "anonymous",
+					"permission": {
+						"columns": [
+							"thread_model_id",
+							"model_parameter_id",
+							"parameter_value"
+						],
+						"filter": {},
+						"allow_aggregations": true
+					}
+				},
+				{
+					"role": "user",
+					"permission": {
+						"columns": [
+							"model_parameter_id",
+							"parameter_value",
+							"thread_model_id"
+						],
+						"filter": {
+							"thread_model": {
+								"thread": {
+									"_or": [
+										{
+											"permissions": {
+												"_and": [
+													{
+														"user_id": {
+															"_in": [
+																"X-Hasura-User-Id",
+																"*"
+															]
+														}
+													},
+													{
+														"read": {
+															"_eq": true
+														}
+													}
+												]
+											}
+										},
+										{
+											"events": {
+												"_and": [
+													{
+														"event": {
+															"_eq": "CREATE"
+														}
+													},
+													{
+														"userid": {
+															"_eq": "X-Hasura-User-Id"
+														}
+													}
+												]
+											}
+										}
+									]
+								}
+							}
+						},
+						"allow_aggregations": true
+					}
+				}
+			],
+			"update_permissions": [
+				{
+					"role": "user",
+					"permission": {
+						"columns": [
+							"model_parameter_id",
+							"parameter_value",
+							"thread_model_id"
+						],
+						"filter": {
+							"thread_model": {
+								"thread": {
+									"_or": [
+										{
+											"permissions": {
+												"_and": [
+													{
+														"user_id": {
+															"_in": [
+																"X-Hasura-User-Id",
+																"*"
+															]
+														}
+													},
+													{
+														"write": {
+															"_eq": true
+														}
+													}
+												]
+											}
+										},
+										{
+											"events": {
+												"_and": [
+													{
+														"event": {
+															"_eq": "CREATE"
+														}
+													},
+													{
+														"userid": {
+															"_eq": "X-Hasura-User-Id"
+														}
+													}
+												]
+											}
+										}
+									]
+								}
+							}
+						},
+						"check": null
+					}
+				}
+			],
+			"delete_permissions": [
+				{
+					"role": "user",
+					"permission": {
+						"backend_only": false,
+						"filter": {
+							"thread_model": {
+								"thread": {
+									"_or": [
+										{
+											"permissions": {
+												"_and": [
+													{
+														"user_id": {
+															"_in": [
+																"X-Hasura-User-Id",
+																"*"
+															]
+														}
+													},
+													{
+														"write": {
+															"_eq": true
+														}
+													}
+												]
+											}
+										},
+										{
+											"events": {
+												"_and": [
+													{
+														"event": {
+															"_eq": "CREATE"
+														}
+													},
+													{
+														"userid": {
+															"_eq": "X-Hasura-User-Id"
+														}
+													}
+												]
+											}
+										}
+									]
+								}
+							}
+						}
+					}
+				}
+			]
+		},
+		{
+			"table": {
+				"name": "thread_permission",
+				"schema": "public"
+			},
+			"object_relationships": [
+				{
+					"name": "thread",
+					"using": {
+						"foreign_key_constraint_on": "thread_id"
+					}
+				}
+			],
+			"insert_permissions": [
+				{
+					"role": "user",
+					"permission": {
+						"check": {
+							"thread": {
+								"events": {
+									"_and": [
+										{
+											"event": {
+												"_eq": "CREATE"
+											}
+										},
+										{
+											"userid": {
+												"_eq": "X-Hasura-User-Id"
+											}
+										}
+									]
+								}
+							}
+						},
+						"columns": [
+							"thread_id",
+							"read",
+							"write",
+							"execute",
+							"user_id"
+						]
+					}
+				}
+			],
+			"select_permissions": [
+				{
+					"role": "user",
+					"permission": {
+						"columns": [
+							"execute",
+							"read",
+							"write",
+							"thread_id",
+							"user_id"
+						],
+						"filter": {}
+					}
+				}
+			],
+			"update_permissions": [
+				{
+					"role": "user",
+					"permission": {
+						"columns": [
+							"execute",
+							"read",
+							"write",
+							"thread_id",
+							"user_id"
+						],
+						"filter": {
+							"thread": {
+								"events": {
+									"_and": [
+										{
+											"event": {
+												"_eq": "CREATE"
+											}
+										},
+										{
+											"userid": {
+												"_eq": "X-Hasura-User-Id"
+											}
+										}
+									]
+								}
+							}
+						},
+						"check": null
+					}
+				}
+			],
+			"delete_permissions": [
+				{
+					"role": "user",
+					"permission": {
+						"backend_only": false,
+						"filter": {
+							"thread": {
+								"events": {
+									"_and": [
+										{
+											"event": {
+												"_eq": "CREATE"
+											}
+										},
+										{
+											"userid": {
+												"_eq": "X-Hasura-User-Id"
+											}
+										}
+									]
+								}
+							}
+						}
+					}
+				}
+			]
+		},
+		{
+			"table": {
+				"name": "thread_provenance",
+				"schema": "public"
+			},
+			"object_relationships": [
+				{
+					"name": "thread",
+					"using": {
+						"foreign_key_constraint_on": "thread_id"
+					}
+				}
+			],
+			"insert_permissions": [
+				{
+					"role": "user",
+					"permission": {
+						"check": {},
+						"columns": [
+							"thread_id",
+							"event",
+							"timestamp",
+							"userid",
+							"notes"
+						]
+					}
+				}
+			],
+			"select_permissions": [
+				{
+					"role": "user",
+					"permission": {
+						"columns": [
+							"notes",
+							"thread_id",
+							"userid",
+							"event",
+							"timestamp"
+						],
+						"filter": {
+							"thread": {
+								"_or": [
+									{
+										"permissions": {
+											"_and": [
+												{
+													"user_id": {
+														"_in": [
+															"X-Hasura-User-Id",
+															"*"
+														]
+													}
+												},
+												{
+													"read": {
+														"_eq": true
+													}
+												}
+											]
+										}
+									},
+									{
+										"events": {
+											"_and": [
+												{
+													"event": {
+														"_eq": "CREATE"
+													}
+												},
+												{
+													"userid": {
+														"_eq": "X-Hasura-User-Id"
+													}
+												}
+											]
+										}
+									}
+								]
+							}
+						},
+						"allow_aggregations": true
+					}
+				}
+			],
+			"delete_permissions": [
+				{
+					"role": "user",
+					"permission": {
+						"backend_only": false,
+						"filter": {
+							"thread": {
+								"events": {
+									"_and": [
+										{
+											"event": {
+												"_eq": "CREATE"
+											}
+										},
+										{
+											"userid": {
+												"_eq": "X-Hasura-User-Id"
+											}
+										}
+									]
+								}
+							}
+						}
+					}
+				}
+			]
+		},
+		{
+			"table": {
+				"name": "variable",
+				"schema": "public"
+			},
+			"object_relationships": [
+				{
+					"name": "intervention",
+					"using": {
+						"foreign_key_constraint_on": "intervention_id"
+					}
+				}
+			],
+			"array_relationships": [
+				{
+					"name": "categories",
+					"using": {
+						"foreign_key_constraint_on": {
+							"column": "variable_id",
+							"table": {
+								"name": "variable_category",
+								"schema": "public"
+							}
+						}
+					}
+				},
+				{
+					"name": "model_ios",
+					"using": {
+						"foreign_key_constraint_on": {
+							"column": "variable_id",
+							"table": {
+								"name": "model_io_variable",
+								"schema": "public"
+							}
+						}
+					}
+				},
+				{
+					"name": "tasksByDrivingVariable",
+					"using": {
+						"foreign_key_constraint_on": {
+							"column": "driving_variable_id",
+							"table": {
+								"name": "task",
+								"schema": "public"
+							}
+						}
+					}
+				},
+				{
+					"name": "tasksByResponseVariable",
+					"using": {
+						"foreign_key_constraint_on": {
+							"column": "response_variable_id",
+							"table": {
+								"name": "task",
+								"schema": "public"
+							}
+						}
+					}
+				},
+				{
+					"name": "threadsByDrivingVariable",
+					"using": {
+						"foreign_key_constraint_on": {
+							"column": "driving_variable_id",
+							"table": {
+								"name": "thread",
+								"schema": "public"
+							}
+						}
+					}
+				},
+				{
+					"name": "threadsByResponseVariable",
+					"using": {
+						"foreign_key_constraint_on": {
+							"column": "response_variable_id",
+							"table": {
+								"name": "thread",
+								"schema": "public"
+							}
+						}
+					}
+				}
+			],
+			"insert_permissions": [
+				{
+					"role": "user",
+					"permission": {
+						"check": {},
+						"columns": [
+							"id",
+							"description",
+							"url",
+							"name",
+							"is_adjustment_variable",
+							"is_indicator",
+							"intervention_id"
+						]
+					}
+				}
+			],
+			"select_permissions": [
+				{
+					"role": "anonymous",
+					"permission": {
+						"columns": [
+							"id",
+							"description",
+							"url",
+							"name",
+							"is_adjustment_variable",
+							"is_indicator",
+							"intervention_id"
+						],
+						"filter": {},
+						"allow_aggregations": true
+					}
+				},
+				{
+					"role": "user",
+					"permission": {
+						"columns": [
+							"is_adjustment_variable",
+							"is_indicator",
+							"description",
+							"id",
+							"intervention_id",
+							"name",
+							"url"
+						],
+						"filter": {},
+						"allow_aggregations": true
+					}
+				}
+			],
+			"update_permissions": [
+				{
+					"role": "user",
+					"permission": {
+						"columns": [
+							"description",
+							"name"
+						],
+						"filter": {},
+						"check": null
+					}
+				}
+			]
+		},
+		{
+			"table": {
+				"name": "variable_category",
+				"schema": "public"
+			},
+			"object_relationships": [
+				{
+					"name": "variable",
+					"using": {
+						"foreign_key_constraint_on": "variable_id"
+					}
+				}
+			],
+			"select_permissions": [
+				{
+					"role": "anonymous",
+					"permission": {
+						"columns": [
+							"variable_id",
+							"category"
+						],
+						"filter": {}
+					}
+				},
+				{
+					"role": "user",
+					"permission": {
+						"columns": [
+							"variable_id",
+							"category"
+						],
+						"filter": {}
+					}
+				}
+			]
+		}
+	]
+}
