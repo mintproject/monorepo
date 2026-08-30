@@ -6,7 +6,10 @@ Extracts model catalog entities from the RDF TriG dump, transforms them into rel
 
 - Python 3.9+
 - PostgreSQL with the `modelcatalog_*` schema applied (see `graphql_engine/migrations/`)
-- The TriG data file at `model-catalog-endpoint/data/model-catalog.trig`
+- The TriG data file. It is not in this repository. It lives in
+  [`mintproject/model-catalog-endpoint`](https://github.com/mintproject/model-catalog-endpoint)
+  at `data/model-catalog.trig`. Clone it, or download the file, and pass the path with
+  `--trig-path`.
 
 ## Setup
 
@@ -35,14 +38,14 @@ kubectl -n mint get secret mint-secrets -o jsonpath='{.data.HASURA_GRAPHQL_DATAB
 Run the full pipeline (extract, transform, load, validate):
 
 ```bash
-python3 etl/run.py --trig-path model-catalog-endpoint/data/model-catalog.trig
+python3 etl/run.py --trig-path <path>/model-catalog.trig
 ```
 
 ### Options
 
 | Flag | Description |
 |------|-------------|
-| `--trig-path PATH` | Path to TriG file (default: `../model-catalog-endpoint/data/model-catalog.trig`) |
+| `--trig-path PATH` | Path to TriG file. Always pass it. The built-in default still names the removed `model-catalog-endpoint/` submodule |
 | `--clear` | Truncate all tables before loading (useful for reruns) |
 | `--validate-only` | Skip ETL, only run validation against existing data |
 | `--db-host HOST` | Database host (default: `localhost`) |

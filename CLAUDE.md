@@ -1,48 +1,48 @@
-# OpenWolf
-
-@.wolf/OPENWOLF.md
-
-This project uses OpenWolf for context management. Read and follow .wolf/OPENWOLF.md every session. Check .wolf/cerebrum.md before generating code. Check .wolf/anatomy.md before reading files.
-
-
 # CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Project Overview
 
-MINT (Model INTegration) platform - a scientific modeling system. This monorepo uses git submodules for major components. The project has completed the DYNAMO v2.0 migration: model catalog data moved from Apache Fuseki (RDF triplestore) to PostgreSQL with Hasura GraphQL.
+MINT (Model INTegration) platform - a scientific modeling system. The services live
+directly in this repository; only `ui/` and `helm-charts/` are still git submodules. The
+project has completed the DYNAMO v2.0 migration: model catalog data moved from Apache
+Fuseki (RDF triplestore) to PostgreSQL with Hasura GraphQL.
 
 ## Repository Structure
 
-| Directory | Purpose | Language |
-|-----------|---------|----------|
-| `model-catalog-api/` | REST API v2.0.0 backed by Hasura | TypeScript/Fastify |
-| `model-catalog-endpoint/` | Apache Fuseki RDF store (deprecated) | - |
-| `mint-ensemble-manager/` | Execution orchestration | TypeScript/Express |
-| `ui-react/` | Frontend (current) | TypeScript/React + Vite |
-| `ui/` | Legacy frontend (deprecated, being replaced by `ui-react/`) | TypeScript/LitElement |
-| `graphql_engine/` | Hasura schema, migrations, metadata | SQL/YAML |
-| `etl/` | RDF-to-PostgreSQL migration pipeline | Python |
-| `helm-charts/` | Kubernetes deployment | Helm |
+Directories marked in the last column carry their own `CLAUDE.md`. Read it before you work
+there. `ui/` and `helm-charts/` are submodules, so their files arrive only after
+`git submodule update --init`.
 
-> **Deprecated (2026-08-29):** `model-catalog-fastapi` (legacy REST API v1.8.0, RDF/SPARQL)
-> is retired. The GitHub repo `mintproject/model-catalog-fastapi` is archived and the
-> directory is no longer checked out here. Use `model-catalog-api/` (v2.0.0).
+| Directory | Purpose | Language | Own `CLAUDE.md` |
+|-----------|---------|----------|-----------------|
+| `model-catalog-api/` | REST API v2.0.0 backed by Hasura | TypeScript/Fastify | yes |
+| `mint-ensemble-manager/` | Execution orchestration | TypeScript/Express | yes |
+| `ui-react/` | Frontend (current) | TypeScript/React + Vite | yes |
+| `ui/` | Legacy frontend (deprecated). Submodule of `mintproject/mint-ui-lit` | TypeScript/LitElement | yes |
+| `graphql_engine/` | Hasura schema, migrations, metadata | SQL/YAML | - |
+| `etl/` | RDF-to-PostgreSQL migration pipeline | Python | - |
+| `knowledge-base/` | MINT domain wiki | Markdown | yes |
+| `docs/` | ADRs, runbooks, agent guides | Markdown | - |
+| `scripts/` | Deployment and maintenance utilities | Shell/SQL | - |
+| `backups/` | Committed PostgreSQL dump (23 MB) | SQL | - |
+| `helm-charts/` | Kubernetes deployment. Submodule of `mintproject/mint` | Helm | - |
 
-> **Removed as submodules (2026-08-30):** `model-catalog-ontology/`, `MINT_USERGUIDE/`,
-> `model-catalog-fetch-api-client/` and `dynamo-experiment-may/` are no longer checked
-> out here. The single-repo cutover removed them
-> ([#146](https://github.com/mintproject/monorepo/issues/146)).
->
-> Two of them stay maintained, in their own repositories. Read them there:
+> **Four repositories left this checkout in the single-repo cutover**
+> ([#146](https://github.com/mintproject/monorepo/issues/146)):
+> `model-catalog-ontology/`, `MINT_USERGUIDE/`, `model-catalog-fetch-api-client/` and
+> `dynamo-experiment-may/`. Two stay maintained, and both keep outside forks. Read them
+> where they live. Do not copy their content here:
 >
 > - The OWL ontology for the model catalog schema:
 >   [`mintproject/Mint-ModelCatalog-Ontology`](https://github.com/mintproject/Mint-ModelCatalog-Ontology)
 > - The user documentation:
 >   [`mintproject/MINT_USERGUIDE`](https://github.com/mintproject/MINT_USERGUIDE)
 >
-> Both keep outside forks. Do not copy their content into this repository.
+> `model-catalog-fastapi` (legacy REST API v1.8.0, RDF/SPARQL) is archived. Use
+> `model-catalog-api/` (v2.0.0). `model-catalog-endpoint` (the Fuseki triplestore) also
+> left this checkout, but its repository stays live. It holds the TriG source file.
 
 ## Architecture
 
@@ -102,8 +102,11 @@ yarn build                          # Production build
 ```
 
 ### ETL Pipeline
+The TriG source file is not in this repository. It lives in
+[`mintproject/model-catalog-endpoint`](https://github.com/mintproject/model-catalog-endpoint)
+at `data/model-catalog.trig`. Pass its path.
 ```bash
-python3 etl/run.py --trig-path model-catalog-endpoint/data/model-catalog.trig
+python3 etl/run.py --trig-path <path>/model-catalog.trig
 python3 etl/run.py --trig-path ... --clear    # Truncate first
 python3 etl/run.py --validate-only            # Validation only
 ```
@@ -130,8 +133,6 @@ hasura metadata reload
 See `.planning/PROJECT.md` for full migration status and decisions. Key points:
 - v2.0.0 API is the only maintained REST API; legacy v1.8.0 (`model-catalog-fastapi`) is archived
 - Old model/model_io/model_parameter tables kept for FK compatibility
-- Submodules: `model-catalog-api`, `mint-ensemble-manager`, `ui` each have their own CLAUDE.md
-- `ui-react/` is NOT a submodule — it lives directly in this repo and has its own CLAUDE.md
 
 ## Git Guidelines
 

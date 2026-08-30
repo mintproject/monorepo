@@ -1,14 +1,20 @@
 # MINT - Model INTegration
 
-## Submodule Status
+![Last Commit](https://img.shields.io/github/last-commit/mintproject/monorepo/main)
 
-| Submodule | Build | Last Commit |
-|-----------|-------|-------------|
-| [model-catalog-api](https://github.com/mintproject/model-catalog-api) | [![CI](https://github.com/mintproject/model-catalog-api/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/mintproject/model-catalog-api/actions/workflows/ci.yml) | ![Last Commit](https://img.shields.io/github/last-commit/mintproject/model-catalog-api/main) |
-| [mint-ensemble-manager](https://github.com/mintproject/mint-ensemble-manager) | [![Build](https://github.com/mintproject/mint-ensemble-manager/actions/workflows/docker-publish.yml/badge.svg?branch=master)](https://github.com/mintproject/mint-ensemble-manager/actions/workflows/docker-publish.yml) | ![Last Commit](https://img.shields.io/github/last-commit/mintproject/mint-ensemble-manager/master) |
-| [mint-ui-lit](https://github.com/mintproject/mint-ui-lit) | [![UI](https://github.com/mintproject/mint-ui-lit/actions/workflows/docker-publish.yml/badge.svg?branch=master)](https://github.com/mintproject/mint-ui-lit/actions/workflows/docker-publish.yml) | ![Last Commit](https://img.shields.io/github/last-commit/mintproject/mint-ui-lit/master) |
-| [graphql_engine](https://github.com/mintproject/graphql_engine) | [![Hasura](https://github.com/mintproject/graphql_engine/actions/workflows/docker-publish.yml/badge.svg?branch=master)](https://github.com/mintproject/graphql_engine/actions/workflows/docker-publish.yml) | ![Last Commit](https://img.shields.io/github/last-commit/mintproject/graphql_engine/master) |
-| [helm-charts (mint)](https://github.com/mintproject/mint) | [![Lint and Test Charts](https://github.com/mintproject/mint/actions/workflows/linter.yaml/badge.svg?branch=main)](https://github.com/mintproject/mint/actions/workflows/linter.yaml) [![Helm Docs](https://github.com/mintproject/mint/actions/workflows/docs.yaml/badge.svg?branch=main)](https://github.com/mintproject/mint/actions/workflows/docs.yaml) | ![Last Commit](https://img.shields.io/github/last-commit/mintproject/mint/main) |
+## Build Status
+
+The four services build from this repository. `ui/` and `helm-charts/` are still submodules
+and build from their own.
+
+| Component | Build |
+|-----------|-------|
+| Model Catalog API | [![Model Catalog API](https://github.com/mintproject/monorepo/actions/workflows/model-catalog-api.yml/badge.svg)](https://github.com/mintproject/monorepo/actions/workflows/model-catalog-api.yml) |
+| Ensemble Manager | [![Ensemble Manager](https://github.com/mintproject/monorepo/actions/workflows/mint-ensemble-manager.yml/badge.svg)](https://github.com/mintproject/monorepo/actions/workflows/mint-ensemble-manager.yml) |
+| UI (React) | [![UI React](https://github.com/mintproject/monorepo/actions/workflows/ui-react.yml/badge.svg)](https://github.com/mintproject/monorepo/actions/workflows/ui-react.yml) |
+| Hasura GraphQL engine | [![GraphQL Engine](https://github.com/mintproject/monorepo/actions/workflows/graphql_engine.yml/badge.svg)](https://github.com/mintproject/monorepo/actions/workflows/graphql_engine.yml) |
+| UI (LitElement, submodule [mint-ui-lit](https://github.com/mintproject/mint-ui-lit)) | [![ui](https://github.com/mintproject/mint-ui-lit/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/mintproject/mint-ui-lit/actions/workflows/docker-publish.yml) |
+| Helm charts (submodule [mint](https://github.com/mintproject/mint)) | [![Lint and Test Charts](https://github.com/mintproject/mint/actions/workflows/linter.yaml/badge.svg)](https://github.com/mintproject/mint/actions/workflows/linter.yaml) [![Helm Docs](https://github.com/mintproject/mint/actions/workflows/docs.yaml/badge.svg)](https://github.com/mintproject/mint/actions/workflows/docs.yaml) |
 
 MINT is a scientific modeling platform that enables researchers to discover, configure, and execute computational models. It provides a unified catalog of models, datasets, and variables, allowing scientists to set up and run model ensembles for complex scenarios such as climate impact analysis, hydrology, and agriculture.
 
@@ -27,7 +33,7 @@ The platform follows a layered architecture backed by a single PostgreSQL databa
 
 ```mermaid
 graph TD
-    UI["UI<br/>(LitElement SPA)"]
+    UI["UI<br/>(React SPA)"]
     API["Model Catalog REST API<br/>(Fastify)"]
     EM["Ensemble Manager<br/>(Express)"]
     HASURA["Hasura GraphQL"]
@@ -67,40 +73,39 @@ graph TD
     OWL -. "defines schema" .-> FUSEKI
 ```
 
-**Data flow:** Model metadata was authored as RDF (TriG format), loaded into Apache Jena Fuseki, and queried via SPARQL by the FastAPI-based REST API. The OWL ontology (`model-catalog-ontology/`) defined the schema for all model catalog entities. This architecture was replaced in v2.0 by the PostgreSQL + Hasura stack via an ETL migration pipeline.
+**Data flow:** Model metadata was authored as RDF (TriG format), loaded into Apache Jena Fuseki, and queried via SPARQL by the FastAPI-based REST API. The OWL ontology defined the schema for all model catalog entities. This architecture was replaced in v2.0 by the PostgreSQL + Hasura stack via an ETL migration pipeline.
 
 ## Repository Structure
 
-This monorepo uses git submodules for major components:
+The services live directly in this repository. Only `ui/` and `helm-charts/` are submodules.
 
 | Directory | Description | Stack |
 |-----------|-------------|-------|
 | `model-catalog-api/` | REST API v2.0.0 for the model catalog | TypeScript, Fastify |
 | `mint-ensemble-manager/` | Model execution orchestration service | TypeScript, Express |
-| `ui/` | Web frontend | TypeScript, LitElement |
+| `ui-react/` | Web frontend (current) | TypeScript, React, Vite |
+| `ui/` | Web frontend (deprecated). Submodule of `mintproject/mint-ui-lit` | TypeScript, LitElement |
 | `graphql_engine/` | Hasura schema, migrations, and metadata | SQL, YAML |
 | `etl/` | RDF-to-PostgreSQL migration pipeline | Python |
-| `helm-charts/` | Kubernetes deployment charts | Helm |
-| `mint-instances/` | Preconfigured model instance data | - |
+| `knowledge-base/` | MINT domain wiki | Markdown |
+| `docs/` | Architecture decisions, runbooks, agent guides | Markdown |
 | `scripts/` | Deployment and maintenance utilities | Shell, SQL |
+| `backups/` | Committed PostgreSQL dump (23 MB) | SQL |
+| `helm-charts/` | Kubernetes deployment charts. Submodule of `mintproject/mint` | Helm |
 
-> **Note:** `model-catalog-endpoint/` is a legacy component from the old RDF/Fuseki-based architecture. It is no longer actively maintained and can be ignored. The platform now uses PostgreSQL with Hasura GraphQL as its data backend.
->
-> `model-catalog-fastapi` (legacy REST API v1.8.0) was deprecated on 2026-08-29. Its repository is archived and it is no longer part of this checkout.
-
-> **Removed as submodules (2026-08-30):** `model-catalog-ontology/`, `MINT_USERGUIDE/`,
-> `model-catalog-fetch-api-client/` and `dynamo-experiment-may/` are no longer checked
-> out here. The single-repo cutover removed them
-> ([#146](https://github.com/mintproject/monorepo/issues/146)).
->
-> Two of them stay maintained, in their own repositories. Read them there:
+> **Four repositories left this checkout in the single-repo cutover**
+> ([#146](https://github.com/mintproject/monorepo/issues/146)):
+> `model-catalog-ontology/`, `MINT_USERGUIDE/`, `model-catalog-fetch-api-client/` and
+> `dynamo-experiment-may/`. Two stay maintained in their own repositories:
 >
 > - The OWL ontology for the model catalog schema:
 >   [`mintproject/Mint-ModelCatalog-Ontology`](https://github.com/mintproject/Mint-ModelCatalog-Ontology)
 > - The user documentation:
 >   [`mintproject/MINT_USERGUIDE`](https://github.com/mintproject/MINT_USERGUIDE)
 >
-> Both keep outside forks. Do not copy their content into this repository.
+> `model-catalog-fastapi` (legacy REST API v1.8.0) and `model-catalog-endpoint` (the
+> Fuseki triplestore) belong to the v1.x architecture. `model-catalog-fastapi` is
+> archived. `model-catalog-endpoint` stays live: it holds the TriG source file.
 
 ## Getting Started
 
@@ -112,24 +117,26 @@ This monorepo uses git submodules for major components:
 
 ### Development
 
-Each component can be developed independently. See the README in each submodule for detailed instructions.
+Each component can be developed independently. See the README in each directory for detailed instructions.
 
 ```bash
-# Clone with submodules
-git clone --recurse-submodules https://github.com/mintproject/mint.git
+git clone --recurse-submodules https://github.com/mintproject/monorepo.git
 
 # Model Catalog API
 cd model-catalog-api
 npm install && npm run dev
 
 # UI
-cd ui
-yarn install && yarn start
+cd ui-react
+npm install && npm run dev
 
 # Ensemble Manager
 cd mint-ensemble-manager
 npm install && npm run start:watch
 ```
+
+`--recurse-submodules` fetches `ui/` and `helm-charts/` only. Everything else is in the
+clone already.
 
 ### Kubernetes Deployment
 
@@ -143,10 +150,11 @@ cd graphql_engine
 hasura migrate apply
 hasura metadata apply
 
-# Load data from RDF sources
-python3 etl/run.py --trig-path model-catalog-endpoint/data/model-catalog.trig
+# Load data from RDF sources. The TriG file is not in this repository; it lives in
+# mintproject/model-catalog-endpoint at data/model-catalog.trig.
+python3 etl/run.py --trig-path <path>/model-catalog.trig
 ```
 
 ## License
 
-See individual submodule repositories for license information.
+See the individual component directories for license information.
