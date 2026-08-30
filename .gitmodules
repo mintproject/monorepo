@@ -1,7 +1,3 @@
-[submodule "mint-ensemble-manager"]
-	path = mint-ensemble-manager
-	url = https://github.com/mintproject/mint-ensemble-manager.git
-	branch = model-catalog-migration
 [submodule "ui"]
 	path = ui
 	url = https://github.com/mintproject/mint-ui-lit.git
