@@ -31,8 +31,16 @@ const threadWithModel = {
   region_id: 'south_sudan',
   driving_variable_id: 'v-precip',
   response_variable_id: 'v-yield',
-  driving_variable: { __typename: 'variable', id: 'v-precip', name: 'precipitation' },
-  response_variable: { __typename: 'variable', id: 'v-yield', name: 'crop yield' },
+  driving_variable: {
+    __typename: 'modelcatalog_standard_variable',
+    id: 'v-precip',
+    label: 'precipitation',
+  },
+  response_variable: {
+    __typename: 'modelcatalog_standard_variable',
+    id: 'v-yield',
+    label: 'crop yield',
+  },
   events: [
     {
       __typename: 'thread_provenance',

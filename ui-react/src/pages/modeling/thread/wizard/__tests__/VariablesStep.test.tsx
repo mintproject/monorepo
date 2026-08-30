@@ -48,6 +48,42 @@ describe('VariablesStep', () => {
     expect(screen.getByText(/no indicator set/i)).toBeInTheDocument();
   });
 
+  // #106: the thread stores a standard variable URI. Showing that URI in the
+  // combobox trigger is unreadable, so the relationship's label is preferred.
+  it('shows the stored indicator by label, not by its URI', () => {
+    renderWithProviders(
+      <VariablesStep
+        thread={makeThread({
+          response_variable_id: 'https://w3id.org/okn/i/mint/DRAWDOWN',
+          response_variable: {
+            __typename: 'modelcatalog_standard_variable',
+            id: 'https://w3id.org/okn/i/mint/DRAWDOWN',
+            label: 'drawdown',
+          },
+        })}
+        onUpdated={vi.fn()}
+        onContinue={vi.fn()}
+        onBack={vi.fn()}
+      />,
+    );
+    expect(screen.getByText(/models will be filtered/i)).toHaveTextContent('drawdown');
+    expect(screen.queryByText(/w3id\.org/)).not.toBeInTheDocument();
+  });
+
+  it('falls back to the id when the standard variable carries no label', () => {
+    renderWithProviders(
+      <VariablesStep
+        thread={makeThread({ response_variable_id: 'https://w3id.org/okn/i/mint/DRAWDOWN' })}
+        onUpdated={vi.fn()}
+        onContinue={vi.fn()}
+        onBack={vi.fn()}
+      />,
+    );
+    expect(screen.getByText(/models will be filtered/i)).toHaveTextContent(
+      'https://w3id.org/okn/i/mint/DRAWDOWN',
+    );
+  });
+
   it('renders both the indicator and adjustable-variable labels', () => {
     renderWithProviders(
       <VariablesStep

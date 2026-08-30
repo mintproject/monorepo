@@ -12438,6 +12438,150 @@ type modelcatalog_standard_variable {
   same_as: _text
 
   """An array relationship"""
+  tasksByDrivingVariable(
+    """distinct select on columns"""
+    distinct_on: [task_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [task_order_by!]
+
+    """filter the rows returned"""
+    where: task_bool_exp
+  ): [task!]!
+
+  """An aggregate relationship"""
+  tasksByDrivingVariable_aggregate(
+    """distinct select on columns"""
+    distinct_on: [task_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [task_order_by!]
+
+    """filter the rows returned"""
+    where: task_bool_exp
+  ): task_aggregate!
+
+  """An array relationship"""
+  tasksByResponseVariable(
+    """distinct select on columns"""
+    distinct_on: [task_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [task_order_by!]
+
+    """filter the rows returned"""
+    where: task_bool_exp
+  ): [task!]!
+
+  """An aggregate relationship"""
+  tasksByResponseVariable_aggregate(
+    """distinct select on columns"""
+    distinct_on: [task_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [task_order_by!]
+
+    """filter the rows returned"""
+    where: task_bool_exp
+  ): task_aggregate!
+
+  """An array relationship"""
+  threadsByDrivingVariable(
+    """distinct select on columns"""
+    distinct_on: [thread_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [thread_order_by!]
+
+    """filter the rows returned"""
+    where: thread_bool_exp
+  ): [thread!]!
+
+  """An aggregate relationship"""
+  threadsByDrivingVariable_aggregate(
+    """distinct select on columns"""
+    distinct_on: [thread_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [thread_order_by!]
+
+    """filter the rows returned"""
+    where: thread_bool_exp
+  ): thread_aggregate!
+
+  """An array relationship"""
+  threadsByResponseVariable(
+    """distinct select on columns"""
+    distinct_on: [thread_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [thread_order_by!]
+
+    """filter the rows returned"""
+    where: thread_bool_exp
+  ): [thread!]!
+
+  """An aggregate relationship"""
+  threadsByResponseVariable_aggregate(
+    """distinct select on columns"""
+    distinct_on: [thread_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [thread_order_by!]
+
+    """filter the rows returned"""
+    where: thread_bool_exp
+  ): thread_aggregate!
+
+  """An array relationship"""
   variable_presentations(
     """distinct select on columns"""
     distinct_on: [modelcatalog_variable_presentation_select_column!]
@@ -12502,6 +12646,10 @@ input modelcatalog_standard_variable_bool_exp {
   id: String_comparison_exp
   label: String_comparison_exp
   same_as: _text_comparison_exp
+  tasksByDrivingVariable: task_bool_exp
+  tasksByResponseVariable: task_bool_exp
+  threadsByDrivingVariable: thread_bool_exp
+  threadsByResponseVariable: thread_bool_exp
   variable_presentations: modelcatalog_variable_presentation_bool_exp
 }
 
@@ -12523,6 +12671,10 @@ input modelcatalog_standard_variable_insert_input {
   id: String
   label: String
   same_as: _text
+  tasksByDrivingVariable: task_arr_rel_insert_input
+  tasksByResponseVariable: task_arr_rel_insert_input
+  threadsByDrivingVariable: thread_arr_rel_insert_input
+  threadsByResponseVariable: thread_arr_rel_insert_input
   variable_presentations: modelcatalog_variable_presentation_arr_rel_insert_input
 }
 
@@ -12578,6 +12730,10 @@ input modelcatalog_standard_variable_order_by {
   id: order_by
   label: order_by
   same_as: order_by
+  tasksByDrivingVariable_aggregate: task_aggregate_order_by
+  tasksByResponseVariable_aggregate: task_aggregate_order_by
+  threadsByDrivingVariable_aggregate: thread_aggregate_order_by
+  threadsByResponseVariable_aggregate: thread_aggregate_order_by
   variable_presentations_aggregate: modelcatalog_variable_presentation_aggregate_order_by
 }
 
@@ -27966,7 +28122,7 @@ columns and relationships of "task"
 """
 type task {
   """An object relationship"""
-  driving_variable: variable
+  driving_variable: modelcatalog_standard_variable
   driving_variable_id: String
   end_date: date!
 
@@ -28053,7 +28209,7 @@ type task {
   region_id: String
 
   """An object relationship"""
-  response_variable: variable
+  response_variable: modelcatalog_standard_variable
   response_variable_id: String
   start_date: date!
 
@@ -28137,7 +28293,7 @@ input task_bool_exp {
   _and: [task_bool_exp!]
   _not: task_bool_exp
   _or: [task_bool_exp!]
-  driving_variable: variable_bool_exp
+  driving_variable: modelcatalog_standard_variable_bool_exp
   driving_variable_id: String_comparison_exp
   end_date: date_comparison_exp
   events: task_provenance_bool_exp
@@ -28148,7 +28304,7 @@ input task_bool_exp {
   problem_statement_id: String_comparison_exp
   region: region_bool_exp
   region_id: String_comparison_exp
-  response_variable: variable_bool_exp
+  response_variable: modelcatalog_standard_variable_bool_exp
   response_variable_id: String_comparison_exp
   start_date: date_comparison_exp
   threads: thread_bool_exp
@@ -28185,7 +28341,7 @@ input task_events_comparison_exp {
 input type for inserting data into table "task"
 """
 input task_insert_input {
-  driving_variable: variable_obj_rel_insert_input
+  driving_variable: modelcatalog_standard_variable_obj_rel_insert_input
   driving_variable_id: String
   end_date: date
   events: task_provenance_arr_rel_insert_input
@@ -28196,7 +28352,7 @@ input task_insert_input {
   problem_statement_id: String
   region: region_obj_rel_insert_input
   region_id: String
-  response_variable: variable_obj_rel_insert_input
+  response_variable: modelcatalog_standard_variable_obj_rel_insert_input
   response_variable_id: String
   start_date: date
   threads: thread_arr_rel_insert_input
@@ -28286,7 +28442,7 @@ input task_on_conflict {
 
 """Ordering options when selecting data from "task"."""
 input task_order_by {
-  driving_variable: variable_order_by
+  driving_variable: modelcatalog_standard_variable_order_by
   driving_variable_id: order_by
   end_date: order_by
   events_aggregate: task_provenance_aggregate_order_by
@@ -28297,7 +28453,7 @@ input task_order_by {
   problem_statement_id: order_by
   region: region_order_by
   region_id: order_by
-  response_variable: variable_order_by
+  response_variable: modelcatalog_standard_variable_order_by
   response_variable_id: order_by
   start_date: order_by
   threads_aggregate: thread_aggregate_order_by
@@ -28811,7 +28967,7 @@ type thread {
   dataset_id: String
 
   """An object relationship"""
-  driving_variable: variable
+  driving_variable: modelcatalog_standard_variable
   driving_variable_id: String
   end_date: date!
 
@@ -28894,7 +29050,7 @@ type thread {
   region_id: String
 
   """An object relationship"""
-  response_variable: variable
+  response_variable: modelcatalog_standard_variable
   response_variable_id: String
   start_date: date!
 
@@ -29019,7 +29175,7 @@ input thread_bool_exp {
   _not: thread_bool_exp
   _or: [thread_bool_exp!]
   dataset_id: String_comparison_exp
-  driving_variable: variable_bool_exp
+  driving_variable: modelcatalog_standard_variable_bool_exp
   driving_variable_id: String_comparison_exp
   end_date: date_comparison_exp
   events: thread_provenance_bool_exp
@@ -29028,7 +29184,7 @@ input thread_bool_exp {
   permissions: thread_permission_bool_exp
   region: region_bool_exp
   region_id: String_comparison_exp
-  response_variable: variable_bool_exp
+  response_variable: modelcatalog_standard_variable_bool_exp
   response_variable_id: String_comparison_exp
   start_date: date_comparison_exp
   task: task_bool_exp
@@ -29249,7 +29405,7 @@ input type for inserting data into table "thread"
 """
 input thread_insert_input {
   dataset_id: String
-  driving_variable: variable_obj_rel_insert_input
+  driving_variable: modelcatalog_standard_variable_obj_rel_insert_input
   driving_variable_id: String
   end_date: date
   events: thread_provenance_arr_rel_insert_input
@@ -29258,7 +29414,7 @@ input thread_insert_input {
   permissions: thread_permission_arr_rel_insert_input
   region: region_obj_rel_insert_input
   region_id: String
-  response_variable: variable_obj_rel_insert_input
+  response_variable: modelcatalog_standard_variable_obj_rel_insert_input
   response_variable_id: String
   start_date: date
   task: task_obj_rel_insert_input
@@ -30956,7 +31112,7 @@ input thread_on_conflict {
 """Ordering options when selecting data from "thread"."""
 input thread_order_by {
   dataset_id: order_by
-  driving_variable: variable_order_by
+  driving_variable: modelcatalog_standard_variable_order_by
   driving_variable_id: order_by
   end_date: order_by
   events_aggregate: thread_provenance_aggregate_order_by
@@ -30965,7 +31121,7 @@ input thread_order_by {
   permissions_aggregate: thread_permission_aggregate_order_by
   region: region_order_by
   region_id: order_by
-  response_variable: variable_order_by
+  response_variable: modelcatalog_standard_variable_order_by
   response_variable_id: order_by
   start_date: order_by
   task: task_order_by
@@ -31628,150 +31784,6 @@ type variable {
     where: model_io_variable_bool_exp
   ): model_io_variable_aggregate!
   name: String
-
-  """An array relationship"""
-  tasksByDrivingVariable(
-    """distinct select on columns"""
-    distinct_on: [task_select_column!]
-
-    """limit the number of rows returned"""
-    limit: Int
-
-    """skip the first n rows. Use only with order_by"""
-    offset: Int
-
-    """sort the rows by one or more columns"""
-    order_by: [task_order_by!]
-
-    """filter the rows returned"""
-    where: task_bool_exp
-  ): [task!]!
-
-  """An aggregate relationship"""
-  tasksByDrivingVariable_aggregate(
-    """distinct select on columns"""
-    distinct_on: [task_select_column!]
-
-    """limit the number of rows returned"""
-    limit: Int
-
-    """skip the first n rows. Use only with order_by"""
-    offset: Int
-
-    """sort the rows by one or more columns"""
-    order_by: [task_order_by!]
-
-    """filter the rows returned"""
-    where: task_bool_exp
-  ): task_aggregate!
-
-  """An array relationship"""
-  tasksByResponseVariable(
-    """distinct select on columns"""
-    distinct_on: [task_select_column!]
-
-    """limit the number of rows returned"""
-    limit: Int
-
-    """skip the first n rows. Use only with order_by"""
-    offset: Int
-
-    """sort the rows by one or more columns"""
-    order_by: [task_order_by!]
-
-    """filter the rows returned"""
-    where: task_bool_exp
-  ): [task!]!
-
-  """An aggregate relationship"""
-  tasksByResponseVariable_aggregate(
-    """distinct select on columns"""
-    distinct_on: [task_select_column!]
-
-    """limit the number of rows returned"""
-    limit: Int
-
-    """skip the first n rows. Use only with order_by"""
-    offset: Int
-
-    """sort the rows by one or more columns"""
-    order_by: [task_order_by!]
-
-    """filter the rows returned"""
-    where: task_bool_exp
-  ): task_aggregate!
-
-  """An array relationship"""
-  threadsByDrivingVariable(
-    """distinct select on columns"""
-    distinct_on: [thread_select_column!]
-
-    """limit the number of rows returned"""
-    limit: Int
-
-    """skip the first n rows. Use only with order_by"""
-    offset: Int
-
-    """sort the rows by one or more columns"""
-    order_by: [thread_order_by!]
-
-    """filter the rows returned"""
-    where: thread_bool_exp
-  ): [thread!]!
-
-  """An aggregate relationship"""
-  threadsByDrivingVariable_aggregate(
-    """distinct select on columns"""
-    distinct_on: [thread_select_column!]
-
-    """limit the number of rows returned"""
-    limit: Int
-
-    """skip the first n rows. Use only with order_by"""
-    offset: Int
-
-    """sort the rows by one or more columns"""
-    order_by: [thread_order_by!]
-
-    """filter the rows returned"""
-    where: thread_bool_exp
-  ): thread_aggregate!
-
-  """An array relationship"""
-  threadsByResponseVariable(
-    """distinct select on columns"""
-    distinct_on: [thread_select_column!]
-
-    """limit the number of rows returned"""
-    limit: Int
-
-    """skip the first n rows. Use only with order_by"""
-    offset: Int
-
-    """sort the rows by one or more columns"""
-    order_by: [thread_order_by!]
-
-    """filter the rows returned"""
-    where: thread_bool_exp
-  ): [thread!]!
-
-  """An aggregate relationship"""
-  threadsByResponseVariable_aggregate(
-    """distinct select on columns"""
-    distinct_on: [thread_select_column!]
-
-    """limit the number of rows returned"""
-    limit: Int
-
-    """skip the first n rows. Use only with order_by"""
-    offset: Int
-
-    """sort the rows by one or more columns"""
-    order_by: [thread_order_by!]
-
-    """filter the rows returned"""
-    where: thread_bool_exp
-  ): thread_aggregate!
   url: String
 }
 
@@ -31827,10 +31839,6 @@ input variable_bool_exp {
   is_indicator: Boolean_comparison_exp
   model_ios: model_io_variable_bool_exp
   name: String_comparison_exp
-  tasksByDrivingVariable: task_bool_exp
-  tasksByResponseVariable: task_bool_exp
-  threadsByDrivingVariable: thread_bool_exp
-  threadsByResponseVariable: thread_bool_exp
   url: String_comparison_exp
 }
 
@@ -32032,10 +32040,6 @@ input variable_insert_input {
   is_indicator: Boolean
   model_ios: model_io_variable_arr_rel_insert_input
   name: String
-  tasksByDrivingVariable: task_arr_rel_insert_input
-  tasksByResponseVariable: task_arr_rel_insert_input
-  threadsByDrivingVariable: thread_arr_rel_insert_input
-  threadsByResponseVariable: thread_arr_rel_insert_input
   url: String
 }
 
@@ -32120,10 +32124,6 @@ input variable_order_by {
   is_indicator: order_by
   model_ios_aggregate: model_io_variable_aggregate_order_by
   name: order_by
-  tasksByDrivingVariable_aggregate: task_aggregate_order_by
-  tasksByResponseVariable_aggregate: task_aggregate_order_by
-  threadsByDrivingVariable_aggregate: thread_aggregate_order_by
-  threadsByResponseVariable_aggregate: thread_aggregate_order_by
   url: order_by
 }
 

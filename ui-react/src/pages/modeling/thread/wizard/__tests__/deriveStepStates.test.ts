@@ -90,4 +90,22 @@ describe('deriveStepStates', () => {
         .summary,
     ).toBe('sv-flood');
   });
+
+  // #106: the stored id is a standard variable URI, which reads as noise in a
+  // one-line step summary.
+  it('summarizes Variables by the standard variable label when there is one', () => {
+    expect(
+      deriveStepStates(
+        makeThread({
+          name: 'X',
+          response_variable_id: 'https://w3id.org/okn/i/mint/DRAWDOWN',
+          response_variable: {
+            __typename: 'modelcatalog_standard_variable',
+            id: 'https://w3id.org/okn/i/mint/DRAWDOWN',
+            label: 'drawdown',
+          },
+        }),
+      ).variables.summary,
+    ).toBe('drawdown');
+  });
 });

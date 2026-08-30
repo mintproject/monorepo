@@ -21,10 +21,17 @@ interface VariablesStepProps {
   onBack?: () => void;
 }
 
-/** Build a minimal option from a stored id (label backfills once the catalog loads). */
-function optionFromId(id?: string | null): StandardVariableOption | null {
+/**
+ * Build a minimal option from what the thread stores.
+ *
+ * The stored id is a standard variable URI (#106), which is unreadable in the
+ * combobox trigger, so the label carried by the relationship is used when there
+ * is one. Falling back to the id keeps an unlabelled variable visible rather
+ * than blank.
+ */
+function optionFromId(id?: string | null, label?: string | null): StandardVariableOption | null {
   if (!id) return null;
-  return { id, label: id, description: null };
+  return { id, label: label || id, description: null };
 }
 
 export function VariablesStep({ thread, onUpdated, onContinue, onBack }: VariablesStepProps) {
@@ -33,10 +40,10 @@ export function VariablesStep({ thread, onUpdated, onContinue, onBack }: Variabl
   const perm = getUserPermission(thread.permissions, thread.events, user?.username ?? null);
 
   const [indicator, setIndicator] = useState<StandardVariableOption | null>(
-    optionFromId(thread.response_variable_id),
+    optionFromId(thread.response_variable_id, thread.response_variable?.label),
   );
   const [adjustable, setAdjustable] = useState<StandardVariableOption | null>(
-    optionFromId(thread.driving_variable_id),
+    optionFromId(thread.driving_variable_id, thread.driving_variable?.label),
   );
   const [saving, setSaving] = useState(false);
 
