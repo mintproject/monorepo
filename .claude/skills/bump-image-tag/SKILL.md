@@ -42,7 +42,9 @@ Helm reads globals only from the **root** `global` key, even when MINT is a subc
 - **A repository that is not the GHCR one.** A tag from `mintproject/monorepo` does not exist on Docker Hub. Fix the chart before pinning.
 - **An image missing at that tag.** Every one of the four must be in GHCR before the pin is real. Wait for CI. `--skip-image-check` overrides, for a tag you know is still building.
 
-Chart `9.0.0-beta.7` or newer. Earlier charts have no `global.imageTag`, so the write is inert.
+Chart `9.0.0-beta.8` or newer. Earlier charts have no `global.imageTag` at all, or
+— in `9.0.0-beta.7` — have the key but pin every service per service in the chart
+defaults, which wins over it. In both cases the write is inert.
 
 ## Where this fits
 
