@@ -126,8 +126,9 @@ deliberately (PR #60).
   `docker/nginx.conf`); Vite bundle built once via `$BUILDPLATFORM` to keep arm64 off QEMU.
 - `helm-charts` `9.0.0-beta.3` adds an **opt-in, disabled-by-default `ui_react` component**
   deriving endpoints from other components' ingress declarations. Legacy `ui` untouched.
-- ⚠️ **The `helm-charts` submodule pointer here is still `9.0.0-beta.2`** — the `ui_react`
-  component is not reachable from the monorepo until it is bumped.
+- `9.0.0-beta.9` inverts that: legacy `ui` is off by default. `9.0.0-beta.10` then turns
+  `ui_react` **on** by default, at host `mint.local` with `client_id: mint-local`. The
+  submodule pointer here is at `9.0.0-beta.10`, so a bare install serves the React UI.
 - Runtime config: nested `window.__MINT_CONFIG__`, one generator shared by Vercel
   (build time) and the container entrypoint (startup). The Lit app's flat
   `window.REACT_APP_*` contract is incompatible.
