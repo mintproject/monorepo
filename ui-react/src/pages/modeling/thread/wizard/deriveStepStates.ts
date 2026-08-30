@@ -22,7 +22,12 @@ export function deriveStepStates(thread: Thread, opts: DeriveOpts = {}): StepSta
 
   const region = thread.region_id?.trim() || 'any region';
   const framingSummary = goalSet ? `${thread.name!.trim()} · ${region}` : 'Not set';
-  const variablesSummary = thread.response_variable_id?.trim() || 'No indicator';
+  // The stored id is a standard variable URI (#106); the label is what a reader
+  // recognises, so the summary prefers it.
+  const variablesSummary =
+    thread.response_variable?.label?.trim() ||
+    thread.response_variable_id?.trim() ||
+    'No indicator';
 
   // status helper: locked beats done beats upcoming
   const state = (done: boolean, locked: boolean, summary: string): StepState => ({

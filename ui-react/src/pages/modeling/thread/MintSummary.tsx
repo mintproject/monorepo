@@ -88,8 +88,14 @@ export function MintSummary({ thread, taskName, problemStatementName }: MintSumm
       <section>
         <h4 className="mb-2 border-b pb-1 text-sm font-semibold text-gray-700">Variables</h4>
         <div className="space-y-0.5">
-          <SummaryRow label="Indicator:" value={thread.response_variable_id} />
-          <SummaryRow label="Driving variable:" value={thread.driving_variable_id} />
+          <SummaryRow
+            label="Indicator:"
+            value={thread.response_variable?.label ?? thread.response_variable_id}
+          />
+          <SummaryRow
+            label="Driving variable:"
+            value={thread.driving_variable?.label ?? thread.driving_variable_id}
+          />
         </div>
         {!thread.response_variable_id && (
           <p className="text-xs italic text-gray-400">No variables selected</p>

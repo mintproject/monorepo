@@ -96,10 +96,17 @@ export type ThreadProvenance = {
   notes?: Maybe<string>;
 };
 
+/**
+ * The indicator and adjustable variable a thread or task is framed by.
+ *
+ * These point at `modelcatalog_standard_variable`, not the legacy `variable`
+ * table: the stored id is a URI, so the label is the only readable name for it.
+ * See https://github.com/mintproject/monorepo/issues/106
+ */
 export type VariableRef = {
-  __typename?: 'variable';
+  __typename?: 'modelcatalog_standard_variable';
   id: string;
-  name?: Maybe<string>;
+  label?: Maybe<string>;
 };
 
 export type ThreadModel = {
@@ -308,11 +315,11 @@ const THREAD_INFO = gql`
     }
     driving_variable {
       id
-      name
+      label
     }
     response_variable {
       id
-      name
+      label
     }
     region {
       id

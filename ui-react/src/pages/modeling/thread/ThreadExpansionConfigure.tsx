@@ -131,13 +131,17 @@ export function ThreadExpansionConfigure({ thread, onUpdated }: ThreadExpansionC
         {thread.response_variable_id && (
           <tr className="align-top">
             <td className="pb-1.5 font-semibold">Indicator:</td>
-            <td className="text-gray-700">{thread.response_variable_id}</td>
+            <td className="text-gray-700">
+              {thread.response_variable?.label ?? thread.response_variable_id}
+            </td>
           </tr>
         )}
         {thread.driving_variable_id && (
           <tr className="align-top">
             <td className="pb-1.5 font-semibold">Driving Variable:</td>
-            <td className="text-gray-700">{thread.driving_variable_id}</td>
+            <td className="text-gray-700">
+              {thread.driving_variable?.label ?? thread.driving_variable_id}
+            </td>
           </tr>
         )}
       </tbody>
