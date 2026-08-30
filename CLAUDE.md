@@ -30,6 +30,20 @@ MINT (Model INTegration) platform - a scientific modeling system. This monorepo 
 > is retired. The GitHub repo `mintproject/model-catalog-fastapi` is archived and the
 > directory is no longer checked out here. Use `model-catalog-api/` (v2.0.0).
 
+> **Removed as submodules (2026-08-30):** `model-catalog-ontology/`, `MINT_USERGUIDE/`,
+> `model-catalog-fetch-api-client/` and `dynamo-experiment-may/` are no longer checked
+> out here. The single-repo cutover removed them
+> ([#146](https://github.com/mintproject/monorepo/issues/146)).
+>
+> Two of them stay maintained, in their own repositories. Read them there:
+>
+> - The OWL ontology for the model catalog schema:
+>   [`mintproject/Mint-ModelCatalog-Ontology`](https://github.com/mintproject/Mint-ModelCatalog-Ontology)
+> - The user documentation:
+>   [`mintproject/MINT_USERGUIDE`](https://github.com/mintproject/MINT_USERGUIDE)
+>
+> Both keep outside forks. Do not copy their content into this repository.
+
 ## Architecture
 
 **Data flow:** TriG (RDF) -> ETL (Python) -> PostgreSQL -> Hasura GraphQL -> REST APIs

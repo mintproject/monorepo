@@ -9,9 +9,6 @@
 | [mint-ui-lit](https://github.com/mintproject/mint-ui-lit) | [![UI](https://github.com/mintproject/mint-ui-lit/actions/workflows/docker-publish.yml/badge.svg?branch=master)](https://github.com/mintproject/mint-ui-lit/actions/workflows/docker-publish.yml) | ![Last Commit](https://img.shields.io/github/last-commit/mintproject/mint-ui-lit/master) |
 | [graphql_engine](https://github.com/mintproject/graphql_engine) | [![Hasura](https://github.com/mintproject/graphql_engine/actions/workflows/docker-publish.yml/badge.svg?branch=master)](https://github.com/mintproject/graphql_engine/actions/workflows/docker-publish.yml) | ![Last Commit](https://img.shields.io/github/last-commit/mintproject/graphql_engine/master) |
 | [helm-charts (mint)](https://github.com/mintproject/mint) | [![Lint and Test Charts](https://github.com/mintproject/mint/actions/workflows/linter.yaml/badge.svg?branch=main)](https://github.com/mintproject/mint/actions/workflows/linter.yaml) [![Helm Docs](https://github.com/mintproject/mint/actions/workflows/docs.yaml/badge.svg?branch=main)](https://github.com/mintproject/mint/actions/workflows/docs.yaml) | ![Last Commit](https://img.shields.io/github/last-commit/mintproject/mint/main) |
-| [MINT_USERGUIDE](https://github.com/mintproject/MINT_USERGUIDE) | [![Pages](https://github.com/mintproject/MINT_USERGUIDE/actions/workflows/pages/pages-build-deployment/badge.svg?branch=master)](https://github.com/mintproject/MINT_USERGUIDE/actions/workflows/pages/pages-build-deployment) | ![Last Commit](https://img.shields.io/github/last-commit/mintproject/MINT_USERGUIDE/master) |
-| [model-catalog-fetch-api-client](https://github.com/mintproject/model-catalog-fetch-api-client) | _no CI_ | ![Last Commit](https://img.shields.io/github/last-commit/mintproject/model-catalog-fetch-api-client/main) |
-| [Mint-ModelCatalog-Ontology](https://github.com/mintproject/Mint-ModelCatalog-Ontology) | _no CI_ | ![Last Commit](https://img.shields.io/github/last-commit/mintproject/Mint-ModelCatalog-Ontology/master) |
 
 MINT is a scientific modeling platform that enables researchers to discover, configure, and execute computational models. It provides a unified catalog of models, datasets, and variables, allowing scientists to set up and run model ensembles for complex scenarios such as climate impact analysis, hydrology, and agriculture.
 
@@ -84,15 +81,26 @@ This monorepo uses git submodules for major components:
 | `graphql_engine/` | Hasura schema, migrations, and metadata | SQL, YAML |
 | `etl/` | RDF-to-PostgreSQL migration pipeline | Python |
 | `helm-charts/` | Kubernetes deployment charts | Helm |
-| `model-catalog-ontology/` | OWL ontology defining the model catalog schema | OWL/RDF |
-| `model-catalog-fetch-api-client/` | Generated API client library | TypeScript |
 | `mint-instances/` | Preconfigured model instance data | - |
-| `MINT_USERGUIDE/` | User documentation | MkDocs |
 | `scripts/` | Deployment and maintenance utilities | Shell, SQL |
 
 > **Note:** `model-catalog-endpoint/` is a legacy component from the old RDF/Fuseki-based architecture. It is no longer actively maintained and can be ignored. The platform now uses PostgreSQL with Hasura GraphQL as its data backend.
 >
 > `model-catalog-fastapi` (legacy REST API v1.8.0) was deprecated on 2026-08-29. Its repository is archived and it is no longer part of this checkout.
+
+> **Removed as submodules (2026-08-30):** `model-catalog-ontology/`, `MINT_USERGUIDE/`,
+> `model-catalog-fetch-api-client/` and `dynamo-experiment-may/` are no longer checked
+> out here. The single-repo cutover removed them
+> ([#146](https://github.com/mintproject/monorepo/issues/146)).
+>
+> Two of them stay maintained, in their own repositories. Read them there:
+>
+> - The OWL ontology for the model catalog schema:
+>   [`mintproject/Mint-ModelCatalog-Ontology`](https://github.com/mintproject/Mint-ModelCatalog-Ontology)
+> - The user documentation:
+>   [`mintproject/MINT_USERGUIDE`](https://github.com/mintproject/MINT_USERGUIDE)
+>
+> Both keep outside forks. Do not copy their content into this repository.
 
 ## Getting Started
 
