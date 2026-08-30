@@ -1,7 +1,7 @@
 # Runbook: superproject to single-repo cutover
 
-Status: **Phases 0 to 10 are done**, except two Phase 10 steps that need
-credentials this machine does not hold. Phase 11 (`dynamo`) remains.
+Status: **Phases 0 to 10 are done.** Phase 11 (`dynamo`) remains, and it is the
+point of no return.
 
 | Phase | State | Evidence |
 |---|---|---|
@@ -13,7 +13,7 @@ credentials this machine does not hold. Phase 11 (`dynamo`) remains.
 | 7 Merge to `main` and publish | done | monorepo#166, `main` at `3bbaa28` |
 | 8 The first release | done | `v0.1.0`, release commit `971622cc` |
 | 9 Dev-cluster proof | **passed** | helm revision 70, chart `9.0.0-beta.8` |
-| 10 Archive the source repositories | done, 2 steps deferred | 12 issues moved to monorepo#171 to #182; 4 repos archived |
+| 10 Archive the source repositories | done | 12 issues moved to monorepo#171 to #182; 4 repos archived |
 | 11 `dynamo` | not started | the point of no return |
 
 Corrections found while executing are marked **Correction** in place. Trust
@@ -744,7 +744,7 @@ reversible, so a soak buys nothing.
 ([#144](https://github.com/mintproject/monorepo/issues/144)) An archived
 repository is read-only. **Do every write first, in this order.**
 
-Steps 1, 2, 3 and 6 ran on 2026-08-30. Steps 4 and 5 are deferred — see the
+Steps 1, 2, 3 and 6 ran on 2026-08-30. Steps 4 and 5 were dropped — see the
 correction after step 6.
 
 1. **Transfer the 12 open issues to `mintproject/monorepo`.** 11 from
@@ -784,31 +784,35 @@ correction after step 6.
    `model-catalog-fetch-api-client` needs different wording. Its code did **not**
    move into the single-repo — it was a dead submodule dropped in Phase 1. Point
    it at `model-catalog-api/` and name the npm deprecation instead.
-4. Add a deprecation note to the Docker Hub repositories `ensemble-manager`,
-   `mint-ui-lit` and `mint-ui-react`. They keep their last image and their pull
-   history — 21,436 and 18,076 pulls.
-5. `npm deprecate @mintproject/modelcatalog_client`. **Do not unpublish.**
-   `ui/package.json:30` still depends on `^8.0.3-alpha.8`, and unpublishing
-   breaks the `ui` build while
-   [#81](https://github.com/mintproject/monorepo/issues/81) is open.
+4. ~~Add a deprecation note to the Docker Hub repositories `ensemble-manager`,
+   `mint-ui-lit` and `mint-ui-react`.~~
+5. ~~`npm deprecate @mintproject/modelcatalog_client`.~~
 6. Archive `model-catalog-api`, `mint-ensemble-manager`, `graphql_engine` and
    `model-catalog-fetch-api-client`.
 
-**Correction: steps 4 and 5 need credentials, and the runbook does not say so.**
-Neither is on the GitHub token. `npm whoami` returns `ENEEDAUTH`, and
-`~/.docker/config.json` holds no auths. Both steps are cosmetic and neither
-gates Phase 11, so the archive proceeded without them. They stay open:
+**Correction: steps 4 and 5 are dropped.** The dev decided on 2026-08-30 not to
+do them. Both are cosmetic notes on external registries, neither gates Phase 11,
+and neither is on the GitHub token — `npm whoami` returns `ENEEDAUTH` and
+`~/.docker/config.json` holds no auths, so each costs a separate login.
 
-```bash
-npm login && npm deprecate @mintproject/modelcatalog_client \
-  "Unmaintained. Use the REST API in mintproject/monorepo at model-catalog-api/."
-# Docker Hub descriptions are edited in the web UI, or via the Hub API with a PAT.
-```
+Nothing breaks. Both artifacts keep working exactly as before:
 
-Order the writes so the credential-gated ones come first next time. An archived
-repository still allows an npm or Docker Hub write, so nothing was lost here —
-but a step that needs a login you do not have should surface before the
-irreversible one, not after it.
+- The Docker Hub images keep their last tag and their pull history — 21,436 and
+  18,076 pulls. Chart `9.0.0-beta.8` already moved every MINT service to GHCR,
+  so no deployment reads them.
+- `@mintproject/modelcatalog_client` stays published, which is what
+  `ui/package.json:30` needs while
+  [#81](https://github.com/mintproject/monorepo/issues/81) is open. The original
+  step said "do not unpublish" for that reason; not deprecating is strictly
+  safer than deprecating.
+
+**Do not write that the npm package is deprecated.** The first
+`model-catalog-fetch-api-client` README notice said so and had to be corrected.
+Its README now states that the package stays published, and why.
+
+If you ever do want these notes, an archived repository does not block either
+write. Order them before step 1 next time, though: a step needing a login you do
+not have should surface before the irreversible one, not after it.
 
 **Why archive and not leave open.** Each repository holds a workflow that writes
 `<sha>`, `<safe-branch>` and `latest` to the same GHCR names the single-repo now
@@ -890,7 +894,7 @@ State these plainly. Do not let a reader assume otherwise.
   rewrites its version downwards. Nothing publishes it today.
 - **`ui` stays a submodule** until
   [#81](https://github.com/mintproject/monorepo/issues/81) removes Lit from TACC.
-- **The Docker Hub and npm deprecation notes are not posted.** Phase 10 steps 4
-  and 5. Both need a login this cutover did not have. Neither gates Phase 11, and
-  an archived repository does not block either write, so they can be done at any
-  time.
+- **The Docker Hub and npm deprecation notes are not posted, by decision.**
+  Phase 10 steps 4 and 5, dropped on 2026-08-30. The Docker Hub images are
+  unreferenced from chart `9.0.0-beta.8` on, and
+  `@mintproject/modelcatalog_client` must stay published for `ui` anyway.
