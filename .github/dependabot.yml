@@ -1,6 +1,10 @@
 # Monthly, and every entry grouped. Dependabot groups within one ecosystem and
 # one directory, so this is four pull requests a month, not four per dependency.
 # Ungrouped weekly updates are what produced 8 open and 0 merged on mint-ui-lit.
+#
+# No `target-branch` anywhere below. Dependabot then opens against the
+# repository default branch, which is `develop`, the integration line. Bumps
+# must not land on `main`, which is production.
 version: 2
 updates:
   # The case for this file. mint-ensemble-manager arrived pinned to
