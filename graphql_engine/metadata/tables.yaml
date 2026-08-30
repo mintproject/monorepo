@@ -2469,34 +2469,6 @@
         table:
           name: model_io_variable
           schema: public
-  - name: tasksByDrivingVariable
-    using:
-      foreign_key_constraint_on:
-        column: driving_variable_id
-        table:
-          name: task
-          schema: public
-  - name: tasksByResponseVariable
-    using:
-      foreign_key_constraint_on:
-        column: response_variable_id
-        table:
-          name: task
-          schema: public
-  - name: threadsByDrivingVariable
-    using:
-      foreign_key_constraint_on:
-        column: driving_variable_id
-        table:
-          name: thread
-          schema: public
-  - name: threadsByResponseVariable
-    using:
-      foreign_key_constraint_on:
-        column: response_variable_id
-        table:
-          name: thread
-          schema: public
   insert_permissions:
   - role: user
     permission:
@@ -3560,6 +3532,34 @@
         column: has_standard_variable
         table:
           name: modelcatalog_variable_presentation
+          schema: public
+  - name: tasksByDrivingVariable
+    using:
+      foreign_key_constraint_on:
+        column: driving_variable_id
+        table:
+          name: task
+          schema: public
+  - name: tasksByResponseVariable
+    using:
+      foreign_key_constraint_on:
+        column: response_variable_id
+        table:
+          name: task
+          schema: public
+  - name: threadsByDrivingVariable
+    using:
+      foreign_key_constraint_on:
+        column: driving_variable_id
+        table:
+          name: thread
+          schema: public
+  - name: threadsByResponseVariable
+    using:
+      foreign_key_constraint_on:
+        column: response_variable_id
+        table:
+          name: thread
           schema: public
   insert_permissions:
   - role: user
