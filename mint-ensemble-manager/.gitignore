@@ -26,9 +26,6 @@ coverage
 # VSCode directory
 .vscode
 
-# Package Lock
-package-lock.json
-
 # Dist directory
 dist
 
