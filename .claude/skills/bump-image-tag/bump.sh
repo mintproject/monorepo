@@ -171,10 +171,18 @@ BODY="Pins every image the chart takes from \`${SOURCE_REPO}\` to \`${TAG}\`.
 One single-repo commit builds all four services, so one tag names the whole
 system state. Per-service tags are cleared, because they win over the global."
 
-git -C "$TOP" checkout -B "$PR_BRANCH" >/dev/null
+# Branch off the base the pull request targets, or the diff carries whatever
+# else the current branch holds.
+ON="$(git -C "$TOP" rev-parse --abbrev-ref HEAD)"
+if [[ "$ON" != "$BASE" ]]; then
+  echo "ERROR: $(basename "$TOP") is on '${ON}', not '${BASE}'." >&2
+  echo "       The file is written. Check it out on ${BASE} and rerun, or commit by hand." >&2
+  exit 1
+fi
+
 ABS="$(cd "$(dirname "$VALUES")" && pwd)/$(basename "$VALUES")"
+git -C "$TOP" checkout -B "$PR_BRANCH" >/dev/null
 git -C "$TOP" add "$ABS"
 git -C "$TOP" commit -m "$SUBJECT" -m "$BODY"
 git -C "$TOP" push -u origin "$PR_BRANCH"
-gh pr create --repo "$(git -C "$TOP" remote get-url origin | sed -E 's#.*[:/]([^/]+/[^/]+?)(\.git)?$#\1#')" \
-  --base "$BASE" --head "$PR_BRANCH" --title "$SUBJECT" --body "$BODY"
+( cd "$TOP" && gh pr create --base "$BASE" --head "$PR_BRANCH" --title "$SUBJECT" --body "$BODY" )
