@@ -86,7 +86,7 @@ The services live directly in this repository. Only `ui/` and `helm-charts/` are
 | `ui-react/` | Web frontend (current) | TypeScript, React, Vite |
 | `ui/` | Web frontend (deprecated). Submodule of `mintproject/mint-ui-lit` | TypeScript, LitElement |
 | `graphql_engine/` | Hasura schema, migrations, and metadata | SQL, YAML |
-| `etl/` | RDF-to-PostgreSQL migration pipeline | Python |
+| `etl/` | One-time RDF-to-PostgreSQL migration. Complete | Python |
 | `knowledge-base/` | MINT domain wiki | Markdown |
 | `docs/` | Architecture decisions, runbooks, agent guides | Markdown |
 | `scripts/` | Deployment and maintenance utilities | Shell, SQL |
@@ -150,8 +150,9 @@ cd graphql_engine
 hasura migrate apply
 hasura metadata apply
 
-# Load data from RDF sources. The TriG file is not in this repository; it lives in
-# mintproject/model-catalog-endpoint at data/model-catalog.trig.
+# Seed the catalog. This is the one-time RDF migration; the v2.0 platform does not
+# run it. The TriG file is not in this repository. Download it from
+# mintproject/model-catalog-endpoint at data/model-catalog.trig. See etl/README.md.
 python3 etl/run.py --trig-path <path>/model-catalog.trig
 ```
 

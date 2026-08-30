@@ -22,7 +22,7 @@ there. `ui/` and `helm-charts/` are submodules, so their files arrive only after
 | `ui-react/` | Frontend (current) | TypeScript/React + Vite | yes |
 | `ui/` | Legacy frontend (deprecated). Submodule of `mintproject/mint-ui-lit` | TypeScript/LitElement | yes |
 | `graphql_engine/` | Hasura schema, migrations, metadata | SQL/YAML | - |
-| `etl/` | RDF-to-PostgreSQL migration pipeline | Python | - |
+| `etl/` | One-time RDF-to-PostgreSQL migration. Complete | Python | - |
 | `knowledge-base/` | MINT domain wiki | Markdown | yes |
 | `docs/` | ADRs, runbooks, agent guides | Markdown | - |
 | `scripts/` | Deployment and maintenance utilities | Shell/SQL | - |
@@ -102,9 +102,15 @@ yarn build                          # Production build
 ```
 
 ### ETL Pipeline
-The TriG source file is not in this repository. It lives in
+This moved the catalog from RDF/Fuseki to PostgreSQL. **The migration is finished.**
+Nothing in a deployment runs it. It survives to seed a new database, to reload after a
+schema change, and to audit the migration. See `etl/README.md`.
+
+The TriG source file is not in this repository, and the Fuseki endpoint it came from is
+retired. Download it from
 [`mintproject/model-catalog-endpoint`](https://github.com/mintproject/model-catalog-endpoint)
-at `data/model-catalog.trig`. Pass its path.
+at `data/model-catalog.trig`, then pass the path. Prefer the wrappers in `scripts/`; they
+handle credentials and take a backup first.
 ```bash
 python3 etl/run.py --trig-path <path>/model-catalog.trig
 python3 etl/run.py --trig-path ... --clear    # Truncate first
