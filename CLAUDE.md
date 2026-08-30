@@ -139,6 +139,19 @@ See `.planning/PROJECT.md` for full migration status and decisions. Key points:
 - Keep commit messages clean and simple, no emoji
 - Open pull requests against `develop`, not `main`
 
+### Branch model
+
+`develop` is the default branch and the integration line. `main` is production.
+
+- Every feature and every fix branches from `develop` and merges back into `develop`.
+- A release is a `develop` -> `main` pull request. release-please then cuts the
+  tag and the changelog from `main` (`target-branch: main` in
+  `.github/workflows/release-please.yml`).
+- A hotfix branches from `main` and merges into `main`, so it ships without the
+  unreleased work on `develop`.
+- **After every hotfix, merge `main` back into `develop` immediately.** Without
+  the back-merge the next release overwrites the fix.
+
 ## Agent skills
 
 ### Issue tracker
