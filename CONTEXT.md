@@ -68,6 +68,23 @@ _Avoid_: the prod repo, the values repo
 The shared MicroK8s instance used to test a branch before merge.
 _Avoid_: staging, test cluster
 
+### Migration
+
+**cutover**:
+The sequence that converts the superproject into the single-repo. It starts at
+the first submodule removal. It ends when the four source repositories are
+archived. The steps are in
+[`docs/runbook-single-repo-cutover.md`](./docs/runbook-single-repo-cutover.md).
+_Avoid_: migration, the move, the switch
+
+> **"Migration" already means something else here.** It means a Hasura schema
+> migration. Use **cutover** for the repository change.
+
+**the point of no return**:
+The first `dynamo` pin to a single-repo tag. Every step before it reverts. It is
+not the archive: an archived repository is one click to restore.
+_Avoid_: the cutover point, the deadline
+
 ### Planning
 
 These words come from the `/wayfinder` skill. They have concrete referents here,
