@@ -1,9 +1,9 @@
 # MINT on a laptop. `docker compose up` starts the whole platform.
 #
-# This file is built one layer at a time. It now holds the data layer, the API
-# layer and the frontend: Postgres, the Tapis auth webhook, Hasura, the one-shot
-# migration service, model-catalog-api, Redis, Ensemble Manager and ui-react.
-# The catalog fixture arrives in a later commit.
+# This file is built one layer at a time. It now holds the data layer and the
+# API layer: Postgres, the Tapis auth webhook, Hasura, the one-shot migration
+# service, the one-shot catalog fixture load, model-catalog-api, Redis and
+# Ensemble Manager. The frontend arrives in a later commit.
 #
 # Ports on the host: ui-react 3000, Ensemble Manager 3001, model-catalog-api
 # 3002, Hasura 8080, Postgres 5432, Redis 6379. The auth webhook has no
@@ -169,6 +169,50 @@ services:
             ;;
         esac
         echo "schema ready"
+
+  # ---------------------------------------------------------------------------
+  # The catalog data. A one-shot service that exits.
+  #
+  # `hasura-init` makes the tables. This fills the `modelcatalog_*` ones from
+  # `graphql_engine/fixtures/modelcatalog.sql`, a subset of the production
+  # catalog with the whole controlled vocabulary. See issues #189 and #190.
+  #
+  # It runs on every `up`. There is no profile and no opt-out flag. The fixture
+  # itself is idempotent: every INSERT carries ON CONFLICT DO NOTHING, and it
+  # sets `session_replication_role = replica`, so the table order does not
+  # matter. A second run adds no row.
+  #
+  # The image is the Postgres image, not the Hasura one. The Hasura image has no
+  # `psql`: its Dockerfile installs postgresql-client-common, which ships no
+  # client binary.
+  #
+  # ON_ERROR_STOP=1 makes a broken fixture fail the service instead of logging
+  # and exiting 0.
+  # ---------------------------------------------------------------------------
+  fixture-load:
+    image: postgis/postgis:14-3.3
+    platform: linux/amd64
+    depends_on:
+      # Postgres is reached directly, so wait for it as well as for the schema.
+      postgres:
+        condition: service_healthy
+      hasura-init:
+        condition: service_completed_successfully
+    environment:
+      PGHOST: postgres
+      PGPORT: "5432"
+      PGUSER: ${POSTGRES_USER:-mint}
+      PGPASSWORD: ${POSTGRES_PASSWORD:-mint}
+      PGDATABASE: ${POSTGRES_DB:-mint}
+    volumes:
+      - ./graphql_engine/fixtures:/fixtures:ro
+    restart: "no"
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        set -e
+        psql -v ON_ERROR_STOP=1 -q -f /fixtures/modelcatalog.sql
+        echo "catalog fixture loaded"
 
   # ---------------------------------------------------------------------------
   # model-catalog-api. The REST face of the catalog, v2.0.0.
