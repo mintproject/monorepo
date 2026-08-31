@@ -1,0 +1,276 @@
+# MINT on a laptop. `docker compose up` starts the whole platform.
+#
+# This file is built one layer at a time. It now holds the data layer and the
+# API layer: Postgres, the Tapis auth webhook, Hasura, the one-shot migration
+# service, model-catalog-api, Redis and Ensemble Manager. The frontend and the
+# catalog fixture arrive in later commits.
+#
+# Ports on the host: Ensemble Manager 3001, model-catalog-api 3002, Hasura 8080,
+# Postgres 5432, Redis 6379. The auth webhook has no published port. Hasura
+# reaches it on the compose network.
+#
+# Every credential here is a development default. Override it in a `.env` file
+# beside this one, or in the shell.
+
+name: mint
+
+x-postgres-env: &postgres-env
+  POSTGRES_USER: ${POSTGRES_USER:-mint}
+  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mint}
+  POSTGRES_DB: ${POSTGRES_DB:-mint}
+
+services:
+  # ---------------------------------------------------------------------------
+  # Postgres. PostGIS is required: the init migration declares columns of type
+  # `public.geometry` and functions that call `ST_Contains`. No migration
+  # creates the extension, so the image must. `postgis/postgis` runs
+  # `CREATE EXTENSION postgis` in POSTGRES_DB on first start.
+  #
+  # The image publishes amd64 only, so `platform` is not optional on Apple
+  # Silicon. Without it the pull fails with "no matching manifest".
+  # ---------------------------------------------------------------------------
+  postgres:
+    image: postgis/postgis:14-3.3
+    platform: linux/amd64
+    environment: *postgres-env
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      # -h 127.0.0.1 forces a TCP check. Without it `pg_isready` uses the unix
+      # socket and reports ready during initdb, while the entrypoint's temporary
+      # server is still refusing TCP. Hasura then starts too early and exits.
+      test:
+        - CMD-SHELL
+        - pg_isready -h 127.0.0.1 -U ${POSTGRES_USER:-mint} -d ${POSTGRES_DB:-mint}
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
+
+  # ---------------------------------------------------------------------------
+  # The Tapis auth webhook. Hasura calls it once per request.
+  #
+  # It answers 200 with role `anonymous` when the request carries no token, and
+  # 401 when the token is invalid. This is how anonymous browsing works.
+  # `HASURA_GRAPHQL_UNAUTHORIZED_ROLE` does nothing in webhook mode, so it is
+  # absent below on purpose. See issue #187.
+  #
+  # Both Tapis variables must be set. The image bakes the `tacc` tenant into its
+  # own defaults, not `portals`.
+  #
+  # The image carries its own HEALTHCHECK on GET /health, so none is repeated
+  # here. It publishes amd64 only.
+  # ---------------------------------------------------------------------------
+  auth-webhook:
+    image: ghcr.io/in-for-disaster-analytics/hasura-tapis-auth-webhook:1.0.0
+    platform: linux/amd64
+    environment:
+      TAPIS_JWKS_URI: ${TAPIS_JWKS_URI:-https://portals.tapis.io/v3/tenants/portals}
+      TAPIS_TOKEN_ISSUER: ${TAPIS_TOKEN_ISSUER:-https://portals.tapis.io/v3/tokens}
+      PORT: "3000"
+    expose:
+      - "3000"
+
+  # ---------------------------------------------------------------------------
+  # Hasura. Built from `graphql_engine/`, never pulled from ghcr.io.
+  #
+  # AUTH_HOOK_MODE must be POST. The webhook has no GET route, and Hasura
+  # defaults to GET.
+  #
+  # CORS lists every browser origin in this stack. `ui-react` on 3000 is the one
+  # that matters today.
+  # ---------------------------------------------------------------------------
+  hasura:
+    build:
+      context: ./graphql_engine
+    image: mint/graphql-engine:dev
+    depends_on:
+      postgres:
+        condition: service_healthy
+      auth-webhook:
+        condition: service_healthy
+    environment:
+      HASURA_GRAPHQL_DATABASE_URL: postgres://${POSTGRES_USER:-mint}:${POSTGRES_PASSWORD:-mint}@postgres:5432/${POSTGRES_DB:-mint}
+      HASURA_GRAPHQL_ADMIN_SECRET: ${HASURA_GRAPHQL_ADMIN_SECRET:-mint}
+      HASURA_GRAPHQL_AUTH_HOOK: http://auth-webhook:3000/auth-webhook
+      HASURA_GRAPHQL_AUTH_HOOK_MODE: POST
+      HASURA_GRAPHQL_ENABLE_CONSOLE: "true"
+      HASURA_GRAPHQL_DEV_MODE: "true"
+      HASURA_GRAPHQL_CORS_DOMAIN: "http://localhost:3000, http://localhost:3001, http://localhost:3002"
+      HASURA_GRAPHQL_ENABLED_LOG_TYPES: "startup, http-log, webhook-log, websocket-log"
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/healthz || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
+
+  # ---------------------------------------------------------------------------
+  # The schema. A one-shot service that exits.
+  #
+  # It runs on every `up`, unlike the MINT chart, which runs this work in a
+  # `post-install` hook and therefore skips it on every upgrade.
+  #
+  # It waits for Hasura, not for Postgres. The Hasura CLI speaks to the Hasura
+  # server, not to the database.
+  #
+  # `hasura seeds apply` is not idempotent. No file in `graphql_engine/seeds/`
+  # uses ON CONFLICT, and `public.region` has a primary key, so a second run
+  # fails on a duplicate key. The guard below counts the rows first. Migrations
+  # and metadata are idempotent and run every time.
+  #
+  # The count comes from Hasura's own `run_sql` endpoint. The image has curl but
+  # no `psql`: its Dockerfile installs postgresql-client-common, which ships no
+  # client binary.
+  #
+  # `graphql_engine/` is bind-mounted, so an edit to a migration needs no
+  # rebuild.
+  # ---------------------------------------------------------------------------
+  hasura-init:
+    build:
+      context: ./graphql_engine
+    image: mint/graphql-engine:dev
+    depends_on:
+      hasura:
+        condition: service_healthy
+    environment:
+      HASURA_GRAPHQL_ENDPOINT: http://hasura:8080
+      HASURA_GRAPHQL_ADMIN_SECRET: ${HASURA_GRAPHQL_ADMIN_SECRET:-mint}
+    working_dir: /hasura
+    volumes:
+      - ./graphql_engine:/hasura
+    restart: "no"
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        set -e
+        hasura migrate apply --skip-update-check
+        hasura metadata apply --skip-update-check
+        rows=$$(curl -fsS \
+          -H "x-hasura-admin-secret: $$HASURA_GRAPHQL_ADMIN_SECRET" \
+          -H "Content-Type: application/json" \
+          -d '{"type":"run_sql","args":{"source":"default","sql":"SELECT count(*) FROM public.region"}}' \
+          "$$HASURA_GRAPHQL_ENDPOINT/v2/query")
+        case "$$rows" in
+          *'["0"]'*)
+            echo "region is empty, applying seeds"
+            hasura seeds apply --skip-update-check
+            ;;
+          *)
+            echo "region already holds rows, skipping seeds"
+            ;;
+        esac
+        echo "schema ready"
+
+  # ---------------------------------------------------------------------------
+  # model-catalog-api. The REST face of the catalog, v2.0.0.
+  #
+  # `target: builder` is deliberate. The final stage of the Dockerfile runs
+  # `npm ci --production`, which drops `tsx`, so `npm run dev` cannot start
+  # there. The builder stage keeps every dependency, so watch mode works.
+  #
+  # PORT must be set. The Dockerfile bakes `ENV PORT=3000` and the code falls
+  # back to 3000 as well. Decision 9 of the map gives this service 3002.
+  #
+  # It reads Hasura with the admin secret. It forwards a user bearer token on a
+  # write. See `model-catalog-api/src/hasura/client.ts`.
+  # ---------------------------------------------------------------------------
+  model-catalog-api:
+    build:
+      context: ./model-catalog-api
+      target: builder
+    image: mint/model-catalog-api:dev
+    depends_on:
+      hasura:
+        condition: service_healthy
+      hasura-init:
+        condition: service_completed_successfully
+    environment:
+      HASURA_GRAPHQL_URL: http://hasura:8080/v1/graphql
+      HASURA_ADMIN_SECRET: ${HASURA_GRAPHQL_ADMIN_SECRET:-mint}
+      PORT: "3002"
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    command: ["npm", "run", "dev"]
+    ports:
+      - "3002:3002"
+    volumes:
+      - ./model-catalog-api/src:/app/src
+      - ./model-catalog-api/openapi.yaml:/app/openapi.yaml
+    healthcheck:
+      # /health queries Hasura and answers 503 when it cannot reach it, so this
+      # check covers the link as well as the process.
+      #
+      # 127.0.0.1, not localhost. Fastify binds IPv4 only, `localhost` resolves
+      # to ::1 first, and busybox wget does not fall back to the A record.
+      test: ["CMD-SHELL", "wget -q -O- http://127.0.0.1:3002/health || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+
+  # ---------------------------------------------------------------------------
+  # Redis. Ensemble Manager builds its Bull queues at import time, so Redis must
+  # answer before Ensemble Manager starts.
+  # ---------------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  # ---------------------------------------------------------------------------
+  # Ensemble Manager. Threads, executions and the Tapis adapter.
+  #
+  # It listens on 3000 inside the container and cannot be told otherwise:
+  # `src/config/app.ts` exports `PORT = 3000` as a constant, and nothing reads an
+  # environment variable. So the port is remapped here, 3001 on the host.
+  #
+  # All other settings come from one JSON file, bind-mounted read-only. The
+  # admin secret is not in that file. `getConfiguration()` copies
+  # HASURA_GRAPHQL_ADMIN_SECRET into `graphql.secret` when the file omits it, so
+  # the secret stays in the environment and takes an override from `.env`.
+  #
+  # Only `src` is bind-mounted. Mounting the whole directory would hide
+  # `node_modules` and `dist`, which the image builds.
+  # ---------------------------------------------------------------------------
+  ensemble-manager:
+    build:
+      context: ./mint-ensemble-manager
+    image: mint/ensemble-manager:dev
+    depends_on:
+      redis:
+        condition: service_healthy
+      hasura:
+        condition: service_healthy
+      hasura-init:
+        condition: service_completed_successfully
+    environment:
+      ENSEMBLE_MANAGER_CONFIG_FILE: /home/node/app/compose-config.json
+      HASURA_GRAPHQL_ADMIN_SECRET: ${HASURA_GRAPHQL_ADMIN_SECRET:-mint}
+      REDIS_URL: redis://redis:6379
+      NODE_OPTIONS: --openssl-legacy-provider
+    command: ["npm", "run", "start:watch"]
+    ports:
+      - "3001:3000"
+    volumes:
+      - ./mint-ensemble-manager/src:/home/node/app/src
+      - ./compose/ensemble-manager.json:/home/node/app/compose-config.json:ro
+    healthcheck:
+      # The Swagger UI is the only unauthenticated route. Every /v1 resource
+      # route answers 401 without a bearer token.
+      test: ["CMD-SHELL", "wget -q -O- http://127.0.0.1:3000/v1/ui/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 60
+      start_period: 120s
+
+volumes:
+  postgres-data:
