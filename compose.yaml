@@ -5,9 +5,13 @@
 # service, the one-shot catalog fixture load, model-catalog-api, Redis and
 # Ensemble Manager. The frontend arrives in a later commit.
 #
-# Ports on the host: Ensemble Manager 3001, model-catalog-api 3002, Hasura 8080,
-# Postgres 5432, Redis 6379. The auth webhook has no published port. Hasura
-# reaches it on the compose network.
+# Ports on the host: ui-react 3000, Ensemble Manager 3001, model-catalog-api
+# 3002, Hasura 8080, Postgres 5432, Redis 6379. The auth webhook has no
+# published port. Hasura reaches it on the compose network.
+#
+# `ui-react` is behind the `ui` profile, because the default way to run it is on
+# the host with Vite. `docker compose --profile ui up` starts the container way
+# instead. Both serve port 3000.
 #
 # Every credential here is a development default. Override it in a `.env` file
 # beside this one, or in the shell.
@@ -315,6 +319,52 @@ services:
       timeout: 5s
       retries: 60
       start_period: 120s
+
+  # ---------------------------------------------------------------------------
+  # ui-react, the container way. It is behind the `ui` profile, so a plain
+  # `docker compose up` does not start it:
+  #
+  #   docker compose --profile ui up
+  #
+  # The host way is the default and needs no profile. Copy `compose/ui-react.env`
+  # to `ui-react/.env`, run `npm run config:local`, then `npm run dev`. Both ways
+  # serve port 3000, so only one runs at a time. The port is not free to change:
+  # Tapis allows one callback for each client, and `mint-localhost-3000` is
+  # registered for http://localhost:3000/oauth2/callback.
+  #
+  # Every URL below is a HOST url. The browser resolves them, so a compose
+  # service name would not resolve. This is why the service publishes no
+  # dependency on hasura or ensemble-manager: it never speaks to them itself.
+  #
+  # nginx serves the bundle. The entrypoint writes `env-config.js` into the web
+  # root at startup from these variables, using the same generator that
+  # `npm run config:local` runs. So the two ways read one configuration shape.
+  # ---------------------------------------------------------------------------
+  ui-react:
+    build:
+      context: ./ui-react
+    image: mint/ui-react:dev
+    profiles:
+      - ui
+    environment:
+      HASURA_ENDPOINT: ${HASURA_ENDPOINT:-http://localhost:8080/v1/graphql}
+      AUTH_SERVER: ${AUTH_SERVER:-https://portals.tapis.io}
+      AUTH_CLIENT_ID: ${AUTH_CLIENT_ID:-mint-localhost-3000}
+      AUTH_PROVIDER: ${AUTH_PROVIDER:-tapis}
+      ENSEMBLE_MANAGER_API: ${ENSEMBLE_MANAGER_API:-http://localhost:3001/v1}
+      EXECUTION_ENGINE: ${EXECUTION_ENGINE:-tapis}
+      DATA_CATALOG_API: ${DATA_CATALOG_API:-https://ckan.tacc.utexas.edu}
+      DATA_CATALOG_BROWSE_URL: ${DATA_CATALOG_BROWSE_URL:-https://ckan.tacc.utexas.edu}
+    ports:
+      - "3000:80"
+    healthcheck:
+      # nginx.conf answers /healthz with a literal 200. The alpine image has
+      # busybox wget, and no curl.
+      test: ["CMD-SHELL", "wget -q -O- http://127.0.0.1/healthz || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 10s
 
 volumes:
   postgres-data:
