@@ -7,23 +7,12 @@ import { useNavigate } from 'react-router-dom';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { LIST_TOP_REGIONS } from '@/graphql/queries/regions';
 import { useAuth } from '@/lib/auth/useAuth';
+import { applyFeatureStyle, loadRegionFeatures, type Region } from '@/lib/geo/region-layer';
 import { mapStyles } from '@/styles/map-style';
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
-
-interface RegionGeometry {
-  // geometry is an opaque GeoJSON object stored in Hasura as JSON
-  geometry: object | null;
-}
-
-interface Region {
-  id: string;
-  name: string;
-  model_catalog_uri?: string | null;
-  geometries: RegionGeometry[];
-}
 
 interface ListTopRegionsData {
   region: Region[];
@@ -46,26 +35,6 @@ function getWelcomeMessage(): string {
 }
 
 // ---------------------------------------------------------------------------
-// Region map styling helpers (mirrors google-map-custom.ts logic)
-// ---------------------------------------------------------------------------
-
-const REGION_FILL_DEFAULT = '#1990d5';
-const REGION_FILL_SELECTED = '#d51990';
-const REGION_STROKE_DEFAULT = '#1990d5';
-const REGION_STROKE_SELECTED = '#d51990';
-
-function applyFeatureStyle(feature: google.maps.Data.Feature, selectedId: string | null) {
-  const regionId: string = feature.getProperty('region_id') as string;
-  const selected = regionId === selectedId;
-  return {
-    fillColor: selected ? REGION_FILL_SELECTED : REGION_FILL_DEFAULT,
-    fillOpacity: selected ? 0.5 : 0.3,
-    strokeColor: selected ? REGION_STROKE_SELECTED : REGION_STROKE_DEFAULT,
-    strokeWeight: 1,
-  };
-}
-
-// ---------------------------------------------------------------------------
 // RegionMap sub-component
 // ---------------------------------------------------------------------------
 
@@ -83,79 +52,51 @@ function RegionMap({ regions, onRegionClick }: RegionMapProps) {
     (map: google.maps.Map) => {
       mapRef.current = map;
 
-      // Load all region GeoJSON into the map data layer
-      regions.forEach((region) => {
-        const features = map.data.addGeoJson({
-          type: 'FeatureCollection',
-          features: region.geometries
-            .filter((g) => g.geometry != null)
-            .map((g) => ({
-              type: 'Feature' as const,
-              geometry: g.geometry as object,
-              properties: {},
-            })),
+      try {
+        loadRegionFeatures(map, regions);
+
+        // Set default style
+        map.data.setStyle((feature) => applyFeatureStyle(feature, null));
+
+        // InfoWindow for hover
+        const infoWindow = new google.maps.InfoWindow();
+        infoWindowRef.current = infoWindow;
+
+        map.data.addListener('mouseout', () => {
+          infoWindow.close();
         });
 
-        features.forEach((feature) => {
-          const bounds = new google.maps.LatLngBounds();
-          const geom = feature.getGeometry();
-          if (geom) {
-            geom.forEachLatLng((latlng) => bounds.extend(latlng));
-            feature.setProperty('center', bounds.getCenter());
-          }
-          feature.setProperty('region_id', region.id);
-          feature.setProperty('region_name', region.name);
+        map.data.addListener('click', (event: google.maps.Data.MouseEvent) => {
+          const regionId: string = event.feature.getProperty('region_id') as string;
+          const regionName: string = event.feature.getProperty('region_name') as string;
+
+          setSelectedId(regionId);
+
+          // Update visual styles for all features
+          map.data.setStyle((feature) => applyFeatureStyle(feature, regionId));
+
+          // Show info window
+          const center =
+            (event.feature.getProperty('center') as google.maps.LatLng | null) ?? event.latLng;
+          infoWindow.setContent(regionName);
+          infoWindow.setPosition(center);
+          infoWindow.open(map);
+
+          onRegionClick(regionId);
         });
-      });
 
-      // Set default style
-      map.data.setStyle((feature) => applyFeatureStyle(feature, null));
-
-      // Fit map to all loaded features
-      const bounds = new google.maps.LatLngBounds();
-      map.data.forEach((feature) => {
-        const geom = feature.getGeometry();
-        if (geom) geom.forEachLatLng((latlng) => bounds.extend(latlng));
-      });
-      if (!bounds.isEmpty()) {
-        map.fitBounds(bounds);
+        map.data.addListener('mouseover', (event: google.maps.Data.MouseEvent) => {
+          const regionName: string = event.feature.getProperty('region_name') as string;
+          const center =
+            (event.feature.getProperty('center') as google.maps.LatLng | null) ?? event.latLng;
+          infoWindow.setContent(regionName);
+          infoWindow.setPosition(center);
+          infoWindow.open(map);
+        });
+      } catch (error) {
+        // A broken map must not take the whole landing page down with it.
+        console.error('Could not draw the region map', error);
       }
-
-      // InfoWindow for hover
-      const infoWindow = new google.maps.InfoWindow();
-      infoWindowRef.current = infoWindow;
-
-      map.data.addListener('mouseout', () => {
-        infoWindow.close();
-      });
-
-      map.data.addListener('click', (event: google.maps.Data.MouseEvent) => {
-        const regionId: string = event.feature.getProperty('region_id') as string;
-        const regionName: string = event.feature.getProperty('region_name') as string;
-
-        setSelectedId(regionId);
-
-        // Update visual styles for all features
-        map.data.setStyle((feature) => applyFeatureStyle(feature, regionId));
-
-        // Show info window
-        const center =
-          (event.feature.getProperty('center') as google.maps.LatLng | null) ?? event.latLng;
-        infoWindow.setContent(regionName);
-        infoWindow.setPosition(center);
-        infoWindow.open(map);
-
-        onRegionClick(regionId);
-      });
-
-      map.data.addListener('mouseover', (event: google.maps.Data.MouseEvent) => {
-        const regionName: string = event.feature.getProperty('region_name') as string;
-        const center =
-          (event.feature.getProperty('center') as google.maps.LatLng | null) ?? event.latLng;
-        infoWindow.setContent(regionName);
-        infoWindow.setPosition(center);
-        infoWindow.open(map);
-      });
     },
 
     [regions, onRegionClick],
