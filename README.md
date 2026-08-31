@@ -125,6 +125,20 @@ Two things MINT deploys are not in this repository. Read them where they live:
 - Python 3.9+
 - Docker (for running PostgreSQL and Hasura locally)
 
+### Run the whole platform on a laptop
+
+`docker compose up` starts every service on one machine, with Tapis
+authentication and a demo model catalog. **[`compose/README.md`](compose/README.md)
+is the guide.**
+
+```bash
+docker compose up -d --wait
+cp compose/ui-react.env ui-react/.env
+cd ui-react && npm install && npm run config:local && npm run dev
+```
+
+Then open `http://localhost:3000`.
+
 ### Development
 
 Each component can be developed independently. See the README in each directory for detailed instructions.

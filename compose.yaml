@@ -1,9 +1,10 @@
 # MINT on a laptop. `docker compose up` starts the whole platform.
 #
-# This file is built one layer at a time. It now holds the data layer and the
-# API layer: Postgres, the Tapis auth webhook, Hasura, the one-shot migration
-# service, the one-shot catalog fixture load, model-catalog-api, Redis and
-# Ensemble Manager. The frontend arrives in a later commit.
+# It holds the whole stack: Postgres, the Tapis auth webhook, Hasura, the
+# one-shot migration service, the one-shot catalog fixture load,
+# model-catalog-api, Redis, Ensemble Manager and ui-react.
+#
+# `compose/README.md` is the guide. Read it first.
 #
 # Ports on the host: ui-react 3000, Ensemble Manager 3001, model-catalog-api
 # 3002, Hasura 8080, Postgres 5432, Redis 6379. The auth webhook has no
