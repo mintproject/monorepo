@@ -100,5 +100,5 @@ This is a **MINT Ensemble Manager** - a Node.js/Express API server for managing 
 
 **Docker Support:**
 - Dockerfile for containerized deployment
-- docker-compose.yml for local development stack
+- `compose.yaml` at the repository root runs the whole MINT stack on a laptop. See `compose/README.md`
 - Kubernetes manifests for cluster deployment
