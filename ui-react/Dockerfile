@@ -20,6 +20,10 @@ RUN npm run build
 
 FROM nginx:1.27-alpine AS runtime
 
+LABEL org.opencontainers.image.title="MINT UI (React)" \
+      org.opencontainers.image.source="https://github.com/mintproject/monorepo" \
+      org.opencontainers.image.licenses="MIT"
+
 # Node runtime for the entrypoint, so the container and Vercel run the same
 # configuration-building code rather than two implementations that can drift.
 RUN apk add --no-cache nodejs

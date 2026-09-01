@@ -117,3 +117,8 @@ npm run codegen
 - React Router v6
 - React Hook Form + Zod
 - Vitest + React Testing Library
+
+## License
+
+[MIT](https://opensource.org/license/mit). Copyright (c) 2026 MINT.
+See [LICENSE](LICENSE).
