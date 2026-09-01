@@ -61,6 +61,9 @@ ui-react/
                                   #   ErrorBoundary, LoadingSpinner, EmptyState,
                                   #   ConfirmDialog, ProtectedRoute
       layout/                     # AppShell, Header, Sidebar, BrandingStrip, Footer
+      home/                       # Landing-page lanes: ExploreCard,
+                                  #   explore-destinations, DecidePanel
+      regions/                    # RegionMap — the region picker on /regions
       model-tree/                 # ModelTree, TreeNode
                                   #   (Software -> Version -> Config -> Setup)
       configuration/              # PLACEHOLDER (.gitkeep) — flattened config form
@@ -68,7 +71,7 @@ ui-react/
       autocomplete/               # PLACEHOLDER (.gitkeep) — StandardVariable/Unit typeahead
 
     pages/
-      AppHome.tsx                 # /
+      AppHome.tsx                 # / — Explore lane + Decide lane, no map
       ModelsPage.tsx              # /models
       ConfigurePage.tsx           # /models/configure/:id
       RegisterPage.tsx            # /models/register
@@ -105,6 +108,9 @@ ui-react/
       mutation-builder.ts         # Helpers for building Hasura mutation objects
       uri.ts                      # URI helpers for model catalog IDs
       utils.ts                    # cn() (clsx + tailwind-merge)
+      modeling/
+        recent-problem-statements.ts  # Reduce a provenance feed to the
+                                      #   statements a user touched last
       auth/
         AuthProvider.tsx          # AuthContext provider — isAuthenticated, user, login, logout
         useAuth.ts                # useContext(AuthContext)
@@ -131,6 +137,7 @@ ui-react/
         render.tsx                # renderWithProviders() — wraps with Apollo + Auth + Router
         auth-mocks.ts             # Mock AuthContext values
         apollo-mocks.ts           # MockedProvider helpers
+        mint-config.ts            # setMintConfig() — window.__MINT_CONFIG__ for tests
 
     __tests__/                    # Cross-cutting integration tests
 ```
@@ -276,6 +283,7 @@ All routes are declared in `src/App.tsx`. Current routes:
 | `/regions/editor` | RegionsEditor |
 | `/regions/:id/datasets` | RegionDatasets |
 | `/regions/:id/models` | RegionModels |
+| `/regions/:id` | Redirects to `/regions/:id/models` |
 | `/variables` | VariablesHome |
 | `*` | NotFoundPage |
 

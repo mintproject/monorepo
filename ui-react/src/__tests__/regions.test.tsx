@@ -45,6 +45,15 @@ vi.mock('react-leaflet', () => ({
 
 vi.mock('leaflet/dist/leaflet.css', () => ({}));
 
+// ─── Mock Google Maps: RegionsHome now carries the region-picker map ─────────
+
+vi.mock('@react-google-maps/api', () => ({
+  useJsApiLoader: () => ({ isLoaded: true }),
+  GoogleMap: ({ children }: { children?: React.ReactNode }) => (
+    <div data-testid="google-map">{children}</div>
+  ),
+}));
+
 // ─── Utility tests ────────────────────────────────────────────────────────────
 
 describe('regionUtils', () => {
@@ -203,6 +212,14 @@ describe('RegionsHome', () => {
     expect(screen.getByRole('link', { name: /explore agricultural/i })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /explore hydrological/i })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /explore administrative/i })).toBeInTheDocument();
+  });
+
+  it('offers the region map as the other way in', () => {
+    renderWithProviders(<RegionsHome />);
+    expect(screen.getByRole('heading', { name: 'Start from the map' })).toBeInTheDocument();
+    expect(
+      screen.getByText(/select a region by hovering over it and clicking/i),
+    ).toBeInTheDocument();
   });
 });
 

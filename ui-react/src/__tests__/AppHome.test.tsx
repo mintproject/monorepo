@@ -1,155 +1,102 @@
 // @vitest-environment jsdom
 /**
- * Unit tests for AppHome page component.
+ * Tests for the landing page.
+ *
+ * The page is two lanes -- Explore (four catalog entry points) and Decide (the
+ * modeling workflow) -- and carries no map: that moved to /regions.
  */
-import { describe, expect, it, vi, beforeEach } from 'vitest';
-import { screen, waitFor } from '@testing-library/react';
+import { describe, expect, it, beforeEach } from 'vitest';
+import { screen } from '@testing-library/react';
 
-import { LIST_TOP_REGIONS } from '@/graphql/queries/regions';
-import { renderWithProviders } from '@/test/utils/render';
+import { makeEmptyActivityMock } from '@/test/utils/apollo-mocks';
 import { mockAuthState, mockUnauthenticatedState } from '@/test/utils/auth-mocks';
+import { setMintConfig } from '@/test/utils/mint-config';
+import { renderWithProviders } from '@/test/utils/render';
 import { AppHome } from '@/pages/AppHome';
 
-// ---------------------------------------------------------------------------
-// Mock @react-google-maps/api — avoids real browser Google Maps SDK.
-// isLoaded: true so that the "no regions" empty-state branch is reachable.
-// ---------------------------------------------------------------------------
-vi.mock('@react-google-maps/api', () => ({
-  useJsApiLoader: () => ({ isLoaded: true }),
-  GoogleMap: ({ children }: { children?: React.ReactNode }) => (
-    <div data-testid="google-map">{children}</div>
-  ),
-}));
-
-// ---------------------------------------------------------------------------
-// Mock data
-// ---------------------------------------------------------------------------
-const mockRegions = [
-  {
-    id: 'south_sudan',
-    name: 'South Sudan',
-    model_catalog_uri: null,
-    geometries: [{ geometry: null }],
-  },
-  {
-    id: 'ethiopia',
-    name: 'Ethiopia',
-    model_catalog_uri: null,
-    geometries: [{ geometry: null }],
-  },
-];
-
-const listRegionsMock = {
-  request: {
-    query: LIST_TOP_REGIONS,
-    variables: {},
-  },
-  result: {
-    data: {
-      region: mockRegions,
-    },
-  },
-};
-
-const emptyRegionsMock = {
-  request: {
-    query: LIST_TOP_REGIONS,
-    variables: {},
-  },
-  result: {
-    data: {
-      region: [],
-    },
-  },
-};
-
-// ---------------------------------------------------------------------------
-// Tests
-// ---------------------------------------------------------------------------
 describe('AppHome', () => {
   beforeEach(() => {
-    // Reset window config
-    (window as Window).__MINT_CONFIG__ = {
-      HASURA_ENDPOINT: 'http://localhost:8080/v1/graphql',
-      AUTH_SERVER: '',
-      AUTH_CLIENT_ID: '',
-      AUTH_REALM: '',
-      AUTH_PROVIDER: 'keycloak',
-      GOOGLE_MAPS_KEY: 'test-maps-key',
-      WELCOME_MESSAGE: 'Welcome to DYNAMO',
-    };
+    setMintConfig({ GOOGLE_MAPS_KEY: 'test-maps-key', WELCOME_MESSAGE: 'Welcome to DYNAMO' });
   });
 
-  it('renders the welcome message', () => {
-    renderWithProviders(<AppHome />, { apolloMocks: [listRegionsMock] });
-    expect(screen.getByText('Welcome to DYNAMO')).toBeTruthy();
+  function renderAnonymous() {
+    return renderWithProviders(<AppHome />, { authState: mockUnauthenticatedState });
+  }
+
+  it('renders the welcome message from the runtime config', () => {
+    renderAnonymous();
+    expect(screen.getByText('Welcome to DYNAMO')).toBeInTheDocument();
   });
 
-  it('renders the DYNAMO description paragraphs', () => {
-    renderWithProviders(<AppHome />, { apolloMocks: [listRegionsMock] });
-    expect(screen.getAllByText(/DYNAMO/)).toBeTruthy();
+  it('falls back to the default welcome message when the config omits it', () => {
+    setMintConfig();
+
+    renderAnonymous();
+    expect(screen.getByText('Welcome to MINT Model Catalog')).toBeInTheDocument();
   });
 
-  it('renders the Getting Started card', () => {
-    renderWithProviders(<AppHome />, { apolloMocks: [listRegionsMock] });
-    expect(screen.getByText('Getting Started')).toBeTruthy();
-  });
+  // ─── Lane A: Explore ───────────────────────────────────────────────────────
 
-  it('shows region selection instruction', () => {
-    renderWithProviders(<AppHome />, { apolloMocks: [listRegionsMock] });
-    expect(screen.getByText(/Select a region by hovering over it and clicking/)).toBeTruthy();
-  });
+  it('offers all four catalog entry points, each linking to its section', () => {
+    renderAnonymous();
 
-  it('shows loading spinner while regions are loading', () => {
-    // Regions are loading (Apollo hasn't resolved yet), so the spinner should
-    // be visible even though isLoaded:true from the maps mock.
-    renderWithProviders(<AppHome />, { apolloMocks: [listRegionsMock] });
-    // map is not ready yet (regionsLoading is true initially)
-    expect(screen.queryByTestId('google-map')).toBeNull();
-  });
-
-  it('shows signed-in username when authenticated', () => {
-    renderWithProviders(<AppHome />, {
-      apolloMocks: [listRegionsMock],
-      authState: { ...mockAuthState, user: { username: 'analyst1', email: 'a@b.com', sub: 'x' } },
-    });
-    expect(screen.getByText(/analyst1/)).toBeTruthy();
-  });
-
-  it('does not show username section when unauthenticated', () => {
-    renderWithProviders(<AppHome />, {
-      apolloMocks: [listRegionsMock],
-      authState: mockUnauthenticatedState,
-    });
-    const userEl = screen.queryByText(/Signed in as/);
-    expect(userEl).toBeNull();
-  });
-
-  it('shows "no regions" message when region list is empty and map is loaded', async () => {
-    renderWithProviders(<AppHome />, {
-      apolloMocks: [emptyRegionsMock],
-    });
-
-    await waitFor(
-      () => {
-        expect(screen.queryByText(/No regions available/)).toBeTruthy();
-      },
-      { timeout: 3000 },
+    expect(screen.getByRole('link', { name: /browse models/i })).toHaveAttribute('href', '/models');
+    expect(screen.getByRole('link', { name: /search datasets/i })).toHaveAttribute(
+      'href',
+      '/datasets/search',
+    );
+    expect(screen.getByRole('link', { name: /pick a region on the map/i })).toHaveAttribute(
+      'href',
+      '/regions',
+    );
+    expect(screen.getByRole('link', { name: /browse variables/i })).toHaveAttribute(
+      'href',
+      '/variables',
     );
   });
 
-  it('falls back to default welcome message when config not set', () => {
-    // Remove WELCOME_MESSAGE from window config
-    (window as Window).__MINT_CONFIG__ = {
-      HASURA_ENDPOINT: 'http://localhost:8080/v1/graphql',
-      AUTH_SERVER: '',
-      AUTH_CLIENT_ID: '',
-      AUTH_REALM: '',
-      AUTH_PROVIDER: 'keycloak',
-    };
+  it('labels the two lanes so the sidebar grouping is visible on arrival', () => {
+    renderAnonymous();
+    expect(screen.getByRole('heading', { name: /explore what is in mint/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: /answer a question with models/i }),
+    ).toBeInTheDocument();
+  });
 
-    renderWithProviders(<AppHome />, { apolloMocks: [listRegionsMock] });
-    // Should fall back to the default message
-    expect(screen.getByText('Welcome to MINT Model Catalog')).toBeTruthy();
+  it('frames the tool with the questions it is built for', () => {
+    renderAnonymous();
+    expect(screen.getByText('Questions MINT is built for:')).toBeInTheDocument();
+    expect(screen.getByText(/will the harvest fall if the rains are late/i)).toBeInTheDocument();
+  });
+
+  // ─── The map is gone ───────────────────────────────────────────────────────
+
+  it('no longer asks for a region before there is anything to filter', () => {
+    renderAnonymous();
+    expect(screen.queryByText(/select a region by hovering/i)).not.toBeInTheDocument();
+  });
+
+  // ─── Auth-aware framing ────────────────────────────────────────────────────
+
+  it('asks anonymous visitors what they want to do', () => {
+    renderAnonymous();
+    expect(
+      screen.getByRole('heading', { level: 1, name: 'What do you want to do?' }),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/you will be asked to sign in first/i)).toBeInTheDocument();
+  });
+
+  it('greets a signed-in user by name', () => {
+    renderWithProviders(<AppHome />, {
+      authState: {
+        ...mockAuthState,
+        user: { username: 'analyst1', email: 'a@b.com', sub: 'x' },
+      },
+      apolloMocks: [makeEmptyActivityMock('analyst1')],
+    });
+
+    expect(
+      screen.getByRole('heading', { level: 1, name: 'Welcome back, analyst1' }),
+    ).toBeInTheDocument();
   });
 });

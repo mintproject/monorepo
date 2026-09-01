@@ -30,6 +30,7 @@ import { RegionsAgriculture } from './pages/regions/RegionsAgriculture';
 import { RegionsManual } from './pages/regions/RegionsManual';
 import { RegionsEditor } from './pages/regions/RegionsEditor';
 import { RegionQueryPage } from './pages/regions/RegionQueryPage';
+import { RegionRedirect } from './pages/regions/RegionRedirect';
 
 // Pages — variables
 import { VariablesHome } from './pages/variables/VariablesHome';
@@ -118,6 +119,8 @@ export function App() {
           <Route path="/regions/manual" element={<RegionsManual />} />
           <Route path="/regions/:id/datasets" element={<RegionQueryPage />} />
           <Route path="/regions/:id/models" element={<RegionQueryPage />} />
+          {/* A bare region has no page of its own; show its models. */}
+          <Route path="/regions/:id" element={<RegionRedirect />} />
 
           {/* Variables */}
           <Route path="/variables" element={<VariablesHome />} />
