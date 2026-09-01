@@ -6,6 +6,7 @@ import { LoginRequiredPage, ProtectedRoute } from './components/common/Protected
 import { Toaster } from './components/ui/toaster';
 
 // Pages — model catalog
+import { AboutPage } from './pages/AboutPage';
 import { AppHome } from './pages/AppHome';
 import { ModelsBrowsePage } from './components/models-browse/ModelsBrowsePage';
 import { RegisterPage } from './pages/RegisterPage';
@@ -48,6 +49,7 @@ export function App() {
         <Routes>
           {/* Home */}
           <Route path="/" element={<AppHome />} />
+          <Route path="/about" element={<AboutPage />} />
 
           {/* Models */}
           <Route path="/models" element={<ModelsBrowsePage />} />

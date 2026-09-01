@@ -1,13 +1,10 @@
 import { Database, FlaskConical, Map, Variable } from 'lucide-react';
 
-/**
- * The four ways into the catalog, in the order the landing page shows them.
- *
- * They are deliberately equal in weight: someone who knows the variable but not
- * the model is not a second-class visitor. The order matches the Explore group
- * in the sidebar, so the landing page and the nav teach the same thing.
- */
+/** Stable identity for a destination, used to attach its catalog count. */
+export type ExploreKey = 'models' | 'datasets' | 'regions' | 'variables';
+
 export interface ExploreDestination {
+  key: ExploreKey;
   /** Route the whole card links to. */
   href: string;
   icon: React.ComponentType<{ className?: string }>;
@@ -18,8 +15,16 @@ export interface ExploreDestination {
   action: string;
 }
 
+/**
+ * The four ways into the catalog, in the order the landing page shows them.
+ *
+ * They are deliberately equal in weight: someone who knows the variable but not
+ * the model is not a second-class visitor. The order matches the Explore group
+ * in the sidebar, so the landing page and the nav teach the same thing.
+ */
 export const EXPLORE_DESTINATIONS: ExploreDestination[] = [
   {
+    key: 'models',
     href: '/models',
     icon: FlaskConical,
     title: 'Models',
@@ -28,6 +33,7 @@ export const EXPLORE_DESTINATIONS: ExploreDestination[] = [
     action: 'Browse models',
   },
   {
+    key: 'datasets',
     href: '/datasets/search',
     icon: Database,
     title: 'Datasets',
@@ -36,6 +42,7 @@ export const EXPLORE_DESTINATIONS: ExploreDestination[] = [
     action: 'Search datasets',
   },
   {
+    key: 'regions',
     href: '/regions',
     icon: Map,
     title: 'Regions',
@@ -44,6 +51,7 @@ export const EXPLORE_DESTINATIONS: ExploreDestination[] = [
     action: 'Pick a region on the map',
   },
   {
+    key: 'variables',
     href: '/variables',
     icon: Variable,
     title: 'Variables',

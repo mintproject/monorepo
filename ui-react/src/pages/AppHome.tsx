@@ -1,6 +1,9 @@
+import { Link } from 'react-router-dom';
+
 import { DecidePanel } from '@/components/home/DecidePanel';
 import { ExploreCard } from '@/components/home/ExploreCard';
 import { EXPLORE_DESTINATIONS } from '@/components/home/explore-destinations';
+import { useCatalogCounts } from '@/hooks/useCatalogCounts';
 import { useAuth } from '@/lib/auth/useAuth';
 
 /**
@@ -32,6 +35,7 @@ function getWelcomeMessage(): string {
  */
 export function AppHome() {
   const { isAuthenticated, user } = useAuth();
+  const counts = useCatalogCounts();
   const welcomeMessage = getWelcomeMessage();
 
   return (
@@ -48,7 +52,10 @@ export function AppHome() {
         <p className="max-w-[62ch] text-sm text-muted-foreground">
           MINT connects simulation models to data so you can test what happens under different
           weather and climate conditions — crop yields under low rainfall, flood extent after a
-          storm, water available downstream.
+          storm, water available downstream.{' '}
+          <Link to="/about" className="font-medium text-foreground underline">
+            More about DYNAMO
+          </Link>
         </p>
       </header>
 
@@ -65,7 +72,11 @@ export function AppHome() {
 
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {EXPLORE_DESTINATIONS.map((destination) => (
-            <ExploreCard key={destination.href} destination={destination} />
+            <ExploreCard
+              key={destination.href}
+              destination={destination}
+              count={counts[destination.key]}
+            />
           ))}
         </div>
       </section>

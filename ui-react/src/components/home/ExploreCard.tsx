@@ -6,6 +6,8 @@ import { cn } from '@/lib/utils';
 
 interface ExploreCardProps {
   destination: ExploreDestination;
+  /** How many things this section holds. Omitted when the count is unavailable. */
+  count?: number | undefined;
 }
 
 /**
@@ -15,7 +17,7 @@ interface ExploreCardProps {
  * page's emphasis belongs to the Decide panel below them. Colour arrives only
  * on hover and focus.
  */
-export function ExploreCard({ destination }: ExploreCardProps) {
+export function ExploreCard({ destination, count }: ExploreCardProps) {
   const Icon = destination.icon;
 
   return (
@@ -27,8 +29,15 @@ export function ExploreCard({ destination }: ExploreCardProps) {
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
       )}
     >
-      <span className="flex h-8 w-8 items-center justify-center rounded-md bg-muted text-muted-foreground">
-        <Icon className="h-4 w-4" />
+      <span className="flex items-center justify-between gap-2">
+        <span className="flex h-8 w-8 items-center justify-center rounded-md bg-muted text-muted-foreground">
+          <Icon className="h-4 w-4" />
+        </span>
+        {count !== undefined && (
+          <span className="text-xs tabular-nums text-muted-foreground">
+            {count.toLocaleString()}
+          </span>
+        )}
       </span>
       <h3 className="text-sm font-bold">{destination.title}</h3>
       <p className="flex-1 text-xs leading-relaxed text-muted-foreground">

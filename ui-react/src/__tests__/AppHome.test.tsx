@@ -63,6 +63,14 @@ describe('AppHome', () => {
     ).toBeInTheDocument();
   });
 
+  it('points at the About page for the DYNAMO description it no longer carries', () => {
+    renderAnonymous();
+    expect(screen.getByRole('link', { name: /more about dynamo/i })).toHaveAttribute(
+      'href',
+      '/about',
+    );
+  });
+
   it('frames the tool with the questions it is built for', () => {
     renderAnonymous();
     expect(screen.getByText('Questions MINT is built for:')).toBeInTheDocument();

@@ -59,8 +59,8 @@ describe('App', () => {
 
   // The landing page sends visitors to these four; a card pointing at a 404
   // would be the same defect the old map had.
-  it.each(['/models', '/datasets/search', '/regions', '/variables'])(
-    'resolves the Explore card route %s',
+  it.each(['/models', '/datasets/search', '/regions', '/variables', '/about'])(
+    'resolves the landing-page route %s',
     (route) => {
       renderApp([route]);
       expect(screen.queryByText('Page not found')).not.toBeInTheDocument();

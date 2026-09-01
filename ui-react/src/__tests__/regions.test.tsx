@@ -214,12 +214,9 @@ describe('RegionsHome', () => {
     expect(screen.getByRole('link', { name: /explore administrative/i })).toBeInTheDocument();
   });
 
-  it('offers the region map as the other way in', () => {
+  it('does not offer a map', () => {
     renderWithProviders(<RegionsHome />);
-    expect(screen.getByRole('heading', { name: 'Start from the map' })).toBeInTheDocument();
-    expect(
-      screen.getByText(/select a region by hovering over it and clicking/i),
-    ).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: /map/i })).not.toBeInTheDocument();
   });
 });
 

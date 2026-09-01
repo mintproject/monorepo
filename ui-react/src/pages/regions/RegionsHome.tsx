@@ -1,18 +1,11 @@
 import { Link } from 'react-router-dom';
 import { Wheat, Droplets, Building2 } from 'lucide-react';
 
-import { RegionMap } from '@/components/regions/RegionMap';
-
-/** Regions overview page — a map picker over the category navigation. */
+/** Regions overview page — the category navigation. */
 export function RegionsHome() {
   return (
     <div className="content-page">
       <h1 className="mb-4 text-2xl font-semibold">Regions</h1>
-
-      <div className="mb-8">
-        <h2 className="mb-3 text-base font-semibold">Start from the map</h2>
-        <RegionMap />
-      </div>
 
       <div className="mb-8">
         <h2 className="mb-3 text-base font-semibold">About regions</h2>
@@ -41,7 +34,7 @@ export function RegionsHome() {
       </div>
 
       <div className="-mx-6 bg-gray-50 px-6 py-8">
-        <h2 className="mb-4 text-base font-semibold">Or start from a category</h2>
+        <h2 className="mb-4 text-base font-semibold">Start from a category</h2>
         <div className="grid max-w-4xl grid-cols-1 gap-6 md:grid-cols-2">
           <CategoryCard
             title="Agricultural Regions"

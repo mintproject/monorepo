@@ -11,6 +11,7 @@ import {
 import { renderWithProviders } from '@/test/utils/render';
 
 const destination: ExploreDestination = {
+  key: 'models',
   href: '/models',
   icon: FlaskConical,
   title: 'Models',
@@ -34,6 +35,19 @@ describe('ExploreCard', () => {
     renderWithProviders(<ExploreCard destination={destination} />);
     expect(screen.getByText('Browse models')).toBeInTheDocument();
   });
+
+  it('shows how many things the section holds, grouped for readability', () => {
+    renderWithProviders(<ExploreCard destination={destination} count={1204} />);
+    expect(screen.getByText('1,204')).toBeInTheDocument();
+  });
+
+  it('renders without a number when the count is unavailable', () => {
+    // The aggregate needs Hasura permissions the deployment may not have yet;
+    // a missing count must cost a number, not the card.
+    renderWithProviders(<ExploreCard destination={destination} />);
+    expect(screen.getByRole('link', { name: /browse models/i })).toBeInTheDocument();
+    expect(screen.queryByText(/^[\d,]+$/)).not.toBeInTheDocument();
+  });
 });
 
 describe('EXPLORE_DESTINATIONS', () => {
@@ -49,5 +63,10 @@ describe('EXPLORE_DESTINATIONS', () => {
   it('points every card at a distinct route', () => {
     const routes = EXPLORE_DESTINATIONS.map((d) => d.href);
     expect(new Set(routes).size).toBe(routes.length);
+  });
+
+  it('gives every card a distinct key, so counts cannot land on the wrong one', () => {
+    const keys = EXPLORE_DESTINATIONS.map((d) => d.key);
+    expect(new Set(keys).size).toBe(keys.length);
   });
 });
