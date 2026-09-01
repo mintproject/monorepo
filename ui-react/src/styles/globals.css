@@ -50,6 +50,28 @@
 }
 
 @layer base {
+  /*
+   * Chrome tokens — the dark frame around the app: the branding strip, the
+   * header and the footer. Values measured from TACC's own live stylesheet
+   * (see mintproject/monorepo#205).
+   *
+   * Scoped to .mint-chrome on purpose. These are NOT the shadcn tokens above:
+   * repointing --primary or --background to #222 would recolour every button,
+   * badge and focus ring in the app.
+   *
+   * Roboto is not bundled — the stack falls through to the platform sans on a
+   * machine without it. The chrome is the only surface that asks for it.
+   */
+  .mint-chrome {
+    --mint-chrome-bg: #222222;
+    --mint-chrome-fg: #ffffff;
+    --mint-chrome-rule: #7f7f7f;
+    --mint-chrome-muted: #888888;
+    --mint-chrome-font: Roboto, ui-sans-serif, system-ui, sans-serif;
+  }
+}
+
+@layer base {
   * {
     @apply border-border;
   }

@@ -94,6 +94,7 @@ is treated as unset):
 | `DATA_CATALOG_BROWSE_URL` | `https://ckan.tacc.utexas.edu` (human-browsable catalog UI, iframe src) |
 | `ENSEMBLE_MANAGER_API` | omitted when unset |
 | `EXECUTION_ENGINE` | `localex` (`tapis` / `localex` / `wings` — the backend that Ensemble Manager runs) |
+| `BRANDING` | `none` (`tacc` shows the TACC + UT Austin strip; the preset lives in `src/lib/branding.ts`) |
 | `AUTH_CALLBACK_ORIGIN` | omitted when unset |
 | `AUTH_PREVIEW_ORIGIN_ALLOWLIST` | omitted when unset |
 | `WELCOME_MESSAGE` | omitted when unset |
