@@ -145,3 +145,8 @@ npm run codegen
 ```
 
 Output goes to `src/generated/graphql.ts`.
+
+## License
+
+[MIT](https://opensource.org/license/mit). Copyright (c) 2026 MINT.
+See [LICENSE](LICENSE).

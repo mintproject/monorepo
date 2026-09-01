@@ -190,4 +190,13 @@ python3 etl/run.py --trig-path <path>/model-catalog.trig
 
 ## License
 
-See the individual component directories for license information.
+[MIT](https://opensource.org/license/mit). See [LICENSE](LICENSE).
+
+The four services carry the same license. Each service directory holds its own copy:
+
+| Service | License file |
+|---------|--------------|
+| Model Catalog API | [`model-catalog-api/LICENSE`](model-catalog-api/LICENSE) |
+| Ensemble Manager | [`mint-ensemble-manager/LICENSE`](mint-ensemble-manager/LICENSE) |
+| UI (React) | [`ui-react/LICENSE`](ui-react/LICENSE) |
+| Hasura GraphQL engine | [`graphql_engine/LICENSE`](graphql_engine/LICENSE) |
