@@ -66,6 +66,15 @@ export function buildEnvConfig(env = process.env) {
     // legacy UI falls back to, so an unset value describes the same deployment
     // in all three places. A Tapis deployment — TACC's is one — must say so.
     EXECUTION_ENGINE: pick(env, 'EXECUTION_ENGINE', 'VITE_EXECUTION_ENGINE') ?? 'localex',
+    // Which co-branding the chrome shows: 'tacc' for the TACC and UT Austin
+    // strip, 'none' for no institutional logos. It names a preset in
+    // src/lib/branding.ts; the logo files, links and alt text are not
+    // configurable, so a deployment cannot ship the wrong alt text.
+    //
+    // 'none' by default. Only mint.tacc.utexas.edu may show UT's shield, and
+    // every other deployment gets it wrong by forgetting to opt out — so the
+    // opt-in is the one that must be written down.
+    BRANDING: pick(env, 'BRANDING', 'VITE_BRANDING') ?? 'none',
   });
 
   // No sensible default — the ensemble manager is deployment-specific, and the

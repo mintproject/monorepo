@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { AppShell } from '../AppShell';
 
@@ -13,6 +13,10 @@ vi.mock('@/lib/auth/useAuth', () => ({
     logout: vi.fn(),
   }),
 }));
+
+afterEach(() => {
+  delete (window as { __MINT_CONFIG__?: unknown }).__MINT_CONFIG__;
+});
 
 describe('AppShell', () => {
   it('renders children inside main area', () => {
@@ -53,5 +57,43 @@ describe('AppShell', () => {
     await userEvent.click(menuBtn);
 
     expect(sidebar).toHaveClass('w-14');
+  });
+
+  it('shows the branding strip and the footer under BRANDING=tacc', () => {
+    window.__MINT_CONFIG__ = { BRANDING: 'tacc' } as never;
+    render(
+      <MemoryRouter>
+        <AppShell>
+          <span />
+        </AppShell>
+      </MemoryRouter>,
+    );
+    expect(screen.getByTestId('branding-strip')).toBeInTheDocument();
+    expect(screen.getByAltText('TACC Logo')).toBeInTheDocument();
+    expect(screen.getByRole('contentinfo')).toBeInTheDocument();
+  });
+
+  it('keeps the footer but drops the strip under BRANDING=none', () => {
+    window.__MINT_CONFIG__ = { BRANDING: 'none' } as never;
+    render(
+      <MemoryRouter>
+        <AppShell>
+          <span />
+        </AppShell>
+      </MemoryRouter>,
+    );
+    expect(screen.queryByTestId('branding-strip')).not.toBeInTheDocument();
+    expect(screen.getByRole('contentinfo')).toBeInTheDocument();
+  });
+
+  it('drops the strip when the key is absent', () => {
+    render(
+      <MemoryRouter>
+        <AppShell>
+          <span />
+        </AppShell>
+      </MemoryRouter>,
+    );
+    expect(screen.queryByTestId('branding-strip')).not.toBeInTheDocument();
   });
 });

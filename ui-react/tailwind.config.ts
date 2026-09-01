@@ -10,7 +10,11 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // TACC brand tokens (stubs — to be finalized with TACC style guide)
+        // Stock shadcn/ui slate palette, mapped to the CSS variables in
+        // src/styles/globals.css. These are NOT TACC brand colours. The TACC
+        // chrome has its own tokens, scoped to .mint-chrome in that file, so
+        // that painting the header dark does not recolour every button and
+        // focus ring in the app.
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',

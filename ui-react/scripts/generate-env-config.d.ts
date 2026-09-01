@@ -8,6 +8,7 @@ export interface MintConfig {
   DATA_CATALOG_API: string;
   DATA_CATALOG_BROWSE_URL: string;
   EXECUTION_ENGINE: string;
+  BRANDING: string;
   ENSEMBLE_MANAGER_API?: string;
   AUTH_CALLBACK_ORIGIN?: string;
   AUTH_PREVIEW_ORIGIN_ALLOWLIST?: string;

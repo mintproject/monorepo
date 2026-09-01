@@ -37,6 +37,12 @@ window.__MINT_CONFIG__ = {
   // generator's 'localex' default, to match the TACC endpoints above — set it
   // to your own engine if you point ENSEMBLE_MANAGER_API elsewhere.
   EXECUTION_ENGINE: "tapis",
+  // Shows the TACC + UT Austin strip and footer locally, because the endpoints
+  // above are TACC's own deployment. This file never reaches a deployment (see
+  // the header), so it does not weaken the 'none' default in
+  // scripts/generate-env-config.mjs. Set it to "none" to see the unbranded
+  // chrome.
+  BRANDING: "tacc",
   // ENSEMBLE_MANAGER_API is deliberately omitted: the thread pages check for
   // its absence and degrade rather than call a wrong host. Set it here if you
   // are working on model execution.

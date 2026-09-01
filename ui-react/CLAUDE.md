@@ -60,7 +60,7 @@ ui-react/
       common/                     # Shared utility components:
                                   #   ErrorBoundary, LoadingSpinner, EmptyState,
                                   #   ConfirmDialog, ProtectedRoute
-      layout/                     # AppShell, Header, Sidebar
+      layout/                     # AppShell, Header, Sidebar, BrandingStrip, Footer
       model-tree/                 # ModelTree, TreeNode
                                   #   (Software -> Version -> Config -> Setup)
       configuration/              # PLACEHOLDER (.gitkeep) — flattened config form
@@ -171,6 +171,10 @@ Keys:
 - `EXECUTION_ENGINE` — `'tapis'` | `'localex'` | `'wings'`; the backend the
   deployment's Ensemble Manager runs. Selects the run-submission route, which
   differs per backend (see `executionEnginePath` in `src/lib/ensemble-manager.ts`)
+- `BRANDING` — `'tacc'` | `'none'`; which co-branding the chrome shows. Names a
+  preset in `src/lib/branding.ts`; the logo files, link targets and alt text are
+  not configurable. Defaults to `'none'` — an unbranded deployment must be a
+  default, not an accident
 - `AUTH_CALLBACK_ORIGIN`, `AUTH_PREVIEW_ORIGIN_ALLOWLIST`
 
 Each key accepts a bare or `VITE_`-prefixed env var name; empty string is

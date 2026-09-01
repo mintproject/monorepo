@@ -51,6 +51,16 @@ describe('buildEnvConfig', () => {
     expect(buildEnvConfig({ VITE_EXECUTION_ENGINE: 'wings' }).EXECUTION_ENGINE).toBe('wings');
   });
 
+  it('defaults branding to none, overridable from env', () => {
+    // An unbranded deployment must be the default. Only mint.tacc.utexas.edu
+    // may show UT's shield, and every other deployment would get it wrong by
+    // forgetting to opt out.
+    expect(buildEnvConfig({}).BRANDING).toBe('none');
+    expect(buildEnvConfig({ BRANDING: 'tacc' }).BRANDING).toBe('tacc');
+    expect(buildEnvConfig({ VITE_BRANDING: 'tacc' }).BRANDING).toBe('tacc');
+    expect(buildEnvConfig({ BRANDING: '' }).BRANDING).toBe('none');
+  });
+
   it('does not emit MODEL_CATALOG_API — the v1.8.0 SPARQL API has no callers', () => {
     const c = buildEnvConfig({ MODEL_CATALOG_API: 'https://models.example.org/v2' });
     expect('MODEL_CATALOG_API' in c).toBe(false);
