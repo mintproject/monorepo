@@ -6,6 +6,7 @@ import { LoginRequiredPage, ProtectedRoute } from './components/common/Protected
 import { Toaster } from './components/ui/toaster';
 
 // Pages — model catalog
+import { AboutPage } from './pages/AboutPage';
 import { AppHome } from './pages/AppHome';
 import { ModelsBrowsePage } from './components/models-browse/ModelsBrowsePage';
 import { RegisterPage } from './pages/RegisterPage';
@@ -30,6 +31,7 @@ import { RegionsAgriculture } from './pages/regions/RegionsAgriculture';
 import { RegionsManual } from './pages/regions/RegionsManual';
 import { RegionsEditor } from './pages/regions/RegionsEditor';
 import { RegionQueryPage } from './pages/regions/RegionQueryPage';
+import { RegionRedirect } from './pages/regions/RegionRedirect';
 
 // Pages — variables
 import { VariablesHome } from './pages/variables/VariablesHome';
@@ -47,6 +49,7 @@ export function App() {
         <Routes>
           {/* Home */}
           <Route path="/" element={<AppHome />} />
+          <Route path="/about" element={<AboutPage />} />
 
           {/* Models */}
           <Route path="/models" element={<ModelsBrowsePage />} />
@@ -118,6 +121,8 @@ export function App() {
           <Route path="/regions/manual" element={<RegionsManual />} />
           <Route path="/regions/:id/datasets" element={<RegionQueryPage />} />
           <Route path="/regions/:id/models" element={<RegionQueryPage />} />
+          {/* A bare region has no page of its own; show its models. */}
+          <Route path="/regions/:id" element={<RegionRedirect />} />
 
           {/* Variables */}
           <Route path="/variables" element={<VariablesHome />} />

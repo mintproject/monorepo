@@ -952,6 +952,7 @@
       - category_id
       - model_catalog_uri
       filter: {}
+      allow_aggregations: true
   - role: user
     permission:
       columns:
@@ -961,6 +962,7 @@
       - name
       - parent_region_id
       filter: {}
+      allow_aggregations: true
 - table:
     name: region_category
     schema: public
@@ -2599,10 +2601,12 @@
       - author_id
       - type
       filter: {}
+      allow_aggregations: true
   - role: user
     permission:
       columns: *id001
       filter: {}
+      allow_aggregations: true
   update_permissions:
   - role: user
     permission:
@@ -3579,10 +3583,12 @@
       - description
       - same_as
       filter: {}
+      allow_aggregations: true
   - role: user
     permission:
       columns: *id043
       filter: {}
+      allow_aggregations: true
   update_permissions:
   - role: user
     permission:

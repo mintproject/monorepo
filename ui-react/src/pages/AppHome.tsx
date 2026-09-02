@@ -1,30 +1,20 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 
-import { useQuery } from '@apollo/client';
-import { GoogleMap, useJsApiLoader } from '@react-google-maps/api';
-import { useNavigate } from 'react-router-dom';
-
-import { LoadingSpinner } from '@/components/common/LoadingSpinner';
-import { LIST_TOP_REGIONS } from '@/graphql/queries/regions';
+import { DecidePanel } from '@/components/home/DecidePanel';
+import { ExploreCard } from '@/components/home/ExploreCard';
+import { EXPLORE_DESTINATIONS } from '@/components/home/explore-destinations';
+import { useCatalogCounts } from '@/hooks/useCatalogCounts';
 import { useAuth } from '@/lib/auth/useAuth';
-import { applyFeatureStyle, loadRegionFeatures, type Region } from '@/lib/geo/region-layer';
-import { mapStyles } from '@/styles/map-style';
 
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
-
-interface ListTopRegionsData {
-  region: Region[];
-}
-
-// ---------------------------------------------------------------------------
-// Config helpers
-// ---------------------------------------------------------------------------
-
-function getGoogleMapsKey(): string {
-  return window.__MINT_CONFIG__?.GOOGLE_MAPS_KEY ?? import.meta.env.VITE_GOOGLE_MAPS_KEY ?? '';
-}
+/**
+ * Questions MINT exists to answer, in the words an analyst would use. They set
+ * the scope of the tool faster than a paragraph about it can.
+ */
+const STARTER_QUESTIONS = [
+  'Will the harvest fall if the rains are late?',
+  'How far will the flood reach?',
+  'How much water is left downstream?',
+];
 
 function getWelcomeMessage(): string {
   return (
@@ -34,225 +24,76 @@ function getWelcomeMessage(): string {
   );
 }
 
-// ---------------------------------------------------------------------------
-// RegionMap sub-component
-// ---------------------------------------------------------------------------
-
-interface RegionMapProps {
-  regions: Region[];
-  onRegionClick: (id: string) => void;
-}
-
-function RegionMap({ regions, onRegionClick }: RegionMapProps) {
-  const mapRef = useRef<google.maps.Map | null>(null);
-  const infoWindowRef = useRef<google.maps.InfoWindow | null>(null);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-
-  const onLoad = useCallback(
-    (map: google.maps.Map) => {
-      mapRef.current = map;
-
-      try {
-        loadRegionFeatures(map, regions);
-
-        // Set default style
-        map.data.setStyle((feature) => applyFeatureStyle(feature, null));
-
-        // InfoWindow for hover
-        const infoWindow = new google.maps.InfoWindow();
-        infoWindowRef.current = infoWindow;
-
-        map.data.addListener('mouseout', () => {
-          infoWindow.close();
-        });
-
-        map.data.addListener('click', (event: google.maps.Data.MouseEvent) => {
-          const regionId: string = event.feature.getProperty('region_id') as string;
-          const regionName: string = event.feature.getProperty('region_name') as string;
-
-          setSelectedId(regionId);
-
-          // Update visual styles for all features
-          map.data.setStyle((feature) => applyFeatureStyle(feature, regionId));
-
-          // Show info window
-          const center =
-            (event.feature.getProperty('center') as google.maps.LatLng | null) ?? event.latLng;
-          infoWindow.setContent(regionName);
-          infoWindow.setPosition(center);
-          infoWindow.open(map);
-
-          onRegionClick(regionId);
-        });
-
-        map.data.addListener('mouseover', (event: google.maps.Data.MouseEvent) => {
-          const regionName: string = event.feature.getProperty('region_name') as string;
-          const center =
-            (event.feature.getProperty('center') as google.maps.LatLng | null) ?? event.latLng;
-          infoWindow.setContent(regionName);
-          infoWindow.setPosition(center);
-          infoWindow.open(map);
-        });
-      } catch (error) {
-        // A broken map must not take the whole landing page down with it.
-        console.error('Could not draw the region map', error);
-      }
-    },
-
-    [regions, onRegionClick],
-  );
-
-  const onUnmount = useCallback(() => {
-    mapRef.current = null;
-  }, []);
-
-  // Re-apply styles when selectedId changes (in case re-render triggers this)
-  useEffect(() => {
-    if (mapRef.current) {
-      mapRef.current.data.setStyle((feature) => applyFeatureStyle(feature, selectedId));
-    }
-  }, [selectedId]);
-
-  return (
-    <GoogleMap
-      mapContainerClassName="middle2main"
-      mapContainerStyle={{ width: '100%', height: '100%' }}
-      zoom={3}
-      center={{ lat: 0, lng: 20 }}
-      options={{
-        mapTypeId: 'terrain',
-        disableDefaultUI: true,
-        draggable: true,
-        styles: mapStyles,
-      }}
-      onLoad={onLoad}
-      onUnmount={onUnmount}
-    />
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Main AppHome page
-// ---------------------------------------------------------------------------
-
+/**
+ * The landing page: two lanes, matching the Explore / Decide split the sidebar
+ * already uses.
+ *
+ * A visitor arrives with one of two intents -- look something up, or answer a
+ * question -- so the page asks which, rather than opening on a world map whose
+ * region choice means nothing yet. The map moved to `/regions`, where it reads
+ * as a filter.
+ */
 export function AppHome() {
-  const { user } = useAuth();
-  const navigate = useNavigate();
-
-  const apiKey = getGoogleMapsKey();
+  const { isAuthenticated, user } = useAuth();
+  const counts = useCatalogCounts();
   const welcomeMessage = getWelcomeMessage();
 
-  const { isLoaded: mapsLoaded } = useJsApiLoader({
-    googleMapsApiKey: apiKey,
-  });
-
-  const { data, loading: regionsLoading } = useQuery<ListTopRegionsData>(LIST_TOP_REGIONS);
-
-  const regions = data?.region ?? [];
-
-  const handleRegionClick = useCallback(
-    (regionId: string) => {
-      navigate(`/regions/${encodeURIComponent(regionId)}`);
-    },
-    [navigate],
-  );
-
-  const mapReady = mapsLoaded && !regionsLoading && regions.length > 0;
-
   return (
-    <>
-      {/* Content section */}
-      <div className="content-page">
-        <div className="main-content mx-0 my-[60px]">
-          <h1 className="mb-10 text-[1.75rem] font-black leading-tight">{welcomeMessage}</h1>
+    <div className="content-page space-y-8 py-8">
+      <header className="space-y-2">
+        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          {welcomeMessage}
+        </p>
+        <h1 className="text-2xl font-black tracking-tight">
+          {isAuthenticated && user?.username
+            ? `Welcome back, ${user.username}`
+            : 'What do you want to do?'}
+        </h1>
+        <p className="max-w-[62ch] text-sm text-muted-foreground">
+          MINT connects simulation models to data so you can test what happens under different
+          weather and climate conditions — crop yields under low rainfall, flood extent after a
+          storm, water available downstream.{' '}
+          <Link to="/about" className="font-medium text-foreground underline">
+            More about DYNAMO
+          </Link>
+        </p>
+      </header>
 
-          <div className="concept-grid grid gap-6 md:grid-cols-[1fr_420px]">
-            {/* Description */}
-            <div className="space-y-4 text-sm leading-relaxed text-foreground">
-              <p>
-                <strong>DYNAMO</strong> helps analysts seamlessly use advanced simulation models and
-                data to explore the impact of weather and climate on water and food availability in
-                selected regions around the world. For instance, an analyst can use DYNAMO to assess
-                expected crop yields under different rainfall scenarios, accounting for their
-                effects on flooding and drought.
-              </p>
-              <p>
-                <strong>DYNAMO</strong>&apos;s simulation models are quantitative and embed deep
-                subject-matter expertise. For example, a hydrology model incorporates physical laws
-                that govern how water moves through a river basin. It uses data on terrain elevation
-                and soil types to estimate how much water is absorbed into the ground and how it
-                flows across land surfaces.
-              </p>
-              <p>
-                Throughout the process, <strong>DYNAMO</strong> offers guidance to reduce the time
-                and effort needed to build integrated models—while maintaining both their accuracy
-                and practical value.
-              </p>
-              <p>
-                Recognizing that analysts bring different expertise and may work with diverse
-                models, <strong>DYNAMO</strong> supports individual user accounts. Each
-                analyst&apos;s actions are tracked under their username, while all users share a
-                unified interface. This means that when one analyst completes a task, the results
-                are immediately accessible to the entire team.
-              </p>
-              {user?.username && (
-                <p className="text-muted-foreground">
-                  Signed in as <strong>{user.username}</strong>.
-                </p>
-              )}
-            </div>
-
-            {/* Getting Started card */}
-            <div className="concept-card rounded-lg border bg-card p-5 text-card-foreground shadow-sm">
-              <h4 className="mb-2 font-black uppercase tracking-wide">Getting Started</h4>
-              <hr className="mb-3 border-[#484848]" />
-              <p className="text-sm leading-relaxed">
-                Start by selecting the main region on the map below. Then, use the top menu to:
-              </p>
-              <ul className="mt-2 list-disc space-y-1 pl-5 text-sm leading-relaxed">
-                <li>
-                  Explore subregions and areas of interest for modeling, such as river basins,
-                  administrative areas, etc.
-                </li>
-                <li>Browse models customized for the main region or any subregion.</li>
-                <li>Run models by setting up initial conditions and input data.</li>
-                <li>Prepare reports to summarize your analyses.</li>
-              </ul>
-              <p className="mt-3 text-sm leading-relaxed">
-                The selected main region is always visible in the top right. Clicking on it allows
-                you to change it.
-              </p>
-            </div>
-          </div>
+      <section aria-labelledby="explore-heading" className="space-y-3">
+        <div className="flex items-baseline gap-3 border-b pb-2">
+          <span className="text-xs font-semibold text-muted-foreground">A</span>
+          <h2 id="explore-heading" className="text-sm font-bold">
+            Explore what is in MINT
+          </h2>
+          <span className="ml-auto text-xs text-muted-foreground">
+            Open to everyone, no sign-in
+          </span>
         </div>
-      </div>
 
-      {/* Map section */}
-      <div className="gray-section bg-muted/40 py-6">
-        <div className="content-page">
-          <h4 className="mb-4 text-sm font-medium text-muted-foreground">
-            Select a region by hovering over it and clicking.
-          </h4>
-
-          {!mapReady && (
-            <div className="flex items-center justify-center" style={{ height: 500 }}>
-              <LoadingSpinner />
-            </div>
-          )}
-
-          {mapReady && (
-            <div className="middle2main overflow-hidden rounded-md" style={{ height: 500 }}>
-              <RegionMap regions={regions} onRegionClick={handleRegionClick} />
-            </div>
-          )}
-
-          {mapsLoaded && !regionsLoading && regions.length === 0 && (
-            <p className="text-sm text-muted-foreground">
-              No regions available. Contact your administrator.
-            </p>
-          )}
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {EXPLORE_DESTINATIONS.map((destination) => (
+            <ExploreCard
+              key={destination.href}
+              destination={destination}
+              count={counts[destination.key]}
+            />
+          ))}
         </div>
+      </section>
+
+      <DecidePanel />
+
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-xs text-muted-foreground">Questions MINT is built for:</span>
+        {STARTER_QUESTIONS.map((question) => (
+          <span
+            key={question}
+            className="rounded-full border bg-muted/60 px-3 py-1 text-xs text-muted-foreground"
+          >
+            {question}
+          </span>
+        ))}
       </div>
-    </>
+    </div>
   );
 }
