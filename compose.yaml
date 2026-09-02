@@ -356,6 +356,10 @@ services:
       EXECUTION_ENGINE: ${EXECUTION_ENGINE:-tapis}
       DATA_CATALOG_API: ${DATA_CATALOG_API:-https://ckan.tacc.utexas.edu}
       DATA_CATALOG_BROWSE_URL: ${DATA_CATALOG_BROWSE_URL:-https://ckan.tacc.utexas.edu}
+      # The generator defaults this to 'none', which is right for a deployment
+      # and wrong here: the committed public/env-config.js sets 'tacc', so
+      # without this line the container and host mode show different chrome.
+      BRANDING: ${BRANDING:-tacc}
     ports:
       - "3000:80"
     healthcheck:

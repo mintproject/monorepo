@@ -157,8 +157,11 @@ whole-object fallback that fires only when `window.__MINT_CONFIG__` is absent �
 i.e. in the jsdom tests, **not** under `npm run dev`, where `index.html` always
 loads `public/env-config.js`. Setting a `VITE_*` var does not change the dev
 server; edit `public/env-config.js`. `generate-env-config.mjs` defaults target
-`*.mint.local` (in-cluster) and `public/env-config.js` targets TACC's public
-endpoints (laptop) — the shape is shared, the values deliberately are not.
+`*.mint.local` (in-cluster) and `public/env-config.js` targets the repository's
+compose stack — `localhost:8080` for Hasura, `localhost:3001` for Ensemble
+Manager — so `npm run dev` needs `docker compose up -d` first and never writes
+to a deployment by default. The shape is shared, the values deliberately are
+not.
 
 Keys:
 - `HASURA_ENDPOINT` — Hasura GraphQL endpoint URL

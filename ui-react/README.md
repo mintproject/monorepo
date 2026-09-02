@@ -10,14 +10,25 @@ New React/TypeScript frontend for the MINT Model Catalog, replacing the legacy L
 ## Running locally
 
 ```bash
+docker compose up -d   # from the repository root — Hasura, Postgres, the APIs
 npm install
-npm run dev        # http://localhost:3000
+npm run dev            # http://localhost:3000
 ```
 
-That is the whole setup — there is nothing to configure first. The committed
-`public/env-config.js` points at TACC's public endpoints, whose Hasura
-`anonymous` role serves read-only queries and whose CKAN allows the `localhost`
-origin, so a fresh clone browses real data with no cluster access.
+The committed `public/env-config.js` points at that compose stack: Hasura on
+8080 and Ensemble Manager on 3001. Nothing else to configure — but the stack has
+to be up, because without it every query fails. Local dev writing to production
+by default is the thing this avoids.
+
+The stack seeds regions and a model-catalog fixture, and no problem statements.
+The modeling pages start empty; sign in and create one. Signing in works locally
+— the compose auth webhook validates real Tapis tokens.
+
+To browse TACC's public deployment instead of the stack, set `HASURA_ENDPOINT`
+to `https://graphql.mint.tacc.utexas.edu/v1/graphql`, whose `anonymous` role
+serves read-only queries and whose CKAN allows the `localhost` origin. Its
+schema can lag this checkout's migrations, so a branch that adds one fails
+against it.
 
 **Where local configuration comes from.** `index.html` loads `/env-config.js`
 before the app, and Vite serves `public/` as-is, so `window.__MINT_CONFIG__` is
@@ -37,16 +48,18 @@ the defaults with `git checkout -- public/env-config.js`. Editing it by hand is
 equally fine — the `.env` route exists so the same key names work for local dev,
 the container and Vercel.
 
-`.env.example` documents every key. Two notes on what local dev does *not* get
-by default:
+`.env.example` documents every key. Two notes on the local defaults:
 
 - **Signing in.** The identity provider allows one callback URL per client, so
   `http://localhost:3000/oauth2/callback` needs its own OAuth2 client id in
-  `AUTH_CLIENT_ID`. Anonymous browsing works without it; writes do not.
-- **Model execution.** `ENSEMBLE_MANAGER_API` is deliberately left unset, and
-  the thread pages check for its absence rather than calling a wrong host. Set
-  `EXECUTION_ENGINE` alongside it: run submission posts to a different route per
-  backend, so the wrong value reaches the wrong handler or none.
+  `AUTH_CLIENT_ID`. `mint-localhost-3000` is that client, which is why the dev
+  server must stay on port 3000. Anonymous browsing works without it; writes do
+  not.
+- **Model execution.** `ENSEMBLE_MANAGER_API` points at the stack's Ensemble
+  Manager on 3001. Empty it and the thread pages switch execution off rather
+  than calling a wrong host. `EXECUTION_ENGINE` must agree with whatever it
+  points at: run submission posts to a different route per backend, so a wrong
+  value reaches the wrong handler or none.
 
 ## Testing
 

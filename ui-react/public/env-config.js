@@ -15,35 +15,50 @@
 //
 // These values intentionally DIFFER from the defaults in
 // scripts/generate-env-config.mjs. Those target an in-cluster MINT deployment
-// (*.mint.local); a laptop is not in that cluster, so the same default cannot
-// serve both. The values below target TACC's public deployment so that a fresh
-// clone runs with no cluster access at all: Hasura's `anonymous` role serves
-// read-only queries and sends CORS `*`, and CKAN allowlists the localhost
-// origin. Signing in is the one thing this does not buy you — that additionally
-// needs an OAuth2 client whose registered callback is
-// http://localhost:3000/oauth2/callback.
+// (*.mint.local); the values below target the compose stack in this repository,
+// which is what a laptop actually runs. Start it first:
+//
+//   docker compose up -d
+//
+// Ports follow compose.yaml: Hasura 8080, Ensemble Manager 3001,
+// model-catalog-api 3002 (the UI reads Hasura directly and never calls it).
+// Without the stack running the app loads and every query fails — that is the
+// intended trade: local dev must not write to production by default. To browse
+// TACC's public deployment instead, set HASURA_ENDPOINT to
+// https://graphql.mint.tacc.utexas.edu/v1/graphql, whose `anonymous` role
+// serves read-only queries and sends CORS `*`. Note that its schema can lag
+// this checkout's migrations, so a branch that adds one will fail against it.
 window.__MINT_CONFIG__ = {
-  HASURA_ENDPOINT: "https://graphql.mint.tacc.utexas.edu/v1/graphql",
+  // Hasura in the compose stack. Its CORS list already names
+  // http://localhost:3000, so the dev server is an allowed origin.
+  HASURA_ENDPOINT: "http://localhost:8080/v1/graphql",
+  // Tapis stays remote: the stack runs no identity provider. The compose auth
+  // webhook validates real `portals` tenant tokens, so signing in locally works
+  // and gives you the `user` role. `mint-localhost-3000` is registered for the
+  // callback http://localhost:3000/oauth2/callback — Tapis allows one callback
+  // per client, so the dev server must stay on port 3000.
   AUTH_SERVER: "https://portals.tapis.io",
   AUTH_CLIENT_ID: "mint-localhost-3000",
   AUTH_REALM: "",
   AUTH_PROVIDER: "tapis",
   GOOGLE_MAPS_KEY: "AIzaSyDf8bXwyV7v9whOpZl64SRVWKdE6yBbt2k",
+  // CKAN stays remote too. The stack runs no CKAN, and this one echoes CORS
+  // headers for the localhost origin.
   DATA_CATALOG_API: "https://ckan.tacc.utexas.edu",
   DATA_CATALOG_BROWSE_URL: "https://ckan.tacc.utexas.edu",
+  // Ensemble Manager in the compose stack. It listens on 3000 in its container;
+  // compose publishes it on 3001. This is a HOST url — the browser resolves it,
+  // so a compose service name would not work.
+  ENSEMBLE_MANAGER_API: "http://localhost:3001/v1",
   // Which backend the Ensemble Manager you point at runs: 'tapis', 'localex'
   // or 'wings'. It picks the submission route, so a value that disagrees with
-  // that deployment reaches the wrong handler or none. 'tapis' rather than the
-  // generator's 'localex' default, to match the TACC endpoints above — set it
-  // to your own engine if you point ENSEMBLE_MANAGER_API elsewhere.
+  // that deployment reaches the wrong handler or none. 'tapis' matches
+  // compose/ensemble-manager.json, which sets execution_engine to tapis.
   EXECUTION_ENGINE: "tapis",
-  // Shows the TACC + UT Austin strip and footer locally, because the endpoints
-  // above are TACC's own deployment. This file never reaches a deployment (see
+  // Shows the TACC + UT Austin strip and footer locally, so the branded chrome
+  // is visible while developing it. This file never reaches a deployment (see
   // the header), so it does not weaken the 'none' default in
   // scripts/generate-env-config.mjs. Set it to "none" to see the unbranded
   // chrome.
   BRANDING: "tacc",
-  // ENSEMBLE_MANAGER_API is deliberately omitted: the thread pages check for
-  // its absence and degrade rather than call a wrong host. Set it here if you
-  // are working on model execution.
 };
