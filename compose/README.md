@@ -14,18 +14,17 @@ real job never reports back. Sign-in and catalog browse work.
 
 ```bash
 docker compose up -d --wait          # the stack, without the frontend
-cp compose/ui-react.env ui-react/.env
-cd ui-react && npm install && npm run config:local && npm run dev
+cd ui-react && npm install && npm run dev
 ```
 
 Open `http://localhost:3000`.
 
-**`npm run config:local` overwrites the tracked `ui-react/public/env-config.js`.**
-That file points at TACC. Restore it before you commit:
-
-```bash
-git checkout -- ui-react/public/env-config.js
-```
+The tracked `ui-react/public/env-config.js` already targets this stack, so host
+mode needs no configuration step. `compose/ui-react.env` holds the same values
+for the `.env` route (`cp compose/ui-react.env ui-react/.env && npm run
+config:local`); use it only when you want to edit them. That command overwrites
+the tracked file — restore it with
+`git checkout -- ui-react/public/env-config.js`.
 
 ## What starts
 
