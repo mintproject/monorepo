@@ -1,0 +1,1216 @@
+{
+  "_about": "Texas GMA Desired Future Conditions (DFC) ETL transforms. Covers unit conversions, format transforms, budget extraction, and compliance-check steps for evaluating MODFLOW and observational groundwater data against TWDB 2021 joint-planning DFC targets. Key metrics across the 16 GMAs: drawdown (feet, most GMAs), volume in storage remaining (percent, GMA 1 Ogallala), saturated thickness (percent/feet, GMAs 12–13), spring flow (cfs/mgd, GMAs 7/10), stream flow (acre-feet/month, GMA 8 Edwards BFZ), potentiometric surface drawdown (feet, GMA 10 saline Edwards). Source: https://www.twdb.texas.gov/groundwater/dfc/2021jointplanning.asp",
+
+  "_svo": {
+    "head":           "https://w3id.org/okn/i/mint/groundwater__hydraulic_head",
+    "sat_thickness":  "https://w3id.org/okn/i/mint/aquifer__saturated_thickness",
+    "water_volume":   "https://w3id.org/okn/i/mint/aquifer__water_volume",
+    "spring_flow":    "https://w3id.org/okn/i/mint/spring__volume_flow_rate",
+    "stream_flow":    "https://w3id.org/okn/i/mint/river__volume_flow_rate",
+    "gma_boundary":   "https://w3id.org/okn/i/mint/groundwater_management_area__boundary",
+    "gcd_boundary":   "https://w3id.org/okn/i/mint/groundwater_conservation_district__boundary",
+    "county_boundary":"https://w3id.org/okn/i/mint/county__boundary",
+    "dfc_area_boundary":"https://w3id.org/okn/i/mint/dfc_planning_area__boundary"
+  },
+
+  "_cbc_formats": {
+    "_about": "Version-specific CBC (cell-by-cell budget) format tags. Each MODFLOW executable writes a slightly different binary layout; distinct format IDs let BFS route to the correct extraction spec and trace back to the originating Tapis app.",
+    "modflow6":    "cbc-mf6",
+    "modflow_usg": "cbc-mfusg",
+    "modflow_2000":"cbc-mf2000",
+    "modflow_96":  "cbc-mf96"
+  },
+
+  "_hds_formats": {
+    "_about": "Version-specific HDS (binary head) format tags for future/raw MODFLOW head sources. The bundled DFC demo now uses the georeferenced CKAN GeoTIFF head raster directly; HDS sources still route through hds-to-geotiff when supplied.",
+    "modflow6":    "hds",
+    "modflow_usg": "hds-mfusg",
+    "modflow_2000":"hds-mf2000",
+    "modflow_96":  "hds-mf96"
+  },
+
+  "transform_specs": [
+
+    {
+      "id": "ts-head-ft-to-m",
+      "name": "head-ft-to-m",
+      "version": "1.0.0",
+      "description": "Convert hydraulic head (or drawdown) from feet to metres.",
+      "transform_type": "unit_convert",
+      "is_lossy": false,
+      "method": "tapis_function",
+      "tapis_app_id": null,
+      "stage": "head-convert",
+      "contracts": [
+        {"id": "c-hftm-in",  "role": "input",  "standard_variable_uri": "https://w3id.org/okn/i/mint/groundwater__hydraulic_head", "unit": "ft"},
+        {"id": "c-hftm-out", "role": "output", "standard_variable_uri": "https://w3id.org/okn/i/mint/groundwater__hydraulic_head", "unit": "m"}
+      ]
+    },
+
+    {
+      "id": "ts-head-m-to-ft",
+      "name": "head-m-to-ft",
+      "version": "1.0.0",
+      "description": "Convert hydraulic head (or drawdown) from metres to feet.",
+      "transform_type": "unit_convert",
+      "is_lossy": false,
+      "method": "tapis_function",
+      "tapis_app_id": null,
+      "stage": "head-convert",
+      "contracts": [
+        {"id": "c-hmft-in",  "role": "input",  "standard_variable_uri": "https://w3id.org/okn/i/mint/groundwater__hydraulic_head", "unit": "m"},
+        {"id": "c-hmft-out", "role": "output", "standard_variable_uri": "https://w3id.org/okn/i/mint/groundwater__hydraulic_head", "unit": "ft"}
+      ]
+    },
+
+    {
+      "id": "ts-sat-thickness-m-to-ft",
+      "name": "sat-thickness-m-to-ft",
+      "version": "1.0.0",
+      "description": "Convert aquifer saturated thickness from metres to feet. GMA 12/13 DFC targets are specified in feet.",
+      "transform_type": "unit_convert",
+      "is_lossy": false,
+      "method": "tapis_function",
+      "tapis_app_id": null,
+      "stage": "thickness-convert",
+      "contracts": [
+        {"id": "c-stmf-in",  "role": "input",  "standard_variable_uri": "https://w3id.org/okn/i/mint/aquifer__saturated_thickness", "unit": "m"},
+        {"id": "c-stmf-out", "role": "output", "standard_variable_uri": "https://w3id.org/okn/i/mint/aquifer__saturated_thickness", "unit": "ft"}
+      ]
+    },
+
+    {
+      "id": "ts-sat-thickness-ft-to-m",
+      "name": "sat-thickness-ft-to-m",
+      "version": "1.0.0",
+      "description": "Convert aquifer saturated thickness from feet to metres.",
+      "transform_type": "unit_convert",
+      "is_lossy": false,
+      "method": "tapis_function",
+      "tapis_app_id": null,
+      "stage": "thickness-convert",
+      "contracts": [
+        {"id": "c-stftm-in",  "role": "input",  "standard_variable_uri": "https://w3id.org/okn/i/mint/aquifer__saturated_thickness", "unit": "ft"},
+        {"id": "c-stftm-out", "role": "output", "standard_variable_uri": "https://w3id.org/okn/i/mint/aquifer__saturated_thickness", "unit": "m"}
+      ]
+    },
+
+    {
+      "id": "ts-flow-cfs-to-m3s",
+      "name": "flow-cfs-to-m3s",
+      "version": "1.0.0",
+      "description": "Convert spring discharge from cfs to m3s. GMA 7 spring-flow DFCs: Las Moras Springs 23.9 cfs; GMA 10 Barton Springs 49.7 cfs.",
+      "transform_type": "unit_convert",
+      "is_lossy": false,
+      "method": "tapis_function",
+      "tapis_app_id": null,
+      "stage": "flow-convert",
+      "contracts": [
+        {"id": "c-cfm-in",  "role": "input",  "standard_variable_uri": "https://w3id.org/okn/i/mint/spring__volume_flow_rate", "unit": "cfs"},
+        {"id": "c-cfm-out", "role": "output", "standard_variable_uri": "https://w3id.org/okn/i/mint/spring__volume_flow_rate", "unit": "m3s"}
+      ]
+    },
+
+    {
+      "id": "ts-flow-m3s-to-cfs",
+      "name": "flow-m3s-to-cfs",
+      "version": "1.0.0",
+      "description": "Convert spring discharge from m3s to cfs.",
+      "transform_type": "unit_convert",
+      "is_lossy": false,
+      "method": "tapis_function",
+      "tapis_app_id": null,
+      "stage": "flow-convert",
+      "contracts": [
+        {"id": "c-mfc-in",  "role": "input",  "standard_variable_uri": "https://w3id.org/okn/i/mint/spring__volume_flow_rate", "unit": "m3s"},
+        {"id": "c-mfc-out", "role": "output", "standard_variable_uri": "https://w3id.org/okn/i/mint/spring__volume_flow_rate", "unit": "cfs"}
+      ]
+    },
+
+    {
+      "id": "ts-flow-mgd-to-m3s",
+      "name": "flow-mgd-to-m3s",
+      "version": "1.0.0",
+      "description": "Convert spring discharge from mgd to m3s. GMA 7 Val Verde: maintain 73–75 mgd at San Felipe Springs.",
+      "transform_type": "unit_convert",
+      "is_lossy": false,
+      "method": "tapis_function",
+      "tapis_app_id": null,
+      "stage": "flow-convert",
+      "contracts": [
+        {"id": "c-mgm-in",  "role": "input",  "standard_variable_uri": "https://w3id.org/okn/i/mint/spring__volume_flow_rate", "unit": "mgd"},
+        {"id": "c-mgm-out", "role": "output", "standard_variable_uri": "https://w3id.org/okn/i/mint/spring__volume_flow_rate", "unit": "m3s"}
+      ]
+    },
+
+    {
+      "id": "ts-flow-m3s-to-mgd",
+      "name": "flow-m3s-to-mgd",
+      "version": "1.0.0",
+      "description": "Convert spring discharge from m3s to mgd.",
+      "transform_type": "unit_convert",
+      "is_lossy": false,
+      "method": "tapis_function",
+      "tapis_app_id": null,
+      "stage": "flow-convert",
+      "contracts": [
+        {"id": "c-mmg-in",  "role": "input",  "standard_variable_uri": "https://w3id.org/okn/i/mint/spring__volume_flow_rate", "unit": "m3s"},
+        {"id": "c-mmg-out", "role": "output", "standard_variable_uri": "https://w3id.org/okn/i/mint/spring__volume_flow_rate", "unit": "mgd"}
+      ]
+    },
+
+    {
+      "id": "ts-flow-cfs-to-af-month",
+      "name": "flow-cfs-to-af-month",
+      "version": "1.0.0",
+      "description": "Convert stream flow from cfs to acre-feet per month. GMA 8 Edwards BFZ DFC targets are in af/month.",
+      "transform_type": "unit_convert",
+      "is_lossy": false,
+      "method": "tapis_function",
+      "tapis_app_id": null,
+      "stage": "flow-convert",
+      "contracts": [
+        {"id": "c-cfa-in",  "role": "input",  "standard_variable_uri": "https://w3id.org/okn/i/mint/river__volume_flow_rate", "unit": "cfs"},
+        {"id": "c-cfa-out", "role": "output", "standard_variable_uri": "https://w3id.org/okn/i/mint/river__volume_flow_rate", "unit": "af_month"}
+      ]
+    },
+
+    {
+      "id": "ts-flow-af-month-to-cfs",
+      "name": "flow-af-month-to-cfs",
+      "version": "1.0.0",
+      "description": "Convert stream flow from acre-feet per month to cfs.",
+      "transform_type": "unit_convert",
+      "is_lossy": false,
+      "method": "tapis_function",
+      "tapis_app_id": null,
+      "stage": "flow-convert",
+      "contracts": [
+        {"id": "c-afc-in",  "role": "input",  "standard_variable_uri": "https://w3id.org/okn/i/mint/river__volume_flow_rate", "unit": "af_month"},
+        {"id": "c-afc-out", "role": "output", "standard_variable_uri": "https://w3id.org/okn/i/mint/river__volume_flow_rate", "unit": "cfs"}
+      ]
+    },
+
+    {
+      "id": "ts-flow-m3s-to-af-month",
+      "name": "flow-m3s-to-af-month",
+      "version": "1.0.0",
+      "description": "Convert stream flow from m3s to acre-feet per month. Used when MODFLOW budget output (SI units) feeds a GMA 8 af/month DFC target.",
+      "transform_type": "unit_convert",
+      "is_lossy": false,
+      "method": "tapis_function",
+      "tapis_app_id": null,
+      "stage": "flow-convert",
+      "contracts": [
+        {"id": "c-m3af-in",  "role": "input",  "standard_variable_uri": "https://w3id.org/okn/i/mint/river__volume_flow_rate", "unit": "m3s"},
+        {"id": "c-m3af-out", "role": "output", "standard_variable_uri": "https://w3id.org/okn/i/mint/river__volume_flow_rate", "unit": "af_month"}
+      ]
+    },
+
+    {
+      "id": "ts-flow-af-month-to-m3s",
+      "name": "flow-af-month-to-m3s",
+      "version": "1.0.0",
+      "description": "Convert stream flow from acre-feet per month to m3s.",
+      "transform_type": "unit_convert",
+      "is_lossy": false,
+      "method": "tapis_function",
+      "tapis_app_id": null,
+      "stage": "flow-convert",
+      "contracts": [
+        {"id": "c-afm3-in",  "role": "input",  "standard_variable_uri": "https://w3id.org/okn/i/mint/river__volume_flow_rate", "unit": "af_month"},
+        {"id": "c-afm3-out", "role": "output", "standard_variable_uri": "https://w3id.org/okn/i/mint/river__volume_flow_rate", "unit": "m3s"}
+      ]
+    },
+
+    {
+      "id": "ts-hds-to-geotiff",
+      "name": "hds-to-geotiff",
+      "version": "1.0.0",
+      "description": "Convert a MODFLOW 6 binary head file (.hds) to a GeoTIFF raster for a specified layer/stress-period. Calls geo_actor which wraps flopy.",
+      "transform_type": "format_convert",
+      "is_lossy": false,
+      "method": "tapis_function",
+      "tapis_app_id": null,
+      "stage": "hds-convert",
+      "env_from_args": {
+        "SOURCE_URI":    "source_uri",
+        "LAYER":         "layer",
+        "STRESS_PERIOD": "stress_period",
+        "TIMESTEP":      "timestep",
+        "GRID_URI":      "grid_uri",
+        "GEO_ACTOR_ID": "geo_actor_id",
+        "TAPIS_TOKEN": "tapis_token"
+      },
+      "contracts": [
+        {"id": "c-hdsg-in",  "role": "input",  "standard_variable_uri": "https://w3id.org/okn/i/mint/groundwater__hydraulic_head", "format": "hds"},
+        {"id": "c-hdsg-out", "role": "output", "standard_variable_uri": "https://w3id.org/okn/i/mint/groundwater__hydraulic_head", "format": "geotiff", "unit": "m"}
+      ]
+    },
+
+    {
+      "id": "ts-hds-mfusg-to-geotiff",
+      "name": "hds-mfusg-to-geotiff",
+      "version": "1.0.0",
+      "description": "Convert a MODFLOW-USG binary head file to a GeoTIFF. USG uses an unstructured grid; geo_actor uses flopy's HeadFile reader with CLN support.",
+      "transform_type": "format_convert",
+      "is_lossy": false,
+      "method": "tapis_function",
+      "tapis_app_id": null,
+      "stage": "hds-convert",
+      "env_from_args": {
+        "SOURCE_URI":    "source_uri",
+        "LAYER":         "layer",
+        "STRESS_PERIOD": "stress_period",
+        "TIMESTEP":      "timestep",
+        "GEO_ACTOR_ID": "geo_actor_id",
+        "TAPIS_TOKEN": "tapis_token"
+      },
+      "contracts": [
+        {"id": "c-usg-hg-in",  "role": "input",  "standard_variable_uri": "https://w3id.org/okn/i/mint/groundwater__hydraulic_head", "format": "hds-mfusg"},
+        {"id": "c-usg-hg-out", "role": "output", "standard_variable_uri": "https://w3id.org/okn/i/mint/groundwater__hydraulic_head", "format": "geotiff", "unit": "m"}
+      ]
+    },
+
+    {
+      "id": "ts-hds-mf2000-to-geotiff",
+      "name": "hds-mf2000-to-geotiff",
+      "version": "1.0.0",
+      "description": "Convert a MODFLOW-2000 binary head file to a GeoTIFF raster.",
+      "transform_type": "format_convert",
+      "is_lossy": false,
+      "method": "tapis_function",
+      "tapis_app_id": null,
+      "stage": "hds-convert",
+      "env_from_args": {
+        "SOURCE_URI":    "source_uri",
+        "LAYER":         "layer",
+        "STRESS_PERIOD": "stress_period",
+        "TIMESTEP":      "timestep",
+        "GEO_ACTOR_ID": "geo_actor_id",
+        "TAPIS_TOKEN": "tapis_token"
+      },
+      "contracts": [
+        {"id": "c-m2k-hg-in",  "role": "input",  "standard_variable_uri": "https://w3id.org/okn/i/mint/groundwater__hydraulic_head", "format": "hds-mf2000"},
+        {"id": "c-m2k-hg-out", "role": "output", "standard_variable_uri": "https://w3id.org/okn/i/mint/groundwater__hydraulic_head", "format": "geotiff", "unit": "m"}
+      ]
+    },
+
+    {
+      "id": "ts-hds-mf96-to-geotiff",
+      "name": "hds-mf96-to-geotiff",
+      "version": "1.0.0",
+      "description": "Convert a MODFLOW-96 binary head file to a GeoTIFF raster.",
+      "transform_type": "format_convert",
+      "is_lossy": false,
+      "method": "tapis_function",
+      "tapis_app_id": null,
+      "stage": "hds-convert",
+      "env_from_args": {
+        "SOURCE_URI":    "source_uri",
+        "LAYER":         "layer",
+        "STRESS_PERIOD": "stress_period",
+        "TIMESTEP":      "timestep",
+        "GEO_ACTOR_ID": "geo_actor_id",
+        "TAPIS_TOKEN": "tapis_token"
+      },
+      "contracts": [
+        {"id": "c-m96-hg-in",  "role": "input",  "standard_variable_uri": "https://w3id.org/okn/i/mint/groundwater__hydraulic_head", "format": "hds-mf96"},
+        {"id": "c-m96-hg-out", "role": "output", "standard_variable_uri": "https://w3id.org/okn/i/mint/groundwater__hydraulic_head", "format": "geotiff", "unit": "m"}
+      ]
+    },
+
+    {
+      "id": "ts-head-point-extract",
+      "name": "head-point-extract",
+      "version": "1.0.0",
+      "description": "Extract hydraulic head at a monitoring well (lat/lon) from a head GeoTIFF. Produces a scalar-json for point-based DFC targets such as GMA 10 well threshold (1,184 ft MSL).",
+      "transform_type": "point_extract",
+      "is_lossy": false,
+      "method": "tapis_function",
+      "tapis_app_id": null,
+      "stage": "point-extract",
+      "env_from_args": {
+        "SOURCE_URI":    "source_uri",
+        "LAT":           "lat",
+        "LON":           "lon",
+        "GEO_ACTOR_ID": "geo_actor_id",
+        "TAPIS_TOKEN": "tapis_token"
+      },
+      "contracts": [
+        {"id": "c-hpe-in",  "role": "input",  "standard_variable_uri": "https://w3id.org/okn/i/mint/groundwater__hydraulic_head", "format": "geotiff"},
+        {"id": "c-hpe-out", "role": "output", "standard_variable_uri": "https://w3id.org/okn/i/mint/groundwater__hydraulic_head", "format": "scalar-json"}
+      ]
+    },
+
+    {
+      "id": "ts-head-gma-average",
+      "name": "head-gma-average",
+      "version": "1.0.0",
+      "description": "Clip a head GeoTIFF (in feet) to a GMA boundary and compute the spatial average. Output gma-scalar: {gma_id, average_value_ft, unit, n_cells, aquifer}.",
+      "transform_type": "geo_aggregate",
+      "is_lossy": false,
+      "method": "tapis_function",
+      "tapis_app_id": null,
+      "stage": "gma-average",
+      "env_from_args": {
+        "SOURCE_URI":       "source_uri",
+        "GMA_ID":           "gma_id",
+        "GMA_BOUNDARY_URI": "gma_boundary_uri",
+        "DFC_AREA_BOUNDARY_URI": "dfc_area_boundary_uri",
+        "AREA":            "area",
+        "GEO_ACTOR_ID":    "geo_actor_id",
+        "TAPIS_TOKEN":     "tapis_token"
+      },
+      "contracts": [
+        {"id": "c-hga-in",  "role": "input",  "standard_variable_uri": "https://w3id.org/okn/i/mint/groundwater__hydraulic_head", "format": "geotiff", "unit": "ft"},
+        {"id": "c-hga-out", "role": "output", "standard_variable_uri": "https://w3id.org/okn/i/mint/groundwater__hydraulic_head", "format": "gma-scalar", "unit": "ft"}
+      ]
+    },
+
+    {
+      "id": "ts-gma-boundary-query",
+      "name": "gma-boundary-query",
+      "version": "1.0.0",
+      "description": "Query the TWDB GMA ArcGIS layer for a single Groundwater Management Area and return GeoJSON. This is a Tapis-hosted function task used to materialize the boundary passed into model-output DFC calculations.",
+      "transform_type": "gma_boundary_query",
+      "is_lossy": false,
+      "method": "tapis_function",
+      "tapis_app_id": null,
+      "stage": "boundary-query",
+      "env_from_args": {
+        "SOURCE_URI": "source_uri",
+        "GMA_ID": "gma_id"
+      },
+      "contracts": [
+        {"id": "c-gma-bq-in",  "role": "input",  "standard_variable_uri": "https://w3id.org/okn/i/mint/groundwater_management_area__boundary", "format": "arcgis-layer", "spatial_type": "polygon"},
+        {"id": "c-gma-bq-out", "role": "output", "standard_variable_uri": "https://w3id.org/okn/i/mint/groundwater_management_area__boundary", "format": "geojson", "spatial_type": "polygon", "crs_requirement": "EPSG:4326"}
+      ]
+    },
+
+    {
+      "id": "ts-gcd-boundary-query",
+      "name": "gcd-boundary-query",
+      "version": "1.0.0",
+      "description": "Query the TWDB Groundwater Conservation District ArcGIS layer for one district and return GeoJSON for DFC area construction.",
+      "transform_type": "gcd_boundary_query",
+      "is_lossy": false,
+      "method": "tapis_function",
+      "tapis_app_id": null,
+      "stage": "boundary-query",
+      "env_from_args": {
+        "SOURCE_URI": "source_uri",
+        "GCD_NAME": "gcd_name"
+      },
+      "contracts": [
+        {"id": "c-gcd-bq-in",  "role": "input",  "standard_variable_uri": "https://w3id.org/okn/i/mint/groundwater_conservation_district__boundary", "format": "arcgis-layer", "spatial_type": "polygon"},
+        {"id": "c-gcd-bq-out", "role": "output", "standard_variable_uri": "https://w3id.org/okn/i/mint/groundwater_conservation_district__boundary", "format": "geojson", "spatial_type": "polygon", "crs_requirement": "EPSG:4326"}
+      ]
+    },
+
+    {
+      "id": "ts-county-boundary-query",
+      "name": "county-boundary-query",
+      "version": "1.0.0",
+      "description": "Query the TWDB Texas county ArcGIS layer for one county and return GeoJSON for DFC area construction.",
+      "transform_type": "county_boundary_query",
+      "is_lossy": false,
+      "method": "tapis_function",
+      "tapis_app_id": null,
+      "stage": "boundary-query",
+      "env_from_args": {
+        "SOURCE_URI": "source_uri",
+        "COUNTY_NAME": "county_name"
+      },
+      "contracts": [
+        {"id": "c-county-bq-in",  "role": "input",  "standard_variable_uri": "https://w3id.org/okn/i/mint/county__boundary", "format": "arcgis-layer", "spatial_type": "polygon"},
+        {"id": "c-county-bq-out", "role": "output", "standard_variable_uri": "https://w3id.org/okn/i/mint/county__boundary", "format": "geojson", "spatial_type": "polygon", "crs_requirement": "EPSG:4326"}
+      ]
+    },
+
+    {
+      "id": "ts-gma-shapefile-boundary-normalize",
+      "name": "gma-shapefile-boundary-normalize",
+      "version": "1.0.0",
+      "description": "Normalize the TWDB GMA shapefile ZIP to EPSG:4326 GeoJSON through the geo_actor.",
+      "transform_type": "boundary_normalize",
+      "is_lossy": false,
+      "method": "tapis_function",
+      "tapis_app_id": null,
+      "stage": "boundary-normalize",
+      "env_from_args": {
+        "SOURCE_URI": "source_uri",
+        "GEO_ACTOR_ID": "geo_actor_id",
+        "TAPIS_TOKEN": "tapis_token"
+      },
+      "contracts": [
+        {"id": "c-gma-bn-in",  "role": "input",  "standard_variable_uri": "https://w3id.org/okn/i/mint/groundwater_management_area__boundary", "format": "shapefile-zip", "spatial_type": "polygon"},
+        {"id": "c-gma-bn-out", "role": "output", "standard_variable_uri": "https://w3id.org/okn/i/mint/groundwater_management_area__boundary", "format": "geojson", "spatial_type": "polygon", "crs_requirement": "EPSG:4326"}
+      ]
+    },
+
+    {
+      "id": "ts-gcd-shapefile-boundary-normalize",
+      "name": "gcd-shapefile-boundary-normalize",
+      "version": "1.0.0",
+      "description": "Normalize the TWDB Groundwater Conservation District shapefile ZIP to EPSG:4326 GeoJSON through the geo_actor.",
+      "transform_type": "boundary_normalize",
+      "is_lossy": false,
+      "method": "tapis_function",
+      "tapis_app_id": null,
+      "stage": "boundary-normalize",
+      "env_from_args": {
+        "SOURCE_URI": "source_uri",
+        "GEO_ACTOR_ID": "geo_actor_id",
+        "TAPIS_TOKEN": "tapis_token"
+      },
+      "contracts": [
+        {"id": "c-gcd-bn-in",  "role": "input",  "standard_variable_uri": "https://w3id.org/okn/i/mint/groundwater_conservation_district__boundary", "format": "shapefile-zip", "spatial_type": "polygon"},
+        {"id": "c-gcd-bn-out", "role": "output", "standard_variable_uri": "https://w3id.org/okn/i/mint/groundwater_conservation_district__boundary", "format": "geojson", "spatial_type": "polygon", "crs_requirement": "EPSG:4326"}
+      ]
+    },
+
+    {
+      "id": "ts-county-shapefile-boundary-normalize",
+      "name": "county-shapefile-boundary-normalize",
+      "version": "1.0.0",
+      "description": "Normalize a Texas county shapefile ZIP to EPSG:4326 GeoJSON through the geo_actor.",
+      "transform_type": "boundary_normalize",
+      "is_lossy": false,
+      "method": "tapis_function",
+      "tapis_app_id": null,
+      "stage": "boundary-normalize",
+      "env_from_args": {
+        "SOURCE_URI": "source_uri",
+        "GEO_ACTOR_ID": "geo_actor_id",
+        "TAPIS_TOKEN": "tapis_token"
+      },
+      "contracts": [
+        {"id": "c-county-bn-in",  "role": "input",  "standard_variable_uri": "https://w3id.org/okn/i/mint/county__boundary", "format": "shapefile-zip", "spatial_type": "polygon"},
+        {"id": "c-county-bn-out", "role": "output", "standard_variable_uri": "https://w3id.org/okn/i/mint/county__boundary", "format": "geojson", "spatial_type": "polygon", "crs_requirement": "EPSG:4326"}
+      ]
+    },
+
+    {
+      "id": "ts-dfc-gma-county-area-intersect",
+      "name": "dfc-gma-county-area-intersect",
+      "version": "1.0.0",
+      "description": "Intersect a GMA boundary and county boundary to derive a DFC planning area GeoJSON used for model-output clipping and aggregation.",
+      "transform_type": "boundary_intersect",
+      "is_lossy": false,
+      "method": "tapis_function",
+      "tapis_app_id": null,
+      "stage": "boundary-intersect",
+      "env_from_args": {
+        "GMA_BOUNDARY_URI": "gma_boundary_uri",
+        "COUNTY_NAME": "county_name",
+        "AQUIFER": "aquifer",
+        "GEO_ACTOR_ID": "geo_actor_id",
+        "TAPIS_TOKEN": "tapis_token"
+      },
+      "contracts": [
+        {"id": "c-dfc-gma-county-in-gma",    "role": "input",  "standard_variable_uri": "https://w3id.org/okn/i/mint/groundwater_management_area__boundary", "format": "geojson", "spatial_type": "polygon", "crs_requirement": "EPSG:4326"},
+        {"id": "c-dfc-gma-county-in-county", "role": "input",  "standard_variable_uri": "https://w3id.org/okn/i/mint/county__boundary", "format": "geojson", "spatial_type": "polygon", "crs_requirement": "EPSG:4326"},
+        {"id": "c-dfc-gma-county-out",       "role": "output", "standard_variable_uri": "https://w3id.org/okn/i/mint/dfc_planning_area__boundary", "format": "geojson", "spatial_type": "polygon", "crs_requirement": "EPSG:4326"}
+      ]
+    },
+
+    {
+      "id": "ts-dfc-gma-gcd-area-intersect",
+      "name": "dfc-gma-gcd-area-intersect",
+      "version": "1.0.0",
+      "description": "Intersect a GMA boundary and Groundwater Conservation District boundary to derive a DFC planning area GeoJSON used for model-output clipping and aggregation.",
+      "transform_type": "boundary_intersect",
+      "is_lossy": false,
+      "method": "tapis_function",
+      "tapis_app_id": null,
+      "stage": "boundary-intersect",
+      "env_from_args": {
+        "GMA_BOUNDARY_URI": "gma_boundary_uri",
+        "GCD_NAME": "gcd_name",
+        "AQUIFER": "aquifer",
+        "GEO_ACTOR_ID": "geo_actor_id",
+        "TAPIS_TOKEN": "tapis_token"
+      },
+      "contracts": [
+        {"id": "c-dfc-gma-gcd-in-gma", "role": "input",  "standard_variable_uri": "https://w3id.org/okn/i/mint/groundwater_management_area__boundary", "format": "geojson", "spatial_type": "polygon", "crs_requirement": "EPSG:4326"},
+        {"id": "c-dfc-gma-gcd-in-gcd", "role": "input",  "standard_variable_uri": "https://w3id.org/okn/i/mint/groundwater_conservation_district__boundary", "format": "geojson", "spatial_type": "polygon", "crs_requirement": "EPSG:4326"},
+        {"id": "c-dfc-gma-gcd-out",    "role": "output", "standard_variable_uri": "https://w3id.org/okn/i/mint/dfc_planning_area__boundary", "format": "geojson", "spatial_type": "polygon", "crs_requirement": "EPSG:4326"}
+      ]
+    },
+
+    {
+      "id": "ts-gma-dfc-compliance",
+      "name": "gma-dfc-compliance",
+      "version": "1.0.0",
+      "description": "Check simulated GMA-average head/drawdown against TWDB 2021 DFC targets. Multi-input: current head scalar + baseline head scalar + DFC targets CSV. Output: dfc-compliance-report {gma_id, observed_drawdown_ft, dfc_target_ft, status, margin_ft}.",
+      "transform_type": "dfc_compliance",
+      "is_lossy": false,
+      "method": "tapis_function",
+      "tapis_app_id": null,
+      "stage": "dfc-compliance",
+      "env_from_args": {
+        "SOURCE_URI":    "source_uri",
+        "MODELED_SCALAR_JSON": "modeled_scalar_json",
+        "DFC_TARGETS_JSON": "dfc_targets_json",
+        "DFC_TARGETS_URI": "dfc_targets_uri",
+        "GMA_ID":        "gma_id",
+        "AREA":          "area",
+        "AREA_TYPE":     "area_type",
+        "AQUIFER":       "aquifer",
+        "BASELINE_YEAR": "baseline_year",
+        "TARGET_YEAR":   "target_year"
+      },
+      "contracts": [
+        {"id": "c-dfc-in-cur",     "role": "input",  "standard_variable_uri": "https://w3id.org/okn/i/mint/groundwater__hydraulic_head", "format": "gma-scalar", "unit": "ft"},
+        {"id": "c-dfc-in-base",    "role": "input",  "standard_variable_uri": "https://w3id.org/okn/i/mint/groundwater__hydraulic_head", "format": "gma-scalar", "unit": "ft"},
+        {"id": "c-dfc-in-targets", "role": "input",  "format": "gma-dfc-csv"},
+        {"id": "c-dfc-out",        "role": "output", "format": "dfc-compliance-report"}
+      ]
+    },
+
+    {
+      "id": "ts-spring-dfc-compliance",
+      "name": "spring-dfc-compliance",
+      "version": "1.0.0",
+      "description": "Check simulated GMA spring discharge against TWDB 2021 DFC spring-flow targets (GMAs 7, 10). Input: simulated spring flow GMA scalar (m3s) + DFC targets CSV. Output: dfc-compliance-report {gma_id, observed_flow_m3s, dfc_target_m3s, status, margin_m3s}.",
+      "transform_type": "dfc_compliance",
+      "is_lossy": false,
+      "method": "tapis_function",
+      "tapis_app_id": null,
+      "stage": "dfc-compliance",
+      "env_from_args": {
+        "SOURCE_URI": "source_uri",
+        "MODELED_SCALAR_JSON": "modeled_scalar_json",
+        "DFC_TARGETS_JSON": "dfc_targets_json",
+        "DFC_TARGETS_URI": "dfc_targets_uri",
+        "GMA_ID":    "gma_id",
+        "AREA":      "area",
+        "AREA_TYPE": "area_type",
+        "AQUIFER":   "aquifer",
+        "TARGET_YEAR": "target_year"
+      },
+      "contracts": [
+        {"id": "c-sdfc-in-flow",    "role": "input",  "standard_variable_uri": "https://w3id.org/okn/i/mint/spring__volume_flow_rate", "format": "gma-scalar", "unit": "m3s"},
+        {"id": "c-sdfc-in-targets", "role": "input",  "format": "gma-dfc-csv"},
+        {"id": "c-sdfc-out",        "role": "output", "format": "dfc-compliance-report"}
+      ]
+    },
+
+    {
+      "id": "ts-stream-dfc-compliance",
+      "name": "stream-dfc-compliance",
+      "version": "1.0.0",
+      "description": "Check simulated GMA stream flow against TWDB 2021 DFC stream-flow targets (GMA 8 Edwards BFZ). Input: simulated river flow GMA scalar (m3s) + DFC targets CSV. Output: dfc-compliance-report.",
+      "transform_type": "dfc_compliance",
+      "is_lossy": false,
+      "method": "tapis_function",
+      "tapis_app_id": null,
+      "stage": "dfc-compliance",
+      "env_from_args": {
+        "SOURCE_URI": "source_uri",
+        "MODELED_SCALAR_JSON": "modeled_scalar_json",
+        "DFC_TARGETS_JSON": "dfc_targets_json",
+        "DFC_TARGETS_URI": "dfc_targets_uri",
+        "GMA_ID":      "gma_id",
+        "AREA":        "area",
+        "AREA_TYPE":   "area_type",
+        "AQUIFER":     "aquifer",
+        "TARGET_YEAR": "target_year"
+      },
+      "contracts": [
+        {"id": "c-rdfc-in-flow",    "role": "input",  "standard_variable_uri": "https://w3id.org/okn/i/mint/river__volume_flow_rate", "format": "gma-scalar", "unit": "m3s"},
+        {"id": "c-rdfc-in-targets", "role": "input",  "format": "gma-dfc-csv"},
+        {"id": "c-rdfc-out",        "role": "output", "format": "dfc-compliance-report"}
+      ]
+    },
+
+    {
+      "id": "ts-satthk-dfc-compliance",
+      "name": "satthk-dfc-compliance",
+      "version": "1.0.0",
+      "description": "Check simulated GMA saturated thickness against TWDB 2021 DFC saturated-thickness targets (GMAs 12, 13). Output: dfc-compliance-report.",
+      "transform_type": "dfc_compliance",
+      "is_lossy": false,
+      "method": "tapis_function",
+      "tapis_app_id": null,
+      "stage": "dfc-compliance",
+      "env_from_args": {
+        "SOURCE_URI": "source_uri",
+        "MODELED_SCALAR_JSON": "modeled_scalar_json",
+        "DFC_TARGETS_JSON": "dfc_targets_json",
+        "DFC_TARGETS_URI": "dfc_targets_uri",
+        "GMA_ID":      "gma_id",
+        "AREA":        "area",
+        "AREA_TYPE":   "area_type",
+        "AQUIFER":     "aquifer",
+        "TARGET_YEAR": "target_year"
+      },
+      "contracts": [
+        {"id": "c-tdfc-in-thk",     "role": "input",  "standard_variable_uri": "https://w3id.org/okn/i/mint/aquifer__saturated_thickness", "format": "gma-scalar", "unit": "ft"},
+        {"id": "c-tdfc-in-targets", "role": "input",  "format": "gma-dfc-csv"},
+        {"id": "c-tdfc-out",        "role": "output", "format": "dfc-compliance-report"}
+      ]
+    },
+
+    {
+      "_comment": "── MODFLOW CBC budget extract specs (drain/spring, river/stream, sat thickness) ──────────────",
+      "_comment2": "Each spec is version-specific so BFS can trace the chain back to the originating Tapis app.",
+      "_comment3": "format: cbc-mf6 = MODFLOW 6 CBC; cbc-mfusg = MODFLOW-USG; cbc-mf2000 = MODFLOW-2000; cbc-mf96 = MODFLOW-96."
+    },
+
+    {
+      "id": "ts-modflow6-drain-gma-extract",
+      "name": "modflow6-drain-gma-extract",
+      "version": "1.0.0",
+      "description": "Extract total drain-package discharge (DRN budget) from a MODFLOW 6 cell-by-cell budget file, clip to GMA boundary, and sum to a GMA scalar in m3s. DRN flows represent spring discharge in most Texas karst aquifer models. Calls geo_actor /extract-budget-gma with package=DRN.",
+      "transform_type": "budget_extract_drain",
+      "is_lossy": false,
+      "method": "tapis_function",
+      "tapis_app_id": null,
+      "stage": "budget-extract",
+      "env_from_args": {
+        "SOURCE_URI":       "source_uri",
+        "GMA_ID":           "gma_id",
+        "GMA_BOUNDARY_URI": "gma_boundary_uri",
+        "GEO_ACTOR_ID":    "geo_actor_id",
+        "TAPIS_TOKEN":      "tapis_token"
+      },
+      "contracts": [
+        {"id": "c-mf6-drn-in",  "role": "input",  "format": "cbc-mf6"},
+        {"id": "c-mf6-drn-out", "role": "output", "standard_variable_uri": "https://w3id.org/okn/i/mint/spring__volume_flow_rate", "format": "gma-scalar", "unit": "m3s"}
+      ]
+    },
+
+    {
+      "id": "ts-modflow-usg-drain-gma-extract",
+      "name": "modflow-usg-drain-gma-extract",
+      "version": "1.0.0",
+      "description": "Extract drain-package discharge from a MODFLOW-USG cell-by-cell budget, clip to GMA, sum to scalar m3s. MODFLOW-USG CBC uses unstructured-grid binary layout; geo_actor uses flopy's CellBudgetFile with CLN support.",
+      "transform_type": "budget_extract_drain",
+      "is_lossy": false,
+      "method": "tapis_function",
+      "tapis_app_id": null,
+      "stage": "budget-extract",
+      "env_from_args": {
+        "SOURCE_URI":       "source_uri",
+        "GMA_ID":           "gma_id",
+        "GMA_BOUNDARY_URI": "gma_boundary_uri",
+        "GEO_ACTOR_ID":    "geo_actor_id",
+        "TAPIS_TOKEN":      "tapis_token"
+      },
+      "contracts": [
+        {"id": "c-usg-drn-in",  "role": "input",  "format": "cbc-mfusg"},
+        {"id": "c-usg-drn-out", "role": "output", "standard_variable_uri": "https://w3id.org/okn/i/mint/spring__volume_flow_rate", "format": "gma-scalar", "unit": "m3s"}
+      ]
+    },
+
+    {
+      "id": "ts-modflow-2000-drain-gma-extract",
+      "name": "modflow-2000-drain-gma-extract",
+      "version": "1.0.0",
+      "description": "Extract drain-package discharge from a MODFLOW-2000 cell-by-cell budget, clip to GMA, sum to scalar m3s.",
+      "transform_type": "budget_extract_drain",
+      "is_lossy": false,
+      "method": "tapis_function",
+      "tapis_app_id": null,
+      "stage": "budget-extract",
+      "env_from_args": {
+        "SOURCE_URI":       "source_uri",
+        "GMA_ID":           "gma_id",
+        "GMA_BOUNDARY_URI": "gma_boundary_uri",
+        "GEO_ACTOR_ID":    "geo_actor_id",
+        "TAPIS_TOKEN":      "tapis_token"
+      },
+      "contracts": [
+        {"id": "c-m2k-drn-in",  "role": "input",  "format": "cbc-mf2000"},
+        {"id": "c-m2k-drn-out", "role": "output", "standard_variable_uri": "https://w3id.org/okn/i/mint/spring__volume_flow_rate", "format": "gma-scalar", "unit": "m3s"}
+      ]
+    },
+
+    {
+      "id": "ts-modflow-96-drain-gma-extract",
+      "name": "modflow-96-drain-gma-extract",
+      "version": "1.0.0",
+      "description": "Extract drain-package discharge from a MODFLOW-96 cell-by-cell budget, clip to GMA, sum to scalar m3s.",
+      "transform_type": "budget_extract_drain",
+      "is_lossy": false,
+      "method": "tapis_function",
+      "tapis_app_id": null,
+      "stage": "budget-extract",
+      "env_from_args": {
+        "SOURCE_URI":       "source_uri",
+        "GMA_ID":           "gma_id",
+        "GMA_BOUNDARY_URI": "gma_boundary_uri",
+        "GEO_ACTOR_ID":    "geo_actor_id",
+        "TAPIS_TOKEN":      "tapis_token"
+      },
+      "contracts": [
+        {"id": "c-m96-drn-in",  "role": "input",  "format": "cbc-mf96"},
+        {"id": "c-m96-drn-out", "role": "output", "standard_variable_uri": "https://w3id.org/okn/i/mint/spring__volume_flow_rate", "format": "gma-scalar", "unit": "m3s"}
+      ]
+    },
+
+    {
+      "id": "ts-modflow6-river-gma-extract",
+      "name": "modflow6-river-gma-extract",
+      "version": "1.0.0",
+      "description": "Extract river-package (RIV) leakage from a MODFLOW 6 cell-by-cell budget, clip to GMA, sum to scalar m3s. RIV leakage represents baseflow / stream–aquifer exchange. Used for GMA 8 Edwards BFZ stream-flow DFC targets.",
+      "transform_type": "budget_extract_river",
+      "is_lossy": false,
+      "method": "tapis_function",
+      "tapis_app_id": null,
+      "stage": "budget-extract",
+      "env_from_args": {
+        "SOURCE_URI":       "source_uri",
+        "GMA_ID":           "gma_id",
+        "GMA_BOUNDARY_URI": "gma_boundary_uri",
+        "GEO_ACTOR_ID":    "geo_actor_id",
+        "TAPIS_TOKEN":      "tapis_token"
+      },
+      "contracts": [
+        {"id": "c-mf6-riv-in",  "role": "input",  "format": "cbc-mf6"},
+        {"id": "c-mf6-riv-out", "role": "output", "standard_variable_uri": "https://w3id.org/okn/i/mint/river__volume_flow_rate", "format": "gma-scalar", "unit": "m3s"}
+      ]
+    },
+
+    {
+      "id": "ts-modflow-usg-river-gma-extract",
+      "name": "modflow-usg-river-gma-extract",
+      "version": "1.0.0",
+      "description": "Extract river-package leakage from a MODFLOW-USG cell-by-cell budget, clip to GMA, sum to scalar m3s.",
+      "transform_type": "budget_extract_river",
+      "is_lossy": false,
+      "method": "tapis_function",
+      "tapis_app_id": null,
+      "stage": "budget-extract",
+      "env_from_args": {
+        "SOURCE_URI":       "source_uri",
+        "GMA_ID":           "gma_id",
+        "GMA_BOUNDARY_URI": "gma_boundary_uri",
+        "GEO_ACTOR_ID":    "geo_actor_id",
+        "TAPIS_TOKEN":      "tapis_token"
+      },
+      "contracts": [
+        {"id": "c-usg-riv-in",  "role": "input",  "format": "cbc-mfusg"},
+        {"id": "c-usg-riv-out", "role": "output", "standard_variable_uri": "https://w3id.org/okn/i/mint/river__volume_flow_rate", "format": "gma-scalar", "unit": "m3s"}
+      ]
+    },
+
+    {
+      "id": "ts-modflow-2000-river-gma-extract",
+      "name": "modflow-2000-river-gma-extract",
+      "version": "1.0.0",
+      "description": "Extract river-package leakage from a MODFLOW-2000 cell-by-cell budget, clip to GMA, sum to scalar m3s.",
+      "transform_type": "budget_extract_river",
+      "is_lossy": false,
+      "method": "tapis_function",
+      "tapis_app_id": null,
+      "stage": "budget-extract",
+      "env_from_args": {
+        "SOURCE_URI":       "source_uri",
+        "GMA_ID":           "gma_id",
+        "GMA_BOUNDARY_URI": "gma_boundary_uri",
+        "GEO_ACTOR_ID":    "geo_actor_id",
+        "TAPIS_TOKEN":      "tapis_token"
+      },
+      "contracts": [
+        {"id": "c-m2k-riv-in",  "role": "input",  "format": "cbc-mf2000"},
+        {"id": "c-m2k-riv-out", "role": "output", "standard_variable_uri": "https://w3id.org/okn/i/mint/river__volume_flow_rate", "format": "gma-scalar", "unit": "m3s"}
+      ]
+    },
+
+    {
+      "id": "ts-modflow-96-river-gma-extract",
+      "name": "modflow-96-river-gma-extract",
+      "version": "1.0.0",
+      "description": "Extract river-package leakage from a MODFLOW-96 cell-by-cell budget, clip to GMA, sum to scalar m3s.",
+      "transform_type": "budget_extract_river",
+      "is_lossy": false,
+      "method": "tapis_function",
+      "tapis_app_id": null,
+      "stage": "budget-extract",
+      "env_from_args": {
+        "SOURCE_URI":       "source_uri",
+        "GMA_ID":           "gma_id",
+        "GMA_BOUNDARY_URI": "gma_boundary_uri",
+        "GEO_ACTOR_ID":    "geo_actor_id",
+        "TAPIS_TOKEN":      "tapis_token"
+      },
+      "contracts": [
+        {"id": "c-m96-riv-in",  "role": "input",  "format": "cbc-mf96"},
+        {"id": "c-m96-riv-out", "role": "output", "standard_variable_uri": "https://w3id.org/okn/i/mint/river__volume_flow_rate", "format": "gma-scalar", "unit": "m3s"}
+      ]
+    },
+
+    {
+      "id": "ts-modflow6-satthk-gma-extract",
+      "name": "modflow6-satthk-gma-extract",
+      "version": "1.0.0",
+      "description": "Compute GMA-average saturated thickness from a MODFLOW 6 head file. geo_actor reads the DIS/DISV package alongside the HDS to compute sat_thickness = head − bottom_elev per cell, clips to GMA boundary, returns spatial average in feet. GMA 12/13 DFC targets are percent of original saturated thickness.",
+      "transform_type": "sat_thickness_extract",
+      "is_lossy": false,
+      "method": "tapis_function",
+      "tapis_app_id": null,
+      "stage": "satthk-extract",
+      "env_from_args": {
+        "SOURCE_URI":       "source_uri",
+        "GMA_ID":           "gma_id",
+        "GMA_BOUNDARY_URI": "gma_boundary_uri",
+        "LAYER":            "layer",
+        "GEO_ACTOR_ID":    "geo_actor_id",
+        "TAPIS_TOKEN":      "tapis_token"
+      },
+      "contracts": [
+        {"id": "c-mf6-stk-in",  "role": "input",  "standard_variable_uri": "https://w3id.org/okn/i/mint/groundwater__hydraulic_head", "format": "hds"},
+        {"id": "c-mf6-stk-out", "role": "output", "standard_variable_uri": "https://w3id.org/okn/i/mint/aquifer__saturated_thickness", "format": "gma-scalar", "unit": "ft"}
+      ]
+    },
+
+    {
+      "id": "ts-modflow-usg-satthk-gma-extract",
+      "name": "modflow-usg-satthk-gma-extract",
+      "version": "1.0.0",
+      "description": "Compute GMA-average saturated thickness from a MODFLOW-USG head file.",
+      "transform_type": "sat_thickness_extract",
+      "is_lossy": false,
+      "method": "tapis_function",
+      "tapis_app_id": null,
+      "stage": "satthk-extract",
+      "env_from_args": {
+        "SOURCE_URI":       "source_uri",
+        "GMA_ID":           "gma_id",
+        "GMA_BOUNDARY_URI": "gma_boundary_uri",
+        "LAYER":            "layer",
+        "GEO_ACTOR_ID":    "geo_actor_id",
+        "TAPIS_TOKEN":      "tapis_token"
+      },
+      "contracts": [
+        {"id": "c-usg-stk-in",  "role": "input",  "standard_variable_uri": "https://w3id.org/okn/i/mint/groundwater__hydraulic_head", "format": "hds-mfusg"},
+        {"id": "c-usg-stk-out", "role": "output", "standard_variable_uri": "https://w3id.org/okn/i/mint/aquifer__saturated_thickness", "format": "gma-scalar", "unit": "ft"}
+      ]
+    },
+
+    {
+      "id": "ts-modflow-2000-satthk-gma-extract",
+      "name": "modflow-2000-satthk-gma-extract",
+      "version": "1.0.0",
+      "description": "Compute GMA-average saturated thickness from a MODFLOW-2000 head file.",
+      "transform_type": "sat_thickness_extract",
+      "is_lossy": false,
+      "method": "tapis_function",
+      "tapis_app_id": null,
+      "stage": "satthk-extract",
+      "env_from_args": {
+        "SOURCE_URI":       "source_uri",
+        "GMA_ID":           "gma_id",
+        "GMA_BOUNDARY_URI": "gma_boundary_uri",
+        "LAYER":            "layer",
+        "GEO_ACTOR_ID":    "geo_actor_id",
+        "TAPIS_TOKEN":      "tapis_token"
+      },
+      "contracts": [
+        {"id": "c-m2k-stk-in",  "role": "input",  "standard_variable_uri": "https://w3id.org/okn/i/mint/groundwater__hydraulic_head", "format": "hds-mf2000"},
+        {"id": "c-m2k-stk-out", "role": "output", "standard_variable_uri": "https://w3id.org/okn/i/mint/aquifer__saturated_thickness", "format": "gma-scalar", "unit": "ft"}
+      ]
+    },
+
+    {
+      "id": "ts-modflow-96-satthk-gma-extract",
+      "name": "modflow-96-satthk-gma-extract",
+      "version": "1.0.0",
+      "description": "Compute GMA-average saturated thickness from a MODFLOW-96 head file.",
+      "transform_type": "sat_thickness_extract",
+      "is_lossy": false,
+      "method": "tapis_function",
+      "tapis_app_id": null,
+      "stage": "satthk-extract",
+      "env_from_args": {
+        "SOURCE_URI":       "source_uri",
+        "GMA_ID":           "gma_id",
+        "GMA_BOUNDARY_URI": "gma_boundary_uri",
+        "LAYER":            "layer",
+        "GEO_ACTOR_ID":    "geo_actor_id",
+        "TAPIS_TOKEN":      "tapis_token"
+      },
+      "contracts": [
+        {"id": "c-m96-stk-in",  "role": "input",  "standard_variable_uri": "https://w3id.org/okn/i/mint/groundwater__hydraulic_head", "format": "hds-mf96"},
+        {"id": "c-m96-stk-out", "role": "output", "standard_variable_uri": "https://w3id.org/okn/i/mint/aquifer__saturated_thickness", "format": "gma-scalar", "unit": "ft"}
+      ]
+    }
+
+  ],
+
+  "source_data_object": {
+    "label": "MODFLOW simulated hydraulic head GeoTIFF — NTGAM Hosston Layer 8 — 2019",
+    "description": "Georeferenced hydraulic head GeoTIFF from the CKAN NTGAM v3.01 outputs dataset. Contains simulated head for Hosston Layer 8, stress period 132, year 2019, in feet.",
+    "resource_uri": "https://ckan.tacc.utexas.edu/subside_dataset/dd7ae765-3789-4c3c-8d2c-04df49f34ba5/resource/1618bee4-f28f-4985-8eff-673736a7f48b/download/hds_lyr8_sp132.tif",
+    "format": "geotiff",
+    "source_catalog": "ckan",
+    "variables": [
+      {
+        "standard_variable_uri": "https://w3id.org/okn/i/mint/groundwater__hydraulic_head",
+        "local_name": "head",
+        "unit": "ft",
+        "spatial_type": "grid"
+      }
+    ]
+  },
+
+  "sources": [
+    {
+      "label": "Texas TWDB GMA DFC Targets — 2021 Joint Planning",
+      "description": "All 16 GMA desired future conditions from the 2021 TWDB joint planning cycle.",
+      "resource_uri": "ckan://ckan.tacc.utexas.edu/dataset/twdb-gma-dfc-2021/resource/dfc-targets-all-gmas",
+      "format": "gma-dfc-csv",
+      "source_catalog": "ckan",
+      "variables": [
+        {
+          "standard_variable_uri": "https://w3id.org/okn/i/mint/groundwater__hydraulic_head",
+          "local_name": "drawdown_target_ft",
+          "unit": "ft"
+        }
+      ]
+    },
+    {
+      "label": "TWDB Statewide GMA Boundaries (FeatureServer Layer 4)",
+      "description": "Live TWDB ArcGIS layer for Groundwater Management Area boundaries. CKAN resource e5f12940-d08f-4a66-900f-d45805a35e59 in package twdb-gis-datasets.",
+      "resource_uri": "https://services1.arcgis.com/7DRakJXKPEhwv0fM/arcgis/rest/services/Z_Statewide_gdb/FeatureServer/4",
+      "format": "arcgis-layer",
+      "source_catalog": "ckan:twdb-gis-datasets",
+      "variables": [
+        {
+          "standard_variable_uri": "https://w3id.org/okn/i/mint/groundwater_management_area__boundary",
+          "local_name": "groundwater_management_area__boundary",
+          "spatial_type": "polygon",
+          "crs": "EPSG:4326",
+          "metadata_json": {
+            "boundary_type": "gma",
+            "arcgis_query_field": "GMAnum",
+            "feature_count": 16,
+            "ckan_resource_id": "e5f12940-d08f-4a66-900f-d45805a35e59"
+          }
+        }
+      ]
+    },
+    {
+      "label": "TWDB Groundwater Conservation District Boundaries (MapServer Layer 0)",
+      "description": "Live TWDB ArcGIS layer for Groundwater Conservation District boundaries. CKAN resource b4b3832c-8c78-4994-9065-148ad1b67166 in package twdb-gis-datasets.",
+      "resource_uri": "https://services.twdb.texas.gov/arcgis/rest/services/Base/GroundWaterConservationDistricts/MapServer/0",
+      "format": "arcgis-layer",
+      "source_catalog": "ckan:twdb-gis-datasets",
+      "variables": [
+        {
+          "standard_variable_uri": "https://w3id.org/okn/i/mint/groundwater_conservation_district__boundary",
+          "local_name": "groundwater_conservation_district__boundary",
+          "spatial_type": "polygon",
+          "crs": "EPSG:4326",
+          "metadata_json": {
+            "boundary_type": "gcd",
+            "arcgis_query_field": "DistrictName",
+            "arcgis_name_field": "DistrictName",
+            "feature_count": 101,
+            "ckan_resource_id": "b4b3832c-8c78-4994-9065-148ad1b67166"
+          }
+        }
+      ]
+    },
+    {
+      "label": "TWDB Texas Counties FIPS Boundaries (FeatureServer Layer 0)",
+      "description": "Live TWDB ArcGIS layer for Texas county boundaries. CKAN resource be8ac273-40f4-4944-b9af-d5bb5c8cb9d2 in package twdb-gis-datasets.",
+      "resource_uri": "https://services.twdb.texas.gov/arcgis/rest/services/PWS/Texas_Counties_FIPS/FeatureServer/0",
+      "format": "arcgis-layer",
+      "source_catalog": "ckan:twdb-gis-datasets",
+      "variables": [
+        {
+          "standard_variable_uri": "https://w3id.org/okn/i/mint/county__boundary",
+          "local_name": "county__boundary",
+          "spatial_type": "polygon",
+          "crs": "EPSG:4326",
+          "metadata_json": {
+            "boundary_type": "county",
+            "arcgis_query_field": "Name",
+            "arcgis_name_field": "Name",
+            "feature_count": 254,
+            "ckan_resource_id": "be8ac273-40f4-4944-b9af-d5bb5c8cb9d2"
+          }
+        }
+      ]
+    },
+    {
+      "label": "Groundwater Management Areas (GMA) Shapefile",
+      "description": "TWDB downloadable shapefile ZIP for GMA boundaries. CKAN resource 97b3a512-ae16-4e51-aa24-09c68d369d41 in package twdb-gis-datasets.",
+      "resource_uri": "https://www.twdb.texas.gov/mapping/gisdata/doc/gma.zip",
+      "format": "shapefile-zip",
+      "source_catalog": "ckan:twdb-gis-datasets",
+      "variables": [
+        {
+          "standard_variable_uri": "https://w3id.org/okn/i/mint/groundwater_management_area__boundary",
+          "local_name": "groundwater_management_area__boundary",
+          "spatial_type": "polygon",
+          "crs": "EPSG:4326",
+          "metadata_json": {
+            "boundary_type": "gma",
+            "ckan_resource_id": "97b3a512-ae16-4e51-aa24-09c68d369d41"
+          }
+        }
+      ]
+    },
+    {
+      "label": "Groundwater Conservation Districts (GCD) Shapefile",
+      "description": "TWDB downloadable shapefile ZIP for Groundwater Conservation District boundaries. CKAN resource a1d5661c-ff6f-4bfd-bb0e-dc753558dd1e in package twdb-gis-datasets.",
+      "resource_uri": "https://www.twdb.texas.gov/mapping/gisdata/doc/GCD_Shapefiles.zip",
+      "format": "shapefile-zip",
+      "source_catalog": "ckan:twdb-gis-datasets",
+      "variables": [
+        {
+          "standard_variable_uri": "https://w3id.org/okn/i/mint/groundwater_conservation_district__boundary",
+          "local_name": "groundwater_conservation_district__boundary",
+          "spatial_type": "polygon",
+          "crs": "EPSG:4326",
+          "metadata_json": {
+            "boundary_type": "gcd",
+            "ckan_resource_id": "a1d5661c-ff6f-4bfd-bb0e-dc753558dd1e"
+          }
+        }
+      ]
+    },
+    {
+      "label": "MODFLOW 6 cell-by-cell budget — NTGAM demo",
+      "description": "Binary cell-by-cell budget file (.cbc) from MODFLOW 6 run (Tapis app: modflow6-simulation). Contains DRN (drain/spring) and RIV (river/stream) package flows per stress period. Upstream of all spring- and stream-flow DFC compliance chains.",
+      "resource_uri": "tapis://ls6/modflow/demo/ntgam-v301/output.cbc",
+      "format": "cbc-mf6",
+      "source_catalog": "tapis",
+      "variables": []
+    },
+    {
+      "label": "MODFLOW-USG cell-by-cell budget — NTGAM demo",
+      "description": "Binary cell-by-cell budget file from MODFLOW-USG run (Tapis app: modflow-usg-simulation). Unstructured-grid layout.",
+      "resource_uri": "tapis://ls6/modflow/demo/ntgam-v301/output-usg.cbc",
+      "format": "cbc-mfusg",
+      "source_catalog": "tapis",
+      "variables": []
+    },
+    {
+      "label": "MODFLOW-2000 cell-by-cell budget — NTGAM demo",
+      "description": "Binary cell-by-cell budget file from MODFLOW-2000 run (Tapis app: modflow-2000-simulation).",
+      "resource_uri": "tapis://ls6/modflow/demo/ntgam-v301/output-mf2000.cbc",
+      "format": "cbc-mf2000",
+      "source_catalog": "tapis",
+      "variables": []
+    },
+    {
+      "label": "MODFLOW-96 cell-by-cell budget — NTGAM demo",
+      "description": "Binary cell-by-cell budget file from MODFLOW-96 run (Tapis app: modflow-96-simulation).",
+      "resource_uri": "tapis://ls6/modflow/demo/ntgam-v301/output-mf96.cbc",
+      "format": "cbc-mf96",
+      "source_catalog": "tapis",
+      "variables": []
+    },
+    {
+      "label": "MODFLOW-USG simulated hydraulic head (HDS) — NTGAM demo",
+      "description": "Binary head output from MODFLOW-USG run. Unstructured-grid format.",
+      "resource_uri": "tapis://ls6/modflow/demo/ntgam-v301/heads-usg.hds",
+      "format": "hds-mfusg",
+      "source_catalog": "tapis",
+      "variables": [
+        {
+          "standard_variable_uri": "https://w3id.org/okn/i/mint/groundwater__hydraulic_head",
+          "local_name": "head",
+          "unit": "m"
+        }
+      ]
+    },
+    {
+      "label": "MODFLOW-2000 simulated hydraulic head (HDS) — NTGAM demo",
+      "description": "Binary head output from MODFLOW-2000 run.",
+      "resource_uri": "tapis://ls6/modflow/demo/ntgam-v301/heads-mf2000.hds",
+      "format": "hds-mf2000",
+      "source_catalog": "tapis",
+      "variables": [
+        {
+          "standard_variable_uri": "https://w3id.org/okn/i/mint/groundwater__hydraulic_head",
+          "local_name": "head",
+          "unit": "m"
+        }
+      ]
+    },
+    {
+      "label": "MODFLOW-96 simulated hydraulic head (HDS) — NTGAM demo",
+      "description": "Binary head output from MODFLOW-96 run.",
+      "resource_uri": "tapis://ls6/modflow/demo/ntgam-v301/heads-mf96.hds",
+      "format": "hds-mf96",
+      "source_catalog": "tapis",
+      "variables": [
+        {
+          "standard_variable_uri": "https://w3id.org/okn/i/mint/groundwater__hydraulic_head",
+          "local_name": "head",
+          "unit": "m"
+        }
+      ]
+    }
+  ],
+
+  "target_model_input": {
+    "_about": "GMA-averaged head scalar in feet. BFS path from the CKAN GeoTIFF head raster: [ts-head-gma-average].",
+    "standard_variable_uri": "https://w3id.org/okn/i/mint/groundwater__hydraulic_head",
+    "format": "gma-scalar",
+    "unit": "ft"
+  },
+
+  "target_model_input_compliance": {
+    "_about": "Full DFC compliance report for head/drawdown. ts-gma-dfc-compliance: current head + baseline head + DFC CSV → dfc-compliance-report.",
+    "format": "dfc-compliance-report"
+  },
+
+  "target_model_input_spring_cfs": {
+    "_about": "Spring discharge in cfs. BFS path from MF6 CBC: [ts-modflow6-drain-gma-extract, ts-flow-m3s-to-cfs].",
+    "standard_variable_uri": "https://w3id.org/okn/i/mint/spring__volume_flow_rate",
+    "unit": "cfs"
+  },
+
+  "target_model_input_stream_af_month": {
+    "_about": "Stream flow in af/month. BFS path from MF6 CBC: [ts-modflow6-river-gma-extract, ts-flow-m3s-to-af-month].",
+    "standard_variable_uri": "https://w3id.org/okn/i/mint/river__volume_flow_rate",
+    "unit": "af_month"
+  },
+
+  "target_model_input_satthk_ft": {
+    "_about": "Saturated thickness GMA scalar in feet. BFS path from MF6 HDS: [ts-modflow6-satthk-gma-extract].",
+    "standard_variable_uri": "https://w3id.org/okn/i/mint/aquifer__saturated_thickness",
+    "format": "gma-scalar",
+    "unit": "ft"
+  },
+
+  "target_model_input_gma_boundary_geojson": {
+    "_about": "GMA boundary GeoJSON. BFS path from TWDB ArcGIS layer: [ts-gma-boundary-query].",
+    "standard_variable_uri": "https://w3id.org/okn/i/mint/groundwater_management_area__boundary",
+    "format": "geojson",
+    "spatial_type": "polygon",
+    "crs": "EPSG:4326"
+  },
+
+  "target_model_input_county_boundary_geojson": {
+    "_about": "County boundary GeoJSON. BFS path from TWDB ArcGIS layer: [ts-county-boundary-query].",
+    "standard_variable_uri": "https://w3id.org/okn/i/mint/county__boundary",
+    "format": "geojson",
+    "spatial_type": "polygon",
+    "crs": "EPSG:4326"
+  },
+
+  "target_model_input_gcd_boundary_geojson": {
+    "_about": "GCD boundary GeoJSON. BFS path from TWDB ArcGIS layer: [ts-gcd-boundary-query].",
+    "standard_variable_uri": "https://w3id.org/okn/i/mint/groundwater_conservation_district__boundary",
+    "format": "geojson",
+    "spatial_type": "polygon",
+    "crs": "EPSG:4326"
+  },
+
+  "target_model_input_dfc_area_boundary_geojson": {
+    "_about": "DFC planning area GeoJSON derived from a GMA boundary plus a county or GCD boundary through /plans/model-run.",
+    "standard_variable_uri": "https://w3id.org/okn/i/mint/dfc_planning_area__boundary",
+    "format": "geojson",
+    "spatial_type": "polygon",
+    "crs": "EPSG:4326"
+  }
+}

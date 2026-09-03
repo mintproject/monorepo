@@ -1,0 +1,36 @@
+{
+  "transform_spec": {
+    "name": "celsius-to-kelvin",
+    "version": "1.0.0",
+    "description": "Convert air temperature from degC to K",
+    "transform_type": "unit_convert",
+    "is_lossy": false,
+    "method": "tapis_function",
+    "tapis_app_id": null,
+    "container_image": "ghcr.io/mintproject/unit-convert:1.0.0",
+    "source_code_url": "https://github.com/mintproject/transforms/unit-convert",
+    "parameters_schema_json": {
+      "type": "object",
+      "properties": {
+        "from_unit": {"type": "string"},
+        "to_unit": {"type": "string"}
+      },
+      "required": ["from_unit", "to_unit"]
+    },
+    "contracts": [
+      {
+        "role": "input",
+        "standard_variable_uri": "https://www.geoscienceontology.org/svo/svl/variable/air__temperature",
+        "unit": "degC",
+        "format": "csv"
+      },
+      {
+        "role": "output",
+        "standard_variable_uri": "https://www.geoscienceontology.org/svo/svl/variable/air__temperature",
+        "unit": "K",
+        "format": "csv"
+      }
+    ]
+  },
+  "_note": "transform_spec and its transform_contract rows are written via Hasura GraphQL (nested insert). The /plans planner searches these contracts to build a path."
+}

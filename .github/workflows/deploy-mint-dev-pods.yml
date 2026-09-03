@@ -1,0 +1,94 @@
+name: Deploy MINT Dev Pods
+
+on:
+  workflow_run:
+    workflows: [MINT Dev Images]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: Image tag to deploy, e.g. sha-abc1234
+        required: true
+      pods:
+        description: all or comma-separated subset
+        required: false
+        default: all
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mint-dev-pods
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy dev stack
+    runs-on: ubuntu-latest
+    environment: Tapis Dev Deploy
+    if: >-
+      ${{
+        github.event_name == 'workflow_dispatch' ||
+        (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'develop')
+      }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install deploy dependencies
+        run: pip install tapipy python-dotenv
+
+      - name: Resolve deployment inputs
+        id: deploy
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            TAG="${{ inputs.image_tag }}"
+            PODS="${{ inputs.pods }}"
+          else
+            HEAD_SHA="${{ github.event.workflow_run.head_sha }}"
+            TAG="sha-${HEAD_SHA::7}"
+            PODS="all"
+          fi
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+          echo "pods=${PODS}" >> "$GITHUB_OUTPUT"
+
+      - name: Dry-run pod specs
+        env:
+          HASURA_GRAPHQL_ADMIN_SECRET: ${{ secrets.HASURA_GRAPHQL_ADMIN_SECRET }}
+          MINTDEV_POSTGRES_PASSWORD: ${{ secrets.MINTDEV_POSTGRES_PASSWORD }}
+          MINTDEV_AUTH_CLIENT_ID: ${{ secrets.MINTDEV_AUTH_CLIENT_ID }}
+          SVO_ADAPTER_GEO_ACTOR_ID: ${{ secrets.SVO_ADAPTER_GEO_ACTOR_ID }}
+        run: >-
+          python deploy/tapis/register_mint_stack.py
+          --image-tag "${{ steps.deploy.outputs.tag }}"
+          --pods "${{ steps.deploy.outputs.pods }}"
+          --dry-run
+
+      - name: Register/update Tapis Pods
+        env:
+          TAPIS_USERNAME: ${{ secrets.TAPIS_USERNAME }}
+          TAPIS_ID: ${{ secrets.TAPIS_ID }}
+          TAPIS_PASSWORD: ${{ secrets.TAPIS_PASSWORD }}
+          HASURA_GRAPHQL_ADMIN_SECRET: ${{ secrets.HASURA_GRAPHQL_ADMIN_SECRET }}
+          MINTDEV_POSTGRES_PASSWORD: ${{ secrets.MINTDEV_POSTGRES_PASSWORD }}
+          MINTDEV_AUTH_CLIENT_ID: ${{ secrets.MINTDEV_AUTH_CLIENT_ID }}
+          SVO_ADAPTER_GEO_ACTOR_ID: ${{ secrets.SVO_ADAPTER_GEO_ACTOR_ID }}
+        run: >-
+          python deploy/tapis/register_mint_stack.py
+          --image-tag "${{ steps.deploy.outputs.tag }}"
+          --pods "${{ steps.deploy.outputs.pods }}"
+          --restart
+
+      - name: Summary
+        run: |
+          echo "## MINT dev deploy" >> "$GITHUB_STEP_SUMMARY"
+          echo "Image tag: \`${{ steps.deploy.outputs.tag }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "Pods: \`${{ steps.deploy.outputs.pods }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- UI: https://mintdevui.pods.portals.tapis.io" >> "$GITHUB_STEP_SUMMARY"
+          echo "- API: https://mintdevapi.pods.portals.tapis.io" >> "$GITHUB_STEP_SUMMARY"
+          echo "- GraphQL: https://mintdevgraphql.pods.portals.tapis.io" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Ensemble: https://mintdevensemble.pods.portals.tapis.io" >> "$GITHUB_STEP_SUMMARY"
+          echo "- SVO Adapter: https://mintdevsvo.pods.portals.tapis.io" >> "$GITHUB_STEP_SUMMARY"

@@ -1,0 +1,199 @@
+{
+  "metadata": {
+    "title": "DFC Objective Specifications",
+    "version": "0.1.0",
+    "purpose": "Define Desired Future Conditions as objective specifications separate from CKAN reference data and SVO Adapter transform logic.",
+    "status": "draft",
+    "notes": [
+      "DFC target records are reference data and should be loaded from CKAN when published.",
+      "Transform specs remain in the SVO Adapter registry.",
+      "Objective specs describe what should be evaluated; the planner decides how to evaluate it."
+    ]
+  },
+  "objective_contract": {
+    "required_fields": [
+      "id",
+      "objective_type",
+      "objective_version",
+      "selection",
+      "targets",
+      "source_requirements",
+      "evaluation",
+      "outputs"
+    ],
+    "objective_types": [
+      "dfc_compliance"
+    ],
+    "selection_fields": {
+      "gma_id": "Groundwater Management Area label or number, for example GMA 12.",
+      "aquifer": "Aquifer or aquifer-system selector used to match adopted DFC target records.",
+      "metric": "DFC metric selector, for example drawdown, saturated_thickness_or_storage, spring_flow, or stream_flow.",
+      "target_year": "Target year for the DFC comparison when present in the adopted target records.",
+      "areas": "Optional list of area names to restrict evaluation; omit or use empty list for all matching DFC target areas."
+    },
+    "target_fields": {
+      "targets_uri": "URI of the adopted DFC target dataset, preferably a CKAN resource URI once published.",
+      "record_selector": "Fields used to select DFC records from the target dataset.",
+      "record_id_field": "Field name for stable target record identifiers.",
+      "value_field": "Field name containing target values and units.",
+      "provenance_fields": "Fields preserving source PDF/page/line provenance."
+    },
+    "source_requirement_fields": {
+      "standard_variable_uri": "SVO variable needed by the planner.",
+      "unit": "Preferred or required unit for the comparison.",
+      "format_preferences": "Ordered source data formats preferred for this objective.",
+      "source_profile": "Optional source-selection profile, such as ntgam-v301.",
+      "allow_user_override": "Whether a caller may provide a specific source_data_object_id."
+    },
+    "evaluation_fields": {
+      "comparison_scope": "Whether evaluation is per target area, GMA-wide, or another objective-defined scope.",
+      "boundary_strategy": "How target-area boundaries should be resolved.",
+      "aggregation": "Modeled-output aggregation required before comparison.",
+      "compliance_rule": "Operator and interpretation for comparing modeled values to target values.",
+      "no_fake_outputs": "Must remain true for scientific decision-support objectives."
+    }
+  },
+  "objectives": [
+    {
+      "id": "dfc-gma12-carrizo-drawdown-2070",
+      "label": "GMA 12 Carrizo drawdown DFC compliance",
+      "objective_type": "dfc_compliance",
+      "objective_version": "0.1.0",
+      "status": "draft",
+      "selection": {
+        "gma_id": "GMA 12",
+        "gma_number": 12,
+        "aquifer": "Carrizo",
+        "metric": "drawdown",
+        "target_year": 2070,
+        "areas": []
+      },
+      "targets": {
+        "targets_uri": "ckan://twdb-gma-dfc-2021/adopted-dfc-targets-2021.json",
+        "local_fallback_uri": "examples/twdb_adopted_dfc_2021.json",
+        "record_selector": {
+          "gma": 12,
+          "aquifer_matches": "Carrizo",
+          "aquifer_exact": true,
+          "metric": "drawdown",
+          "period.target_year": 2070
+        },
+        "record_id_field": "id",
+        "area_field": "area",
+        "area_type_field": "area_type",
+        "value_field": "target_values",
+        "provenance_fields": [
+          "source.title",
+          "source.url",
+          "source.pdf_page",
+          "source.text_line",
+          "dfc_statement",
+          "adoption_date"
+        ]
+      },
+      "source_requirements": {
+        "standard_variable_uri": "https://w3id.org/okn/i/mint/groundwater__hydraulic_head",
+        "unit": "ft",
+        "format_preferences": [
+          "geotiff",
+          "hds-mfusg",
+          "geojson"
+        ],
+        "source_profile": "ntgam-v301",
+        "source_data_object_id": null,
+        "allow_user_override": true,
+        "known_source_hint": {
+          "ckan_package": "ntgam-v301-outputs",
+          "resource_id": "1618bee4-f28f-4985-8eff-673736a7f48b",
+          "resource_name": "Hydraulic Head GeoTIFF — Hosston (Layer 8) — 2019",
+          "resource_uri": "https://ckan.tacc.utexas.edu/subside_dataset/dd7ae765-3789-4c3c-8d2c-04df49f34ba5/resource/1618bee4-f28f-4985-8eff-673736a7f48b/download/hds_lyr8_sp132.tif"
+        }
+      },
+      "evaluation": {
+        "comparison_scope": "per_dfc_target_area",
+        "fanout": "one_branch_per_selected_target_area",
+        "boundary_strategy": {
+          "mode": "resolve_by_area_type",
+          "preferred_boundary_sources": [
+            {
+              "boundary_type": "gma",
+              "ckan_package": "twdb-gis-datasets",
+              "resource_id": "e5f12940-d08f-4a66-900f-d45805a35e59",
+              "format": "arcgis-layer"
+            },
+            {
+              "boundary_type": "gcd",
+              "ckan_package": "twdb-gis-datasets",
+              "resource_id": "b4b3832c-8c78-4994-9065-148ad1b67166",
+              "format": "arcgis-layer"
+            },
+            {
+              "boundary_type": "county",
+              "ckan_package": "twdb-gis-datasets",
+              "resource_id": "be8ac273-40f4-4944-b9af-d5bb5c8cb9d2",
+              "format": "arcgis-layer"
+            }
+          ],
+          "strict_scope_goal": "Eventually aggregate over GMA intersection target-area boundaries when fused boundary intersection is available."
+        },
+        "aggregation": {
+          "operation": "area_average",
+          "input_variable": "groundwater__hydraulic_head",
+          "output_format": "gma-scalar",
+          "output_unit": "ft"
+        },
+        "compliance_rule": {
+          "operator": "<=",
+          "modeled_value_name": "modeled_average_drawdown",
+          "target_value_name": "adopted_dfc_drawdown",
+          "pass_label": "meets_or_below_dfc_drawdown",
+          "fail_label": "exceeds_dfc_drawdown"
+        },
+        "no_fake_outputs": true
+      },
+      "runtime_requirements": {
+        "requires_tapis_token": true,
+        "requires_geo_actor_id": true,
+        "requires_ckan_token": false,
+        "external_writes_require_approval": true
+      },
+      "outputs": {
+        "result_type": "dfc_compliance_report",
+        "granularity": "target_area",
+        "include_fields": [
+          "objective_id",
+          "target_record_id",
+          "area",
+          "scope",
+          "modeled_value",
+          "target_values",
+          "unit",
+          "compliance_status",
+          "source_resource_uri",
+          "boundary_uri",
+          "tapis_run_id",
+          "workflow_plan_id"
+        ],
+        "publish_to_ckan_by_default": false
+      },
+      "provenance": {
+        "reuse_key_components": [
+          "objective_type",
+          "objective_version",
+          "selection.gma_id",
+          "selection.aquifer",
+          "selection.metric",
+          "selection.target_year",
+          "targets.targets_uri",
+          "targets.record_selector",
+          "source_requirements.source_profile",
+          "source_requirements.known_source_hint.resource_id",
+          "evaluation.boundary_strategy.mode",
+          "evaluation.aggregation.operation"
+        ],
+        "record_in_plan": true,
+        "record_in_provenance_events": true
+      }
+    }
+  ]
+}

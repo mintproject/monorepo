@@ -1,0 +1,114 @@
+{
+  "_about": "svo-adapter tasks to RUN the SUBSIDE subsidence forecast end-to-end from upstream data. The forecast (run_spec ts-subside-forecast) has THREE SVO-typed inputs (water level = groundwater__hydraulic_head ft; storage coefficient = aquifer__storativity; land surface = land_surface__elevation ft) — all must be satisfied. planner.plan_model_run resolves each input from `sources` via its own conversion chain (head/elevation m->ft; storativity passes through) and converges them on the forecast run -> land_surface__subsidence + risk. standard_variable_uris are the catalog (w3id) ids the MINT model inputs carry, so contracts match the registered forecast. The run spec is also matched to the same StandardVariables MODFLOW produces, so a MODFLOW head output is a valid head source.",
+  "forecast_run_spec_id": "ts-subside-forecast",
+  "_svo": {
+    "head": "https://w3id.org/okn/i/mint/groundwater__hydraulic_head",
+    "storativity": "https://w3id.org/okn/i/mint/aquifer__storativity",
+    "land_surface": "https://w3id.org/okn/i/mint/land_surface__elevation",
+    "subsidence": "https://w3id.org/okn/i/mint/land_surface__subsidence"
+  },
+
+  "transform_specs": [
+    {
+      "id": "ts-head-m-to-ft-msl",
+      "name": "head-m-to-ft-msl",
+      "version": "1.0.0",
+      "description": "Convert a groundwater hydraulic-head raster from metres on the model datum to feet above mean sea level (m->ft + datum shift).",
+      "transform_type": "unit_convert",
+      "is_lossy": false,
+      "method": "tapis_function",
+      "tapis_app_id": null,
+      "stage": "head-convert",
+      "env_from_args": {"DATUM_OFFSET_M": "datum_offset_m"},
+      "contracts": [
+        {"id": "c-h2f-in",  "role": "input",
+         "standard_variable_uri": "https://w3id.org/okn/i/mint/groundwater__hydraulic_head", "unit": "m"},
+        {"id": "c-h2f-out", "role": "output",
+         "standard_variable_uri": "https://w3id.org/okn/i/mint/groundwater__hydraulic_head", "unit": "ft"}
+      ]
+    },
+    {
+      "id": "ts-elevation-m-to-ft",
+      "name": "elevation-m-to-ft",
+      "version": "1.0.0",
+      "description": "Convert a land-surface elevation raster (DEM) from metres to feet above mean sea level.",
+      "transform_type": "unit_convert",
+      "is_lossy": false,
+      "method": "tapis_function",
+      "tapis_app_id": null,
+      "stage": "elevation-convert",
+      "contracts": [
+        {"id": "c-e2f-in",  "role": "input",
+         "standard_variable_uri": "https://w3id.org/okn/i/mint/land_surface__elevation", "unit": "m"},
+        {"id": "c-e2f-out", "role": "output",
+         "standard_variable_uri": "https://w3id.org/okn/i/mint/land_surface__elevation", "unit": "ft"}
+      ]
+    },
+    {
+      "id": "ts-subside-forecast",
+      "name": "subside-forecast",
+      "version": "1.0.0",
+      "description": "Run the SUBSIDE subsidence screening model (analysis.subsidence.forecast.run_forecast / POST /api/subside/forecast). Requires ALL THREE inputs; produces an annual land-subsidence projection + 0-10 risk. In-process/API model (no Tapis job).",
+      "transform_type": "subsidence_forecast",
+      "is_lossy": true,
+      "method": "tapis_function",
+      "tapis_app_id": null,
+      "stage": "forecast",
+      "env_from_args": {"FORECAST_API": "forecast_api", "START_YEAR": "start_year", "END_YEAR": "end_year"},
+      "contracts": [
+        {"id": "c-fc-in-head", "role": "input",
+         "standard_variable_uri": "https://w3id.org/okn/i/mint/groundwater__hydraulic_head", "unit": "ft"},
+        {"id": "c-fc-in-stor", "role": "input",
+         "standard_variable_uri": "https://w3id.org/okn/i/mint/aquifer__storativity"},
+        {"id": "c-fc-in-ls", "role": "input",
+         "standard_variable_uri": "https://w3id.org/okn/i/mint/land_surface__elevation", "unit": "ft"},
+        {"id": "c-fc-out", "role": "output",
+         "standard_variable_uri": "https://w3id.org/okn/i/mint/land_surface__subsidence", "unit": "ft"}
+      ]
+    }
+  ],
+
+  "sources": [
+    {
+      "label": "MODFLOW simulated hydraulic head (GeoTIFF)",
+      "description": "Hydraulic-head raster exported from a MODFLOW run (modflow6/usg/2000/96 'heads' output), metres on the model datum.",
+      "resource_uri": "tapis://ls6/modflow/demo/heads.tif",
+      "format": "geotiff", "source_catalog": "tapis",
+      "variables": [{"standard_variable_uri": "https://w3id.org/okn/i/mint/groundwater__hydraulic_head",
+                     "local_name": "head", "unit": "m", "spatial_type": "grid", "crs": "EPSG:4326"},
+                    {"local_name": "layer_1"}]
+    },
+    {
+      "label": "Aquifer storativity (GeoTIFF)",
+      "description": "Aquifer storage coefficient raster (same property MODFLOW STO consumes), dimensionless.",
+      "resource_uri": "ckan://ckan.tacc.utexas.edu/dataset/aquifer-properties/resource/storativity",
+      "format": "geotiff", "source_catalog": "ckan",
+      "variables": [{"standard_variable_uri": "https://w3id.org/okn/i/mint/aquifer__storativity",
+                     "local_name": "storativity", "spatial_type": "grid", "crs": "EPSG:4326"},
+                    {"local_name": "layer_1"}]
+    },
+    {
+      "label": "Land surface elevation DEM (GeoTIFF)",
+      "description": "Digital elevation model of the land surface, metres above mean sea level.",
+      "resource_uri": "ckan://ckan.tacc.utexas.edu/dataset/dem/resource/land-surface",
+      "format": "geotiff", "source_catalog": "ckan",
+      "variables": [{"standard_variable_uri": "https://w3id.org/okn/i/mint/land_surface__elevation",
+                     "local_name": "elevation", "unit": "m", "spatial_type": "grid", "crs": "EPSG:4326"}]
+    }
+  ],
+
+  "source_data_object": {
+    "label": "MODFLOW simulated hydraulic head (GeoTIFF)",
+    "resource_uri": "tapis://ls6/modflow/demo/heads.tif",
+    "format": "geotiff", "source_catalog": "tapis",
+    "variables": [{"standard_variable_uri": "https://w3id.org/okn/i/mint/groundwater__hydraulic_head",
+                   "local_name": "head", "unit": "m", "spatial_type": "grid", "crs": "EPSG:4326"},
+                  {"local_name": "layer_1"}]
+  },
+  "target_model_input": {
+    "standard_variable_uri": "https://w3id.org/okn/i/mint/groundwater__hydraulic_head", "unit": "ft"
+  },
+  "target_model_input_subsidence": {
+    "standard_variable_uri": "https://w3id.org/okn/i/mint/land_surface__subsidence", "unit": "ft"
+  }
+}

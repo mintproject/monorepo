@@ -1,0 +1,25 @@
+{
+  "request": {
+    "data_object_id": "do-kaus-temp-2023",
+    "model_configuration_id": "https://w3id.org/okn/i/mint/hand-config",
+    "dataset_specification_id": "https://w3id.org/okn/i/mint/temperature-input-spec"
+  },
+  "response": {
+    "status": "transform_required",
+    "dimensions": [
+      {"dimension": "semantic", "compatible": true,  "detail": "SVO / standard variable match", "source": "...air__temperature", "target": "...air__temperature"},
+      {"dimension": "unit",     "compatible": false, "detail": "unit conversion required", "source": "degC", "target": "K"},
+      {"dimension": "spatial",  "compatible": false, "detail": "regrid / interpolation required", "source": "point/EPSG:4326/null", "target": "grid/EPSG:4326/conus-1km"},
+      {"dimension": "temporal", "compatible": false, "detail": "temporal aggregation/resampling required", "source": "PT1H", "target": "P1D"},
+      {"dimension": "format",   "compatible": false, "detail": "format conversion required", "source": "csv", "target": "netcdf"},
+      {"dimension": "accessibility", "compatible": true, "detail": "resource URI present", "source": "ckan://...", "target": null}
+    ],
+    "missing_requirements": [
+      "unit: unit conversion required",
+      "spatial: regrid / interpolation required",
+      "temporal: temporal aggregation/resampling required",
+      "format: format conversion required"
+    ],
+    "suggested_plan_id": null
+  }
+}
