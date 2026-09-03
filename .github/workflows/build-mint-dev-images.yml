@@ -4,7 +4,7 @@ name: MINT Dev Images
 # whole dev stack. Service-level workflows still run their deeper test suites.
 on:
   push:
-    branches: [develop]
+    branches: ['**']
   pull_request:
     branches: [develop, main]
   workflow_dispatch:
