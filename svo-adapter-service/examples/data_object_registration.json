@@ -1,0 +1,28 @@
+{
+  "label": "Austin air temperature, station KAUS",
+  "description": "Hourly point observations of 2m air temperature",
+  "resource_uri": "ckan://ckan.tacc.utexas.edu/dataset/kaus-temp/resource/abc123",
+  "filename": "kaus_temp_2023.csv",
+  "format": "csv",
+  "extension": ".csv",
+  "mime_type": "text/csv",
+  "checksum": "sha256:9f2c...",
+  "source_catalog": "ckan",
+  "variables": [
+    {
+      "standard_variable_uri": "https://www.geoscienceontology.org/svo/svl/variable/air__temperature",
+      "local_name": "temp_c",
+      "unit": "degC",
+      "dimensionality": "0D point",
+      "spatial_type": "point",
+      "crs": "EPSG:4326",
+      "temporal_resolution": "PT1H",
+      "schema_json": {
+        "columns": [
+          {"name": "timestamp", "type": "datetime"},
+          {"name": "temp_c", "type": "float"}
+        ]
+      }
+    }
+  ]
+}

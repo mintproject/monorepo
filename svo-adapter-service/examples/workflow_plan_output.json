@@ -1,0 +1,26 @@
+{
+  "status": "transform_required",
+  "plan_id": "wp-7f3a",
+  "plan_json": {
+    "steps": [
+      {"step": 0, "transform_spec_id": "ts-validate", "name": "schema-validate", "transform_type": "schema_validate", "is_lossy": false, "method": "tapis_function", "tapis_app_id": null, "depends_on": []},
+      {"step": 1, "transform_spec_id": "ts-c2k",      "name": "celsius-to-kelvin", "transform_type": "unit_convert", "is_lossy": false, "method": "tapis_function", "tapis_app_id": null, "depends_on": [0]},
+      {"step": 2, "transform_spec_id": "ts-agg",      "name": "hourly-to-daily", "transform_type": "temporal_aggregate", "is_lossy": true, "method": "tapis_job", "tapis_app_id": "temporal-agg-0.2.0", "depends_on": [1]},
+      {"step": 3, "transform_spec_id": "ts-regrid",   "name": "point-to-grid", "transform_type": "regrid", "is_lossy": true, "method": "tapis_job", "tapis_app_id": "regrid-idw-0.3.0", "depends_on": [2]},
+      {"step": 4, "transform_spec_id": "ts-nc",       "name": "csv-to-netcdf", "transform_type": "format_convert", "is_lossy": false, "method": "tapis_job", "tapis_app_id": "csv2nc-1.1.0", "depends_on": [3]}
+    ],
+    "lossy": true
+  },
+  "tapis_workflow_definition": {
+    "name": "svo-adapter-plan-wp-7f3a",
+    "execution_profile": {"max_retries": 1},
+    "tasks": [
+      {"id": "step-0-schema_validate", "type": "function", "runtime": "PYTHON", "description": "schema-validate"},
+      {"id": "step-1-unit_convert", "type": "function", "runtime": "PYTHON", "description": "celsius-to-kelvin", "depends_on": [{"id": "step-0-schema_validate"}]},
+      {"id": "step-2-temporal_aggregate", "type": "tapis_job", "tapis_job_def": {"appId": "temporal-agg-0.2.0", "appVersion": "$LATEST"}, "depends_on": [{"id": "step-1-unit_convert"}]},
+      {"id": "step-3-regrid", "type": "tapis_job", "tapis_job_def": {"appId": "regrid-idw-0.3.0", "appVersion": "$LATEST"}, "depends_on": [{"id": "step-2-temporal_aggregate"}]},
+      {"id": "step-4-format_convert", "type": "tapis_job", "tapis_job_def": {"appId": "csv2nc-1.1.0", "appVersion": "$LATEST"}, "depends_on": [{"id": "step-3-regrid"}]}
+    ],
+    "binds_model_input": "https://w3id.org/okn/i/mint/temperature-input-spec"
+  }
+}

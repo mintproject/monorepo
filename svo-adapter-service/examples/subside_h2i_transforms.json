@@ -1,0 +1,119 @@
+{
+  "_about": "SUBSIDE H2I OPERA DISP-S1 pipeline (Pipeline A) modeled for the svo-adapter. Like WERC, SUBSIDE runs it as ONE Tapis job (STAGE=run on subside-h2i-opera-analysis: discover + download + preview + zip; see subside/tapis/workflows/pipelines/h2i-opera.yaml). The adapter submits that single job (run-h2i) unchanged, then chains the load tail (publish + stac-publish). Reuses the SHARED publish / stac-publish pieces (same spec ids as the WERC fixture, so a combined registry holds one copy of each).",
+  "_svo": {
+    "displacement": "https://www.geoscienceontology.org/svo/svl/variable/land_surface__displacement"
+  },
+
+  "transform_specs": [
+    {
+      "id": "ts-subside-run-h2i",
+      "name": "run-h2i",
+      "version": "0.1.1",
+      "description": "The full SUBSIDE H2I analysis as ONE Tapis job (discover + download + crop + preview overlay + zip, via STAGE=run). The adapter submits this unchanged.",
+      "transform_type": "subside_h2i_run",
+      "is_lossy": false,
+      "method": "tapis_job",
+      "tapis_app_id": "subside-h2i-opera-analysis",
+      "app_version": "0.1.1",
+      "stage": "run",
+      "container_image": "ghcr.io/wmobley/subside-h2i-opera-analysis:main",
+      "env_from_args": {
+        "START_DATE": "start_date",
+        "END_DATE": "end_date",
+        "NUM_WORKERS": "num_workers",
+        "MIN_OVERLAP_PERCENT": "min_overlap_percent"
+      },
+      "file_inputs": [
+        {"name": "aoi-geojson", "from_arg": "aoi_geojson_uri", "target_path": "config/aoi.geojson"},
+        {"name": "earthdata-netrc", "from_arg": "earthdata_netrc_uri", "target_path": ".netrc"}
+      ],
+      "contracts": [
+        {
+          "id": "c-h2i-in", "role": "input",
+          "standard_variable_uri": "https://www.geoscienceontology.org/svo/svl/variable/land_surface__displacement",
+          "format": "aoi-query"
+        },
+        {
+          "id": "c-h2i-out", "role": "output",
+          "standard_variable_uri": "https://www.geoscienceontology.org/svo/svl/variable/land_surface__displacement",
+          "format": "displacement-product"
+        }
+      ]
+    },
+    {
+      "id": "ts-subside-publish",
+      "name": "publish",
+      "version": "0.1.1",
+      "description": "Emit the unified subside-run-manifest.json describing the run's products.",
+      "transform_type": "manifest_emit",
+      "is_lossy": false,
+      "method": "tapis_function",
+      "tapis_app_id": null,
+      "stage": "publish",
+      "contracts": [
+        {"id": "c-pub-in", "role": "input", "format": "displacement-product"},
+        {"id": "c-pub-out", "role": "output", "format": "displacement-product"}
+      ]
+    },
+    {
+      "id": "ts-subside-stac-publish",
+      "name": "stac-publish",
+      "version": "0.1.1",
+      "description": "Dual-write the product to the CKAN FileStore + the STAC API (stacmap.publish, the stac-platform backend) as one discoverable Item. Shared by BOTH SUBSIDE pipelines.",
+      "transform_type": "catalog_register",
+      "is_lossy": false,
+      "method": "tapis_function",
+      "tapis_app_id": null,
+      "stage": "stac-publish",
+      "env_from_args": {
+        "STAC_URL": "stac_url",
+        "STAC_COLLECTION": "stac_collection",
+        "CKAN_URL": "ckan_url",
+        "CKAN_TOKEN": "ckan_token"
+      },
+      "contracts": [
+        {"id": "c-stac-in-cog", "role": "input", "format": "geotiff"},
+        {"id": "c-stac-in-nc", "role": "input", "format": "netcdf"},
+        {"id": "c-stac-in-prod", "role": "input", "format": "displacement-product"},
+        {"id": "c-stac-out", "role": "output", "catalog": "ckan+stac"}
+      ]
+    }
+  ],
+
+  "source_data_object": {
+    "label": "Houston AOI displacement request (AOI + date range), 2024",
+    "description": "An area-of-interest + date range, fed into the single H2I job.",
+    "resource_uri": "tapis://ls6/subside/demo/houston-2024/aoi.geojson",
+    "format": "aoi-query",
+    "source_catalog": "request",
+    "variables": [
+      {
+        "standard_variable_uri": "https://www.geoscienceontology.org/svo/svl/variable/land_surface__displacement",
+        "local_name": "displacement",
+        "unit": "m",
+        "spatial_type": "grid",
+        "crs": "EPSG:4326",
+        "temporal_resolution": "acquisition"
+      }
+    ]
+  },
+
+  "target_model_input": {
+    "_about": "A downloaded, previewable displacement product — exactly what the single H2I job produces. Plan = [run-h2i]: one job, done.",
+    "standard_variable_uri": "https://www.geoscienceontology.org/svo/svl/variable/land_surface__displacement",
+    "unit": "m",
+    "format": "displacement-product",
+    "spatial_type": "grid",
+    "crs": "EPSG:4326"
+  },
+
+  "target_model_input_cataloged": {
+    "_about": "Same product, made DISCOVERABLE in CKAN + STAC. Plan = [run-h2i, stac-publish]: one job, then the catalog load on the end.",
+    "standard_variable_uri": "https://www.geoscienceontology.org/svo/svl/variable/land_surface__displacement",
+    "unit": "m",
+    "format": "displacement-product",
+    "spatial_type": "grid",
+    "crs": "EPSG:4326",
+    "catalog": "ckan+stac"
+  }
+}
