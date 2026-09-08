@@ -52,7 +52,11 @@ const swaggerOptions = {
         openapi: "3.0.0",
         info: {
             title: "Mint Ensemble Manager API",
-            version: "1.0.0"
+            version: "1.0.0",
+            license: {
+                name: "MIT",
+                url: "https://opensource.org/license/mit"
+            }
         },
         servers: CONFIG_SERVERS,
         components: apiDocComponents.components

@@ -150,6 +150,16 @@ async function searchPackagesPage(opts: {
   return { results: result.results ?? [], count: result.count ?? 0 };
 }
 
+/**
+ * How many packages the catalog holds, without fetching any of them.
+ *
+ * `rows: 0` makes CKAN skip the result set and return only its total.
+ */
+export async function countPackages(opts: { signal?: AbortSignal } = {}): Promise<number> {
+  const { count } = await searchPackagesPage({ rows: 0, ...opts });
+  return count;
+}
+
 /** CKAN's default `ckan.search.rows_max`; asking for more is silently clamped. */
 const CKAN_MAX_ROWS = 1000;
 

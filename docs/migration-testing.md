@@ -30,12 +30,14 @@ kubectl delete statefulset mint-hasura-db -n $NAMESPACE
 # Delete the PVC to wipe all data
 kubectl delete pvc data-mint-hasura-db-0 -n $NAMESPACE
 
-# Recreate the statefulset and PVC from helm
-# NOTE: do NOT use --reuse-values — local values.yaml has changed
-# (data-catalog disabled, tapis_webhook_base_url, dynamo-values.yaml).
-# Pass the values file(s) you actually want applied:
-helm upgrade mint ./helm-charts/charts/mint -n $NAMESPACE \
-  -f ./helm-charts/charts/mint/values.yaml
+# Recreate the statefulset and PVC from helm.
+# The MINT chart is not in this repository. Install it from its Helm repository.
+helm repo add mintproject https://mintproject.github.io/mint --force-update
+helm repo update mintproject
+
+# NOTE: do NOT use --reuse-values. Without it the chart defaults apply, which is
+# what you want here. Add -f only for values you deliberately override.
+helm upgrade mint mintproject/MINT -n $NAMESPACE --version 9.0.0-beta.10
 
 # Wait for the new database pod to be ready
 kubectl rollout status statefulset/mint-hasura-db -n $NAMESPACE --timeout=120s

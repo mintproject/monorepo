@@ -27,7 +27,7 @@ export function StepShell({
   onBack,
 }: StepShellProps) {
   return (
-    <div className="flex h-full flex-col" data-testid="step-shell">
+    <div className="flex min-h-full flex-col" data-testid="step-shell">
       <div className="mb-4">
         <h2 className="text-lg font-semibold">{title}</h2>
         {description && <p className="mt-1 text-sm text-gray-600">{description}</p>}
@@ -35,7 +35,7 @@ export function StepShell({
 
       <div className="flex-1">{children}</div>
 
-      <div className="mt-6 flex items-center gap-3 border-t pt-4">
+      <div className="sticky bottom-0 z-10 mt-6 flex items-center gap-3 border-t bg-white pb-2 pt-4">
         {onBack && (
           <Button type="button" variant="outline" data-testid="step-back" onClick={onBack}>
             Back
