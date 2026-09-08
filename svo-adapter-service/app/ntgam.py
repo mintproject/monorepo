@@ -50,7 +50,7 @@ _TEMPORAL_TO_SP = {"predevelopment": 52, "base": 92, "current": 132}
 _SP_TO_TEMPORAL = {v: k for k, v in _TEMPORAL_TO_SP.items()}
 _YEAR_TO_SP = {1939: 52, 1979: 92, 2019: 132}
 _HEAD_RASTER_FORMATS = {"GEOTIFF", "GTIFF", "COG", "TIF", "TIFF"}
-_REPO = Path(__file__).resolve().parents[3]
+from .config import REPO_ROOT as _REPO
 _RAW_SOURCE_CACHE = Path(tempfile.gettempdir()) / "ntgam-source-cache"
 _MATERIALIZATION_CACHE = Path(tempfile.gettempdir()) / "ntgam-materialization-cache"
 _MATERIALIZATION_LOCK = threading.RLock()
