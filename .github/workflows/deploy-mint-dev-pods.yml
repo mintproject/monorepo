@@ -80,6 +80,7 @@ jobs:
           python deploy/tapis/register_mint_stack.py
           --image-tag "${{ steps.deploy.outputs.tag }}"
           --pods "${{ steps.deploy.outputs.pods }}"
+          --owners "wmobley,mosoriob"
           --restart
 
       - name: Summary
