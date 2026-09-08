@@ -152,11 +152,11 @@ def _ensemble_config(urls: dict[str, str]) -> str:
             "basePath": _env("TAPIS_BASE_URL", "https://portals.tapis.io"),
         },
         "auth_server": _env("AUTH_SERVER", "https://portals.tapis.io"),
-        "auth_client_id": _env("MINTDEV_AUTH_CLIENT_ID", "mintdev-ui"),
+        "auth_client_id": _env("MINTDEV_AUTH_CLIENT_ID", "mint_dev"),
         "visualization_url": "",
         "ingestion_api": "",
         "auth": {
-            "client_id": _env("MINTDEV_AUTH_CLIENT_ID", "mintdev-ui"),
+            "client_id": _env("MINTDEV_AUTH_CLIENT_ID", "mint_dev"),
             "authorization_url": _env(
                 "MINTDEV_AUTHORIZATION_URL",
                 "https://portals.tapis.io/v3/oauth2/authorize",
@@ -183,7 +183,7 @@ def build_specs(owner: str, tag: str, base_url: str) -> dict[str, dict[str, Any]
     specs: dict[str, dict[str, Any]] = {
         "postgres": {
             "pod_id": PODS["postgres"],
-            "image": "postgres:16-alpine",
+            "image": "postgres:16",
             "description": "MINT dev PostgreSQL database",
             "networking": {"default": {"protocol": "tcp", "port": 5432}},
             "environment_variables": {
@@ -212,6 +212,10 @@ def build_specs(owner: str, tag: str, base_url: str) -> dict[str, dict[str, Any]
                 "HASURA_GRAPHQL_ENABLE_CONSOLE": _env("HASURA_GRAPHQL_ENABLE_CONSOLE", "true"),
                 "HASURA_GRAPHQL_DEV_MODE": _env("HASURA_GRAPHQL_DEV_MODE", "false"),
                 "HASURA_GRAPHQL_UNAUTHORIZED_ROLE": _env("HASURA_GRAPHQL_UNAUTHORIZED_ROLE", "anonymous"),
+                "HASURA_GRAPHQL_CORS_ORIGINS": _env(
+                    "HASURA_GRAPHQL_CORS_ORIGINS",
+                    "https://mintdevui.pods.portals.tapis.io",
+                ),
                 **_hasura_auth_env(),
             },
             "time_to_stop_default": -1,
@@ -282,7 +286,7 @@ def build_specs(owner: str, tag: str, base_url: str) -> dict[str, dict[str, Any]
                 "HASURA_ENDPOINT": graphql_endpoint,
                 "AUTH_PROVIDER": _env("AUTH_PROVIDER", "tapis"),
                 "AUTH_SERVER": _env("AUTH_SERVER", "https://portals.tapis.io"),
-                "AUTH_CLIENT_ID": _env("MINTDEV_AUTH_CLIENT_ID", "mintdev-ui"),
+                "AUTH_CLIENT_ID": _env("MINTDEV_AUTH_CLIENT_ID", "mint_dev"),
                 "AUTH_CALLBACK_ORIGIN": urls["ui"],
                 "ENSEMBLE_MANAGER_API": urls["ensemble"],
                 "DATA_CATALOG_API": _env("DATA_CATALOG_API", "https://ckan.tacc.utexas.edu"),
