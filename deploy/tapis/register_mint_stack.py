@@ -111,7 +111,7 @@ def _database_url(base_url: str) -> str:
     host = f"{PODS['postgres']}.pods.{_pods_domain(base_url)}"
     return (
         f"postgres://{_postgres_user()}:{_postgres_password()}@"
-        f"{host}:443/{_postgres_db()}?sslmode=require&sslnegotiation=direct"
+        f"{host}:443/{_postgres_db()}?sslmode=require"
     )
 
 
@@ -183,7 +183,7 @@ def build_specs(owner: str, tag: str, base_url: str) -> dict[str, dict[str, Any]
     specs: dict[str, dict[str, Any]] = {
         "postgres": {
             "pod_id": PODS["postgres"],
-            "pod_template": "template/postgres",
+            "image": "postgres:16-alpine",
             "description": "MINT dev PostgreSQL database",
             "networking": {"default": {"protocol": "tcp", "port": 5432}},
             "environment_variables": {
@@ -195,7 +195,7 @@ def build_specs(owner: str, tag: str, base_url: str) -> dict[str, dict[str, Any]
         },
         "redis": {
             "pod_id": PODS["redis"],
-            "pod_template": "template/redis",
+            "image": "docker.io/redis:7-alpine",
             "description": "MINT dev Redis queue backend",
             "networking": {"default": {"protocol": "tcp", "port": 6379}},
             "time_to_stop_default": -1,
@@ -311,7 +311,17 @@ def validate_live_requirements(selected: list[str]) -> None:
         raise SystemExit(2)
 
 
-def upsert_pod(t: Any, spec: dict[str, Any], *, recreate: bool, start: bool, restart: bool) -> None:
+def set_pod_owners(t: Any, pod_id: str, owners: list[str]) -> None:
+    """Add owners to a pod with ADMIN permissions."""
+    for owner in owners:
+        try:
+            t.pods.set_pod_permission(pod_id=pod_id, user=owner, level="ADMIN")
+            print(f"  [{pod_id}] added owner: {owner}")
+        except Exception as exc:  # noqa: BLE001
+            print(f"  [{pod_id}] failed to add owner {owner}: {exc}", file=sys.stderr)
+
+
+def upsert_pod(t: Any, spec: dict[str, Any], *, recreate: bool, start: bool, restart: bool, owners: list[str] | None = None) -> None:
     pid = spec["pod_id"]
     exists = True
     try:
@@ -334,10 +344,16 @@ def upsert_pod(t: Any, spec: dict[str, Any], *, recreate: bool, start: bool, res
                 print(f"  [{pid}] restart requested")
             except Exception as exc:  # noqa: BLE001
                 print(f"  [{pid}] restart failed: {exc}", file=sys.stderr)
+        # Set owners on existing pods too
+        if owners:
+            set_pod_owners(t, pid, owners)
         return
 
     print(f"  [{pid}] creating…")
     t.pods.create_pod(**spec)
+    # Set owners immediately after creation
+    if owners:
+        set_pod_owners(t, pid, owners)
     if not start:
         return
     try:
@@ -360,6 +376,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--owner", default=_env("GHCR_OWNER", "mintproject"))
     parser.add_argument("--image-tag", default=_env("IMAGE_TAG", "latest"))
     parser.add_argument("--pods", default="all", help="all or comma-separated: postgres,redis,graphql,api,ensemble,svo,ui")
+    parser.add_argument("--owners", default="wmobley,mosoriob", help="comma-separated list of pod owners (ADMIN permission)")
     parser.add_argument("--recreate", action="store_true")
     parser.add_argument("--restart", action="store_true")
     parser.add_argument("--no-start", action="store_true")
@@ -392,8 +409,11 @@ def main(argv: list[str] | None = None) -> int:
     t = Tapis(base_url=args.base_url.rstrip("/"), username=username, password=password)
     t.get_tokens()
 
+    # Parse owners list
+    owners = [o.strip() for o in args.owners.split(",") if o.strip()] if args.owners else []
+
     for key in selected:
-        upsert_pod(t, specs[key], recreate=args.recreate, start=not args.no_start, restart=args.restart)
+        upsert_pod(t, specs[key], recreate=args.recreate, start=not args.no_start, restart=args.restart, owners=owners)
 
     print("\nMINT dev stack updated:")
     for key in ORDER:

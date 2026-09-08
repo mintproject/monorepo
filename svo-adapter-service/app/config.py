@@ -11,7 +11,11 @@ from pathlib import Path
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # …/modflow-suite (app/ -> svo-adapter-service/ -> monorepo/ -> modflow-suite/)
-_REPO = Path(__file__).resolve().parents[3]
+# In container, file is at /app/app/config.py, so parents[3] would be IndexError
+try:
+    _REPO = Path(__file__).resolve().parents[3]
+except IndexError:
+    _REPO = Path("/app")  # Fallback for container environment
 
 
 class Settings(BaseSettings):
