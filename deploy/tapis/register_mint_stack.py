@@ -269,7 +269,14 @@ def build_specs(owner: str, tag: str, base_url: str) -> dict[str, dict[str, Any]
             "pod_id": PODS["ui"],
             "image": f"ghcr.io/{owner}/ui:{tag}",
             "description": "MINT dev React UI",
-            "networking": {"default": {"protocol": "http", "port": 80}},
+            "networking": {
+                "default": {
+                    "protocol": "http",
+                    "port": 80,
+                    "tapis_auth": True,
+                    "tapis_auth_return_path": "/",
+                }
+            },
             "resources": {"cpu_request": 250, "cpu_limit": 1000, "mem_request": 256, "mem_limit": 512},
             "environment_variables": {
                 "HASURA_ENDPOINT": graphql_endpoint,
