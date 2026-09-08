@@ -111,7 +111,7 @@ def _database_url(base_url: str) -> str:
     host = f"{PODS['postgres']}.pods.{_pods_domain(base_url)}"
     return (
         f"postgres://{_postgres_user()}:{_postgres_password()}@"
-        f"{host}:443/{_postgres_db()}?sslmode=require&sslnegotiation=direct"
+        f"{host}:443/{_postgres_db()}?sslmode=require"
     )
 
 
@@ -183,7 +183,7 @@ def build_specs(owner: str, tag: str, base_url: str) -> dict[str, dict[str, Any]
     specs: dict[str, dict[str, Any]] = {
         "postgres": {
             "pod_id": PODS["postgres"],
-            "pod_template": "template/postgres",
+            "image": "postgres:16-alpine",
             "description": "MINT dev PostgreSQL database",
             "networking": {"default": {"protocol": "tcp", "port": 5432}},
             "environment_variables": {
@@ -195,7 +195,7 @@ def build_specs(owner: str, tag: str, base_url: str) -> dict[str, dict[str, Any]
         },
         "redis": {
             "pod_id": PODS["redis"],
-            "pod_template": "template/redis",
+            "image": "docker.io/redis:7-alpine",
             "description": "MINT dev Redis queue backend",
             "networking": {"default": {"protocol": "tcp", "port": 6379}},
             "time_to_stop_default": -1,
