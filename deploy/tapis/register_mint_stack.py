@@ -279,6 +279,11 @@ def build_specs(owner: str, tag: str, base_url: str) -> dict[str, dict[str, Any]
                     "port": 80,
                     "tapis_auth": True,
                     "tapis_auth_return_path": "/",
+                    "tapis_auth_allowed_users": [
+                        user.strip()
+                        for user in _env("MINTDEV_UI_AUTH_ALLOWED_USERS", "wmobley,mosoriob").split(",")
+                        if user.strip()
+                    ],
                 }
             },
             "resources": {"cpu_request": 250, "cpu_limit": 1000, "mem_request": 256, "mem_limit": 512},
