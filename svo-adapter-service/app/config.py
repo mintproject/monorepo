@@ -17,6 +17,9 @@ try:
 except IndexError:
     _REPO = Path("/app")  # Fallback for container environment
 
+# Canonical monorepo root used by sibling modules (ntgam, qaqc, etc.)
+REPO_ROOT = _REPO
+
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="SVO_ADAPTER_", env_file=".env")

@@ -17,7 +17,7 @@ import httpx
 
 from .config import settings
 
-_REPO = Path(__file__).resolve().parents[3]
+from .config import REPO_ROOT as _REPO
 _DEFAULT_CONFIG = _REPO / "ntgam" / "ntgam-v301.json"
 _MINT_NS = "https://w3id.org/okn/i/mint/"
 
