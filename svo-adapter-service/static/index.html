@@ -21,10 +21,42 @@
 <nav>
   <button class="tc active" data-case="dfc">DFC Evaluation</button>
   <button class="tc" data-case="forecast">NTGAM Subsidence Forecast</button>
+  <button class="tc" data-case="pieces">ETL Pieces</button>
   <span id="statusLine"></span>
 </nav>
 
 <main>
+  <section id="piecesSection" style="display:none">
+    <h3>ETL pieces <span class="desc">— shared SVO transform registry</span></h3>
+    <p class="muted">Register a reusable Python function or a Tapis app-backed piece. Python runs only as an inline Tapis/OWE function task when a workflow is generated.</p>
+    <div class="dfc-grid" style="margin-top:14px">
+      <label>Stable ID <input id="pieceId" value="piece-example" placeholder="head-m-to-ft"></label>
+      <label>Name <input id="pieceName" value="example-transform" placeholder="Head metres to feet"></label>
+      <label>Version <input id="pieceVersion" value="1.0.0"></label>
+      <label>Transform type <input id="pieceType" value="custom_python" placeholder="unit_convert"></label>
+      <label>Description <input id="pieceDescription" value="Small Python SVO transform"></label>
+      <label>Runtime
+        <select id="pieceRuntime"><option value="tapis_function">Small Python function</option><option value="tapis_app">Tapis app/job</option></select>
+      </label>
+      <label>Entrypoint <input id="pieceEntrypoint" value="transform"></label>
+      <label>Tapis app ID <input id="pieceAppId" placeholder="Required for app/job runtime"></label>
+      <label>Tapis app version <input id="pieceAppVersion" placeholder="1.0.0"></label>
+      <label>Container image <input id="pieceContainer" placeholder="optional"></label>
+    </div>
+    <label style="display:flex;flex-direction:column;gap:5px;margin-top:12px;color:var(--mut);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em">Python source
+      <textarea id="pieceSource" rows="10" spellcheck="false">def transform(input_path, output_path):
+    return output_path</textarea>
+    </label>
+    <div style="margin-top:14px"><h4>Input contracts</h4><div id="pieceInputs"></div><button id="addPieceInputBtn" class="ghost" type="button">+ Add input</button></div>
+    <div style="margin-top:14px"><h4>Output contracts</h4><div id="pieceOutputs"></div><button id="addPieceOutputBtn" class="ghost" type="button">+ Add output</button></div>
+    <details style="margin-top:14px"><summary>Advanced runtime JSON</summary><textarea id="pieceAdvanced" rows="5" placeholder='{"env_from_args": {}, "file_inputs": [], "parameters_schema_json": {}}'></textarea></details>
+    <div class="dfc-actions">
+      <button id="registerPieceBtn">Register ETL piece</button>
+      <button id="refreshPiecesBtn" class="ghost">Refresh registry</button>
+      <span id="pieceMsg" class="muted"></span>
+    </div>
+    <div id="piecesList" style="margin-top:16px"><p class="muted">Load the registry to view pieces.</p></div>
+  </section>
   <section id="dfcQuestionSection" class="question-panel">
     <div class="question-shell">
       <div class="question-main">

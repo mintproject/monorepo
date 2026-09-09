@@ -221,7 +221,9 @@ describe('ConfigurationForm (edit mode)', () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByPlaceholderText('Configuration name')).toBeInTheDocument();
+      expect(screen.getByPlaceholderText('Configuration name')).toHaveValue(
+        'Default Configuration',
+      );
     });
 
     const nameInput = screen.getByPlaceholderText('Configuration name');
@@ -231,17 +233,17 @@ describe('ConfigurationForm (edit mode)', () => {
     const submitButton = screen.getByRole('button', { name: /save changes/i });
     await userEvent.click(submitButton);
 
-    // react-hook-form + zodResolver validation is async; under CI load (coverage +
-    // parallel run) the error can take longer than the 1000ms default to render.
+    // react-hook-form + zodResolver validation is async; under CI coverage load
+    // the error can take several seconds to render.
     await waitFor(
       () => {
         expect(screen.getByText('Configuration name is required')).toBeInTheDocument();
       },
-      { timeout: 4000 },
+      { timeout: 10000 },
     );
-    // testTimeout must exceed the inner waitFor; the userEvent interactions above
-    // plus the 4s wait can otherwise overrun the 5s default under CI load.
-  }, 15000);
+    // Keep the test timeout above the waitFor timeout so CI load does not abort
+    // the test while the validation state is still settling.
+  }, 30000);
 
   it('calls onCancel when Cancel button is clicked', async () => {
     const onCancel = vi.fn();

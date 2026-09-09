@@ -35,11 +35,14 @@ services:
   # Silicon. Without it the pull fails with "no matching manifest".
   # ---------------------------------------------------------------------------
   postgres:
-    image: postgis/postgis:14-3.3
+    build:
+      context: ./docker/postgres-pgvector
+    image: mint/postgres-pgvector:dev
     platform: linux/amd64
     environment: *postgres-env
-    ports:
-      - "5432:5432"
+    # Postgres is consumed by the Compose services over the internal network;
+    # no host mapping is required.
+    ports: []
     volumes:
       - postgres-data:/var/lib/postgresql/data
     healthcheck:
@@ -103,10 +106,12 @@ services:
       HASURA_GRAPHQL_AUTH_HOOK_MODE: POST
       HASURA_GRAPHQL_ENABLE_CONSOLE: "true"
       HASURA_GRAPHQL_DEV_MODE: "true"
+      SVO_SEMANTIC_SEARCH_WEBHOOK_URL: http://semantic-search:8091/events/catalog
       HASURA_GRAPHQL_CORS_DOMAIN: "http://localhost:3000, http://localhost:3001, http://localhost:3002"
       HASURA_GRAPHQL_ENABLED_LOG_TYPES: "startup, http-log, webhook-log, websocket-log"
+    # Expose Hasura for the local React UI; services still use the internal URL.
     ports:
-      - "8080:8080"
+      - "8082:8080"
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS http://localhost:8080/healthz || exit 1"]
       interval: 5s
@@ -267,8 +272,11 @@ services:
   # ---------------------------------------------------------------------------
   redis:
     image: redis:7-alpine
+    platform: linux/arm64
     ports:
-      - "6379:6379"
+      # Keep the container port at 6379; 6380 avoids colliding with a local
+      # Redis/Homebrew service that may already be running on the host.
+      - "6380:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
@@ -348,9 +356,10 @@ services:
     profiles:
       - ui
     environment:
-      HASURA_ENDPOINT: ${HASURA_ENDPOINT:-http://localhost:8080/v1/graphql}
+      HASURA_ENDPOINT: ${HASURA_ENDPOINT:-http://localhost:8082/v1/graphql}
       AUTH_SERVER: ${AUTH_SERVER:-https://portals.tapis.io}
-      AUTH_CLIENT_ID: ${AUTH_CLIENT_ID:-mint-localhost-3000}
+      AUTH_CLIENT_ID: ${AUTH_CLIENT_ID:-mint-ui-dev-wm}
+      AUTH_CALLBACK_ORIGIN: ${AUTH_CALLBACK_ORIGIN:-http://localhost:3000}
       AUTH_PROVIDER: ${AUTH_PROVIDER:-tapis}
       ENSEMBLE_MANAGER_API: ${ENSEMBLE_MANAGER_API:-http://localhost:3001/v1}
       EXECUTION_ENGINE: ${EXECUTION_ENGINE:-tapis}
@@ -370,6 +379,50 @@ services:
       timeout: 5s
       retries: 30
       start_period: 10s
+
+  # ---------------------------------------------------------------------------
+  # SVO Adapter. It shares Hasura with the catalog and exposes semantic planning
+  # plus the bundled adapter UI on the host for local development.
+  # ---------------------------------------------------------------------------
+  svo-adapter:
+    build:
+      context: ./svo-adapter-service
+    image: mint/svo-adapter:dev
+    depends_on:
+      hasura:
+        condition: service_healthy
+      hasura-init:
+        condition: service_completed_successfully
+    environment:
+      SVO_ADAPTER_HASURA_GRAPHQL_URL: http://hasura:8080/v1/graphql
+      SVO_ADAPTER_HASURA_ADMIN_SECRET: ${HASURA_GRAPHQL_ADMIN_SECRET:-mint}
+    ports:
+      - "8090:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
+  semantic-search:
+    build:
+      context: ./semantic-search-service
+    image: mint/semantic-search:dev
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://mint:mint@postgres:5432/mint
+      SVO_EMBEDDING_REFRESH_SECONDS: ${SVO_EMBEDDING_REFRESH_SECONDS:-60}
+    ports:
+      - "8091:8091"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8091/health')"]
+      interval: 15s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
 
 volumes:
   postgres-data:

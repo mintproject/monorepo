@@ -378,6 +378,12 @@ def build_plan_json(path: list[dict[str, Any]]) -> dict[str, Any]:
                 val = hints.get(key)
             if val is not None:
                 step[key] = val
+        metadata = (spec.get("parameters_schema_json") or {}).get("metadata") or {}
+        source = metadata.get("source")
+        if isinstance(source, dict) and isinstance(source.get("code"), str):
+            step["python_source"] = source["code"]
+            if source.get("entrypoint"):
+                step["python_entrypoint"] = source["entrypoint"]
         steps.append(step)
     return {"steps": steps, "lossy": any(s["is_lossy"] for s in steps)}
 
@@ -404,6 +410,12 @@ def _step_from_spec(idx: int, spec: dict[str, Any], depends_on: list[int]) -> di
         val = spec.get(key) if spec.get(key) is not None else hints.get(key)
         if val is not None:
             step[key] = val
+    metadata = (spec.get("parameters_schema_json") or {}).get("metadata") or {}
+    source = metadata.get("source")
+    if isinstance(source, dict) and isinstance(source.get("code"), str):
+        step["python_source"] = source["code"]
+        if source.get("entrypoint"):
+            step["python_entrypoint"] = source["entrypoint"]
     return step
 
 

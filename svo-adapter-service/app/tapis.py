@@ -140,8 +140,10 @@ def generate_tapis_workflow(
                 "runtime": "python:3.11",
                 "installer": "pip",
                 "description": s.get("name"),
-                "code": _task_code.get_code(transform_type),
+                "code": s.get("python_source") or _task_code.get_code(transform_type),
             }
+            if s.get("python_entrypoint"):
+                task["entrypoint"] = s["python_entrypoint"]
             inputs = {
                 key: {"type": "string", "value_from": {"args": arg}}
                 for key, arg in (s.get("env_from_args") or {}).items()

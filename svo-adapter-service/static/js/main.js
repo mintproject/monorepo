@@ -266,6 +266,7 @@ async function loadCase(key) {
   if ($('dfcQuestionSection')) $('dfcQuestionSection').style.display = key === 'dfc' ? '' : 'none';
   if ($('dfcAnswerSection')) $('dfcAnswerSection').style.display = key === 'dfc' ? '' : 'none';
   if ($('setupSection')) $('setupSection').style.display = key === 'dfc' ? '' : 'none';
+  if ($('piecesSection')) $('piecesSection').style.display = key === 'pieces' ? '' : 'none';
   if ($('forecastRunControls')) $('forecastRunControls').style.display = key === 'forecast' ? 'flex' : 'none';
   if ($('dfcRunControls')) $('dfcRunControls').style.display = key === 'dfc' ? '' : 'none';
   if ($('dfcControls')) $('dfcControls').style.display = 'none';
@@ -303,6 +304,8 @@ async function loadCase(key) {
       STATE.PLAN_FORECAST = await api('POST', '/forecast/plan', forecastRequestBody());
       if ($('runLocalBtn')) $('runLocalBtn').style.display = '';
       renderForecastGraph(STATE.PLAN_FORECAST);
+    } else if (key === 'pieces') {
+      renderPieces(specs);
     } else {
       throw new Error(`unknown case: ${key}`);
     }
@@ -312,6 +315,93 @@ async function loadCase(key) {
     $('statusLine').innerHTML = `<span class="err">${esc(e.message)}</span>`;
     $('graphOut').innerHTML = `<p class="err">${esc(e.message)}</p>`;
   }
+}
+
+function renderPieces(specs) {
+  const list = $('piecesList');
+  if (!list) return;
+  if (!specs.length) { list.innerHTML = '<p class="muted">No ETL pieces registered.</p>'; return; }
+  list.innerHTML = specs.map(s => {
+    const params = s.parameters_schema_json || {};
+    const meta = params.metadata || {};
+    const runtime = meta.runtime || {};
+    const hasSource = Boolean(meta.source?.code);
+    const kind = runtime.kind || (s.tapis_app_id ? 'tapis_app' : 'built-in function');
+    const contracts = (s.contracts || []).map(c => `${c.role}: ${humanSvo(c.standard_variable_uri || 'unspecified')} ${c.unit || ''} ${c.format || ''}`).join('<br>');
+    return `<div class="context-card" style="margin-bottom:8px"><b>${esc(s.name || s.id)}</b> <span class="muted">${esc(s.version || '')}</span><br><span class="muted">${esc(kind)}${hasSource ? ' · Python source registered' : ''}</span><div style="margin-top:6px;font-size:12px">${contracts || 'No contracts'}</div><button class="ghost test-piece-btn" data-piece-id="${esc(s.id)}" type="button" style="margin-top:8px">Generate test workflow</button><pre id="piece-test-${esc(s.id)}" style="display:none;margin-top:8px;max-height:240px;overflow:auto"></pre></div>`;
+  }).join('');
+}
+
+async function testPiece(specId, button) {
+  const out = document.getElementById(`piece-test-${specId}`);
+  try { button.disabled = true; button.textContent = 'Generating…'; const result = await api('POST', `/transform-specs/${encodeURIComponent(specId)}/test`, { dry_run: true }, { auth: true }); out.style.display = ''; out.textContent = JSON.stringify(result, null, 2); }
+  catch (e) { out.style.display = ''; out.textContent = e.message; }
+  finally { button.disabled = false; button.textContent = 'Generate test workflow'; }
+}
+
+function contractRow(role, values = {}) {
+  const id = `piece-${role}-${Math.random().toString(16).slice(2)}`;
+  return `<div class="context-card piece-contract" data-role="${role}" style="margin:8px 0"><div class="dfc-grid">
+    <label>SVO URI or short name <input data-field="standard_variable_uri" value="${esc(values.standard_variable_uri || '')}" placeholder="groundwater__hydraulic_head"></label>
+    <label>Unit <input data-field="unit" value="${esc(values.unit || '')}" placeholder="m"></label>
+    <label>Format <input data-field="format" value="${esc(values.format || '')}" placeholder="csv"></label>
+    <label>Dimensionality <input data-field="dimensionality" value="${esc(values.dimensionality || '')}" placeholder="scalar"></label>
+    <label>Spatial type <input data-field="spatial_type" value="${esc(values.spatial_type || '')}" placeholder="point/grid"></label>
+    <label>CRS <input data-field="crs_requirement" value="${esc(values.crs_requirement || '')}" placeholder="EPSG:4326"></label>
+    <label>Temporal resolution <input data-field="temporal_resolution" value="${esc(values.temporal_resolution || '')}" placeholder="daily"></label>
+  </div><button class="ghost remove-piece-contract" type="button" data-target="${id}">Remove ${role}</button></div>`.replace('class="context-card piece-contract"', `id="${id}" class="context-card piece-contract"`);
+}
+
+function addPieceContract(role, values) {
+  const target = role === 'input' ? $('pieceInputs') : $('pieceOutputs');
+  if (target) target.insertAdjacentHTML('beforeend', contractRow(role, values));
+}
+
+function collectPieceContracts() {
+  return [...document.querySelectorAll('.piece-contract')].map(row => {
+    const out = { role: row.dataset.role };
+    row.querySelectorAll('[data-field]').forEach(el => { if (el.value.trim()) out[el.dataset.field] = el.value.trim(); });
+    return out;
+  });
+}
+
+function piecePayload() {
+  const runtime = $('pieceRuntime').value;
+  const source = $('pieceSource').value;
+  const advanced = $('pieceAdvanced').value.trim() ? JSON.parse($('pieceAdvanced').value) : {};
+  const payload = {
+    id: $('pieceId').value.trim() || undefined, name: $('pieceName').value.trim(), version: $('pieceVersion').value.trim() || undefined,
+    description: $('pieceDescription').value.trim() || undefined, transform_type: $('pieceType').value.trim() || 'custom_python',
+    method: runtime, tapis_app_id: runtime === 'tapis_app' ? ($('pieceAppId').value.trim() || undefined) : undefined,
+    app_version: runtime === 'tapis_app' ? ($('pieceAppVersion').value.trim() || undefined) : undefined,
+    container_image: $('pieceContainer').value.trim() || undefined,
+    metadata: { ...(advanced.metadata || {}), runtime: { kind: runtime, language: 'python', entrypoint: $('pieceEntrypoint').value.trim() || 'transform' }, source: { language: 'python', entrypoint: $('pieceEntrypoint').value.trim() || 'transform', code: source } },
+    contracts: collectPieceContracts(),
+    parameters_schema_json: advanced.parameters_schema_json,
+    env_from_args: advanced.env_from_args,
+    file_inputs: advanced.file_inputs,
+  };
+  return JSON.parse(JSON.stringify(payload));
+}
+
+async function loadPieces() {
+  const msg = $('pieceMsg');
+  try { const specs = await api('GET', '/transform-specs'); renderPieces(specs); if (msg) msg.textContent = `${specs.length} piece${specs.length === 1 ? '' : 's'} loaded`; }
+  catch (e) { if (msg) msg.innerHTML = `<span class="err">${esc(e.message)}</span>`; }
+}
+
+async function registerPiece() {
+  const msg = $('pieceMsg');
+  try {
+    const payload = piecePayload();
+    if (!payload.name || !payload.contracts?.length) throw new Error('name and at least one contract are required');
+    if (payload.metadata?.source && typeof payload.metadata.source.code !== 'string') throw new Error('metadata.source.code must be a string');
+    if (payload.method === 'tapis_app' && !payload.tapis_app_id) throw new Error('Tapis app ID is required for app/job runtime');
+    msg.textContent = 'registering…';
+    await api('POST', '/transform-specs', payload, { auth: true });
+    msg.textContent = 'registered; refreshing registry';
+    await loadPieces();
+  } catch (e) { msg.innerHTML = `<span class="err">${esc(e.message)}</span>`; }
 }
 
 function renderDfcControls() {
@@ -632,6 +722,14 @@ function initEventHandlers() {
 
   // DFC evaluate button
   if ($('evaluateDfcBtn')) $('evaluateDfcBtn').onclick = evaluateDfcMetrics;
+  if ($('registerPieceBtn')) $('registerPieceBtn').onclick = registerPiece;
+  if ($('refreshPiecesBtn')) $('refreshPiecesBtn').onclick = loadPieces;
+  if ($('addPieceInputBtn')) $('addPieceInputBtn').onclick = () => addPieceContract('input');
+  if ($('addPieceOutputBtn')) $('addPieceOutputBtn').onclick = () => addPieceContract('output');
+  if ($('pieceInputs') && !$('pieceInputs').children.length) addPieceContract('input', { standard_variable_uri: 'groundwater__hydraulic_head', unit: 'm', format: 'csv' });
+  if ($('pieceOutputs') && !$('pieceOutputs').children.length) addPieceContract('output', { standard_variable_uri: 'groundwater__hydraulic_head', unit: 'ft', format: 'csv' });
+  document.addEventListener('click', e => { const btn = e.target.closest('.remove-piece-contract'); if (btn) document.getElementById(btn.dataset.target)?.remove(); });
+  document.addEventListener('click', e => { const btn = e.target.closest('.test-piece-btn'); if (btn) testPiece(btn.dataset.pieceId, btn); });
 
   // DFC context selectors
   if ($('dfcGmaId')) $('dfcGmaId').onchange = () => { updateDfcContextSelectors({ preserveGma: true, preserveAquifer: false, preserveYear: false, preserveMetric: false }); renderDfcAnswerPlaceholder(); $('dfcQuestionMsg').textContent = 'planning context updated'; };

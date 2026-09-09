@@ -125,6 +125,25 @@ class MintCatalogClient:
             offset += limit
         return results
 
+    async def list_all_etl_processes(self) -> list[dict[str, Any]]:
+        """Paginate through first-class ETL processes in the MINT catalog."""
+        from .hasura import LIST_MINT_ETL_PROCESSES_QUERY
+
+        results: list[dict[str, Any]] = []
+        limit = 100
+        offset = 0
+        while True:
+            data = await self._hasura.execute(
+                LIST_MINT_ETL_PROCESSES_QUERY,
+                {"limit": limit, "offset": offset},
+            )
+            page = data.get("modelcatalog_etl_process") or []
+            results.extend(page)
+            if len(page) < limit:
+                break
+            offset += limit
+        return results
+
 
 def _normalise_uri(uri: str | None) -> str | None:
     if not uri:
@@ -238,6 +257,47 @@ def mint_config_to_spec_row(
     }
 
 
+def etl_process_to_spec_row(
+    process: dict[str, Any], warnings: list[str]
+) -> dict[str, Any] | None:
+    """Map a catalog ETL process to the adapter's reusable transform registry.
+
+    The catalog owns the source and runtime metadata; the adapter retains the
+    normalized SVO contracts used by inference and planning.
+    """
+    process_id = str(process.get("id") or "")
+    if not process_id:
+        warnings.append("ETL process has no id — skipped.")
+        return None
+    contracts = process.get("contracts") or []
+    if not any(c.get("role") == "input" for c in contracts) or not any(
+        c.get("role") == "output" for c in contracts
+    ):
+        warnings.append(f"{process_id}: ETL process requires input and output contracts — skipped.")
+        return None
+    runtime = process.get("runtime_json") or {}
+    app_id = runtime.get("tapis_app_id")
+    app_version = runtime.get("tapis_app_version")
+    metadata = {
+        "mint_etl_process_id": process_id,
+        "visibility": process.get("visibility"),
+        "runtime_kind": process.get("runtime_kind"),
+        "runtime": runtime,
+    }
+    return {
+        "id": process_id,
+        "name": process.get("label") or process_id,
+        "version": process.get("version"),
+        "description": process.get("description") or "",
+        "transform_type": "etl_process",
+        "method": "tapis_job" if app_id else "tapis_function",
+        "tapis_app_id": app_id,
+        "app_version": app_version,
+        "parameters_schema_json": {"metadata": metadata},
+        "contracts": {"data": contracts},
+    }
+
+
 def _infer_transform_type(config: dict[str, Any]) -> str:
     """Infer the transform_type from MINT label/description when not explicit."""
     label = str(config.get("label") or "").lower()
@@ -273,6 +333,7 @@ async def sync_mint_to_adapter(
     """
     from .hasura import (
         UPSERT_TRANSFORM_SPEC_MUTATION,
+        UPSERT_ETL_TRANSFORM_SPEC_MUTATION,
         DELETE_OBSOLETE_MINT_SPECS_MUTATION,
         GET_MINT_SPEC_IDS_QUERY,
     )
@@ -285,6 +346,7 @@ async def sync_mint_to_adapter(
 
     log.info("mint_sync: fetching all ModelConfigurations via Hasura")
     configs = await mint_client.list_all_configurations()
+    etl_processes = await mint_client.list_all_etl_processes()
     log.info("mint_sync: received %d configurations", len(configs))
 
     rows_to_upsert: list[dict[str, Any]] = []
@@ -298,6 +360,13 @@ async def sync_mint_to_adapter(
         if cfg.get("has_software_image") and not cfg.get("tapis_app_id"):
             result.unresolved_tapis_apps.append(cfg.get("id", ""))
         live_mint_ids.append(row["mint_model_config_id"])
+        rows_to_upsert.append(row)
+
+    for process in etl_processes:
+        row = etl_process_to_spec_row(process, warnings)
+        if row is None:
+            result.skipped += 1
+            continue
         rows_to_upsert.append(row)
 
     result.warnings = warnings
@@ -320,13 +389,15 @@ async def sync_mint_to_adapter(
 
     for row in rows_to_upsert:
         contracts = row.pop("contracts", None)
-        is_update = row["mint_model_config_id"] in existing_ids
+        is_etl = "mint_model_config_id" not in row
+        is_update = row.get("mint_model_config_id") in existing_ids if not is_etl else False
         # Upsert on mint_model_config_id: if the row exists, update all fields;
         # contracts are deleted and re-inserted via the nested mutation.
         row["mint_synced_at"] = "now()"
         if contracts:
             row["contracts"] = contracts
-        await hasura_client.execute(UPSERT_TRANSFORM_SPEC_MUTATION, {"obj": row})
+        mutation = UPSERT_ETL_TRANSFORM_SPEC_MUTATION if is_etl else UPSERT_TRANSFORM_SPEC_MUTATION
+        await hasura_client.execute(mutation, {"obj": row})
         if is_update:
             result.updated += 1
         else:

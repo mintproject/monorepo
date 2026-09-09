@@ -83,7 +83,7 @@ describe('StandardVariableCombobox', () => {
     expect(screen.getByRole('combobox')).not.toBeDisabled();
   });
 
-  it('shows selected label when a value is provided', async () => {
+  it('shows selected human-readable description when a value is provided', async () => {
     const selected = {
       id: 'https://w3id.org/okn/i/mint/sv1',
       label: 'Precipitation',
@@ -94,7 +94,7 @@ describe('StandardVariableCombobox', () => {
     });
     // Wait for loading to complete
     await waitFor(() => {
-      expect(screen.getByText('Precipitation')).toBeInTheDocument();
+      expect(screen.getByText('Amount of precipitation')).toBeInTheDocument();
     });
   });
 
@@ -167,12 +167,12 @@ describe('StandardVariableCombobox', () => {
 
     await waitFor(() => expect(screen.getByRole('combobox')).not.toBeDisabled());
     await user.click(screen.getByRole('combobox'));
-    // After opening, multiple "Precipitation" texts exist (trigger + list item)
-    await waitFor(() => expect(screen.getAllByText('Precipitation').length).toBeGreaterThan(1));
+    await waitFor(() => {
+      expect(screen.getByRole('option', { name: /Precipitation/ })).toBeInTheDocument();
+    });
 
     // Click on the already-selected item (the one inside the list)
-    const items = screen.getAllByText('Precipitation');
-    await user.click(items[items.length - 1]!); // last one is the list item
+    await user.click(screen.getByRole('option', { name: /Precipitation/ }));
 
     expect(handleChange).toHaveBeenCalledWith(null);
   });

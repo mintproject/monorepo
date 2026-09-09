@@ -31,14 +31,15 @@
 window.__MINT_CONFIG__ = {
   // Hasura in the compose stack. Its CORS list already names
   // http://localhost:3000, so the dev server is an allowed origin.
-  HASURA_ENDPOINT: "http://localhost:8080/v1/graphql",
+  HASURA_ENDPOINT: "http://localhost:8082/v1/graphql",
   // Tapis stays remote: the stack runs no identity provider. The compose auth
   // webhook validates real `portals` tenant tokens, so signing in locally works
   // and gives you the `user` role. `mint-localhost-3000` is registered for the
   // callback http://localhost:3000/oauth2/callback — Tapis allows one callback
   // per client, so the dev server must stay on port 3000.
   AUTH_SERVER: "https://portals.tapis.io",
-  AUTH_CLIENT_ID: "mint-localhost-3000",
+  AUTH_CLIENT_ID: "mint-ui-dev-wm",
+  AUTH_CALLBACK_ORIGIN: "http://localhost:3000",
   AUTH_REALM: "",
   AUTH_PROVIDER: "tapis",
   GOOGLE_MAPS_KEY: "AIzaSyDf8bXwyV7v9whOpZl64SRVWKdE6yBbt2k",

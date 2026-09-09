@@ -70,6 +70,11 @@ from .planner import (
     reachable_variables,
 )
 
+class TestTransformIn(BaseModel):
+    args: dict[str, Any] = {}
+    dry_run: bool = True
+    run_name: str | None = None
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Start the background Tapis status poller on startup; cancel it on shutdown.
@@ -554,6 +559,28 @@ async def reset_demo():
     from .store import reset_store
     reset_store()
     return {"status": "reset"}
+
+@app.post("/transform-specs/{spec_id}/test")
+async def test_transform_spec(spec_id: str, body: TestTransformIn, authorization: str | None = Header(None)):
+    """Generate or submit a one-piece pipeline using the registered definition."""
+    token = _bearer(authorization)
+    h = get_client(token)
+    specs = (await h.execute(TRANSFORM_REGISTRY_QUERY))["adapter_transform_spec"]
+    spec = next((s for s in specs if s.get("id") == spec_id), None)
+    if not spec:
+        raise HTTPException(404, "transform spec not found")
+    step = build_plan_json([spec])["steps"][0]
+    pipeline = tapis.generate_tapis_workflow({"id": f"test-{spec_id}", "plan_json": {"steps": [step]}})
+    args = _wrap_args(body.args)
+    if token and "tapis_token" in (pipeline.get("params") or {}) and not args.get("tapis_token", {}).get("value"):
+        args["tapis_token"] = {"value": token}
+    if body.dry_run:
+        return {"status": "generated", "spec_id": spec_id, "tapis_workflow_definition": pipeline, "args": args}
+    try:
+        result = await run_in_threadpool(tapis.submit_tapis_workflow, pipeline, args, token=token, run_name=body.run_name, recreate=True)
+    except Exception as exc:
+        raise HTTPException(502, f"Tapis piece test failed: {exc}")
+    return {"status": "submitted", "spec_id": spec_id, **result}
 
 
 async def _load_edge_map(
