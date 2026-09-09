@@ -9,35 +9,45 @@ import { loadRunHistory, initHistoryHandlers, renderDfcResults } from './compone
 // ── Auth ─────────────────────────────────────────────────────────────────
 function initAuth() {
   const show = on => {
-    ['loginBtn', 'jwtInput'].forEach(id => { const el = $(id); if (el) el.style.display = on ? '' : 'none'; });
+    const loginControl = $('loginBtn');
+    if (loginControl) loginControl.style.display = on ? '' : 'none';
     const logoutBtn = $('logoutBtn');
     if (logoutBtn) logoutBtn.style.display = on ? 'none' : '';
   };
+  const refresh = () => {
+    const token = getToken();
+    if (!token) { $('authLabel').textContent = 'not logged in'; show(true); return; }
+    let who = 'logged in';
+    try {
+      const payload = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+      const c = JSON.parse(atob(payload));
+      who = (c['tapis/username'] || c.preferred_username || 'logged in') +
+        (c['tapis/tenant_id'] ? ' @ ' + c['tapis/tenant_id'] : '');
+    } catch {}
+    $('authLabel').textContent = who; show(false);
+  };
   const loginBtn = $('loginBtn');
-  if (loginBtn) loginBtn.onclick = () => { const t = $('jwtInput')?.value.trim(); if (t) { setToken(t); if ($('jwtInput')) $('jwtInput').value = ''; } };
-  const jwtInput = $('jwtInput');
-  if (jwtInput) jwtInput.addEventListener('keydown', e => { if (e.key === 'Enter') loginBtn?.click(); });
+  if (loginBtn && loginBtn.tagName !== 'A') loginBtn.onclick = () => {
+    const params = new URLSearchParams({
+      client_id: 'webodm-localhost-dev',
+      response_type: 'token',
+      redirect_uri: 'http://localhost:8000/api/oauth2/tapis/callback',
+      scope: 'openid profile email',
+      state: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+    });
+    window.location.href = `https://portals.tapis.io/v3/oauth2/authorize?${params}`;
+  };
   const logoutBtn = $('logoutBtn');
-  if (logoutBtn) logoutBtn.onclick = () => setToken(null);
+  if (logoutBtn) logoutBtn.onclick = () => { setToken(null); refresh(); };
+  const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+  const queryParams = new URLSearchParams(window.location.search);
+  const callbackToken = hashParams.get('access_token') || queryParams.get('access_token');
+  if (callbackToken) {
+    setToken(callbackToken);
+    history.replaceState(null, '', '/ui/');
+  }
   restoreToken();
-  const token = getToken();
-  if (!token) { $('authLabel').textContent = 'not logged in'; show(true); return; }
-  let who = 'token';
-  try { const c = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))); who = (c['tapis/username'] || 'token') + (c['tapis/tenant_id'] ? ' @ ' + c['tapis/tenant_id'] : ''); } catch {}
-  $('authLabel').textContent = who; show(false);
-}
-
-// ── Mode ─────────────────────────────────────────────────────────────────
-async function checkMode() {
-  try {
-    const h = await api('GET', '/health');
-    if (!h.demo_mode) {
-      $('modeTag').textContent = 'live mode';
-      $('modeTag').style.cssText = 'font-size:11px;padding:2px 8px;border-radius:10px;background:rgba(34,197,94,.12);color:var(--ok);border:1px solid rgba(34,197,94,.2)';
-    } else {
-      $('modeTag').textContent = 'local fixture mode';
-    }
-  } catch { $('modeTag').textContent = 'service unreachable'; }
+  refresh();
 }
 
 // ── Runtime defaults ──────────────────────────────────────────────────────
@@ -63,18 +73,26 @@ function renderForecastGraph(plan) {
   const runSpec = Object.values(STATE.SPECS).find(s => s.name === plan.run_spec);
   const inputContracts = (runSpec?.contracts || []).filter(c => c.role === 'input');
   const branches = plan.branches.map((b, i) => {
-    const obj = byUri[b.source];
-    if (!obj) return `<div class="branch"><p class="err">source "${esc(b.source)}" not in registry</p></div>`;
     const tgtC = inputContracts.find(c => svoName(c.standard_variable_uri || '') === b.standard_variable) || {};
-    const target = specInContract(tgtC);
+    const target = { ...specInContract(tgtC) };
     if (!target.svo) target.svo = b.standard_variable ? `.../${b.standard_variable}` : null;
     const pill = b.satisfied ? `<span class="pill ok">resolved</span>` : `<span class="pill bad">unresolved</span>`;
-    return `<div class="branch">
-      <div class="branch-header">
+    const branchHeader = `<div class="branch-header">
         <div class="branch-index">${i + 1}</div>
         <div class="branch-title">${esc(humanSvo(b.standard_variable))} ${pill}</div>
-      </div>
-      ${renderChain(obj, b.chain || [], target)}
+      </div>`;
+    if (!b.source) return `<div class="branch">
+      ${branchHeader}
+      <p class="muted">No registered source satisfies this forecast input at the selected location and layer.</p>
+    </div>`;
+    const obj = byUri[b.source];
+    if (!obj) return `<div class="branch">
+      ${branchHeader}
+      <p class="err">Planned source "${esc(b.source)}" is not registered in the current view.</p>
+    </div>`;
+    return `<div class="branch">
+      ${branchHeader}
+      ${renderChain(obj, b.chain || b.etl || [], target)}
     </div>`;
   }).join('');
   const outC = (runSpec?.contracts || []).find(c => c.role === 'output') || {};
@@ -99,22 +117,41 @@ function sourceVariableName(o) {
   return humanSvo(v.standard_variable_uri || '').toLowerCase();
 }
 
+function sourceRank(o) {
+  const uri = String(o?.resource_uri || '');
+  if (uri.startsWith('https://ckan.tacc.utexas.edu/')) return 100;
+  if (/^https?:\/\//i.test(uri) && !uri.includes('example.com')) return 90;
+  if (uri.startsWith('tapis://ls6/modflow/demo/')) return -10;
+  if (/^tapis:\/\//i.test(uri)) return 80;
+  if (/^https?:\/\//i.test(uri)) return 30;
+  if (/^file:\/\//i.test(uri)) return 0;
+  return 10;
+}
+
+function bestSource(matches) {
+  return [...matches].sort((a, b) => sourceRank(b) - sourceRank(a))[0] || null;
+}
+
 function chooseDfcSource(target) {
   const fmt = o => String(o.format || '').toLowerCase();
   const variable = o => sourceVariableName(o);
   if (target.sourceKind === 'geotiff') {
-    return STATE.OBJECTS.find(o => fmt(o) === 'geotiff' && variable(o).includes('hydraulic_head'))
-      || STATE.OBJECTS.find(o => fmt(o).includes('tif') && variable(o).includes('hydraulic_head'))
-      || STATE.OBJECTS.find(o => variable(o).includes('hydraulic_head'))
-      || STATE.OBJECTS[0] || null;
+    return bestSource(STATE.OBJECTS.filter(o => fmt(o) === 'geotiff' && variable(o).includes('hydraulic_head')))
+      || bestSource(STATE.OBJECTS.filter(o => fmt(o).includes('tif') && variable(o).includes('hydraulic_head')))
+      || bestSource(STATE.OBJECTS.filter(o => variable(o).includes('hydraulic_head')))
+      || bestSource(STATE.OBJECTS);
   }
   if (target.sourceKind === 'hds') {
-    return STATE.OBJECTS.find(o => fmt(o).includes('hds')) || STATE.OBJECTS.find(o => variable(o).includes('hydraulic_head')) || STATE.OBJECTS[0] || null;
+    return bestSource(STATE.OBJECTS.filter(o => fmt(o).includes('hds')))
+      || bestSource(STATE.OBJECTS.filter(o => variable(o).includes('hydraulic_head')))
+      || bestSource(STATE.OBJECTS);
   }
   if (target.sourceKind === 'cbc') {
-    return STATE.OBJECTS.find(o => fmt(o).includes('cbc')) || STATE.OBJECTS.find(o => variable(o).includes('flow_rate')) || STATE.OBJECTS[0] || null;
+    return bestSource(STATE.OBJECTS.filter(o => fmt(o).includes('cbc')))
+      || bestSource(STATE.OBJECTS.filter(o => variable(o).includes('flow_rate')))
+      || bestSource(STATE.OBJECTS);
   }
-  return STATE.OBJECTS[0] || null;
+  return bestSource(STATE.OBJECTS);
 }
 
 async function loadDfcObjectives() {
@@ -181,6 +218,18 @@ function objectiveForTarget(target) {
 }
 
 function sourceForPlan(plan, fallbackTarget = null) {
+  if (plan?.source?.id) {
+    const byId = STATE.OBJECTS.find(o => o.id === plan.source.id);
+    if (byId) return byId;
+  }
+  if (plan?.plan_json?.source_data_object_id) {
+    const byPlanId = STATE.OBJECTS.find(o => o.id === plan.plan_json.source_data_object_id);
+    if (byPlanId) return byPlanId;
+  }
+  if (plan?.plan_json?.source) {
+    const byPlanUri = STATE.OBJECTS.find(o => o.resource_uri === plan.plan_json.source);
+    if (byPlanUri) return byPlanUri;
+  }
   const sourceUri = plan?.plan_json?.steps?.find(s => s.source)?.source;
   return STATE.OBJECTS.find(o => o.resource_uri === sourceUri)
     || (fallbackTarget ? chooseDfcSource(fallbackTarget) : null)
@@ -249,7 +298,7 @@ function liveDfcMissingArgs(workflow, args) {
 function appendLivePrerequisites(workflow, args) {
   const missing = liveDfcMissingArgs(workflow, args);
   if (!missing.length) return;
-  $('runOut').innerHTML += `<p class="warn" style="margin-top:12px"><b>Live extraction prerequisites missing:</b> ${missing.map(esc).join(', ')}. Local fixture mode generated the workflow only; no modeled outputs or compliance results were fabricated.</p>`;
+  $('runOut').innerHTML += `<p class="warn" style="margin-top:12px"><b>Live extraction prerequisites missing:</b> ${missing.map(esc).join(', ')}. The workflow was not submitted.</p>`;
 }
 
 // ── Load case ─────────────────────────────────────────────────────────────
@@ -265,6 +314,7 @@ async function loadCase(key) {
   STATE.DFC_SELECTED_SOURCE = STATE.DFC_SELECTED_TARGET = null;
   if ($('dfcQuestionSection')) $('dfcQuestionSection').style.display = key === 'dfc' ? '' : 'none';
   if ($('dfcAnswerSection')) $('dfcAnswerSection').style.display = key === 'dfc' ? '' : 'none';
+  if ($('inspectSection')) $('inspectSection').style.display = key === 'forecast' ? '' : 'none';
   if ($('setupSection')) $('setupSection').style.display = key === 'dfc' ? '' : 'none';
   if ($('forecastRunControls')) $('forecastRunControls').style.display = key === 'forecast' ? 'flex' : 'none';
   if ($('dfcRunControls')) $('dfcRunControls').style.display = key === 'dfc' ? '' : 'none';
@@ -272,36 +322,23 @@ async function loadCase(key) {
   if ($('sourcesTitle')) $('sourcesTitle').innerHTML = key === 'dfc' ? 'Model sources <span class="desc">— registered modeled outputs for this evaluation</span>' : 'Sources <span class="desc">— data objects registered for this test case</span>';
   if ($('inferenceTitle')) $('inferenceTitle').textContent = key === 'dfc' ? 'Calculation Evidence' : 'Inference graph';
   if ($('runTitle')) $('runTitle').textContent = key === 'dfc' ? 'Workflow' : 'Run';
-  if ($('runTapisBtn')) $('runTapisBtn').textContent = 'Run workflow';
+  if ($('runTapisBtn')) $('runTapisBtn').textContent = 'Submit to Tapis';
   if (key === 'dfc') renderDfcAnswerPlaceholder();
 
   try {
-    if (STATE.IS_DEMO) {
-      const needsSeed = !STATE.SPECS || !Object.keys(STATE.SPECS).length;
-      if (needsSeed) {
-        if (key === 'forecast') await api('POST', '/admin/seed-ntgam-forecast');
-        else if (key === 'dfc') await api('POST', '/admin/seed-gma-dfc');
-        else throw new Error(`unknown case: ${key}`);
-      }
-    }
     const [specs, objs] = await Promise.all([api('GET', '/transform-specs'), api('GET', '/data-objects')]);
     STATE.SPECS = {};
     for (const s of specs) STATE.SPECS[s.id] = s;
     STATE.OBJECTS = Array.isArray(objs) ? objs : (objs.data_objects || []);
     renderSources(STATE.OBJECTS);
     if (key === 'dfc') {
-      if ($('runLocalBtn')) $('runLocalBtn').style.display = 'none';
       await Promise.all([loadDfcTargetRecords(), loadRuntimeDefaults(), loadDfcObjectives()]);
       applyRuntimeDefaults();
       renderDfcControls();
       const objectiveNote = STATE.DFC_OBJECTIVES.length ? `; ${STATE.DFC_OBJECTIVES.length} objective spec${STATE.DFC_OBJECTIVES.length === 1 ? '' : 's'} loaded` : '';
-      $('dfcQuestionMsg').textContent = STATE.OBJECTS.length ? `fixture model outputs loaded${objectiveNote}` : `no model outputs registered${objectiveNote}`;
-    } else if (!STATE.IS_DEMO) {
-      if ($('runLocalBtn')) $('runLocalBtn').style.display = 'none';
-      $('graphOut').innerHTML = '<p class="muted" style="padding:8px 0">Fixture seed data is not available in live mode.</p>';
+      $('dfcQuestionMsg').textContent = STATE.OBJECTS.length ? `registered model outputs loaded${objectiveNote}` : `no model outputs registered${objectiveNote}`;
     } else if (key === 'forecast') {
       STATE.PLAN_FORECAST = await api('POST', '/forecast/plan', forecastRequestBody());
-      if ($('runLocalBtn')) $('runLocalBtn').style.display = '';
       renderForecastGraph(STATE.PLAN_FORECAST);
     } else {
       throw new Error(`unknown case: ${key}`);
@@ -469,20 +506,17 @@ function renderTapisDryRun(r) {
   <details style="margin-top:12px"><summary class="muted">redacted workflow JSON</summary><pre>${esc(JSON.stringify(redactedTapisDryRun(r), null, 2))}</pre></details>`;
 }
 
-// ── Run locally (NTGAM) ───────────────────────────────────────────────────
-function initRunLocal() {
-  const btn = $('runLocalBtn');
-  if (btn) btn.onclick = async () => {
-    $('runMsg').textContent = 'assembling scenario…'; $('runOut').innerHTML = '';
-    try {
-      const sr = await api('POST', '/forecast/scenario', forecastRequestBody());
-      STATE.SCENARIO = sr.scenario;
-      $('runMsg').textContent = 'running…';
-      const r = await api('POST', '/forecast/run', { scenario: STATE.SCENARIO });
-      renderForecastResult(r);
-      $('runMsg').textContent = 'done';
-    } catch (e) { $('runMsg').innerHTML = `<span class="err">${esc(e.message)}</span>`; }
-  };
+async function assembleForecastScenario({ requireComplete = false } = {}) {
+  const result = await api('POST', '/forecast/scenario', forecastRequestBody(), { auth: true });
+  if (!result?.scenario || typeof result.scenario !== 'object') {
+    throw new Error('Forecast scenario assembly returned no scenario.');
+  }
+  if (requireComplete && result.missing?.length) {
+    const fields = result.missing.map(item => item.field).filter(Boolean);
+    throw new Error(`Forecast inputs are missing: ${fields.join(', ')}`);
+  }
+  STATE.SCENARIO = result.scenario;
+  return result;
 }
 
 // ── Run on Tapis ──────────────────────────────────────────────────────────
@@ -490,11 +524,17 @@ function initRunTapis() {
   const btn = $('runTapisBtn');
   if (btn) btn.onclick = async () => {
     stopPoll();
-    $('runMsg').textContent = 'submitting…'; $('runOut').innerHTML = '';
+    $('runMsg').textContent = 'submitting to Tapis…'; $('runOut').innerHTML = '';
     try {
       let r;
       if (STATE.CASE_KEY === 'forecast') {
-        r = await api('POST', '/forecast/run-tapis', forecastRequestBody(), { auth: true });
+        $('runMsg').textContent = 'assembling scenario…';
+        await assembleForecastScenario();
+        r = await api('POST', '/forecast/run-tapis', {
+          scenario: STATE.SCENARIO,
+          plan_steps: STATE.PLAN_FORECAST?.plan_json?.steps || [],
+          dry_run: false,
+        }, { auth: true });
       } else if (STATE.CASE_KEY === 'dfc') {
         if (!STATE.PLAN_DFC?.plan_id) throw new Error('Plan a DFC transform chain first');
         const args = dfcRunArgs();
@@ -522,7 +562,7 @@ async function planDfcMetric(target, source) {
 
 async function planDfcObjective(target, objective) {
   try {
-    const plan = await api('POST', `/objectives/${encodeURIComponent(objective.id)}/evaluate-plan`, {});
+    const plan = await api('POST', `/objectives/${encodeURIComponent(objective.id)}/evaluate-plan`, { target_contract: target.contract });
     const source = sourceForPlan(plan, target);
     return { target, source, plan, objectiveId: objective.id };
   } catch (e) {
@@ -536,7 +576,7 @@ function hasAreaSpecificTargets(records) {
 
 async function planDfcForSelectedTargets(source, target, targetRecords) {
   const objective = objectiveForTarget(target);
-  if (objective) return api('POST', `/objectives/${encodeURIComponent(objective.id)}/evaluate-plan`, {});
+  if (objective) return api('POST', `/objectives/${encodeURIComponent(objective.id)}/evaluate-plan`, { target_contract: target.contract });
   if (hasAreaSpecificTargets(targetRecords) && target.key === 'head-drawdown') {
     return api('POST', '/plans/dfc-fanout', {
       data_object_id: source.id,
@@ -656,7 +696,7 @@ function initEventHandlers() {
     $('dfcControls').style.display = 'none';
     const targetRecords = targetRecordsForMetric(STATE.DFC_TARGET_RECORDS, target);
     const planPromise = objectiveId
-      ? api('POST', `/objectives/${encodeURIComponent(objectiveId)}/evaluate-plan`, {})
+      ? api('POST', `/objectives/${encodeURIComponent(objectiveId)}/evaluate-plan`, { target_contract: target.contract })
       : planDfcForSelectedTargets(source, target, targetRecords);
     planPromise
       .then(plan => {
@@ -672,18 +712,6 @@ function initEventHandlers() {
       })
       .catch(err => { $('graphOut').innerHTML = `<p class="err">${esc(err.message)}</p>`; });
   });
-
-  // Seed DFC button
-  if ($('seedDfcBtn')) $('seedDfcBtn').onclick = async () => {
-    $('dfcSetupMsg').textContent = 'loading transform registry…';
-    $('dfcSetupResult').innerHTML = '';
-    try {
-      const r = await api('POST', '/admin/seed-gma-dfc', undefined, { auth: !!getToken() });
-      $('dfcSetupMsg').textContent = 'DFC transforms loaded';
-      $('dfcSetupResult').innerHTML = `<pre>${esc(JSON.stringify({ transform_specs: r.transform_specs?.length || 0, sources: r.sources?.length || 0, targets: Object.keys(r.targets || {}) }, null, 2))}</pre>`;
-      await loadCase('dfc');
-    } catch (e) { $('dfcSetupMsg').innerHTML = `<span class="err">${esc(e.message)}</span>`; }
-  };
 
   // Sync CKAN button
   if ($('syncCkanBtn')) $('syncCkanBtn').onclick = async () => {
@@ -734,11 +762,9 @@ function initEventHandlers() {
 // ── Init ──────────────────────────────────────────────────────────────────
 export async function init() {
   initAuth();
-  await checkMode();
-  api('GET', '/health').then(h => { STATE.IS_DEMO = !!h?.demo_mode; }).catch(() => { }).finally(() => loadCase(STATE.CASE_KEY));
   initEventHandlers();
-  initRunLocal();
   initRunTapis();
+  await loadCase(STATE.CASE_KEY);
 }
 
 init();

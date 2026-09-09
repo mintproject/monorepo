@@ -14,7 +14,6 @@ export const STATE = {
 
   // Runtime
   RUNTIME_DEFAULTS: {},
-  IS_DEMO: false,
   CASE_KEY: 'dfc',
 
   // Current selections

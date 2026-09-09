@@ -16,7 +16,7 @@ with NOTHING hardcoded:
                      ``missing`` rather than silently zeroed.
 
 The scalar parameter slugs are identical to the ``SubsidenceInputs`` field names,
-so the scenario dict feeds ``forecast.run_forecast`` directly.
+so the assembled scenario can be passed to the Tapis SUBSIDE task unchanged.
 """
 from __future__ import annotations
 
@@ -806,33 +806,3 @@ def build_scenario_from_plan(lat: float, lon: float, *, layer: int, layer_source
     return {"scenario": scenario, "provenance": provenance, "missing": missing,
             "selection": {"model_layer": layer, "layer_source": layer_source, "lat": lat, "lon": lon},
             "context": {"aquifer": {"aquifers": aquifers}, "nearest_well": nearest_well}}
-
-
-# --- run the forecast (shell out to the SUBSIDE venv) ----------------------
-_RUNNER = (
-    "import sys, json\n"
-    "scenario = json.load(open(sys.argv[1]))\n"
-    "from analysis.subsidence.forecast import run_forecast\n"
-    "print(json.dumps(run_forecast(scenario)))\n"
-)
-
-
-def run_forecast(scenario: dict[str, Any]) -> dict[str, Any]:
-    """Run the SUBSIDE screening model on a scenario via the SUBSIDE venv."""
-    with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False) as fh:
-        json.dump(scenario, fh)
-        scenario_path = fh.name
-    try:
-        bindir = str(Path(settings.subside_python).parent)
-        proc = subprocess.run(
-            [settings.subside_python, "-c", _RUNNER, scenario_path],
-            cwd=settings.subside_dir,
-            env={"PYTHONPATH": settings.subside_dir,
-                 "PATH": f"{bindir}:/usr/local/bin:/usr/bin:/bin"},
-            capture_output=True, text=True, timeout=180,
-        )
-    finally:
-        Path(scenario_path).unlink(missing_ok=True)
-    if proc.returncode != 0:
-        raise RuntimeError(f"forecast run failed: {proc.stderr.strip()[-500:]}")
-    return json.loads(proc.stdout.strip().splitlines()[-1])

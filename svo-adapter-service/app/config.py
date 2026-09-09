@@ -22,7 +22,11 @@ REPO_ROOT = _REPO
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_prefix="SVO_ADAPTER_", env_file=".env")
+    # The shared monorepo .env contains settings for sibling services too.
+    # Ignore those unrelated entries while still applying SVO_ADAPTER_* values.
+    model_config = SettingsConfigDict(
+        env_prefix="SVO_ADAPTER_", env_file=".env", extra="ignore"
+    )
 
     # Hasura GraphQL endpoint (same Hasura that fronts the model catalog).
     hasura_graphql_url: str = "http://localhost:8080/v1/graphql"
@@ -52,12 +56,6 @@ class Settings(BaseSettings):
     # adapter_workflow_run rows in "running"/"submitting" state.
     # Set to 0 to disable polling even when tapis_token is configured.
     poll_interval_seconds: int = 60
-
-    # Demo mode: serve the bundled standalone UI and back every Hasura call with an
-    # in-process in-memory store, so the whole flow (register pieces -> readiness ->
-    # plan -> generate -> submit dry-run) runs with NO Hasura/Postgres/Tapis. Never
-    # enable in production. Set SVO_ADAPTER_DEMO_MODE=1.
-    demo_mode: bool = False
 
     # MINT catalog sync: pull ModelConfiguration entries from the MINT model-catalog
     # REST API and upsert them into adapter.transform_spec. MINT is the sole source
@@ -94,10 +92,5 @@ class Settings(BaseSettings):
     # context services (TWDB well-reports + aquifer FeatureServers, …) that the
     # forecast queries on-demand by location (aquifer detect, nearest well).
     stac_api_url: str = "https://stacapi.pods.portals.tapis.io/api/v1"
-    # To RUN the forecast we shell out to the SUBSIDE venv (which vendors the
-    # screening model + numpy/pandas); the adapter venv stays light on purpose.
-    subside_python: str = str(_REPO / "subside" / ".venv" / "bin" / "python")
-    subside_dir: str = str(_REPO / "subside")
-
 
 settings = Settings()

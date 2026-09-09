@@ -97,10 +97,9 @@ class MintCatalogClient:
     already uses). This avoids any dependency on the model-catalog-api REST layer
     being up and its exact URL / pagination format.
 
-    The `hasura_client` parameter accepts any object with an async
-    `execute(query, variables)` method — the real HasuraClient or InMemoryHasura.
-    In demo mode the in-memory store has no modelcatalog_* data, so sync returns
-    zero configs (expected — demo uses fixture seeds).
+    The `hasura_client` parameter accepts the adapter's Hasura client interface,
+    allowing catalog synchronization to use the same authenticated GraphQL
+    connection as the rest of the service.
     """
 
     def __init__(self, hasura_client: Any) -> None:

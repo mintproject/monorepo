@@ -70,6 +70,34 @@ STANDARD_PARAMS: dict[str, dict[str, Any]] = {
 }
 
 
+def _params_for_steps(steps: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
+    """Declare only workflow args that the plan's tasks actually reference.
+
+    Older generated workflows used ``STANDARD_PARAMS`` wholesale, which made DFC
+    plans require unrelated WERC/SUBSIDE args (start_date, end_date,
+    aoi_geojson_uri, ...). Tapis validates required params before running, so a
+    DFC workflow must expose only the args needed by its transform steps.
+    """
+    names: set[str] = set()
+    for step in steps:
+        names.update((step.get("env_from_args") or {}).values())
+        for file_input in step.get("file_inputs") or []:
+            arg = file_input.get("from_arg")
+            if arg:
+                names.add(arg)
+        # tapis_job tasks always reference allocation in schedulerOptions below.
+        if step.get("tapis_app_id"):
+            names.add("allocation")
+
+    params: dict[str, dict[str, Any]] = {}
+    for name in sorted(names):
+        if name in STANDARD_PARAMS:
+            params[name] = dict(STANDARD_PARAMS[name])
+        else:
+            params[name] = {"type": "string", "required": True}
+    return params
+
+
 # ---------------------------------------------------------------------------
 # Generation
 # ---------------------------------------------------------------------------
@@ -95,7 +123,7 @@ def generate_tapis_workflow(
     group_id = group_id or settings.tapis_workflow_group
     owner = owner or settings.tapis_workflow_owner
     exec_system = exec_system or settings.tapis_exec_system
-    params = dict(params or STANDARD_PARAMS)
+    params = dict(params) if params is not None else _params_for_steps(steps)
 
     tasks: list[dict[str, Any]] = []
     prev_id: str | None = None

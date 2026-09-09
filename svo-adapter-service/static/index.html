@@ -9,11 +9,10 @@
 
 <header>
   <h1>Texas DFC Evaluation <span>— SVO Adapter</span></h1>
-  <div id="modeTag">checking…</div>
+  <div id="modeTag">Tapis + Hasura</div>
   <div id="auth">
     <span id="authLabel">not logged in</span>
-    <input type="text" id="jwtInput" placeholder="paste Tapis JWT for live submit" style="width:230px">
-    <button id="loginBtn" class="ghost">Log in</button>
+    <a id="loginBtn" class="ghost" href="https://portals.tapis.io/v3/oauth2/authorize?client_id=webodm-localhost-dev&amp;response_type=token&amp;redirect_uri=http%3A%2F%2Flocalhost%3A8000%2Fapi%2Foauth2%2Ftapis%2Fcallback&amp;scope=openid%20profile%20email">Log in with Tapis</a>
     <button id="logoutBtn" class="ghost" style="display:none">Log out</button>
   </div>
 </header>
@@ -92,6 +91,28 @@
   <section id="inspectSection" style="display:none">
     <h3>Inspect <span class="desc">— transform chain & workflow</span></h3>
     <p class="bfs-note" id="bfsNote"></p>
+    <div id="forecastRunControls" style="display:none">
+      <div class="workflow-note">
+        <b>NTGAM forecast inputs</b><br>
+        Choose a location and model layer. The adapter resolves the required forecast
+        inputs through the shared SVO transform registry before running the forecast.
+      </div>
+      <div class="dfc-grid">
+        <label>Latitude
+          <input type="number" id="forecastLat" step="any" value="32.7767">
+        </label>
+        <label>Longitude
+          <input type="number" id="forecastLon" step="any" value="-96.7970">
+        </label>
+        <label>Model layer
+          <input type="number" id="forecastLayer" min="1" step="1" value="1">
+        </label>
+      </div>
+      <div class="dfc-actions">
+        <button id="runTapisBtn">Submit to Tapis</button>
+        <span id="runMsg" class="muted"></span>
+      </div>
+    </div>
     <div id="graphOut"><p class="muted">Select a metric from the answer above to see its calculation path.</p></div>
     <div id="dfcControls" style="display:none">
       <details class="advanced-dfc">
@@ -142,7 +163,6 @@
           <label>CKAN org <input type="text" id="dfcCkanOrg" value="twdb-gams"></label>
         </div>
         <div class="dfc-actions">
-          <button id="seedDfcBtn">Load DFC transforms</button>
           <button id="syncCkanBtn" class="ghost">Sync CKAN GAM resources</button>
           <span id="dfcSetupMsg" class="muted"></span>
         </div>
@@ -152,6 +172,6 @@
   </details>
 </main>
 
-<script type="module" src="/ui/js/main.js?v=20260821-dfc-objective-planning"></script>
+<script type="module" src="/ui/js/main.js?v=20260909-tapis-submit"></script>
 </body>
 </html>

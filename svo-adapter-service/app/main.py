@@ -6,7 +6,6 @@ metadata is delegated to Hasura GraphQL; this service does not reimplement it.
 Endpoints:
   GET  /transform-specs           list the transform registry (pieces + contracts)
   POST /transform-specs           register one ETL piece (transform_spec + contracts)
-  POST /admin/seed-subside-werc   one-click demo seed of the SUBSIDE WERC pieces
   POST /data-objects              register a data object + its variable contract(s)
   POST /readiness/check           assess a data object vs a model-input requirement
   POST /plans                     generate (and persist) an ETL plan to close gaps
@@ -16,8 +15,7 @@ Endpoints:
   GET  /runs/{id}                 fetch execution state of a run
   POST /runs/{id}/register-output register a transformed output as a new data object
 
-A bundled standalone UI (static/index.html) is served at / and drives this flow;
-demo mode (SVO_ADAPTER_DEMO_MODE=1) backs it with an in-memory store (see store.py).
+A bundled standalone UI (static/index.html) is served at / and drives this flow.
 """
 from __future__ import annotations
 
@@ -34,7 +32,7 @@ from starlette.concurrency import run_in_threadpool
 
 from pathlib import Path
 
-from fastapi.responses import RedirectResponse
+from fastapi.responses import FileResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
 log = logging.getLogger(__name__)
@@ -75,25 +73,22 @@ async def lifespan(app: FastAPI):
     """Start the background Tapis status poller on startup; cancel it on shutdown.
 
     The poller only runs when:
-    - demo_mode is off (no real Tapis in demo)
     - tapis_token is configured (service-level token for unattended polling)
     - poll_interval_seconds > 0 (explicit disable path)
     """
     task: asyncio.Task | None = None
-    if (not settings.demo_mode
-            and settings.tapis_token
+    if (settings.tapis_token
             and settings.poll_interval_seconds > 0):
         from . import poller
         task = asyncio.create_task(poller.run_poller(), name="svo-adapter-poller")
     else:
         log.info(
-            "poller disabled (demo_mode=%s, token=%s, interval=%d)",
-            settings.demo_mode,
+            "poller disabled (token=%s, interval=%d)",
             "set" if settings.tapis_token else "unset",
             settings.poll_interval_seconds,
         )
 
-    if not settings.demo_mode and settings.hasura_admin_secret:
+    if settings.hasura_admin_secret:
         async def _reload_hasura_schema() -> None:
             """Force Hasura to re-introspect Postgres so newly migrated columns
             (e.g. tapis_app_id on modelcatalog_configuration) are visible in the
@@ -117,7 +112,7 @@ async def lifespan(app: FastAPI):
                 log.warning("hasura schema reload failed (non-fatal)", exc_info=True)
         await _reload_hasura_schema()
 
-    if settings.mint_sync_on_startup and not settings.demo_mode:
+    if settings.mint_sync_on_startup:
         async def _startup_sync() -> None:
             try:
                 from .mint_sync import MintCatalogClient, sync_mint_to_adapter
@@ -138,7 +133,7 @@ async def lifespan(app: FastAPI):
                 log.exception("startup mint sync failed (non-fatal)")
         asyncio.create_task(_startup_sync(), name="svo-adapter-mint-sync")
 
-    if settings.ckan_sync_on_startup and not settings.demo_mode:
+    if settings.ckan_sync_on_startup:
         async def _startup_ckan_sync() -> None:
             try:
                 from .ckan_sync import sync_ckan_to_adapter
@@ -164,7 +159,52 @@ async def lifespan(app: FastAPI):
             pass
 
 
-app = FastAPI(title="SVO Adapter Service", version="0.1.0", lifespan=lifespan)
+OPENAPI_TAGS = [
+    {
+        "name": "Core: Registry",
+        "description": "Reusable data-object, transform-spec, and standard-variable registry operations.",
+    },
+    {
+        "name": "Core: Planning",
+        "description": "Reusable compatibility, readiness, reachability, and ETL-plan operations.",
+    },
+    {
+        "name": "Core: Workflows",
+        "description": "Reusable generation and submission of Tapis Workflows from saved plans.",
+    },
+    {
+        "name": "Core: Runs",
+        "description": "Reusable workflow-run status, polling, output registration, and provenance operations.",
+    },
+    {
+        "name": "Core: Catalog/objectives",
+        "description": "Reusable objective, runtime-default, and catalog dataset helper operations.",
+    },
+    {
+        "name": "Integrations",
+        "description": "Optional MINT, CKAN, Hasura edge-cache, and Tapis operational integration.",
+    },
+    {
+        "name": "DFC/GAM",
+        "description": "Texas GMA/GAM DFC target planning and MODFLOW 6 QA/QC use case.",
+    },
+    {
+        "name": "NTGAM forecast",
+        "description": "NTGAM location, scenario, and subsidence forecast use case.",
+    },
+]
+
+app = FastAPI(
+    title="SVO Adapter Service",
+    version="0.1.0",
+    description=(
+        "Plans and executes SVO-to-SVO data transformations. "
+        "Core groups are reusable across deployments; DFC/GAM and NTGAM forecast "
+        "groups identify bespoke application profiles."
+    ),
+    openapi_tags=OPENAPI_TAGS,
+    lifespan=lifespan,
+)
 
 from fastapi.middleware.cors import CORSMiddleware
 app.add_middleware(
@@ -245,7 +285,7 @@ mutation SetWorkflowDef($id: String!, $def: jsonb!) {
 GET_PLAN = """
 query GetPlan($id: String!) {
   adapter_workflow_plan_by_pk(id: $id) {
-    id status plan_json target_dataset_specification_id target_model_configuration_id
+    id status plan_json source_data_object_id target_dataset_specification_id target_model_configuration_id
   }
 }
 """
@@ -255,6 +295,28 @@ query GetRun($id: String!) {
   adapter_workflow_run_by_pk(id: $id) {
     id status tapis_workflow_id tapis_run_id started_at completed_at
     output_data_object_id logs_uri error_message workflow_plan_id execution_id
+  }
+}
+"""
+
+LIST_RUNS = """
+query ListRuns($limit: Int!) {
+  adapter_workflow_run(order_by: {started_at: desc}, limit: $limit) {
+    id status tapis_workflow_id tapis_run_id started_at completed_at
+    output_data_object_id logs_uri error_message workflow_plan_id execution_id
+  }
+  adapter_workflow_run_aggregate { aggregate { count } }
+}
+"""
+
+GET_PROVENANCE = """
+query GetProvenance($run_id: String!, $limit: Int!) {
+  adapter_provenance_event(
+    where: {workflow_run_id: {_eq: $run_id}}
+    order_by: {created_at: desc}
+    limit: $limit
+  ) {
+    id event_type payload_json created_at workflow_run_id data_object_id
   }
 }
 """
@@ -344,6 +406,82 @@ def _data_object_to_contract(row: dict[str, Any]) -> DataObjectContract:
     )
 
 
+def _uri_scheme(uri: str | None) -> str:
+    text = str(uri or "")
+    return text.split(":", 1)[0].lower() if ":" in text else ""
+
+
+def _is_tapis_accessible_uri(uri: str | None) -> bool:
+    return _uri_scheme(uri) in {"http", "https", "tapis"}
+
+
+def _is_live_runnable_source_uri(uri: str | None) -> bool:
+    """Return true only for sources likely reachable from Tapis/OWE.
+
+    Some legacy registry rows have valid-looking schemes but point at
+    non-existent test data (for example a test Tapis path or example.com).
+    Those should not be selected for live workflows.
+    """
+    text = str(uri or "")
+    if not _is_tapis_accessible_uri(text):
+        return False
+    if "example.com" in text:
+        return False
+    if text.startswith("tapis://ls6/modflow/demo/"):
+        return False
+    return True
+
+
+def _source_uri_score(uri: str | None) -> int:
+    """Rank candidate data-object URIs for live/Tapis workflows.
+
+    Prefer real CKAN HTTPS resources, then other non-example HTTPS, then Tapis.
+    """
+    text = str(uri or "")
+    scheme = _uri_scheme(text)
+    if text.startswith("https://ckan.tacc.utexas.edu/"):
+        return 100
+    if scheme in {"http", "https"} and "example.com" not in text:
+        return 90
+    if text.startswith("tapis://ls6/modflow/demo/"):
+        return -10
+    if scheme == "tapis":
+        return 80
+    if scheme in {"http", "https"}:
+        return 30
+    if scheme == "file":
+        return 0
+    return 10
+
+
+async def _replacement_source_uri(h, source_data_object_id: str | None) -> str | None:
+    """Find a live-runnable replacement URI for a stale source object.
+
+    Match on the source object's first SVO variable and choose the highest-ranked
+    registered data object with an actually runnable URI.
+    """
+    if not source_data_object_id:
+        return None
+    src_rows = (await h.execute(DATA_OBJECT_CONTRACT_QUERY, {"id": source_data_object_id}))["adapter_data_object"]
+    if not src_rows:
+        return None
+    src_var = ((src_rows[0].get("variables") or [{}])[0]).get("standard_variable_uri")
+    if not src_var:
+        return None
+    objs = (await h.execute(LIST_DATA_OBJECTS_QUERY)).get("adapter_data_object", [])
+    candidates = []
+    for obj in objs:
+        uri = obj.get("resource_uri")
+        if not _is_live_runnable_source_uri(uri):
+            continue
+        if not any(v.get("standard_variable_uri") == src_var for v in obj.get("variables", [])):
+            continue
+        candidates.append((_source_uri_score(uri), obj.get("label") or "", uri))
+    if not candidates:
+        return None
+    return max(candidates, key=lambda item: (item[0], item[1]))[2]
+
+
 async def _resolve_target(h, ds_id: str | None, inline: DataObjectContract | None) -> DataObjectContract:
     """The target requirement: supplied inline, else read from the model catalog."""
     if inline is not None:
@@ -358,7 +496,7 @@ async def _resolve_target(h, ds_id: str | None, inline: DataObjectContract | Non
 
 @app.get("/health")
 async def health() -> dict[str, Any]:
-    return {"status": "ok", "demo_mode": settings.demo_mode}
+    return {"status": "ok"}
 
 
 @app.post("/data-objects")
@@ -475,94 +613,14 @@ async def register_transform_spec(body: TransformSpecIn, authorization: str | No
     }})
     # Recompute the edge cache in the background so the next /plans call gets
     # accelerated BFS without blocking this response.
-    if not settings.demo_mode:
-        asyncio.create_task(_recompute_edges_bg(), name="recompute-edges")
+    asyncio.create_task(_recompute_edges_bg(), name="recompute-edges")
     return created
-
-
-_EXAMPLES = Path(__file__).resolve().parents[1] / "examples"
-
-
-def _clean(d: dict[str, Any]) -> dict[str, Any]:
-    return {k: v for k, v in d.items() if not k.startswith("_")}
-
-
-DELETE_TRANSFORM_SPECS_BY_IDS = """
-mutation DeleteTransformSpecsByIds($ids: [String!]!) {
-  delete_adapter_transform_spec(where: { id: { _in: $ids } }) { affected_rows }
-}
-"""
-
-DELETE_DATA_OBJECTS_BY_IDS = """
-mutation DeleteDataObjectsByIds($ids: [String!]!) {
-  delete_adapter_data_object(where: { id: { _in: $ids } }) { affected_rows }
-}
-"""
-
-
-async def _seed(h, fixture: str) -> dict[str, Any]:
-    """Register a pipeline fixture's transform pieces + its sample source data
-    object; return the ids + targets. Delete-then-insert so re-seeding is safe."""
-    data = json.loads((_EXAMPLES / fixture).read_text())
-    # Skip comment-only objects (entries whose only keys start with "_")
-    raw_specs = [s for s in data["transform_specs"] if any(not k.startswith("_") for k in s)]
-    # Delete pre-existing rows so re-seeding doesn't hit duplicate key violations.
-    spec_ids = [s["id"] for s in raw_specs if s.get("id")]
-    if spec_ids and not settings.demo_mode:
-        await h.execute(DELETE_TRANSFORM_SPECS_BY_IDS, {"ids": spec_ids})
-    specs = []
-    for s in raw_specs:
-        obj = _spec_insert_obj(s)
-        specs.append((await h.execute(INSERT_TRANSFORM_SPEC, {"obj": obj}))["insert_adapter_transform_spec_one"])
-    async def _register_do(raw: dict[str, Any]) -> dict[str, Any]:
-        do = _clean(raw)
-        variables = do.pop("variables", [])
-        if variables:
-            do["variables"] = {"data": variables}
-        return (await h.execute(INSERT_DATA_OBJECT, {"obj": do}))["insert_adapter_data_object_one"]
-
-    created_do = await _register_do(data["source_data_object"])
-    # Register all additional `sources` (e.g. the forecast's head/storativity/DEM),
-    # so a multi-input model run can resolve every input. Skip any that duplicate
-    # the primary source_data_object by resource_uri.
-    primary_uri = data["source_data_object"].get("resource_uri")
-    extra_sources = [await _register_do(s) for s in (data.get("sources") or [])
-                     if s.get("resource_uri") != primary_uri]
-    # All target_model_input[...] variants, keyed by suffix ("base", "cataloged", "netcdf", ...).
-    targets = {
-        (key[len("target_model_input"):].lstrip("_") or "base"): _clean(val)
-        for key, val in data.items()
-        if key.startswith("target_model_input") and isinstance(val, dict)
-    }
-    return {
-        "transform_specs": specs,
-        "data_object": created_do,
-        "sources": [created_do, *extra_sources],
-        "target_contract": targets.get("base"),
-        # Cataloged variant: reaching it pulls the stac-publish backend piece into the plan.
-        "target_contract_cataloged": targets.get("cataloged"),
-        "targets": targets,
-    }
-
-
-@app.post("/admin/reset")
-async def reset_demo():
-    """Clear the in-memory demo registry (demo mode only). Lets the UI start clean
-    without restarting the server."""
-    if not settings.demo_mode:
-        raise HTTPException(400, "reset is available only in demo mode")
-    from .store import reset_store
-    reset_store()
-    return {"status": "reset"}
 
 
 async def _load_edge_map(
     registry: list[dict[str, Any]],
 ) -> "dict[str, list[dict[str, Any]]] | None":
-    """Fetch precomputed edges from Hasura and build the BFS index. Returns None
-    in demo mode or when the edge table is empty (first run before recompute)."""
-    if settings.demo_mode:
-        return None
+    """Fetch precomputed edges from Hasura and build the BFS index."""
     from . import edges as edges_mod
     edge_rows = (await get_client(None).execute(edges_mod.GET_EDGES))["adapter_transform_edge"]
     return edges_mod.build_edge_map(registry, edge_rows) if edge_rows else None
@@ -595,8 +653,6 @@ async def validate_tapis(authorization: str | None = Header(None)):
 async def trigger_recompute_edges(authorization: str | None = Header(None)):
     """Precompute all output→input transform compatibility edges into adapter.transform_edge.
     Fast O(n²) pass over the registry; call after bulk spec registration or schema changes."""
-    if settings.demo_mode:
-        raise HTTPException(400, "recompute-edges is not available in demo mode")
     from . import edges as edges_mod
     result = await edges_mod.recompute(get_client(None))
     return {"status": "ok", **result}
@@ -607,47 +663,12 @@ async def trigger_poll(authorization: str | None = Header(None)):
     """Manually trigger one status-poll pass (useful for debugging without waiting
     for the next scheduled tick). Uses the caller's bearer token if provided,
     falling back to the service-level SVO_ADAPTER_TAPIS_TOKEN."""
-    if settings.demo_mode:
-        raise HTTPException(400, "poll is not available in demo mode")
     from . import poller
     token = _bearer(authorization) or settings.tapis_token
     if not token:
         raise HTTPException(401, "provide a Tapis bearer token or set SVO_ADAPTER_TAPIS_TOKEN")
     updates = await poller.poll_once(token)
     return {"polled": len(updates), "updates": updates}
-
-
-@app.post("/admin/seed-subside-werc")
-async def seed_subside_werc(authorization: str | None = Header(None)):
-    """[DEPRECATED] Seed from fixture file. Use POST /admin/sync-from-mint instead
-    once common transforms are registered in the MINT catalog."""
-    return await _seed(get_client(_bearer(authorization)), "subside_werc_transforms.json")
-
-
-@app.post("/admin/seed-subside-h2i")
-async def seed_subside_h2i(authorization: str | None = Header(None)):
-    """[DEPRECATED] Seed from fixture file. Use POST /admin/sync-from-mint instead."""
-    return await _seed(get_client(_bearer(authorization)), "subside_h2i_transforms.json")
-
-
-@app.post("/admin/seed-subside-forecast")
-async def seed_subside_forecast(authorization: str | None = Header(None)):
-    """[DEPRECATED] Seed from fixture file. Use POST /admin/sync-from-mint instead
-    once the MINT catalog migration 1771300000004_svo_adapter_common_transforms has
-    been applied and the BFS-relevant configs are registered in MINT."""
-    return await _seed(get_client(_bearer(authorization)), "subside_forecast_transforms.json")
-
-
-@app.post("/admin/seed-gma-dfc")
-async def seed_gma_dfc(authorization: str | None = Header(None)):
-    """Seed GMA DFC ETL transforms: unit conversions for drawdown/saturated-thickness/
-    spring-flow, HDS→GeoTIFF format convert, GMA spatial aggregation, budget extract
-    specs for all MODFLOW versions, and the multi-input DFC compliance check.
-    Also recomputes transform edges so /plans works immediately after seeding."""
-    result = await _seed(get_client(_bearer(authorization)), "gma_dfc_transforms.json")
-    # Await edge recompute synchronously so /plans works right after this endpoint returns.
-    await _recompute_edges_bg()
-    return result
 
 
 @app.post("/admin/sync-from-mint")
@@ -725,9 +746,6 @@ async def sync_status(authorization: str | None = Header(None)):
     timestamp of the last sync."""
     from .hasura import GET_SYNC_STATUS_QUERY
 
-    if settings.demo_mode:
-        return {"demo_mode": True, "spec_count": 0, "mint_synced_count": 0,
-                "function_task_count": 0, "last_sync": None}
     h = get_client(_bearer(authorization))
     data = await h.execute(GET_SYNC_STATUS_QUERY)
     last_sync_rows = data.get("last_sync") or []
@@ -737,6 +755,263 @@ async def sync_status(authorization: str | None = Header(None)):
         "function_task_count": data.get("function_tasks", {}).get("aggregate", {}).get("count", 0),
         "last_sync": last_sync_rows[0]["mint_synced_at"] if last_sync_rows else None,
     }
+
+
+# ---------------------------------------------------------------------------
+# DFC UI support endpoints — read-only lookups that back the standalone UI
+# dropdowns (GMA/aquifer/year/metric selectors).  Data comes from the
+# PDF-extracted fixture; no Hasura/CKAN mutation.
+# ---------------------------------------------------------------------------
+
+_DFC_FIXTURE = Path(__file__).resolve().parents[1] / "examples" / "twdb_adopted_dfc_2021.json"
+_OBJECTIVES_FIXTURE = Path(__file__).resolve().parents[1] / "examples" / "dfc_objectives.json"
+
+
+@app.get("/dfc-targets")
+async def dfc_targets(
+    gma_id: str | None = Query(None, description="Filter by GMA, e.g. 'GMA 12' or '12'"),
+    aquifer: str | None = Query(None, description="Filter by aquifer name (case-insensitive)"),
+    metric: str | None = Query(None, description="Filter by metric key"),
+    limit: int = Query(1000, ge=1, le=10000),
+):
+    """Return adopted DFC target records from the PDF-extracted fixture.
+
+    Optional query params filter by GMA, aquifer, and metric.  The UI calls
+    this on every GMA/aquifer/year change to repopulate the metric dropdown
+    and show adopted-target evidence on the planner answer cards.
+    """
+    import json as _json
+
+    if not _DFC_FIXTURE.is_file():
+        raise HTTPException(500, "DFC fixture not found")
+    with open(_DFC_FIXTURE) as f:
+        fixture = _json.load(f)
+    records = fixture.get("records", [])
+
+    # Normalise the GMA filter: accept "GMA 12", "gma 12", or bare "12".
+    gma_num: int | None = None
+    if gma_id:
+        m = __import__("re").search(r"\d+", gma_id)
+        gma_num = int(m.group()) if m else None
+
+    out = []
+    for r in records:
+        if gma_num is not None and r.get("gma") != gma_num:
+            continue
+        if aquifer:
+            r_aq = (r.get("aquifer_system") or r.get("aquifer") or "").lower()
+            if aquifer.lower() not in r_aq and r_aq not in aquifer.lower():
+                continue
+        if metric and r.get("metric") != metric:
+            continue
+        out.append(r)
+        if len(out) >= limit:
+            break
+
+    return {"count": len(out), "records": out}
+
+
+@app.get("/objectives")
+async def list_objectives():
+    """Return DFC objective specifications from the fixture."""
+    import json as _json
+
+    if not _OBJECTIVES_FIXTURE.is_file():
+        return {"objectives": []}
+    with open(_OBJECTIVES_FIXTURE) as f:
+        fixture = _json.load(f)
+    return {"objectives": fixture.get("objectives", [])}
+
+
+@app.get("/objectives/{objective_id}")
+async def get_objective(objective_id: str):
+    """Return a single DFC objective specification by ID."""
+    import json as _json
+
+    if not _OBJECTIVES_FIXTURE.is_file():
+        raise HTTPException(404, "objectives fixture not found")
+    with open(_OBJECTIVES_FIXTURE) as f:
+        fixture = _json.load(f)
+    for obj in fixture.get("objectives", []):
+        if obj.get("id") == objective_id:
+            return obj
+    raise HTTPException(404, f"objective {objective_id!r} not found")
+
+
+@app.get("/runtime-defaults")
+async def runtime_defaults():
+    """Return non-secret runtime configuration for the standalone UI.
+
+    Exposes geo_actor_id and other non-sensitive settings so the UI can
+    prefill workflow args.  Tokens and secrets are never returned.
+    """
+    return {
+        "geo_actor_id": settings.geo_actor_id or "",
+        "tapis_exec_system": settings.tapis_exec_system,
+        "tapis_workflow_group": settings.tapis_workflow_group,
+    }
+
+
+@app.post("/objectives/{objective_id}/evaluate-plan")
+async def evaluate_objective_plan(
+    objective_id: str,
+    body: dict | None = None,
+    authorization: str | None = Header(None),
+):
+    """Evaluate an objective specification into an ETL plan.
+
+    Loads the objective from the fixture, finds a matching data object
+    for the objective's source requirement, and generates a transform
+    chain using the same planner as POST /plans.
+    """
+    import json as _json
+
+    if not _OBJECTIVES_FIXTURE.is_file():
+        raise HTTPException(404, "objectives fixture not found")
+    with open(_OBJECTIVES_FIXTURE) as f:
+        fixture = _json.load(f)
+    objective = None
+    for obj in fixture.get("objectives", []):
+        if obj.get("id") == objective_id:
+            objective = obj
+            break
+    if not objective:
+        raise HTTPException(404, f"objective {objective_id!r} not found")
+
+    h = get_client(_bearer(authorization))
+    # The UI sends the metric contract (e.g. head drawdown) in the body.
+    body = body or {}
+    target_contract = body.get("target_contract") or objective.get("source_requirement", {}).get("contract") or objective.get("targets", {}).get("contract", {})
+    if not target_contract:
+        raise HTTPException(422, "objective has no target_contract; pass target_contract in request body")
+
+    # List data objects and pick the best reachable match. Prefer remotely
+    # accessible CKAN/Tapis sources over local file paths so live Tapis workflows
+    # do not receive laptop-only paths.
+    objs_data = await h.execute(LIST_DATA_OBJECTS_QUERY)
+    objects = objs_data.get("adapter_data_object", [])
+    if not objects:
+        raise HTTPException(422, "no data objects registered — sync CKAN resources first")
+
+    target_svo = target_contract.get("standard_variable_uri", "")
+    tgt = DataObjectContract(**{k: v for k, v in target_contract.items() if k in DataObjectContract.model_fields})
+    registry = (await h.execute(TRANSFORM_REGISTRY_QUERY))["adapter_transform_spec"]
+    edge_map = await _load_edge_map(registry)
+
+    candidates = []
+    for o in objects:
+        if target_svo and not any(v.get("standard_variable_uri") == target_svo for v in o.get("variables", [])):
+            continue
+        rows = (await h.execute(DATA_OBJECT_CONTRACT_QUERY, {"id": o["id"]}))["adapter_data_object"]
+        if not rows:
+            continue
+        src = _data_object_to_contract(rows[0])
+        path = find_path(src, tgt, registry, edge_map=edge_map)
+        if path is None:
+            continue
+        candidates.append((_source_uri_score(o.get("resource_uri")), -len(path), o, path))
+
+    if not candidates:
+        raise HTTPException(422, "no transform path found from any matching data object to target contract")
+    _, _, best, path = max(candidates, key=lambda item: (item[0], item[1], item[2].get("label") or ""))
+
+    plan_json = build_plan_json(path) if path else {"steps": [], "lossy": False}
+    plan_json["source"] = best.get("resource_uri", "")
+    plan_json["source_data_object_id"] = best.get("id")
+
+    # Persist the plan (best-effort; ignore if adapter tables aren't tracked).
+    plan_id = f"obj-{objective_id}"
+    try:
+        created = (await h.execute(INSERT_PLAN, {"obj": {
+            "source_data_object_id": best["id"],
+            "status": "draft",
+            "plan_json": plan_json,
+        }}))["insert_adapter_workflow_plan_one"]
+        plan_id = created["id"]
+    except Exception:
+        pass
+
+    return {
+        "plan_id": plan_id,
+        "source": {"id": best["id"], "label": best.get("label", "")},
+        "objective_id": objective_id,
+        "plan_json": plan_json,
+    }
+
+
+@app.post("/plans/dfc-fanout")
+async def create_dfc_fanout_plan(body: dict[str, Any], authorization: str | None = Header(None)):
+    """Create one DFC area-aggregation branch per adopted target row.
+
+    The DFC UI uses this for district/county-specific drawdown targets. It
+    resolves the same source→target transform chain as ``/plans`` and duplicates
+    that chain per selected adopted DFC target record, attaching per-area context
+    for workflow generation and rendering.
+    """
+    data_object_id = body.get("data_object_id")
+    target_contract_raw = body.get("target_contract")
+    target_records = body.get("target_records") or []
+    if not data_object_id:
+        raise HTTPException(422, "data_object_id is required")
+    if not target_contract_raw:
+        raise HTTPException(422, "target_contract is required")
+    if not isinstance(target_records, list) or not target_records:
+        raise HTTPException(422, "target_records must be a non-empty list")
+
+    h = get_client(_bearer(authorization))
+    src_rows = (await h.execute(DATA_OBJECT_CONTRACT_QUERY, {"id": data_object_id}))["adapter_data_object"]
+    if not src_rows:
+        raise HTTPException(404, "data object not found")
+    src = _data_object_to_contract(src_rows[0])
+    tgt = DataObjectContract(**{k: v for k, v in target_contract_raw.items() if k in DataObjectContract.model_fields})
+
+    registry = (await h.execute(TRANSFORM_REGISTRY_QUERY))["adapter_transform_spec"]
+    edge_map = await _load_edge_map(registry)
+    path = find_path(src, tgt, registry, edge_map=edge_map)
+    if path is None:
+        raise HTTPException(422, "no transform path found from source contract to target contract")
+
+    base = build_plan_json(path)
+    steps: list[dict[str, Any]] = []
+    step_idx = 0
+    for rec in target_records:
+        depends_on: list[int] = []
+        for base_step in base.get("steps", []):
+            step = dict(base_step)
+            step["step"] = step_idx
+            step["depends_on"] = depends_on.copy()
+            area = rec.get("area") or "GMA-wide"
+            rec_gma = rec.get("gma")
+            step["dfc_record_id"] = rec.get("id")
+            step["dfc_area"] = area
+            step["env_values"] = {
+                "AREA": area,
+                "AREA_TYPE": rec.get("area_type") or "gma",
+                "GMA_ID": body.get("gma_id") or (f"GMA {rec_gma}" if rec_gma else None),
+                "AQUIFER": rec.get("aquifer") or rec.get("aquifer_system"),
+                "TARGET_YEAR": (rec.get("period") or {}).get("target_year"),
+                "DFC_RECORD_ID": rec.get("id"),
+            }
+            steps.append(step)
+            depends_on = [step_idx]
+            step_idx += 1
+
+    plan_json = {
+        "steps": steps,
+        "lossy": base.get("lossy", False),
+        "dfc_fanout": True,
+        "target_records": target_records,
+    }
+    created = (await h.execute(INSERT_PLAN, {"obj": {
+        "source_data_object_id": data_object_id,
+        "status": "draft",
+        "plan_json": plan_json,
+    }}))["insert_adapter_workflow_plan_one"]
+    await h.execute(INSERT_PROVENANCE, {"obj": {
+        "event_type": "dfc_fanout_plan_generated",
+        "payload_json": {"plan_id": created["id"], "areas": len(target_records), "steps": len(steps)},
+    }})
+    return {"status": "transform_required", "plan_id": created["id"], "plan_json": plan_json}
 
 
 @app.post("/readiness/check", response_model=ReadinessResult)
@@ -1295,6 +1570,27 @@ async def submit_workflow(body: SubmitWorkflowIn, authorization: str | None = He
 
     pipeline = tapis.generate_tapis_workflow(plan)
     args = _wrap_args(body.args)
+    if token and "tapis_token" in (pipeline.get("params") or {}) and not args.get("tapis_token", {}).get("value"):
+        args["tapis_token"] = {"value": token}
+    if not body.dry_run and "source_uri" in (pipeline.get("params") or {}):
+        source_uri = args.get("source_uri", {}).get("value")
+        if not _is_live_runnable_source_uri(source_uri) and plan.get("source_data_object_id"):
+            src_rows = (await h.execute(DATA_OBJECT_CONTRACT_QUERY, {"id": plan["source_data_object_id"]}))["adapter_data_object"]
+            plan_source_uri = (src_rows[0] or {}).get("resource_uri") if src_rows else None
+            if _is_live_runnable_source_uri(plan_source_uri):
+                args["source_uri"] = {"value": plan_source_uri}
+                source_uri = plan_source_uri
+        if not _is_live_runnable_source_uri(source_uri):
+            replacement_uri = await _replacement_source_uri(h, plan.get("source_data_object_id"))
+            if replacement_uri:
+                args["source_uri"] = {"value": replacement_uri}
+                source_uri = replacement_uri
+        if not _is_live_runnable_source_uri(source_uri):
+            raise HTTPException(
+                422,
+                "Live workflow source_uri must point to a reachable http, https, or tapis resource; "
+                f"got {source_uri or 'missing'!r}. Sync/select a CKAN or real Tapis data object instead of a local file path.",
+            )
 
     # Record the run before triggering, so a failed submit still leaves a trail.
     run_obj: dict[str, Any] = {
@@ -1341,6 +1637,16 @@ async def get_plan(plan_id: str, authorization: str | None = Header(None)):
     return plan
 
 
+@app.get("/runs")
+async def list_runs(limit: int = Query(50, ge=1, le=200), authorization: str | None = Header(None)):
+    """List recent workflow runs, most recent first."""
+    h = get_client(_bearer(authorization))
+    data = await h.execute(LIST_RUNS, {"limit": limit})
+    runs = data.get("adapter_workflow_run", [])
+    total = data.get("adapter_workflow_run_aggregate", {}).get("aggregate", {}).get("count", 0)
+    return {"runs": runs, "total": total}
+
+
 @app.get("/runs/{run_id}")
 async def get_run(run_id: str, authorization: str | None = Header(None)):
     h = get_client(_bearer(authorization))
@@ -1348,6 +1654,78 @@ async def get_run(run_id: str, authorization: str | None = Header(None)):
     if not run:
         raise HTTPException(404, "run not found")
     return run
+
+
+@app.post("/runs/{run_id}/poll")
+async def poll_run(run_id: str, authorization: str | None = Header(None)):
+    """Poll one Tapis workflow run and persist any status transition.
+
+    This is the user-triggered counterpart to the background poller. It returns
+    the persisted adapter run fields plus the Tapis detail payload so the UI can
+    render task stdout/stderr and DFC modeled values.
+    """
+    token = _bearer(authorization) or settings.tapis_token
+    h = get_client(token)
+    run = (await h.execute(GET_RUN, {"id": run_id}))["adapter_workflow_run_by_pk"]
+    if not run:
+        raise HTTPException(404, "run not found")
+
+    pipeline_id = run.get("tapis_workflow_id")
+    run_uuid = run.get("tapis_run_id")
+    if not pipeline_id or not run_uuid:
+        return run
+    if not token:
+        raise HTTPException(401, "log in with a Tapis token to poll this run")
+
+    detail = await run_in_threadpool(tapis.get_run_detail, pipeline_id, run_uuid, token=token)
+    tapis_status = str(detail.get("status") or "").upper()
+    terminal = {
+        "COMPLETED": "completed",
+        "FINISHED": "completed",
+        "FAILED": "failed",
+        "CANCELLED": "failed",
+        "TERMINATED": "failed",
+    }
+    update: dict[str, Any] = {}
+    adapter_status = terminal.get(tapis_status)
+    if adapter_status:
+        update["status"] = adapter_status
+        if adapter_status == "completed":
+            update["completed_at"] = datetime.utcnow().isoformat()
+        else:
+            failed = []
+            for task in detail.get("tasks") or []:
+                if str(task.get("status") or "").upper() in {"FAILED", "ERROR"}:
+                    failed.append(task.get("last_message") or task.get("stderr") or task.get("stdout") or task.get("task_id") or "task failed")
+            if failed:
+                update["error_message"] = "; ".join(map(str, failed))[:2000]
+    elif tapis_status and str(run.get("status") or "").lower() in {"submitting", "generated"}:
+        update["status"] = "running"
+
+    if update:
+        run = (await h.execute(UPDATE_RUN, {"id": run_id, "set": update}))["update_adapter_workflow_run_by_pk"] or run
+        await h.execute(INSERT_PROVENANCE, {"obj": {
+            "workflow_run_id": run_id,
+            "event_type": "run_status_polled",
+            "payload_json": {"tapis_status": tapis_status, "adapter_status": update.get("status")},
+        }})
+
+    return {**run, **detail}
+
+
+@app.get("/runs/{run_id}/provenance")
+async def get_run_provenance(
+    run_id: str,
+    limit: int = Query(100, ge=1, le=500),
+    authorization: str | None = Header(None),
+):
+    """Return provenance events associated with a workflow run."""
+    h = get_client(_bearer(authorization))
+    run = (await h.execute(GET_RUN, {"id": run_id}))["adapter_workflow_run_by_pk"]
+    if not run:
+        raise HTTPException(404, "run not found")
+    data = await h.execute(GET_PROVENANCE, {"run_id": run_id, "limit": limit})
+    return {"run_id": run_id, "events": data.get("adapter_provenance_event", [])}
 
 
 @app.post("/runs/{run_id}/register-output")
@@ -1465,19 +1843,6 @@ async def ntgam_scenario(body: dict[str, Any], authorization: str | None = Heade
         raise HTTPException(502, f"scenario assembly failed: {exc}")
 
 
-@app.post("/forecast/run")
-async def ntgam_run(body: dict[str, Any]):
-    """Run the SUBSIDE screening model on an assembled scenario (returns risk score,
-    risk factors, and the annual subsidence projection)."""
-    scenario = body.get("scenario") or body
-    if not isinstance(scenario, dict) or not scenario:
-        raise HTTPException(422, "a scenario object is required")
-    try:
-        return await run_in_threadpool(ntgam.run_forecast, scenario)
-    except Exception as exc:  # noqa: BLE001
-        raise HTTPException(500, f"forecast run failed: {exc}")
-
-
 @app.post("/forecast/run-tapis")
 async def ntgam_run_tapis(body: dict[str, Any], authorization: str | None = Header(None)):
     """Run the forecast as a Tapis Workflows pipeline (emulates SUBSIDE): generate a
@@ -1593,11 +1958,57 @@ async def ntgam_run_tapis_detail(run_uuid: str, pipeline_id: str,
 
 
 # --- bundled standalone UI -------------------------------------------------
-# Serve the demo single-page app (static/index.html) and redirect / to it.
+# Serve the single-page UI (static/index.html) and redirect / to it.
 _STATIC_DIR = Path(__file__).resolve().parents[1] / "static"
 if _STATIC_DIR.is_dir():
+    @app.get("/ui/", include_in_schema=False)
+    async def _ui_index() -> FileResponse:
+        """Serve the UI shell without allowing stale deployment metadata to persist."""
+        return FileResponse(
+            _STATIC_DIR / "index.html",
+            headers={"Cache-Control": "no-store, max-age=0"},
+        )
+
     app.mount("/ui", StaticFiles(directory=str(_STATIC_DIR), html=True), name="ui")
 
     @app.get("/")
     async def _root() -> RedirectResponse:
         return RedirectResponse("/ui/")
+
+    @app.get("/api/oauth2/tapis/callback")
+    async def tapis_oauth_callback() -> FileResponse:
+        """Serve the UI so it can consume Tapis' query-string access token."""
+        return FileResponse(
+            _STATIC_DIR / "index.html",
+            headers={"Cache-Control": "no-store, max-age=0"},
+        )
+
+
+# Keep the generated Swagger UI organized by API scope. The route implementations
+# intentionally remain close to the service code above; tags are applied centrally
+# so adding a route does not require repeating OpenAPI boilerplate in every handler.
+def _openapi_scope(path: str) -> str:
+    if path.startswith("/forecast/"):
+        return "NTGAM forecast"
+    if path in {"/dfc-targets", "/plans/dfc-fanout"} or path.startswith("/qaqc/"):
+        return "DFC/GAM"
+    if path.startswith("/admin/"):
+        return "Integrations"
+    if path in {"/data-objects", "/transform-specs", "/standard-variables", "/health"}:
+        return "Core: Registry"
+    if path in {"/readiness/check", "/plans", "/plans/discover", "/plans/discover-sources",
+                "/plans/model-run"} or path.startswith("/reachable/"):
+        return "Core: Planning"
+    if path in {"/workflows/generate", "/workflows/submit"}:
+        return "Core: Workflows"
+    if path == "/runs" or path.startswith("/runs/") or path.startswith("/plans/"):
+        return "Core: Runs"
+    if path.startswith("/objectives") or path in {"/runtime-defaults", "/datasets/find",
+                                                   "/datasets/dataset_resources"}:
+        return "Core: Catalog/objectives"
+    return "Core: Registry"
+
+
+for _route in app.routes:
+    if hasattr(_route, "path") and hasattr(_route, "tags"):
+        _route.tags = [_openapi_scope(_route.path)]

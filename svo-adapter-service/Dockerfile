@@ -20,6 +20,6 @@ COPY app ./app
 COPY static ./static
 COPY examples ./examples
 
-EXPOSE 8090
+EXPOSE 8000
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8090"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

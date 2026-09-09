@@ -1,8 +1,9 @@
 # svo-adapter-service
 
 FastAPI sidecar that plans SVO-to-SVO ETL pipelines to make data objects
-model-ready for MINT. See [`../docs/svo-adapter-service.md`](../docs/svo-adapter-service.md)
-for the full architecture.
+model-ready for MINT. See the [SVO Adapter documentation index](docs/README.md),
+especially the [API reference](docs/api.md), for the endpoint catalog and the
+boundary between reusable adapter behavior and application-specific profiles.
 
 ## How this reuses MINT's existing PostgreSQL + Hasura architecture
 
@@ -29,13 +30,13 @@ Hasura/Postgres) and register them as `adapter.transform_spec` rows.
 
 ```bash
 # Preview what would be created/updated/deleted (no writes):
-curl -X POST http://localhost:8090/admin/sync-from-mint?dry_run=true
+curl -X POST http://localhost:8000/admin/sync-from-mint?dry_run=true
 
 # Run the sync (also triggers a background edge-recompute):
-curl -X POST http://localhost:8090/admin/sync-from-mint
+curl -X POST http://localhost:8000/admin/sync-from-mint
 
 # Check state:
-curl http://localhost:8090/admin/sync-status
+curl http://localhost:8000/admin/sync-status
 ```
 
 **How it works:**
@@ -86,7 +87,6 @@ app/
   models.py      # Pydantic models + the DataObjectContract
   planner.py     # six-dimension compatibility + BFS transform-path search
   tapis.py       # plan_json → Tapis Workflows pipeline + register/run
-  store.py       # in-memory Hasura stub for demo mode
   main.py        # FastAPI endpoints
 examples/        # sample request/response payloads
 ```
@@ -99,31 +99,11 @@ python3 -m venv .venv && . .venv/bin/activate
 pip install -r requirements.txt
 export SVO_ADAPTER_HASURA_GRAPHQL_URL=http://localhost:8080/v1/graphql
 export SVO_ADAPTER_HASURA_ADMIN_SECRET=...   # same Hasura as the model catalog
-uvicorn app.main:app --reload --port 8090
+uvicorn app.main:app --reload --port 8000
 ```
 
 Apply the schema first (from `graphql_engine/`): `hasura migrate apply && hasura metadata apply`.
 
-## Demo UI (zero infra)
-
-A bundled standalone single-page UI (`static/index.html`) walks the whole flow —
-register the ETL pieces, check readiness, plan, generate, and run a Tapis
-Workflows pipeline. **Demo mode** backs every Hasura call with an in-memory store
-so it runs with no Hasura/Postgres/Tapis:
-
-```bash
-cd svo-adapter-service
-python3 -m venv .venv && . .venv/bin/activate
-pip install -r requirements.txt
-SVO_ADAPTER_DEMO_MODE=1 uvicorn app.main:app --reload --port 8090
-# open http://localhost:8090/  -> click "Load SUBSIDE WERC pieces" -> step through 1-6
-```
-
-Click **Load SUBSIDE WERC pieces** to seed the SUBSIDE pipeline as `transform_spec`s
-(`POST /admin/seed-subside-werc`), then walk steps 1–6. "Submit run" defaults to
-**dry-run** (registers + returns the pipeline definition without triggering Tapis —
-no `workflows` grant needed). Headless equivalent: `python tests/test_demo_api.py`.
-
-Same UI, real backend: drop `SVO_ADAPTER_DEMO_MODE` and point at a live Hasura
-(the readiness/plan target can still be supplied inline via `target_contract`, so
-a populated model catalog is optional).
+The UI is live-only: it reads the persistent transform/data-object registry from
+Hasura and submits forecast and DFC workflows to Tapis. Start Hasura and apply the
+schema before opening `http://localhost:8000/ui/`.

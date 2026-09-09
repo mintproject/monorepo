@@ -83,7 +83,7 @@ class ReadinessCheckIn(BaseModel):
     data_object_id: str
     model_configuration_id: str | None = None
     # Either point at a model-catalog DatasetSpecification (read from Hasura) OR
-    # supply the target requirement inline (handy for demos / catalog-less checks).
+    # supply the target requirement inline for catalog-independent checks.
     dataset_specification_id: str | None = None
     target_contract: DataObjectContract | None = None
 

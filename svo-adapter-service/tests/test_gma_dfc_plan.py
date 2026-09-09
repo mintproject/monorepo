@@ -117,15 +117,20 @@ def test_dfc_head_workflow_params_are_plan_specific():
         group_id="adapter-demo",
     )
 
-    # The workflow always uses STANDARD_PARAMS (start_date, end_date, etc.)
-    # for interchangeability with SUBSIDE pipelines. DFC-specific params
-    # (source_uri, gma_id, etc.) are task-level inputs via env_from_args,
-    # not pipeline-level params.
-    assert "start_date" in workflow["params"]
-    assert "end_date" in workflow["params"]
+    # DFC workflows declare only the pipeline args referenced by their plan
+    # steps. They must not require unrelated WERC/SUBSIDE args, or Tapis rejects
+    # submission before running.
+    assert "start_date" not in workflow["params"]
+    assert "end_date" not in workflow["params"]
+    assert "aoi_geojson_uri" not in workflow["params"]
+    assert "allocation" not in workflow["params"]
     assert "tapis_token" in workflow["params"]
 
-    # DFC-specific inputs are wired through the task's input map, not params.
+    # DFC-specific inputs are both declared as pipeline params and wired through
+    # the task's input map.
+    assert "source_uri" in workflow["params"]
+    assert "gma_id" in workflow["params"]
+    assert "gma_boundary_uri" in workflow["params"]
     task = workflow["tasks"][0]
     task_input_keys = set(task.get("input", {}).keys())
     assert "SOURCE_URI" in task_input_keys

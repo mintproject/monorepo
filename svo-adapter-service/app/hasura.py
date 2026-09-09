@@ -19,11 +19,7 @@ class HasuraError(RuntimeError):
 
 
 def get_client(bearer_token: str | None = None):
-    """Return the metadata client: the in-memory demo store when demo_mode is on,
-    otherwise a real Hasura GraphQL client. Both expose ``execute``."""
-    if settings.demo_mode:
-        from .store import InMemoryHasura
-        return InMemoryHasura(bearer_token)
+    """Return the configured Hasura GraphQL client."""
     return HasuraClient(bearer_token)
 
 
