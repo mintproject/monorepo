@@ -81,7 +81,7 @@ jobs:
           --image-tag "${{ steps.deploy.outputs.tag }}"
           --pods "${{ steps.deploy.outputs.pods }}"
           --owners "wmobley,mosoriob"
-          --restart
+          --restart-pods "redis,graphql,api,ensemble,svo,ui"
 
       - name: Summary
         run: |

@@ -135,6 +135,38 @@ class StorageTests(unittest.TestCase):
         with self.assertRaises(SystemExit), patch("sys.stderr"):
             deploy.main(["--no-start", "--restart"])
 
+    def test_automated_restart_allowlist_excludes_postgres(self):
+        selected = deploy.parse_pods("all")
+        self.assertEqual(
+            deploy.resolve_restart_pods(
+                selected,
+                restart=False,
+                restart_pods="redis,graphql,api,ensemble,svo,ui",
+            ),
+            ["redis", "graphql", "api", "ensemble", "svo", "ui"],
+        )
+
+    def test_postgres_is_not_restarted_when_omitted_from_allowlist(self):
+        t = Mock()
+        t.pods.get_pod.return_value = self.spec
+        deploy.upsert_pod(t, self.spec, recreate=False, start=True, restart=False)
+        t.pods.restart_pod.assert_not_called()
+        t.pods.update_pod.assert_called_once()
+
+    def test_restart_allowlist_is_limited_to_updated_pods(self):
+        self.assertEqual(
+            deploy.resolve_restart_pods(
+                deploy.parse_pods("postgres,ui"),
+                restart=False,
+                restart_pods="redis,postgres,ui",
+            ),
+            ["postgres", "ui"],
+        )
+
+    def test_restart_modes_cannot_be_combined(self):
+        with self.assertRaises(SystemExit):
+            deploy.resolve_restart_pods(["ui"], restart=True, restart_pods="ui")
+
     def test_waits_are_bounded(self):
         with self.assertRaises(RuntimeError):
             deploy.wait_for_postgres(Mock(), timeout=0)

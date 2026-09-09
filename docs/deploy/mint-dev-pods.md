@@ -34,6 +34,12 @@ Deploy by immutable `sha-*` tags. Do not use `latest` for rollback-sensitive dep
 - `Deploy MINT Dev Pods` runs after a successful `MINT Dev Images` run on `develop`, plus manual dispatch for rollback/redeploy.
 - PRs build images with `push: false` and never deploy.
 
+The automated deploy updates the selected pod specs but restarts only Redis and
+the application pods. It intentionally excludes PostgreSQL from the restart
+allow-list so a routine image deployment cannot bounce the database. A
+deliberate PostgreSQL restart remains available to an operator using the
+registration script directly.
+
 The deploy job uses the `Tapis Dev Deploy` GitHub Environment.
 
 ## Required environment secrets
@@ -114,8 +120,9 @@ When deploying PostgreSQL, the script waits for the volume to become available
 and for SQL to succeed before deploying the next service. Selectors are ordered
 by dependency even when supplied as `--pods graphql,postgres`. Persistent
 storage readiness waits allow up to ten minutes for Tapis lifecycle updates;
-restarts require a confirmed change in container start time. `--no-start` and
-`--restart` cannot be combined. Persistent
+restarts require a confirmed change in container start time. `--restart-pods`
+limits restarts without changing the update set; `--no-start` cannot be
+combined with either restart option. Persistent
 storage survives pod restarts; it does not replace database backups. Never
 delete the volume as part of image rollback.
 

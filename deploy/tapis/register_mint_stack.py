@@ -347,6 +347,16 @@ def parse_pods(value: str) -> list[str]:
     return [name for name in ORDER if name in selected]
 
 
+def resolve_restart_pods(selected: list[str], *, restart: bool, restart_pods: str | None) -> list[str]:
+    """Resolve the pods to restart independently from the pods to update."""
+    if restart and restart_pods is not None:
+        raise SystemExit("--restart and --restart-pods cannot be combined")
+    if restart_pods is None:
+        return selected if restart else []
+    requested = parse_pods(restart_pods)
+    return [name for name in requested if name in selected]
+
+
 def _field(value: Any, key: str, default: Any = None) -> Any:
     return value.get(key, default) if isinstance(value, dict) else getattr(value, key, default)
 
@@ -498,14 +508,23 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--owners", default="wmobley,mosoriob", help="comma-separated list of pod owners (ADMIN permission)")
     parser.add_argument("--recreate", action="store_true")
     parser.add_argument("--restart", action="store_true")
+    parser.add_argument(
+        "--restart-pods",
+        help="comma-separated pods to restart after updating; limits restarts without changing the update set",
+    )
     parser.add_argument("--no-start", action="store_true")
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args(argv)
-    if args.no_start and args.restart:
-        parser.error("--no-start and --restart cannot be combined")
+    if args.no_start and (args.restart or args.restart_pods is not None):
+        parser.error("--no-start cannot be combined with --restart or --restart-pods")
 
     _load_dotenv()
     selected = parse_pods(args.pods)
+    restart_selected = resolve_restart_pods(
+        selected,
+        restart=args.restart,
+        restart_pods=args.restart_pods,
+    )
     specs = build_specs(args.owner, args.image_tag, args.base_url)
     urls = specs.pop("_urls")
 
@@ -541,7 +560,7 @@ def main(argv: list[str] | None = None) -> int:
     if "postgres" in selected:
         postgres = _get_or_missing(t.pods.get_pod, pod_id=PODS["postgres"])
         check_postgres_storage(postgres, recreate=args.recreate)
-        if postgres is not None and args.restart:
+        if postgres is not None and "postgres" in restart_selected:
             previous_start = _field(_field(postgres, "status_container", {}), "start_time")
             if not previous_start:
                 raise RuntimeError("Cannot verify PostgreSQL restart; previous container start time is missing")
@@ -549,7 +568,14 @@ def main(argv: list[str] | None = None) -> int:
         ensure_postgres_volume(t, allow_create=postgres is None)
 
     for key in selected:
-        upsert_pod(t, specs[key], recreate=args.recreate, start=not args.no_start, restart=args.restart, owners=owners)
+        upsert_pod(
+            t,
+            specs[key],
+            recreate=args.recreate,
+            start=not args.no_start,
+            restart=key in restart_selected,
+            owners=owners,
+        )
         if key == "postgres" and not args.no_start:
             wait_for_postgres(t, previous_start, restarted=postgres_restarted)
 
