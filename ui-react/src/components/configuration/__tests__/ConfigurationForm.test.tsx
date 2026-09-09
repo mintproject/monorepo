@@ -221,7 +221,9 @@ describe('ConfigurationForm (edit mode)', () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByPlaceholderText('Configuration name')).toBeInTheDocument();
+      expect(screen.getByPlaceholderText('Configuration name')).toHaveValue(
+        'Default Configuration',
+      );
     });
 
     const nameInput = screen.getByPlaceholderText('Configuration name');
