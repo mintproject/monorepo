@@ -1,0 +1,6 @@
+# Optional local indexing runtime. Keep this out of the request-serving adapter
+# image so a CPU-only deployment does not pull a CUDA runtime.
+--extra-index-url https://download.pytorch.org/whl/cpu
+psycopg[binary]>=3.2
+torch==2.6.0+cpu
+sentence-transformers==3.3.1

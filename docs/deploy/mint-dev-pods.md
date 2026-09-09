@@ -88,3 +88,70 @@ pods: api,ui
 - The Ensemble Manager image entrypoint materializes `ENSEMBLE_MANAGER_CONFIG_JSON` into a runtime config file and sets `ENSEMBLE_MANAGER_CONFIG_FILE` before starting the app.
 - Authenticated Hasura writes need either `MINTDEV_HASURA_JWT_SECRET` or `MINTDEV_HASURA_AUTH_HOOK`; without one, the stack may boot but write paths that forward user JWTs can fail.
 - Tapis Pod template details for Redis/PostgreSQL should be validated during the first dev deployment.
+
+## Persistent PostgreSQL storage
+
+The registration script uses `postgis/postgis:16-3.5` and the dedicated Tapis
+volume `mintdevpostgresdata`. The volume mounts at `/var/lib/postgresql/data`;
+`PGDATA` is `/var/lib/postgresql/data/pgdata`. PostGIS is required by the first
+MINT migration (`public.geometry`). For a new database pod, the volume is created
+if absent, with a 10,240 MB size warning threshold, and reused on subsequent
+deployments. If an existing pod's volume is missing, deployment stops instead
+of silently creating empty replacement storage.
+
+Volume mounts use the current Tapis format: the container mount path is the
+dictionary key, with `type: tapisvolume` and `source_id: mintdevpostgresdata`.
+The deployment identity must have access to both the database pod and volume.
+The volume is not automatically shared with all pod owners.
+
+The script refuses to change an existing database's image, volume, subpath, or
+PGDATA implicitly. It also refuses `--recreate` for an existing PostgreSQL pod.
+An older ephemeral deployment requires a deliberate preservation/recovery
+operation before routine deployment can resume. Authentication/server errors
+are not treated as missing pods or volumes.
+
+When deploying PostgreSQL, the script waits for the volume to become available
+and for SQL to succeed before deploying the next service. Selectors are ordered
+by dependency even when supplied as `--pods graphql,postgres`. Persistent
+storage readiness waits allow up to ten minutes for Tapis lifecycle updates;
+restarts require a confirmed change in container start time. `--no-start` and
+`--restart` cannot be combined. Persistent
+storage survives pod restarts; it does not replace database backups. Never
+delete the volume as part of image rollback.
+
+## Empty-database recovery
+
+First inventory all databases and user schemas, preserve protected logical
+backups and pod configuration, and pause dependent services. If data exists,
+restore it into the persistent database before resuming; attaching a fresh
+volume does not copy the old container filesystem.
+
+For an empty database, stop PostgreSQL, attach the volume and set PGDATA as
+above, and use the PostGIS image. Preserve the current credentials, network
+configuration, and other pod settings. Start PostgreSQL and verify SQL readiness,
+`SHOW data_directory`, the actual filesystem mount, and an enabled PostGIS
+extension in the database used by Hasura. Do not run two database instances
+against the same data directory.
+
+Start Hasura after PostgreSQL is ready. Inside the Hasura pod:
+
+```bash
+cd /hasura
+export HASURA_GRAPHQL_ENDPOINT=http://localhost:8080
+hasura migrate apply --skip-update-check
+hasura seeds apply --skip-update-check  # fresh database only; inspect before retrying
+hasura metadata apply --skip-update-check
+hasura migrate status --skip-update-check
+hasura metadata inconsistency list --skip-update-check
+```
+
+Use the existing pod's admin-secret environment variable. Stop on any failed
+command. Seeds provide reference data; migrations and metadata do not restore
+historical model records or runs. Do not load demo fixtures as a substitute for
+a missing backup.
+
+Before resuming services, verify the UI's anonymous model-catalog query succeeds
+and metadata is consistent. Perform a controlled PostgreSQL restart, restart
+Hasura if needed, and compare the database system identifier, migration records,
+schema, and reference-data counts before and after. Retain the volume and
+backups if recovery fails.

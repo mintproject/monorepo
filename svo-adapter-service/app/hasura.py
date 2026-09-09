@@ -148,6 +148,21 @@ mutation UpsertMintSyncSpec($obj: adapter_transform_spec_insert_input!) {
 }
 """
 
+UPSERT_ETL_TRANSFORM_SPEC_MUTATION = """
+mutation UpsertMintETLSpec($obj: adapter_transform_spec_insert_input!) {
+  insert_adapter_transform_spec_one(
+    object: $obj
+    on_conflict: {
+      constraint: transform_spec_pkey
+      update_columns: [
+        name description transform_type method tapis_app_id app_version
+        parameters_schema_json env_from_args mint_synced_at
+      ]
+    }
+  ) { id }
+}
+"""
+
 # Delete spec rows whose mint_model_config_id is NOT in the live MINT set.
 # Rows with null mint_model_config_id (hand-created or legacy) are untouched.
 DELETE_OBSOLETE_MINT_SPECS_MUTATION = """
@@ -221,6 +236,18 @@ query ListMintConfigurations($limit: Int!, $offset: Int!) {
         has_fixed_value
         has_default_value
       }
+    }
+  }
+}
+"""
+
+LIST_MINT_ETL_PROCESSES_QUERY = """
+query ListMintETLProcesses($limit: Int!, $offset: Int!) {
+  modelcatalog_etl_process(limit: $limit, offset: $offset, order_by: {id: asc}) {
+    id label description version visibility runtime_kind runtime_json
+    contracts(order_by: [{role: asc}, {position: asc}]) {
+      role position standard_variable_uri unit format dimensionality
+      spatial_type crs_requirement temporal_resolution schema_requirement_json
     }
   }
 }

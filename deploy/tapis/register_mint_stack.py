@@ -14,11 +14,16 @@ import os
 import sys
 import time
 from getpass import getpass
+from functools import partial
 from pathlib import Path
 from typing import Any
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
+POSTGRES_IMAGE = "postgis/postgis:16-3.5"
+POSTGRES_VOLUME = "mintdevpostgresdata"
+POSTGRES_MOUNT = "/var/lib/postgresql/data"
+POSTGRES_DATA = f"{POSTGRES_MOUNT}/pgdata"
 
 PODS = {
     "postgres": "mintdevpostgres",
@@ -201,13 +206,21 @@ def build_specs(owner: str, tag: str, base_url: str) -> dict[str, dict[str, Any]
     specs: dict[str, dict[str, Any]] = {
         "postgres": {
             "pod_id": PODS["postgres"],
-            "image": "postgres:16",
+            "image": POSTGRES_IMAGE,
             "description": "MINT dev PostgreSQL database",
             "networking": {"default": {"protocol": "tcp", "port": 5432}},
             "environment_variables": {
                 "POSTGRES_USER": _postgres_user(),
                 "POSTGRES_PASSWORD": _postgres_password(),
                 "POSTGRES_DB": _postgres_db(),
+                "PGDATA": POSTGRES_DATA,
+            },
+            "volume_mounts": {
+                POSTGRES_MOUNT: {
+                    "type": "tapisvolume",
+                    "source_id": POSTGRES_VOLUME,
+                    "sub_path": "",
+                },
             },
             "time_to_stop_default": -1,
         },
@@ -331,7 +344,79 @@ def parse_pods(value: str) -> list[str]:
     invalid = [part for part in selected if part not in PODS]
     if invalid:
         raise SystemExit(f"Unknown pod selector(s): {', '.join(invalid)}")
-    return selected
+    return [name for name in ORDER if name in selected]
+
+
+def _field(value: Any, key: str, default: Any = None) -> Any:
+    return value.get(key, default) if isinstance(value, dict) else getattr(value, key, default)
+
+
+def _get_or_missing(operation: Any, **kwargs: Any) -> Any:
+    """Only a confirmed HTTP 404 permits creation; other errors must abort."""
+    try:
+        return operation(**kwargs)
+    except Exception as exc:
+        if getattr(getattr(exc, "response", None), "status_code", None) == 404:
+            return None
+        raise RuntimeError("Tapis lookup failed; refusing to assume the resource is absent") from None
+
+
+def check_postgres_storage(pod: Any, *, recreate: bool) -> None:
+    if pod is None:
+        return
+    if recreate:
+        raise RuntimeError("PostgreSQL recreation is disabled; use the documented preservation/recovery procedure")
+    mounts = _field(pod, "volume_mounts", {})
+    if not isinstance(mounts, dict) and not hasattr(mounts, "__dict__"):
+        raise RuntimeError("Cannot verify PostgreSQL volume mounts; deployment stopped")
+    mount = _field(mounts, POSTGRES_MOUNT)
+    mount_paths = mounts.keys() if isinstance(mounts, dict) else vars(mounts).keys()
+    env = _field(pod, "environment_variables", {})
+    if (
+        _field(mount, "type") != "tapisvolume"
+        or _field(mount, "source_id") != POSTGRES_VOLUME
+        or _field(mount, "sub_path") != ""
+        or _field(mount, "read_only", False) is not False
+        or any(path.startswith(POSTGRES_MOUNT + "/") for path in mount_paths)
+        or _field(env, "PGDATA") != POSTGRES_DATA
+        or _field(pod, "image") != POSTGRES_IMAGE
+    ):
+        raise RuntimeError("PostgreSQL image/storage differs; preserve data and perform a deliberate migration before deploying")
+
+
+def ensure_postgres_volume(t: Any, *, allow_create: bool = False, timeout: float = 600) -> None:
+    volume = _get_or_missing(t.pods.get_volume, volume_id=POSTGRES_VOLUME)
+    if volume is None:
+        if not allow_create:
+            raise RuntimeError("Existing PostgreSQL volume is missing; refusing to replace it with empty storage")
+        t.pods.create_volume(volume_id=POSTGRES_VOLUME, description="Persistent MINT dev PostgreSQL data", size_limit=10240)
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        volume = t.pods.get_volume(volume_id=POSTGRES_VOLUME)
+        if _field(volume, "status") == "AVAILABLE":
+            return
+        time.sleep(5)
+    raise RuntimeError("PostgreSQL volume did not become AVAILABLE; deployment stopped")
+
+
+def wait_for_postgres(t: Any, previous_start: Any = None, *, restarted: bool = False, timeout: float = 600) -> None:
+    if restarted and not previous_start:
+        raise RuntimeError("Cannot verify PostgreSQL restart without its previous container start time")
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        pod = t.pods.get_pod(pod_id=PODS["postgres"])
+        started = _field(_field(pod, "status_container", {}), "start_time")
+        if _field(pod, "status") == "AVAILABLE" and (not restarted or (started and started != previous_start)):
+            result = t.pods.exec_pod_commands(
+                pod_id=PODS["postgres"],
+                commands=[["sh", "-c", 'PGPASSWORD="$POSTGRES_PASSWORD" psql -h 127.0.0.1 -U "$POSTGRES_USER" -d "$POSTGRES_DB" -X -v ON_ERROR_STOP=1 -Atc "SELECT 1"']],
+                command_timeout=10, total_timeout=15,
+            )
+            results = _field(result, "execution_results", [])
+            if results and _field(results[0], "exit_code") == 0 and _field(results[0], "stdout", "").strip() == "1":
+                return
+        time.sleep(5)
+    raise RuntimeError("PostgreSQL did not become SQL-ready; dependent deployment stopped")
 
 
 def validate_live_requirements(selected: list[str]) -> None:
@@ -357,11 +442,10 @@ def set_pod_owners(t: Any, pod_id: str, owners: list[str]) -> None:
 
 def upsert_pod(t: Any, spec: dict[str, Any], *, recreate: bool, start: bool, restart: bool, owners: list[str] | None = None) -> None:
     pid = spec["pod_id"]
-    exists = True
-    try:
-        t.pods.get_pod(pod_id=pid)
-    except Exception:
-        exists = False
+    existing = _get_or_missing(t.pods.get_pod, pod_id=pid)
+    exists = existing is not None
+    if pid == PODS["postgres"]:
+        check_postgres_storage(existing, recreate=recreate)
 
     if exists and recreate:
         print(f"  [{pid}] deleting existing pod (--recreate)…")
@@ -371,13 +455,14 @@ def upsert_pod(t: Any, spec: dict[str, Any], *, recreate: bool, start: bool, res
 
     if exists:
         print(f"  [{pid}] updating…")
-        t.pods.update_pod(**spec)
+        update = dict(spec)
+        if pid == PODS["postgres"]:
+            # The image was verified above; older Tapipy update schemas omit it.
+            update.pop("image")
+        t.pods.update_pod(**update)
         if restart:
-            try:
-                t.pods.restart_pod(pod_id=pid)
-                print(f"  [{pid}] restart requested")
-            except Exception as exc:  # noqa: BLE001
-                print(f"  [{pid}] restart failed: {exc}", file=sys.stderr)
+            t.pods.restart_pod(pod_id=pid)
+            print(f"  [{pid}] restart requested")
         # Set owners on existing pods too
         if owners:
             set_pod_owners(t, pid, owners)
@@ -416,6 +501,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--no-start", action="store_true")
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args(argv)
+    if args.no_start and args.restart:
+        parser.error("--no-start and --restart cannot be combined")
 
     _load_dotenv()
     selected = parse_pods(args.pods)
@@ -423,6 +510,8 @@ def main(argv: list[str] | None = None) -> int:
     urls = specs.pop("_urls")
 
     if args.dry_run:
+        if "postgres" in selected:
+            print(f"Persistent volume: {POSTGRES_VOLUME} (create if absent; retain on pod restart)")
         for key in selected:
             print(f"--- {PODS[key]} ({key}) ---")
             print(json.dumps(redact_spec(specs[key]), indent=2, sort_keys=True))
@@ -441,13 +530,28 @@ def main(argv: list[str] | None = None) -> int:
     username = _env("TAPIS_USERNAME") or _env("TAPIS_ID") or input("Tapis username: ")
     password = _env("TAPIS_PASSWORD") or getpass("Tapis password: ")
     t = Tapis(base_url=args.base_url.rstrip("/"), username=username, password=password)
+    t.requests_session.send = partial(t.requests_session.send, timeout=30)
     t.get_tokens()
 
     # Parse owners list
     owners = [o.strip() for o in args.owners.split(",") if o.strip()] if args.owners else []
 
+    previous_start = None
+    postgres_restarted = False
+    if "postgres" in selected:
+        postgres = _get_or_missing(t.pods.get_pod, pod_id=PODS["postgres"])
+        check_postgres_storage(postgres, recreate=args.recreate)
+        if postgres is not None and args.restart:
+            previous_start = _field(_field(postgres, "status_container", {}), "start_time")
+            if not previous_start:
+                raise RuntimeError("Cannot verify PostgreSQL restart; previous container start time is missing")
+            postgres_restarted = True
+        ensure_postgres_volume(t, allow_create=postgres is None)
+
     for key in selected:
         upsert_pod(t, specs[key], recreate=args.recreate, start=not args.no_start, restart=args.restart, owners=owners)
+        if key == "postgres" and not args.no_start:
+            wait_for_postgres(t, previous_start, restarted=postgres_restarted)
 
     print("\nMINT dev stack updated:")
     for key in ORDER:

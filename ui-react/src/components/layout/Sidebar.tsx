@@ -37,6 +37,8 @@ const NAV_GROUPS: NavGroup[] = [
         items: [
           { href: '/models', label: 'Browse Models' },
           { href: '/models/register', label: 'Register Model' },
+          { href: '/etl/register', label: 'Register ETL Process' },
+          { href: '/etl', label: 'Browse ETL Processes' },
         ],
       },
       {

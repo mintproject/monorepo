@@ -2617,6 +2617,21 @@
   - role: user
     permission:
       filter: {}
+  event_triggers:
+  - name: semantic_search_software
+    definition:
+      enable_manual: false
+      insert:
+        columns: '*'
+      update:
+        columns: '*'
+      delete:
+        columns: '*'
+    webhook_from_env: SVO_SEMANTIC_SEARCH_WEBHOOK_URL
+    retry_conf:
+      num_retries: 3
+      interval_sec: 10
+      timeout_sec: 30
 - table:
     name: modelcatalog_software_version
     schema: public
@@ -2738,6 +2753,21 @@
   - role: user
     permission:
       filter: {}
+  event_triggers:
+  - name: semantic_search_software_version
+    definition:
+      enable_manual: false
+      insert:
+        columns: '*'
+      update:
+        columns: '*'
+      delete:
+        columns: '*'
+    webhook_from_env: SVO_SEMANTIC_SEARCH_WEBHOOK_URL
+    retry_conf:
+      num_retries: 3
+      interval_sec: 10
+      timeout_sec: 30
 - table:
     name: modelcatalog_configuration
     schema: public
@@ -2901,6 +2931,21 @@
   - role: user
     permission:
       filter: {}
+  event_triggers:
+  - name: semantic_search_configuration
+    definition:
+      enable_manual: false
+      insert:
+        columns: '*'
+      update:
+        columns: '*'
+      delete:
+        columns: '*'
+    webhook_from_env: SVO_SEMANTIC_SEARCH_WEBHOOK_URL
+    retry_conf:
+      num_retries: 3
+      interval_sec: 10
+      timeout_sec: 30
 - table:
     name: modelcatalog_dataset_specification
     schema: public
@@ -2976,6 +3021,21 @@
   - role: user
     permission:
       filter: {}
+  event_triggers:
+  - name: semantic_search_dataset_specification
+    definition:
+      enable_manual: false
+      insert:
+        columns: '*'
+      update:
+        columns: '*'
+      delete:
+        columns: '*'
+    webhook_from_env: SVO_SEMANTIC_SEARCH_WEBHOOK_URL
+    retry_conf:
+      num_retries: 3
+      interval_sec: 10
+      timeout_sec: 30
 - table:
     name: modelcatalog_parameter
     schema: public
@@ -3095,6 +3155,21 @@
   - role: user
     permission:
       filter: {}
+  event_triggers:
+  - name: semantic_search_configuration_input
+    definition:
+      enable_manual: false
+      insert:
+        columns: '*'
+      update:
+        columns: '*'
+      delete:
+        columns: '*'
+    webhook_from_env: SVO_SEMANTIC_SEARCH_WEBHOOK_URL
+    retry_conf:
+      num_retries: 3
+      interval_sec: 10
+      timeout_sec: 30
 - table:
     name: modelcatalog_configuration_output
     schema: public
@@ -3127,6 +3202,21 @@
   - role: user
     permission:
       filter: {}
+  event_triggers:
+  - name: semantic_search_configuration_output
+    definition:
+      enable_manual: false
+      insert:
+        columns: '*'
+      update:
+        columns: '*'
+      delete:
+        columns: '*'
+    webhook_from_env: SVO_SEMANTIC_SEARCH_WEBHOOK_URL
+    retry_conf:
+      num_retries: 3
+      interval_sec: 10
+      timeout_sec: 30
 - table:
     name: modelcatalog_configuration_parameter
     schema: public
@@ -3599,6 +3689,21 @@
   - role: user
     permission:
       filter: {}
+  event_triggers:
+  - name: semantic_search_standard_variable
+    definition:
+      enable_manual: false
+      insert:
+        columns: '*'
+      update:
+        columns: '*'
+      delete:
+        columns: '*'
+    webhook_from_env: SVO_SEMANTIC_SEARCH_WEBHOOK_URL
+    retry_conf:
+      num_retries: 3
+      interval_sec: 10
+      timeout_sec: 30
 - table:
     name: modelcatalog_unit
     schema: public
@@ -3715,6 +3820,21 @@
   - role: user
     permission:
       filter: {}
+  event_triggers:
+  - name: semantic_search_variable_presentation
+    definition:
+      enable_manual: false
+      insert:
+        columns: '*'
+      update:
+        columns: '*'
+      delete:
+        columns: '*'
+    webhook_from_env: SVO_SEMANTIC_SEARCH_WEBHOOK_URL
+    retry_conf:
+      num_retries: 3
+      interval_sec: 10
+      timeout_sec: 30
 - table:
     name: modelcatalog_intervention
     schema: public
@@ -4414,6 +4534,21 @@
   - role: user
     permission:
       filter: {}
+  event_triggers:
+  - name: semantic_search_ds_presentation
+    definition:
+      enable_manual: false
+      insert:
+        columns: '*'
+      update:
+        columns: '*'
+      delete:
+        columns: '*'
+    webhook_from_env: SVO_SEMANTIC_SEARCH_WEBHOOK_URL
+    retry_conf:
+      num_retries: 3
+      interval_sec: 10
+      timeout_sec: 30
 - table:
     name: modelcatalog_parameter_adjusts_variable
     schema: public
@@ -4445,4 +4580,46 @@
   delete_permissions:
   - role: user
     permission:
+      filter: {}
+- table:
+    name: modelcatalog_etl_process
+    schema: public
+  array_relationships:
+  - name: contracts
+    using:
+      foreign_key_constraint_on:
+        column: etl_process_id
+        table:
+          name: modelcatalog_etl_process_contract
+          schema: public
+  insert_permissions:
+  - role: user
+    permission:
+      check: {}
+      columns: [id, label, description, version, owner_username, visibility, runtime_kind, runtime_json]
+  select_permissions:
+  - role: anonymous
+    permission:
+      columns: [id, label, description, version, owner_username, visibility, runtime_kind, runtime_json, created_at, updated_at]
+      filter: {visibility: {_eq: public}}
+  - role: user
+    permission:
+      columns: [id, label, description, version, owner_username, visibility, runtime_kind, runtime_json, created_at, updated_at]
+      filter: {_or: [{visibility: {_eq: public}}, {visibility: {_eq: shared}}, {owner_username: {_eq: X-Hasura-User-Id}}]}
+- table:
+    name: modelcatalog_etl_process_contract
+    schema: public
+  object_relationships:
+  - name: etl_process
+    using:
+      foreign_key_constraint_on: etl_process_id
+  insert_permissions:
+  - role: user
+    permission:
+      check: {}
+      columns: [etl_process_id, role, position, standard_variable_uri, unit, format, dimensionality, spatial_type, crs_requirement, temporal_resolution, schema_requirement_json]
+  select_permissions:
+  - role: user
+    permission:
+      columns: [etl_process_id, role, position, standard_variable_uri, unit, format, dimensionality, spatial_type, crs_requirement, temporal_resolution, schema_requirement_json]
       filter: {}

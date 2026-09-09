@@ -10,6 +10,8 @@ import { AboutPage } from './pages/AboutPage';
 import { AppHome } from './pages/AppHome';
 import { ModelsBrowsePage } from './components/models-browse/ModelsBrowsePage';
 import { RegisterPage } from './pages/RegisterPage';
+import { ETLProcessRegisterPage } from './pages/ETLProcessRegisterPage';
+import { ETLProcessBrowsePage } from './pages/ETLProcessBrowsePage';
 
 // Pages — modeling
 import { ModelingHome } from './pages/modeling/ModelingHome';
@@ -67,6 +69,15 @@ export function App() {
             element={
               <ProtectedRoute>
                 <RegisterPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="/etl" element={<ETLProcessBrowsePage />} />
+          <Route
+            path="/etl/register"
+            element={
+              <ProtectedRoute>
+                <ETLProcessRegisterPage />
               </ProtectedRoute>
             }
           />

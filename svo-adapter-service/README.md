@@ -75,6 +75,29 @@ specs that were synced but have no `tapis_app_id`. These use OWE function tasks
 until an admin registers the app in Tapis and sets `tapis_app_id` on the MINT
 `ModelConfiguration`, then re-runs the sync.
 
+## Semantic SVO search
+
+The local Compose stack includes `semantic-search` on port `8091`. It uses the
+pgvector-backed standard-variable index and embeds each variable together with
+the model configurations, software, and model versions linked to that variable.
+This means a query such as `wildfire` can return canonical SVO variables from
+ELMFIRE and QUIC-Fire configurations, with each result showing whether the
+variable is a model input or output. The React SVO selector uses this endpoint
+for queries of two or more characters and falls back to the catalog text list
+if the service is unavailable.
+
+The service performs an initial full index at startup. Hasura event triggers
+normally POST catalog changes to the service immediately; a 60-second fallback
+check also catches imports or writes that bypass Hasura. Only variables whose
+indexed text changed are re-embedded. Set
+`SVO_EMBEDDING_REFRESH_SECONDS` in Compose to change the interval (minimum five
+seconds). A restart still forces a full rebuild:
+
+```bash
+docker compose up -d --build semantic-search
+curl 'http://localhost:8091/search?q=wildfire&limit=20'
+```
+
 ## Layout
 
 ```
@@ -127,3 +150,17 @@ no `workflows` grant needed). Headless equivalent: `python tests/test_demo_api.p
 Same UI, real backend: drop `SVO_ADAPTER_DEMO_MODE` and point at a live Hasura
 (the readiness/plan target can still be supplied inline via `target_contract`, so
 a populated model catalog is optional).
+
+The UI is live-only: it reads the persistent transform/data-object registry from
+Hasura and submits forecast and DFC workflows to Tapis. Start Hasura and apply the
+schema before opening `http://localhost:8000/ui/`.
+
+## Registering reusable ETL pieces
+
+Open the **ETL Pieces** tab to register a transform through the same
+`POST /transform-specs` registry flow used by the backend. A piece may include
+Python source and an entrypoint for a lightweight inline Tapis/OWE `function` task,
+or a `tapis_app_id`/version for a heavier `tapis_job`. Generated workflows can mix
+both task types. The adapter stores the definition and materializes function tasks
+inline when registering each generated pipeline; it never executes submitted Python
+locally.
