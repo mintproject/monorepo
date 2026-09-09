@@ -22,8 +22,29 @@ const ETL_PROCESSES = gql`
   }
 `;
 
+type ETLContract = {
+  role: string;
+  standard_variable_uri: string;
+  unit: string | null;
+  format: string | null;
+};
+
+type ETLProcess = {
+  id: string;
+  label: string;
+  description: string | null;
+  version: string | null;
+  runtime_kind: string;
+  visibility: string;
+  contracts: ETLContract[];
+};
+
+type BrowseETLProcessesData = {
+  modelcatalog_etl_process: ETLProcess[];
+};
+
 export function ETLProcessBrowsePage() {
-  const { data, loading, error } = useQuery(ETL_PROCESSES);
+  const { data, loading, error } = useQuery<BrowseETLProcessesData>(ETL_PROCESSES);
   const processes = data?.modelcatalog_etl_process ?? [];
   return (
     <div className="container min-w-0 max-w-full overflow-x-hidden py-6">
@@ -52,9 +73,9 @@ export function ETLProcessBrowsePage() {
         </Card>
       )}
       <div className="grid gap-4 md:grid-cols-2">
-        {processes.map((process: any) => {
-          const inputs = process.contracts.filter((c: any) => c.role === 'input');
-          const outputs = process.contracts.filter((c: any) => c.role === 'output');
+        {processes.map((process) => {
+          const inputs = process.contracts.filter((c) => c.role === 'input');
+          const outputs = process.contracts.filter((c) => c.role === 'output');
           return (
             <Card key={process.id} className="min-w-0 overflow-hidden">
               <CardHeader className="min-w-0">
@@ -80,7 +101,7 @@ export function ETLProcessBrowsePage() {
                 <div className="grid min-w-0 gap-3 sm:grid-cols-2">
                   <div className="min-w-0">
                     <p className="font-medium">Inputs</p>
-                    {inputs.map((c: any, i: number) => (
+                    {inputs.map((c, i) => (
                       <p key={i} className="break-all text-xs text-muted-foreground">
                         {c.standard_variable_uri}
                         {c.unit ? ` · ${c.unit}` : ''}
@@ -90,7 +111,7 @@ export function ETLProcessBrowsePage() {
                   </div>
                   <div className="min-w-0">
                     <p className="font-medium">Outputs</p>
-                    {outputs.map((c: any, i: number) => (
+                    {outputs.map((c, i) => (
                       <p key={i} className="break-all text-xs text-muted-foreground">
                         {c.standard_variable_uri}
                         {c.unit ? ` · ${c.unit}` : ''}
