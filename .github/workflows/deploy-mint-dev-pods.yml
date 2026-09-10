@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: read
+  packages: read
 
 concurrency:
   group: mint-dev-pods
@@ -41,6 +42,74 @@ jobs:
         run: >-
           python deploy/tapis/register_mint_stack.py
           --restart-existing-pods "api,ui,ensemble,svo"
+
+      - name: Log in to GHCR for Hasura migration client
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Apply Hasura migrations and metadata
+        env:
+          HASURA_GRAPHQL_ADMIN_SECRET: ${{ secrets.HASURA_GRAPHQL_ADMIN_SECRET }}
+          GRAPHQL_ENDPOINT: https://mintdevgraphql.pods.portals.tapis.io
+          IMAGE_TAG: develop
+        run: |
+          set -euo pipefail
+
+          # Tapis starts the pod asynchronously. Wait for the endpoint before
+          # asking the CLI to connect, with a bounded retry window.
+          curl --fail --silent --show-error --retry 30 --retry-delay 5 \
+            --retry-all-errors "$GRAPHQL_ENDPOINT/healthz" >/dev/null
+
+          # The image contains the CLI and the /hasura project. Running the
+          # same resolved tag keeps migrations and metadata aligned with the
+          # GraphQL image that was just deployed.
+          docker run --rm --pull=always \
+            --entrypoint hasura \
+            --workdir /hasura \
+            --env HASURA_GRAPHQL_ENDPOINT="$GRAPHQL_ENDPOINT" \
+            --env HASURA_GRAPHQL_ADMIN_SECRET \
+            "ghcr.io/mintproject/graphql-engine:$IMAGE_TAG" \
+            migrate status --skip-update-check
+
+          docker run --rm --pull=always \
+            --entrypoint hasura \
+            --workdir /hasura \
+            --env HASURA_GRAPHQL_ENDPOINT="$GRAPHQL_ENDPOINT" \
+            --env HASURA_GRAPHQL_ADMIN_SECRET \
+            "ghcr.io/mintproject/graphql-engine:$IMAGE_TAG" \
+            migrate apply --skip-update-check
+
+          docker run --rm --pull=always \
+            --entrypoint hasura \
+            --workdir /hasura \
+            --env HASURA_GRAPHQL_ENDPOINT="$GRAPHQL_ENDPOINT" \
+            --env HASURA_GRAPHQL_ADMIN_SECRET \
+            "ghcr.io/mintproject/graphql-engine:$IMAGE_TAG" \
+            metadata apply --skip-update-check
+
+          docker run --rm --pull=always \
+            --entrypoint hasura \
+            --workdir /hasura \
+            --env HASURA_GRAPHQL_ENDPOINT="$GRAPHQL_ENDPOINT" \
+            --env HASURA_GRAPHQL_ADMIN_SECRET \
+            "ghcr.io/mintproject/graphql-engine:$IMAGE_TAG" \
+            metadata reload --skip-update-check
+
+          # A bounded, read-only schema smoke test catches both classes of
+          # regression without printing rows or GraphQL error payloads.
+          response="$(curl --fail --silent --show-error \
+            -H "content-type: application/json" \
+            -H "x-hasura-admin-secret: $HASURA_GRAPHQL_ADMIN_SECRET" \
+            --data '{"query":"{ modelcatalog_etl_process(limit: 1) { id } problem_statement(limit: 1) { id events(limit: 1) { event } } }"}' \
+            "$GRAPHQL_ENDPOINT/v1/graphql")"
+          if [[ "$response" == *'"errors"'* ]]; then
+            echo "GraphQL schema smoke test failed" >&2
+            exit 1
+          fi
+          echo "Hasura migrations, metadata, and schema smoke test passed"
 
       - name: Summary
         run: |
