@@ -22,6 +22,7 @@ from typing import Any
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 POSTGRES_IMAGE = "ghcr.io/mintproject/postgres-pgvector:develop"
+POSTGRES_TEMPLATE = "postgres:16postgis3.5"
 LEGACY_POSTGRES_IMAGES = frozenset({"postgis/postgis:16-3.5"})
 POSTGRES_VOLUME = "mintdevpostgresdata"
 POSTGRES_MOUNT = "/var/lib/postgresql/data"
@@ -216,6 +217,7 @@ def build_specs(owner: str, tag: str, base_url: str) -> dict[str, dict[str, Any]
         "postgres": {
             "pod_id": PODS["postgres"],
             "image": POSTGRES_IMAGE,
+            "template": POSTGRES_TEMPLATE,
             "description": "MINT dev PostgreSQL database",
             "networking": {"default": {"protocol": "tcp", "port": 5432}},
             "environment_variables": {

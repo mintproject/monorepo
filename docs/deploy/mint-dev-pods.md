@@ -97,9 +97,10 @@ inputs.
 
 ## Persistent PostgreSQL storage
 
-The registration script uses the published PostgreSQL 16/PostGIS image with
-pgvector, `ghcr.io/mintproject/postgres-pgvector:develop`, and the dedicated
-Tapis volume `mintdevpostgresdata`. The volume mounts at `/var/lib/postgresql/data`;
+The registration script uses the Tapis `postgres:16postgis3.5` template with the
+published PostgreSQL 16/PostGIS image that includes pgvector,
+`ghcr.io/mintproject/postgres-pgvector:develop`, and the dedicated Tapis volume
+`mintdevpostgresdata`. The volume mounts at `/var/lib/postgresql/data`;
 `PGDATA` is `/var/lib/postgresql/data/pgdata`. PostGIS is required by the first
 MINT migration (`public.geometry`). For a new database pod, the volume is created
 if absent, with a 10,240 MB size warning threshold, and reused on subsequent
@@ -112,7 +113,8 @@ The deployment identity must have access to both the database pod and volume.
 The volume is not automatically shared with all pod owners.
 
 The first protected deployment replaces the known existing
-`postgis/postgis:16-3.5` pod definition with the pgvector image. It deletes
+`postgis/postgis:16-3.5` pod definition with the `postgres:16postgis3.5`
+template and pgvector image. It deletes
 only the pod, retains the same volume and PGDATA, recreates the pod
 with that volume attached, and waits for SQL readiness before Hasura starts.
 If a previous stop request left the legacy pod stopped without lifecycle start

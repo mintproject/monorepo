@@ -17,6 +17,7 @@ class StorageTests(unittest.TestCase):
 
     def test_database_uses_postgis_and_pgdata_within_persistent_mount(self):
         self.assertEqual(self.spec["image"], "ghcr.io/mintproject/postgres-pgvector:develop")
+        self.assertEqual(self.spec["template"], "postgres:16postgis3.5")
         data = self.spec["environment_variables"]["PGDATA"]
         mount, source = next(iter(self.spec["volume_mounts"].items()))
         self.assertTrue(data.startswith(mount + "/"))
