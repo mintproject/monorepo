@@ -37,6 +37,12 @@ PODS = {
 
 ORDER = ["postgres", "redis", "graphql", "api", "ensemble", "svo", "ui"]
 
+# Recreating a pod is a destructive operation.  Keep the fallback deliberately
+# narrow until each service has an explicit state-preservation policy.
+RECREATE_ON_IMAGE_MISMATCH_PODS = frozenset({"ui"})
+POD_IMAGE_VERIFY_TIMEOUT = 120
+POD_RESTART_TIMEOUT = 600
+
 SECRET_KEYS = {
     "HASURA_GRAPHQL_ADMIN_SECRET",
     "HASURA_ADMIN_SECRET",
@@ -371,6 +377,70 @@ def _get_or_missing(operation: Any, **kwargs: Any) -> Any:
         raise RuntimeError("Tapis lookup failed; refusing to assume the resource is absent") from None
 
 
+class PodImageMismatchError(RuntimeError):
+    """The Tapis pod definition did not converge to the requested image."""
+
+
+def _pod_lookup_for_verification(t: Any, pod_id: str) -> Any:
+    """Read a pod for verification without treating errors as absence."""
+    try:
+        return t.pods.get_pod(pod_id=pod_id)
+    except Exception:
+        raise RuntimeError("Tapis pod verification failed; deployment stopped") from None
+
+
+def wait_for_pod_image(t: Any, pod_id: str, expected_image: str, *, timeout: float = POD_IMAGE_VERIFY_TIMEOUT) -> Any:
+    """Wait until Tapis reports the exact requested image in the pod definition."""
+    deadline = time.monotonic() + timeout
+    observed = None
+    while time.monotonic() < deadline:
+        pod = _pod_lookup_for_verification(t, pod_id)
+        observed = _field(pod, "image")
+        if observed == expected_image:
+            return pod
+        time.sleep(min(5, max(0, deadline - time.monotonic())))
+    raise PodImageMismatchError(
+        f"[{pod_id}] image did not converge; expected {expected_image!r}, observed {observed!r}"
+    )
+
+
+def wait_for_pod_absent(t: Any, pod_id: str, *, timeout: float = POD_IMAGE_VERIFY_TIMEOUT) -> None:
+    """Wait for a deleted pod to be confirmed absent before recreating it."""
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        try:
+            t.pods.get_pod(pod_id=pod_id)
+        except Exception as exc:
+            if getattr(getattr(exc, "response", None), "status_code", None) == 404:
+                return
+            raise RuntimeError("Tapis pod deletion verification failed; deployment stopped") from None
+        time.sleep(min(5, max(0, deadline - time.monotonic())))
+    raise RuntimeError(f"[{pod_id}] deletion did not complete; refusing to create a duplicate pod")
+
+
+def wait_for_pod_restart(
+    t: Any,
+    pod_id: str,
+    expected_image: str,
+    previous_start: Any = None,
+    *,
+    timeout: float = POD_RESTART_TIMEOUT,
+) -> Any:
+    """Confirm an application pod is available on a new container instance."""
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        pod = _pod_lookup_for_verification(t, pod_id)
+        started = _field(_field(pod, "status_container", {}), "start_time")
+        if (
+            _field(pod, "status") == "AVAILABLE"
+            and _field(pod, "image") == expected_image
+            and (not previous_start or (started and started != previous_start))
+        ):
+            return pod
+        time.sleep(min(5, max(0, deadline - time.monotonic())))
+    raise RuntimeError(f"[{pod_id}] did not become AVAILABLE on the requested image after restart")
+
+
 def check_postgres_storage(pod: Any, *, recreate: bool) -> None:
     if pod is None:
         return
@@ -409,14 +479,25 @@ def ensure_postgres_volume(t: Any, *, allow_create: bool = False, timeout: float
     raise RuntimeError("PostgreSQL volume did not become AVAILABLE; deployment stopped")
 
 
-def wait_for_postgres(t: Any, previous_start: Any = None, *, restarted: bool = False, timeout: float = 600) -> None:
+def wait_for_postgres(
+    t: Any,
+    previous_start: Any = None,
+    *,
+    restarted: bool = False,
+    expected_image: str | None = None,
+    timeout: float = 600,
+) -> None:
     if restarted and not previous_start:
         raise RuntimeError("Cannot verify PostgreSQL restart without its previous container start time")
     deadline = time.monotonic() + timeout
     while time.monotonic() < deadline:
         pod = t.pods.get_pod(pod_id=PODS["postgres"])
         started = _field(_field(pod, "status_container", {}), "start_time")
-        if _field(pod, "status") == "AVAILABLE" and (not restarted or (started and started != previous_start)):
+        if (
+            _field(pod, "status") == "AVAILABLE"
+            and (not expected_image or _field(pod, "image") == expected_image)
+            and (not restarted or (started and started != previous_start))
+        ):
             result = t.pods.exec_pod_commands(
                 pod_id=PODS["postgres"],
                 commands=[["sh", "-c", 'PGPASSWORD="$POSTGRES_PASSWORD" psql -h 127.0.0.1 -U "$POSTGRES_USER" -d "$POSTGRES_DB" -X -v ON_ERROR_STOP=1 -Atc "SELECT 1"']],
@@ -450,7 +531,50 @@ def set_pod_owners(t: Any, pod_id: str, owners: list[str]) -> None:
             print(f"  [{pod_id}] failed to add owner {owner}: {exc}", file=sys.stderr)
 
 
-def upsert_pod(t: Any, spec: dict[str, Any], *, recreate: bool, start: bool, restart: bool, owners: list[str] | None = None) -> None:
+def _start_pod_if_needed(t: Any, pod_id: str) -> None:
+    try:
+        status = _field(t.pods.get_pod(pod_id=pod_id), "status")
+    except Exception:
+        raise RuntimeError(f"[{pod_id}] could not verify pod status before start") from None
+    if status and status != "STOPPED":
+        print(f"  [{pod_id}] already {status}; not starting")
+        return
+    try:
+        t.pods.start_pod(pod_id=pod_id)
+    except Exception:
+        raise RuntimeError(f"[{pod_id}] start request failed") from None
+    print(f"  [{pod_id}] start requested")
+
+
+def _recreate_pod(t: Any, spec: dict[str, Any], *, start: bool, owners: list[str] | None = None) -> None:
+    pid = spec["pod_id"]
+    pod_name = next((name for name, pod_id in PODS.items() if pod_id == pid), None)
+    if pod_name not in RECREATE_ON_IMAGE_MISMATCH_PODS:
+        raise RuntimeError(f"[{pid}] image mismatch; automatic recreation is disabled for this pod")
+    if pid == PODS["postgres"]:
+        raise RuntimeError("PostgreSQL recreation is disabled; image mismatch requires deliberate recovery")
+    print(f"  [{pid}] deleting before image-mismatch recovery…")
+    t.pods.delete_pod(pod_id=pid)
+    wait_for_pod_absent(t, pid)
+    print(f"  [{pid}] creating with requested image…")
+    t.pods.create_pod(**spec)
+    if owners:
+        set_pod_owners(t, pid, owners)
+    if start:
+        _start_pod_if_needed(t, pid)
+    wait_for_pod_image(t, pid, spec["image"])
+
+
+def upsert_pod(
+    t: Any,
+    spec: dict[str, Any],
+    *,
+    recreate: bool,
+    recreate_on_image_mismatch: bool = False,
+    start: bool,
+    restart: bool,
+    owners: list[str] | None = None,
+) -> None:
     pid = spec["pod_id"]
     existing = _get_or_missing(t.pods.get_pod, pod_id=pid)
     exists = existing is not None
@@ -460,19 +584,29 @@ def upsert_pod(t: Any, spec: dict[str, Any], *, recreate: bool, start: bool, res
     if exists and recreate:
         print(f"  [{pid}] deleting existing pod (--recreate)…")
         t.pods.delete_pod(pod_id=pid)
+        wait_for_pod_absent(t, pid)
         exists = False
-        time.sleep(2)
 
     if exists:
+        previous_start = _field(_field(existing, "status_container", {}), "start_time")
         print(f"  [{pid}] updating…")
         update = dict(spec)
         if pid == PODS["postgres"]:
             # The image was verified above; older Tapipy update schemas omit it.
             update.pop("image")
         t.pods.update_pod(**update)
+        try:
+            wait_for_pod_image(t, pid, spec["image"])
+        except PodImageMismatchError:
+            if not recreate_on_image_mismatch:
+                raise
+            _recreate_pod(t, spec, start=start, owners=owners)
+            return
         if restart:
             t.pods.restart_pod(pod_id=pid)
             print(f"  [{pid}] restart requested")
+            if pid != PODS["postgres"]:
+                wait_for_pod_restart(t, pid, spec["image"], previous_start)
         # Set owners on existing pods too
         if owners:
             set_pod_owners(t, pid, owners)
@@ -483,20 +617,9 @@ def upsert_pod(t: Any, spec: dict[str, Any], *, recreate: bool, start: bool, res
     # Set owners immediately after creation
     if owners:
         set_pod_owners(t, pid, owners)
-    if not start:
-        return
-    try:
-        status = getattr(t.pods.get_pod(pod_id=pid), "status", None)
-    except Exception:
-        status = None
-    if status and status != "STOPPED":
-        print(f"  [{pid}] already {status}; not starting")
-        return
-    try:
-        t.pods.start_pod(pod_id=pid)
-        print(f"  [{pid}] start requested")
-    except Exception as exc:  # noqa: BLE001
-        print(f"  [{pid}] start skipped: {exc}", file=sys.stderr)
+    if start:
+        _start_pod_if_needed(t, pid)
+    wait_for_pod_image(t, pid, spec["image"])
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -507,6 +630,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--pods", default="all", help="all or comma-separated: postgres,redis,graphql,api,ensemble,svo,ui")
     parser.add_argument("--owners", default="wmobley,mosoriob", help="comma-separated list of pod owners (ADMIN permission)")
     parser.add_argument("--recreate", action="store_true")
+    parser.add_argument(
+        "--recreate-on-image-mismatch",
+        action="store_true",
+        help="opt-in UI-only recreation if the requested image does not converge",
+    )
     parser.add_argument("--restart", action="store_true")
     parser.add_argument(
         "--restart-pods",
@@ -515,8 +643,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--no-start", action="store_true")
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args(argv)
-    if args.no_start and (args.restart or args.restart_pods is not None):
-        parser.error("--no-start cannot be combined with --restart or --restart-pods")
+    if args.no_start and (args.restart or args.restart_pods is not None or args.recreate_on_image_mismatch):
+        parser.error("--no-start cannot be combined with --restart, --restart-pods, or --recreate-on-image-mismatch")
+    if args.recreate and args.recreate_on_image_mismatch:
+        parser.error("--recreate and --recreate-on-image-mismatch cannot be combined")
 
     _load_dotenv()
     selected = parse_pods(args.pods)
@@ -572,12 +702,18 @@ def main(argv: list[str] | None = None) -> int:
             t,
             specs[key],
             recreate=args.recreate,
+            recreate_on_image_mismatch=args.recreate_on_image_mismatch,
             start=not args.no_start,
             restart=key in restart_selected,
             owners=owners,
         )
         if key == "postgres" and not args.no_start:
-            wait_for_postgres(t, previous_start, restarted=postgres_restarted)
+            wait_for_postgres(
+                t,
+                previous_start,
+                restarted=postgres_restarted,
+                expected_image=specs[key]["image"],
+            )
 
     print("\nMINT dev stack updated:")
     for key in ORDER:

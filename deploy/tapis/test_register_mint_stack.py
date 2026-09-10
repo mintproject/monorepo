@@ -135,6 +135,14 @@ class StorageTests(unittest.TestCase):
         with self.assertRaises(SystemExit), patch("sys.stderr"):
             deploy.main(["--no-start", "--restart"])
 
+    def test_no_start_rejects_image_mismatch_recovery(self):
+        with self.assertRaises(SystemExit), patch("sys.stderr"):
+            deploy.main(["--no-start", "--recreate-on-image-mismatch"])
+
+    def test_recreate_modes_cannot_be_combined(self):
+        with self.assertRaises(SystemExit), patch("sys.stderr"):
+            deploy.main(["--recreate", "--recreate-on-image-mismatch"])
+
     def test_automated_restart_allowlist_excludes_postgres(self):
         selected = deploy.parse_pods("all")
         self.assertEqual(
@@ -177,6 +185,112 @@ class StorageTests(unittest.TestCase):
 
     def test_selector_keeps_dependency_order(self):
         self.assertEqual(deploy.parse_pods("graphql,postgres,postgres"), ["postgres", "graphql"])
+
+
+class LifecycleTests(unittest.TestCase):
+    def setUp(self):
+        self.env = patch.dict(os.environ, {}, clear=True)
+        self.env.start()
+        self.addCleanup(self.env.stop)
+        self.spec = deploy.build_specs("mintproject", "sha-new", "https://portals.tapis.io")["ui"]
+
+    def test_image_verification_waits_for_eventual_consistency(self):
+        old = {"image": "ghcr.io/mintproject/ui:sha-old"}
+        new = {"image": self.spec["image"]}
+        t = Mock()
+        t.pods.get_pod.side_effect = [old, old, new]
+        clock = [0]
+        with patch.object(deploy.time, "monotonic", side_effect=lambda: clock[0]), patch.object(
+            deploy.time, "sleep", side_effect=lambda _: clock.__setitem__(0, clock[0] + 1)
+        ):
+            result = deploy.wait_for_pod_image(t, self.spec["pod_id"], self.spec["image"], timeout=10)
+        self.assertEqual(result, new)
+        self.assertEqual(t.pods.get_pod.call_count, 3)
+
+    def test_image_verification_timeout_is_fail_closed(self):
+        t = Mock()
+        with self.assertRaises(deploy.PodImageMismatchError) as ctx:
+            deploy.wait_for_pod_image(t, self.spec["pod_id"], self.spec["image"], timeout=0)
+        self.assertIn("did not converge", str(ctx.exception))
+
+    def test_verification_lookup_errors_do_not_trigger_recovery(self):
+        t = Mock()
+        t.pods.get_pod.side_effect = RuntimeError("credentials must not leak")
+        with self.assertRaises(RuntimeError) as ctx:
+            deploy.wait_for_pod_image(t, self.spec["pod_id"], self.spec["image"])
+        self.assertNotIn("credentials", str(ctx.exception))
+
+    def test_restart_happens_after_image_verification(self):
+        existing = {"image": "old", "status_container": {"start_time": "old-start"}}
+        updated = {"image": self.spec["image"]}
+        ready = {"image": self.spec["image"], "status": "AVAILABLE", "status_container": {"start_time": "new-start"}}
+        t = Mock()
+        t.pods.get_pod.side_effect = [existing, updated, ready]
+        events = []
+        t.pods.update_pod.side_effect = lambda **_: events.append("update")
+        t.pods.restart_pod.side_effect = lambda **_: events.append("restart")
+        with patch.object(deploy.time, "sleep"), patch.object(
+            deploy, "wait_for_pod_image", side_effect=lambda *_args, **_kwargs: events.append("verify")
+        ), patch.object(deploy, "wait_for_pod_restart", side_effect=lambda *_args, **_kwargs: events.append("ready")):
+            deploy.upsert_pod(t, self.spec, recreate=False, start=False, restart=True)
+        self.assertEqual(events, ["update", "verify", "restart", "ready"])
+
+    def test_mismatch_without_opt_in_does_not_delete_or_restart(self):
+        t = Mock()
+        t.pods.get_pod.return_value = self.spec
+        with patch.object(deploy, "wait_for_pod_image", side_effect=deploy.PodImageMismatchError("stale")):
+            with self.assertRaises(deploy.PodImageMismatchError):
+                deploy.upsert_pod(t, self.spec, recreate=False, start=False, restart=True)
+        t.pods.delete_pod.assert_not_called()
+        t.pods.restart_pod.assert_not_called()
+
+    def test_opt_in_recovery_recreates_ui_after_confirmed_delete(self):
+        missing = Exception()
+        missing.response = SimpleNamespace(status_code=404)
+        t = Mock()
+        t.pods.get_pod.side_effect = [self.spec, missing]
+        with patch.object(
+            deploy,
+            "wait_for_pod_image",
+            side_effect=[deploy.PodImageMismatchError("stale"), self.spec],
+        ):
+            deploy.upsert_pod(
+                t,
+                self.spec,
+                recreate=False,
+                recreate_on_image_mismatch=True,
+                start=False,
+                restart=True,
+            )
+        t.pods.delete_pod.assert_called_once_with(pod_id=deploy.PODS["ui"])
+        t.pods.create_pod.assert_called_once_with(**self.spec)
+        t.pods.restart_pod.assert_not_called()
+
+    def test_opt_in_recovery_cannot_recreate_postgres(self):
+        postgres = deploy.build_specs("mintproject", "sha-new", "https://portals.tapis.io")["postgres"]
+        t = Mock()
+        t.pods.get_pod.return_value = postgres
+        with patch.object(deploy, "wait_for_pod_image", side_effect=deploy.PodImageMismatchError("stale")):
+            with self.assertRaises(RuntimeError) as ctx:
+                deploy.upsert_pod(
+                    t,
+                    postgres,
+                    recreate=False,
+                    recreate_on_image_mismatch=True,
+                    start=False,
+                    restart=False,
+                )
+        self.assertIn("automatic recreation is disabled", str(ctx.exception))
+        t.pods.delete_pod.assert_not_called()
+        t.pods.create_pod.assert_not_called()
+
+    def test_delete_wait_requires_confirmed_404(self):
+        t = Mock()
+        error = Exception()
+        error.response = SimpleNamespace(status_code=403)
+        t.pods.get_pod.side_effect = error
+        with self.assertRaises(RuntimeError):
+            deploy.wait_for_pod_absent(t, deploy.PODS["ui"], timeout=1)
 
 
 if __name__ == "__main__":

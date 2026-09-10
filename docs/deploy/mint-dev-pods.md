@@ -40,6 +40,19 @@ allow-list so a routine image deployment cannot bounce the database. A
 deliberate PostgreSQL restart remains available to an operator using the
 registration script directly.
 
+Tapis applies pod updates asynchronously. The registration script now reads
+each pod back and requires the exact requested image before requesting a
+restart. For restarted application pods it also waits for `AVAILABLE` and a
+new container start time. `AVAILABLE` confirms the Tapis lifecycle state; it is
+not a substitute for an application-level health check.
+
+Automated deployments fail if an image does not converge. A manual workflow
+dispatch may opt into the last-resort UI-only fallback with
+`recreate_ui_on_image_mismatch: true`; the script confirms deletion before
+creating the replacement pod and verifies its image afterward. The fallback is
+disabled by default and cannot recreate Redis, GraphQL, API, Ensemble, SVO, or
+PostgreSQL. PostgreSQL is never automatically deleted or recreated.
+
 The deploy job uses the `Tapis Dev Deploy` GitHub Environment.
 
 ## Required environment secrets
@@ -86,6 +99,12 @@ To restart only one or two pods, set `pods` to a comma-separated subset, for exa
 ```text
 pods: api,ui
 ```
+
+If a manual deployment reports that the UI image did not converge, rerun it
+with the same immutable `sha-*` tag and set
+`recreate_ui_on_image_mismatch` to `true`. Inspect the Tapis pod action and
+status history if the replacement does not become available; do not switch to
+a moving `dev` or `latest` tag to work around a lifecycle failure.
 
 ## Caveats
 

@@ -12,7 +12,7 @@ MINT developers need an always-on dev stack that updates automatically from `dev
 
 ## Current code/system summary
 
-MINT currently contains five custom deployable service images: `graphql_engine`, `model-catalog-api`, `mint-ensemble-manager`, `svo-adapter-service`, and the React UI in `ui-react`. The dev deployment publishes the React UI as `ghcr.io/mintproject/ui:<tag>` and the SVO adapter as `ghcr.io/mintproject/svo-adapter:<tag>`. PostgreSQL and Redis are runtime dependencies. Existing service workflows already publish GHCR images and the Helm chart documents the service environment patterns.
+MINT currently contains five custom deployable service images: `graphql_engine`, `model-catalog-api`, `mint-ensemble-manager`, `svo-adapter-service`, and the React UI in `ui-react`. The dev deployment publishes the React UI as `ghcr.io/mintproject/ui:<tag>` and the SVO adapter as `ghcr.io/mintproject/svo-adapter:<tag>`. PostgreSQL and Redis are runtime dependencies. Existing service workflows already publish GHCR images and the Helm chart documents the service environment patterns. Tapis pod updates are asynchronous, so an accepted update request alone is not evidence that the requested image reached the pod.
 
 ## Proposed design
 
@@ -35,7 +35,7 @@ No public API or database schema changes are introduced. Tapis Pods specs are cr
 
 ## Data flow
 
-`develop` push → build five MINT images → tag all as `sha-<short-sha>` → deploy workflow runs `register_mint_stack.py` → Tapis creates/updates dev pods → UI/API/GraphQL/Ensemble/SVO Adapter are available at `mintdev*` pod URLs.
+`develop` push → build five MINT images → tag all as `sha-<short-sha>` → deploy workflow runs `register_mint_stack.py` → Tapis creates/updates dev pods → the script verifies the image definition → requests app-pod restarts → verifies availability and a new container start time → UI/API/GraphQL/Ensemble/SVO Adapter are available at `mintdev*` pod URLs.
 
 ## Risks and tradeoffs
 
@@ -44,6 +44,8 @@ No public API or database schema changes are introduced. Tapis Pods specs are cr
 - Authenticated Hasura writes require either `MINTDEV_HASURA_JWT_SECRET` or `MINTDEV_HASURA_AUTH_HOOK`; otherwise dev read paths may work while write paths fail.
 - Dev deploys are automatic from `develop`, so bad merges can break the dev stack; rollback is manual workflow dispatch with a previous `sha-*` tag.
 - Pod environment variables may expose secrets to pod owners; only dev secrets are in scope.
+- A stale image or failed lifecycle update fails the deployment rather than being hidden by a successful API response.
+- The only automatic image-mismatch recovery is an explicitly requested, UI-only delete/recreate; Redis and in-flight application state are not treated as disposable.
 
 ## Alternatives considered
 
@@ -56,7 +58,7 @@ No public API or database schema changes are introduced. Tapis Pods specs are cr
 - Compile `deploy/tapis/register_mint_stack.py` with `python -m py_compile`.
 - Run `register_mint_stack.py --dry-run` and verify redacted pod specs.
 - Parse GitHub Actions workflow YAML.
-- First live validation should be a dev workflow run only; no local live Tapis writes.
+- Unit-test update/read-back ordering, bounded image verification, restart completion, confirmed deletion, and the UI-only opt-in fallback. First live validation should be a dev workflow run only; no local live Tapis writes.
 
 ## Documentation plan
 
@@ -81,9 +83,12 @@ Roll out by merging to `develop` and allowing the dev deployment workflow to run
 - Use dev pod IDs prefixed with `mintdev`.
 - Auto-deploy dev from `develop`; production is out of scope.
 - Add an Ensemble Manager entrypoint to materialize `ENSEMBLE_MANAGER_CONFIG_JSON` as a runtime config file.
+- Keep immutable `sha-*` tags. Verify update convergence before restart; verify lifecycle completion afterward. Keep image-mismatch recreation disabled by default and limited to the UI; never recreate PostgreSQL.
 
 ## User feedback / decisions
 
 The user approved Tapis Pods, MINT-only scope, `ghcr.io/mintproject/...`, no history-preservation requirement, auto-run deploys, and dev-first rollout, then requested implementation.
 
-Implementation completed for dev CI/CD scaffolding, dry-run pod registration, and docs. No live Tapis deployment was run locally.
+The original dev CI/CD scaffolding is implemented. This revision adds bounded
+image read-back verification, restart completion checks, and an opt-in UI-only
+image-mismatch recovery path. No live Tapis deployment was run locally.
