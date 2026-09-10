@@ -13,6 +13,11 @@ on:
         description: all or comma-separated subset
         required: false
         default: all
+      recreate_ui_on_image_mismatch:
+        description: Recreate only mintdevui if Tapis does not apply the requested image
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -52,8 +57,13 @@ jobs:
             TAG="sha-${HEAD_SHA::7}"
             PODS="all"
           fi
+          RECREATE_UI="false"
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.recreate_ui_on_image_mismatch }}" = "true" ]; then
+            RECREATE_UI="true"
+          fi
           echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
           echo "pods=${PODS}" >> "$GITHUB_OUTPUT"
+          echo "recreate_ui=${RECREATE_UI}" >> "$GITHUB_OUTPUT"
 
       - name: Dry-run pod specs
         env:
@@ -81,7 +91,8 @@ jobs:
           --image-tag "${{ steps.deploy.outputs.tag }}"
           --pods "${{ steps.deploy.outputs.pods }}"
           --owners "wmobley,mosoriob"
-          --restart
+          --restart-pods "redis,graphql,api,ensemble,svo,ui"
+          ${{ steps.deploy.outputs.recreate_ui == 'true' && '--recreate-on-image-mismatch' || '' }}
 
       - name: Summary
         run: |

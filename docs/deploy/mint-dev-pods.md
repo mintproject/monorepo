@@ -34,6 +34,25 @@ Deploy by immutable `sha-*` tags. Do not use `latest` for rollback-sensitive dep
 - `Deploy MINT Dev Pods` runs after a successful `MINT Dev Images` run on `develop`, plus manual dispatch for rollback/redeploy.
 - PRs build images with `push: false` and never deploy.
 
+The automated deploy updates the selected pod specs but restarts only Redis and
+the application pods. It intentionally excludes PostgreSQL from the restart
+allow-list so a routine image deployment cannot bounce the database. A
+deliberate PostgreSQL restart remains available to an operator using the
+registration script directly.
+
+Tapis applies pod updates asynchronously. The registration script now reads
+each pod back and requires the exact requested image before requesting a
+restart. For restarted application pods it also waits for `AVAILABLE` and a
+new container start time. `AVAILABLE` confirms the Tapis lifecycle state; it is
+not a substitute for an application-level health check.
+
+Automated deployments fail if an image does not converge. A manual workflow
+dispatch may opt into the last-resort UI-only fallback with
+`recreate_ui_on_image_mismatch: true`; the script confirms deletion before
+creating the replacement pod and verifies its image afterward. The fallback is
+disabled by default and cannot recreate Redis, GraphQL, API, Ensemble, SVO, or
+PostgreSQL. PostgreSQL is never automatically deleted or recreated.
+
 The deploy job uses the `Tapis Dev Deploy` GitHub Environment.
 
 ## Required environment secrets
@@ -81,6 +100,12 @@ To restart only one or two pods, set `pods` to a comma-separated subset, for exa
 pods: api,ui
 ```
 
+If a manual deployment reports that the UI image did not converge, rerun it
+with the same immutable `sha-*` tag and set
+`recreate_ui_on_image_mismatch` to `true`. Inspect the Tapis pod action and
+status history if the replacement does not become available; do not switch to
+a moving `dev` or `latest` tag to work around a lifecycle failure.
+
 ## Caveats
 
 - Production deployment is out of scope.
@@ -114,8 +139,9 @@ When deploying PostgreSQL, the script waits for the volume to become available
 and for SQL to succeed before deploying the next service. Selectors are ordered
 by dependency even when supplied as `--pods graphql,postgres`. Persistent
 storage readiness waits allow up to ten minutes for Tapis lifecycle updates;
-restarts require a confirmed change in container start time. `--no-start` and
-`--restart` cannot be combined. Persistent
+restarts require a confirmed change in container start time. `--restart-pods`
+limits restarts without changing the update set; `--no-start` cannot be
+combined with either restart option. Persistent
 storage survives pod restarts; it does not replace database backups. Never
 delete the volume as part of image rollback.
 
