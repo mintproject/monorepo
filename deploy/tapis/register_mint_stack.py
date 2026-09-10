@@ -38,9 +38,9 @@ PODS = {
 
 ORDER = ["postgres", "redis", "graphql", "api", "ensemble", "svo", "ui"]
 
-# Recreating a pod is a destructive operation.  Keep the fallback deliberately
-# narrow until each service has an explicit state-preservation policy.
-RECREATE_ON_IMAGE_MISMATCH_PODS = frozenset({"ui"})
+# Recreating a pod is destructive. Only stateless application services may use
+# this fallback; Redis queue state and PostgreSQL data are protected.
+RECREATE_ON_IMAGE_MISMATCH_PODS = frozenset({"graphql", "api", "ensemble", "svo", "ui"})
 POD_IMAGE_VERIFY_TIMEOUT = 120
 POD_RESTART_TIMEOUT = 600
 
@@ -583,7 +583,7 @@ def _recreate_pod(t: Any, spec: dict[str, Any], *, start: bool, owners: list[str
     pid = spec["pod_id"]
     pod_name = next((name for name, pod_id in PODS.items() if pod_id == pid), None)
     if pod_name not in RECREATE_ON_IMAGE_MISMATCH_PODS:
-        raise RuntimeError(f"[{pid}] image mismatch; automatic recreation is disabled for this pod")
+        raise RuntimeError(f"[{pid}] image mismatch; automatic recreation is disabled for this protected pod")
     if pid == PODS["postgres"]:
         raise RuntimeError("PostgreSQL recreation is disabled; image mismatch requires deliberate recovery")
     print(f"  [{pid}] deleting before image-mismatch recovery…")
@@ -596,6 +596,8 @@ def _recreate_pod(t: Any, spec: dict[str, Any], *, start: bool, owners: list[str
     if start:
         _start_pod_if_needed(t, pid)
     wait_for_pod_image(t, pid, spec["image"])
+    if start:
+        wait_for_pod_restart(t, pid, spec["image"])
 
 
 def upsert_pod(
@@ -666,7 +668,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--recreate-on-image-mismatch",
         action="store_true",
-        help="opt-in UI-only recreation if the requested image does not converge",
+        help="recreate only stateless application pods if the requested image does not converge",
     )
     parser.add_argument("--restart", action="store_true")
     parser.add_argument(

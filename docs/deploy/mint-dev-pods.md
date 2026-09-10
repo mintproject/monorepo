@@ -48,12 +48,11 @@ not a substitute for an application-level health check. Transient transport
 errors during these bounded reads are retried; authentication and other HTTP
 errors fail immediately.
 
-Automated deployments fail if an image does not converge. A manual workflow
-dispatch may opt into the last-resort UI-only fallback with
-`recreate_ui_on_image_mismatch: true`; the script confirms deletion before
-creating the replacement pod and verifies its image afterward. The fallback is
-disabled by default and cannot recreate Redis, GraphQL, API, Ensemble, SVO, or
-PostgreSQL. PostgreSQL is never automatically deleted or recreated.
+If an image does not converge, the deploy uses a guarded fallback for the
+stateless application pods: GraphQL, API, Ensemble, SVO, and UI. It confirms
+deletion before creating each replacement pod and verifies its image and
+startup afterward. Redis and PostgreSQL are protected from this fallback;
+PostgreSQL is never automatically deleted or recreated.
 
 The deploy job uses the `Tapis Dev Deploy` GitHub Environment.
 
@@ -102,11 +101,11 @@ To restart only one or two pods, set `pods` to a comma-separated subset, for exa
 pods: api,ui
 ```
 
-If a manual deployment reports that the UI image did not converge, rerun it
-with the same immutable `sha-*` tag and set
-`recreate_ui_on_image_mismatch` to `true`. Inspect the Tapis pod action and
-status history if the replacement does not become available; do not switch to
-a moving `dev` or `latest` tag to work around a lifecycle failure.
+If a deployment reports that an application image did not converge, inspect
+the Tapis pod action and status history. The deploy will recreate only the
+stateless application pod; it will not recreate Redis or PostgreSQL. Keep using
+the same immutable `sha-*` tag rather than switching to a moving `dev` or
+`latest` tag.
 
 ## Caveats
 
