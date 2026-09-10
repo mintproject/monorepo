@@ -229,6 +229,16 @@ class LifecycleTests(unittest.TestCase):
         self.assertEqual(result["image"], self.spec["image"])
         self.assertEqual(t.pods.get_pod.call_count, 2)
 
+    def test_tapipy_transport_wrapper_is_retried(self):
+        t = Mock()
+        t.pods.get_pod.side_effect = [
+            Exception("Unable to make request to Tapis server. Exception: connection reset"),
+            {"image": self.spec["image"]},
+        ]
+        with patch.object(deploy.time, "sleep"):
+            result = deploy.wait_for_pod_image(t, self.spec["pod_id"], self.spec["image"], timeout=10)
+        self.assertEqual(result["image"], self.spec["image"])
+
     def test_http_verification_error_is_not_retried(self):
         error = Exception("unauthorized credentials")
         error.response = SimpleNamespace(status_code=401)
