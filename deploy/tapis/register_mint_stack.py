@@ -21,7 +21,8 @@ from typing import Any
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-POSTGRES_IMAGE = "postgis/postgis:16-3.5"
+POSTGRES_IMAGE = "ghcr.io/mintproject/postgres-pgvector:develop"
+LEGACY_POSTGRES_IMAGES = frozenset({"postgis/postgis:16-3.5"})
 POSTGRES_VOLUME = "mintdevpostgresdata"
 POSTGRES_MOUNT = "/var/lib/postgresql/data"
 POSTGRES_DATA = f"{POSTGRES_MOUNT}/pgdata"
@@ -495,7 +496,7 @@ def check_postgres_storage(pod: Any, *, recreate: bool) -> None:
         or _field(mount, "read_only", False) is not False
         or any(path.startswith(POSTGRES_MOUNT + "/") for path in mount_paths)
         or _field(env, "PGDATA") != POSTGRES_DATA
-        or _field(pod, "image") != POSTGRES_IMAGE
+        or _field(pod, "image") not in {POSTGRES_IMAGE, *LEGACY_POSTGRES_IMAGES}
     ):
         raise RuntimeError("PostgreSQL image/storage differs; preserve data and perform a deliberate migration before deploying")
 
@@ -634,8 +635,10 @@ def upsert_pod(
         print(f"  [{pid}] updating…")
         update = dict(spec)
         if pid == PODS["postgres"]:
-            # The image was verified above; older Tapipy update schemas omit it.
-            update.pop("image")
+            # Include the image so the protected, known legacy image can make
+            # the controlled transition to the pgvector image. The storage
+            # guard above still rejects every other image or mount layout.
+            print(f"  [{pid}] applying the protected pgvector image transition…")
         t.pods.update_pod(**update)
         try:
             wait_for_pod_image(t, pid, spec["image"])

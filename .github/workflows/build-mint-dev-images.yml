@@ -29,6 +29,10 @@ jobs:
             image: graphql-engine
             context: graphql_engine
             dockerfile: graphql_engine/Dockerfile
+          - service: postgres-pgvector
+            image: postgres-pgvector
+            context: docker/postgres-pgvector
+            dockerfile: docker/postgres-pgvector/Dockerfile
           - service: model-catalog-api
             image: model-catalog-api
             context: model-catalog-api

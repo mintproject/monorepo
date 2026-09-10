@@ -20,6 +20,7 @@ The build workflow publishes one shared stack tag across all custom images:
 
 ```text
 ghcr.io/mintproject/graphql-engine:develop
+ghcr.io/mintproject/postgres-pgvector:develop
 ghcr.io/mintproject/model-catalog-api:develop
 ghcr.io/mintproject/ensemble-manager:develop
 ghcr.io/mintproject/svo-adapter:develop
@@ -27,20 +28,19 @@ ghcr.io/mintproject/ui:develop
 ```
 
 The `develop` branch also publishes a moving `:develop` tag for each image. The
-automatic dev deployment uses that tag. Use an immutable `sha-*` tag for manual
-rollback or reproducible deployment.
+automatic and manually dispatched dev deployments use that tag. Use a separate
+workflow change before attempting an immutable rollback.
 
 ## GitHub Actions
 
-- `MINT Dev Images` builds the five custom images on `develop`, PRs, and manual dispatch.
+- `MINT Dev Images` builds the six custom images on `develop`, PRs, and manual dispatch.
 - `Deploy MINT Dev Pods` runs after a successful `MINT Dev Images` run on `develop`, plus manual dispatch.
 - PRs build images with `push: false` and never deploy.
 
-The automated deploy only looks up and restarts these existing application
-pods: `mintdevapi`, `mintdevui`, `mintdevensemble`, and `mintdevsvo`. It does
-not update pod definitions, create missing pods, assign owners, or touch
-GraphQL, Redis, or PostgreSQL. A missing or incomplete pod lookup stops the
-workflow before any restart is requested.
+The automated deploy first updates and restarts the PostgreSQL and Hasura pods
+with the `develop` images, then looks up and restarts these existing application
+pods: `mintdevapi`, `mintdevui`, `mintdevensemble`, and `mintdevsvo`. A missing
+or incomplete pod lookup stops the workflow before that pod action is requested.
 
 After each restart, the script waits for `AVAILABLE` and a new container start
 time. `AVAILABLE` confirms the Tapis lifecycle state; it is not a substitute
@@ -63,6 +63,7 @@ Configure these in the `Tapis Dev Deploy` environment:
 ```text
 TAPIS_USERNAME or TAPIS_ID
 TAPIS_PASSWORD
+MINTDEV_POSTGRES_PASSWORD
 HASURA_GRAPHQL_ADMIN_SECRET
 ```
 
@@ -96,8 +97,9 @@ inputs.
 
 ## Persistent PostgreSQL storage
 
-The registration script uses `postgis/postgis:16-3.5` and the dedicated Tapis
-volume `mintdevpostgresdata`. The volume mounts at `/var/lib/postgresql/data`;
+The registration script uses the published PostgreSQL 16/PostGIS image with
+pgvector, `ghcr.io/mintproject/postgres-pgvector:develop`, and the dedicated
+Tapis volume `mintdevpostgresdata`. The volume mounts at `/var/lib/postgresql/data`;
 `PGDATA` is `/var/lib/postgresql/data/pgdata`. PostGIS is required by the first
 MINT migration (`public.geometry`). For a new database pod, the volume is created
 if absent, with a 10,240 MB size warning threshold, and reused on subsequent
@@ -109,11 +111,12 @@ dictionary key, with `type: tapisvolume` and `source_id: mintdevpostgresdata`.
 The deployment identity must have access to both the database pod and volume.
 The volume is not automatically shared with all pod owners.
 
-The script refuses to change an existing database's image, volume, subpath, or
-PGDATA implicitly. It also refuses `--recreate` for an existing PostgreSQL pod.
-An older ephemeral deployment requires a deliberate preservation/recovery
-operation before routine deployment can resume. Authentication/server errors
-are not treated as missing pods or volumes.
+The first protected deployment may transition the known existing
+`postgis/postgis:16-3.5` pod to the pgvector image in place; it preserves the
+same volume and PGDATA and restarts the pod to load the extension. Unknown
+database images, volume layouts, subpaths, or PGDATA values still stop the
+deployment, and `--recreate` remains refused for an existing PostgreSQL pod.
+Authentication/server errors are not treated as missing pods or volumes.
 
 When deploying PostgreSQL, the script waits for the volume to become available
 and for SQL to succeed before deploying the next service. Selectors are ordered
