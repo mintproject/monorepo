@@ -91,7 +91,7 @@ jobs:
           --image-tag "${{ steps.deploy.outputs.tag }}"
           --pods "${{ steps.deploy.outputs.pods }}"
           --owners "wmobley,mosoriob"
-          --restart-pods "redis,graphql,api,ensemble,svo,ui"
+          --restart-pods "graphql,api,ensemble,svo,ui"
           ${{ steps.deploy.outputs.recreate_ui == 'true' && '--recreate-on-image-mismatch' || '' }}
 
       - name: Summary

@@ -34,11 +34,11 @@ Deploy by immutable `sha-*` tags. Do not use `latest` for rollback-sensitive dep
 - `Deploy MINT Dev Pods` runs after a successful `MINT Dev Images` run on `develop`, plus manual dispatch for rollback/redeploy.
 - PRs build images with `push: false` and never deploy.
 
-The automated deploy updates the selected pod specs but restarts only Redis and
-the application pods. It intentionally excludes PostgreSQL from the restart
-allow-list so a routine image deployment cannot bounce the database. A
-deliberate PostgreSQL restart remains available to an operator using the
-registration script directly.
+The automated deploy updates the selected pod specs but restarts only the
+application pods. It intentionally excludes Redis and PostgreSQL from the
+restart allow-list so a routine image deployment cannot disrupt queued work or
+bounce the database. Deliberate Redis or PostgreSQL restarts remain available
+to an operator using the registration script directly.
 
 Tapis applies pod updates asynchronously. The registration script now reads
 each pod back and requires the exact requested image before requesting a
