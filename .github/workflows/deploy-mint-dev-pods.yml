@@ -34,6 +34,19 @@ jobs:
       - name: Install deploy dependencies
         run: pip install tapipy python-dotenv
 
+      - name: Update PostgreSQL and Hasura pod definitions
+        env:
+          TAPIS_USERNAME: ${{ secrets.TAPIS_USERNAME }}
+          TAPIS_ID: ${{ secrets.TAPIS_ID }}
+          TAPIS_PASSWORD: ${{ secrets.TAPIS_PASSWORD }}
+          MINTDEV_POSTGRES_PASSWORD: ${{ secrets.MINTDEV_POSTGRES_PASSWORD }}
+          HASURA_GRAPHQL_ADMIN_SECRET: ${{ secrets.HASURA_GRAPHQL_ADMIN_SECRET }}
+        run: >-
+          python deploy/tapis/register_mint_stack.py
+          --image-tag develop
+          --pods postgres,graphql
+          --restart-pods postgres,graphql
+
       - name: Restart existing application pods
         env:
           TAPIS_USERNAME: ${{ secrets.TAPIS_USERNAME }}

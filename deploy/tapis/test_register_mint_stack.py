@@ -16,7 +16,7 @@ class StorageTests(unittest.TestCase):
         self.spec = deploy.build_specs("mintproject", "sha-test", "https://portals.tapis.io")["postgres"]
 
     def test_database_uses_postgis_and_pgdata_within_persistent_mount(self):
-        self.assertEqual(self.spec["image"], "postgis/postgis:16-3.5")
+        self.assertEqual(self.spec["image"], "ghcr.io/mintproject/postgres-pgvector:develop")
         data = self.spec["environment_variables"]["PGDATA"]
         mount, source = next(iter(self.spec["volume_mounts"].items()))
         self.assertTrue(data.startswith(mount + "/"))
@@ -25,6 +25,10 @@ class StorageTests(unittest.TestCase):
 
     def test_existing_storage_can_be_reused(self):
         deploy.check_postgres_storage(self.spec, recreate=False)
+
+    def test_known_plain_postgis_storage_can_transition_to_pgvector(self):
+        legacy = {**self.spec, "image": "postgis/postgis:16-3.5"}
+        deploy.check_postgres_storage(legacy, recreate=False)
 
     def test_sdk_objects_are_supported(self):
         def obj(value):
@@ -160,6 +164,15 @@ class StorageTests(unittest.TestCase):
         deploy.upsert_pod(t, self.spec, recreate=False, start=True, restart=False)
         t.pods.restart_pod.assert_not_called()
         t.pods.update_pod.assert_called_once()
+
+    def test_postgres_transition_updates_image_without_recreating_volume(self):
+        t = Mock()
+        legacy = {**self.spec, "image": "postgis/postgis:16-3.5"}
+        t.pods.get_pod.return_value = legacy
+        with patch.object(deploy, "wait_for_pod_image", return_value=self.spec):
+            deploy.upsert_pod(t, self.spec, recreate=False, start=True, restart=False)
+        t.pods.update_pod.assert_called_once_with(**self.spec)
+        t.pods.delete_pod.assert_not_called()
 
     def test_restart_allowlist_is_limited_to_updated_pods(self):
         self.assertEqual(

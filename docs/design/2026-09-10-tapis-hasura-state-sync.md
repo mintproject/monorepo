@@ -18,22 +18,28 @@ Make every MINT Tapis dev deployment apply the Hasura migrations and metadata sh
 
 ## Current code/system summary
 
-`graphql_engine/Dockerfile` builds from Hasura and installs the Hasura CLI, then copies the migration and metadata project into `/hasura`. The local `compose.yaml` runs a one-shot `hasura-init` container, but `deploy-mint-dev-pods.yml` only registers/updates/restarts Tapis pods. The Tapis GraphQL pod has the migration client and project files but no separate initialization pod or exec phase.
+`graphql_engine/Dockerfile` builds from Hasura and installs the Hasura CLI, then copies the migration and metadata project into `/hasura`. The local `compose.yaml` runs a one-shot `hasura-init` container, but `deploy-mint-dev-pods.yml` only registers/updates/restarts Tapis pods. The Tapis GraphQL pod has the migration client and project files but no separate initialization pod or exec phase. The first workflow attempt reached the database but failed at migration `1771200021000` because the Tapis PostgreSQL pod used plain `postgis/postgis:16-3.5`, which does not contain `vector.control`.
 
 ## Proposed design
 
-Add a post-registration step to `Deploy MINT Dev Pods` that:
+Add a protected pre-migration step to `Deploy MINT Dev Pods` that:
 
-1. Waits for `https://mintdevgraphql.pods.portals.tapis.io/healthz`.
-2. Runs the GraphQL image selected by the deployment as a short-lived migration client.
-3. Executes `hasura migrate status`, `hasura migrate apply`, `hasura metadata apply`, and `hasura metadata reload` against the public Tapis GraphQL endpoint using the admin secret.
-4. Verifies the deployed GraphQL schema by querying `modelcatalog_etl_process` and `problem_statement.events`.
+1. Builds and publishes a PostgreSQL 16/PostGIS image with pgvector as `ghcr.io/mintproject/postgres-pgvector:develop`.
+2. Updates and restarts the existing PostgreSQL pod on the same protected Tapis volume, allowing only the known plain-PostGIS image as a transition source.
+3. Updates and restarts Hasura with the `develop` image.
+4. Waits for `https://mintdevgraphql.pods.portals.tapis.io/healthz`.
+5. Runs the GraphQL image as a short-lived migration client.
+6. Executes `hasura migrate status`, `hasura migrate apply`, `hasura metadata apply`, and `hasura metadata reload` against the public Tapis GraphQL endpoint using the admin secret.
+7. Verifies the deployed GraphQL schema by querying `modelcatalog_etl_process` and `problem_statement.events`.
 
-The step will use the image's `/hasura` contents, so migrations and metadata are guaranteed to come from the same immutable image tag as the running GraphQL service. It will not run seeds, alter PostgreSQL pod storage, or perform application-level data writes.
+The step will use the image's `/hasura` contents, so migrations and metadata are guaranteed to come from the same `develop` image tag as the running GraphQL service. It will not run seeds, recreate PostgreSQL, alter the existing volume, or perform application-level data writes.
 
 ## Files likely affected
 
 - `.github/workflows/deploy-mint-dev-pods.yml` — add the post-deploy synchronization and schema verification.
+- `.github/workflows/build-mint-dev-images.yml` — publish the Tapis PostgreSQL image.
+- `docker/postgres-pgvector/Dockerfile` — align the local/Tapis image with PostgreSQL 16 and install pgvector.
+- `deploy/tapis/register_mint_stack.py` — perform the protected in-place image transition.
 - `docs/deploy/mint-dev-pods.md` — document the automated synchronization and failure recovery.
 
 ## API/schema changes
@@ -42,7 +48,10 @@ No application API or database schema files change. The workflow begins applying
 
 ## Data flow
 
-GitHub Actions selects immutable image tag → Tapis updates/starts `mintdevgraphql` → workflow waits for health → same image runs Hasura CLI against the Tapis GraphQL endpoint → migrations and metadata are applied → schema smoke query validates the deployed endpoint.
+GitHub Actions selects the `develop` image tag → Tapis updates/starts
+`mintdevpostgres` and `mintdevgraphql` → workflow waits for health → the same
+GraphQL image runs Hasura CLI against the Tapis GraphQL endpoint → migrations
+and metadata are applied → schema smoke query validates the deployed endpoint.
 
 ## Risks and tradeoffs
 
@@ -50,6 +59,7 @@ GitHub Actions selects immutable image tag → Tapis updates/starts `mintdevgrap
 - The workflow depends on the public Tapis pod URL being reachable from GitHub-hosted runners.
 - A migration or metadata failure will fail the deployment workflow after pod updates, making the failure visible rather than presenting a partially synchronized stack as healthy.
 - The workflow needs permission to pull the selected GHCR image if the package is not anonymously readable.
+- PostgreSQL must be restarted to load the extension from the new image; the workflow verifies the existing volume and SQL readiness before Hasura migration.
 
 ## Alternatives considered
 
@@ -70,7 +80,9 @@ Update the Tapis deployment runbook to state that migration and metadata synchro
 
 ## Rollout/rollback plan
 
-Roll out through the existing `Deploy MINT Dev Pods` workflow. The step applies only forward migrations shipped in the selected image. To roll back application images, dispatch the workflow with a prior immutable tag; database migrations are not automatically downgraded.
+Roll out through the existing `Deploy MINT Dev Pods` workflow. The step applies
+only forward migrations shipped in the `develop` image. Database migrations are
+not automatically downgraded if application images are later rolled back.
 
 ## Open questions
 
@@ -79,15 +91,20 @@ None for the requested fix. A future production deployment path should adopt the
 ## Decisions
 
 - Use the deployed GraphQL image as the migration client so the migration files and running service share one resolved tag.
-- Automatic develop deployments resolve the GraphQL image as the `develop` tag, per user requirement; manual dispatch retains an explicit tag input.
+- Automatic and manually dispatched develop deployments resolve the GraphQL image as the `develop` tag, per user requirement.
+- Automatic develop deployments use the `develop` tag for the pgvector PostgreSQL image as well, per user requirement.
 - Run synchronization from GitHub Actions because Tapis provides no interactive pod-exec phase in this deployment workflow.
 - Keep seed application out of the automated path because seeds are intentionally non-idempotent and the Tapis database is persistent.
 
 ## User feedback / decisions
 
 - User clarified that the deployment is entirely managed by Tapis Pods, GitHub workflows, and container images; there is no practical interactive Tapis exec operation. The design was adjusted to use a GitHub Actions post-deploy step.
+- The first synchronization run exposed that the existing Tapis database image lacked pgvector; the design was extended to publish and transition the protected PostgreSQL pod in place before retrying migrations.
 
 Implementation deviation: the workflow runs the CLI in short-lived Docker
 containers from GitHub Actions rather than creating a separate Tapis init pod.
 This preserves the existing Tapis pod inventory while still using the resolved
-GraphQL image tag as the migration client.
+GraphQL image tag as the migration client. The first implementation also
+required a protected PostgreSQL image transition after the deployed database
+was found to lack pgvector; the transition is in-place on the existing volume
+and uses the required `develop` tag.

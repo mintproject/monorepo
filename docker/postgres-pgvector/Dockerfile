@@ -1,5 +1,5 @@
-FROM postgis/postgis:14-3.3
+FROM postgis/postgis:16-3.5
 
 RUN apt-get -o Acquire::Check-Valid-Until=false update \
-    && apt-get install -y --no-install-recommends postgresql-14-pgvector \
+    && apt-get install -y --no-install-recommends postgresql-16-pgvector \
     && rm -rf /var/lib/apt/lists/*
