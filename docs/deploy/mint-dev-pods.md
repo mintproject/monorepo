@@ -19,11 +19,11 @@ This runbook covers the MINT-only dev stack deployed to Tapis Pods from this rep
 The build workflow publishes one shared stack tag across all custom images:
 
 ```text
-ghcr.io/mintproject/graphql-engine:sha-<short-sha>
-ghcr.io/mintproject/model-catalog-api:sha-<short-sha>
-ghcr.io/mintproject/ensemble-manager:sha-<short-sha>
-ghcr.io/mintproject/svo-adapter:sha-<short-sha>
-ghcr.io/mintproject/ui:sha-<short-sha>
+ghcr.io/mintproject/graphql-engine:develop
+ghcr.io/mintproject/model-catalog-api:develop
+ghcr.io/mintproject/ensemble-manager:develop
+ghcr.io/mintproject/svo-adapter:develop
+ghcr.io/mintproject/ui:develop
 ```
 
 The `develop` branch also publishes a moving `:develop` tag for each image. The
@@ -50,6 +50,12 @@ immediately.
 
 The deploy job uses the `Tapis Dev Deploy` GitHub Environment.
 
+After pod registration, the deploy job waits for Hasura, then runs the
+migration and metadata CLI from the resolved GraphQL image tag. It finishes
+with a bounded schema smoke test for the ETL process and problem statement
+event relationships. This step uses the protected
+`HASURA_GRAPHQL_ADMIN_SECRET` and does not apply seeds.
+
 ## Required environment secrets
 
 Configure these in the `Tapis Dev Deploy` environment:
@@ -57,6 +63,7 @@ Configure these in the `Tapis Dev Deploy` environment:
 ```text
 TAPIS_USERNAME or TAPIS_ID
 TAPIS_PASSWORD
+HASURA_GRAPHQL_ADMIN_SECRET
 ```
 
 ## Local restart
@@ -79,7 +86,10 @@ inputs.
 ## Caveats
 
 - Production deployment is out of scope.
-- PostgreSQL schema initialization/Hasura migrations are not automated by `register_mint_stack.py` yet.
+- PostgreSQL schema initialization and Hasura metadata synchronization are
+  automated by the `Deploy MINT Dev Pods` workflow after pod registration.
+  `register_mint_stack.py` remains responsible only for Tapis pod and volume
+  lifecycle.
 - The Ensemble Manager image entrypoint materializes `ENSEMBLE_MANAGER_CONFIG_JSON` into a runtime config file and sets `ENSEMBLE_MANAGER_CONFIG_FILE` before starting the app.
 - Authenticated Hasura writes need either `MINTDEV_HASURA_JWT_SECRET` or `MINTDEV_HASURA_AUTH_HOOK`; without one, the stack may boot but write paths that forward user JWTs can fail.
 - Tapis Pod template details for Redis/PostgreSQL should be validated during the first dev deployment.
