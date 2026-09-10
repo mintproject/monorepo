@@ -63,6 +63,7 @@ Configure these in the `Tapis Dev Deploy` environment:
 ```text
 TAPIS_USERNAME or TAPIS_ID
 TAPIS_PASSWORD
+HASURA_GRAPHQL_ADMIN_SECRET
 ```
 
 ## Local restart
