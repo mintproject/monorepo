@@ -33,29 +33,20 @@ rollback or reproducible deployment.
 ## GitHub Actions
 
 - `MINT Dev Images` builds the five custom images on `develop`, PRs, and manual dispatch.
-- `Deploy MINT Dev Pods` runs after a successful `MINT Dev Images` run on `develop`, plus manual dispatch for rollback/redeploy.
+- `Deploy MINT Dev Pods` runs after a successful `MINT Dev Images` run on `develop`, plus manual dispatch.
 - PRs build images with `push: false` and never deploy.
 
-The automated deploy resolves `develop`, updates the selected pod specs, and
-restarts only the application pods. It intentionally excludes Redis and
-PostgreSQL from the restart allow-list so a routine image deployment cannot
-disrupt queued work or bounce the database. Deliberate Redis or PostgreSQL
-restarts remain available to an operator using the registration script
-directly.
+The automated deploy only looks up and restarts these existing application
+pods: `mintdevapi`, `mintdevui`, `mintdevensemble`, and `mintdevsvo`. It does
+not update pod definitions, create missing pods, assign owners, or touch
+GraphQL, Redis, or PostgreSQL. A missing or incomplete pod lookup stops the
+workflow before any restart is requested.
 
-Tapis applies pod updates asynchronously. The registration script now reads
-each pod back and requires the exact requested image before requesting a
-restart. For restarted application pods it also waits for `AVAILABLE` and a
-new container start time. `AVAILABLE` confirms the Tapis lifecycle state; it is
-not a substitute for an application-level health check. Transient transport
-errors during these bounded reads are retried; authentication and other HTTP
-errors fail immediately.
-
-The automated deploy does not recreate pods when image verification fails; it
-stops before requesting a restart. The registration script retains the
-explicit `--recreate-on-image-mismatch` option for deliberate operator-led
-recovery, limited to stateless application pods. Redis and PostgreSQL remain
-protected from that option.
+After each restart, the script waits for `AVAILABLE` and a new container start
+time. `AVAILABLE` confirms the Tapis lifecycle state; it is not a substitute
+for an application-level health check. Transient transport errors during
+these bounded reads are retried; authentication and other HTTP errors fail
+immediately.
 
 The deploy job uses the `Tapis Dev Deploy` GitHub Environment.
 
@@ -66,49 +57,24 @@ Configure these in the `Tapis Dev Deploy` environment:
 ```text
 TAPIS_USERNAME or TAPIS_ID
 TAPIS_PASSWORD
-HASURA_GRAPHQL_ADMIN_SECRET
-MINTDEV_POSTGRES_PASSWORD
 ```
 
-Optional:
+## Local restart
 
-```text
-MINTDEV_AUTH_CLIENT_ID
-MINTDEV_HASURA_JWT_SECRET or MINTDEV_HASURA_AUTH_HOOK
-SVO_ADAPTER_GEO_ACTOR_ID
-```
-
-## Local dry run
-
-From `monorepo/`:
+From `monorepo/`, with Tapis credentials in the environment:
 
 ```bash
-python deploy/tapis/register_mint_stack.py --image-tag develop --dry-run
-python deploy/tapis/register_mint_stack.py --image-tag sha-abc1234 --pods api,svo,ui --dry-run
+python deploy/tapis/register_mint_stack.py \
+  --restart-existing-pods api,ui,ensemble,svo
 ```
 
-Dry-run output redacts secret-like environment variables and does not call Tapis.
+This mode only restarts existing pods and refuses to create or update them.
 
-## Manual deploy / rollback
+## Manual restart
 
-Use GitHub Actions → `Deploy MINT Dev Pods` → `workflow_dispatch` with a known-good tag:
-
-```text
-image_tag: sha-abc1234
-pods: all
-```
-
-To restart only one or two pods, set `pods` to a comma-separated subset, for example:
-
-```text
-pods: api,ui
-```
-
-If a deployment reports that an application image did not converge, inspect
-the Tapis pod action and status history. The deploy will recreate only the
-stateless application pod; it will not recreate Redis or PostgreSQL. Keep using
-the same immutable `sha-*` tag rather than switching to a moving `dev` or
-`latest` tag.
+Use GitHub Actions → `Deploy MINT Dev Pods` → `workflow_dispatch`. It performs
+the same four-pod restart and has no image, pod-selection, or registration
+inputs.
 
 ## Caveats
 
