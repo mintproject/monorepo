@@ -387,11 +387,17 @@ class TransientPodLookupError(RuntimeError):
 
 
 def _is_transient_lookup_error(exc: Exception) -> bool:
-    return isinstance(exc, (ConnectionError, TimeoutError, RemoteDisconnected, OSError)) or exc.__class__.__name__ in {
+    if isinstance(exc, (ConnectionError, TimeoutError, RemoteDisconnected, OSError)):
+        return True
+    if exc.__class__.__name__ in {
         "ConnectTimeout",
         "ReadTimeout",
         "ConnectionError",
-    }
+    }:
+        return True
+    # Tapipy wraps transport exceptions in BaseTapyException without an HTTP
+    # response. Keep this narrow so auth and service HTTP errors still fail fast.
+    return getattr(exc, "response", None) is None and "unable to make request" in str(exc).lower()
 
 
 def _pod_lookup_for_verification(t: Any, pod_id: str) -> Any:
