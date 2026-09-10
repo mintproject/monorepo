@@ -178,9 +178,9 @@ class StorageTests(unittest.TestCase):
         t = Mock()
         legacy = {**self.spec, "image": "postgis/postgis:16-3.5", "status": "AVAILABLE"}
         t.pods.get_pod.return_value = legacy
-        with patch.object(deploy, "wait_for_pod_stopped"), patch.object(
-            deploy, "wait_for_pod_absent"
-        ), patch.object(deploy, "wait_for_pod_image"):
+        with patch.object(deploy, "wait_for_pod_absent"), patch.object(
+            deploy, "wait_for_pod_image"
+        ):
             deploy.upsert_pod(
                 t,
                 self.spec,
@@ -189,7 +189,6 @@ class StorageTests(unittest.TestCase):
                 start=False,
                 restart=True,
             )
-        t.pods.stop_pod.assert_called_once_with(pod_id=deploy.PODS["postgres"])
         t.pods.delete_pod.assert_called_once_with(pod_id=deploy.PODS["postgres"])
         t.pods.create_pod.assert_called_once_with(**self.spec)
         t.pods.update_pod.assert_not_called()

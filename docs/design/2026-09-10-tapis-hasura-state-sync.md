@@ -25,7 +25,7 @@ Make every MINT Tapis dev deployment apply the Hasura migrations and metadata sh
 Add a protected pre-migration step to `Deploy MINT Dev Pods` that:
 
 1. Builds and publishes a PostgreSQL 16/PostGIS image with pgvector as `ghcr.io/mintproject/postgres-pgvector:develop`.
-2. Stops and replaces the existing PostgreSQL pod definition on the same protected Tapis volume, allowing only the known plain-PostGIS image as a transition source; the volume itself is never deleted.
+2. Replaces the existing PostgreSQL pod definition on the same protected Tapis volume, allowing only the known plain-PostGIS image as a transition source; the pod is deleted directly, the volume itself is never deleted, and absence is verified before recreation.
 3. Updates and restarts Hasura with the `develop` image.
 4. Waits for `https://mintdevgraphql.pods.portals.tapis.io/healthz`.
 5. Runs the GraphQL image as a short-lived migration client.
@@ -107,4 +107,7 @@ This preserves the existing Tapis pod inventory while still using the resolved
 GraphQL image tag as the migration client. The first implementation also
 required a protected PostgreSQL pod replacement after the deployed database was
 found to lack pgvector; the replacement retains the existing volume and uses
-the required `develop` tag.
+the required `develop` tag. The second attempt showed that waiting for a
+separate `STOPPED` state was too strict for this Tapis lifecycle, so the
+protected path now uses the documented delete operation followed by confirmed
+absence before recreation.

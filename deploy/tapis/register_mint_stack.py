@@ -451,21 +451,6 @@ def wait_for_pod_absent(t: Any, pod_id: str, *, timeout: float = POD_IMAGE_VERIF
     raise RuntimeError(f"[{pod_id}] deletion did not complete; refusing to create a duplicate pod")
 
 
-def wait_for_pod_stopped(t: Any, pod_id: str, *, timeout: float = POD_IMAGE_VERIFY_TIMEOUT) -> None:
-    """Confirm a pod is stopped before replacing its definition."""
-    deadline = time.monotonic() + timeout
-    while time.monotonic() < deadline:
-        try:
-            pod = _pod_lookup_for_verification(t, pod_id)
-        except TransientPodLookupError:
-            time.sleep(min(5, max(0, deadline - time.monotonic())))
-            continue
-        if _field(pod, "status") == "STOPPED":
-            return
-        time.sleep(min(5, max(0, deadline - time.monotonic())))
-    raise RuntimeError(f"[{pod_id}] did not stop before protected pod replacement")
-
-
 def wait_for_pod_restart(
     t: Any,
     pod_id: str,
@@ -636,11 +621,10 @@ def _replace_postgres_pod(
     if pid != PODS["postgres"]:
         raise RuntimeError("Protected PostgreSQL replacement called for a non-PostgreSQL pod")
 
-    if _field(existing, "status") != "STOPPED":
-        print(f"  [{pid}] stopping before protected image replacement…")
-        t.pods.stop_pod(pod_id=pid)
-        wait_for_pod_stopped(t, pid)
-
+    # Tapis exposes deletion as a lifecycle operation and may leave a running
+    # pod in SHUTTING_DOWN longer than the verification window. The protected
+    # storage checks above make the volume boundary explicit; delete the pod
+    # directly, then wait for confirmed absence before recreating it.
     print(f"  [{pid}] deleting pod definition; persistent volume is retained…")
     t.pods.delete_pod(pod_id=pid)
     wait_for_pod_absent(t, pid)

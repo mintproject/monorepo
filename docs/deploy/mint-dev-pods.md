@@ -112,8 +112,8 @@ The deployment identity must have access to both the database pod and volume.
 The volume is not automatically shared with all pod owners.
 
 The first protected deployment replaces the known existing
-`postgis/postgis:16-3.5` pod definition with the pgvector image. It stops and
-deletes only the pod, retains the same volume and PGDATA, recreates the pod
+`postgis/postgis:16-3.5` pod definition with the pgvector image. It deletes
+only the pod, retains the same volume and PGDATA, recreates the pod
 with that volume attached, and waits for SQL readiness before Hasura starts.
 Unknown database images, volume layouts, subpaths, or PGDATA values still stop
 the deployment, and ordinary `--recreate` remains refused for an existing
