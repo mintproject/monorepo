@@ -26,7 +26,9 @@ ghcr.io/mintproject/svo-adapter:sha-<short-sha>
 ghcr.io/mintproject/ui:sha-<short-sha>
 ```
 
-Deploy by immutable `sha-*` tags. Do not use `latest` for rollback-sensitive deploys.
+The `develop` branch also publishes a moving `:develop` tag for each image. The
+automatic dev deployment uses that tag. Use an immutable `sha-*` tag for manual
+rollback or reproducible deployment.
 
 ## GitHub Actions
 
@@ -34,11 +36,12 @@ Deploy by immutable `sha-*` tags. Do not use `latest` for rollback-sensitive dep
 - `Deploy MINT Dev Pods` runs after a successful `MINT Dev Images` run on `develop`, plus manual dispatch for rollback/redeploy.
 - PRs build images with `push: false` and never deploy.
 
-The automated deploy updates the selected pod specs but restarts only the
-application pods. It intentionally excludes Redis and PostgreSQL from the
-restart allow-list so a routine image deployment cannot disrupt queued work or
-bounce the database. Deliberate Redis or PostgreSQL restarts remain available
-to an operator using the registration script directly.
+The automated deploy resolves `develop`, updates the selected pod specs, and
+restarts only the application pods. It intentionally excludes Redis and
+PostgreSQL from the restart allow-list so a routine image deployment cannot
+disrupt queued work or bounce the database. Deliberate Redis or PostgreSQL
+restarts remain available to an operator using the registration script
+directly.
 
 Tapis applies pod updates asynchronously. The registration script now reads
 each pod back and requires the exact requested image before requesting a
@@ -48,11 +51,11 @@ not a substitute for an application-level health check. Transient transport
 errors during these bounded reads are retried; authentication and other HTTP
 errors fail immediately.
 
-If an image does not converge, the deploy uses a guarded fallback for the
-stateless application pods: GraphQL, API, Ensemble, SVO, and UI. It confirms
-deletion before creating each replacement pod and verifies its image and
-startup afterward. Redis and PostgreSQL are protected from this fallback;
-PostgreSQL is never automatically deleted or recreated.
+The automated deploy does not recreate pods when image verification fails; it
+stops before requesting a restart. The registration script retains the
+explicit `--recreate-on-image-mismatch` option for deliberate operator-led
+recovery, limited to stateless application pods. Redis and PostgreSQL remain
+protected from that option.
 
 The deploy job uses the `Tapis Dev Deploy` GitHub Environment.
 
@@ -80,7 +83,7 @@ SVO_ADAPTER_GEO_ACTOR_ID
 From `monorepo/`:
 
 ```bash
-python deploy/tapis/register_mint_stack.py --image-tag sha-abc1234 --dry-run
+python deploy/tapis/register_mint_stack.py --image-tag develop --dry-run
 python deploy/tapis/register_mint_stack.py --image-tag sha-abc1234 --pods api,svo,ui --dry-run
 ```
 

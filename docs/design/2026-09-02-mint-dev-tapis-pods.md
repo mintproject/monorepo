@@ -4,7 +4,7 @@
 
 ## Objective
 
-Deploy the MINT stack from this monorepo to a dev-only Tapis Pods stack using GitHub Actions and shared immutable image tags.
+Deploy the MINT stack from this monorepo to a dev-only Tapis Pods stack using GitHub Actions, moving `develop` image tags for automatic updates, and immutable SHA tags for rollback.
 
 ## User need
 
@@ -35,7 +35,7 @@ No public API or database schema changes are introduced. Tapis Pods specs are cr
 
 ## Data flow
 
-`develop` push → build five MINT images → tag all as `sha-<short-sha>` → deploy workflow runs `register_mint_stack.py` → Tapis creates/updates dev pods → the script verifies the image definition → requests app-pod restarts → verifies availability and a new container start time → UI/API/GraphQL/Ensemble/SVO Adapter are available at `mintdev*` pod URLs.
+`develop` push → build five MINT images → publish both `develop` and `sha-<short-sha>` tags → deploy workflow runs `register_mint_stack.py` with `develop` → Tapis updates dev pods → the script verifies the image definition → requests application-pod restarts → verifies availability and a new container start time → UI/API/GraphQL/Ensemble/SVO Adapter are available at `mintdev*` pod URLs.
 
 ## Risks and tradeoffs
 
@@ -83,7 +83,7 @@ Roll out by merging to `develop` and allowing the dev deployment workflow to run
 - Use dev pod IDs prefixed with `mintdev`.
 - Auto-deploy dev from `develop`; production is out of scope.
 - Add an Ensemble Manager entrypoint to materialize `ENSEMBLE_MANAGER_CONFIG_JSON` as a runtime config file.
-- Keep immutable `sha-*` tags. Verify update convergence before restart; verify lifecycle completion afterward. Recreate only stateless application pods on mismatch; never recreate Redis or PostgreSQL.
+- Use the moving `develop` tag for automatic dev updates and immutable `sha-*` tags for rollback. Verify update convergence before restarting application pods; never restart Redis or PostgreSQL in that workflow.
 
 ## User feedback / decisions
 
@@ -92,4 +92,5 @@ The user approved Tapis Pods, MINT-only scope, `ghcr.io/mintproject/...`, no his
 The original dev CI/CD scaffolding is implemented. This revision adds bounded
 image read-back verification, restart completion checks, and a guarded
 stateless-application image-mismatch recovery path. No live Tapis deployment
-was run locally.
+was run locally. The live rollout uses the existing Tapis networking CORS
+configuration and the moving `develop` image tag with restart-only behavior.

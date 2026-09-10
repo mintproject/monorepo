@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       image_tag:
-        description: Image tag to deploy, e.g. sha-abc1234
+        description: Image tag to deploy, e.g. develop or sha-abc1234
         required: true
       pods:
         description: all or comma-separated subset
@@ -48,8 +48,7 @@ jobs:
             TAG="${{ inputs.image_tag }}"
             PODS="${{ inputs.pods }}"
           else
-            HEAD_SHA="${{ github.event.workflow_run.head_sha }}"
-            TAG="sha-${HEAD_SHA::7}"
+            TAG="develop"
             PODS="all"
           fi
           echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
@@ -82,7 +81,6 @@ jobs:
           --pods "${{ steps.deploy.outputs.pods }}"
           --owners "wmobley,mosoriob"
           --restart-pods "graphql,api,ensemble,svo,ui"
-          --recreate-on-image-mismatch
 
       - name: Summary
         run: |
