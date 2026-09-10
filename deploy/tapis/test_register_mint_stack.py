@@ -301,7 +301,25 @@ class LifecycleTests(unittest.TestCase):
                     start=False,
                     restart=False,
                 )
-        self.assertIn("automatic recreation is disabled", str(ctx.exception))
+        self.assertIn("protected pod", str(ctx.exception))
+        t.pods.delete_pod.assert_not_called()
+        t.pods.create_pod.assert_not_called()
+
+    def test_opt_in_recovery_cannot_recreate_redis(self):
+        redis = deploy.build_specs("mintproject", "sha-new", "https://portals.tapis.io")["redis"]
+        t = Mock()
+        t.pods.get_pod.return_value = redis
+        with patch.object(deploy, "wait_for_pod_image", side_effect=deploy.PodImageMismatchError("stale")):
+            with self.assertRaises(RuntimeError) as ctx:
+                deploy.upsert_pod(
+                    t,
+                    redis,
+                    recreate=False,
+                    recreate_on_image_mismatch=True,
+                    start=False,
+                    restart=False,
+                )
+        self.assertIn("protected pod", str(ctx.exception))
         t.pods.delete_pod.assert_not_called()
         t.pods.create_pod.assert_not_called()
 

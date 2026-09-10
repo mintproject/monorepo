@@ -45,7 +45,7 @@ No public API or database schema changes are introduced. Tapis Pods specs are cr
 - Dev deploys are automatic from `develop`, so bad merges can break the dev stack; rollback is manual workflow dispatch with a previous `sha-*` tag.
 - Pod environment variables may expose secrets to pod owners; only dev secrets are in scope.
 - A stale image or failed lifecycle update fails the deployment rather than being hidden by a successful API response.
-- The only automatic image-mismatch recovery is an explicitly requested, UI-only delete/recreate; Redis and in-flight application state are not treated as disposable.
+- Image-mismatch recovery is limited to stateless application pods (GraphQL, API, Ensemble, SVO, and UI); Redis queue state and PostgreSQL data are not treated as disposable.
 
 ## Alternatives considered
 
@@ -58,7 +58,7 @@ No public API or database schema changes are introduced. Tapis Pods specs are cr
 - Compile `deploy/tapis/register_mint_stack.py` with `python -m py_compile`.
 - Run `register_mint_stack.py --dry-run` and verify redacted pod specs.
 - Parse GitHub Actions workflow YAML.
-- Unit-test update/read-back ordering, bounded image verification, restart completion, confirmed deletion, and the UI-only opt-in fallback. First live validation should be a dev workflow run only; no local live Tapis writes.
+- Unit-test update/read-back ordering, bounded image verification, restart completion, confirmed deletion, and the stateless application fallback. First live validation should be a dev workflow run only; no local live Tapis writes.
 
 ## Documentation plan
 
@@ -83,12 +83,13 @@ Roll out by merging to `develop` and allowing the dev deployment workflow to run
 - Use dev pod IDs prefixed with `mintdev`.
 - Auto-deploy dev from `develop`; production is out of scope.
 - Add an Ensemble Manager entrypoint to materialize `ENSEMBLE_MANAGER_CONFIG_JSON` as a runtime config file.
-- Keep immutable `sha-*` tags. Verify update convergence before restart; verify lifecycle completion afterward. Keep image-mismatch recreation disabled by default and limited to the UI; never recreate PostgreSQL.
+- Keep immutable `sha-*` tags. Verify update convergence before restart; verify lifecycle completion afterward. Recreate only stateless application pods on mismatch; never recreate Redis or PostgreSQL.
 
 ## User feedback / decisions
 
 The user approved Tapis Pods, MINT-only scope, `ghcr.io/mintproject/...`, no history-preservation requirement, auto-run deploys, and dev-first rollout, then requested implementation.
 
 The original dev CI/CD scaffolding is implemented. This revision adds bounded
-image read-back verification, restart completion checks, and an opt-in UI-only
-image-mismatch recovery path. No live Tapis deployment was run locally.
+image read-back verification, restart completion checks, and a guarded
+stateless-application image-mismatch recovery path. No live Tapis deployment
+was run locally.
