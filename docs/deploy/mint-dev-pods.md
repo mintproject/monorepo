@@ -111,12 +111,14 @@ dictionary key, with `type: tapisvolume` and `source_id: mintdevpostgresdata`.
 The deployment identity must have access to both the database pod and volume.
 The volume is not automatically shared with all pod owners.
 
-The first protected deployment may transition the known existing
-`postgis/postgis:16-3.5` pod to the pgvector image in place; it preserves the
-same volume and PGDATA and restarts the pod to load the extension. Unknown
-database images, volume layouts, subpaths, or PGDATA values still stop the
-deployment, and `--recreate` remains refused for an existing PostgreSQL pod.
-Authentication/server errors are not treated as missing pods or volumes.
+The first protected deployment replaces the known existing
+`postgis/postgis:16-3.5` pod definition with the pgvector image. It stops and
+deletes only the pod, retains the same volume and PGDATA, recreates the pod
+with that volume attached, and waits for SQL readiness before Hasura starts.
+Unknown database images, volume layouts, subpaths, or PGDATA values still stop
+the deployment, and ordinary `--recreate` remains refused for an existing
+PostgreSQL pod. Authentication/server errors are not treated as missing pods
+or volumes.
 
 When deploying PostgreSQL, the script waits for the volume to become available
 and for SQL to succeed before deploying the next service. Selectors are ordered

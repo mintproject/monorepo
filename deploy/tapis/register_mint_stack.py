@@ -451,6 +451,21 @@ def wait_for_pod_absent(t: Any, pod_id: str, *, timeout: float = POD_IMAGE_VERIF
     raise RuntimeError(f"[{pod_id}] deletion did not complete; refusing to create a duplicate pod")
 
 
+def wait_for_pod_stopped(t: Any, pod_id: str, *, timeout: float = POD_IMAGE_VERIFY_TIMEOUT) -> None:
+    """Confirm a pod is stopped before replacing its definition."""
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        try:
+            pod = _pod_lookup_for_verification(t, pod_id)
+        except TransientPodLookupError:
+            time.sleep(min(5, max(0, deadline - time.monotonic())))
+            continue
+        if _field(pod, "status") == "STOPPED":
+            return
+        time.sleep(min(5, max(0, deadline - time.monotonic())))
+    raise RuntimeError(f"[{pod_id}] did not stop before protected pod replacement")
+
+
 def wait_for_pod_restart(
     t: Any,
     pod_id: str,
@@ -608,6 +623,36 @@ def _recreate_pod(t: Any, spec: dict[str, Any], *, start: bool, owners: list[str
         wait_for_pod_restart(t, pid, spec["image"])
 
 
+def _replace_postgres_pod(
+    t: Any,
+    existing: Any,
+    spec: dict[str, Any],
+    *,
+    start: bool,
+    owners: list[str] | None = None,
+) -> None:
+    """Replace the known legacy PostgreSQL pod without touching its volume."""
+    pid = spec["pod_id"]
+    if pid != PODS["postgres"]:
+        raise RuntimeError("Protected PostgreSQL replacement called for a non-PostgreSQL pod")
+
+    if _field(existing, "status") != "STOPPED":
+        print(f"  [{pid}] stopping before protected image replacement…")
+        t.pods.stop_pod(pod_id=pid)
+        wait_for_pod_stopped(t, pid)
+
+    print(f"  [{pid}] deleting pod definition; persistent volume is retained…")
+    t.pods.delete_pod(pod_id=pid)
+    wait_for_pod_absent(t, pid)
+    print(f"  [{pid}] creating with the pgvector image and existing volume…")
+    t.pods.create_pod(**spec)
+    if owners:
+        set_pod_owners(t, pid, owners)
+    if start:
+        _start_pod_if_needed(t, pid)
+    wait_for_pod_image(t, pid, spec["image"])
+
+
 def upsert_pod(
     t: Any,
     spec: dict[str, Any],
@@ -617,12 +662,22 @@ def upsert_pod(
     start: bool,
     restart: bool,
     owners: list[str] | None = None,
+    migrate_postgres_image: bool = False,
 ) -> None:
     pid = spec["pod_id"]
     existing = _get_or_missing(t.pods.get_pod, pod_id=pid)
     exists = existing is not None
     if pid == PODS["postgres"]:
         check_postgres_storage(existing, recreate=recreate)
+        if (
+            existing is not None
+            and _field(existing, "image") in LEGACY_POSTGRES_IMAGES
+            and not migrate_postgres_image
+        ):
+            raise RuntimeError(
+                "PostgreSQL uses the known legacy image; rerun with --migrate-postgres-image "
+                "for the protected volume-preserving transition"
+            )
 
     if exists and recreate:
         print(f"  [{pid}] deleting existing pod (--recreate)…")
@@ -631,14 +686,17 @@ def upsert_pod(
         exists = False
 
     if exists:
+        if pid == PODS["postgres"] and _field(existing, "image") in LEGACY_POSTGRES_IMAGES:
+            _replace_postgres_pod(t, existing, spec, start=start, owners=owners)
+            return
         previous_start = _field(_field(existing, "status_container", {}), "start_time")
         print(f"  [{pid}] updating…")
         update = dict(spec)
         if pid == PODS["postgres"]:
-            # Include the image so the protected, known legacy image can make
-            # the controlled transition to the pgvector image. The storage
-            # guard above still rejects every other image or mount layout.
-            print(f"  [{pid}] applying the protected pgvector image transition…")
+            # Tapis UpdatePod does not accept an image field. A known legacy
+            # image is handled by _replace_postgres_pod above; this path is
+            # only for an already-converged PostgreSQL definition.
+            update.pop("image")
         t.pods.update_pod(**update)
         try:
             wait_for_pod_image(t, pid, spec["image"])
@@ -702,6 +760,11 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="recreate only stateless application pods if the requested image does not converge",
     )
+    parser.add_argument(
+        "--migrate-postgres-image",
+        action="store_true",
+        help="replace the known legacy PostgreSQL pod while retaining its Tapis volume",
+    )
     parser.add_argument("--restart", action="store_true")
     parser.add_argument(
         "--restart-pods",
@@ -738,6 +801,10 @@ def main(argv: list[str] | None = None) -> int:
             )
     else:
         selected = parse_pods(args.pods)
+    if args.migrate_postgres_image and "postgres" not in selected:
+        parser.error("--migrate-postgres-image requires postgres in --pods")
+    if args.migrate_postgres_image and args.recreate:
+        parser.error("--migrate-postgres-image cannot be combined with --recreate")
     restart_selected = resolve_restart_pods(
         selected,
         restart=args.restart,
@@ -802,6 +869,7 @@ def main(argv: list[str] | None = None) -> int:
             start=not args.no_start,
             restart=key in restart_selected,
             owners=owners,
+            migrate_postgres_image=args.migrate_postgres_image,
         )
         if key == "postgres" and not args.no_start:
             wait_for_postgres(

@@ -169,10 +169,31 @@ class StorageTests(unittest.TestCase):
         t = Mock()
         legacy = {**self.spec, "image": "postgis/postgis:16-3.5"}
         t.pods.get_pod.return_value = legacy
-        with patch.object(deploy, "wait_for_pod_image", return_value=self.spec):
+        with self.assertRaises(RuntimeError):
             deploy.upsert_pod(t, self.spec, recreate=False, start=True, restart=False)
-        t.pods.update_pod.assert_called_once_with(**self.spec)
+        t.pods.update_pod.assert_not_called()
         t.pods.delete_pod.assert_not_called()
+
+    def test_postgres_transition_replaces_only_the_pod_and_retains_volume(self):
+        t = Mock()
+        legacy = {**self.spec, "image": "postgis/postgis:16-3.5", "status": "AVAILABLE"}
+        t.pods.get_pod.return_value = legacy
+        with patch.object(deploy, "wait_for_pod_stopped"), patch.object(
+            deploy, "wait_for_pod_absent"
+        ), patch.object(deploy, "wait_for_pod_image"):
+            deploy.upsert_pod(
+                t,
+                self.spec,
+                migrate_postgres_image=True,
+                recreate=False,
+                start=False,
+                restart=True,
+            )
+        t.pods.stop_pod.assert_called_once_with(pod_id=deploy.PODS["postgres"])
+        t.pods.delete_pod.assert_called_once_with(pod_id=deploy.PODS["postgres"])
+        t.pods.create_pod.assert_called_once_with(**self.spec)
+        t.pods.update_pod.assert_not_called()
+        t.pods.delete_volume.assert_not_called()
 
     def test_restart_allowlist_is_limited_to_updated_pods(self):
         self.assertEqual(
