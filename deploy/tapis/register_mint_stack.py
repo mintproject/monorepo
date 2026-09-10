@@ -9,6 +9,7 @@ operations are intended to run from the GitHub Actions dev deployment workflow.
 from __future__ import annotations
 
 import argparse
+from http.client import RemoteDisconnected
 import json
 import os
 import sys
@@ -381,12 +382,29 @@ class PodImageMismatchError(RuntimeError):
     """The Tapis pod definition did not converge to the requested image."""
 
 
+class TransientPodLookupError(RuntimeError):
+    """A pod lookup failed because the transport may be retried safely."""
+
+
+def _is_transient_lookup_error(exc: Exception) -> bool:
+    return isinstance(exc, (ConnectionError, TimeoutError, RemoteDisconnected, OSError)) or exc.__class__.__name__ in {
+        "ConnectTimeout",
+        "ReadTimeout",
+        "ConnectionError",
+    }
+
+
 def _pod_lookup_for_verification(t: Any, pod_id: str) -> Any:
     """Read a pod for verification without treating errors as absence."""
     try:
         return t.pods.get_pod(pod_id=pod_id)
-    except Exception:
-        raise RuntimeError("Tapis pod verification failed; deployment stopped") from None
+    except Exception as exc:
+        if _is_transient_lookup_error(exc):
+            raise TransientPodLookupError from None
+        status_code = getattr(getattr(exc, "response", None), "status_code", None)
+        if status_code is not None:
+            raise RuntimeError(f"Tapis pod verification failed for {pod_id} (HTTP {status_code}); deployment stopped") from None
+        raise RuntimeError(f"Tapis pod verification failed for {pod_id}; deployment stopped") from None
 
 
 def wait_for_pod_image(t: Any, pod_id: str, expected_image: str, *, timeout: float = POD_IMAGE_VERIFY_TIMEOUT) -> Any:
@@ -394,7 +412,11 @@ def wait_for_pod_image(t: Any, pod_id: str, expected_image: str, *, timeout: flo
     deadline = time.monotonic() + timeout
     observed = None
     while time.monotonic() < deadline:
-        pod = _pod_lookup_for_verification(t, pod_id)
+        try:
+            pod = _pod_lookup_for_verification(t, pod_id)
+        except TransientPodLookupError:
+            time.sleep(min(5, max(0, deadline - time.monotonic())))
+            continue
         observed = _field(pod, "image")
         if observed == expected_image:
             return pod
@@ -413,6 +435,9 @@ def wait_for_pod_absent(t: Any, pod_id: str, *, timeout: float = POD_IMAGE_VERIF
         except Exception as exc:
             if getattr(getattr(exc, "response", None), "status_code", None) == 404:
                 return
+            if _is_transient_lookup_error(exc):
+                time.sleep(min(5, max(0, deadline - time.monotonic())))
+                continue
             raise RuntimeError("Tapis pod deletion verification failed; deployment stopped") from None
         time.sleep(min(5, max(0, deadline - time.monotonic())))
     raise RuntimeError(f"[{pod_id}] deletion did not complete; refusing to create a duplicate pod")
@@ -429,7 +454,11 @@ def wait_for_pod_restart(
     """Confirm an application pod is available on a new container instance."""
     deadline = time.monotonic() + timeout
     while time.monotonic() < deadline:
-        pod = _pod_lookup_for_verification(t, pod_id)
+        try:
+            pod = _pod_lookup_for_verification(t, pod_id)
+        except TransientPodLookupError:
+            time.sleep(min(5, max(0, deadline - time.monotonic())))
+            continue
         started = _field(_field(pod, "status_container", {}), "start_time")
         if (
             _field(pod, "status") == "AVAILABLE"
@@ -491,7 +520,11 @@ def wait_for_postgres(
         raise RuntimeError("Cannot verify PostgreSQL restart without its previous container start time")
     deadline = time.monotonic() + timeout
     while time.monotonic() < deadline:
-        pod = t.pods.get_pod(pod_id=PODS["postgres"])
+        try:
+            pod = _pod_lookup_for_verification(t, PODS["postgres"])
+        except TransientPodLookupError:
+            time.sleep(min(5, max(0, deadline - time.monotonic())))
+            continue
         started = _field(_field(pod, "status_container", {}), "start_time")
         if (
             _field(pod, "status") == "AVAILABLE"

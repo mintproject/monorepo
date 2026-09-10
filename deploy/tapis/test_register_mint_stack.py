@@ -220,6 +220,27 @@ class LifecycleTests(unittest.TestCase):
             deploy.wait_for_pod_image(t, self.spec["pod_id"], self.spec["image"])
         self.assertNotIn("credentials", str(ctx.exception))
 
+    def test_transient_verification_lookup_is_retried(self):
+        missing_connection = ConnectionError("connection closed")
+        t = Mock()
+        t.pods.get_pod.side_effect = [missing_connection, {"image": self.spec["image"]}]
+        with patch.object(deploy.time, "sleep"):
+            result = deploy.wait_for_pod_image(t, self.spec["pod_id"], self.spec["image"], timeout=10)
+        self.assertEqual(result["image"], self.spec["image"])
+        self.assertEqual(t.pods.get_pod.call_count, 2)
+
+    def test_http_verification_error_is_not_retried(self):
+        error = Exception("unauthorized credentials")
+        error.response = SimpleNamespace(status_code=401)
+        t = Mock()
+        t.pods.get_pod.side_effect = error
+        with patch.object(deploy.time, "sleep"):
+            with self.assertRaises(RuntimeError) as ctx:
+                deploy.wait_for_pod_image(t, self.spec["pod_id"], self.spec["image"], timeout=10)
+        self.assertIn("HTTP 401", str(ctx.exception))
+        self.assertNotIn("credentials", str(ctx.exception))
+        t.pods.get_pod.assert_called_once()
+
     def test_restart_happens_after_image_verification(self):
         existing = {"image": "old", "status_container": {"start_time": "old-start"}}
         updated = {"image": self.spec["image"]}
