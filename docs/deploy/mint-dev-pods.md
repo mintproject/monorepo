@@ -44,7 +44,9 @@ Tapis applies pod updates asynchronously. The registration script now reads
 each pod back and requires the exact requested image before requesting a
 restart. For restarted application pods it also waits for `AVAILABLE` and a
 new container start time. `AVAILABLE` confirms the Tapis lifecycle state; it is
-not a substitute for an application-level health check.
+not a substitute for an application-level health check. Transient transport
+errors during these bounded reads are retried; authentication and other HTTP
+errors fail immediately.
 
 Automated deployments fail if an image does not converge. A manual workflow
 dispatch may opt into the last-resort UI-only fallback with
