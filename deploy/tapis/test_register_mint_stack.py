@@ -266,6 +266,41 @@ class LifecycleTests(unittest.TestCase):
             deploy.upsert_pod(t, self.spec, recreate=False, start=False, restart=True)
         self.assertEqual(events, ["update", "verify", "restart", "ready"])
 
+    def test_restart_existing_pods_only_restarts_selected_apps(self):
+        existing_api = {"image": "ghcr.io/mintproject/model-catalog-api:develop", "status_container": {"start_time": "api-old"}}
+        existing_ui = {"image": "ghcr.io/mintproject/ui:develop", "status_container": {"start_time": "ui-old"}}
+        t = Mock()
+        t.pods.get_pod.side_effect = [existing_api, existing_ui]
+        with patch.object(deploy, "wait_for_pod_restart") as ready:
+            deploy.restart_existing_pods(t, ["api", "ui"])
+        self.assertEqual(
+            t.pods.restart_pod.call_args_list,
+            [
+                unittest.mock.call(pod_id=deploy.PODS["api"]),
+                unittest.mock.call(pod_id=deploy.PODS["ui"]),
+            ],
+        )
+        self.assertEqual(ready.call_count, 2)
+        t.pods.update_pod.assert_not_called()
+        t.pods.create_pod.assert_not_called()
+        t.pods.delete_pod.assert_not_called()
+        t.pods.set_pod_permission.assert_not_called()
+
+    def test_restart_existing_pods_refuses_missing_pod(self):
+        missing = Exception()
+        missing.response = SimpleNamespace(status_code=404)
+        t = Mock()
+        t.pods.get_pod.side_effect = missing
+        with self.assertRaises(RuntimeError) as ctx:
+            deploy.restart_existing_pods(t, ["api"])
+        self.assertIn("will not create it", str(ctx.exception))
+        t.pods.restart_pod.assert_not_called()
+        t.pods.create_pod.assert_not_called()
+
+    def test_restart_existing_pods_rejects_protected_services(self):
+        with self.assertRaises(RuntimeError):
+            deploy.restart_existing_pods(Mock(), ["graphql"])
+
     def test_mismatch_without_opt_in_does_not_delete_or_restart(self):
         t = Mock()
         t.pods.get_pod.return_value = self.spec

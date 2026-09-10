@@ -12,11 +12,11 @@ MINT developers need an always-on dev stack that updates automatically from `dev
 
 ## Current code/system summary
 
-MINT currently contains five custom deployable service images: `graphql_engine`, `model-catalog-api`, `mint-ensemble-manager`, `svo-adapter-service`, and the React UI in `ui-react`. The dev deployment publishes the React UI as `ghcr.io/mintproject/ui:<tag>` and the SVO adapter as `ghcr.io/mintproject/svo-adapter:<tag>`. PostgreSQL and Redis are runtime dependencies. Existing service workflows already publish GHCR images and the Helm chart documents the service environment patterns. Tapis pod updates are asynchronous, so an accepted update request alone is not evidence that the requested image reached the pod.
+MINT currently contains five custom deployable service images: `graphql_engine`, `model-catalog-api`, `mint-ensemble-manager`, `svo-adapter-service`, and the React UI in `ui-react`. The dev image workflow publishes all five with moving `develop` tags. The restart workflow only touches the existing API, UI, Ensemble, and SVO application pods; PostgreSQL, Redis, and GraphQL are outside its scope.
 
 ## Proposed design
 
-Add a MINT dev image workflow, a Tapis Pods deploy workflow, and a `tapipy` registration script. The custom images are published under `ghcr.io/mintproject/` as `graphql-engine`, `model-catalog-api`, `ensemble-manager`, `svo-adapter`, and `ui`, then tagged as `sha-<short-sha>`. The dev pod IDs are `mintdevpostgres`, `mintdevredis`, `mintdevgraphql`, `mintdevapi`, `mintdevensemble`, `mintdevsvo`, and `mintdevui`.
+Add a MINT dev image workflow and a restart-only Tapis Pods workflow. The custom images are published under `ghcr.io/mintproject/` as `graphql-engine`, `model-catalog-api`, `ensemble-manager`, `svo-adapter`, and `ui`, including moving `develop` tags. The restart workflow looks up and restarts only `mintdevapi`, `mintdevui`, `mintdevensemble`, and `mintdevsvo`.
 
 ## Files likely affected
 
@@ -35,7 +35,7 @@ No public API or database schema changes are introduced. Tapis Pods specs are cr
 
 ## Data flow
 
-`develop` push → build five MINT images → publish both `develop` and `sha-<short-sha>` tags → deploy workflow runs `register_mint_stack.py` with `develop` → Tapis updates dev pods → the script verifies the image definition → requests application-pod restarts → verifies availability and a new container start time → UI/API/GraphQL/Ensemble/SVO Adapter are available at `mintdev*` pod URLs.
+`develop` push → build five MINT images → publish `develop` tags → restart workflow runs `register_mint_stack.py --restart-existing-pods api,ui,ensemble,svo` → Tapis looks up those four existing pods → requests restarts → verifies availability and a new container start time.
 
 ## Risks and tradeoffs
 
@@ -44,8 +44,8 @@ No public API or database schema changes are introduced. Tapis Pods specs are cr
 - Authenticated Hasura writes require either `MINTDEV_HASURA_JWT_SECRET` or `MINTDEV_HASURA_AUTH_HOOK`; otherwise dev read paths may work while write paths fail.
 - Dev deploys are automatic from `develop`, so bad merges can break the dev stack; rollback is manual workflow dispatch with a previous `sha-*` tag.
 - Pod environment variables may expose secrets to pod owners; only dev secrets are in scope.
-- A stale image or failed lifecycle update fails the deployment rather than being hidden by a successful API response.
-- Image-mismatch recovery is limited to stateless application pods (GraphQL, API, Ensemble, SVO, and UI); Redis queue state and PostgreSQL data are not treated as disposable.
+- A missing pod or failed lifecycle update fails the restart workflow rather than creating or mutating an unexpected resource.
+- The moving `develop` tag simplifies rollout but does not provide immutable rollback; immutable SHA tags remain available from the image workflow for deliberate operator use.
 
 ## Alternatives considered
 
@@ -56,9 +56,9 @@ No public API or database schema changes are introduced. Tapis Pods specs are cr
 ## Test plan
 
 - Compile `deploy/tapis/register_mint_stack.py` with `python -m py_compile`.
-- Run `register_mint_stack.py --dry-run` and verify redacted pod specs.
+- Unit-test restart-only lookup, refusal to create missing pods, restart completion, and protected-service rejection.
 - Parse GitHub Actions workflow YAML.
-- Unit-test update/read-back ordering, bounded image verification, restart completion, confirmed deletion, and the stateless application fallback. First live validation should be a dev workflow run only; no local live Tapis writes.
+- First live validation should be a dev workflow run only; no local live Tapis writes.
 
 ## Documentation plan
 
@@ -83,14 +83,14 @@ Roll out by merging to `develop` and allowing the dev deployment workflow to run
 - Use dev pod IDs prefixed with `mintdev`.
 - Auto-deploy dev from `develop`; production is out of scope.
 - Add an Ensemble Manager entrypoint to materialize `ENSEMBLE_MANAGER_CONFIG_JSON` as a runtime config file.
-- Use the moving `develop` tag for automatic dev updates and immutable `sha-*` tags for rollback. Verify update convergence before restarting application pods; never restart Redis or PostgreSQL in that workflow.
+- Use the moving `develop` tag for automatic image updates. Look up and restart only `mintdevapi`, `mintdevui`, `mintdevensemble`, and `mintdevsvo`; never create, update, or delete pods in that workflow.
 
 ## User feedback / decisions
 
 The user approved Tapis Pods, MINT-only scope, `ghcr.io/mintproject/...`, no history-preservation requirement, auto-run deploys, and dev-first rollout, then requested implementation.
 
-The original dev CI/CD scaffolding is implemented. This revision adds bounded
-image read-back verification, restart completion checks, and a guarded
-stateless-application image-mismatch recovery path. No live Tapis deployment
-was run locally. The live rollout uses the existing Tapis networking CORS
-configuration and the moving `develop` image tag with restart-only behavior.
+The original dev CI/CD scaffolding is implemented. This revision adds a
+restart-only workflow, bounded restart completion checks, and refusal to create
+or mutate missing pod definitions. No live Tapis deployment was run locally.
+The live rollout uses the existing Tapis pod definitions and restarts only the
+four application pods.

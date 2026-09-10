@@ -37,6 +37,7 @@ PODS = {
 }
 
 ORDER = ["postgres", "redis", "graphql", "api", "ensemble", "svo", "ui"]
+RESTART_ONLY_PODS = ("api", "ui", "ensemble", "svo")
 
 # Recreating a pod is destructive. Only stateless application services may use
 # this fallback; Redis queue state and PostgreSQL data are protected.
@@ -663,6 +664,28 @@ def upsert_pod(
     wait_for_pod_image(t, pid, spec["image"])
 
 
+def restart_existing_pods(t: Any, selected: list[str]) -> None:
+    """Restart only already-existing application pods; never mutate definitions."""
+    invalid = [key for key in selected if key not in RESTART_ONLY_PODS]
+    if invalid:
+        raise RuntimeError(
+            "Restart-only mode is limited to: " + ", ".join(RESTART_ONLY_PODS)
+        )
+    for key in selected:
+        pid = PODS[key]
+        pod = _get_or_missing(t.pods.get_pod, pod_id=pid)
+        if pod is None:
+            raise RuntimeError(f"[{pid}] was not found; restart-only mode will not create it")
+        previous_start = _field(_field(pod, "status_container", {}), "start_time")
+        expected_image = _field(pod, "image")
+        if not previous_start or not expected_image:
+            raise RuntimeError(f"[{pid}] is missing lifecycle or image data; restart stopped")
+        print(f"  [{pid}] restarting existing pod…")
+        t.pods.restart_pod(pod_id=pid)
+        print(f"  [{pid}] restart requested")
+        wait_for_pod_restart(t, pid, expected_image, previous_start)
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Register/update the MINT dev Tapis Pods stack.")
     parser.add_argument("--base-url", default=_env("TAPIS_BASE_URL", "https://portals.tapis.io"))
@@ -681,16 +704,37 @@ def main(argv: list[str] | None = None) -> int:
         "--restart-pods",
         help="comma-separated pods to restart after updating; limits restarts without changing the update set",
     )
+    parser.add_argument(
+        "--restart-existing-pods",
+        help="restart only these existing application pods; never create or update pod definitions",
+    )
     parser.add_argument("--no-start", action="store_true")
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args(argv)
+    if args.restart_existing_pods is not None and (
+        args.restart
+        or args.restart_pods is not None
+        or args.recreate
+        or args.recreate_on_image_mismatch
+        or args.no_start
+        or args.dry_run
+    ):
+        parser.error("--restart-existing-pods cannot be combined with lifecycle or dry-run options")
     if args.no_start and (args.restart or args.restart_pods is not None or args.recreate_on_image_mismatch):
         parser.error("--no-start cannot be combined with --restart, --restart-pods, or --recreate-on-image-mismatch")
     if args.recreate and args.recreate_on_image_mismatch:
         parser.error("--recreate and --recreate-on-image-mismatch cannot be combined")
 
     _load_dotenv()
-    selected = parse_pods(args.pods)
+    if args.restart_existing_pods is not None:
+        selected = parse_pods(args.restart_existing_pods)
+        invalid = [key for key in selected if key not in RESTART_ONLY_PODS]
+        if invalid or not selected:
+            parser.error(
+                "--restart-existing-pods accepts only: " + ", ".join(RESTART_ONLY_PODS)
+            )
+    else:
+        selected = parse_pods(args.pods)
     restart_selected = resolve_restart_pods(
         selected,
         restart=args.restart,
@@ -710,7 +754,8 @@ def main(argv: list[str] | None = None) -> int:
             print(f"  {key:8} {urls[key]}")
         return 0
 
-    validate_live_requirements(selected)
+    if args.restart_existing_pods is None:
+        validate_live_requirements(selected)
 
     try:
         from tapipy.tapis import Tapis
@@ -722,6 +767,13 @@ def main(argv: list[str] | None = None) -> int:
     t = Tapis(base_url=args.base_url.rstrip("/"), username=username, password=password)
     t.requests_session.send = partial(t.requests_session.send, timeout=30)
     t.get_tokens()
+
+    if args.restart_existing_pods is not None:
+        restart_existing_pods(t, selected)
+        print("\nMINT dev application pods restarted:")
+        for key in selected:
+            print(f"  {key:8} {PODS[key]}")
+        return 0
 
     # Parse owners list
     owners = [o.strip() for o in args.owners.split(",") if o.strip()] if args.owners else []
