@@ -46,6 +46,7 @@ jobs:
           --image-tag develop
           --pods postgres,graphql
           --restart-pods postgres,graphql
+          --migrate-postgres-image
 
       - name: Restart existing application pods
         env:

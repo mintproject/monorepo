@@ -25,14 +25,14 @@ Make every MINT Tapis dev deployment apply the Hasura migrations and metadata sh
 Add a protected pre-migration step to `Deploy MINT Dev Pods` that:
 
 1. Builds and publishes a PostgreSQL 16/PostGIS image with pgvector as `ghcr.io/mintproject/postgres-pgvector:develop`.
-2. Updates and restarts the existing PostgreSQL pod on the same protected Tapis volume, allowing only the known plain-PostGIS image as a transition source.
+2. Stops and replaces the existing PostgreSQL pod definition on the same protected Tapis volume, allowing only the known plain-PostGIS image as a transition source; the volume itself is never deleted.
 3. Updates and restarts Hasura with the `develop` image.
 4. Waits for `https://mintdevgraphql.pods.portals.tapis.io/healthz`.
 5. Runs the GraphQL image as a short-lived migration client.
 6. Executes `hasura migrate status`, `hasura migrate apply`, `hasura metadata apply`, and `hasura metadata reload` against the public Tapis GraphQL endpoint using the admin secret.
 7. Verifies the deployed GraphQL schema by querying `modelcatalog_etl_process` and `problem_statement.events`.
 
-The step will use the image's `/hasura` contents, so migrations and metadata are guaranteed to come from the same `develop` image tag as the running GraphQL service. It will not run seeds, recreate PostgreSQL, alter the existing volume, or perform application-level data writes.
+The step will use the image's `/hasura` contents, so migrations and metadata are guaranteed to come from the same `develop` image tag as the running GraphQL service. It will not run seeds, delete the PostgreSQL volume, or perform application-level data writes.
 
 ## Files likely affected
 
@@ -59,7 +59,7 @@ and metadata are applied → schema smoke query validates the deployed endpoint.
 - The workflow depends on the public Tapis pod URL being reachable from GitHub-hosted runners.
 - A migration or metadata failure will fail the deployment workflow after pod updates, making the failure visible rather than presenting a partially synchronized stack as healthy.
 - The workflow needs permission to pull the selected GHCR image if the package is not anonymously readable.
-- PostgreSQL must be restarted to load the extension from the new image; the workflow verifies the existing volume and SQL readiness before Hasura migration.
+- PostgreSQL must be replaced and restarted to load the extension from the new image; the workflow verifies the existing volume and SQL readiness before Hasura migration.
 
 ## Alternatives considered
 
@@ -105,6 +105,6 @@ Implementation deviation: the workflow runs the CLI in short-lived Docker
 containers from GitHub Actions rather than creating a separate Tapis init pod.
 This preserves the existing Tapis pod inventory while still using the resolved
 GraphQL image tag as the migration client. The first implementation also
-required a protected PostgreSQL image transition after the deployed database
-was found to lack pgvector; the transition is in-place on the existing volume
-and uses the required `develop` tag.
+required a protected PostgreSQL pod replacement after the deployed database was
+found to lack pgvector; the replacement retains the existing volume and uses
+the required `develop` tag.
