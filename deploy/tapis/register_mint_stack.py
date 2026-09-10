@@ -837,7 +837,12 @@ def main(argv: list[str] | None = None) -> int:
     if "postgres" in selected:
         postgres = _get_or_missing(t.pods.get_pod, pod_id=PODS["postgres"])
         check_postgres_storage(postgres, recreate=args.recreate)
-        if postgres is not None and "postgres" in restart_selected:
+        postgres_image_migration = (
+            args.migrate_postgres_image
+            and postgres is not None
+            and _field(postgres, "image") in LEGACY_POSTGRES_IMAGES
+        )
+        if postgres is not None and "postgres" in restart_selected and not postgres_image_migration:
             previous_start = _field(_field(postgres, "status_container", {}), "start_time")
             if not previous_start:
                 raise RuntimeError("Cannot verify PostgreSQL restart; previous container start time is missing")

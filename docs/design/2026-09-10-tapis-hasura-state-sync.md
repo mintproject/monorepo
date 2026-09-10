@@ -110,4 +110,7 @@ found to lack pgvector; the replacement retains the existing volume and uses
 the required `develop` tag. The second attempt showed that waiting for a
 separate `STOPPED` state was too strict for this Tapis lifecycle, so the
 protected path now uses the documented delete operation followed by confirmed
-absence before recreation.
+absence before recreation. A subsequent retry showed that a prior stop can
+clear the old container start timestamp; the migration path therefore verifies
+the newly created image and SQL readiness instead of requiring that old
+timestamp.

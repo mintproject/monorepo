@@ -115,6 +115,9 @@ The first protected deployment replaces the known existing
 `postgis/postgis:16-3.5` pod definition with the pgvector image. It deletes
 only the pod, retains the same volume and PGDATA, recreates the pod
 with that volume attached, and waits for SQL readiness before Hasura starts.
+If a previous stop request left the legacy pod stopped without lifecycle start
+metadata, the migration path does not require that old timestamp; it verifies
+the replacement image and SQL readiness instead.
 Unknown database images, volume layouts, subpaths, or PGDATA values still stop
 the deployment, and ordinary `--recreate` remains refused for an existing
 PostgreSQL pod. Authentication/server errors are not treated as missing pods
