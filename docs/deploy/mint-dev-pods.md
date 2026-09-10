@@ -54,6 +54,11 @@ deletion before creating each replacement pod and verifies its image and
 startup afterward. Redis and PostgreSQL are protected from this fallback;
 PostgreSQL is never automatically deleted or recreated.
 
+GraphQL browser CORS is configured with Hasura's
+`HASURA_GRAPHQL_CORS_DOMAIN` environment variable. The pod definition does not
+set Tapis networking CORS fields because those settings require an
+`APPROVEDADMIN` permission that the dev deployment identity does not have.
+
 The deploy job uses the `Tapis Dev Deploy` GitHub Environment.
 
 ## Required environment secrets

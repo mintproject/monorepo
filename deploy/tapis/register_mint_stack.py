@@ -191,24 +191,6 @@ def build_specs(owner: str, tag: str, base_url: str) -> dict[str, dict[str, Any]
     urls = pod_urls(base_url)
     graphql_endpoint = f"{urls['graphql']}/v1/graphql"
     admin_secret = _admin_secret()
-    browser_cors = {
-        "cors_allow_origins": [
-            "https://mintdevui.pods.portals.tapis.io",
-            "https://*.tapis.io",
-            "http://localhost:3000",
-        ],
-        "cors_allow_methods": ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"],
-        "cors_allow_headers": [
-            "Authorization",
-            "Content-Type",
-            "X-Hasura-Role",
-            "X-Hasura-User-Id",
-            "X-Hasura-Allowed-Roles",
-            "X-Hasura-Admin-Secret",
-        ],
-        "cors_allow_credentials": False,
-        "cors_max_age": 100,
-    }
 
     specs: dict[str, dict[str, Any]] = {
         "postgres": {
@@ -242,7 +224,10 @@ def build_specs(owner: str, tag: str, base_url: str) -> dict[str, dict[str, Any]
             "pod_id": PODS["graphql"],
             "image": f"ghcr.io/{owner}/graphql-engine:{tag}",
             "description": "MINT dev Hasura GraphQL Engine",
-            "networking": {"default": {"protocol": "http", "port": 8080, **browser_cors}},
+            # Tapis pod-level CORS settings require APPROVEDADMIN permission.
+            # Configure browser access in Hasura instead so ordinary dev deploy
+            # identities can create/recreate the stateless GraphQL pod.
+            "networking": {"default": {"protocol": "http", "port": 8080}},
             "resources": {"cpu_request": 250, "cpu_limit": 1000, "mem_request": 512, "mem_limit": 2048},
             "environment_variables": {
                 "HASURA_GRAPHQL_DATABASE_URL": _database_url(base_url),
@@ -250,9 +235,9 @@ def build_specs(owner: str, tag: str, base_url: str) -> dict[str, dict[str, Any]
                 "HASURA_GRAPHQL_ENABLE_CONSOLE": _env("HASURA_GRAPHQL_ENABLE_CONSOLE", "true"),
                 "HASURA_GRAPHQL_DEV_MODE": _env("HASURA_GRAPHQL_DEV_MODE", "false"),
                 "HASURA_GRAPHQL_UNAUTHORIZED_ROLE": _env("HASURA_GRAPHQL_UNAUTHORIZED_ROLE", "anonymous"),
-                "HASURA_GRAPHQL_CORS_ORIGINS": _env(
-                    "HASURA_GRAPHQL_CORS_ORIGINS",
-                    "https://mintdevui.pods.portals.tapis.io",
+                "HASURA_GRAPHQL_CORS_DOMAIN": _env(
+                    "HASURA_GRAPHQL_CORS_DOMAIN",
+                    "https://mintdevui.pods.portals.tapis.io,http://localhost:3000",
                 ),
                 **_hasura_auth_env(),
             },

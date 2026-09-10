@@ -84,6 +84,7 @@ Roll out by merging to `develop` and allowing the dev deployment workflow to run
 - Auto-deploy dev from `develop`; production is out of scope.
 - Add an Ensemble Manager entrypoint to materialize `ENSEMBLE_MANAGER_CONFIG_JSON` as a runtime config file.
 - Keep immutable `sha-*` tags. Verify update convergence before restart; verify lifecycle completion afterward. Recreate only stateless application pods on mismatch; never recreate Redis or PostgreSQL.
+- Configure GraphQL browser CORS through Hasura's `HASURA_GRAPHQL_CORS_DOMAIN`; do not send privileged Tapis networking CORS fields from the ordinary dev deployment identity.
 
 ## User feedback / decisions
 
@@ -92,4 +93,6 @@ The user approved Tapis Pods, MINT-only scope, `ghcr.io/mintproject/...`, no his
 The original dev CI/CD scaffolding is implemented. This revision adds bounded
 image read-back verification, restart completion checks, and a guarded
 stateless-application image-mismatch recovery path. No live Tapis deployment
-was run locally.
+was run locally. The first live deployment exposed that Tapis networking CORS
+requires `APPROVEDADMIN`; the implementation was adjusted to use Hasura CORS
+configuration instead.

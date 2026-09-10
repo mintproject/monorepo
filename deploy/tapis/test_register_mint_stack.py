@@ -23,6 +23,14 @@ class StorageTests(unittest.TestCase):
         self.assertEqual(source["type"], "tapisvolume")
         self.assertEqual(source["source_id"], "mintdevpostgresdata")
 
+    def test_graphql_cors_is_configured_in_hasura_not_tapis_networking(self):
+        graphql = deploy.build_specs("mintproject", "sha-test", "https://portals.tapis.io")["graphql"]
+        self.assertNotIn("cors_allow_origins", graphql["networking"]["default"])
+        self.assertEqual(
+            graphql["environment_variables"]["HASURA_GRAPHQL_CORS_DOMAIN"],
+            "https://mintdevui.pods.portals.tapis.io,http://localhost:3000",
+        )
+
     def test_existing_storage_can_be_reused(self):
         deploy.check_postgres_storage(self.spec, recreate=False)
 
