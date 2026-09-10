@@ -149,9 +149,9 @@ class StorageTests(unittest.TestCase):
             deploy.resolve_restart_pods(
                 selected,
                 restart=False,
-                restart_pods="redis,graphql,api,ensemble,svo,ui",
+                restart_pods="graphql,api,ensemble,svo,ui",
             ),
-            ["redis", "graphql", "api", "ensemble", "svo", "ui"],
+            ["graphql", "api", "ensemble", "svo", "ui"],
         )
 
     def test_postgres_is_not_restarted_when_omitted_from_allowlist(self):
