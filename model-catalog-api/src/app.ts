@@ -10,6 +10,7 @@ import { CatalogService } from './service.js'
 import { SecurityHandler } from './security.js'
 import { fileURLToPath } from 'url'
 import path from 'path'
+import { MAX_QUERY_LENGTH, MAX_RESULT_LIMIT, semanticSearchService } from './semantic-search.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const OPENAPI_SPEC_PATH = path.join(__dirname, '..', 'openapi.yaml')
@@ -119,12 +120,66 @@ export async function buildApp() {
   app.get('/health', async (_req, reply) => {
     try {
       await readClient.query({ query: gql`{ __typename }` })
-      return { status: 'ok', hasura: 'connected' }
+      return {
+        status: 'ok',
+        hasura: 'connected',
+        semantic_search: semanticSearchService.status,
+      }
     } catch {
       reply.status(503)
-      return { status: 'error', hasura: 'unreachable' }
+      return {
+        status: 'error',
+        hasura: 'unreachable',
+        semantic_search: semanticSearchService.status,
+      }
     }
   })
+
+  // Semantic search belongs to the catalog API because it searches catalog
+  // records. Inference/indexing remain behind semanticSearchService so the
+  // generated CRUD handlers do not own model lifecycle or database SQL.
+  app.get('/search', async (req, reply) => {
+    const query = String((req.query as Record<string, unknown> | undefined)?.q ?? '').trim()
+    const rawLimit = (req.query as Record<string, unknown> | undefined)?.limit ?? 20
+    const limit = Number(rawLimit)
+
+    if (!query) {
+      reply.code(400).send({ error: 'Query parameter q is required' })
+      return
+    }
+    if (query.length > MAX_QUERY_LENGTH) {
+      reply.code(400).send({ error: `Query parameter q must be ${MAX_QUERY_LENGTH} characters or fewer` })
+      return
+    }
+    if (!Number.isInteger(limit) || limit < 1 || limit > MAX_RESULT_LIMIT) {
+      reply.code(400).send({ error: `Query parameter limit must be an integer between 1 and ${MAX_RESULT_LIMIT}` })
+      return
+    }
+
+    try {
+      return await semanticSearchService.search(query, limit)
+    } catch (error) {
+      req.log.error({ err: error }, 'semantic search failed')
+      reply.code(503).send({ error: 'Semantic search is temporarily unavailable' })
+    }
+  })
+
+  app.post('/events/catalog', async (req, reply) => {
+    const expectedSecret = process.env.SVO_SEMANTIC_SEARCH_WEBHOOK_SECRET
+    const receivedSecret = req.headers['x-mint-webhook-secret']
+    if (!expectedSecret || receivedSecret !== expectedSecret) {
+      reply.code(401).send({ error: 'Invalid webhook credentials' })
+      return
+    }
+
+    semanticSearchService.requestRefresh()
+    return { status: 'accepted' }
+  })
+
+  // Start model loading/indexing without delaying ordinary catalog API startup.
+  // /search remains unavailable until the model and database are ready, while
+  // /health distinguishes catalog availability from semantic readiness.
+  void semanticSearchService.initialize()
 
   // Load spec with response schemas stripped to avoid AJV compilation errors
   // and dramatically speed up startup (~30s -> ~2s)

@@ -102,6 +102,7 @@ is treated as unset):
 | `AUTH_CLIENT_ID` | `mint-localhost-3000` |
 | `AUTH_REALM` | `` (Keycloak only) |
 | `AUTH_PROVIDER` | `tapis` |
+| `MODEL_CATALOG_API` | `http://model-catalog-api:3000` (deployment-specific; used for semantic search) |
 | `GOOGLE_MAPS_KEY` | (shared development key) |
 | `DATA_CATALOG_API` | `https://ckan.tacc.utexas.edu` (CKAN REST API base, no `/api` suffix) |
 | `DATA_CATALOG_BROWSE_URL` | `https://ckan.tacc.utexas.edu` (human-browsable catalog UI, iframe src) |

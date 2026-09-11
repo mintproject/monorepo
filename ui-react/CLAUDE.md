@@ -180,7 +180,8 @@ Keys:
 - `AUTH_REALM` — Keycloak realm (Keycloak only)
 - `AUTH_PROVIDER` — `'keycloak'` | `'tapis'`
 - `GOOGLE_MAPS_KEY`, `WELCOME_MESSAGE`
-- `DATA_CATALOG_API`, `DATA_CATALOG_BROWSE_URL`, `ENSEMBLE_MANAGER_API`
+- `MODEL_CATALOG_API` — Model Catalog API base URL, including semantic search;
+  `DATA_CATALOG_API`, `DATA_CATALOG_BROWSE_URL`, `ENSEMBLE_MANAGER_API`
 - `EXECUTION_ENGINE` — `'tapis'` | `'localex'` | `'wings'`; the backend the
   deployment's Ensemble Manager runs. Selects the run-submission route, which
   differs per backend (see `executionEnginePath` in `src/lib/ensemble-manager.ts`)

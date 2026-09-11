@@ -14,6 +14,7 @@ import { Check, ChevronsUpDown } from 'lucide-react';
 import { usePrefetchReferenceDataQuery } from '@/graphql/generated/graphql';
 import { cn } from '@/lib/utils';
 import { humanizeStandardVariable } from '@/lib/standard-variable-grammar';
+import { getModelCatalogApiUrl } from '@/lib/config';
 import { Button } from '@/components/ui/button';
 import {
   Command,
@@ -84,7 +85,7 @@ export function StandardVariableCombobox({
       return;
     }
     const controller = new AbortController();
-    fetch(`http://localhost:8091/search?q=${encodeURIComponent(query)}&limit=50`, {
+    fetch(`${getModelCatalogApiUrl()}/search?q=${encodeURIComponent(query)}&limit=50`, {
       signal: controller.signal,
     })
       .then((response) => (response.ok ? response.json() : null))

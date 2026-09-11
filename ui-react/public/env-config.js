@@ -21,7 +21,7 @@
 //   docker compose up -d
 //
 // Ports follow compose.yaml: Hasura 8080, Ensemble Manager 3001,
-// model-catalog-api 3002 (the UI reads Hasura directly and never calls it).
+// model-catalog-api 3002 (the UI uses it for semantic search).
 // Without the stack running the app loads and every query fails — that is the
 // intended trade: local dev must not write to production by default. To browse
 // TACC's public deployment instead, set HASURA_ENDPOINT to
@@ -42,6 +42,7 @@ window.__MINT_CONFIG__ = {
   AUTH_CALLBACK_ORIGIN: "http://localhost:3000",
   AUTH_REALM: "",
   AUTH_PROVIDER: "tapis",
+  MODEL_CATALOG_API: "http://localhost:3002",
   GOOGLE_MAPS_KEY: "AIzaSyDf8bXwyV7v9whOpZl64SRVWKdE6yBbt2k",
   // CKAN stays remote too. The stack runs no CKAN, and this one echoes CORS
   // headers for the localhost origin.

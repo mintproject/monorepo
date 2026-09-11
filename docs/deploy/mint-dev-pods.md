@@ -12,7 +12,6 @@ This runbook covers the MINT-only dev stack deployed to Tapis Pods from this rep
 | Model Catalog API | `mintdevapi` | `https://mintdevapi.pods.portals.tapis.io` |
 | Ensemble Manager | `mintdevensemble` | `https://mintdevensemble.pods.portals.tapis.io` |
 | SVO Adapter | `mintdevsvo` | `https://mintdevsvo.pods.portals.tapis.io` |
-| Semantic Search | `mintdevsemanticsearch` | `https://mintdevsemanticsearch.pods.portals.tapis.io` |
 | React UI | `mintdevui` | `https://mintdevui.pods.portals.tapis.io` |
 
 ## Images
@@ -25,7 +24,6 @@ ghcr.io/mintproject/postgres-pgvector:develop
 ghcr.io/mintproject/model-catalog-api:develop
 ghcr.io/mintproject/ensemble-manager:develop
 ghcr.io/mintproject/svo-adapter:develop
-ghcr.io/mintproject/semantic-search:develop
 ghcr.io/mintproject/ui:develop
 ```
 
@@ -35,16 +33,18 @@ workflow change before attempting an immutable rollback.
 
 ## GitHub Actions
 
-- `MINT Dev Images` builds the seven custom images on `develop`, PRs, and manual dispatch.
+- `MINT Dev Images` builds the six custom images on `develop`, PRs, and manual dispatch.
 - `Deploy MINT Dev Pods` runs after a successful `MINT Dev Images` run on `develop`, plus manual dispatch.
+- `Test MINT Catalog Pod Stack` is manually dispatched for an isolated, prefixed
+  pod group while testing a feature branch.
 - PRs build images with `push: false` and never deploy.
 
 The automated deploy first updates and restarts the PostgreSQL and Hasura pods
 with the `develop` images. After the embedding migrations are applied, it
-creates or updates `mintdevsemanticsearch`, restarts Hasura with its webhook
-URL, and verifies both health endpoints. Only after metadata and the schema
+creates or updates `mintdevapi`, waits for its embedding-backed `/search` check,
+and restarts Hasura with its webhook URL. Only after metadata and the schema
 smoke test pass does it restart these existing application pods:
-`mintdevapi`, `mintdevui`, `mintdevensemble`, and `mintdevsvo`. A missing
+`mintdevui`, `mintdevensemble`, and `mintdevsvo`. A missing
 or incomplete pod lookup stops the workflow before that pod action is requested.
 
 After each restart, the script waits for `AVAILABLE` and a new container start
@@ -55,17 +55,34 @@ immediately.
 
 The deploy job uses the `Tapis Dev Deploy` GitHub Environment.
 
-The Tapis permitted-image list must include
-`ghcr.io/mintproject/semantic-search` before the first deployment that creates
-`mintdevsemanticsearch`; otherwise Tapis will reject the pod definition.
-
 After pod registration, the deploy job waits for Hasura, then runs the
-migration CLI from the resolved GraphQL image tag. It starts semantic search
-after those migrations so its embedding query sees the current schema, then
-runs metadata application and the final schema smoke test. It finishes by
-restarting the dependent application pods. The schema smoke test covers the
-ETL process and problem statement event relationships. This step uses the protected
+migration CLI from the resolved GraphQL image tag. It starts Model Catalog after
+those migrations so its embedding query sees the current schema, then runs
+metadata application and the final schema smoke test. It finishes by restarting
+the dependent application pods. The schema smoke test covers the ETL process and
+problem statement event relationships. This step uses the protected
 `HASURA_GRAPHQL_ADMIN_SECRET` and does not apply seeds.
+
+## Isolated staged pod testing
+
+Run `Test MINT Catalog Pod Stack` from the feature branch after
+`MINT Dev Images` has published that branch's image tag. The workflow defaults to
+the `codex-model-catalog-embeddings` image tag and `minttest` pod prefix. It
+executes these gates in order:
+
+1. PostgreSQL with the existing pgvector volume guard.
+2. Hasura migration application.
+3. Model Catalog startup and a real `/search` request, proving model loading,
+   database connectivity, and vector query execution.
+4. Hasura metadata reload, authenticated webhook acknowledgment, and schema
+   smoke verification.
+5. Redis, Ensemble Manager, SVO Adapter, and UI registration.
+
+The wrapper `deploy/tapis/register_mint_test_stack.py` rewrites every pod ID and
+the PostgreSQL volume ID from `MINT_TEST_STACK_PREFIX`; it never targets the
+shared `mintdev*` resources. Test pods are intentionally left available for
+inspection. Use a new prefix for a clean test volume rather than deleting a
+volume that may contain useful diagnostics.
 
 ## Required environment secrets
 

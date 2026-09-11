@@ -18,11 +18,18 @@ export function getRuntimeConfig() {
       AUTH_CLIENT_ID: import.meta.env.VITE_AUTH_CLIENT_ID ?? '',
       AUTH_REALM: import.meta.env.VITE_AUTH_REALM ?? '',
       AUTH_PROVIDER: (import.meta.env.VITE_AUTH_PROVIDER as 'keycloak' | 'tapis') ?? 'keycloak',
+      MODEL_CATALOG_API: import.meta.env.VITE_MODEL_CATALOG_API ?? 'http://localhost:3002',
       DATA_CATALOG_API: import.meta.env.VITE_DATA_CATALOG_API ?? 'https://ckan.tacc.utexas.edu',
       DATA_CATALOG_BROWSE_URL:
         import.meta.env.VITE_DATA_CATALOG_BROWSE_URL ?? 'https://ckan.tacc.utexas.edu',
     }
   );
+}
+
+/** Returns the Model Catalog API base URL (no trailing slash). */
+export function getModelCatalogApiUrl(): string {
+  const url = getRuntimeConfig().MODEL_CATALOG_API ?? 'http://localhost:3002';
+  return url.replace(/\/$/, '');
 }
 
 /**

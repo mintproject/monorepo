@@ -1,4 +1,5 @@
 import { buildApp } from './app.js'
+import { semanticSearchService } from './semantic-search.js'
 
 const PORT = Number(process.env.PORT || 3000)
 
@@ -11,6 +12,7 @@ async function main() {
   // Graceful shutdown
   const shutdown = async () => {
     app.log.info('Shutting down...')
+    await semanticSearchService.stop()
     await app.close()
     process.exit(0)
   }

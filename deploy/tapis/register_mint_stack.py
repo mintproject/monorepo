@@ -35,16 +35,15 @@ PODS = {
     "api": "mintdevapi",
     "ensemble": "mintdevensemble",
     "svo": "mintdevsvo",
-    "semantic_search": "mintdevsemanticsearch",
     "ui": "mintdevui",
 }
 
-ORDER = ["postgres", "redis", "graphql", "api", "ensemble", "svo", "semantic_search", "ui"]
+ORDER = ["postgres", "redis", "graphql", "api", "ensemble", "svo", "ui"]
 RESTART_ONLY_PODS = ("api", "ui", "ensemble", "svo")
 
 # Recreating a pod is destructive. Only stateless application services may use
 # this fallback; Redis queue state and PostgreSQL data are protected.
-RECREATE_ON_IMAGE_MISMATCH_PODS = frozenset({"graphql", "api", "ensemble", "svo", "semantic_search", "ui"})
+RECREATE_ON_IMAGE_MISMATCH_PODS = frozenset({"graphql", "api", "ensemble", "svo", "ui"})
 POD_IMAGE_VERIFY_TIMEOUT = 120
 POD_RESTART_TIMEOUT = 600
 
@@ -99,6 +98,13 @@ def _postgres_password() -> str:
 
 def _admin_secret() -> str:
     return _env("HASURA_GRAPHQL_ADMIN_SECRET") or _env("HASURA_ADMIN_SECRET")
+
+
+def _semantic_webhook_secret() -> str:
+    # A dedicated secret is preferred. Falling back to the existing Hasura
+    # secret keeps the protected develop deployment compatible until the new
+    # optional secret is provisioned in GitHub/Tapis.
+    return _env("SVO_SEMANTIC_SEARCH_WEBHOOK_SECRET") or _admin_secret()
 
 
 def _hasura_auth_env() -> dict[str, str]:
@@ -197,7 +203,7 @@ def build_specs(owner: str, tag: str, base_url: str) -> dict[str, dict[str, Any]
     admin_secret = _admin_secret()
     browser_cors = {
         "cors_allow_origins": [
-            "https://mintdevui.pods.portals.tapis.io",
+            urls["ui"],
             "https://*.tapis.io",
             "http://localhost:3000",
         ],
@@ -259,7 +265,8 @@ def build_specs(owner: str, tag: str, base_url: str) -> dict[str, dict[str, Any]
                     "HASURA_GRAPHQL_CORS_ORIGINS",
                     "https://mintdevui.pods.portals.tapis.io",
                 ),
-                "SVO_SEMANTIC_SEARCH_WEBHOOK_URL": f"{urls['semantic_search']}/events/catalog",
+                "SVO_SEMANTIC_SEARCH_WEBHOOK_URL": f"{urls['api']}/events/catalog",
+                "SVO_SEMANTIC_SEARCH_WEBHOOK_SECRET": _semantic_webhook_secret(),
                 **_hasura_auth_env(),
             },
             "time_to_stop_default": -1,
@@ -269,11 +276,16 @@ def build_specs(owner: str, tag: str, base_url: str) -> dict[str, dict[str, Any]
             "image": f"ghcr.io/{owner}/model-catalog-api:{tag}",
             "description": "MINT dev Model Catalog API",
             "networking": {"default": {"protocol": "http", "port": 3000}},
-            "resources": {"cpu_request": 250, "cpu_limit": 1000, "mem_request": 512, "mem_limit": 2048},
+            "resources": {"cpu_request": 500, "cpu_limit": 2000, "mem_request": 1024, "mem_limit": 4096},
             "environment_variables": {
                 "PORT": "3000",
                 "HASURA_GRAPHQL_URL": graphql_endpoint,
                 "HASURA_ADMIN_SECRET": admin_secret,
+                "DATABASE_URL": _database_url(base_url),
+                "SVO_SEMANTIC_SEARCH_WEBHOOK_SECRET": _semantic_webhook_secret(),
+                "SVO_EMBEDDING_MODEL": _env("SVO_EMBEDDING_MODEL", "Xenova/all-MiniLM-L6-v2"),
+                "SVO_EMBEDDING_REFRESH_SECONDS": _env("SVO_EMBEDDING_REFRESH_SECONDS", "60"),
+                "SVO_EMBEDDING_BATCH_SIZE": _env("SVO_EMBEDDING_BATCH_SIZE", "32"),
                 "LOG_LEVEL": _env("LOG_LEVEL", "info"),
             },
             "time_to_stop_default": -1,
@@ -313,18 +325,6 @@ def build_specs(owner: str, tag: str, base_url: str) -> dict[str, dict[str, Any]
             },
             "time_to_stop_default": -1,
         },
-        "semantic_search": {
-            "pod_id": PODS["semantic_search"],
-            "image": f"ghcr.io/{owner}/semantic-search:{tag}",
-            "description": "MINT dev semantic search service",
-            "networking": {"default": {"protocol": "http", "port": 8091}},
-            "resources": {"cpu_request": 500, "cpu_limit": 2000, "mem_request": 1024, "mem_limit": 4096},
-            "environment_variables": {
-                "DATABASE_URL": _database_url(base_url),
-                "SVO_EMBEDDING_REFRESH_SECONDS": _env("SVO_EMBEDDING_REFRESH_SECONDS", "60"),
-            },
-            "time_to_stop_default": -1,
-        },
         "ui": {
             "pod_id": PODS["ui"],
             "image": f"ghcr.io/{owner}/ui:{tag}",
@@ -349,6 +349,7 @@ def build_specs(owner: str, tag: str, base_url: str) -> dict[str, dict[str, Any]
                 "AUTH_SERVER": _env("AUTH_SERVER", "https://portals.tapis.io"),
                 "AUTH_CLIENT_ID": _env("MINTDEV_AUTH_CLIENT_ID", "mint_dev"),
                 "AUTH_CALLBACK_ORIGIN": urls["ui"],
+                "MODEL_CATALOG_API": urls["api"],
                 "ENSEMBLE_MANAGER_API": urls["ensemble"],
                 "DATA_CATALOG_API": _env("DATA_CATALOG_API", "https://ckan.tacc.utexas.edu"),
                 "DATA_CATALOG_BROWSE_URL": _env("DATA_CATALOG_BROWSE_URL", "https://ckan.tacc.utexas.edu"),
@@ -569,7 +570,7 @@ def wait_for_postgres(
 
 def validate_live_requirements(selected: list[str]) -> None:
     missing = []
-    if any(p in selected for p in ("postgres", "graphql", "semantic_search")) and not _postgres_password():
+    if any(p in selected for p in ("postgres", "graphql", "api")) and not _postgres_password():
         missing.append("MINTDEV_POSTGRES_PASSWORD (or PGPASSWORD)")
     if any(p in selected for p in ("graphql", "api", "ensemble", "svo")) and not _admin_secret():
         missing.append("HASURA_GRAPHQL_ADMIN_SECRET (or HASURA_ADMIN_SECRET)")
@@ -752,7 +753,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--base-url", default=_env("TAPIS_BASE_URL", "https://portals.tapis.io"))
     parser.add_argument("--owner", default=_env("GHCR_OWNER", "mintproject"))
     parser.add_argument("--image-tag", default=_env("IMAGE_TAG", "latest"))
-    parser.add_argument("--pods", default="all", help="all or comma-separated: postgres,redis,graphql,api,ensemble,svo,semantic_search,ui")
+    parser.add_argument("--pods", default="all", help="all or comma-separated: postgres,redis,graphql,api,ensemble,svo,ui")
     parser.add_argument("--owners", default="wmobley,mosoriob", help="comma-separated list of pod owners (ADMIN permission)")
     parser.add_argument("--recreate", action="store_true")
     parser.add_argument(

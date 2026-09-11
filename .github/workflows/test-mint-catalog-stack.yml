@@ -1,0 +1,183 @@
+name: Test MINT Catalog Pod Stack
+
+# This workflow deliberately uses a prefixed, isolated pod group. It is a
+# staged integration test for the Model Catalog embedding refactor and never
+# targets the shared mintdev* pod IDs.
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: GHCR tag produced by MINT Dev Images for the branch under test
+        required: true
+        default: codex-model-catalog-embeddings
+        type: string
+      pod_prefix:
+        description: Lowercase prefix for isolated Tapis pod and volume IDs
+        required: true
+        default: minttest
+        type: string
+      tapis_base_url:
+        description: Tapis base URL
+        required: true
+        default: https://portals.tapis.io
+        type: string
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  staged-stack:
+    name: Staged isolated MINT pod stack
+    runs-on: ubuntu-latest
+    environment: Tapis Dev Deploy
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install deployment dependencies
+        run: pip install tapipy python-dotenv
+
+      - name: Log in to GHCR for migration verification
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Stage 1 — PostgreSQL
+        env:
+          TAPIS_USERNAME: ${{ secrets.TAPIS_USERNAME }}
+          TAPIS_ID: ${{ secrets.TAPIS_ID }}
+          TAPIS_PASSWORD: ${{ secrets.TAPIS_PASSWORD }}
+          MINTDEV_POSTGRES_PASSWORD: ${{ secrets.MINTDEV_POSTGRES_PASSWORD }}
+          HASURA_GRAPHQL_ADMIN_SECRET: ${{ secrets.HASURA_GRAPHQL_ADMIN_SECRET }}
+          MINT_TEST_STACK_PREFIX: ${{ inputs.pod_prefix }}
+          TAPIS_BASE_URL: ${{ inputs.tapis_base_url }}
+        run: >-
+          python deploy/tapis/register_mint_test_stack.py
+          --base-url "$TAPIS_BASE_URL"
+          --image-tag "${{ inputs.image_tag }}"
+          --pods postgres
+          --restart-pods postgres
+          --migrate-postgres-image
+
+      - name: Stage 2 — Hasura migrations
+        env:
+          HASURA_GRAPHQL_ADMIN_SECRET: ${{ secrets.HASURA_GRAPHQL_ADMIN_SECRET }}
+          MINT_TEST_STACK_PREFIX: ${{ inputs.pod_prefix }}
+          TAPIS_BASE_URL: ${{ inputs.tapis_base_url }}
+        run: |
+          set -euo pipefail
+          POD_DOMAIN="${TAPIS_BASE_URL#https://}"
+          POD_DOMAIN="${POD_DOMAIN%/}"
+          GRAPHQL_ENDPOINT="https://${MINT_TEST_STACK_PREFIX}graphql.pods.${POD_DOMAIN}"
+          curl --fail --silent --show-error --retry 30 --retry-delay 5 \
+            --retry-all-errors "$GRAPHQL_ENDPOINT/healthz" >/dev/null
+          docker run --rm --pull=always \
+            --entrypoint hasura \
+            --workdir /hasura \
+            --env HASURA_GRAPHQL_ENDPOINT="$GRAPHQL_ENDPOINT" \
+            --env HASURA_GRAPHQL_ADMIN_SECRET \
+            "ghcr.io/mintproject/graphql-engine:${{ inputs.image_tag }}" \
+            migrate apply --skip-update-check
+
+      - name: Stage 3 — Model Catalog API and embedding readiness
+        env:
+          TAPIS_USERNAME: ${{ secrets.TAPIS_USERNAME }}
+          TAPIS_ID: ${{ secrets.TAPIS_ID }}
+          TAPIS_PASSWORD: ${{ secrets.TAPIS_PASSWORD }}
+          MINTDEV_POSTGRES_PASSWORD: ${{ secrets.MINTDEV_POSTGRES_PASSWORD }}
+          HASURA_GRAPHQL_ADMIN_SECRET: ${{ secrets.HASURA_GRAPHQL_ADMIN_SECRET }}
+          MINT_TEST_STACK_PREFIX: ${{ inputs.pod_prefix }}
+          TAPIS_BASE_URL: ${{ inputs.tapis_base_url }}
+        run: >-
+          python deploy/tapis/register_mint_test_stack.py
+          --base-url "$TAPIS_BASE_URL"
+          --image-tag "${{ inputs.image_tag }}"
+          --pods api
+          --restart-pods api
+          --recreate-on-image-mismatch
+
+      - name: Verify Model Catalog search
+        env:
+          MINT_TEST_STACK_PREFIX: ${{ inputs.pod_prefix }}
+          TAPIS_BASE_URL: ${{ inputs.tapis_base_url }}
+        run: |
+          set -euo pipefail
+          POD_DOMAIN="${TAPIS_BASE_URL#https://}"
+          POD_DOMAIN="${POD_DOMAIN%/}"
+          MODEL_CATALOG_ENDPOINT="https://${MINT_TEST_STACK_PREFIX}api.pods.${POD_DOMAIN}"
+          curl --fail --silent --show-error --retry 60 --retry-delay 5 \
+            --retry-all-errors --connect-timeout 10 --max-time 30 \
+            "$MODEL_CATALOG_ENDPOINT/search?q=wildfire&limit=1" >/dev/null
+
+      - name: Stage 4 — Hasura metadata and webhook verification
+        env:
+          HASURA_GRAPHQL_ADMIN_SECRET: ${{ secrets.HASURA_GRAPHQL_ADMIN_SECRET }}
+          MINT_TEST_STACK_PREFIX: ${{ inputs.pod_prefix }}
+          TAPIS_BASE_URL: ${{ inputs.tapis_base_url }}
+          SVO_SEMANTIC_SEARCH_WEBHOOK_SECRET: ${{ secrets.HASURA_GRAPHQL_ADMIN_SECRET }}
+        run: |
+          set -euo pipefail
+          POD_DOMAIN="${TAPIS_BASE_URL#https://}"
+          POD_DOMAIN="${POD_DOMAIN%/}"
+          GRAPHQL_ENDPOINT="https://${MINT_TEST_STACK_PREFIX}graphql.pods.${POD_DOMAIN}"
+          MODEL_CATALOG_ENDPOINT="https://${MINT_TEST_STACK_PREFIX}api.pods.${POD_DOMAIN}"
+          docker run --rm --pull=always \
+            --entrypoint hasura \
+            --workdir /hasura \
+            --env HASURA_GRAPHQL_ENDPOINT="$GRAPHQL_ENDPOINT" \
+            --env HASURA_GRAPHQL_ADMIN_SECRET \
+            "ghcr.io/mintproject/graphql-engine:${{ inputs.image_tag }}" \
+            metadata apply --skip-update-check
+          docker run --rm --pull=always \
+            --entrypoint hasura \
+            --workdir /hasura \
+            --env HASURA_GRAPHQL_ENDPOINT="$GRAPHQL_ENDPOINT" \
+            --env HASURA_GRAPHQL_ADMIN_SECRET \
+            "ghcr.io/mintproject/graphql-engine:${{ inputs.image_tag }}" \
+            metadata reload --skip-update-check
+          curl --fail --silent --show-error \
+            -H "x-mint-webhook-secret: $SVO_SEMANTIC_SEARCH_WEBHOOK_SECRET" \
+            -H "content-type: application/json" \
+            --data '{"event":{"op":"TEST"}}' \
+            "$MODEL_CATALOG_ENDPOINT/events/catalog" >/dev/null
+          response="$(curl --fail --silent --show-error \
+            -H "content-type: application/json" \
+            -H "x-hasura-admin-secret: $HASURA_GRAPHQL_ADMIN_SECRET" \
+            --data '{"query":"{ modelcatalog_etl_process(limit: 1) { id } problem_statement(limit: 1) { id events(limit: 1) { event } } }"}' \
+            "$GRAPHQL_ENDPOINT/v1/graphql")"
+          if [[ "$response" == *'"errors"'* ]]; then
+            echo "GraphQL schema verification failed" >&2
+            exit 1
+          fi
+
+      - name: Stage 5 — dependent application pods
+        env:
+          TAPIS_USERNAME: ${{ secrets.TAPIS_USERNAME }}
+          TAPIS_ID: ${{ secrets.TAPIS_ID }}
+          TAPIS_PASSWORD: ${{ secrets.TAPIS_PASSWORD }}
+          MINTDEV_POSTGRES_PASSWORD: ${{ secrets.MINTDEV_POSTGRES_PASSWORD }}
+          HASURA_GRAPHQL_ADMIN_SECRET: ${{ secrets.HASURA_GRAPHQL_ADMIN_SECRET }}
+          MINT_TEST_STACK_PREFIX: ${{ inputs.pod_prefix }}
+          TAPIS_BASE_URL: ${{ inputs.tapis_base_url }}
+        run: >-
+          python deploy/tapis/register_mint_test_stack.py
+          --base-url "$TAPIS_BASE_URL"
+          --image-tag "${{ inputs.image_tag }}"
+          --pods redis,ensemble,svo,ui
+
+      - name: Summary
+        run: |
+          POD_DOMAIN="${{ inputs.tapis_base_url }}"
+          POD_DOMAIN="${POD_DOMAIN#https://}"
+          POD_DOMAIN="${POD_DOMAIN%/}"
+          echo "## Isolated MINT catalog pod test" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Prefix: ${{ inputs.pod_prefix }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Image tag: ${{ inputs.image_tag }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Model Catalog: https://${{ inputs.pod_prefix }}api.pods.${POD_DOMAIN}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Hasura: https://${{ inputs.pod_prefix }}graphql.pods.${POD_DOMAIN}" >> "$GITHUB_STEP_SUMMARY"

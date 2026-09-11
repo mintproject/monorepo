@@ -10,8 +10,13 @@ The API connects to Hasura via two environment variables:
 |---|---|---|
 | `HASURA_GRAPHQL_URL` | `http://testing-mint-hasura.mint.svc.cluster.local/v1/graphql` | Hasura GraphQL endpoint |
 | `HASURA_ADMIN_SECRET` | `CHANGEME` | Hasura admin secret (used for reads) |
+| `DATABASE_URL` | *(none)* | PostgreSQL URL used by the pgvector indexer and semantic search |
 | `PORT` | `3000` | Server port |
 | `LOG_LEVEL` | `info` | Pino log level (`trace`, `debug`, `info`, `warn`, `error`) |
+| `SVO_EMBEDDING_MODEL` | `Xenova/all-MiniLM-L6-v2` | Transformers.js model identifier |
+| `SVO_EMBEDDING_REFRESH_SECONDS` | `60` | Minimum periodic refresh interval (5 seconds) |
+| `SVO_EMBEDDING_BATCH_SIZE` | `32` | Maximum rows embedded per refresh batch |
+| `SVO_SEMANTIC_SEARCH_WEBHOOK_SECRET` | *(none)* | Required value for Hasura event-trigger requests |
 
 For local development, point to your Hasura instance:
 
@@ -81,7 +86,29 @@ To run them:
 GET /health
 ```
 
-Returns `{ status: "ok", hasura: "connected" }` or `503` if Hasura is unreachable.
+Returns catalog connectivity plus semantic-search status. Hasura connectivity
+failure returns `503`; semantic model/index failure is reported in the response
+without taking ordinary catalog CRUD routes offline.
+
+### Semantic search
+
+Semantic search is owned by this API because it searches Model Catalog records.
+The API uses the 384-dimensional, normalized `Xenova/all-MiniLM-L6-v2` embedding
+model and the existing pgvector/full-text ranking query:
+
+```bash
+curl 'http://localhost:3002/search?q=wildfire&limit=20'
+```
+
+`GET /search` accepts a query of 1–200 characters and a result limit of 1–100.
+The response is `{ "results": [...] }`, with each result containing the
+standard-variable ID, label, description, score, and linked model roles.
+
+Hasura sends catalog event triggers to `POST /events/catalog` with the
+`X-MINT-Webhook-Secret` header. The endpoint only acknowledges a refresh request;
+indexing is asynchronous and serialized. A periodic refresh also catches writes
+that bypass Hasura. Set `SVO_SEMANTIC_SEARCH_WEBHOOK_SECRET` in both Hasura and
+the API; requests without it receive `401`.
 
 ### API docs
 
@@ -108,6 +135,15 @@ HTTP request
   -> CatalogServiceImpl (list / getById / create / update / deleteResource)
   -> Apollo Client (hasura/client.ts)
   -> Hasura GraphQL
+
+Semantic search follows a separate path so the generated CRUD handlers remain
+unchanged:
+
+```
+GET /search or POST /events/catalog
+  -> SemanticSearchService
+  -> Transformers.js embedding provider + PostgreSQL pgvector index
+```
 ```
 
 ### Key files

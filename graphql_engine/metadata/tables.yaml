@@ -2628,6 +2628,9 @@
       delete:
         columns: '*'
     webhook_from_env: SVO_SEMANTIC_SEARCH_WEBHOOK_URL
+    headers:
+    - name: X-MINT-Webhook-Secret
+      value_from_env: SVO_SEMANTIC_SEARCH_WEBHOOK_SECRET
     retry_conf:
       num_retries: 3
       interval_sec: 10
@@ -2764,6 +2767,9 @@
       delete:
         columns: '*'
     webhook_from_env: SVO_SEMANTIC_SEARCH_WEBHOOK_URL
+    headers:
+    - name: X-MINT-Webhook-Secret
+      value_from_env: SVO_SEMANTIC_SEARCH_WEBHOOK_SECRET
     retry_conf:
       num_retries: 3
       interval_sec: 10
@@ -2942,6 +2948,9 @@
       delete:
         columns: '*'
     webhook_from_env: SVO_SEMANTIC_SEARCH_WEBHOOK_URL
+    headers:
+    - name: X-MINT-Webhook-Secret
+      value_from_env: SVO_SEMANTIC_SEARCH_WEBHOOK_SECRET
     retry_conf:
       num_retries: 3
       interval_sec: 10
@@ -3032,6 +3041,9 @@
       delete:
         columns: '*'
     webhook_from_env: SVO_SEMANTIC_SEARCH_WEBHOOK_URL
+    headers:
+    - name: X-MINT-Webhook-Secret
+      value_from_env: SVO_SEMANTIC_SEARCH_WEBHOOK_SECRET
     retry_conf:
       num_retries: 3
       interval_sec: 10
@@ -3166,6 +3178,9 @@
       delete:
         columns: '*'
     webhook_from_env: SVO_SEMANTIC_SEARCH_WEBHOOK_URL
+    headers:
+    - name: X-MINT-Webhook-Secret
+      value_from_env: SVO_SEMANTIC_SEARCH_WEBHOOK_SECRET
     retry_conf:
       num_retries: 3
       interval_sec: 10
@@ -3213,6 +3228,9 @@
       delete:
         columns: '*'
     webhook_from_env: SVO_SEMANTIC_SEARCH_WEBHOOK_URL
+    headers:
+    - name: X-MINT-Webhook-Secret
+      value_from_env: SVO_SEMANTIC_SEARCH_WEBHOOK_SECRET
     retry_conf:
       num_retries: 3
       interval_sec: 10
@@ -3700,6 +3718,9 @@
       delete:
         columns: '*'
     webhook_from_env: SVO_SEMANTIC_SEARCH_WEBHOOK_URL
+    headers:
+    - name: X-MINT-Webhook-Secret
+      value_from_env: SVO_SEMANTIC_SEARCH_WEBHOOK_SECRET
     retry_conf:
       num_retries: 3
       interval_sec: 10
@@ -3831,6 +3852,9 @@
       delete:
         columns: '*'
     webhook_from_env: SVO_SEMANTIC_SEARCH_WEBHOOK_URL
+    headers:
+    - name: X-MINT-Webhook-Secret
+      value_from_env: SVO_SEMANTIC_SEARCH_WEBHOOK_SECRET
     retry_conf:
       num_retries: 3
       interval_sec: 10
@@ -4545,6 +4569,9 @@
       delete:
         columns: '*'
     webhook_from_env: SVO_SEMANTIC_SEARCH_WEBHOOK_URL
+    headers:
+    - name: X-MINT-Webhook-Secret
+      value_from_env: SVO_SEMANTIC_SEARCH_WEBHOOK_SECRET
     retry_conf:
       num_retries: 3
       interval_sec: 10

@@ -46,6 +46,8 @@ export function buildEnvConfig(env = process.env) {
     AUTH_CLIENT_ID: pick(env, 'AUTH_CLIENT_ID', 'VITE_AUTH_CLIENT_ID') ?? 'mint-localhost-3000',
     AUTH_REALM: pick(env, 'AUTH_REALM', 'VITE_AUTH_REALM') ?? '',
     AUTH_PROVIDER: pick(env, 'AUTH_PROVIDER', 'VITE_AUTH_PROVIDER') ?? 'tapis',
+    MODEL_CATALOG_API:
+      pick(env, 'MODEL_CATALOG_API', 'VITE_MODEL_CATALOG_API') ?? 'http://localhost:3002',
     GOOGLE_MAPS_KEY:
       pick(env, 'GOOGLE_MAPS_KEY', 'VITE_GOOGLE_MAPS_KEY') ??
       'AIzaSyDf8bXwyV7v9whOpZl64SRVWKdE6yBbt2k',

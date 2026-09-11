@@ -77,25 +77,26 @@ until an admin registers the app in Tapis and sets `tapis_app_id` on the MINT
 
 ## Semantic SVO search
 
-The local Compose stack includes `semantic-search` on port `8091`. It uses the
-pgvector-backed standard-variable index and embeds each variable together with
-the model configurations, software, and model versions linked to that variable.
+Semantic search is served by `model-catalog-api` on port `3002` in the local
+Compose stack. It uses the pgvector-backed standard-variable index and embeds
+each variable together with the model configurations, software, and model
+versions linked to that variable.
 This means a query such as `wildfire` can return canonical SVO variables from
 ELMFIRE and QUIC-Fire configurations, with each result showing whether the
 variable is a model input or output. The React SVO selector uses this endpoint
 for queries of two or more characters and falls back to the catalog text list
 if the service is unavailable.
 
-The service performs an initial full index at startup. Hasura event triggers
-normally POST catalog changes to the service immediately; a 60-second fallback
-check also catches imports or writes that bypass Hasura. Only variables whose
-indexed text changed are re-embedded. Set
-`SVO_EMBEDDING_REFRESH_SECONDS` in Compose to change the interval (minimum five
-seconds). A restart still forces a full rebuild:
+The Model Catalog API performs an initial full index at startup. Hasura event
+triggers POST authenticated catalog changes to it immediately; a 60-second
+fallback check also catches imports or writes that bypass Hasura. Only variables
+whose indexed text changed are re-embedded. Set `SVO_EMBEDDING_REFRESH_SECONDS`
+in Compose to change the interval (minimum five seconds). Search remains
+available at:
 
 ```bash
-docker compose up -d --build semantic-search
-curl 'http://localhost:8091/search?q=wildfire&limit=20'
+docker compose up -d --build model-catalog-api
+curl 'http://localhost:3002/search?q=wildfire&limit=20'
 ```
 
 ## Layout

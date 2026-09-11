@@ -49,10 +49,6 @@ jobs:
             image: svo-adapter
             context: svo-adapter-service
             dockerfile: svo-adapter-service/Dockerfile
-          - service: semantic-search
-            image: semantic-search
-            context: semantic-search-service
-            dockerfile: semantic-search-service/Dockerfile
 
     steps:
       - uses: actions/checkout@v4

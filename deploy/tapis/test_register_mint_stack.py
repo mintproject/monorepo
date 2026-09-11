@@ -6,6 +6,7 @@ from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
 import register_mint_stack as deploy
+import register_mint_test_stack as isolated
 
 
 class StorageTests(unittest.TestCase):
@@ -24,17 +25,36 @@ class StorageTests(unittest.TestCase):
         self.assertEqual(source["type"], "tapisvolume")
         self.assertEqual(source["source_id"], "mintdevpostgresdata")
 
-    def test_graphql_points_event_triggers_at_semantic_search_service(self):
+    def test_graphql_points_event_triggers_at_model_catalog_api(self):
         specs = deploy.build_specs("mintproject", "develop", "https://portals.tapis.io")
         graphql = specs["graphql"]
-        semantic = specs["semantic_search"]
+        api = specs["api"]
         self.assertEqual(
             graphql["environment_variables"]["SVO_SEMANTIC_SEARCH_WEBHOOK_URL"],
-            "https://mintdevsemanticsearch.pods.portals.tapis.io/events/catalog",
+            "https://mintdevapi.pods.portals.tapis.io/events/catalog",
         )
-        self.assertEqual(semantic["pod_id"], "mintdevsemanticsearch")
-        self.assertEqual(semantic["image"], "ghcr.io/mintproject/semantic-search:develop")
-        self.assertEqual(semantic["networking"]["default"]["port"], 8091)
+        self.assertEqual(
+            api["environment_variables"]["SVO_SEMANTIC_SEARCH_WEBHOOK_SECRET"],
+            graphql["environment_variables"]["SVO_SEMANTIC_SEARCH_WEBHOOK_SECRET"],
+        )
+        self.assertEqual(
+            api["environment_variables"]["SVO_EMBEDDING_MODEL"],
+            "Xenova/all-MiniLM-L6-v2",
+        )
+        self.assertNotIn("semantic_search", specs)
+
+    def test_isolated_stack_rewrites_pods_and_volume_without_dev_ids(self):
+        original_pods = deploy.PODS
+        original_volume = deploy.POSTGRES_VOLUME
+        try:
+            isolated.configure_isolated_stack("minttest")
+            self.assertEqual(deploy.PODS["postgres"], "minttestpostgres")
+            self.assertEqual(deploy.PODS["api"], "minttestapi")
+            self.assertEqual(deploy.POSTGRES_VOLUME, "minttestpostgresdata")
+            self.assertNotIn("mintdev", " ".join(deploy.PODS.values()))
+        finally:
+            deploy.PODS = original_pods
+            deploy.POSTGRES_VOLUME = original_volume
 
     def test_existing_storage_can_be_reused(self):
         deploy.check_postgres_storage(self.spec, recreate=False)

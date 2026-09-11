@@ -6,6 +6,8 @@ interface MintConfig {
   AUTH_CLIENT_ID: string;
   AUTH_REALM: string;
   AUTH_PROVIDER: 'keycloak' | 'tapis';
+  /** Model Catalog API base URL, including semantic search endpoints. */
+  MODEL_CATALOG_API?: string;
   GOOGLE_MAPS_KEY?: string;
   WELCOME_MESSAGE?: string;
   /** CKAN data catalog REST API base URL, no /api suffix (e.g. https://ckan.tacc.utexas.edu) */

@@ -87,7 +87,7 @@ jobs:
             "ghcr.io/mintproject/graphql-engine:$IMAGE_TAG" \
             migrate apply --skip-update-check
 
-      - name: Start semantic search then restart Hasura endpoint
+      - name: Start Model Catalog API then restart Hasura endpoint
         env:
           TAPIS_USERNAME: ${{ secrets.TAPIS_USERNAME }}
           TAPIS_ID: ${{ secrets.TAPIS_ID }}
@@ -98,13 +98,13 @@ jobs:
           set -euo pipefail
 
           # parse_pods preserves dependency order, so use separate invocations
-          # to guarantee the migrated database is available before semantic
-          # search starts, and semantic search is available before Hasura's
-          # metadata is applied.
+          # to guarantee the migrated database is available before the Model
+          # Catalog embedding indexer starts, and the catalog webhook endpoint
+          # is available before Hasura metadata is applied.
           python deploy/tapis/register_mint_stack.py \
             --image-tag develop \
-            --pods semantic_search \
-            --restart-pods semantic_search \
+            --pods api \
+            --restart-pods api \
             --recreate-on-image-mismatch
 
           python deploy/tapis/register_mint_stack.py \
@@ -115,13 +115,13 @@ jobs:
 
       - name: Verify semantic search and Hasura health
         env:
-          SEMANTIC_SEARCH_ENDPOINT: https://mintdevsemanticsearch.pods.portals.tapis.io
+          MODEL_CATALOG_ENDPOINT: https://mintdevapi.pods.portals.tapis.io
           GRAPHQL_ENDPOINT: https://mintdevgraphql.pods.portals.tapis.io
         run: |
           set -euo pipefail
           curl --fail --silent --show-error --retry 30 --retry-delay 5 \
             --retry-all-errors --connect-timeout 10 --max-time 30 \
-            "$SEMANTIC_SEARCH_ENDPOINT/health" >/dev/null
+            "$MODEL_CATALOG_ENDPOINT/search?q=wildfire&limit=1" >/dev/null
           curl --fail --silent --show-error --retry 30 --retry-delay 5 \
             --retry-all-errors --connect-timeout 10 --max-time 30 \
             "$GRAPHQL_ENDPOINT/healthz" >/dev/null
@@ -170,7 +170,7 @@ jobs:
           TAPIS_PASSWORD: ${{ secrets.TAPIS_PASSWORD }}
         run: >-
           python deploy/tapis/register_mint_stack.py
-          --restart-existing-pods "api,ui,ensemble,svo"
+          --restart-existing-pods "ui,ensemble,svo"
 
       - name: Summary
         run: |
@@ -179,4 +179,3 @@ jobs:
           echo "- API: https://mintdevapi.pods.portals.tapis.io" >> "$GITHUB_STEP_SUMMARY"
           echo "- Ensemble: https://mintdevensemble.pods.portals.tapis.io" >> "$GITHUB_STEP_SUMMARY"
           echo "- SVO Adapter: https://mintdevsvo.pods.portals.tapis.io" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Semantic Search: https://mintdevsemanticsearch.pods.portals.tapis.io" >> "$GITHUB_STEP_SUMMARY"

@@ -4,6 +4,7 @@ export interface MintConfig {
   AUTH_CLIENT_ID: string;
   AUTH_REALM: string;
   AUTH_PROVIDER: string;
+  MODEL_CATALOG_API?: string;
   GOOGLE_MAPS_KEY: string;
   DATA_CATALOG_API: string;
   DATA_CATALOG_BROWSE_URL: string;
