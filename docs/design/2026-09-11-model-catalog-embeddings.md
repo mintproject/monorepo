@@ -322,7 +322,8 @@ automatic downgrade of database migrations is performed.
   attempt failed to resolve the UI behavior.
 - **Impact on implementation:** Add least-privilege anonymous metadata,
   require anonymous nested relationship coverage in both workflows, rebuild
-  Hasura, and verify the live UI query.
+  Hasura, include the UI's contract ordering fields in the smoke query, and
+  verify the live UI query.
 
 ## Implementation result
 

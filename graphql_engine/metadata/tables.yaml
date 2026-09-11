@@ -4653,7 +4653,7 @@
   select_permissions:
   - role: anonymous
     permission:
-      columns: [role, standard_variable_uri, unit, format]
+      columns: [role, position, standard_variable_uri, unit, format]
       filter:
         etl_process:
           visibility:
