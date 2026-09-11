@@ -307,6 +307,23 @@ automatic downgrade of database migrations is performed.
   workflow schema smoke tests, reapply metadata, and verify the live `/etl`
   GraphQL path after redeployment.
 
+### 2026-09-11 — Verify anonymous UI relationship permissions
+
+- **Decision:** Grant the anonymous role read access to the public ETL contract
+  fields and the problem-statement event name, and run the schema smoke test
+  without the Hasura admin secret.
+- **Reason:** The live admin metadata check passed while the anonymous UI role
+  still omitted `contracts` and `events`; Hasura role schemas can hide a
+  relationship when its target table has no select permission.
+- **Alternatives rejected:** Testing only with the admin secret reproduces the
+  false-positive deployment; broad anonymous access to all contract/event
+  columns would expose more data than the UI requires.
+- **User feedback:** User approved continuing after the first deployment
+  attempt failed to resolve the UI behavior.
+- **Impact on implementation:** Add least-privilege anonymous metadata,
+  require anonymous nested relationship coverage in both workflows, rebuild
+  Hasura, and verify the live UI query.
+
 ## Implementation result
 
 Implemented on `codex/model-catalog-embeddings`. The standalone semantic-search

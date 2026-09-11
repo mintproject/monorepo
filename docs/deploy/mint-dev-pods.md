@@ -60,8 +60,8 @@ migration CLI from the resolved GraphQL image tag. It starts Model Catalog after
 those migrations so its embedding query sees the current schema, then runs
 metadata application and the final schema smoke test. It finishes by restarting
 the dependent application pods. The schema smoke test covers the ETL process and
-problem statement event relationships. This step uses the protected
-`HASURA_GRAPHQL_ADMIN_SECRET` and does not apply seeds or run ETL.
+problem statement event relationships using the anonymous role. This step
+does not apply seeds or run ETL.
 
 ## Isolated staged pod testing
 

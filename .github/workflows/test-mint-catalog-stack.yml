@@ -148,8 +148,7 @@ jobs:
             "$MODEL_CATALOG_ENDPOINT/events/catalog" >/dev/null
           response="$(curl --fail --silent --show-error \
             -H "content-type: application/json" \
-            -H "x-hasura-admin-secret: $HASURA_GRAPHQL_ADMIN_SECRET" \
-            --data '{"query":"{ modelcatalog_etl_process(limit: 1) { id contracts(limit: 1) { role } } problem_statement(limit: 1) { id events(limit: 1) { event } } }"}' \
+            --data '{"query":"{ modelcatalog_etl_process(limit: 1) { id contracts(limit: 1) { role } } modelcatalog_etl_process_contract(limit: 1) { role } problem_statement(limit: 1) { id events(limit: 1) { event } } }"}' \
             "$GRAPHQL_ENDPOINT/v1/graphql")"
           if [[ "$response" == *'"errors"'* ]]; then
             echo "GraphQL schema verification failed" >&2

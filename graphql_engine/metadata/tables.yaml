@@ -839,6 +839,11 @@
       - userid
       - timestamp
   select_permissions:
+  - role: anonymous
+    permission:
+      columns:
+      - event
+      filter: {}
   - role: user
     permission:
       columns:
@@ -4646,6 +4651,13 @@
       check: {}
       columns: [etl_process_id, role, position, standard_variable_uri, unit, format, dimensionality, spatial_type, crs_requirement, temporal_resolution, schema_requirement_json]
   select_permissions:
+  - role: anonymous
+    permission:
+      columns: [role, standard_variable_uri, unit, format]
+      filter:
+        etl_process:
+          visibility:
+            _eq: public
   - role: user
     permission:
       columns: [etl_process_id, role, position, standard_variable_uri, unit, format, dimensionality, spatial_type, crs_requirement, temporal_resolution, schema_requirement_json]
