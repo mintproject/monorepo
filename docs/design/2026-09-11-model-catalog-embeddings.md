@@ -115,8 +115,9 @@ hybrid pgvector/full-text query → standard variables and linked models.
 
 Deployment → PostgreSQL migration → Model Catalog starts and loads the model →
 health/search readiness verification → Hasura metadata apply → dependent pods.
-The manual `Test MINT Catalog Pod Stack` workflow repeats this sequence with a
-prefix-isolated pod and volume group.
+The protected `Deploy MINT Dev Pods` workflow can repeat this sequence from a
+feature branch with `image_tag=codex-model-catalog-embeddings` and
+`pod_prefix=mintemb`, isolating the pod and volume group.
 
 ## Risks and tradeoffs
 
@@ -248,13 +249,34 @@ automatic downgrade of database migrations is performed.
   Transformers.js cache at runtime; a revision/artifact pin remains follow-up
   hardening rather than a prerequisite for this branch test.
 
+### 2026-09-11 - Keep isolated Tapis registration unprivileged
+
+- **Decision:** Isolated pod specs omit Tapis-level CORS fields and set the
+  isolated UI origin only in Hasura's application configuration.
+- **Reason:** Tapis treats all changes to the shared `default` networking CORS
+  object as an `APPROVEDADMIN` operation, including wildcard origins.
+- **Impact on implementation:** The prefixed stack can be created by the
+  protected deploy workflow without requesting elevated Tapis permissions.
+
+### 2026-09-11 - Allow schema-only migration on a fresh test volume
+
+- **Decision:** The two existing data-repair migrations conditionally insert
+  rows only when their referenced catalog entities are present.
+- **Reason:** A fresh isolated volume has the schema but no ETL-loaded catalog;
+  the live test explicitly avoids seeds and must still verify service wiring.
+- **Impact on implementation:** Populated databases retain the prior repair
+  behavior. ETL or a deliberate restore remains required for catalog data.
+
 ## Implementation result
 
 Implemented on `codex/model-catalog-embeddings`. The standalone semantic-search
 image/pod was removed from Compose, image builds, Tapis registration, and the
 normal deployment sequence. The API now owns `/search`, `/events/catalog`, the
 pgvector index refresh loop, authenticated Hasura event delivery, and semantic
-health status. No live Tapis resources were created from this session.
+health status. Live isolated Tapis resources were created through the protected
+workflow as `mintembpostgres` and `mintembgraphql`; the workflow then reached
+the migration gate and exposed the fresh-volume data dependency. API and
+dependent pods were not started because migration verification failed.
 
 ## User feedback / decisions
 

@@ -1,5 +1,7 @@
 -- Restore the Barton Springs MODFLOW-2005 setup to the nine inputs used by the
 -- Tapis model and make every package input discoverable in the data catalog.
+-- On a new schema with no ETL-loaded catalog rows, this data repair is a no-op;
+-- catalog population remains a separate ETL or restore operation.
 
 BEGIN;
 
@@ -17,7 +19,9 @@ WHERE configuration_id = 'https://w3id.org/okn/i/mint/modflow_2005_BartonSprings
 
 INSERT INTO public.modelcatalog_variable_presentation
   (id, label, description, has_long_name, has_short_name, has_standard_variable, uses_unit)
-VALUES
+SELECT seed.id, seed.label, seed.description, seed.has_long_name, seed.has_short_name,
+       seed.has_standard_variable, seed.uses_unit
+FROM (VALUES
   ('https://w3id.org/okn/i/mint/wmobley-modflow-2005-drain-package',
    'MODFLOW 2005 drain package',
    'MODFLOW 2005 drain package input file.',
@@ -38,6 +42,12 @@ VALUES
    'MODFLOW 2005 strongly implicit procedure package input file.',
    'MODFLOW 2005 SIP package', 'sip',
    'https://w3id.org/okn/i/mint/7fdad32c-2107-4717-8b03-c3f152336e1f', NULL)
+) AS seed(id, label, description, has_long_name, has_short_name, has_standard_variable, uses_unit)
+WHERE EXISTS (
+  SELECT 1
+  FROM public.modelcatalog_standard_variable sv
+  WHERE sv.id = seed.has_standard_variable
+)
 ON CONFLICT (id) DO UPDATE SET
   label = EXCLUDED.label,
   description = EXCLUDED.description,
@@ -63,6 +73,10 @@ FROM (VALUES
   ('drought',  'Oc',  'https://w3id.org/okn/i/mint/wmobley-modflow-2005-output-control'),
   ('drought',  'Sip', 'https://w3id.org/okn/i/mint/wmobley-modflow-2005-sip-package')
 ) AS mappings(variant, package, presentation_id)
+JOIN public.modelcatalog_dataset_specification ds
+  ON ds.id = format('https://w3id.org/okn/i/mint/modflow_2005_BartonSprings_%s_%s', variant, package)
+JOIN public.modelcatalog_variable_presentation vp
+  ON vp.id = mappings.presentation_id
 ON CONFLICT DO NOTHING;
 
 COMMIT;

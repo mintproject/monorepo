@@ -35,8 +35,8 @@ workflow change before attempting an immutable rollback.
 
 - `MINT Dev Images` builds the six custom images on `develop`, PRs, and manual dispatch.
 - `Deploy MINT Dev Pods` runs after a successful `MINT Dev Images` run on `develop`, plus manual dispatch.
-- `Test MINT Catalog Pod Stack` is manually dispatched for an isolated, prefixed
-  pod group while testing a feature branch.
+- `Deploy MINT Dev Pods` can be manually dispatched from a feature branch with
+  an isolated prefix while testing branch images.
 - PRs build images with `push: false` and never deploy.
 
 The automated deploy first updates and restarts the PostgreSQL and Hasura pods
@@ -65,15 +65,22 @@ problem statement event relationships. This step uses the protected
 
 ## Isolated staged pod testing
 
-Run `Test MINT Catalog Pod Stack` from the feature branch after
-`MINT Dev Images` has published that branch's image tag. The workflow defaults to
-the `codex-model-catalog-embeddings` image tag and `minttest` pod prefix. It
-executes these gates in order:
+Manually dispatch `Deploy MINT Dev Pods` from the feature branch after
+`MINT Dev Images` has published that branch's image tag. Set these workflow
+inputs:
+
+```text
+image_tag: codex-model-catalog-embeddings
+pod_prefix: mintemb
+```
+
+The workflow executes these gates in order:
 
 1. PostgreSQL with the existing pgvector volume guard.
 2. Hasura migration application.
-3. Model Catalog startup and a real `/search` request, proving model loading,
-   database connectivity, and vector query execution.
+3. Model Catalog startup and a real `/search` request, proving service,
+   database, and vector-query wiring. A fresh isolated volume has no catalog
+   rows because this path deliberately does not run ETL or seeds.
 4. Hasura metadata reload, authenticated webhook acknowledgment, and schema
    smoke verification.
 5. Redis, Ensemble Manager, SVO Adapter, and UI registration.
