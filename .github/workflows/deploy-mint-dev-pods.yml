@@ -48,15 +48,6 @@ jobs:
           --restart-pods postgres,graphql
           --migrate-postgres-image
 
-      - name: Restart existing application pods
-        env:
-          TAPIS_USERNAME: ${{ secrets.TAPIS_USERNAME }}
-          TAPIS_ID: ${{ secrets.TAPIS_ID }}
-          TAPIS_PASSWORD: ${{ secrets.TAPIS_PASSWORD }}
-        run: >-
-          python deploy/tapis/register_mint_stack.py
-          --restart-existing-pods "api,ui,ensemble,svo"
-
       - name: Log in to GHCR for Hasura migration client
         uses: docker/login-action@v3
         with:
@@ -64,7 +55,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Apply Hasura migrations and metadata
+      - name: Apply Hasura migrations
         env:
           HASURA_GRAPHQL_ADMIN_SECRET: ${{ secrets.HASURA_GRAPHQL_ADMIN_SECRET }}
           GRAPHQL_ENDPOINT: https://mintdevgraphql.pods.portals.tapis.io
@@ -96,6 +87,53 @@ jobs:
             "ghcr.io/mintproject/graphql-engine:$IMAGE_TAG" \
             migrate apply --skip-update-check
 
+      - name: Start semantic search then restart Hasura endpoint
+        env:
+          TAPIS_USERNAME: ${{ secrets.TAPIS_USERNAME }}
+          TAPIS_ID: ${{ secrets.TAPIS_ID }}
+          TAPIS_PASSWORD: ${{ secrets.TAPIS_PASSWORD }}
+          MINTDEV_POSTGRES_PASSWORD: ${{ secrets.MINTDEV_POSTGRES_PASSWORD }}
+          HASURA_GRAPHQL_ADMIN_SECRET: ${{ secrets.HASURA_GRAPHQL_ADMIN_SECRET }}
+        run: |
+          set -euo pipefail
+
+          # parse_pods preserves dependency order, so use separate invocations
+          # to guarantee the migrated database is available before semantic
+          # search starts, and semantic search is available before Hasura's
+          # metadata is applied.
+          python deploy/tapis/register_mint_stack.py \
+            --image-tag develop \
+            --pods semantic_search \
+            --restart-pods semantic_search \
+            --recreate-on-image-mismatch
+
+          python deploy/tapis/register_mint_stack.py \
+            --image-tag develop \
+            --pods graphql \
+            --restart-pods graphql \
+            --recreate-on-image-mismatch
+
+      - name: Verify semantic search and Hasura health
+        env:
+          SEMANTIC_SEARCH_ENDPOINT: https://mintdevsemanticsearch.pods.portals.tapis.io
+          GRAPHQL_ENDPOINT: https://mintdevgraphql.pods.portals.tapis.io
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --retry 30 --retry-delay 5 \
+            --retry-all-errors --connect-timeout 10 --max-time 30 \
+            "$SEMANTIC_SEARCH_ENDPOINT/health" >/dev/null
+          curl --fail --silent --show-error --retry 30 --retry-delay 5 \
+            --retry-all-errors --connect-timeout 10 --max-time 30 \
+            "$GRAPHQL_ENDPOINT/healthz" >/dev/null
+
+      - name: Apply Hasura metadata and verify schema
+        env:
+          HASURA_GRAPHQL_ADMIN_SECRET: ${{ secrets.HASURA_GRAPHQL_ADMIN_SECRET }}
+          GRAPHQL_ENDPOINT: https://mintdevgraphql.pods.portals.tapis.io
+          IMAGE_TAG: develop
+        run: |
+          set -euo pipefail
+
           docker run --rm --pull=always \
             --entrypoint hasura \
             --workdir /hasura \
@@ -125,6 +163,15 @@ jobs:
           fi
           echo "Hasura migrations, metadata, and schema smoke test passed"
 
+      - name: Restart existing application pods
+        env:
+          TAPIS_USERNAME: ${{ secrets.TAPIS_USERNAME }}
+          TAPIS_ID: ${{ secrets.TAPIS_ID }}
+          TAPIS_PASSWORD: ${{ secrets.TAPIS_PASSWORD }}
+        run: >-
+          python deploy/tapis/register_mint_stack.py
+          --restart-existing-pods "api,ui,ensemble,svo"
+
       - name: Summary
         run: |
           echo "## MINT dev application pods restarted" >> "$GITHUB_STEP_SUMMARY"
@@ -132,3 +179,4 @@ jobs:
           echo "- API: https://mintdevapi.pods.portals.tapis.io" >> "$GITHUB_STEP_SUMMARY"
           echo "- Ensemble: https://mintdevensemble.pods.portals.tapis.io" >> "$GITHUB_STEP_SUMMARY"
           echo "- SVO Adapter: https://mintdevsvo.pods.portals.tapis.io" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Semantic Search: https://mintdevsemanticsearch.pods.portals.tapis.io" >> "$GITHUB_STEP_SUMMARY"

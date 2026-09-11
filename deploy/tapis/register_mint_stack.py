@@ -35,15 +35,16 @@ PODS = {
     "api": "mintdevapi",
     "ensemble": "mintdevensemble",
     "svo": "mintdevsvo",
+    "semantic_search": "mintdevsemanticsearch",
     "ui": "mintdevui",
 }
 
-ORDER = ["postgres", "redis", "graphql", "api", "ensemble", "svo", "ui"]
+ORDER = ["postgres", "redis", "graphql", "api", "ensemble", "svo", "semantic_search", "ui"]
 RESTART_ONLY_PODS = ("api", "ui", "ensemble", "svo")
 
 # Recreating a pod is destructive. Only stateless application services may use
 # this fallback; Redis queue state and PostgreSQL data are protected.
-RECREATE_ON_IMAGE_MISMATCH_PODS = frozenset({"graphql", "api", "ensemble", "svo", "ui"})
+RECREATE_ON_IMAGE_MISMATCH_PODS = frozenset({"graphql", "api", "ensemble", "svo", "semantic_search", "ui"})
 POD_IMAGE_VERIFY_TIMEOUT = 120
 POD_RESTART_TIMEOUT = 600
 
@@ -258,6 +259,7 @@ def build_specs(owner: str, tag: str, base_url: str) -> dict[str, dict[str, Any]
                     "HASURA_GRAPHQL_CORS_ORIGINS",
                     "https://mintdevui.pods.portals.tapis.io",
                 ),
+                "SVO_SEMANTIC_SEARCH_WEBHOOK_URL": f"{urls['semantic_search']}/events/catalog",
                 **_hasura_auth_env(),
             },
             "time_to_stop_default": -1,
@@ -308,6 +310,18 @@ def build_specs(owner: str, tag: str, base_url: str) -> dict[str, dict[str, Any]
                 "SVO_ADAPTER_CKAN_URL": _env("SVO_ADAPTER_CKAN_URL", "https://ckan.tacc.utexas.edu"),
                 "SVO_ADAPTER_STAC_API_URL": _env("SVO_ADAPTER_STAC_API_URL", "https://stacapi.pods.portals.tapis.io/api/v1"),
                 "SVO_ADAPTER_GEO_ACTOR_ID": _env("SVO_ADAPTER_GEO_ACTOR_ID", ""),
+            },
+            "time_to_stop_default": -1,
+        },
+        "semantic_search": {
+            "pod_id": PODS["semantic_search"],
+            "image": f"ghcr.io/{owner}/semantic-search:{tag}",
+            "description": "MINT dev semantic search service",
+            "networking": {"default": {"protocol": "http", "port": 8091}},
+            "resources": {"cpu_request": 500, "cpu_limit": 2000, "mem_request": 1024, "mem_limit": 4096},
+            "environment_variables": {
+                "DATABASE_URL": _database_url(base_url),
+                "SVO_EMBEDDING_REFRESH_SECONDS": _env("SVO_EMBEDDING_REFRESH_SECONDS", "60"),
             },
             "time_to_stop_default": -1,
         },
@@ -555,7 +569,7 @@ def wait_for_postgres(
 
 def validate_live_requirements(selected: list[str]) -> None:
     missing = []
-    if any(p in selected for p in ("postgres", "graphql")) and not _postgres_password():
+    if any(p in selected for p in ("postgres", "graphql", "semantic_search")) and not _postgres_password():
         missing.append("MINTDEV_POSTGRES_PASSWORD (or PGPASSWORD)")
     if any(p in selected for p in ("graphql", "api", "ensemble", "svo")) and not _admin_secret():
         missing.append("HASURA_GRAPHQL_ADMIN_SECRET (or HASURA_ADMIN_SECRET)")
@@ -738,7 +752,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--base-url", default=_env("TAPIS_BASE_URL", "https://portals.tapis.io"))
     parser.add_argument("--owner", default=_env("GHCR_OWNER", "mintproject"))
     parser.add_argument("--image-tag", default=_env("IMAGE_TAG", "latest"))
-    parser.add_argument("--pods", default="all", help="all or comma-separated: postgres,redis,graphql,api,ensemble,svo,ui")
+    parser.add_argument("--pods", default="all", help="all or comma-separated: postgres,redis,graphql,api,ensemble,svo,semantic_search,ui")
     parser.add_argument("--owners", default="wmobley,mosoriob", help="comma-separated list of pod owners (ADMIN permission)")
     parser.add_argument("--recreate", action="store_true")
     parser.add_argument(
