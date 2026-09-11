@@ -53,6 +53,12 @@ class StorageTests(unittest.TestCase):
             self.assertEqual(deploy.PODS["api"], "minttestapi")
             self.assertEqual(deploy.POSTGRES_VOLUME, "minttestpostgresdata")
             self.assertNotIn("mintdev", " ".join(deploy.PODS.values()))
+            isolated_graphql = deploy.build_specs("mintproject", "develop", "https://portals.tapis.io")["graphql"]
+            self.assertFalse(any(key.startswith("cors_") for key in isolated_graphql["networking"]["default"]))
+            self.assertEqual(
+                isolated_graphql["environment_variables"]["HASURA_GRAPHQL_CORS_ORIGINS"],
+                "https://minttestui.pods.portals.tapis.io",
+            )
         finally:
             deploy.PODS = original_pods
             deploy.POSTGRES_VOLUME = original_volume

@@ -38,10 +38,10 @@ PODS = {
     "ui": "mintdevui",
 }
 
-# Tapis's shared ``default`` networking object only permits CORS mutations from
-# APPROVEDADMIN users. Isolated test stacks already match the existing
-# ``https://*.tapis.io`` rule, so their wrapper disables this one custom origin
-# while normal deploys continue to advertise the exact UI URL.
+# Tapis's shared ``default`` networking object only permits CORS configuration
+# from APPROVEDADMIN users. Isolated test stacks omit Tapis-level CORS fields;
+# Hasura still receives the exact isolated UI origin in its own configuration,
+# while normal deploys continue to advertise the full proxy CORS policy.
 INCLUDE_CUSTOM_UI_CORS = True
 
 ORDER = ["postgres", "redis", "graphql", "api", "ensemble", "svo", "ui"]
@@ -207,26 +207,26 @@ def build_specs(owner: str, tag: str, base_url: str) -> dict[str, dict[str, Any]
     urls = pod_urls(base_url)
     graphql_endpoint = f"{urls['graphql']}/v1/graphql"
     admin_secret = _admin_secret()
-    cors_origins = [
-        "https://*.tapis.io",
-        "http://localhost:3000",
-    ]
+    browser_cors = {}
     if INCLUDE_CUSTOM_UI_CORS:
-        cors_origins.insert(0, urls["ui"])
-    browser_cors = {
-        "cors_allow_origins": cors_origins,
-        "cors_allow_methods": ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"],
-        "cors_allow_headers": [
-            "Authorization",
-            "Content-Type",
-            "X-Hasura-Role",
-            "X-Hasura-User-Id",
-            "X-Hasura-Allowed-Roles",
-            "X-Hasura-Admin-Secret",
-        ],
-        "cors_allow_credentials": False,
-        "cors_max_age": 100,
-    }
+        browser_cors = {
+            "cors_allow_origins": [
+                urls["ui"],
+                "https://*.tapis.io",
+                "http://localhost:3000",
+            ],
+            "cors_allow_methods": ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"],
+            "cors_allow_headers": [
+                "Authorization",
+                "Content-Type",
+                "X-Hasura-Role",
+                "X-Hasura-User-Id",
+                "X-Hasura-Allowed-Roles",
+                "X-Hasura-Admin-Secret",
+            ],
+            "cors_allow_credentials": False,
+            "cors_max_age": 100,
+        }
 
     specs: dict[str, dict[str, Any]] = {
         "postgres": {
@@ -271,7 +271,7 @@ def build_specs(owner: str, tag: str, base_url: str) -> dict[str, dict[str, Any]
                 "HASURA_GRAPHQL_UNAUTHORIZED_ROLE": _env("HASURA_GRAPHQL_UNAUTHORIZED_ROLE", "anonymous"),
                 "HASURA_GRAPHQL_CORS_ORIGINS": _env(
                     "HASURA_GRAPHQL_CORS_ORIGINS",
-                    "https://mintdevui.pods.portals.tapis.io",
+                    urls["ui"],
                 ),
                 "SVO_SEMANTIC_SEARCH_WEBHOOK_URL": f"{urls['api']}/events/catalog",
                 "SVO_SEMANTIC_SEARCH_WEBHOOK_SECRET": _semantic_webhook_secret(),
