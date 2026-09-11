@@ -24,6 +24,18 @@ class StorageTests(unittest.TestCase):
         self.assertEqual(source["type"], "tapisvolume")
         self.assertEqual(source["source_id"], "mintdevpostgresdata")
 
+    def test_graphql_points_event_triggers_at_semantic_search_service(self):
+        specs = deploy.build_specs("mintproject", "develop", "https://portals.tapis.io")
+        graphql = specs["graphql"]
+        semantic = specs["semantic_search"]
+        self.assertEqual(
+            graphql["environment_variables"]["SVO_SEMANTIC_SEARCH_WEBHOOK_URL"],
+            "https://mintdevsemanticsearch.pods.portals.tapis.io/events/catalog",
+        )
+        self.assertEqual(semantic["pod_id"], "mintdevsemanticsearch")
+        self.assertEqual(semantic["image"], "ghcr.io/mintproject/semantic-search:develop")
+        self.assertEqual(semantic["networking"]["default"]["port"], 8091)
+
     def test_existing_storage_can_be_reused(self):
         deploy.check_postgres_storage(self.spec, recreate=False)
 

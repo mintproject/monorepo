@@ -26,18 +26,19 @@ Add a protected pre-migration step to `Deploy MINT Dev Pods` that:
 
 1. Builds and publishes a PostgreSQL 16/PostGIS image with pgvector as `ghcr.io/mintproject/postgres-pgvector:develop`, then registers it using Tapis's `postgres:16postgis3.5` template.
 2. Replaces the existing PostgreSQL pod definition on the same protected Tapis volume, allowing only the known plain-PostGIS image as a transition source; the pod is deleted directly, the volume itself is never deleted, and absence is verified before recreation.
-3. Updates and restarts Hasura with the `develop` image.
+3. Updates and restarts Hasura with the `develop` image, including the semantic-search webhook URL.
 4. Waits for `https://mintdevgraphql.pods.portals.tapis.io/healthz`.
 5. Runs the GraphQL image as a short-lived migration client.
-6. Executes `hasura migrate status`, `hasura migrate apply`, `hasura metadata apply`, and `hasura metadata reload` against the public Tapis GraphQL endpoint using the admin secret.
-7. Verifies the deployed GraphQL schema by querying `modelcatalog_etl_process` and `problem_statement.events`.
+6. Starts or updates the semantic-search pod after migrations, verifies its health endpoint, restarts Hasura with the resolved webhook configuration, and verifies Hasura health again.
+7. Executes `hasura metadata apply` and `hasura metadata reload` against the public Tapis GraphQL endpoint using the admin secret.
+8. Verifies the deployed GraphQL schema by querying `modelcatalog_etl_process` and `problem_statement.events`.
 
 The step will use the image's `/hasura` contents, so migrations and metadata are guaranteed to come from the same `develop` image tag as the running GraphQL service. It will not run seeds, delete the PostgreSQL volume, or perform application-level data writes.
 
 ## Files likely affected
 
 - `.github/workflows/deploy-mint-dev-pods.yml` — add the post-deploy synchronization and schema verification.
-- `.github/workflows/build-mint-dev-images.yml` — publish the Tapis PostgreSQL image.
+- `.github/workflows/build-mint-dev-images.yml` — publish the Tapis PostgreSQL and semantic-search images.
 - `docker/postgres-pgvector/Dockerfile` — align the local/Tapis image with PostgreSQL 16 and install pgvector.
 - `deploy/tapis/register_mint_stack.py` — perform the protected in-place image transition.
 - `docs/deploy/mint-dev-pods.md` — document the automated synchronization and failure recovery.
@@ -51,7 +52,9 @@ No application API or database schema files change. The workflow begins applying
 GitHub Actions selects the `develop` image tag → Tapis updates/starts
 `mintdevpostgres` and `mintdevgraphql` → workflow waits for health → the same
 GraphQL image runs Hasura CLI against the Tapis GraphQL endpoint → migrations
-and metadata are applied → schema smoke query validates the deployed endpoint.
+are applied → `mintdevsemanticsearch` starts → Hasura restarts with its webhook
+URL and becomes healthy → metadata is applied → schema smoke query validates
+the deployed endpoint → dependent application pods restart.
 
 ## Risks and tradeoffs
 
@@ -59,6 +62,7 @@ and metadata are applied → schema smoke query validates the deployed endpoint.
 - The workflow depends on the public Tapis pod URL being reachable from GitHub-hosted runners.
 - A migration or metadata failure will fail the deployment workflow after pod updates, making the failure visible rather than presenting a partially synchronized stack as healthy.
 - The workflow needs permission to pull the selected GHCR image if the package is not anonymously readable.
+- Tapis must permit `ghcr.io/mintproject/semantic-search` before the workflow can create the new semantic-search pod.
 - PostgreSQL must be replaced and restarted to load the extension from the new image; the workflow verifies the existing volume and SQL readiness before Hasura migration.
 
 ## Alternatives considered
@@ -95,11 +99,14 @@ None for the requested fix. A future production deployment path should adopt the
 - Automatic develop deployments use the `develop` tag for the pgvector PostgreSQL image as well, per user requirement.
 - Run synchronization from GitHub Actions because Tapis provides no interactive pod-exec phase in this deployment workflow.
 - Keep seed application out of the automated path because seeds are intentionally non-idempotent and the Tapis database is persistent.
+- Register semantic search as a Tapis pod only after the embedding migrations complete, because its startup index query depends on the migrated embedding columns.
 
 ## User feedback / decisions
 
 - User clarified that the deployment is entirely managed by Tapis Pods, GitHub workflows, and container images; there is no practical interactive Tapis exec operation. The design was adjusted to use a GitHub Actions post-deploy step.
 - The first synchronization run exposed that the existing Tapis database image lacked pgvector; the design was extended to publish and transition the protected PostgreSQL pod in place before retrying migrations.
+- The next synchronization run exposed that Hasura metadata referenced an unset `SVO_SEMANTIC_SEARCH_WEBHOOK_URL`; the design was extended to build/register the semantic-search service and to start it after migrations but before metadata application.
+- The workflow now invokes semantic search and Hasura separately because the deployment script intentionally preserves dependency order; this makes the post-migration startup order explicit and adds a second Hasura health gate before metadata.
 
 Implementation deviation: the workflow runs the CLI in short-lived Docker
 containers from GitHub Actions rather than creating a separate Tapis init pod.
