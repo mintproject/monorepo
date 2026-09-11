@@ -126,7 +126,9 @@ pod_prefix: mintemb
 
 The workflow then uses the prefixed registration wrapper and runs the same
 ordered PostgreSQL → Hasura → Model Catalog → metadata → dependent-pods gates
-against `mintemb*` resources.
+against `mintemb*` resources. Missing dependent pods are created and verified
+on the requested image tag; the shared `mintdev*` deployment remains
+restart-only.
 
 ## Caveats
 

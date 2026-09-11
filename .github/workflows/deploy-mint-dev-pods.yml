@@ -189,23 +189,38 @@ jobs:
           fi
           echo "Hasura migrations, metadata, and schema smoke test passed"
 
-      - name: Restart existing application pods
+      - name: Create or restart dependent application pods
         env:
           TAPIS_USERNAME: ${{ secrets.TAPIS_USERNAME }}
           TAPIS_ID: ${{ secrets.TAPIS_ID }}
           TAPIS_PASSWORD: ${{ secrets.TAPIS_PASSWORD }}
+          MINTDEV_POSTGRES_PASSWORD: ${{ secrets.MINTDEV_POSTGRES_PASSWORD }}
+          HASURA_GRAPHQL_ADMIN_SECRET: ${{ secrets.HASURA_GRAPHQL_ADMIN_SECRET }}
+          IMAGE_TAG: ${{ inputs.image_tag || 'develop' }}
           MINT_TEST_STACK_PREFIX: ${{ inputs.pod_prefix || '' }}
-        run: >-
-          bash -c '
-          STACK_SCRIPT=deploy/tapis/register_mint_stack.py;
-          if [[ -n "$MINT_TEST_STACK_PREFIX" ]]; then STACK_SCRIPT=deploy/tapis/register_mint_test_stack.py; fi;
-          python "$STACK_SCRIPT"
-          --restart-existing-pods "ui,ensemble,svo"'
+        run: |
+          set -euo pipefail
+          STACK_SCRIPT=deploy/tapis/register_mint_stack.py
+          if [[ -n "$MINT_TEST_STACK_PREFIX" ]]; then
+            STACK_SCRIPT=deploy/tapis/register_mint_test_stack.py
+            # A prefixed stack is created during this workflow, so its
+            # dependent pods may not exist yet. Upsert them and verify the
+            # requested branch image before moving to the handoff summary.
+            python "$STACK_SCRIPT" \
+              --image-tag "$IMAGE_TAG" \
+              --pods ui,ensemble,svo \
+              --restart-pods ui,ensemble,svo \
+              --recreate-on-image-mismatch
+          else
+            # The shared develop stack must never be created or replaced by
+            # this workflow's dependent-pod handoff.
+            python "$STACK_SCRIPT" --restart-existing-pods "ui,ensemble,svo"
+          fi
 
       - name: Summary
         run: |
           STACK_PREFIX="${{ inputs.pod_prefix || 'mintdev' }}"
-          echo "## MINT dev application pods restarted" >> "$GITHUB_STEP_SUMMARY"
+          echo "## MINT dev application pods ready" >> "$GITHUB_STEP_SUMMARY"
           echo "- UI: https://${STACK_PREFIX}ui.pods.portals.tapis.io" >> "$GITHUB_STEP_SUMMARY"
           echo "- API: https://${STACK_PREFIX}api.pods.portals.tapis.io" >> "$GITHUB_STEP_SUMMARY"
           echo "- Ensemble: https://${STACK_PREFIX}ensemble.pods.portals.tapis.io" >> "$GITHUB_STEP_SUMMARY"

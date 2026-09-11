@@ -267,16 +267,30 @@ automatic downgrade of database migrations is performed.
 - **Impact on implementation:** Populated databases retain the prior repair
   behavior. ETL or a deliberate restore remains required for catalog data.
 
+### 2026-09-11 — Upsert dependent pods in isolated deployments
+
+- **Decision:** Prefixed workflow runs upsert and verify `ui`, `ensemble`, and
+  `svo` instead of using restart-only mode; the shared `mintdev*` path remains
+  restart-only.
+- **Reason:** A newly isolated stack does not have those application pod
+  definitions yet, so restart-only mode correctly refused the missing
+  `mintembensemble` pod after the earlier gates had passed.
+- **Alternatives rejected:** Precreating the pods manually would bypass the
+  protected workflow and make the test sequence non-reproducible.
+- **User feedback:** User approved proceeding with the fix and live test.
+- **Impact on implementation:** The protected workflow now uses the existing
+  registration wrapper and image-verification logic to create missing
+  prefixed pods, then records them as ready in the job summary.
+
 ## Implementation result
 
 Implemented on `codex/model-catalog-embeddings`. The standalone semantic-search
 image/pod was removed from Compose, image builds, Tapis registration, and the
 normal deployment sequence. The API now owns `/search`, `/events/catalog`, the
 pgvector index refresh loop, authenticated Hasura event delivery, and semantic
-health status. Live isolated Tapis resources were created through the protected
-workflow as `mintembpostgres` and `mintembgraphql`; the workflow then reached
-the migration gate and exposed the fresh-volume data dependency. API and
-dependent pods were not started because migration verification failed.
+health status. Live isolated Tapis resources use the `mintemb*` prefix. The
+isolated workflow upserts dependent pods that do not exist yet, while the
+normal `mintdev*` path remains restart-only for those services.
 
 ## User feedback / decisions
 
