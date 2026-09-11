@@ -1,6 +1,6 @@
 # Model Catalog Embeddings Integration
 
-Status: Implementing
+Status: Implemented
 
 ## Objective
 
@@ -335,7 +335,10 @@ health status. Live isolated Tapis resources use the `mintemb*` prefix. The
 isolated workflow upserts dependent pods that do not exist yet, while the
 normal `mintdev*` path remains restart-only for those services. The follow-up
 ETL contract repair is additive and is verified by the nested-relationship
-schema smoke test.
+schema smoke test. The protected deployment's dependent-pod handoff can still
+report a false negative when Tapis does not expose a changed
+`status_container.start_time` within its polling window; the live UI and all
+database/Hasura verification gates pass independently.
 
 ## User feedback / decisions
 
