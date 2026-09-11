@@ -1,6 +1,6 @@
 # Model Catalog Embeddings Integration
 
-Status: Implemented
+Status: Implementing
 
 ## Objective
 
@@ -85,8 +85,12 @@ an HNSW cosine index, and the `search_standard_variables` SQL function.
 
 ## API/schema changes
 
-No new database tables or columns are planned. The existing embedding migration
-and `search_standard_variables` function remain authoritative.
+The existing embedding migration and `search_standard_variables` function
+remain authoritative. A forward-only compatibility migration repairs the
+already-intended `modelcatalog_etl_process_contract` table when a persistent
+database reports the earlier ETL migration as applied without exposing the
+table or its `contracts` relationship. It adds no new logical API surface and
+does not load seeds or ETL data.
 
 The Model Catalog API will serve:
 
@@ -173,6 +177,8 @@ feature branch with `image_tag=codex-model-catalog-embeddings` and
   webhook and database configuration and no semantic pod is selected.
 - Build the production-shaped Node image and run an ONNX inference smoke test
   confirming the configured MiniLM conversion returns 384 dimensions.
+- Require the protected deployment smoke test to query the nested ETL
+  `contracts` relationship as well as problem statement events.
 
 ## Documentation plan
 
@@ -183,7 +189,8 @@ variables, model artifact strategy, readiness behavior, and rollback procedure.
 ## Rollout/rollback plan
 
 Build and publish only the existing `model-catalog-api:develop` image, with the
-embedding runtime included. Apply the existing database migration first. Deploy
+embedding runtime included. Apply the existing migrations, including the
+forward-only ETL contract compatibility repair, first. Deploy
 Model Catalog and verify `/health` and `/search`, then apply Hasura metadata and
 restart dependent services. Do not delete the existing PostgreSQL volume.
 
@@ -282,6 +289,24 @@ automatic downgrade of database migrations is performed.
   registration wrapper and image-verification logic to create missing
   prefixed pods, then records them as ready in the job summary.
 
+### 2026-09-11 — Repair applied migration drift for ETL contracts
+
+- **Decision:** Add forward-only idempotent migration
+  `1771200025000_modelcatalog_etl_process_contract_repair` and require the
+  protected workflow smoke test to request `modelcatalog_etl_process.contracts`.
+- **Reason:** The live isolated GraphQL endpoint exposed the parent ETL table
+  but not its contract table or relationship even though the original
+  migration was marked applied; the previous smoke test did not exercise the
+  failing field.
+- **Alternatives rejected:** Editing the original applied migration would not
+  run on existing volumes; seeds or ETL would not create the missing schema;
+  manually mutating Hasura would bypass the protected deploy workflow.
+- **User feedback:** User approved proceeding with the repair after the live
+  ETL page continued to fail.
+- **Impact on implementation:** Add the repair migration, expand both
+  workflow schema smoke tests, reapply metadata, and verify the live `/etl`
+  GraphQL path after redeployment.
+
 ## Implementation result
 
 Implemented on `codex/model-catalog-embeddings`. The standalone semantic-search
@@ -290,7 +315,9 @@ normal deployment sequence. The API now owns `/search`, `/events/catalog`, the
 pgvector index refresh loop, authenticated Hasura event delivery, and semantic
 health status. Live isolated Tapis resources use the `mintemb*` prefix. The
 isolated workflow upserts dependent pods that do not exist yet, while the
-normal `mintdev*` path remains restart-only for those services.
+normal `mintdev*` path remains restart-only for those services. The follow-up
+ETL contract repair is additive and is verified by the nested-relationship
+schema smoke test.
 
 ## User feedback / decisions
 

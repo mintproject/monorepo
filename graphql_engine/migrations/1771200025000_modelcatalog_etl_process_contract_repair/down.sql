@@ -1,0 +1,1 @@
+-- Irreversible compatibility repair. Restore from a database backup if rollback is required.

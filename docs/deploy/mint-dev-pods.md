@@ -61,7 +61,7 @@ those migrations so its embedding query sees the current schema, then runs
 metadata application and the final schema smoke test. It finishes by restarting
 the dependent application pods. The schema smoke test covers the ETL process and
 problem statement event relationships. This step uses the protected
-`HASURA_GRAPHQL_ADMIN_SECRET` and does not apply seeds.
+`HASURA_GRAPHQL_ADMIN_SECRET` and does not apply seeds or run ETL.
 
 ## Isolated staged pod testing
 
@@ -82,7 +82,7 @@ The workflow executes these gates in order:
    database, and vector-query wiring. A fresh isolated volume has no catalog
    rows because this path deliberately does not run ETL or seeds.
 4. Hasura metadata reload, authenticated webhook acknowledgment, and schema
-   smoke verification.
+   smoke verification, including the ETL `contracts` relationship.
 5. Redis, Ensemble Manager, SVO Adapter, and UI registration.
 
 The wrapper `deploy/tapis/register_mint_test_stack.py` rewrites every pod ID and
