@@ -5,6 +5,17 @@ on:
     workflows: [MINT Dev Images]
     types: [completed]
   workflow_dispatch:
+    inputs:
+      image_tag:
+        description: GHCR image tag to deploy
+        required: true
+        default: develop
+        type: string
+      pod_prefix:
+        description: Optional lowercase prefix for an isolated pod stack
+        required: false
+        default: ''
+        type: string
 
 permissions:
   contents: read
@@ -41,12 +52,17 @@ jobs:
           TAPIS_PASSWORD: ${{ secrets.TAPIS_PASSWORD }}
           MINTDEV_POSTGRES_PASSWORD: ${{ secrets.MINTDEV_POSTGRES_PASSWORD }}
           HASURA_GRAPHQL_ADMIN_SECRET: ${{ secrets.HASURA_GRAPHQL_ADMIN_SECRET }}
+          IMAGE_TAG: ${{ inputs.image_tag || 'develop' }}
+          MINT_TEST_STACK_PREFIX: ${{ inputs.pod_prefix || '' }}
         run: >-
-          python deploy/tapis/register_mint_stack.py
-          --image-tag develop
+          bash -c '
+          STACK_SCRIPT=deploy/tapis/register_mint_stack.py;
+          if [[ -n "$MINT_TEST_STACK_PREFIX" ]]; then STACK_SCRIPT=deploy/tapis/register_mint_test_stack.py; fi;
+          python "$STACK_SCRIPT"
+          --image-tag "$IMAGE_TAG"
           --pods postgres,graphql
           --restart-pods postgres,graphql
-          --migrate-postgres-image
+          --migrate-postgres-image'
 
       - name: Log in to GHCR for Hasura migration client
         uses: docker/login-action@v3
@@ -58,10 +74,12 @@ jobs:
       - name: Apply Hasura migrations
         env:
           HASURA_GRAPHQL_ADMIN_SECRET: ${{ secrets.HASURA_GRAPHQL_ADMIN_SECRET }}
-          GRAPHQL_ENDPOINT: https://mintdevgraphql.pods.portals.tapis.io
-          IMAGE_TAG: develop
+          MINT_TEST_STACK_PREFIX: ${{ inputs.pod_prefix || '' }}
+          IMAGE_TAG: ${{ inputs.image_tag || 'develop' }}
         run: |
           set -euo pipefail
+          STACK_PREFIX="${MINT_TEST_STACK_PREFIX:-mintdev}"
+          GRAPHQL_ENDPOINT="https://${STACK_PREFIX}graphql.pods.portals.tapis.io"
 
           # Tapis starts the pod asynchronously. Wait for the endpoint before
           # asking the CLI to connect, with a bounded retry window.
@@ -94,31 +112,37 @@ jobs:
           TAPIS_PASSWORD: ${{ secrets.TAPIS_PASSWORD }}
           MINTDEV_POSTGRES_PASSWORD: ${{ secrets.MINTDEV_POSTGRES_PASSWORD }}
           HASURA_GRAPHQL_ADMIN_SECRET: ${{ secrets.HASURA_GRAPHQL_ADMIN_SECRET }}
+          IMAGE_TAG: ${{ inputs.image_tag || 'develop' }}
+          MINT_TEST_STACK_PREFIX: ${{ inputs.pod_prefix || '' }}
         run: |
           set -euo pipefail
+          STACK_SCRIPT=deploy/tapis/register_mint_stack.py
+          if [[ -n "$MINT_TEST_STACK_PREFIX" ]]; then STACK_SCRIPT=deploy/tapis/register_mint_test_stack.py; fi
 
           # parse_pods preserves dependency order, so use separate invocations
           # to guarantee the migrated database is available before the Model
           # Catalog embedding indexer starts, and the catalog webhook endpoint
           # is available before Hasura metadata is applied.
-          python deploy/tapis/register_mint_stack.py \
-            --image-tag develop \
+          python "$STACK_SCRIPT" \
+            --image-tag "$IMAGE_TAG" \
             --pods api \
             --restart-pods api \
             --recreate-on-image-mismatch
 
-          python deploy/tapis/register_mint_stack.py \
-            --image-tag develop \
+          python "$STACK_SCRIPT" \
+            --image-tag "$IMAGE_TAG" \
             --pods graphql \
             --restart-pods graphql \
             --recreate-on-image-mismatch
 
       - name: Verify semantic search and Hasura health
         env:
-          MODEL_CATALOG_ENDPOINT: https://mintdevapi.pods.portals.tapis.io
-          GRAPHQL_ENDPOINT: https://mintdevgraphql.pods.portals.tapis.io
+          MINT_TEST_STACK_PREFIX: ${{ inputs.pod_prefix || '' }}
         run: |
           set -euo pipefail
+          STACK_PREFIX="${MINT_TEST_STACK_PREFIX:-mintdev}"
+          MODEL_CATALOG_ENDPOINT="https://${STACK_PREFIX}api.pods.portals.tapis.io"
+          GRAPHQL_ENDPOINT="https://${STACK_PREFIX}graphql.pods.portals.tapis.io"
           curl --fail --silent --show-error --retry 30 --retry-delay 5 \
             --retry-all-errors --connect-timeout 10 --max-time 30 \
             "$MODEL_CATALOG_ENDPOINT/search?q=wildfire&limit=1" >/dev/null
@@ -129,10 +153,12 @@ jobs:
       - name: Apply Hasura metadata and verify schema
         env:
           HASURA_GRAPHQL_ADMIN_SECRET: ${{ secrets.HASURA_GRAPHQL_ADMIN_SECRET }}
-          GRAPHQL_ENDPOINT: https://mintdevgraphql.pods.portals.tapis.io
-          IMAGE_TAG: develop
+          MINT_TEST_STACK_PREFIX: ${{ inputs.pod_prefix || '' }}
+          IMAGE_TAG: ${{ inputs.image_tag || 'develop' }}
         run: |
           set -euo pipefail
+          STACK_PREFIX="${MINT_TEST_STACK_PREFIX:-mintdev}"
+          GRAPHQL_ENDPOINT="https://${STACK_PREFIX}graphql.pods.portals.tapis.io"
 
           docker run --rm --pull=always \
             --entrypoint hasura \
@@ -168,14 +194,19 @@ jobs:
           TAPIS_USERNAME: ${{ secrets.TAPIS_USERNAME }}
           TAPIS_ID: ${{ secrets.TAPIS_ID }}
           TAPIS_PASSWORD: ${{ secrets.TAPIS_PASSWORD }}
+          MINT_TEST_STACK_PREFIX: ${{ inputs.pod_prefix || '' }}
         run: >-
-          python deploy/tapis/register_mint_stack.py
-          --restart-existing-pods "ui,ensemble,svo"
+          bash -c '
+          STACK_SCRIPT=deploy/tapis/register_mint_stack.py;
+          if [[ -n "$MINT_TEST_STACK_PREFIX" ]]; then STACK_SCRIPT=deploy/tapis/register_mint_test_stack.py; fi;
+          python "$STACK_SCRIPT"
+          --restart-existing-pods "ui,ensemble,svo"'
 
       - name: Summary
         run: |
+          STACK_PREFIX="${{ inputs.pod_prefix || 'mintdev' }}"
           echo "## MINT dev application pods restarted" >> "$GITHUB_STEP_SUMMARY"
-          echo "- UI: https://mintdevui.pods.portals.tapis.io" >> "$GITHUB_STEP_SUMMARY"
-          echo "- API: https://mintdevapi.pods.portals.tapis.io" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Ensemble: https://mintdevensemble.pods.portals.tapis.io" >> "$GITHUB_STEP_SUMMARY"
-          echo "- SVO Adapter: https://mintdevsvo.pods.portals.tapis.io" >> "$GITHUB_STEP_SUMMARY"
+          echo "- UI: https://${STACK_PREFIX}ui.pods.portals.tapis.io" >> "$GITHUB_STEP_SUMMARY"
+          echo "- API: https://${STACK_PREFIX}api.pods.portals.tapis.io" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Ensemble: https://${STACK_PREFIX}ensemble.pods.portals.tapis.io" >> "$GITHUB_STEP_SUMMARY"
+          echo "- SVO Adapter: https://${STACK_PREFIX}svo.pods.portals.tapis.io" >> "$GITHUB_STEP_SUMMARY"

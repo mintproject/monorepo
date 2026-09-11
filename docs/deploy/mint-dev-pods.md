@@ -106,11 +106,20 @@ python deploy/tapis/register_mint_stack.py \
 
 This mode only restarts existing pods and refuses to create or update them.
 
-## Manual restart
+## Manual deployment
 
-Use GitHub Actions → `Deploy MINT Dev Pods` → `workflow_dispatch`. It performs
-the same four-pod restart and has no image, pod-selection, or registration
-inputs.
+Use GitHub Actions → `Deploy MINT Dev Pods` → `workflow_dispatch`. The default
+inputs preserve the shared `develop`/`mintdev*` deployment. For an isolated live
+stack, select the branch containing the workflow and set:
+
+```text
+image_tag: codex-model-catalog-embeddings
+pod_prefix: mintemb
+```
+
+The workflow then uses the prefixed registration wrapper and runs the same
+ordered PostgreSQL → Hasura → Model Catalog → metadata → dependent-pods gates
+against `mintemb*` resources.
 
 ## Caveats
 
