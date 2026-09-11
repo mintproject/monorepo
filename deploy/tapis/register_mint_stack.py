@@ -38,6 +38,12 @@ PODS = {
     "ui": "mintdevui",
 }
 
+# Tapis's shared ``default`` networking object only permits CORS mutations from
+# APPROVEDADMIN users. Isolated test stacks already match the existing
+# ``https://*.tapis.io`` rule, so their wrapper disables this one custom origin
+# while normal deploys continue to advertise the exact UI URL.
+INCLUDE_CUSTOM_UI_CORS = True
+
 ORDER = ["postgres", "redis", "graphql", "api", "ensemble", "svo", "ui"]
 RESTART_ONLY_PODS = ("api", "ui", "ensemble", "svo")
 
@@ -201,12 +207,14 @@ def build_specs(owner: str, tag: str, base_url: str) -> dict[str, dict[str, Any]
     urls = pod_urls(base_url)
     graphql_endpoint = f"{urls['graphql']}/v1/graphql"
     admin_secret = _admin_secret()
+    cors_origins = [
+        "https://*.tapis.io",
+        "http://localhost:3000",
+    ]
+    if INCLUDE_CUSTOM_UI_CORS:
+        cors_origins.insert(0, urls["ui"])
     browser_cors = {
-        "cors_allow_origins": [
-            urls["ui"],
-            "https://*.tapis.io",
-            "http://localhost:3000",
-        ],
+        "cors_allow_origins": cors_origins,
         "cors_allow_methods": ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"],
         "cors_allow_headers": [
             "Authorization",

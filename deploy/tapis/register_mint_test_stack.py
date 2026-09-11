@@ -30,6 +30,7 @@ def configure_isolated_stack(prefix: str) -> None:
         for name, pod_id in BASE_PODS.items()
     }
     stack.POSTGRES_VOLUME = f"{clean_prefix}{BASE_POSTGRES_VOLUME.removeprefix('mintdev')}"
+    stack.INCLUDE_CUSTOM_UI_CORS = False
 
 
 def main(argv: list[str] | None = None) -> int:

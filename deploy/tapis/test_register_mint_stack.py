@@ -46,6 +46,7 @@ class StorageTests(unittest.TestCase):
     def test_isolated_stack_rewrites_pods_and_volume_without_dev_ids(self):
         original_pods = deploy.PODS
         original_volume = deploy.POSTGRES_VOLUME
+        original_custom_ui_cors = deploy.INCLUDE_CUSTOM_UI_CORS
         try:
             isolated.configure_isolated_stack("minttest")
             self.assertEqual(deploy.PODS["postgres"], "minttestpostgres")
@@ -55,6 +56,7 @@ class StorageTests(unittest.TestCase):
         finally:
             deploy.PODS = original_pods
             deploy.POSTGRES_VOLUME = original_volume
+            deploy.INCLUDE_CUSTOM_UI_CORS = original_custom_ui_cors
 
     def test_existing_storage_can_be_reused(self):
         deploy.check_postgres_storage(self.spec, recreate=False)
