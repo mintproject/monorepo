@@ -423,5 +423,76 @@ class LifecycleTests(unittest.TestCase):
             deploy.wait_for_pod_absent(t, deploy.PODS["ui"], timeout=1)
 
 
+class OwnerGrantTests(unittest.TestCase):
+    def setUp(self):
+        self.env = patch.dict(os.environ, {}, clear=True)
+        self.env.start()
+        self.addCleanup(self.env.stop)
+
+    def test_grant_touches_every_pod_and_never_mutates_definitions(self):
+        t = Mock()
+        t.pods.get_pod.return_value = {"image": "any"}
+        rc = deploy.grant_pod_owners(t, list(deploy.ORDER), ["wmobley", "mosorio"])
+        self.assertEqual(rc, 0)
+        granted = {
+            (call.kwargs["pod_id"], call.kwargs["user"])
+            for call in t.pods.set_pod_permission.call_args_list
+        }
+        self.assertEqual(
+            granted,
+            {(deploy.PODS[key], user) for key in deploy.ORDER for user in ("wmobley", "mosorio")},
+        )
+        t.pods.update_pod.assert_not_called()
+        t.pods.create_pod.assert_not_called()
+        t.pods.restart_pod.assert_not_called()
+        t.pods.delete_pod.assert_not_called()
+
+    def test_absent_pod_is_skipped_not_created(self):
+        missing = Exception()
+        missing.response = SimpleNamespace(status_code=404)
+        t = Mock()
+        t.pods.get_pod.side_effect = [missing, {"image": "any"}]
+        rc = deploy.grant_pod_owners(t, ["semantic_search", "ui"], ["mosorio"])
+        self.assertEqual(rc, 0)
+        t.pods.set_pod_permission.assert_called_once_with(
+            pod_id=deploy.PODS["ui"], user="mosorio", level="ADMIN"
+        )
+        t.pods.create_pod.assert_not_called()
+
+    def test_one_rejected_grant_does_not_hide_the_others(self):
+        t = Mock()
+        t.pods.get_pod.return_value = {"image": "any"}
+        t.pods.set_pod_permission.side_effect = [Exception("CORS approval required"), None]
+        rc = deploy.grant_pod_owners(t, ["graphql"], ["wmobley", "mosorio"])
+        self.assertEqual(rc, 0)
+        self.assertEqual(t.pods.set_pod_permission.call_count, 2)
+
+    def test_total_failure_is_fatal(self):
+        t = Mock()
+        t.pods.get_pod.return_value = {"image": "any"}
+        t.pods.set_pod_permission.side_effect = Exception("unauthorized")
+        rc = deploy.grant_pod_owners(t, ["graphql"], ["mosorio"])
+        self.assertEqual(rc, 1)
+
+    def test_owners_only_rejects_lifecycle_options(self):
+        for extra in (["--restart"], ["--recreate"], ["--dry-run"], ["--restart-existing-pods", "ui"]):
+            with self.subTest(extra=extra):
+                with self.assertRaises(SystemExit):
+                    deploy.main(["--set-owners-only", *extra])
+
+    def test_owners_only_does_not_require_deploy_secrets(self):
+        with patch.object(deploy, "validate_live_requirements") as gate, patch.object(
+            deploy, "grant_pod_owners", return_value=0
+        ) as grant, patch.dict(
+            os.environ, {"TAPIS_USERNAME": "mosorio", "TAPIS_PASSWORD": "x"}, clear=True
+        ), patch.dict(
+            "sys.modules", {"tapipy": Mock(), "tapipy.tapis": Mock()}
+        ):
+            rc = deploy.main(["--set-owners-only"])
+        self.assertEqual(rc, 0)
+        gate.assert_not_called()
+        self.assertEqual(grant.call_args.args[1], list(deploy.ORDER))
+
+
 if __name__ == "__main__":
     unittest.main()

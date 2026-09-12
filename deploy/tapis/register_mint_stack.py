@@ -578,14 +578,48 @@ def validate_live_requirements(selected: list[str]) -> None:
         raise SystemExit(2)
 
 
-def set_pod_owners(t: Any, pod_id: str, owners: list[str]) -> None:
-    """Add owners to a pod with ADMIN permissions."""
+def set_pod_owners(t: Any, pod_id: str, owners: list[str]) -> list[str]:
+    """Add owners to a pod with ADMIN permissions. Return the owners that failed."""
+    failed = []
     for owner in owners:
         try:
             t.pods.set_pod_permission(pod_id=pod_id, user=owner, level="ADMIN")
             print(f"  [{pod_id}] added owner: {owner}")
         except Exception as exc:  # noqa: BLE001
+            failed.append(owner)
             print(f"  [{pod_id}] failed to add owner {owner}: {exc}", file=sys.stderr)
+    return failed
+
+
+def grant_pod_owners(t: Any, selected: list[str], owners: list[str]) -> int:
+    """Grant ADMIN on every existing selected pod; never touch a pod definition.
+
+    A later deploy step can fail and skip the pods it owns, so this runs first
+    and independently. One rejected grant must not hide the others, so the
+    result is a summary. Only a total failure is fatal.
+    """
+    granted: list[str] = []
+    failed: list[str] = []
+    absent: list[str] = []
+    for key in selected:
+        pid = PODS[key]
+        if _get_or_missing(t.pods.get_pod, pod_id=pid) is None:
+            absent.append(pid)
+            print(f"  [{pid}] not found; skipped")
+            continue
+        rejected = set_pod_owners(t, pid, owners)
+        failed.extend(f"{pid}:{owner}" for owner in rejected)
+        granted.extend(f"{pid}:{owner}" for owner in owners if owner not in rejected)
+    print(
+        f"\nOwner grants: {len(granted)} succeeded, {len(failed)} failed, "
+        f"{len(absent)} pod(s) absent"
+    )
+    if failed:
+        print("Failed grants: " + ", ".join(failed), file=sys.stderr)
+    if not granted and failed:
+        print("No grant succeeded; treating this as a deploy failure", file=sys.stderr)
+        return 1
+    return 0
 
 
 def _start_pod_if_needed(t: Any, pod_id: str) -> None:
@@ -774,6 +808,11 @@ def main(argv: list[str] | None = None) -> int:
         "--restart-existing-pods",
         help="restart only these existing application pods; never create or update pod definitions",
     )
+    parser.add_argument(
+        "--set-owners-only",
+        action="store_true",
+        help="only grant ADMIN on the selected existing pods; never create, update or restart a pod",
+    )
     parser.add_argument("--no-start", action="store_true")
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args(argv)
@@ -786,6 +825,17 @@ def main(argv: list[str] | None = None) -> int:
         or args.dry_run
     ):
         parser.error("--restart-existing-pods cannot be combined with lifecycle or dry-run options")
+    if args.set_owners_only and (
+        args.restart_existing_pods is not None
+        or args.restart
+        or args.restart_pods is not None
+        or args.recreate
+        or args.recreate_on_image_mismatch
+        or args.migrate_postgres_image
+        or args.no_start
+        or args.dry_run
+    ):
+        parser.error("--set-owners-only cannot be combined with lifecycle or dry-run options")
     if args.no_start and (args.restart or args.restart_pods is not None or args.recreate_on_image_mismatch):
         parser.error("--no-start cannot be combined with --restart, --restart-pods, or --recreate-on-image-mismatch")
     if args.recreate and args.recreate_on_image_mismatch:
@@ -824,7 +874,7 @@ def main(argv: list[str] | None = None) -> int:
             print(f"  {key:8} {urls[key]}")
         return 0
 
-    if args.restart_existing_pods is None:
+    if args.restart_existing_pods is None and not args.set_owners_only:
         validate_live_requirements(selected)
 
     try:
@@ -847,6 +897,11 @@ def main(argv: list[str] | None = None) -> int:
 
     # Parse owners list
     owners = [o.strip() for o in args.owners.split(",") if o.strip()] if args.owners else []
+
+    if args.set_owners_only:
+        if not owners:
+            parser.error("--set-owners-only requires a non-empty --owners list")
+        return grant_pod_owners(t, selected, owners)
 
     previous_start = None
     postgres_restarted = False
