@@ -181,6 +181,10 @@ Keys:
 - `AUTH_PROVIDER` — `'keycloak'` | `'tapis'`
 - `GOOGLE_MAPS_KEY`, `WELCOME_MESSAGE`
 - `DATA_CATALOG_API`, `DATA_CATALOG_BROWSE_URL`, `ENSEMBLE_MANAGER_API`
+- `MODEL_CATALOG_API` — model catalog REST API base, version prefix included.
+  The app reads the catalog through Hasura and calls this base only for the
+  routes Hasura cannot serve: today the Tapis application proxy behind the
+  component location picker (`src/lib/tapis-apps.ts`)
 - `EXECUTION_ENGINE` — `'tapis'` | `'localex'` | `'wings'`; the backend the
   deployment's Ensemble Manager runs. Selects the run-submission route, which
   differs per backend (see `executionEnginePath` in `src/lib/ensemble-manager.ts`)

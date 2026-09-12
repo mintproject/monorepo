@@ -38,6 +38,19 @@ export function getDataCatalogApiUrl(): string {
 }
 
 /**
+ * Returns the model catalog REST API base URL, version prefix included and no
+ * trailing slash (e.g. https://api.models.mint.local/v2.0.0).
+ *
+ * The app reads the catalog itself through Hasura. This base exists for the few
+ * routes Hasura cannot serve — today the Tapis application proxy, which
+ * forwards the user's token to Tapis (see `src/lib/tapis-apps.ts`).
+ */
+export function getModelCatalogApiUrl(): string {
+  const url = getRuntimeConfig().MODEL_CATALOG_API ?? 'http://api.models.mint.local/v2.0.0';
+  return url.replace(/\/$/, '');
+}
+
+/**
  * Returns the human-browsable Data Catalog UI URL (no trailing slash), used as
  * the iframe src on the datasets browse page.
  *

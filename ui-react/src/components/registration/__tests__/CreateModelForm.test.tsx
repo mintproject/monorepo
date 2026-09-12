@@ -33,11 +33,11 @@ describe('CreateModelForm', () => {
     expect(screen.getByRole('button', { name: /create model/i })).toBeInTheDocument();
   });
 
-  it('blocks submit when the model name is empty', async () => {
+  it('blocks submit when the model configuration name is empty', async () => {
     const user = userEvent.setup();
     renderWithProviders(<CreateModelForm />, { apolloMocks: [regions, families] });
     await user.click(screen.getByRole('button', { name: /create model/i }));
-    expect(await screen.findByText(/model name is required/i)).toBeInTheDocument();
+    expect(await screen.findByText(/model configuration name is required/i)).toBeInTheDocument();
     expect(navigateMock).not.toHaveBeenCalled();
   });
 
@@ -53,6 +53,7 @@ describe('CreateModelForm', () => {
             id: 'cfg-1',
             label: 'Modflow · Barton Springs',
             software_version_id: null,
+            has_component_location: null,
           },
         },
       },
@@ -62,11 +63,83 @@ describe('CreateModelForm', () => {
       apolloMocks: [regions, families, createConfig],
     });
 
-    await user.type(screen.getByLabelText(/model name/i), 'Modflow · Barton Springs');
+    await user.type(screen.getByLabelText(/model configuration name/i), 'Modflow · Barton Springs');
     await user.click(screen.getByRole('button', { name: /create model/i }));
 
     await waitFor(() =>
       expect(navigateMock).toHaveBeenCalledWith(expect.stringContaining('/models/configure/')),
+    );
+  });
+
+  it('stores the component location the user entered', async () => {
+    const user = userEvent.setup();
+    navigateMock.mockClear();
+    const variableMatcher = vi.fn().mockReturnValue(true);
+    const createConfig = {
+      request: { query: CreateConfigurationDocument },
+      variableMatcher,
+      result: {
+        data: {
+          insert_modelcatalog_configuration_one: {
+            id: 'cfg-1',
+            label: 'Hello World',
+            software_version_id: null,
+            has_component_location: 'https://example.org/components/model.zip',
+          },
+        },
+      },
+    };
+
+    renderWithProviders(<CreateModelForm />, {
+      apolloMocks: [regions, families, createConfig],
+    });
+
+    await user.type(screen.getByLabelText(/model configuration name/i), 'Hello World');
+    await user.type(
+      screen.getByLabelText(/component location url/i),
+      'https://example.org/components/model.zip',
+    );
+    await user.click(screen.getByRole('button', { name: /create model/i }));
+
+    await waitFor(() =>
+      expect(variableMatcher).toHaveBeenCalledWith(
+        expect.objectContaining({
+          componentLocation: 'https://example.org/components/model.zip',
+        }),
+      ),
+    );
+  });
+
+  it('sends a null component location when the field is left empty', async () => {
+    const user = userEvent.setup();
+    navigateMock.mockClear();
+    const variableMatcher = vi.fn().mockReturnValue(true);
+    const createConfig = {
+      request: { query: CreateConfigurationDocument },
+      variableMatcher,
+      result: {
+        data: {
+          insert_modelcatalog_configuration_one: {
+            id: 'cfg-1',
+            label: 'Hello World',
+            software_version_id: null,
+            has_component_location: null,
+          },
+        },
+      },
+    };
+
+    renderWithProviders(<CreateModelForm />, {
+      apolloMocks: [regions, families, createConfig],
+    });
+
+    await user.type(screen.getByLabelText(/model configuration name/i), 'Hello World');
+    await user.click(screen.getByRole('button', { name: /create model/i }));
+
+    await waitFor(() =>
+      expect(variableMatcher).toHaveBeenCalledWith(
+        expect.objectContaining({ componentLocation: null }),
+      ),
     );
   });
 });

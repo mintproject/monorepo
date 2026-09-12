@@ -21,7 +21,8 @@
 //   docker compose up -d
 //
 // Ports follow compose.yaml: Hasura 8080, Ensemble Manager 3001,
-// model-catalog-api 3002 (the UI reads Hasura directly and never calls it).
+// model-catalog-api 3002 (the UI reads the catalog from Hasura and calls this
+// one only for its Tapis application proxy).
 // Without the stack running the app loads and every query fails — that is the
 // intended trade: local dev must not write to production by default. To browse
 // TACC's public deployment instead, set HASURA_ENDPOINT to
@@ -51,6 +52,10 @@ window.__MINT_CONFIG__ = {
   // compose publishes it on 3001. This is a HOST url — the browser resolves it,
   // so a compose service name would not work.
   ENSEMBLE_MANAGER_API: "http://localhost:3001/v1",
+  // model-catalog-api in the compose stack, published on 3002. The app reads the
+  // catalog through Hasura and calls this base only for the Tapis application
+  // proxy, which needs a signed-in user: its routes answer 401 without a token.
+  MODEL_CATALOG_API: "http://localhost:3002/v2.0.0",
   // Which backend the Ensemble Manager you point at runs: 'tapis', 'localex'
   // or 'wings'. It picks the submission route, so a value that disagrees with
   // that deployment reaches the wrong handler or none. 'tapis' matches

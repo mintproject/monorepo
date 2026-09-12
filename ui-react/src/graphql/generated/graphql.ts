@@ -26398,10 +26398,11 @@ export type CreateConfigurationMutationVariables = Exact<{
   label: Scalars['String']['input'];
   description?: InputMaybe<Scalars['String']['input']>;
   softwareVersionId?: InputMaybe<Scalars['String']['input']>;
+  componentLocation?: InputMaybe<Scalars['String']['input']>;
 }>;
 
 
-export type CreateConfigurationMutation = { __typename?: 'mutation_root', insert_modelcatalog_configuration_one?: { __typename?: 'modelcatalog_configuration', id: string, label: string, software_version_id?: string | null } | null };
+export type CreateConfigurationMutation = { __typename?: 'mutation_root', insert_modelcatalog_configuration_one?: { __typename?: 'modelcatalog_configuration', id: string, label: string, software_version_id?: string | null, has_component_location?: string | null } | null };
 
 export type SetConfigurationInputOptionalMutationVariables = Exact<{
   configurationId: Scalars['String']['input'];
@@ -27494,13 +27495,14 @@ export type CreateModelFamilyMutationHookResult = ReturnType<typeof useCreateMod
 export type CreateModelFamilyMutationResult = Apollo.MutationResult<CreateModelFamilyMutation>;
 export type CreateModelFamilyMutationOptions = Apollo.BaseMutationOptions<CreateModelFamilyMutation, CreateModelFamilyMutationVariables>;
 export const CreateConfigurationDocument = gql`
-    mutation CreateConfiguration($id: String!, $label: String!, $description: String, $softwareVersionId: String) {
+    mutation CreateConfiguration($id: String!, $label: String!, $description: String, $softwareVersionId: String, $componentLocation: String) {
   insert_modelcatalog_configuration_one(
-    object: {id: $id, label: $label, description: $description, software_version_id: $softwareVersionId}
+    object: {id: $id, label: $label, description: $description, software_version_id: $softwareVersionId, has_component_location: $componentLocation}
   ) {
     id
     label
     software_version_id
+    has_component_location
   }
 }
     `;
@@ -27523,6 +27525,7 @@ export type CreateConfigurationMutationFn = Apollo.MutationFunction<CreateConfig
  *      label: // value for 'label'
  *      description: // value for 'description'
  *      softwareVersionId: // value for 'softwareVersionId'
+ *      componentLocation: // value for 'componentLocation'
  *   },
  * });
  */
