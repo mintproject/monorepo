@@ -1,6 +1,7 @@
 /**
- * CreateModelForm — config-first single-page model creation.
- * UI terms: Model = Configuration, Model Family = Software, Version = SoftwareVersion.
+ * CreateModelForm — config-first single-page model configuration creation.
+ * UI terms: Model Configuration = Configuration, Model Family = Software,
+ * Version = SoftwareVersion.
  *
  * Submit order:
  *   1. (optional) CreateModelFamily → Software + first SoftwareVersion
@@ -54,6 +55,7 @@ import {
   type CreateModelSchema,
 } from '@/schemas/registration';
 import { RegionScopeSection } from './RegionScopeSection';
+import { ComponentLocationSection } from './ComponentLocationSection';
 import { OptionalDetailsSection } from './OptionalDetailsSection';
 
 export function CreateModelForm() {
@@ -90,6 +92,7 @@ export function CreateModelForm() {
           label: data.label,
           description: data.description || null,
           softwareVersionId: plan.softwareVersionId,
+          componentLocation: data.componentLocation?.trim() || null,
         },
       });
 
@@ -111,8 +114,8 @@ export function CreateModelForm() {
 
       // Region scope: mirror each chosen geographic region into modelcatalog_region
       // (so the junction FK resolves), then link it to this configuration. These
-      // writes run after the model already exists, so a region failure must not
-      // discard the created model — link best-effort and warn on partial failure.
+      // writes run after the model configuration already exists, so a region failure
+      // must not discard it — link best-effort and warn on partial failure.
       if (data.isRegionSpecific && data.regions.length > 0) {
         const results = await Promise.allSettled(
           data.regions.map(async (r) => {
@@ -124,7 +127,7 @@ export function CreateModelForm() {
         if (failed > 0) {
           toast({
             title: 'Some regions were not linked',
-            description: `${failed} of ${data.regions.length} region(s) could not be linked. You can add them later from the model page.`,
+            description: `${failed} of ${data.regions.length} region(s) could not be linked. You can add them later from the model configuration page.`,
             variant: 'destructive',
           });
         }
@@ -133,7 +136,10 @@ export function CreateModelForm() {
       // NOTE: license, website, and keywords are collected but not yet persisted —
       // no mutation target exists for standalone configs. Tracked as a follow-up.
 
-      toast({ title: 'Model created', description: `${data.label} was created successfully.` });
+      toast({
+        title: 'Model configuration created',
+        description: `${data.label} was created successfully.`,
+      });
       navigate(`/models/configure/${slugFromUri(configurationId)}`);
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : 'Creation failed');
@@ -147,7 +153,7 @@ export function CreateModelForm() {
           <form onSubmit={form.handleSubmit(onSubmit)}>
             <Card>
               <CardHeader>
-                <CardTitle>Create a new model</CardTitle>
+                <CardTitle>Create a new model configuration</CardTitle>
                 <p className="text-sm text-muted-foreground">
                   Define a model configuration — its parameters, inputs and outputs. Linking it to a
                   model family is optional.
@@ -160,7 +166,7 @@ export function CreateModelForm() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>
-                        Model name <span className="text-destructive">*</span>
+                        Model configuration name <span className="text-destructive">*</span>
                       </FormLabel>
                       <FormControl>
                         <Input placeholder='e.g. "Modflow · Barton Springs"' {...field} />
@@ -179,7 +185,7 @@ export function CreateModelForm() {
                       <FormControl>
                         <Textarea
                           rows={2}
-                          placeholder="Brief description of this model"
+                          placeholder="Brief description of this model configuration"
                           {...field}
                         />
                       </FormControl>
@@ -188,6 +194,8 @@ export function CreateModelForm() {
                   )}
                 />
 
+                <Separator />
+                <ComponentLocationSection />
                 <Separator />
                 <RegionScopeSection />
                 <Separator />
@@ -213,7 +221,7 @@ export function CreateModelForm() {
                     {form.formState.isSubmitting && (
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     )}
-                    Create model
+                    Create model configuration
                   </Button>
                 </div>
               </CardContent>

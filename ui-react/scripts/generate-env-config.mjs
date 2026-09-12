@@ -54,6 +54,13 @@ export function buildEnvConfig(env = process.env) {
     DATA_CATALOG_BROWSE_URL:
       pick(env, 'DATA_CATALOG_BROWSE_URL', 'VITE_DATA_CATALOG_BROWSE_URL') ??
       'https://ckan.tacc.utexas.edu',
+    // The v2.0.0 model catalog REST API, version prefix included. The app reads
+    // the catalog through Hasura; this base is for the routes Hasura cannot
+    // serve — today the Tapis application proxy, which forwards the user's
+    // token to Tapis so the browser needs no Tapis CORS grant.
+    MODEL_CATALOG_API:
+      pick(env, 'MODEL_CATALOG_API', 'VITE_MODEL_CATALOG_API') ??
+      'http://api.models.mint.local/v2.0.0',
     // Which execution backend the deployment's Ensemble Manager runs, so the
     // app posts run submissions to the route that backend actually serves. It
     // is a property of that deployment, not a user choice: the chart configures

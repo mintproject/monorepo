@@ -386,6 +386,7 @@ mutation CreateConfiguration(
   $label: String!
   $description: String
   $softwareVersionId: String
+  $componentLocation: String
 ) {
   insert_modelcatalog_configuration_one(
     object: {
@@ -393,11 +394,13 @@ mutation CreateConfiguration(
       label: $label
       description: $description
       software_version_id: $softwareVersionId
+      has_component_location: $componentLocation
     }
   ) {
     id
     label
     software_version_id
+    has_component_location
   }
 }
 

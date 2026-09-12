@@ -36,7 +36,7 @@ const NAV_GROUPS: NavGroup[] = [
         icon: FlaskConical,
         items: [
           { href: '/models', label: 'Browse Models' },
-          { href: '/models/register', label: 'Register Model' },
+          { href: '/models/register', label: 'Register Model Configuration' },
           { href: '/etl/register', label: 'Register ETL Process' },
           { href: '/etl', label: 'Browse ETL Processes' },
         ],

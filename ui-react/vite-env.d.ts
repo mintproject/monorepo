@@ -15,6 +15,13 @@ interface MintConfig {
   /** Ensemble Manager REST API base URL. */
   ENSEMBLE_MANAGER_API?: string;
   /**
+   * Model catalog REST API base URL, version prefix included
+   * (e.g. https://api.models.mint.local/v2.0.0). The app reads the catalog
+   * through Hasura; this base serves the routes Hasura cannot — today the Tapis
+   * application proxy used by the component location picker.
+   */
+  MODEL_CATALOG_API?: string;
+  /**
    * Execution backend the deployment's Ensemble Manager runs — 'tapis',
    * 'localex' or 'wings'. Selects the submission route; see
    * {@link submitRuns}. Left as `string` because the Ensemble Manager can gain

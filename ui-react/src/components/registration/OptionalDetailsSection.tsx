@@ -25,7 +25,7 @@ export function OptionalDetailsSection() {
         </span>
       </div>
       <p className="mb-4 text-xs text-muted-foreground">
-        Skip any of these — you can fill them in later from the model page.
+        Skip any of these — you can fill them in later from the model configuration page.
       </p>
 
       {/* Model Family */}

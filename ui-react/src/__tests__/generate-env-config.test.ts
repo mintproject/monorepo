@@ -61,9 +61,15 @@ describe('buildEnvConfig', () => {
     expect(buildEnvConfig({ BRANDING: '' }).BRANDING).toBe('none');
   });
 
-  it('does not emit MODEL_CATALOG_API — the v1.8.0 SPARQL API has no callers', () => {
-    const c = buildEnvConfig({ MODEL_CATALOG_API: 'https://models.example.org/v2' });
-    expect('MODEL_CATALOG_API' in c).toBe(false);
+  it('emits MODEL_CATALOG_API — the component location picker calls its Tapis proxy', () => {
+    expect(buildEnvConfig({}).MODEL_CATALOG_API).toBe('http://api.models.mint.local/v2.0.0');
+    expect(
+      buildEnvConfig({ MODEL_CATALOG_API: 'https://models.example.org/v2.0.0' }).MODEL_CATALOG_API,
+    ).toBe('https://models.example.org/v2.0.0');
+    expect(
+      buildEnvConfig({ VITE_MODEL_CATALOG_API: 'https://models.example.org/v2.0.0' })
+        .MODEL_CATALOG_API,
+    ).toBe('https://models.example.org/v2.0.0');
   });
 
   it('resolves the browse URL independently of the API base', () => {

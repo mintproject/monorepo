@@ -39,8 +39,14 @@ export type ModelFamilyLink = z.infer<typeof modelFamilyLinkSchema>;
 // ─── Root form schema ─────────────────────────────────────────────────────────
 
 export const createModelSchema = z.object({
-  label: z.string().min(1, 'Model name is required'),
+  label: z.string().min(1, 'Model configuration name is required'),
   description: z.string().optional(),
+  // Where the executable component lives, stored as has_component_location. On a
+  // Tapis deployment this is the canonical app URL, which the Ensemble Manager
+  // splits back into an app id and version; on any other deployment it is a
+  // plain URL, such as a component zip. Empty means the model is metadata only
+  // and cannot be run.
+  componentLocation: z.string().url('Enter a valid URL').optional().or(z.literal('')),
   inputs: z.array(inputRowSchema),
   outputs: z.array(inputRowSchema),
   parameters: z.array(parameterRowSchema),
@@ -60,6 +66,7 @@ export function emptyCreateModel(): CreateModelSchema {
   return {
     label: '',
     description: '',
+    componentLocation: '',
     inputs: [],
     outputs: [],
     parameters: [],
