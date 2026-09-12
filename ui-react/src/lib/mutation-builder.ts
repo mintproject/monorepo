@@ -248,10 +248,15 @@ export function buildAddParameterVariables(
 
 /**
  * Assign sequential position values to all rows in a field array.
- * Position is 0-indexed from the array order.
+ *
+ * Position is 1-indexed from the array order, never 0. The Ensemble Manager
+ * treats a falsy position as an absent one — `_getModelIODetails` in
+ * `ExecutionCreation.ts` returns null for it — and refuses the whole run with
+ * "Input file missing position". It also builds the component prefix from the
+ * number (`-i1`, `-p1`), which the 1-based catalogue already assumes.
  */
 export function assignPositions<T extends { position?: number }>(rows: T[]): T[] {
-  return rows.map((row, index) => ({ ...row, position: index }));
+  return rows.map((row, index) => ({ ...row, position: index + 1 }));
 }
 
 /**
