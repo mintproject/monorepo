@@ -127,8 +127,17 @@ async def refresh_embeddings_loop():
 def start_embedding_indexer():
     # Preserve the initial full build, then respond to Hasura catalog events
     # without re-encoding rows whose SVO/model context has not changed.
-    refreshed = index_catalog_embeddings(force=True)
-    log.info("indexed %d standard-variable embeddings", refreshed)
+    #
+    # The first build must not stop the service. On a first install the catalog
+    # tables do not exist yet, because the Hasura migrations run in their own
+    # container. An unguarded query there raises UndefinedTable, the startup
+    # event fails and the process exits 3. The refresh loop below retries, so a
+    # failure here costs one refresh interval and nothing more.
+    try:
+        refreshed = index_catalog_embeddings(force=True)
+        log.info("indexed %d standard-variable embeddings", refreshed)
+    except Exception:
+        log.exception("initial embedding index failed; the refresh loop will retry")
     global refresh_event
     refresh_event = asyncio.Event()
     global refresh_task

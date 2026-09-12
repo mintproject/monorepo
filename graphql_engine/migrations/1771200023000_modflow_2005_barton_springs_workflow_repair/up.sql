@@ -1,5 +1,11 @@
 -- Restore the Barton Springs MODFLOW-2005 setup to the nine inputs used by the
 -- Tapis model and make every package input discoverable in the data catalog.
+--
+-- This is a data repair, not a schema change.  It runs before the catalog rows
+-- exist on a cold start: `hasura migrate apply` runs first, and the catalog
+-- fixture loads after it.  So every statement selects its own foreign key
+-- target and inserts nothing when the target is absent.  On an empty catalog
+-- the migration is a no-op, and the fixture carries the same rows itself.
 
 BEGIN;
 
@@ -17,27 +23,38 @@ WHERE configuration_id = 'https://w3id.org/okn/i/mint/modflow_2005_BartonSprings
 
 INSERT INTO public.modelcatalog_variable_presentation
   (id, label, description, has_long_name, has_short_name, has_standard_variable, uses_unit)
-VALUES
+SELECT
+  presentations.id,
+  presentations.label,
+  presentations.description,
+  presentations.has_long_name,
+  presentations.has_short_name,
+  sv.id,
+  NULL
+FROM (VALUES
   ('https://w3id.org/okn/i/mint/wmobley-modflow-2005-drain-package',
    'MODFLOW 2005 drain package',
    'MODFLOW 2005 drain package input file.',
    'MODFLOW 2005 drain package', 'drain_package_file',
-   'https://w3id.org/okn/i/mint/28d21c91-fea3-4efa-9a4e-602f4590081d', NULL),
+   'https://w3id.org/okn/i/mint/28d21c91-fea3-4efa-9a4e-602f4590081d'),
   ('https://w3id.org/okn/i/mint/wmobley-modflow-2005-hfb6-package',
    'MODFLOW 2005 HFB6 package',
    'MODFLOW 2005 horizontal-flow-barrier package input file.',
    'MODFLOW 2005 HFB6 package', 'hfb6',
-   'https://w3id.org/okn/i/mint/b498b989-329f-4240-96be-5edf578b0fa3', NULL),
+   'https://w3id.org/okn/i/mint/b498b989-329f-4240-96be-5edf578b0fa3'),
   ('https://w3id.org/okn/i/mint/wmobley-modflow-2005-output-control',
    'MODFLOW 2005 output control',
    'MODFLOW 2005 output-control package input file.',
    'MODFLOW 2005 output control', 'output_control_file',
-   'https://w3id.org/okn/i/mint/c6a8d6e8-3761-4bce-bf6b-51b0bcde6e39', NULL),
+   'https://w3id.org/okn/i/mint/c6a8d6e8-3761-4bce-bf6b-51b0bcde6e39'),
   ('https://w3id.org/okn/i/mint/wmobley-modflow-2005-sip-package',
    'MODFLOW 2005 SIP package',
    'MODFLOW 2005 strongly implicit procedure package input file.',
    'MODFLOW 2005 SIP package', 'sip',
-   'https://w3id.org/okn/i/mint/7fdad32c-2107-4717-8b03-c3f152336e1f', NULL)
+   'https://w3id.org/okn/i/mint/7fdad32c-2107-4717-8b03-c3f152336e1f')
+) AS presentations(id, label, description, has_long_name, has_short_name, standard_variable_id)
+JOIN public.modelcatalog_standard_variable AS sv
+  ON sv.id = presentations.standard_variable_id
 ON CONFLICT (id) DO UPDATE SET
   label = EXCLUDED.label,
   description = EXCLUDED.description,
@@ -48,7 +65,7 @@ ON CONFLICT (id) DO UPDATE SET
 
 INSERT INTO public.modelcatalog_dataset_specification_presentation
   (dataset_specification_id, presentation_id)
-SELECT format('https://w3id.org/okn/i/mint/modflow_2005_BartonSprings_%s_%s', variant, package), presentation_id
+SELECT ds.id, vp.id
 FROM (VALUES
   ('advanced', 'Drn', 'https://w3id.org/okn/i/mint/wmobley-modflow-2005-drain-package'),
   ('advanced', 'Hfb', 'https://w3id.org/okn/i/mint/wmobley-modflow-2005-hfb6-package'),
@@ -63,6 +80,10 @@ FROM (VALUES
   ('drought',  'Oc',  'https://w3id.org/okn/i/mint/wmobley-modflow-2005-output-control'),
   ('drought',  'Sip', 'https://w3id.org/okn/i/mint/wmobley-modflow-2005-sip-package')
 ) AS mappings(variant, package, presentation_id)
+JOIN public.modelcatalog_dataset_specification AS ds
+  ON ds.id = format('https://w3id.org/okn/i/mint/modflow_2005_BartonSprings_%s_%s', mappings.variant, mappings.package)
+JOIN public.modelcatalog_variable_presentation AS vp
+  ON vp.id = mappings.presentation_id
 ON CONFLICT DO NOTHING;
 
 COMMIT;

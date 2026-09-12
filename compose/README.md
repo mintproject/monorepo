@@ -33,10 +33,16 @@ the tracked file — restore it with
 | `ui-react` | 3000 | The frontend. Behind the `ui` profile. See below |
 | `ensemble-manager` | 3001 | Threads, executions and the Tapis adapter |
 | `model-catalog-api` | 3002 | The REST face of the catalog, v2.0.0 |
-| `hasura` | 8080 | GraphQL over Postgres, and the console |
-| `postgres` | 5432 | PostGIS. The one database |
-| `redis` | 6379 | Bull queues for Ensemble Manager |
+| `hasura` | 8082 | GraphQL over Postgres, and the console |
+| `svo-adapter` | 8090 | Semantic planning, and the adapter UI |
+| `semantic-search` | 8091 | Standard-variable embeddings over pgvector |
+| `redis` | 6380 | Bull queues for Ensemble Manager |
+| `postgres` | none | PostGIS and pgvector. The one database |
 | `auth-webhook` | none | Validates Tapis tokens for Hasura |
+
+`postgres` publishes no host port. The other services reach it on the compose
+network. `redis` uses 6380 on the host, because a Homebrew Redis may already
+hold 6379.
 
 Two more services run once and exit:
 
@@ -153,6 +159,13 @@ docker compose up -d --wait        # start again
 `down -v` gives you the cold start again: the migrations, the seeds and the
 fixture all run.
 
+The volume is `mint_postgres-data-16`. Its name carries the Postgres major
+version on purpose. Postgres refuses a data directory that another major version
+made, and the container exits 1 with `database files are incompatible with
+server`. A major version bump therefore takes a new volume name. The old volume
+stays on disk, and `docker compose up` still starts. Delete the old volume by
+hand when you no longer want it.
+
 To rebuild an image after a dependency change:
 
 ```bash
@@ -167,7 +180,7 @@ Run it from empty volumes: `docker compose down -v && docker compose up -d --wai
 | # | Check | How to run it |
 |---|---|---|
 | 1 | The stack starts from empty volumes. No manual step is needed | `docker compose up -d --wait` |
-| 2 | The Hasura console answers on `http://localhost:8080` | `curl -o /dev/null -w '%{http_code}' localhost:8080/console` |
+| 2 | The Hasura console answers on `http://localhost:8082` | `curl -o /dev/null -w '%{http_code}' localhost:8082/console` |
 | 3 | The catalog list renders rows before sign-in, through the anonymous role | Open `http://localhost:3000/models` in a private window |
 | 4 | Sign-in at `http://localhost:3000` completes against `portals.tapis.io` | Click **Sign In** |
 | 5 | `model-catalog-api` answers an authenticated GET | `GET localhost:3002/v2.0.0/modelconfigurations` with a bearer token |
@@ -211,3 +224,13 @@ say why.
 - The Hasura image ships no `psql`. Its Dockerfile installs
   `postgresql-client-common`, which has no client binary. `fixture-load` uses the
   Postgres image instead.
+- A **data** migration cannot depend on the catalog rows. `hasura migrate apply`
+  runs before `fixture-load`, so the `modelcatalog_*` tables are empty. Such a
+  migration must select its own foreign key target and insert nothing when the
+  target is absent. See
+  `graphql_engine/migrations/1771200022000_modflow_2005_hydraulic_head_output`.
+- `semantic-search` reads `modelcatalog_standard_variable` as it starts. It waits
+  for `hasura-init` and `fixture-load`, and it also survives an empty schema: the
+  refresh loop retries.
+- `svo-adapter` listens on **8090** inside the container, not 8000. Its image
+  runs `uvicorn --port 8090`.
