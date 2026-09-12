@@ -337,7 +337,7 @@ def build_specs(owner: str, tag: str, base_url: str) -> dict[str, dict[str, Any]
                     "tapis_auth_return_path": "/",
                     "tapis_auth_allowed_users": [
                         user.strip()
-                        for user in _env("MINTDEV_UI_AUTH_ALLOWED_USERS", "wmobley,mosoriob").split(",")
+                        for user in _env("MINTDEV_UI_AUTH_ALLOWED_USERS", "wmobley,mosorio").split(",")
                         if user.strip()
                     ],
                 }
@@ -753,7 +753,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--owner", default=_env("GHCR_OWNER", "mintproject"))
     parser.add_argument("--image-tag", default=_env("IMAGE_TAG", "latest"))
     parser.add_argument("--pods", default="all", help="all or comma-separated: postgres,redis,graphql,api,ensemble,svo,semantic_search,ui")
-    parser.add_argument("--owners", default="wmobley,mosoriob", help="comma-separated list of pod owners (ADMIN permission)")
+    parser.add_argument("--owners", default="wmobley,mosorio", help="comma-separated list of pod owners (ADMIN permission)")
     parser.add_argument("--recreate", action="store_true")
     parser.add_argument(
         "--recreate-on-image-mismatch",
