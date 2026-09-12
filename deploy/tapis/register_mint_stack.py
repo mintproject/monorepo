@@ -759,6 +759,43 @@ def upsert_pod(
     wait_for_pod_image(t, pid, spec["image"])
 
 
+def sync_ui_auth(t: Any, spec: dict[str, Any]) -> int:
+    """Push the UI auth allowlist and keep the image the pod runs now.
+
+    tapis_auth_allowed_users lives in the pod definition, so only an update
+    applies it. The deploy reaches the UI pod in its last step, and an earlier
+    failure skips that step. This mode runs early and changes nothing else.
+    """
+    pid = spec["pod_id"]
+    existing = _get_or_missing(t.pods.get_pod, pod_id=pid)
+    if existing is None:
+        raise RuntimeError(f"[{pid}] was not found; auth-sync mode will not create it")
+    current_image = _field(existing, "image")
+    if not current_image:
+        raise RuntimeError(f"[{pid}] reports no image; refusing to rewrite the definition")
+
+    allowed = spec["networking"]["default"]["tapis_auth_allowed_users"]
+    update = dict(spec)
+    update["image"] = current_image
+    print(f"  [{pid}] keeping the running image {current_image}")
+    print(f"  [{pid}] allowed users: {', '.join(allowed)}")
+    t.pods.update_pod(**update)
+
+    applied = _field(
+        _field(_field(_get_or_missing(t.pods.get_pod, pod_id=pid), "networking", {}), "default", {}),
+        "tapis_auth_allowed_users",
+    )
+    if applied is None:
+        raise RuntimeError(f"[{pid}] reported no allowed-user list after the update")
+    missing = [user for user in allowed if user not in applied]
+    if missing:
+        raise RuntimeError(
+            f"[{pid}] allowlist did not converge; missing: " + ", ".join(missing)
+        )
+    print(f"  [{pid}] allowlist applied: {', '.join(applied)}")
+    return 0
+
+
 def restart_existing_pods(t: Any, selected: list[str]) -> None:
     """Restart only already-existing application pods; never mutate definitions."""
     invalid = [key for key in selected if key not in RESTART_ONLY_PODS]
@@ -813,6 +850,11 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="only grant ADMIN on the selected existing pods; never create, update or restart a pod",
     )
+    parser.add_argument(
+        "--sync-ui-auth",
+        action="store_true",
+        help="only push the UI auth allowlist; keep the running image and never restart the pod",
+    )
     parser.add_argument("--no-start", action="store_true")
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args(argv)
@@ -836,6 +878,18 @@ def main(argv: list[str] | None = None) -> int:
         or args.dry_run
     ):
         parser.error("--set-owners-only cannot be combined with lifecycle or dry-run options")
+    if args.sync_ui_auth and (
+        args.set_owners_only
+        or args.restart_existing_pods is not None
+        or args.restart
+        or args.restart_pods is not None
+        or args.recreate
+        or args.recreate_on_image_mismatch
+        or args.migrate_postgres_image
+        or args.no_start
+        or args.dry_run
+    ):
+        parser.error("--sync-ui-auth cannot be combined with lifecycle or dry-run options")
     if args.no_start and (args.restart or args.restart_pods is not None or args.recreate_on_image_mismatch):
         parser.error("--no-start cannot be combined with --restart, --restart-pods, or --recreate-on-image-mismatch")
     if args.recreate and args.recreate_on_image_mismatch:
@@ -874,7 +928,7 @@ def main(argv: list[str] | None = None) -> int:
             print(f"  {key:8} {urls[key]}")
         return 0
 
-    if args.restart_existing_pods is None and not args.set_owners_only:
+    if args.restart_existing_pods is None and not args.set_owners_only and not args.sync_ui_auth:
         validate_live_requirements(selected)
 
     try:
@@ -902,6 +956,9 @@ def main(argv: list[str] | None = None) -> int:
         if not owners:
             parser.error("--set-owners-only requires a non-empty --owners list")
         return grant_pod_owners(t, selected, owners)
+
+    if args.sync_ui_auth:
+        return sync_ui_auth(t, specs["ui"])
 
     previous_start = None
     postgres_restarted = False

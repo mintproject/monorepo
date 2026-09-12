@@ -46,6 +46,17 @@ jobs:
           --set-owners-only
           --pods all
 
+      # The UI allowlist lives in the pod definition, and the deploy reaches
+      # the UI pod last. Push the allowlist now, and keep the running image.
+      - name: Sync the UI auth allowlist
+        env:
+          TAPIS_USERNAME: ${{ secrets.TAPIS_USERNAME }}
+          TAPIS_ID: ${{ secrets.TAPIS_ID }}
+          TAPIS_PASSWORD: ${{ secrets.TAPIS_PASSWORD }}
+        run: >-
+          python deploy/tapis/register_mint_stack.py
+          --sync-ui-auth
+
       - name: Update PostgreSQL and Hasura pod definitions
         env:
           TAPIS_USERNAME: ${{ secrets.TAPIS_USERNAME }}
