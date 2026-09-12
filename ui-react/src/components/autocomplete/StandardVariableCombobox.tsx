@@ -6,12 +6,15 @@
  *
  * Filter: case-insensitive substring match on label (primary) and description (secondary).
  * Keyboard: full ARIA combobox pattern via cmdk + Radix Popover.
+ *
+ * `scope` narrows the list to the variables the caller can act on — see
+ * useScopedStandardVariables. The default, `all`, keeps every registration form
+ * exactly as it was.
  */
 
 import * as React from 'react';
 import { Check, ChevronsUpDown } from 'lucide-react';
 
-import { usePrefetchReferenceDataQuery } from '@/graphql/generated/graphql';
 import { cn } from '@/lib/utils';
 import { humanizeStandardVariable } from '@/lib/standard-variable-grammar';
 import { Button } from '@/components/ui/button';
@@ -24,6 +27,12 @@ import {
   CommandList,
 } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import {
+  useScopedStandardVariables,
+  type StandardVariableScope,
+} from './useScopedStandardVariables';
+
+export type { StandardVariableScope };
 
 export interface StandardVariableOption {
   id: string;
@@ -49,6 +58,14 @@ export interface StandardVariableComboboxProps {
   disabled?: boolean;
   /** Additional className for the trigger button. */
   className?: string;
+  /**
+   * Narrows the offered list. `all` (the default) offers the whole catalog.
+   * `indicator` and `driver` offer only what the thread wizard can act on, and
+   * add a link that widens the list back to the whole catalog.
+   */
+  scope?: StandardVariableScope;
+  /** Noun used in the widen/narrow links, e.g. "produces a model". */
+  scopeLabel?: string;
 }
 
 export function StandardVariableCombobox({
@@ -58,24 +75,22 @@ export function StandardVariableCombobox({
   placeholder = 'Search standard variables...',
   disabled = false,
   className,
+  scope = 'all',
+  scopeLabel = 'used by a model',
 }: StandardVariableComboboxProps) {
   const [open, setOpen] = React.useState(false);
   const [search, setSearch] = React.useState('');
+  const [showAll, setShowAll] = React.useState(false);
   const [semanticOptions, setSemanticOptions] = React.useState<StandardVariableOption[] | null>(
     null,
   );
 
-  // Reads from Apollo cache — cache-first means no network call if already fetched
-  const { data, loading } = usePrefetchReferenceDataQuery({ fetchPolicy: 'cache-first' });
+  // Reads from Apollo cache — cache-first means no network call if already fetched.
+  // The full catalog is fetched only once the user widens a narrowed picker.
+  const narrowed = scope !== 'all';
+  const { scoped, all, allLoaded, loading } = useScopedStandardVariables(scope, showAll);
 
-  const options: StandardVariableOption[] = React.useMemo(() => {
-    if (!data?.modelcatalog_standard_variable) return [];
-    return data.modelcatalog_standard_variable.map((sv) => ({
-      id: sv.id,
-      label: sv.label?.trim() || 'Unnamed standard variable',
-      description: sv.description?.trim() || (sv.label ? null : `Catalog ID: ${sv.id}`),
-    }));
-  }, [data]);
+  const options = narrowed && !showAll ? scoped : all;
 
   React.useEffect(() => {
     const query = search.trim();
@@ -103,7 +118,31 @@ export function StandardVariableCombobox({
     return () => controller.abort();
   }, [search]);
 
-  const visibleOptions = semanticOptions?.length ? semanticOptions : options;
+  /**
+   * Semantic results are ranked over the whole catalog, so the scope has to be
+   * applied to them too. Without this the ranked list puts back exactly the dead
+   * ends the scope removes. If the scope drops every ranked hit, fall back to
+   * the plain list rather than showing nothing.
+   */
+  const rankedOptions = React.useMemo(() => {
+    if (!semanticOptions?.length) return null;
+    if (!narrowed || showAll) return semanticOptions;
+    const inScope = new Set(scoped.map((o) => o.id));
+    const kept = semanticOptions.filter((o) => inScope.has(o.id));
+    return kept.length ? kept : null;
+  }, [semanticOptions, narrowed, showAll, scoped]);
+
+  /**
+   * A thread can already hold a variable the scope does not carry — at TACC one
+   * live thread holds an indicator that no configuration produces. Pin the
+   * stored value to the top so the user can see what is set, instead of meeting
+   * a control that reads as empty.
+   */
+  const visibleOptions = React.useMemo(() => {
+    const base = rankedOptions ?? options;
+    if (!value || base.some((o) => o.id === value.id)) return base;
+    return [value, ...base];
+  }, [rankedOptions, options, value]);
 
   const handleSelect = React.useCallback(
     (selectedId: string) => {
@@ -113,13 +152,13 @@ export function StandardVariableCombobox({
       } else {
         const found =
           visibleOptions.find((o) => o.id === selectedId) ??
-          options.find((o) => o.id === selectedId) ??
+          all.find((o) => o.id === selectedId) ??
           null;
         onChange(found);
       }
       setOpen(false);
     },
-    [value, visibleOptions, options, onChange],
+    [value, visibleOptions, all, onChange],
   );
 
   const triggerLabel =
@@ -193,6 +232,20 @@ export function StandardVariableCombobox({
               ))}
             </CommandGroup>
           </CommandList>
+          {narrowed && (
+            // Outside CommandList so cmdk's filter never hides the escape.
+            <div className="border-t px-2 py-1.5">
+              <button
+                type="button"
+                className="w-full rounded px-1 py-0.5 text-left text-xs text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                onClick={() => setShowAll((v) => !v)}
+              >
+                {showAll
+                  ? `Showing ${allLoaded ? `all ${all.length}` : 'every'} standard variable — show only the ${scoped.length} ${scopeLabel}`
+                  : `Showing the ${scoped.length} ${scopeLabel} — show every standard variable`}
+              </button>
+            </div>
+          )}
         </Command>
       </PopoverContent>
     </Popover>

@@ -179,3 +179,114 @@ query GetModelFamilies {
     }
   }
 }
+
+# The standard variables a thread can pick as its indicator: those produced by a
+# configuration the Models step actually lists.
+#
+# The `where` clause repeats the walk GetModelTreeWithRegions makes
+# (src/graphql/generated/modeling.ts) so the two lists cannot drift. The Models
+# step shows leaf rows only, which are either a top-level configuration that
+# hangs off a software version and has no children, or a setup whose parent
+# hangs off a version. TACC holds 89 configurations with no version at all; the
+# tree never lists them, so an indicator only they produce is a dead end.
+#
+# Do not use GetOutputVariableOptions here. It walks every configuration_output
+# with no tree rule, so at TACC it offers 148 where the tree reaches 147 — the
+# extra one comes from the orphan configuration pihm_flooding.
+#
+# `distinct_on` returns one row per presentation instead of one per
+# (dataset_specification, presentation) pair: 357 rows / 113 KB against TACC,
+# where the undeduped form returns 2781 rows / 942 KB.
+query GetIndicatorVariableOptions {
+  modelcatalog_dataset_specification_presentation(
+    distinct_on: presentation_id
+    order_by: { presentation_id: asc }
+    where: {
+      dataset_specification: {
+        configuration_outputs: {
+          configuration: {
+            _or: [
+              { software_version_id: { _is_null: false }, _not: { child_configurations: {} } }
+              { parent_configuration: { software_version_id: { _is_null: false } } }
+            ]
+          }
+        }
+      }
+    }
+  ) {
+    dataset_specification_id
+    presentation_id
+    presentation {
+      id
+      standard_variable {
+        id
+        label
+        description
+      }
+    }
+  }
+}
+
+# The standard variables a thread can pick as its adjustable variable.
+#
+# The knowledge base defines a driver (TD) as "input variables or adjustable
+# parameters" (knowledge-base/wiki/goal-oriented-modeling.md), so this reads both
+# paths and the client takes the union. Against TACC: 154 inputs, 28 adjusted by
+# a parameter, 161 distinct. Both root fields use the same leaf-configuration
+# rule as GetIndicatorVariableOptions, and both ride in one round trip.
+query GetDriverVariableOptions {
+  inputs: modelcatalog_dataset_specification_presentation(
+    distinct_on: presentation_id
+    order_by: { presentation_id: asc }
+    where: {
+      dataset_specification: {
+        configuration_inputs: {
+          configuration: {
+            _or: [
+              { software_version_id: { _is_null: false }, _not: { child_configurations: {} } }
+              { parent_configuration: { software_version_id: { _is_null: false } } }
+            ]
+          }
+        }
+      }
+    }
+  ) {
+    dataset_specification_id
+    presentation_id
+    presentation {
+      id
+      standard_variable {
+        id
+        label
+        description
+      }
+    }
+  }
+  adjusted: modelcatalog_parameter_adjusts_variable(
+    distinct_on: variable_id
+    order_by: { variable_id: asc }
+    where: {
+      parameter: {
+        configuration_parameters: {
+          configuration: {
+            _or: [
+              { software_version_id: { _is_null: false }, _not: { child_configurations: {} } }
+              { parent_configuration: { software_version_id: { _is_null: false } } }
+            ]
+          }
+        }
+      }
+    }
+  ) {
+    parameter_id
+    variable_id
+    variable {
+      id
+      standard_variable {
+        id
+        label
+        description
+      }
+    }
+  }
+}
