@@ -494,5 +494,83 @@ class OwnerGrantTests(unittest.TestCase):
         self.assertEqual(grant.call_args.args[1], list(deploy.ORDER))
 
 
+class UiAuthSyncTests(unittest.TestCase):
+    def setUp(self):
+        self.env = patch.dict(os.environ, {}, clear=True)
+        self.env.start()
+        self.addCleanup(self.env.stop)
+        self.spec = deploy.build_specs("mintproject", "sha-new", "https://portals.tapis.io")["ui"]
+        self.allowed = self.spec["networking"]["default"]["tapis_auth_allowed_users"]
+
+    def _converged(self):
+        return {"networking": {"default": {"tapis_auth_allowed_users": list(self.allowed)}}}
+
+    def test_sync_keeps_the_running_image(self):
+        running = {"image": "ghcr.io/mintproject/ui:sha-old"}
+        t = Mock()
+        t.pods.get_pod.side_effect = [running, self._converged()]
+        rc = deploy.sync_ui_auth(t, self.spec)
+        self.assertEqual(rc, 0)
+        sent = t.pods.update_pod.call_args.kwargs
+        self.assertEqual(sent["image"], "ghcr.io/mintproject/ui:sha-old")
+        self.assertEqual(
+            sent["networking"]["default"]["tapis_auth_allowed_users"], self.allowed
+        )
+
+    def test_sync_never_starts_or_restarts_the_pod(self):
+        t = Mock()
+        t.pods.get_pod.side_effect = [{"image": "ghcr.io/mintproject/ui:sha-old"}, self._converged()]
+        deploy.sync_ui_auth(t, self.spec)
+        t.pods.restart_pod.assert_not_called()
+        t.pods.start_pod.assert_not_called()
+        t.pods.create_pod.assert_not_called()
+        t.pods.delete_pod.assert_not_called()
+
+    def test_sync_refuses_a_missing_pod(self):
+        missing = Exception()
+        missing.response = SimpleNamespace(status_code=404)
+        t = Mock()
+        t.pods.get_pod.side_effect = missing
+        with self.assertRaises(RuntimeError) as ctx:
+            deploy.sync_ui_auth(t, self.spec)
+        self.assertIn("will not create it", str(ctx.exception))
+        t.pods.update_pod.assert_not_called()
+
+    def test_sync_refuses_a_pod_without_an_image(self):
+        t = Mock()
+        t.pods.get_pod.return_value = {"image": ""}
+        with self.assertRaises(RuntimeError) as ctx:
+            deploy.sync_ui_auth(t, self.spec)
+        self.assertIn("refusing to rewrite", str(ctx.exception))
+        t.pods.update_pod.assert_not_called()
+
+    def test_sync_is_fail_closed_when_the_allowlist_does_not_converge(self):
+        stale = {"networking": {"default": {"tapis_auth_allowed_users": ["wmobley"]}}}
+        t = Mock()
+        t.pods.get_pod.side_effect = [{"image": "ghcr.io/mintproject/ui:sha-old"}, stale]
+        with self.assertRaises(RuntimeError) as ctx:
+            deploy.sync_ui_auth(t, self.spec)
+        self.assertIn("did not converge", str(ctx.exception))
+
+    def test_sync_rejects_lifecycle_options(self):
+        for extra in (["--restart"], ["--recreate"], ["--dry-run"], ["--set-owners-only"]):
+            with self.subTest(extra=extra):
+                with self.assertRaises(SystemExit):
+                    deploy.main(["--sync-ui-auth", *extra])
+
+    def test_sync_does_not_require_deploy_secrets(self):
+        with patch.object(deploy, "validate_live_requirements") as gate, patch.object(
+            deploy, "sync_ui_auth", return_value=0
+        ) as sync, patch.dict(
+            os.environ, {"TAPIS_USERNAME": "mosorio", "TAPIS_PASSWORD": "x"}, clear=True
+        ), patch.dict(
+            "sys.modules", {"tapipy": Mock(), "tapipy.tapis": Mock()}
+        ):
+            rc = deploy.main(["--sync-ui-auth"])
+        self.assertEqual(rc, 0)
+        gate.assert_not_called()
+        self.assertEqual(sync.call_args.args[1]["pod_id"], deploy.PODS["ui"])
+
+
 if __name__ == "__main__":
     unittest.main()
