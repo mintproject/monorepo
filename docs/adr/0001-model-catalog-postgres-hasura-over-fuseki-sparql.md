@@ -4,6 +4,7 @@
 - **Deciders:** MINT platform engineering (ISI)
 - **Supersedes:** the RDF triplestore data path (`model-catalog-endpoint` + `model-catalog-fastapi`)
 - **Amended:** 2026-08-29 — part 4 reversed, `v1.8.0` deprecated (see [Amendment](#amendment-2026-08-29-v180-deprecated))
+- **Amended:** 2026-09-12 — the `etl/` code is deleted from the repository (see [part 2](#2-a-one-time-python-etl-not-a-live-bridge))
 - **Related:** [ADR-0002](0002-react-frontend-replaces-litelement-ui.md), `.planning/_archive/2026-dynamo-v2/`
 
 ---
@@ -65,6 +66,11 @@ Software → SoftwareVersion → Configuration → Setup
 (`ON CONFLICT DO NOTHING`), so it is safe to rerun, and does two-pass loading for
 self-referential FKs (`region.part_of`, `model_category.parent_category`,
 `configuration.model_configuration_id`).
+
+> **2026-09-12:** `etl/` is deleted. The ETL ran once and the migration is finished.
+> Its TriG input was never in this repository, and the Fuseki endpoint it came from is
+> retired. To seed a database, restore `backups/production-backup.sql`. To read the
+> ETL code, run `git log -- etl/`.
 
 ### 3. REST survives as a facade over Hasura, in a new implementation
 

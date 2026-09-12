@@ -49,7 +49,7 @@ graph TD
     HASURA --> PG
 ```
 
-**Data flow:** Scientific model metadata is stored in PostgreSQL, exposed through Hasura GraphQL, and served to clients via a REST API that conforms to an OpenAPI specification. The ETL pipeline handles data migration from the legacy RDF triplestore into the relational database.
+**Data flow:** Scientific model metadata is stored in PostgreSQL, exposed through Hasura GraphQL, and served to clients via a REST API that conforms to an OpenAPI specification.
 
 ### Legacy Architecture (v1.x)
 
@@ -76,7 +76,7 @@ graph TD
     OWL -. "defines schema" .-> FUSEKI
 ```
 
-**Data flow:** Model metadata was authored as RDF (TriG format), loaded into Apache Jena Fuseki, and queried via SPARQL by the FastAPI-based REST API. The OWL ontology defined the schema for all model catalog entities. This architecture was replaced in v2.0 by the PostgreSQL + Hasura stack via an ETL migration pipeline.
+**Data flow:** Model metadata was authored as RDF (TriG format), loaded into Apache Jena Fuseki, and queried via SPARQL by the FastAPI-based REST API. The OWL ontology defined the schema for all model catalog entities. A one-time Python ETL replaced this architecture in v2.0 with the PostgreSQL + Hasura stack. The ETL is gone; see [ADR-0001](docs/adr/0001-model-catalog-postgres-hasura-over-fuseki-sparql.md).
 
 ## Repository Structure
 
@@ -88,7 +88,6 @@ The services live directly in this repository. It holds no submodules.
 | `mint-ensemble-manager/` | Model execution orchestration service | TypeScript, Express |
 | `ui-react/` | Web frontend (current) | TypeScript, React, Vite |
 | `graphql_engine/` | Hasura schema, migrations, and metadata | SQL, YAML |
-| `etl/` | One-time RDF-to-PostgreSQL migration. Complete | Python |
 | `knowledge-base/` | MINT domain wiki | Markdown |
 | `docs/` | Architecture decisions, runbooks, agent guides | Markdown |
 | `scripts/` | Deployment and maintenance utilities | Shell, SQL |
@@ -182,10 +181,8 @@ cd graphql_engine
 hasura migrate apply
 hasura metadata apply
 
-# Seed the catalog. This is the one-time RDF migration; the v2.0 platform does not
-# run it. The TriG file is not in this repository. Download it from
-# mintproject/model-catalog-endpoint at data/model-catalog.trig. See etl/README.md.
-python3 etl/run.py --trig-path <path>/model-catalog.trig
+# Seed the catalog from the committed dump
+psql -U hasura -d hasura -f backups/production-backup.sql
 ```
 
 ## License
