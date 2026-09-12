@@ -34,6 +34,18 @@ jobs:
       - name: Install deploy dependencies
         run: pip install tapipy python-dotenv
 
+      # A later step can fail and skip the pods it owns, so grant ADMIN on
+      # every pod first. This step only sets permissions.
+      - name: Grant pod owners on every existing pod
+        env:
+          TAPIS_USERNAME: ${{ secrets.TAPIS_USERNAME }}
+          TAPIS_ID: ${{ secrets.TAPIS_ID }}
+          TAPIS_PASSWORD: ${{ secrets.TAPIS_PASSWORD }}
+        run: >-
+          python deploy/tapis/register_mint_stack.py
+          --set-owners-only
+          --pods all
+
       - name: Update PostgreSQL and Hasura pod definitions
         env:
           TAPIS_USERNAME: ${{ secrets.TAPIS_USERNAME }}
