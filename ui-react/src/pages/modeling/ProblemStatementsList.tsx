@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@apollo/client';
 import { useNavigate } from 'react-router-dom';
-import { Pencil, Trash2, Plus, Search, X, ClipboardList } from 'lucide-react';
+import { Pencil, Trash2, Plus, Search, X, ClipboardList, MapPin } from 'lucide-react';
 
 import { LIST_TOP_REGIONS } from '@/graphql/queries/regions';
 
@@ -129,6 +129,7 @@ export function ProblemStatementsList({ regionId = 'DEFAULT' }: ProblemStatement
   const regions = useMemo(() => regionsData?.region ?? [], [regionsData]);
 
   const [selectedRegionId, setSelectedRegionId] = useState<string | undefined>(undefined);
+  const selectedRegionName = regions.find((r) => r.id === selectedRegionId)?.name ?? '';
 
   useEffect(() => {
     if (!selectedRegionId && regions.length > 0) {
@@ -320,54 +321,87 @@ export function ProblemStatementsList({ regionId = 'DEFAULT' }: ProblemStatement
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Problem Statements</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Choose an existing problem from the list below or click Add to create a new one.
+          Problem statements belong to a region. Choose a region, then pick a problem from the list
+          or click Add to create a new one.
         </p>
       </div>
 
-      {/* ── Search bar + Add button ──────────────────────────────────────── */}
-      <div className="flex items-center gap-3">
-        <div className="relative flex-1">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            id="ps-search"
-            placeholder="Search problem statements…"
-            value={filter}
-            onChange={(e) => setFilter(e.target.value)}
-            className="pl-9 pr-9"
-            aria-label="Search problem statements"
-          />
-          {filter && (
-            <button
-              type="button"
-              onClick={() => setFilter('')}
-              className="absolute right-2.5 top-2.5 text-muted-foreground hover:text-foreground"
-              aria-label="Clear search"
+      {/* ── Region scope + search + Add button ───────────────────────────── */}
+      {/* The region is the scope of the whole list, not a secondary filter.
+          It goes first, it carries a visible label, and the summary line
+          below repeats the region name so the scope is never a guess. */}
+      <div className="flex flex-col gap-3 rounded-lg border bg-muted/40 p-3 lg:flex-row lg:items-end">
+        <div className="flex flex-col gap-1.5 lg:w-[260px]">
+          <Label
+            htmlFor="ps-region-filter"
+            className="flex h-4 items-center gap-1.5 text-xs leading-none"
+          >
+            <MapPin className="h-3.5 w-3.5 text-emerald-700" aria-hidden />
+            Region
+          </Label>
+          <Select
+            value={selectedRegionId ?? ''}
+            onValueChange={(v) => setSelectedRegionId(v)}
+            disabled={regions.length === 0}
+          >
+            <SelectTrigger
+              id="ps-region-filter"
+              className="bg-background font-medium"
+              aria-label="Filter by region"
             >
-              <X className="h-4 w-4" />
-            </button>
-          )}
+              <SelectValue placeholder="Select a region…" />
+            </SelectTrigger>
+            <SelectContent>
+              {regions.map((r) => (
+                <SelectItem key={r.id} value={r.id}>
+                  {r.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
-        <Select
-          value={selectedRegionId ?? ''}
-          onValueChange={(v) => setSelectedRegionId(v)}
-          disabled={regions.length === 0}
-        >
-          <SelectTrigger className="w-[180px]" aria-label="Filter by region">
-            <SelectValue placeholder="Region" />
-          </SelectTrigger>
-          <SelectContent>
-            {regions.map((r) => (
-              <SelectItem key={r.id} value={r.id}>
-                {r.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+
+        <div className="flex flex-1 flex-col gap-1.5">
+          <Label htmlFor="ps-search" className="flex h-4 items-center text-xs leading-none">
+            Search
+          </Label>
+          <div className="relative">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              id="ps-search"
+              placeholder="Search problem statements…"
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+              className="bg-background pl-9 pr-9"
+              aria-label="Search problem statements"
+            />
+            {filter && (
+              <button
+                type="button"
+                onClick={() => setFilter('')}
+                className="absolute right-2.5 top-2.5 text-muted-foreground hover:text-foreground"
+                aria-label="Clear search"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+        </div>
+
         <Button onClick={openAddDialog} aria-label="Add problem statement">
           <Plus className="mr-1.5 h-4 w-4" />
           Add
         </Button>
       </div>
+
+      {/* ── Scope summary ─────────────────────────────────────────────────── */}
+      {selectedRegionName && !loading && !error && (
+        <p className="-mt-3 text-sm text-muted-foreground" aria-live="polite">
+          {filtered.length} problem {filtered.length === 1 ? 'statement' : 'statements'} in{' '}
+          <span className="font-medium text-foreground">{selectedRegionName}</span>
+          {filter && <> that match “{filter}”</>}
+        </p>
+      )}
 
       {/* ── Error ────────────────────────────────────────────────────────── */}
       {error && (
@@ -389,11 +423,15 @@ export function ProblemStatementsList({ regionId = 'DEFAULT' }: ProblemStatement
       {!loading && filtered.length === 0 && (
         <EmptyState
           icon={<ClipboardList className="h-10 w-10 opacity-40" />}
-          title={filter ? 'No matches' : 'No problem statements yet'}
+          title={
+            filter
+              ? 'No matches'
+              : `No problem statements in ${selectedRegionName || 'this region'}`
+          }
           description={
             filter
-              ? 'No problem statements match your search.'
-              : 'Click Add to create your first problem statement.'
+              ? `No problem statement in ${selectedRegionName || 'this region'} matches your search. Clear the search or choose another region.`
+              : 'Choose another region, or click Add to create the first problem statement here.'
           }
         />
       )}
