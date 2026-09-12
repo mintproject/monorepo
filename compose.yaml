@@ -7,8 +7,9 @@
 # `compose/README.md` is the guide. Read it first.
 #
 # Ports on the host: ui-react 3000, Ensemble Manager 3001, model-catalog-api
-# 3002, Hasura 8080, Postgres 5432, Redis 6379. The auth webhook has no
-# published port. Hasura reaches it on the compose network.
+# 3002, Hasura 8082, svo-adapter 8090, semantic-search 8091, Redis 6380.
+# Postgres and the auth webhook publish no port. The other services reach them
+# on the compose network.
 #
 # `ui-react` is behind the `ui` profile, because the default way to run it is on
 # the host with Vite. `docker compose --profile ui up` starts the container way
@@ -44,7 +45,12 @@ services:
     # no host mapping is required.
     ports: []
     volumes:
-      - postgres-data:/var/lib/postgresql/data
+      # The volume name carries the major version. Postgres refuses a data
+      # directory from another major version, and the container then exits 1
+      # with "database files are incompatible with server". A new major version
+      # must take a new volume name, so the old data stays on disk and the
+      # stack still starts.
+      - postgres-data-16:/var/lib/postgresql/data
     healthcheck:
       # -h 127.0.0.1 forces a TCP check. Without it `pg_isready` uses the unix
       # socket and reports ready during initdb, while the entrypoint's temporary
@@ -396,10 +402,13 @@ services:
     environment:
       SVO_ADAPTER_HASURA_GRAPHQL_URL: http://hasura:8080/v1/graphql
       SVO_ADAPTER_HASURA_ADMIN_SECRET: ${HASURA_GRAPHQL_ADMIN_SECRET:-mint}
+    # The image runs `uvicorn --port 8090`, so the container port is 8090, not
+    # 8000. A mapping to 8000 publishes a closed port and the healthcheck never
+    # passes.
     ports:
-      - "8090:8000"
+      - "8090:8090"
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8090/health')"]
       interval: 10s
       timeout: 5s
       retries: 12
@@ -412,6 +421,13 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      # The schema, then the catalog rows. The service queries
+      # `modelcatalog_standard_variable` as it starts, so both one-shot
+      # services must finish first.
+      hasura-init:
+        condition: service_completed_successfully
+      fixture-load:
+        condition: service_completed_successfully
     environment:
       DATABASE_URL: postgresql://mint:mint@postgres:5432/mint
       SVO_EMBEDDING_REFRESH_SECONDS: ${SVO_EMBEDDING_REFRESH_SECONDS:-60}
@@ -425,4 +441,4 @@ services:
       start_period: 30s
 
 volumes:
-  postgres-data:
+  postgres-data-16:
