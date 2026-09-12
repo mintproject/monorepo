@@ -45,7 +45,7 @@ describe('AppHome', () => {
       'href',
       '/datasets/search',
     );
-    expect(screen.getByRole('link', { name: /pick a region on the map/i })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: /browse regions/i })).toHaveAttribute(
       'href',
       '/regions',
     );

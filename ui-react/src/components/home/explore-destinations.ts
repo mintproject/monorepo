@@ -48,7 +48,7 @@ export const EXPLORE_DESTINATIONS: ExploreDestination[] = [
     title: 'Regions',
     description:
       'River basins, administrative areas and agricultural zones — and the models and data attached to each one.',
-    action: 'Pick a region on the map',
+    action: 'Browse regions',
   },
   {
     key: 'variables',
