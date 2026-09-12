@@ -43,7 +43,7 @@ frontend migration is not what moved the data. Do not describe one as a phase of
 | Query | SPARQL `.rq` templates per type | GraphQL (Hasura) |
 | API | `model-catalog-fastapi` (Python) `v1.8.0` | `model-catalog-api` (TS/Fastify) `v2.0.0` |
 | Client | `@mintproject/modelcatalog_client` SDK | GraphQL, or REST facade |
-| Load | — | `etl/run.py`, TriG → Postgres, idempotent |
+| Load | — | `etl/run.py`, TriG → Postgres, idempotent (code removed after the migration) |
 
 **`v1.8.0` is deprecated (2026-08-29).** The `model-catalog-fastapi` repo is archived and
 unmaintained; `v2.0.0` is the only maintained REST API. Fuseki itself is disabled in the

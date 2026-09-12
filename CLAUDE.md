@@ -20,7 +20,6 @@ there. A plain `git clone` is complete; there is nothing to `git submodule updat
 | `mint-ensemble-manager/` | Execution orchestration | TypeScript/Express | yes |
 | `ui-react/` | Frontend (current) | TypeScript/React + Vite | yes |
 | `graphql_engine/` | Hasura schema, migrations, metadata | SQL/YAML | - |
-| `etl/` | One-time RDF-to-PostgreSQL migration. Complete | Python | - |
 | `knowledge-base/` | MINT domain wiki | Markdown | yes |
 | `docs/` | ADRs, runbooks, agent guides | Markdown | - |
 | `scripts/` | Deployment and maintenance utilities | Shell/SQL | - |
@@ -54,7 +53,7 @@ there. A plain `git clone` is complete; there is nothing to `git submodule updat
 
 ## Architecture
 
-**Data flow:** TriG (RDF) -> ETL (Python) -> PostgreSQL -> Hasura GraphQL -> REST APIs
+**Data flow:** PostgreSQL -> Hasura GraphQL -> REST APIs
 
 **model-catalog-api request path:**
 ```
@@ -112,21 +111,15 @@ yarn test                           # Jest
 yarn build                          # Production build
 ```
 
-### ETL Pipeline
-This moved the catalog from RDF/Fuseki to PostgreSQL. **The migration is finished.**
-Nothing in a deployment runs it. It survives to seed a new database, to reload after a
-schema change, and to audit the migration. See `etl/README.md`.
-
-The TriG source file is not in this repository, and the Fuseki endpoint it came from is
-retired. Download it from
-[`mintproject/model-catalog-endpoint`](https://github.com/mintproject/model-catalog-endpoint)
-at `data/model-catalog.trig`, then pass the path. Prefer the wrappers in `scripts/`; they
-handle credentials and take a backup first.
+### Seed a database
+Restore the committed dump. It holds the migrated model catalog.
 ```bash
-python3 etl/run.py --trig-path <path>/model-catalog.trig
-python3 etl/run.py --trig-path ... --clear    # Truncate first
-python3 etl/run.py --validate-only            # Validation only
+psql -U hasura -d hasura -f backups/production-backup.sql
 ```
+
+The RDF-to-PostgreSQL ETL is gone. It ran once for DYNAMO v2.0 and the migration is
+finished. Read [ADR-0001](docs/adr/0001-model-catalog-postgres-hasura-over-fuseki-sparql.md)
+for the decision, and `git log -- etl/` for the code.
 
 ### Hasura Migrations
 ```bash
@@ -139,7 +132,6 @@ hasura metadata reload
 
 ## Key Implementation Details
 
-- **ETL idempotency:** Uses ON CONFLICT DO NOTHING; safe to rerun. Self-referential FKs require two-pass loading.
 - **Junction tables:** FK-pair-only junction tables get insert+delete only (no update). Entity tables get full CRUD.
 - **username parameter:** Accepted but ignored (no user_id column in modelcatalog_* tables).
 - **Nested writes (Phase 3):** PUT/POST handle junction relationships via delete-then-insert for updates, nested inserts for creates. See `buildJunctionInserts` in model-catalog-api.
