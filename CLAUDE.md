@@ -139,7 +139,7 @@ hasura metadata reload
 
 ## Migration Context
 
-See `.planning/PROJECT.md` for full migration status and decisions. Key points:
+See `docs/MIGRATION-CONTEXT.md` for full migration status and decisions. Key points:
 - v2.0.0 API is the only maintained REST API; legacy v1.8.0 (`model-catalog-fastapi`) is archived
 - Old model/model_io/model_parameter tables kept for FK compatibility
 
