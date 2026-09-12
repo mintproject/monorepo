@@ -131,6 +131,88 @@ describe('ModelsStep', () => {
     expect(screen.getByTestId('filtered-by-banner')).toHaveTextContent(/1 of 2/i);
   });
 
+  // ── An indicator that reaches nothing (monorepo#103) ──────────────────────
+  //
+  // The Variables step now offers producible indicators only, so an empty list
+  // means a STORED value: a thread saved before that rule, or one whose model
+  // lost its output. A bare "No models found." gives the user no way to act.
+
+  it('names the indicator that empties the list, instead of "No models found."', async () => {
+    renderWithProviders(
+      <ModelsStep
+        thread={makeThread({
+          response_variable_id: 'https://w3id.org/okn/i/mint/DEAD_MOISTURE',
+          response_variable: {
+            __typename: 'modelcatalog_standard_variable',
+            id: 'https://w3id.org/okn/i/mint/DEAD_MOISTURE',
+            label: '100hr_dead_moisture',
+          },
+        })}
+        onUpdated={vi.fn()}
+        onContinue={vi.fn()}
+        onBack={vi.fn()}
+      />,
+      { apolloMocks: [treeMock] },
+    );
+    expect(await screen.findByText(/no model produces/i)).toHaveTextContent('100hr_dead_moisture');
+    expect(screen.queryByText('No models found.')).not.toBeInTheDocument();
+  });
+
+  it('prints the indicator label, never its URI', async () => {
+    renderWithProviders(
+      <ModelsStep
+        thread={makeThread({
+          response_variable_id: 'https://w3id.org/okn/i/mint/DEAD_MOISTURE',
+          response_variable: {
+            __typename: 'modelcatalog_standard_variable',
+            id: 'https://w3id.org/okn/i/mint/DEAD_MOISTURE',
+            label: '100hr_dead_moisture',
+          },
+        })}
+        onUpdated={vi.fn()}
+        onContinue={vi.fn()}
+        onBack={vi.fn()}
+      />,
+      { apolloMocks: [treeMock] },
+    );
+    await screen.findByText(/no model produces/i);
+    expect(screen.queryByText(/w3id\.org/)).not.toBeInTheDocument();
+  });
+
+  it('offers a way back to the Variables step when the indicator reaches nothing', async () => {
+    const onEditIndicator = vi.fn();
+    renderWithProviders(
+      <ModelsStep
+        thread={makeThread({ response_variable_id: 'sv-nothing' })}
+        onUpdated={vi.fn()}
+        onContinue={vi.fn()}
+        onBack={vi.fn()}
+        onEditIndicator={onEditIndicator}
+      />,
+      { apolloMocks: [treeMock] },
+    );
+    await userEvent.click(
+      await screen.findByRole('button', { name: /choose a different indicator/i }),
+    );
+    expect(onEditIndicator).toHaveBeenCalled();
+  });
+
+  // A search that matches nothing is a different fault and keeps its own words.
+  it('still reports an empty search separately from an empty indicator', async () => {
+    renderWithProviders(
+      <ModelsStep
+        thread={makeThread({ response_variable_id: 'sv-flood' })}
+        onUpdated={vi.fn()}
+        onContinue={vi.fn()}
+        onBack={vi.fn()}
+      />,
+      { apolloMocks: [treeMock] },
+    );
+    await screen.findByText('PIHM Flood A');
+    await userEvent.type(screen.getByPlaceholderText(/filter models/i), 'zzzz');
+    expect(await screen.findByText('No models match your search.')).toBeInTheDocument();
+  });
+
   it('gates Continue on >=1 selected model', async () => {
     renderWithProviders(
       <ModelsStep

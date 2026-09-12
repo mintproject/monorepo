@@ -26504,6 +26504,16 @@ export type GetModelFamiliesQueryVariables = Exact<{ [key: string]: never; }>;
 
 export type GetModelFamiliesQuery = { __typename?: 'query_root', modelcatalog_software: Array<{ __typename?: 'modelcatalog_software', id: string, label: string, versions: Array<{ __typename?: 'modelcatalog_software_version', id: string, label: string, version_id?: string | null }> }> };
 
+export type GetIndicatorVariableOptionsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetIndicatorVariableOptionsQuery = { __typename?: 'query_root', modelcatalog_dataset_specification_presentation: Array<{ __typename?: 'modelcatalog_dataset_specification_presentation', dataset_specification_id: string, presentation_id: string, presentation: { __typename?: 'modelcatalog_variable_presentation', id: string, standard_variable?: { __typename?: 'modelcatalog_standard_variable', id: string, label: string, description?: string | null } | null } }> };
+
+export type GetDriverVariableOptionsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetDriverVariableOptionsQuery = { __typename?: 'query_root', inputs: Array<{ __typename?: 'modelcatalog_dataset_specification_presentation', dataset_specification_id: string, presentation_id: string, presentation: { __typename?: 'modelcatalog_variable_presentation', id: string, standard_variable?: { __typename?: 'modelcatalog_standard_variable', id: string, label: string, description?: string | null } | null } }>, adjusted: Array<{ __typename?: 'modelcatalog_parameter_adjusts_variable', parameter_id: string, variable_id: string, variable: { __typename?: 'modelcatalog_variable_presentation', id: string, standard_variable?: { __typename?: 'modelcatalog_standard_variable', id: string, label: string, description?: string | null } | null } }> };
+
 export type ListTopRegionsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
@@ -28265,6 +28275,132 @@ export type GetModelFamiliesQueryHookResult = ReturnType<typeof useGetModelFamil
 export type GetModelFamiliesLazyQueryHookResult = ReturnType<typeof useGetModelFamiliesLazyQuery>;
 export type GetModelFamiliesSuspenseQueryHookResult = ReturnType<typeof useGetModelFamiliesSuspenseQuery>;
 export type GetModelFamiliesQueryResult = Apollo.QueryResult<GetModelFamiliesQuery, GetModelFamiliesQueryVariables>;
+export const GetIndicatorVariableOptionsDocument = gql`
+    query GetIndicatorVariableOptions {
+  modelcatalog_dataset_specification_presentation(
+    distinct_on: presentation_id
+    order_by: {presentation_id: asc}
+    where: {dataset_specification: {configuration_outputs: {configuration: {_or: [{software_version_id: {_is_null: false}, _not: {child_configurations: {}}}, {parent_configuration: {software_version_id: {_is_null: false}}}]}}}}
+  ) {
+    dataset_specification_id
+    presentation_id
+    presentation {
+      id
+      standard_variable {
+        id
+        label
+        description
+      }
+    }
+  }
+}
+    `;
+
+/**
+ * __useGetIndicatorVariableOptionsQuery__
+ *
+ * To run a query within a React component, call `useGetIndicatorVariableOptionsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetIndicatorVariableOptionsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetIndicatorVariableOptionsQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useGetIndicatorVariableOptionsQuery(baseOptions?: Apollo.QueryHookOptions<GetIndicatorVariableOptionsQuery, GetIndicatorVariableOptionsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetIndicatorVariableOptionsQuery, GetIndicatorVariableOptionsQueryVariables>(GetIndicatorVariableOptionsDocument, options);
+      }
+export function useGetIndicatorVariableOptionsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetIndicatorVariableOptionsQuery, GetIndicatorVariableOptionsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetIndicatorVariableOptionsQuery, GetIndicatorVariableOptionsQueryVariables>(GetIndicatorVariableOptionsDocument, options);
+        }
+// @ts-ignore
+export function useGetIndicatorVariableOptionsSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetIndicatorVariableOptionsQuery, GetIndicatorVariableOptionsQueryVariables>): Apollo.UseSuspenseQueryResult<GetIndicatorVariableOptionsQuery, GetIndicatorVariableOptionsQueryVariables>;
+export function useGetIndicatorVariableOptionsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetIndicatorVariableOptionsQuery, GetIndicatorVariableOptionsQueryVariables>): Apollo.UseSuspenseQueryResult<GetIndicatorVariableOptionsQuery | undefined, GetIndicatorVariableOptionsQueryVariables>;
+export function useGetIndicatorVariableOptionsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetIndicatorVariableOptionsQuery, GetIndicatorVariableOptionsQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetIndicatorVariableOptionsQuery, GetIndicatorVariableOptionsQueryVariables>(GetIndicatorVariableOptionsDocument, options);
+        }
+export type GetIndicatorVariableOptionsQueryHookResult = ReturnType<typeof useGetIndicatorVariableOptionsQuery>;
+export type GetIndicatorVariableOptionsLazyQueryHookResult = ReturnType<typeof useGetIndicatorVariableOptionsLazyQuery>;
+export type GetIndicatorVariableOptionsSuspenseQueryHookResult = ReturnType<typeof useGetIndicatorVariableOptionsSuspenseQuery>;
+export type GetIndicatorVariableOptionsQueryResult = Apollo.QueryResult<GetIndicatorVariableOptionsQuery, GetIndicatorVariableOptionsQueryVariables>;
+export const GetDriverVariableOptionsDocument = gql`
+    query GetDriverVariableOptions {
+  inputs: modelcatalog_dataset_specification_presentation(
+    distinct_on: presentation_id
+    order_by: {presentation_id: asc}
+    where: {dataset_specification: {configuration_inputs: {configuration: {_or: [{software_version_id: {_is_null: false}, _not: {child_configurations: {}}}, {parent_configuration: {software_version_id: {_is_null: false}}}]}}}}
+  ) {
+    dataset_specification_id
+    presentation_id
+    presentation {
+      id
+      standard_variable {
+        id
+        label
+        description
+      }
+    }
+  }
+  adjusted: modelcatalog_parameter_adjusts_variable(
+    distinct_on: variable_id
+    order_by: {variable_id: asc}
+    where: {parameter: {configuration_parameters: {configuration: {_or: [{software_version_id: {_is_null: false}, _not: {child_configurations: {}}}, {parent_configuration: {software_version_id: {_is_null: false}}}]}}}}
+  ) {
+    parameter_id
+    variable_id
+    variable {
+      id
+      standard_variable {
+        id
+        label
+        description
+      }
+    }
+  }
+}
+    `;
+
+/**
+ * __useGetDriverVariableOptionsQuery__
+ *
+ * To run a query within a React component, call `useGetDriverVariableOptionsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetDriverVariableOptionsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetDriverVariableOptionsQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useGetDriverVariableOptionsQuery(baseOptions?: Apollo.QueryHookOptions<GetDriverVariableOptionsQuery, GetDriverVariableOptionsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetDriverVariableOptionsQuery, GetDriverVariableOptionsQueryVariables>(GetDriverVariableOptionsDocument, options);
+      }
+export function useGetDriverVariableOptionsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetDriverVariableOptionsQuery, GetDriverVariableOptionsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetDriverVariableOptionsQuery, GetDriverVariableOptionsQueryVariables>(GetDriverVariableOptionsDocument, options);
+        }
+// @ts-ignore
+export function useGetDriverVariableOptionsSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetDriverVariableOptionsQuery, GetDriverVariableOptionsQueryVariables>): Apollo.UseSuspenseQueryResult<GetDriverVariableOptionsQuery, GetDriverVariableOptionsQueryVariables>;
+export function useGetDriverVariableOptionsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetDriverVariableOptionsQuery, GetDriverVariableOptionsQueryVariables>): Apollo.UseSuspenseQueryResult<GetDriverVariableOptionsQuery | undefined, GetDriverVariableOptionsQueryVariables>;
+export function useGetDriverVariableOptionsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetDriverVariableOptionsQuery, GetDriverVariableOptionsQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetDriverVariableOptionsQuery, GetDriverVariableOptionsQueryVariables>(GetDriverVariableOptionsDocument, options);
+        }
+export type GetDriverVariableOptionsQueryHookResult = ReturnType<typeof useGetDriverVariableOptionsQuery>;
+export type GetDriverVariableOptionsLazyQueryHookResult = ReturnType<typeof useGetDriverVariableOptionsLazyQuery>;
+export type GetDriverVariableOptionsSuspenseQueryHookResult = ReturnType<typeof useGetDriverVariableOptionsSuspenseQuery>;
+export type GetDriverVariableOptionsQueryResult = Apollo.QueryResult<GetDriverVariableOptionsQuery, GetDriverVariableOptionsQueryVariables>;
 export const ListTopRegionsDocument = gql`
     query ListTopRegions {
   region(where: {parent_region_id: {_is_null: true}}, order_by: {name: asc}) {

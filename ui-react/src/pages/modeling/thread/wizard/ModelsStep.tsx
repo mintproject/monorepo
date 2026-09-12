@@ -14,6 +14,7 @@ import {
 } from '@/graphql/generated/modeling';
 import { useAuth } from '@/lib/auth/useAuth';
 import { diffThreadModels } from '@/lib/thread-models';
+import { slugFromUri } from '@/lib/uri';
 import { useToast } from '@/components/ui/use-toast';
 import { cn } from '@/lib/utils';
 import { StepShell } from './StepShell';
@@ -146,6 +147,10 @@ export function ModelsStep({
   const totalCount = allRows.length;
 
   const indicator = thread.response_variable_id ?? null;
+  // The stored id is a standard-variable URI (#106), which is unreadable, so
+  // prefer the label the relationship carries. A thread whose relationship did
+  // not resolve falls back to the URI's trailing slug — never the whole URI.
+  const indicatorLabel = thread.response_variable?.label ?? (indicator && slugFromUri(indicator));
   const indicatorRows = useMemo(
     () => (indicator ? allRows.filter((r) => r.producesIds.includes(indicator)) : allRows),
     [allRows, indicator],
@@ -224,7 +229,7 @@ export function ModelsStep({
             icon: '🎯',
             label: 'Indicator',
             value: `${indicatorRows.length} of ${totalCount} models`,
-            source: indicator,
+            source: indicatorLabel ?? undefined,
           },
         ],
       }
@@ -275,9 +280,36 @@ export function ModelsStep({
       {!loading && !error && (
         <div className="space-y-2">
           {displayedRows.length === 0 ? (
-            <p className="py-6 text-center text-sm text-gray-400">
-              {searchText ? 'No models match your search.' : 'No models found.'}
-            </p>
+            <div className="py-6 text-center text-sm text-gray-400">
+              {searchText ? (
+                'No models match your search.'
+              ) : indicator && indicatorRows.length === 0 ? (
+                // The Variables step now offers only producible indicators, so
+                // this is reachable for a stored value alone — a thread saved
+                // before that rule, or one whose model lost its output. Say
+                // which choice empties the list, rather than a bare "none".
+                <>
+                  <p className="text-gray-600">
+                    No model produces <strong>{indicatorLabel}</strong>.
+                  </p>
+                  <p className="mt-1 text-xs">
+                    This sub-task stores it as its indicator, but no configuration in the catalog
+                    carries it as an output.
+                  </p>
+                  {onEditIndicator && (
+                    <button
+                      type="button"
+                      onClick={onEditIndicator}
+                      className="mt-2 text-xs text-blue-600 underline"
+                    >
+                      Choose a different indicator
+                    </button>
+                  )}
+                </>
+              ) : (
+                'No models found.'
+              )}
+            </div>
           ) : (
             displayedRows.map((row) => (
               <ModelCard
