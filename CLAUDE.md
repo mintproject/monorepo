@@ -5,29 +5,36 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Project Overview
 
 MINT (Model INTegration) platform - a scientific modeling system. The services live
-directly in this repository; only `ui/` and `helm-charts/` are still git submodules. The
-project has completed the DYNAMO v2.0 migration: model catalog data moved from Apache
-Fuseki (RDF triplestore) to PostgreSQL with Hasura GraphQL.
+directly in this repository. **This repository holds no git submodules.** The project
+has completed the DYNAMO v2.0 migration: model catalog data moved from Apache Fuseki
+(RDF triplestore) to PostgreSQL with Hasura GraphQL.
 
 ## Repository Structure
 
 Directories marked in the last column carry their own `CLAUDE.md`. Read it before you work
-there. `ui/` and `helm-charts/` are submodules, so their files arrive only after
-`git submodule update --init`.
+there. A plain `git clone` is complete; there is nothing to `git submodule update`.
 
 | Directory | Purpose | Language | Own `CLAUDE.md` |
 |-----------|---------|----------|-----------------|
 | `model-catalog-api/` | REST API v2.0.0 backed by Hasura | TypeScript/Fastify | yes |
 | `mint-ensemble-manager/` | Execution orchestration | TypeScript/Express | yes |
 | `ui-react/` | Frontend (current) | TypeScript/React + Vite | yes |
-| `ui/` | Legacy frontend (deprecated). Submodule of `mintproject/mint-ui-lit` | TypeScript/LitElement | yes |
 | `graphql_engine/` | Hasura schema, migrations, metadata | SQL/YAML | - |
-| `etl/` | One-time RDF-to-PostgreSQL migration. Complete | Python | - |
 | `knowledge-base/` | MINT domain wiki | Markdown | yes |
 | `docs/` | ADRs, runbooks, agent guides | Markdown | - |
 | `scripts/` | Deployment and maintenance utilities | Shell/SQL | - |
 | `backups/` | Committed PostgreSQL dump (23 MB) | SQL | - |
-| `helm-charts/` | Kubernetes deployment. Submodule of `mintproject/mint` | Helm | - |
+
+> **The MINT chart and `ui` are not here.** Both were submodule stubs. Both are gone
+> ([ADR-0004](docs/adr/0004-no-submodule-stubs-for-external-repositories.md)).
+>
+> - **The MINT chart** — [`mintproject/mint`](https://github.com/mintproject/mint),
+>   published at `https://mintproject.github.io/mint` (chart name `MINT`). It has
+>   external consumers, so it stays external. Install it from the Helm repository.
+>   `dynamo` pins the deployed version; nothing in this repository does.
+> - **`ui`**, the deprecated LitElement frontend —
+>   [`mintproject/mint-ui-lit`](https://github.com/mintproject/mint-ui-lit), removed
+>   from TACC by [#81](https://github.com/mintproject/monorepo/issues/81).
 
 > **Four repositories left this checkout in the single-repo cutover**
 > ([#146](https://github.com/mintproject/monorepo/issues/146)):
@@ -46,7 +53,7 @@ there. `ui/` and `helm-charts/` are submodules, so their files arrive only after
 
 ## Architecture
 
-**Data flow:** TriG (RDF) -> ETL (Python) -> PostgreSQL -> Hasura GraphQL -> REST APIs
+**Data flow:** PostgreSQL -> Hasura GraphQL -> REST APIs
 
 **model-catalog-api request path:**
 ```
@@ -93,29 +100,26 @@ npm run codegen                     # GraphQL type generation (needs HASURA_ADMI
 ```
 
 ### UI (ui — deprecated LitElement frontend)
-Only touch this for maintenance of the old app; new frontend work goes in `ui-react/`.
+Not in this repository. Clone
+[`mintproject/mint-ui-lit`](https://github.com/mintproject/mint-ui-lit) separately, and
+only for maintenance of the old app. New frontend work goes in `ui-react/`.
 ```bash
-cd ui
+git clone https://github.com/mintproject/mint-ui-lit.git
+cd mint-ui-lit
 yarn install && yarn start          # Development with hot reload
 yarn test                           # Jest
 yarn build                          # Production build
 ```
 
-### ETL Pipeline
-This moved the catalog from RDF/Fuseki to PostgreSQL. **The migration is finished.**
-Nothing in a deployment runs it. It survives to seed a new database, to reload after a
-schema change, and to audit the migration. See `etl/README.md`.
-
-The TriG source file is not in this repository, and the Fuseki endpoint it came from is
-retired. Download it from
-[`mintproject/model-catalog-endpoint`](https://github.com/mintproject/model-catalog-endpoint)
-at `data/model-catalog.trig`, then pass the path. Prefer the wrappers in `scripts/`; they
-handle credentials and take a backup first.
+### Seed a database
+Restore the committed dump. It holds the migrated model catalog.
 ```bash
-python3 etl/run.py --trig-path <path>/model-catalog.trig
-python3 etl/run.py --trig-path ... --clear    # Truncate first
-python3 etl/run.py --validate-only            # Validation only
+psql -U hasura -d hasura -f backups/production-backup.sql
 ```
+
+The RDF-to-PostgreSQL ETL is gone. It ran once for DYNAMO v2.0 and the migration is
+finished. Read [ADR-0001](docs/adr/0001-model-catalog-postgres-hasura-over-fuseki-sparql.md)
+for the decision, and `git log -- etl/` for the code.
 
 ### Hasura Migrations
 ```bash
@@ -128,7 +132,6 @@ hasura metadata reload
 
 ## Key Implementation Details
 
-- **ETL idempotency:** Uses ON CONFLICT DO NOTHING; safe to rerun. Self-referential FKs require two-pass loading.
 - **Junction tables:** FK-pair-only junction tables get insert+delete only (no update). Entity tables get full CRUD.
 - **username parameter:** Accepted but ignored (no user_id column in modelcatalog_* tables).
 - **Nested writes (Phase 3):** PUT/POST handle junction relationships via delete-then-insert for updates, nested inserts for creates. See `buildJunctionInserts` in model-catalog-api.
@@ -136,7 +139,7 @@ hasura metadata reload
 
 ## Migration Context
 
-See `.planning/PROJECT.md` for full migration status and decisions. Key points:
+See `docs/MIGRATION-CONTEXT.md` for full migration status and decisions. Key points:
 - v2.0.0 API is the only maintained REST API; legacy v1.8.0 (`model-catalog-fastapi`) is archived
 - Old model/model_io/model_parameter tables kept for FK compatibility
 
@@ -175,4 +178,4 @@ Single-context: `CONTEXT.md` and `docs/adr/` at the repo root. See `docs/agents/
 
 ### Kubernetes dev instance
 
-Shared MicroK8s cluster: kubectl context `microk8s`, namespace `mint`, helm release `mint` (NOT `testing-mint`, despite `helm-charts/README.md`). Every branch push builds a deployable image, so a branch can be tested before merge. Use the `test-on-k8s-dev` skill.
+Shared MicroK8s cluster: kubectl context `microk8s`, namespace `mint`, helm release `mint` (NOT `testing-mint`, despite the chart's own README). Every branch push builds a deployable image, so a branch can be tested before merge. Use the `test-on-k8s-dev` skill.

@@ -1,0 +1,20 @@
+{
+  "package": {
+    "name": "svo-adapter-etl-test-data",
+    "title": "SVO Adapter ETL test heads",
+    "notes": "Small deterministic fixture for testing a user-registered SVO ETL function.",
+    "owner_org": "twdb-gams"
+  },
+  "resources": [
+    {
+      "name": "heads.csv",
+      "path": "heads.csv",
+      "format": "CSV",
+      "mint_standard_variables": "groundwater__hydraulic_head",
+      "unit": "m",
+      "description": "Two synthetic groundwater hydraulic-head records."
+    }
+  ],
+  "dry_run": true,
+  "note": "Validate this manifest before an explicitly approved CKAN package/resource write."
+}

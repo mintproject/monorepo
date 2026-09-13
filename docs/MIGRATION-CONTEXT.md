@@ -43,7 +43,7 @@ frontend migration is not what moved the data. Do not describe one as a phase of
 | Query | SPARQL `.rq` templates per type | GraphQL (Hasura) |
 | API | `model-catalog-fastapi` (Python) `v1.8.0` | `model-catalog-api` (TS/Fastify) `v2.0.0` |
 | Client | `@mintproject/modelcatalog_client` SDK | GraphQL, or REST facade |
-| Load | — | `etl/run.py`, TriG → Postgres, idempotent |
+| Load | — | `etl/run.py`, TriG → Postgres, idempotent (code removed after the migration) |
 
 **`v1.8.0` is deprecated (2026-08-29).** The `model-catalog-fastapi` repo is archived and
 unmaintained; `v2.0.0` is the only maintained REST API. Fuseki itself is disabled in the
@@ -126,8 +126,10 @@ deliberately (PR #60).
   `docker/nginx.conf`); Vite bundle built once via `$BUILDPLATFORM` to keep arm64 off QEMU.
 - `helm-charts` `9.0.0-beta.3` adds an **opt-in, disabled-by-default `ui_react` component**
   deriving endpoints from other components' ingress declarations. Legacy `ui` untouched.
-- ⚠️ **The `helm-charts` submodule pointer here is still `9.0.0-beta.2`** — the `ui_react`
-  component is not reachable from the monorepo until it is bumped.
+- `9.0.0-beta.9` inverts that: legacy `ui` is off by default. `9.0.0-beta.10` then turns
+  `ui_react` **on** by default, at host `mint.local` with `client_id: mint-local`. This
+  repository pins no chart. `9.0.0-beta.10` is the published release, and it is what
+  `CHART_VERSION` installs, so a bare install serves the React UI.
 - Runtime config: nested `window.__MINT_CONFIG__`, one generator shared by Vercel
   (build time) and the container entrypoint (startup). The Lit app's flat
   `window.REACT_APP_*` contract is incompatible.

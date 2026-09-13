@@ -10,34 +10,49 @@ interface HeaderProps {
   onToggleSidebar: () => void;
 }
 
+/**
+ * The app bar, painted in the dark chrome the Lit app ships: #222 at 50px, a
+ * #7F7F7F rule below it, Roboto 13px.
+ *
+ * The controls carry their own chrome colours rather than the shadcn variants,
+ * which are built for the light surface below: a `primary` button on #222 is a
+ * dark shape on a dark bar. The Sidebar stays light.
+ */
 export function Header({ sidebarCollapsed, onToggleSidebar }: HeaderProps) {
   const { isAuthenticated, user, login, logout } = useAuth();
 
   return (
-    <header className="flex h-14 shrink-0 items-center justify-between border-b bg-background px-4">
+    <header
+      className={cn(
+        'mint-chrome flex h-[50px] shrink-0 items-center justify-between px-4',
+        'border-b border-[color:var(--mint-chrome-rule)] bg-[color:var(--mint-chrome-bg)]',
+        'font-[family-name:var(--mint-chrome-font)] text-[13px] text-[color:var(--mint-chrome-fg)]',
+      )}
+    >
       <div className="flex items-center gap-3">
         <Button
           variant="ghost"
           size="icon"
           aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           onClick={onToggleSidebar}
+          className="h-8 w-8 text-white hover:bg-white/10 hover:text-white"
         >
           <Menu className="h-5 w-5" />
         </Button>
-        <span className="text-lg font-semibold leading-none">MINT Model Catalog</span>
+        <span className="text-base font-medium leading-none">MINT Model Catalog</span>
       </div>
 
       <div className="flex items-center gap-3">
         {isAuthenticated ? (
           <>
             <UserAvatar username={user?.username} />
-            <span className="hidden text-sm text-muted-foreground sm:inline">{user?.username}</span>
-            <Button variant="outline" size="sm" onClick={logout}>
+            <span className="hidden text-[13px] text-white/70 sm:inline">{user?.username}</span>
+            <Button variant="outline" size="sm" onClick={logout} className={chromeButton}>
               Sign Out
             </Button>
           </>
         ) : (
-          <Button size="sm" onClick={login}>
+          <Button variant="outline" size="sm" onClick={login} className={chromeButton}>
             Sign In
           </Button>
         )}
@@ -45,6 +60,10 @@ export function Header({ sidebarCollapsed, onToggleSidebar }: HeaderProps) {
     </header>
   );
 }
+
+/** An outline button that reads on #222 instead of on the light surface. */
+const chromeButton =
+  'h-8 border-white/40 bg-transparent text-white hover:bg-white/10 hover:text-white';
 
 /** Simple initials-based avatar when no image is available. */
 function UserAvatar({ username }: { username?: string }) {
@@ -55,7 +74,7 @@ function UserAvatar({ username }: { username?: string }) {
       aria-hidden="true"
       className={cn(
         'flex h-8 w-8 items-center justify-center rounded-full',
-        'select-none bg-primary text-xs font-medium text-primary-foreground',
+        'select-none bg-white/15 text-xs font-medium text-white',
       )}
     >
       {initials}

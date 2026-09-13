@@ -1,0 +1,151 @@
+{
+  "_about": "SUBSIDE WERC OPERA DISP-S1 pipeline modeled for the svo-adapter. SUBSIDE runs the whole WERC analysis as ONE monolithic Tapis job (STAGE=run on subside-werc-opera-analysis; see subside/tapis/workflows/pipelines/werc-opera.yaml). The adapter does NOT decompose that job — it submits it as a single step (run-werc), then chains the ETL/load tail (format-convert + publish + stac-publish) to make the output model-ready and discoverable. So a generated pipeline is: [one Tapis job] -> [adapter ETL transforms as the target needs] -> [catalog register]. Registry is in the shape app.hasura.TRANSFORM_REGISTRY_QUERY returns; `catalog` round-trips via transform_contract.metadata_json.",
+  "_svo": {
+    "displacement": "https://www.geoscienceontology.org/svo/svl/variable/land_surface__displacement",
+    "displacement_rate": "https://www.geoscienceontology.org/svo/svl/variable/land_surface__displacement_rate"
+  },
+
+  "transform_specs": [
+    {
+      "id": "ts-subside-run-werc",
+      "name": "run-werc",
+      "version": "0.1.1",
+      "description": "The full SUBSIDE WERC analysis as ONE Tapis job (discover + download + stack + reference + velocity + export, all in-process via STAGE=run). The adapter submits this unchanged.",
+      "transform_type": "subside_werc_run",
+      "is_lossy": true,
+      "method": "tapis_job",
+      "tapis_app_id": "subside-werc-opera-analysis",
+      "app_version": "0.1.1",
+      "stage": "run",
+      "container_image": "ghcr.io/wmobley/subside-werc-opera-analysis:main",
+      "env_from_args": {
+        "START_DATE": "start_date",
+        "END_DATE": "end_date",
+        "REFERENCE_MODE": "reference_mode",
+        "NUM_WORKERS": "num_workers",
+        "MIN_OVERLAP_PERCENT": "min_overlap_percent"
+      },
+      "file_inputs": [
+        {"name": "aoi-geojson", "from_arg": "aoi_geojson_uri", "target_path": "config/aoi.geojson"},
+        {"name": "earthdata-netrc", "from_arg": "earthdata_netrc_uri", "target_path": ".netrc"}
+      ],
+      "contracts": [
+        {
+          "id": "c-werc-in", "role": "input",
+          "standard_variable_uri": "https://www.geoscienceontology.org/svo/svl/variable/land_surface__displacement",
+          "format": "opera-disp-s1-cmr"
+        },
+        {
+          "id": "c-werc-out", "role": "output",
+          "standard_variable_uri": "https://www.geoscienceontology.org/svo/svl/variable/land_surface__displacement_rate",
+          "unit": "mm/yr",
+          "format": "geotiff",
+          "temporal_resolution": "rate"
+        }
+      ]
+    },
+    {
+      "id": "ts-adapter-format-convert",
+      "name": "format-convert",
+      "version": "1.0.0",
+      "description": "Generic adapter ETL: convert a raster between formats (e.g. GeoTIFF/COG <-> NetCDF) to match a model input. Runs as the pipeline tail, after the job.",
+      "transform_type": "format_convert",
+      "is_lossy": false,
+      "method": "tapis_function",
+      "tapis_app_id": null,
+      "stage": "format-convert",
+      "contracts": [
+        {"id": "c-fmt-in", "role": "input", "format": "geotiff"},
+        {"id": "c-fmt-out", "role": "output", "format": "netcdf"}
+      ]
+    },
+    {
+      "id": "ts-subside-publish",
+      "name": "publish",
+      "version": "0.1.1",
+      "description": "Emit the unified subside-run-manifest.json describing the run's products.",
+      "transform_type": "manifest_emit",
+      "is_lossy": false,
+      "method": "tapis_function",
+      "tapis_app_id": null,
+      "stage": "publish",
+      "contracts": [
+        {"id": "c-pub-in", "role": "input", "format": "geotiff"},
+        {"id": "c-pub-out", "role": "output", "format": "geotiff"}
+      ]
+    },
+    {
+      "id": "ts-subside-stac-publish",
+      "name": "stac-publish",
+      "version": "0.1.1",
+      "description": "Dual-write the product to the CKAN FileStore + the STAC API (stacmap.publish, the stac-platform backend) as one discoverable Item. The load step; shared by BOTH SUBSIDE pipelines.",
+      "transform_type": "catalog_register",
+      "is_lossy": false,
+      "method": "tapis_function",
+      "tapis_app_id": null,
+      "stage": "stac-publish",
+      "env_from_args": {
+        "STAC_URL": "stac_url",
+        "STAC_COLLECTION": "stac_collection",
+        "CKAN_URL": "ckan_url",
+        "CKAN_TOKEN": "ckan_token"
+      },
+      "contracts": [
+        {"id": "c-stac-in-cog", "role": "input", "format": "geotiff"},
+        {"id": "c-stac-in-nc", "role": "input", "format": "netcdf"},
+        {"id": "c-stac-in-prod", "role": "input", "format": "displacement-product"},
+        {"id": "c-stac-out", "role": "output", "catalog": "ckan+stac"}
+      ]
+    }
+  ],
+
+  "source_data_object": {
+    "label": "OPERA DISP-S1 products (discovered) over Houston AOI, 2024",
+    "description": "CMR-discovered OPERA L3 DISP-S1 granule references for the AOI + date range, fed into the single WERC job.",
+    "resource_uri": "earthdata://urs.earthdata.nasa.gov/OPERA_L3_DISP-S1/houston-2024",
+    "format": "opera-disp-s1-cmr",
+    "source_catalog": "earthdata",
+    "variables": [
+      {
+        "standard_variable_uri": "https://www.geoscienceontology.org/svo/svl/variable/land_surface__displacement",
+        "local_name": "displacement",
+        "unit": "m",
+        "spatial_type": "grid",
+        "crs": "EPSG:4326",
+        "temporal_resolution": "acquisition"
+      }
+    ]
+  },
+
+  "target_model_input": {
+    "_about": "A subsidence-rate GeoTIFF — exactly what the single WERC job produces. The plan is just [run-werc]: one job, already model-ready, no ETL tail needed.",
+    "standard_variable_uri": "https://www.geoscienceontology.org/svo/svl/variable/land_surface__displacement_rate",
+    "unit": "mm/yr",
+    "format": "geotiff",
+    "spatial_type": "grid",
+    "crs": "EPSG:4326",
+    "temporal_resolution": "rate"
+  },
+
+  "target_model_input_cataloged": {
+    "_about": "Same product, made DISCOVERABLE in CKAN + STAC. Plan = [run-werc, stac-publish]: one job, then the catalog load on the end.",
+    "standard_variable_uri": "https://www.geoscienceontology.org/svo/svl/variable/land_surface__displacement_rate",
+    "unit": "mm/yr",
+    "format": "geotiff",
+    "spatial_type": "grid",
+    "crs": "EPSG:4326",
+    "temporal_resolution": "rate",
+    "catalog": "ckan+stac"
+  },
+
+  "target_model_input_netcdf": {
+    "_about": "A model that needs the rate as a DISCOVERABLE NetCDF. Plan = [run-werc, format-convert, stac-publish]: one job, then the ETL (format-convert) + load (stac-publish) on the end.",
+    "standard_variable_uri": "https://www.geoscienceontology.org/svo/svl/variable/land_surface__displacement_rate",
+    "unit": "mm/yr",
+    "format": "netcdf",
+    "spatial_type": "grid",
+    "crs": "EPSG:4326",
+    "temporal_resolution": "rate",
+    "catalog": "ckan+stac"
+  }
+}

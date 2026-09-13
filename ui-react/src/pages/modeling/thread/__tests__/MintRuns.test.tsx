@@ -310,3 +310,62 @@ describe('MintRuns log fetch authentication', () => {
     expect(fetchInit().headers).not.toHaveProperty('Authorization');
   });
 });
+
+// A Tapis application declares no output file type, so the user repairs that
+// after the first run — from the run itself, not from the model page (#267).
+describe('MintRuns archived files', () => {
+  beforeEach(() => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve({ files: [] }),
+      }),
+    );
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('offers the archived files of each run', () => {
+    renderWithProviders(
+      <MintRuns
+        threadData={mockThreadDataSubmitted}
+        executions={executionsWithOneRun}
+        canWrite
+        canExecute
+        ensembleManagerApi="http://ensemble"
+        onContinue={vi.fn()}
+        onFetchRuns={vi.fn()}
+        onSubmitRuns={vi.fn()}
+      />,
+    );
+    expect(screen.getByTestId('view-files-exec-1')).toBeInTheDocument();
+  });
+
+  it('opens the files dialog on that run', async () => {
+    renderWithProviders(
+      <MintRuns
+        threadData={mockThreadDataSubmitted}
+        executions={executionsWithOneRun}
+        canWrite
+        canExecute
+        ensembleManagerApi="http://ensemble"
+        onContinue={vi.fn()}
+        onFetchRuns={vi.fn()}
+        onSubmitRuns={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByTestId('view-files-exec-1'));
+
+    expect(await screen.findByTestId('execution-files-dialog')).toBeInTheDocument();
+    await waitFor(() =>
+      expect((globalThis.fetch as unknown as Mock).mock.calls[0]?.[0]).toBe(
+        'http://ensemble/executions/exec-1/files',
+      ),
+    );
+  });
+});

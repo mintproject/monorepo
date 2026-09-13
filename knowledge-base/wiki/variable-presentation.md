@@ -37,7 +37,7 @@ Two naming-layer datatype properties (domain `VariablePresentation`, range `xsd:
 
 ## Realization in the `modelcatalog_*` schema
 
-The migrated `modelcatalog_variable_presentation` table is a **reduced subset** of `sd:VariablePresentation`. ETL maps RDF predicates to columns (source: `etl/extract.py`):
+The migrated `modelcatalog_variable_presentation` table is a **reduced subset** of `sd:VariablePresentation`. The one-time ETL mapped RDF predicates to columns (source: `etl/extract.py`, removed from the repository; read it with `git log -- etl/extract.py`):
 
 | Column (`TEXT`) | RDF predicate |
 |---|---|

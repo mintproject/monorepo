@@ -2179,6 +2179,45 @@ const TapisSchema = {
 };
 
 const ExecutionSchema = {
+    // One file in the Tapis archive of an execution. MINT does not store it.
+    // GET /executions/{executionId}/files reads the list live from Tapis.
+    ExecutionFile: {
+        type: "object",
+        description: "A file that an execution archived",
+        properties: {
+            name: {
+                type: "string",
+                description: "The file name, without the folder"
+            },
+            path: {
+                type: "string",
+                description: "The path on the archive system"
+            },
+            size: {
+                type: "integer",
+                description: "The size in bytes"
+            },
+            url: {
+                type: "string",
+                description: "The tapis:// URI of the file"
+            }
+        },
+        required: ["name", "path", "size", "url"]
+    },
+    ExecutionFilesError: {
+        type: "object",
+        description: "The error answer of the execution files endpoint",
+        properties: {
+            result: {
+                type: "string",
+                example: "error"
+            },
+            message: {
+                type: "string"
+            }
+        },
+        required: ["result", "message"]
+    },
     Execution: {
         type: "object",
         description: "An execution instance representing a model run",
@@ -2335,6 +2374,35 @@ const ExecutionSchema = {
             }
         },
         required: ["resource"]
+    },
+    PublicationError: {
+        type: "object",
+        description: "The cause of a failed publication, for one execution",
+        properties: {
+            executionId: {
+                type: "string",
+                description: "The execution that failed to publish"
+            },
+            name: {
+                type: "string",
+                description: "The error class, for example NotFoundError"
+            },
+            message: {
+                type: "string",
+                description: "The error message"
+            },
+            statusCode: {
+                type: "integer",
+                description: "The HTTP status of the error, when the error carries one"
+            },
+            code: {
+                type: "string",
+                description:
+                    "A stable machine-readable name for the cause, for example NO_OUTPUTS_DECLARED",
+                example: "NO_OUTPUTS_DECLARED"
+            }
+        },
+        required: ["executionId", "name", "message"]
     }
 };
 

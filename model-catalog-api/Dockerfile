@@ -8,6 +8,11 @@ COPY openapi.yaml ./
 RUN npm run build
 
 FROM node:20-alpine
+
+LABEL org.opencontainers.image.title="MINT Model Catalog API" \
+      org.opencontainers.image.source="https://github.com/mintproject/monorepo" \
+      org.opencontainers.image.licenses="MIT"
+
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci --production

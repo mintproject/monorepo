@@ -15,6 +15,12 @@
 import type { MockedResponse } from '@apollo/client/testing';
 import type { DocumentNode } from 'graphql';
 
+import { ACTIVITY_ROWS } from '@/components/home/DecidePanel';
+import {
+  ListRecentProblemStatementActivityDocument,
+  type ListRecentProblemStatementActivityQuery,
+} from '@/graphql/generated/modeling';
+
 /**
  * Create a successful Apollo MockedResponse.
  * TVariables constrains the variable shape; the data payload is typed loosely
@@ -61,4 +67,26 @@ export function makeNetworkErrorMock<TVariables extends Record<string, unknown>>
     request: { query, variables },
     error: new Error(errorMessage),
   };
+}
+
+// ─── Modeling: the Decide panel's recent-activity feed ───────────────────────
+
+/**
+ * The provenance feed `DecidePanel` reads when a user is signed in.
+ * `limit` comes from `ACTIVITY_ROWS` so the mock cannot drift from the query.
+ */
+export function makeRecentActivityMock(
+  userid: string,
+  rows: ListRecentProblemStatementActivityQuery['problem_statement_provenance'],
+): MockedResponse {
+  return makeQueryMock(
+    ListRecentProblemStatementActivityDocument,
+    { userid, limit: ACTIVITY_ROWS },
+    { problem_statement_provenance: rows },
+  );
+}
+
+/** A signed-in user who has not touched a problem statement yet. */
+export function makeEmptyActivityMock(userid: string): MockedResponse {
+  return makeRecentActivityMock(userid, []);
 }

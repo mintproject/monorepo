@@ -1,6 +1,6 @@
 import { Router, Request, Response } from "express";
 import executionOutputsService from "@/api/api-v1/services/tapis/executionOutputsService";
-import { BadRequestError, NotFoundError } from "@/classes/common/errors";
+import { BadRequestError, NotFoundError, UnprocessableEntityError } from "@/classes/common/errors";
 import { getTokenFromAuthorizationHeader } from "@/utils/authUtils";
 import { getSubtask } from "@/classes/graphql/graphql_functions_v2";
 import { Thread as GraphQLThread } from "@/classes/graphql/graphql";
@@ -229,6 +229,20 @@ export const executionsRouter = (): Router => {
      *               properties:
      *                 message:
      *                   type: string
+     *       422:
+     *         description: >
+     *           The execution succeeded, but the model configuration declares no
+     *           output. The user must promote a file from the execution first.
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 code:
+     *                   type: string
+     *                   example: NO_OUTPUTS_DECLARED
+     *                 message:
+     *                   type: string
      *       500:
      *         description: Server error
      *         content:
@@ -268,7 +282,12 @@ export const executionsRouter = (): Router => {
 
             res.status(200).json(executionResults);
         } catch (error) {
-            if (error instanceof NotFoundError) {
+            if (error instanceof UnprocessableEntityError) {
+                res.status(error.statusCode).json({
+                    code: error.code,
+                    message: error.message
+                });
+            } else if (error instanceof NotFoundError) {
                 res.status(404).json({
                     message: error.message
                 });

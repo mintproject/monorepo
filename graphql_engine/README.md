@@ -161,3 +161,8 @@ graphql_engine/
 3. **Backup**: Create database backups before applying migrations in production
 4. **Documentation**: Document schema changes and their purpose
 5. **Rollback plan**: Ensure migrations can be rolled back if needed
+
+## License
+
+[MIT](https://opensource.org/license/mit). Copyright (c) 2021-2026 MINT.
+See [LICENSE](LICENSE).

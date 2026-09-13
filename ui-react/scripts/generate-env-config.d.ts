@@ -7,7 +7,9 @@ export interface MintConfig {
   GOOGLE_MAPS_KEY: string;
   DATA_CATALOG_API: string;
   DATA_CATALOG_BROWSE_URL: string;
+  MODEL_CATALOG_API: string;
   EXECUTION_ENGINE: string;
+  BRANDING: string;
   ENSEMBLE_MANAGER_API?: string;
   AUTH_CALLBACK_ORIGIN?: string;
   AUTH_PREVIEW_ORIGIN_ALLOWLIST?: string;

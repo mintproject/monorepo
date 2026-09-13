@@ -1,8 +1,8 @@
 /**
- * RegionScopeSection — the (non-optional) "Region" block of the Create-a-model
+ * RegionScopeSection — the (non-optional) "Region" block of the create-a-model-configuration
  * form, placed between Description and Parameters.
  *
- * Most models are non-spatial or work anywhere, so region selection is off by
+ * Most model configurations are non-spatial or work anywhere, so region selection is off by
  * default. Turning the switch on reveals a button that opens RegionPickerDialog
  * and shows the chosen regions as removable chips. Bound to CreateModelSchema.
  */
@@ -51,14 +51,14 @@ export function RegionScopeSection() {
             <h3 className="text-sm font-semibold text-foreground">Region</h3>
           </div>
           <p className="text-xs text-muted-foreground">
-            Most models work anywhere — turn this on only if the model is calibrated for, or its
-            inputs are fixed to, specific geographic regions.
+            Most model configurations work anywhere — turn this on only if this configuration is
+            calibrated for, or its inputs are fixed to, specific geographic regions.
           </p>
         </div>
         <Switch
           checked={isRegionSpecific}
           onCheckedChange={handleToggle}
-          aria-label="This model is region-specific"
+          aria-label="This model configuration is region-specific"
         />
       </div>
 

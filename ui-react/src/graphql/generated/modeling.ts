@@ -1565,3 +1565,67 @@ export function useGetModelTreeWithRegionsQuery(
     options,
   );
 }
+
+// ─── Query: ListRecentProblemStatementActivity ───────────────────────────────
+
+/**
+ * The signed-in user's own provenance feed, newest first.
+ *
+ * There is no "last touched" column on `problem_statement`, so recency comes
+ * from the provenance table instead. Hasura's row-level filter on
+ * `problem_statement_provenance` nulls the relationship out for any event whose
+ * statement the user may no longer read, so a row can come back without one.
+ * `pickRecentProblemStatements` in `lib/modeling/recent-problem-statements.ts`
+ * drops those and deduplicates the rest.
+ *
+ * Only the `user` role may select this table; the query is skipped when signed
+ * out.
+ */
+export type ListRecentProblemStatementActivityQueryVariables = {
+  userid: string;
+  limit: number;
+};
+
+export type ListRecentProblemStatementActivityQuery = {
+  __typename?: 'query_root';
+  problem_statement_provenance: {
+    __typename?: 'problem_statement_provenance';
+    timestamp: string;
+    problem_statement?: {
+      __typename?: 'problem_statement';
+      id: string;
+      name?: Maybe<string>;
+      region_id: string;
+    } | null;
+  }[];
+};
+
+export const ListRecentProblemStatementActivityDocument = gql`
+  query ListRecentProblemStatementActivity($userid: String!, $limit: Int!) {
+    problem_statement_provenance(
+      where: { userid: { _eq: $userid } }
+      order_by: { timestamp: desc }
+      limit: $limit
+    ) {
+      timestamp
+      problem_statement {
+        id
+        name
+        region_id
+      }
+    }
+  }
+`;
+
+export function useListRecentProblemStatementActivityQuery(
+  baseOptions: Apollo.QueryHookOptions<
+    ListRecentProblemStatementActivityQuery,
+    ListRecentProblemStatementActivityQueryVariables
+  > & { variables: ListRecentProblemStatementActivityQueryVariables },
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useQuery<
+    ListRecentProblemStatementActivityQuery,
+    ListRecentProblemStatementActivityQueryVariables
+  >(ListRecentProblemStatementActivityDocument, options);
+}

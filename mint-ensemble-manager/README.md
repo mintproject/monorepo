@@ -1277,3 +1277,8 @@ npm start
 ```
 
 -   Go to http://localhost:3000/v1/ui
+
+## License
+
+[MIT](https://opensource.org/license/mit). Copyright (c) 2019-2026 MINT.
+See [LICENSE](LICENSE).

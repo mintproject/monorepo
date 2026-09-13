@@ -376,16 +376,25 @@ describe('toPgTextArray', () => {
 // ─── assignPositions ──────────────────────────────────────────────────────────
 
 describe('assignPositions', () => {
-  it('assigns sequential 0-indexed positions', () => {
+  // 1-based, not 0-based: the Ensemble Manager reads a falsy position as a
+  // missing one (`_getModelIODetails` in ExecutionCreation.ts) and refuses the
+  // run with "Input file missing position". It also builds the component
+  // prefix from the number, so the first input has to be `-i1`.
+  it('assigns sequential 1-indexed positions', () => {
     const rows = [makeInputRow(), makeInputRow(), makeInputRow()];
     const result = assignPositions(rows);
-    expect(result.map((r) => r.position)).toEqual([0, 1, 2]);
+    expect(result.map((r) => r.position)).toEqual([1, 2, 3]);
+  });
+
+  it('never assigns position 0, which the Ensemble Manager reads as missing', () => {
+    const result = assignPositions([makeInputRow()]);
+    expect(result[0]!.position).toBe(1);
   });
 
   it('overwrites existing position values', () => {
     const rows = [makeInputRow({ position: 99 }), makeInputRow({ position: 0 })];
     const result = assignPositions(rows);
-    expect(result.map((r) => r.position)).toEqual([0, 1]);
+    expect(result.map((r) => r.position)).toEqual([1, 2]);
   });
 
   it('returns empty array for empty input', () => {

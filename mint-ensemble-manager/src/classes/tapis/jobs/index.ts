@@ -27,13 +27,39 @@ interface TapisFileForMatch {
     url: string;
 }
 
+// One candidate pair of a declared output and an archived file.
+// `score` comes from Fuse. A lower score is a better match.
+interface MatchCandidate {
+    outputIndex: number;
+    fileIndex: number;
+    score: number;
+}
+
+// Sort the candidates so that the best match comes first.
+// Fuse gives a lower score to a better match. The two index
+// comparisons keep the order stable when the scores are equal.
+const byBestScore = (a: MatchCandidate, b: MatchCandidate): number =>
+    a.score - b.score || a.outputIndex - b.outputIndex || a.fileIndex - b.fileIndex;
+
+/**
+ * Match the files of a finished Tapis job to the declared outputs of a model
+ * configuration.
+ *
+ * One file belongs to at most one declared output, and one declared output
+ * takes at most one file. The pair with the best score wins, so two declared
+ * outputs with similar labels cannot publish the same file twice.
+ *
+ * The result carries the format of the declared output in `resource.type`.
+ * `TACC_CKAN_Datacatalog.registerResource` sends that field to CKAN as
+ * `format`.
+ *
+ * A declared output that matches no file is written to the log. It produces no
+ * execution result.
+ */
 const matchTapisOutputsToMintOutputs = (
     files: Jobs.FileInfo[],
     mintOutputs: ModelOutput[]
 ): Execution_Result[] => {
-    console.log(files);
-    console.log(mintOutputs);
-    const executionResults: Execution_Result[] = [];
     const filesForMatch: TapisFileForMatch[] = files.map((file) => ({
         name: file.name,
         extension: file.name.split(".").pop() || "",
@@ -41,67 +67,59 @@ const matchTapisOutputsToMintOutputs = (
     }));
 
     const fuse = new Fuse(filesForMatch, fuseOptions);
-    for (const mintOutput of mintOutputs) {
-        const results = fuse.search(mintOutput.model_io.name);
-        if (results.length > 0) {
-            const tapisUrl = results[0].item.url;
-            const executionResult: Execution_Result = {
-                resource: {
-                    name: results[0].item.name,
-                    url: tapisUrl,
-                    id: getMd5Hash(tapisUrl)
-                },
-                model_io: mintOutput.model_io
-            };
-            executionResults.push(executionResult);
+
+    // Collect every possible pair first. A greedy loop over the outputs alone
+    // lets an early output take a file that a later output matches better.
+    const candidates: MatchCandidate[] = [];
+    mintOutputs.forEach((mintOutput, outputIndex) => {
+        for (const result of fuse.search(mintOutput.model_io.name)) {
+            candidates.push({
+                outputIndex,
+                fileIndex: result.refIndex,
+                score: result.score ?? 1
+            });
         }
+    });
+    candidates.sort(byBestScore);
+
+    const usedOutputs = new Set<number>();
+    const usedFiles = new Set<number>();
+    const resultByOutputIndex = new Map<number, Execution_Result>();
+
+    for (const candidate of candidates) {
+        if (usedOutputs.has(candidate.outputIndex) || usedFiles.has(candidate.fileIndex)) {
+            continue;
+        }
+        usedOutputs.add(candidate.outputIndex);
+        usedFiles.add(candidate.fileIndex);
+
+        const mintOutput = mintOutputs[candidate.outputIndex];
+        const file = filesForMatch[candidate.fileIndex];
+        resultByOutputIndex.set(candidate.outputIndex, {
+            resource: {
+                name: file.name,
+                url: file.url,
+                id: getMd5Hash(file.url),
+                type: mintOutput.model_io.format
+            },
+            model_io: mintOutput.model_io
+        });
     }
-    // const filesNotMatched = filesForMatch.filter((file) => !filesMatched.includes(file.name));
-    // for (const file of filesNotMatched) {
-    //     const executionResult: Execution_Result = {
-    //         resource: {
-    //             name: file.name,
-    //             url: file.url,
-    //             id: getMd5Hash(file.url)
-    //         },
-    //         model_io: null
-    //     };
-    //     executionResults.push(executionResult);
-    // }
-    console.log(executionResults);
-    return executionResults;
+
+    const unmatchedOutputs = mintOutputs
+        .filter((_mintOutput, outputIndex) => !usedOutputs.has(outputIndex))
+        .map((mintOutput) => mintOutput.model_io.name);
+    if (unmatchedOutputs.length > 0) {
+        console.warn(
+            `No archived file matches these declared outputs: ${unmatchedOutputs.join(", ")}`
+        );
+    }
+
+    // Return the results in the order of the declared outputs, not in the
+    // order in which the matcher found them.
+    return mintOutputs
+        .map((_mintOutput, outputIndex) => resultByOutputIndex.get(outputIndex))
+        .filter((executionResult): executionResult is Execution_Result => Boolean(executionResult));
 };
-
-// const matchTapisOutputsToMintOutputs = (
-//     files: Jobs.FileInfo[],
-//     mintOutputs: ModelOutput[]
-// ): Execution_Result[] => {
-//     const PORTAL_URL = "https://ptdatax.tacc.utexas.edu/workbench/data/tapis/private/cloud.data";
-//     const executionResults: Execution_Result[] = [];
-
-//     const mintOutputsForMatch: MintOutputsForMatch[] = mintOutputs.map((output) => ({
-//         name: output.model_io.name,
-//         id: output.model_io.id,
-//         extension: output.model_io.format,
-//         model_io: output.model_io
-//     }));
-//     const fuse = new Fuse(mintOutputsForMatch, fuseOptions);
-//     console.log(files);
-//     console.log(mintOutputsForMatch);
-//     for (const file of files) {
-//         const results = fuse.search(file.name);
-//         const publicUrl = file.url.replace("tapis://ls6", PORTAL_URL);
-//         const executionResult: Execution_Result = {
-//             resource: {
-//                 name: file.name,
-//                 url: publicUrl,
-//                 id: getMd5Hash(publicUrl)
-//             },
-//             model_io: results.length > 0 ? results[0].item.model_io : null
-//         };
-//         executionResults.push(executionResult);
-//     }
-//     return executionResults;
-// };
 
 export { matchTapisOutputsToMintOutputs };

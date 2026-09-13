@@ -15,6 +15,11 @@ import {
 } from '@/graphql/generated/modeling';
 import { useAuth } from '@/lib/auth/useAuth';
 import { useToast } from '@/components/ui/use-toast';
+import {
+  StandardVariableCombobox,
+  type StandardVariableOption,
+} from '@/components/autocomplete/StandardVariableCombobox';
+import { usePrefetchReferenceDataQuery } from '@/graphql/generated/graphql';
 
 interface MintVariablesProps {
   thread: Thread;
@@ -31,6 +36,12 @@ export function MintVariables({ thread, onContinue, onThreadUpdated }: MintVaria
   const [responseVarId, setResponseVarId] = useState(thread.response_variable_id ?? '');
   const [drivingVarId, setDrivingVarId] = useState(thread.driving_variable_id ?? '');
   const [saving, setSaving] = useState(false);
+  const { data: referenceData } = usePrefetchReferenceDataQuery({ fetchPolicy: 'cache-first' });
+  const standardVariables = referenceData?.modelcatalog_standard_variable ?? [];
+  const responseVariable = standardVariables.find((v) => v.id === responseVarId);
+  const drivingVariable = standardVariables.find((v) => v.id === drivingVarId);
+  const readableVariable = (id: string | null | undefined) =>
+    standardVariables.find((v) => v.id === id)?.label ?? id;
 
   // Sync when thread changes
   useEffect(() => {
@@ -119,7 +130,7 @@ export function MintVariables({ thread, onContinue, onThreadUpdated }: MintVaria
               <span className="font-semibold">Indicators:</span>
               {thread.response_variable_id ? (
                 <ul className="ml-2 list-inside list-disc">
-                  <li>{thread.response_variable_id}</li>
+                  <li>{readableVariable(thread.response_variable_id)}</li>
                 </ul>
               ) : (
                 <span className="ml-2 text-gray-400">None selected</span>
@@ -129,7 +140,7 @@ export function MintVariables({ thread, onContinue, onThreadUpdated }: MintVaria
               <span className="font-semibold">Adjustable Variables:</span>
               {thread.driving_variable_id ? (
                 <ul className="ml-2 list-inside list-disc">
-                  <li>{thread.driving_variable_id}</li>
+                  <li>{readableVariable(thread.driving_variable_id)}</li>
                 </ul>
               ) : (
                 <span className="ml-2 text-gray-400">None selected</span>
@@ -157,15 +168,21 @@ export function MintVariables({ thread, onContinue, onThreadUpdated }: MintVaria
               <label htmlFor="response-variable" className="text-sm font-medium">
                 Indicator* (response variable):
               </label>
-              <input
+              <StandardVariableCombobox
                 id="response-variable"
-                name="response_variable"
-                type="text"
-                required
-                value={responseVarId}
-                onChange={(e) => setResponseVarId(e.target.value)}
-                placeholder="e.g. cycles__crop_production"
-                className="block w-full rounded border border-gray-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                value={
+                  responseVariable
+                    ? {
+                        id: responseVariable.id,
+                        label: responseVariable.label ?? '',
+                        description: responseVariable.description ?? null,
+                      }
+                    : null
+                }
+                onChange={(value: StandardVariableOption | null) =>
+                  setResponseVarId(value?.id ?? '')
+                }
+                placeholder="Choose the output SVO variable"
               />
               <p className="text-xs text-gray-400">
                 The standard MINT variable name for the output of interest
@@ -176,14 +193,21 @@ export function MintVariables({ thread, onContinue, onThreadUpdated }: MintVaria
               <label htmlFor="driving-variable" className="text-sm font-medium">
                 Adjustable Variable:
               </label>
-              <input
+              <StandardVariableCombobox
                 id="driving-variable"
-                name="driving_variable"
-                type="text"
-                value={drivingVarId}
-                onChange={(e) => setDrivingVarId(e.target.value)}
-                placeholder="e.g. fertilizer_amount__average"
-                className="block w-full rounded border border-gray-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                value={
+                  drivingVariable
+                    ? {
+                        id: drivingVariable.id,
+                        label: drivingVariable.label ?? '',
+                        description: drivingVariable.description ?? null,
+                      }
+                    : null
+                }
+                onChange={(value: StandardVariableOption | null) =>
+                  setDrivingVarId(value?.id ?? '')
+                }
+                placeholder="Choose the driver SVO variable"
               />
               <p className="text-xs text-gray-400">
                 The standard MINT variable name for the driver input

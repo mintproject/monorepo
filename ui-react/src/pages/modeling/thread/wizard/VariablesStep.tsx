@@ -97,6 +97,8 @@ export function VariablesStep({ thread, onUpdated, onContinue, onBack }: Variabl
             onChange={setIndicator}
             disabled={readOnly}
             placeholder="Search standard variables…"
+            scope="indicator"
+            scopeLabel="a model produces"
           />
           {indicator ? (
             <p className="text-xs text-green-700">
@@ -116,6 +118,8 @@ export function VariablesStep({ thread, onUpdated, onContinue, onBack }: Variabl
             onChange={setAdjustable}
             disabled={readOnly}
             placeholder="Search standard variables…"
+            scope="driver"
+            scopeLabel="a model takes or adjusts"
           />
           <p className="text-xs text-gray-500">Marks an input you intend to vary across runs.</p>
         </div>

@@ -41,7 +41,7 @@ import {
   runsComplete,
   threadExecutionFromGQL,
 } from '@/lib/thread-execution';
-import { publishResults, submitRuns } from '@/lib/ensemble-manager';
+import { publishExecution, publishResults, submitRuns } from '@/lib/ensemble-manager';
 import { useAuth } from '@/lib/auth/useAuth';
 import { cn } from '@/lib/utils';
 
@@ -261,6 +261,42 @@ export function MintThread({ threadId: threadIdProp }: MintThreadProps = {}) {
     await refetchExecution();
   }, [thread, threadId, refetchExecution]);
 
+  /**
+   * Register the outputs of one execution, then read the counters back.
+   *
+   * The Runs step offers this beside the archived files of a single run:
+   * nothing republishes by itself, so a user who has just promoted a file
+   * presses Publish for that run alone (#261).
+   */
+  const handlePublishExecution = useCallback(
+    async (executionId: string) => {
+      const ensembleManagerApi = window.__MINT_CONFIG__?.ENSEMBLE_MANAGER_API ?? '';
+      const problemStatementId = thread?.task?.problem_statement_id;
+      const taskId = thread?.task_id;
+      if (!ensembleManagerApi || !problemStatementId || !taskId || !threadId) {
+        // Saying nothing here would read as a successful publication.
+        throw new Error('This deployment has no Ensemble Manager configured.');
+      }
+      await publishExecution(
+        ensembleManagerApi,
+        { problemStatementId, taskId, threadId },
+        executionId,
+      );
+      await refetchExecution();
+    },
+    [thread, threadId, refetchExecution],
+  );
+
+  /**
+   * Re-read the thread after the user promotes a file.
+   *
+   * The declared outputs of a model configuration reach the steps through the
+   * execution query, so a promotion is invisible until that query runs again.
+   */
+  const handleOutputsChanged = useCallback(async () => {
+    await refetchExecution();
+  }, [refetchExecution]);
+
   // ── render ─────────────────────────────────────────────────────────────────
 
   if (loading && !data) {
@@ -368,6 +404,8 @@ export function MintThread({ threadId: threadIdProp }: MintThreadProps = {}) {
             onContinue={goNext}
             onFetchRuns={handleFetchRuns}
             onSubmitRuns={handleSubmitRuns}
+            onPublishExecution={handlePublishExecution}
+            onOutputsChanged={handleOutputsChanged}
           />
         );
       case 'results':
@@ -380,6 +418,7 @@ export function MintThread({ threadId: threadIdProp }: MintThreadProps = {}) {
             onContinue={goNext}
             onFetchRuns={handleFetchRuns}
             onPublishResults={handlePublishResults}
+            onPromoteOutputs={() => setCurrentSection('runs')}
           />
         );
       case 'summary':

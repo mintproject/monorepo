@@ -16,12 +16,13 @@ wiki for a domain term. Read [`docs/adr/`](./docs/adr/) for a recorded decision.
 ### Repository layout
 
 **superproject**:
-The layout in use today. One repository holds each service as a git submodule.
+The former layout. One repository held each service as a git submodule. Use this
+word only about the past, or about the `.gitmodules` history.
 _Avoid_: monorepo, parent repo, umbrella repo
 
 **single-repo**:
-The target layout. One repository holds each service as a plain directory, with
-one history.
+The layout in use today. One repository holds each service as a plain directory,
+with one history. `.gitmodules` is gone and no gitlink remains.
 _Avoid_: monorepo, consolidated repo, merged repo
 
 > **Never write "monorepo" for either one.** `mintproject/monorepo` is the name of
@@ -36,8 +37,14 @@ _Avoid_: package, module, component, app
 
 **submodule**:
 A git pointer from the superproject to another repository. A submodule is a
-mechanism, not a service. Several submodules hold no service.
+mechanism, not a service. **None remain.** The word describes the former layout.
 _Avoid_: dependency, subrepo
+
+**external repository**:
+A repository that MINT deploys or maintains, and that this repository does not
+hold. Today: `mintproject/mint` (the MINT chart) and `mint-ui-lit` (`ui`). Read
+it where it lives. Do not add a gitlink for it.
+_Avoid_: submodule, vendored repo, third-party repo
 
 ### Frontends
 
@@ -47,17 +54,19 @@ Its image is `mint-ui-react`.
 _Avoid_: the React app, the new UI
 
 **`ui`**:
-The deprecated LitElement frontend. Its repository is `mint-ui-lit` and its image
-is `mint-ui-lit`. The directory name and the repository name differ.
+The deprecated LitElement frontend. It is an external repository, `mint-ui-lit`,
+and its image is `mint-ui-lit`. It was the directory `ui/` until the gitlink was
+removed. The old directory name and the repository name differ.
 _Avoid_: the frontend (unqualified), the old UI
 
 ### Deployment
 
 **the MINT chart**:
 The Helm chart that deploys the whole platform. Its repository is
-`mintproject/mint`. It appears in the superproject as the directory
-`helm-charts/`. The three names denote one thing.
-_Avoid_: helm-charts (as a repository name), the mint repo
+`mintproject/mint`, and it publishes to `https://mintproject.github.io/mint`
+under the chart name `MINT`. It is an external repository. It was the directory
+`helm-charts/` until the gitlink was removed.
+_Avoid_: helm-charts (as a directory or a repository name), the mint repo
 
 **`dynamo`**:
 The private repository that holds the deployment values for the TACC production

@@ -46,6 +46,6 @@ describe('RegisterPage', () => {
 
     expect(screen.getByRole('heading', { name: /create a new model/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /create model/i })).toBeInTheDocument();
-    expect(screen.getByLabelText(/model name/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/model configuration name/i)).toBeInTheDocument();
   });
 });

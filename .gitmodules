@@ -1,6 +1,0 @@
-[submodule "ui"]
-	path = ui
-	url = https://github.com/mintproject/mint-ui-lit.git
-[submodule "helm-charts"]
-	path = helm-charts
-	url = https://github.com/mintproject/mint.git

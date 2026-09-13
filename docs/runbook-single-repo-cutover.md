@@ -1,6 +1,23 @@
 # Runbook: superproject to single-repo cutover
 
-Status: ready to execute. Not started.
+Status: **Phases 0 to 10 are done.** Phase 11 (`dynamo`) remains, and it is the
+point of no return.
+
+| Phase | State | Evidence |
+|---|---|---|
+| 0 Preparation | done | |
+| 1 Remove dead submodules | done | |
+| 2 Registry and chart groundwork | done, then corrected | chart `9.0.0-beta.7`, fixed in `beta.8` |
+| 3 to 5 The three imports | done | monorepo#162 last |
+| 6 Documentation cleanup | done | monorepo#163 |
+| 7 Merge to `main` and publish | done | monorepo#166, `main` at `3bbaa28` |
+| 8 The first release | done | `v0.1.0`, release commit `971622cc` |
+| 9 Dev-cluster proof | **passed** | helm revision 70, chart `9.0.0-beta.8` |
+| 10 Archive the source repositories | done | 12 issues moved to monorepo#171 to #182; 4 repos archived |
+| 11 `dynamo` | not started | the point of no return |
+
+Corrections found while executing are marked **Correction** in place. Trust
+those over the surrounding prose: the prose was written before the work ran.
 
 This runbook converts the **superproject** into the **single-repo**. It brings
 `model-catalog-api`, `mint-ensemble-manager` and `graphql_engine` in as plain
@@ -14,23 +31,39 @@ See [ADR-0003](./adr/0003-single-repo-over-submodule-superproject.md) for why.
 See [`CONTEXT.md`](../CONTEXT.md) for **superproject**, **single-repo**,
 **cutover** and **the point of no return**.
 
-## Before you start: five facts that will bite you
+## Before you start: seven facts that will bite you
 
 1. **Squash merge destroys the import.** `mintproject/monorepo` allows squash and
    rebase. A squash of an import branch flattens 138 to 726 commits into one. Use
    a merge commit. Phase 0 disables the other two buttons.
 2. **A GHCR package is created private.** The chart then fails to pull. Phase 7
-   flips visibility and proves it with an anonymous probe.
+   proves visibility with an anonymous probe.
+   **Correction:** when Phase 7 actually ran, all four packages were already
+   public and no flip was needed. Probe anyway. Do not skip the probe because
+   this note says the flip is unnecessary.
 3. **Most failures here are silent.** `scripts/deploy-hasura.sh` keeps running and
    reports the wrong branch. The old bump skills keep running and return a stale
    SHA. Each phase has assertions, not a checklist.
    ([#141](https://github.com/mintproject/monorepo/issues/141))
+   Three more turned up during execution, all of the same shape: `global.imageTag`
+   was ignored by the chart while appearing to be set (Phase 2), the release
+   re-tag workflow never ran while the release looked correct (Phase 8), and a
+   registry move invalidated an image pin while the old pod kept serving
+   (Phase 9). Assume the next one is also silent.
 4. **The point of no return is not the archive.** Archiving is one click to undo.
    The one-way steps are the issue transfers (Phase 10.1) and the first `dynamo`
    pin (Phase 11).
 5. **A Helm upgrade does not run Hasura migrations.**
    ([#117](https://github.com/mintproject/monorepo/issues/117)) Phase 0.5 exists
-   because of this.
+   because of this. It did not bite in Phase 9 — the deployed image and
+   `origin/main` held the same 26 migrations and the same 36 metadata and seed
+   files, byte for byte. Re-check rather than assume; the next release may differ.
+6. **The release re-tag workflow does not fire.** release-please creates the
+   release with the default `GITHUB_TOKEN`, and GitHub does not start workflows
+   from `GITHUB_TOKEN` events. Phase 8 must be finished by hand.
+7. **`helm upgrade --wait` always fails on the dev cluster.** An orphan
+   `mint-hasura-db` PVC has been `Pending` for over 160 days, and `--wait` waits
+   on every resource in the release. The manifests still apply. See Phase 9.
 
 ## The end state
 
@@ -40,14 +73,16 @@ See [`CONTEXT.md`](../CONTEXT.md) for **superproject**, **single-repo**,
 | `mint-ensemble-manager` | submodule | plain directory, full history |
 | `graphql_engine` | submodule | plain directory, full history |
 | `ui-react` | plain directory | unchanged |
-| `ui` | submodule | submodule, until [#81](https://github.com/mintproject/monorepo/issues/81) |
-| `helm-charts` | submodule | submodule. The chart has external consumers. |
+| `ui` | submodule | gone. External repository. See [ADR-0004](adr/0004-no-submodule-stubs-for-external-repositories.md) |
+| `helm-charts` | submodule | gone. External repository, published Helm repo. See [ADR-0004](adr/0004-no-submodule-stubs-for-external-repositories.md) |
 | `model-catalog-ontology` | submodule | gone. Repository stays maintained. |
 | `MINT_USERGUIDE` | submodule | gone. Repository stays maintained. |
 | `dynamo-experiment-may` | submodule | gone. Another organisation owns it. |
 | `model-catalog-fetch-api-client` | submodule | gone. Repository archived. |
 
-`.gitmodules` ends with two stanzas: `ui` and `helm-charts`.
+`.gitmodules` ended with two stanzas, `ui` and `helm-charts`.
+[ADR-0004](adr/0004-no-submodule-stubs-for-external-repositories.md) removed both and
+deleted the file. Neither repository is imported; both are consumed where they live.
 
 Every image publishes to GHCR. Docker Hub is dropped. Every single-repo commit
 builds an image for every service, so one tag names the whole system state.
@@ -148,6 +183,10 @@ One pull request into `develop`.
 
 Assert: `.gitmodules` has 5 stanzas.
 
+**Correction.** Phase 1 and Phase 3 both edit `.gitmodules`, so they conflict.
+Stack the import branches on the Phase 1 branch rather than branching each off
+`develop`.
+
 ---
 
 ## Phase 2 — Registry and chart groundwork
@@ -196,6 +235,31 @@ Assert on the dev cluster, with today's per-service SHAs:
 
 Nothing pins `9.0.0-beta.7` yet, so this phase reverts by removing one `.tgz`.
 
+**Correction: `9.0.0-beta.7` shipped a `global.imageTag` that did nothing.**
+The assertion above is why. It only checks that a per-service tag *wins* — and
+the chart's own defaults set a per-service tag on all four services, so the
+global value was never reachable. `--set global.imageTag=X` on a fresh install
+resolved the old pinned SHAs and reported success.
+
+The missing assertion is the positive one. Add it:
+
+```bash
+# global.imageTag must actually reach all four, with no other overrides.
+helm template mint charts/mint --set global.imageTag=0.1.0 \
+  | grep -E '^\s+image:' | sort -u
+```
+
+Fixed in [`mintproject/mint#110`](https://github.com/mintproject/mint/pull/110),
+packaged as `9.0.0-beta.8`. That change clears the four default tags, moves
+`ui_react` and `ensemble_manager` from Docker Hub to GHCR, and defaults
+`global.imageTag` to `0.1.0`. An empty default falls through to
+`.Chart.AppVersion` (`1.16.3`), which names no image these services publish.
+
+`mint-ui-lit` moved to GHCR in 2.1, but **only `:latest` and `:main` were pushed
+there.** Every per-commit SHA tag lives only on Docker Hub, so an existing SHA
+pin against the GHCR repository fails to pull. Do not pin a SHA for the `ui`
+component against GHCR.
+
 ---
 
 ## Phases 3 to 5 — The three imports
@@ -207,6 +271,10 @@ One pull request per service, merged one at a time, in this order:
 2. `graphql_engine` — 108 commits, 12 MB. No test suite.
 3. `mint-ensemble-manager` — 726 commits, 3.8 MB, two authors, a mailmap that
    matters, and the only preconditions.
+
+**Correction.** Those counts are all-refs totals. Mainline-only, which is what
+actually crosses, is **70 / 96 / 364**. Do not use the larger numbers to judge
+whether an import completed.
 
 ### The import procedure, identical for all three
 
@@ -333,7 +401,7 @@ all four after Phase 5.
 After the **last** import, add a fifth:
 
 ```bash
-# 5. Only ui and helm-charts remain as gitlinks.
+# 5. No gitlinks remain. This prints nothing.
 git ls-files -s | awk '$1 == 160000 {print $4}'
 ```
 
@@ -368,6 +436,11 @@ Import as above. Its workflow has no `test` job.
 `graphql_engine` gains no `CLAUDE.md`. See "Known gaps".
 
 ### Phase 5 — `mint-ensemble-manager`
+
+**Unscheduled step, discovered during execution.** `mint-ensemble-manager`
+history carries credentials that GitHub push protection rejects. The push fails
+after `filter-repo` has already run, so budget for it before you start the
+import rather than mid-merge.
 
 Import as above. Then, as **separate commits in the same pull request**, so each
 reverts on its own:
@@ -487,8 +560,47 @@ package already exists and is private, although
 publishing to Docker Hub. Check what publishes there. Do not assume the package
 is new.
 
-4. **Then** delete the `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` secrets. Not
-   before: the last workflow that used them only disappears at Phase 5.
+**Correction, measured 2026-08-30:** all four were already public. No flip was
+needed. Run the probe regardless.
+
+Two problems with the probe as written.
+
+`docker logout ghcr.io` destroys the operator's registry credentials for the
+rest of the session. An anonymous token proves the same thing and touches
+nothing.
+
+Anywhere you write a bare `$i:latest` under zsh, `:l` is the lowercase modifier
+and silently mangles the name. Always brace it: `${i}:latest`.
+
+```bash
+sha=$(git rev-parse origin/main)
+for i in model-catalog-api graphql-engine mint-ui-react ensemble-manager; do
+  t=$(curl -s "https://ghcr.io/token?scope=repository:mintproject/${i}:pull&service=ghcr.io" \
+    | python3 -c "import json,sys;print(json.load(sys.stdin).get('token',''))")
+  code=$(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: Bearer $t" \
+    -H "Accept: application/vnd.oci.image.index.v1+json" \
+    "https://ghcr.io/v2/mintproject/${i}/manifests/${sha}")
+  [ "$code" = "200" ] && echo "public ${i}" || echo "PRIVATE/MISSING ${i} ($code)"
+done
+```
+
+4. ~~**Then** delete the `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` secrets.~~
+
+   **Correction: do not do this.** The secrets are **org-level**, and 18 other
+   repositories in the organisation still use them. `mintproject/monorepo` has
+   no repository-level secrets and no workflow that names `DOCKERHUB`, so there
+   is nothing to delete here and deleting the org secrets breaks those 18 repos.
+   Verify and move on:
+
+   ```bash
+   gh secret list --repo mintproject/monorepo   # expect: empty
+   grep -rl DOCKERHUB .github/                  # expect: no matches
+   ```
+
+**Branch protection now exists on `main`**, with required checks `Lint & Format`,
+`TypeScript`, `Tests` and `Test`. That closes the first item under "Known gaps".
+`develop` is still unprotected, so a pull request into `develop` can be merged
+while its checks are pending.
 
 ---
 
@@ -506,21 +618,117 @@ the single-repo tag namespace is empty.
 The re-tag workflow adds `0.1.0` to the four manifests that already built and
 passed. It does not rebuild — a rebuild would ship an artifact no test saw.
 
+**Correction: the re-tag workflow never runs on its own.** Two reasons, and a
+token change alone fixes only the first.
+
+1. It listens on `release: published`. release-please creates the release with
+   the default `GITHUB_TOKEN`, and GitHub does not start workflows from
+   `GITHUB_TOKEN` events. Confirmed for `v0.1.0`:
+   `gh run list --workflow="Release Re-tag"` returned `[]`.
+2. The release commit is a **new** commit. Its four images are still building
+   when the release publishes, so even a firing trigger would race the builds.
+
+The release and the git tag look correct while no image carries the version.
+Finish Phase 8 by hand:
+
+```bash
+# 1. Wait for all four build workflows on the RELEASE commit, not the merge
+#    commit that preceded it.
+sha=$(git rev-parse v0.1.0^{commit})
+gh run list --limit 10 --json name,status,conclusion,headSha \
+  --jq ".[] | select(.headSha==\"$sha\") | \"\(.conclusion // .status)\t\(.name)\""
+
+# 2. Then dispatch the re-tag.
+gh workflow run "Release Re-tag" -f version=0.1.0 -f sha="$sha"
+```
+
+Until the workflow is fixed, this manual step is required for **every** release.
+The fix needs both a non-`GITHUB_TOKEN` credential and a wait-for-manifest loop,
+or the trigger should be dropped in favour of a documented `workflow_dispatch`.
+
 `graphql_engine` carries no version file. It has no `package.json`, and adding
 one to hold a single field is new tooling. Its version lives in the git tag and
 the image tag only.
 
 Assert: `ghcr.io/mintproject/<each>:0.1.0` resolves, and its digest equals the
-digest of the SHA tag.
+digest of the SHA tag. Compare digests, not just resolution — a version tag that
+resolves to the wrong image is the failure this assertion exists to catch.
+
+Measured for `v0.1.0` at release commit `971622cc`: all four match.
+
+Note that `release-please` rewrites the two service `package.json` versions
+**downwards**, `mint-ensemble-manager` 4.1.0 and `model-catalog-api` 2.1.0 both
+to 0.1.0. Neither is published to npm, and `mint-ensemble-manager` is
+`"private": true`. `model-catalog-api` is not; adding the flag would close the
+gap.
 
 ---
 
 ## Phase 9 — The dev-cluster proof
 
-This gates the archive.
+This gates the archive. **Passed on 2026-08-30**, helm revision 70.
 
-Deploy chart `9.0.0-beta.7` to the dev cluster with
-`--set global.imageTag=0.1.0`. All four services must come up green.
+Deploy chart **`9.0.0-beta.8` or newer** to the dev cluster. `9.0.0-beta.7`
+cannot pass this gate: its `global.imageTag` is inert, so the deploy comes up
+green on the *old* images and proves nothing.
+
+`--set global.imageTag=0.1.0` is not enough on its own. The dev cluster's own
+values file pins a per-service tag for `model_catalog_api`, `ensemble_manager`
+and `ui_react`, and a per-service tag wins. Clear them:
+
+```yaml
+# phase9-overlay.yaml, layered over `helm get values mint`
+global:
+  imageTag: "0.1.0"
+components:
+  model_catalog_api: { image: { tag: "" } }
+  ensemble_manager:  { image: { tag: "" } }
+  ui_react:          { image: { tag: "" } }
+  ui:                { enabled: false }   # see below
+```
+
+Layer it rather than rewriting the values file. Round-tripping
+`helm get values` through a YAML dumper reflows the Tapis auth public key.
+
+```bash
+helm --kube-context microk8s -n mint get values mint -o yaml > cluster-current.yaml
+helm --kube-context microk8s -n mint upgrade mint <chart> \
+  -f cluster-current.yaml -f phase9-overlay.yaml --timeout 8m
+```
+
+**Do not pass `--wait`.** An orphan `mint-hasura-db` PVC has been `Pending` for
+over 160 days — the database actually uses `data-mint-hasura-db-0`, which is
+bound. `--wait` waits on every resource in the release, so it always fails, the
+release is marked `failed`, and the real failure is buried in the same error
+block. The manifests apply either way. Verify with `kubectl` instead.
+
+**`ui_react` needs a `client_id`.** It is `enabled: false` by default and the
+chart refuses to render without `components.ui_react.config.client_id`. The dev
+cluster's value is `mint-local`, readable from the live
+`mint-ui-react-config-map`.
+
+**The legacy `ui` breaks this deploy.** Chart 2.1 moved `mint-ui-lit` to GHCR,
+but only `:latest` and `:main` exist there; the per-commit SHA tags live only on
+Docker Hub. The cluster pinned a SHA, so `mint-ui` goes `ImagePullBackOff` while
+the old ReplicaSet keeps serving — the UI looks alive and the failure surfaces
+elsewhere. Disable the component, or pin `:latest`.
+[`mintproject/mint#111`](https://github.com/mintproject/mint/pull/111) makes
+`ui` disabled by default, in `9.0.0-beta.9`.
+
+Assert more than `Running`. `ensemble_manager` has **no readiness probe**, so
+`1/1 Running` says nothing about whether it serves. Probe from inside the
+cluster:
+
+| Endpoint | Expected |
+|---|---|
+| `mint-hasura/healthz` | 200 |
+| `mint-model-catalog/v2.0.0/modelconfigurations?limit=1` | 200 |
+| `mint-ui-react/` | 200 |
+| `mint-ensemble-manager/v1/ui/` | 200 |
+| `mint-ensemble-manager/v1/problemStatements` | 401, auth enforced |
+
+`mint-ensemble-manager/v1/` returns 404 by design. No route is mounted at the
+bare base path.
 
 A TACC deployment is **not** required. `dynamo` overrides every tag per service,
 so TACC does not consume `global.imageTag` until Phase 11. A TACC deploy would
@@ -538,26 +746,75 @@ reversible, so a soak buys nothing.
 ([#144](https://github.com/mintproject/monorepo/issues/144)) An archived
 repository is read-only. **Do every write first, in this order.**
 
+Steps 1, 2, 3 and 6 ran on 2026-08-30. Steps 4 and 5 were dropped — see the
+correction after step 6.
+
 1. **Transfer the 12 open issues to `mintproject/monorepo`.** 11 from
    `mint-ensemble-manager`, 1 from `graphql_engine`, 0 from `model-catalog-api`.
    Two are live work: `graphql_engine#13`, a grant bug on the junction tables,
    and `mint-ensemble-manager#108`, the model catalog GraphQL migration.
    **This step is irreversible.** Transferring back does not restore the numbers
    or the inbound links.
+
+   **A transfer silently drops a label the target repository does not have.**
+   `tapis` existed only in `mint-ensemble-manager` and carried 2 of the 12
+   issues. Create every missing label in `mintproject/monorepo` **before** the
+   transfer. Afterwards you cannot tell from the moved issue that a label was
+   lost.
+
+   ```bash
+   # Compare before transferring.
+   gh issue list --repo mintproject/<source> --state open --limit 100 \
+     --json labels --jq '[.[].labels[].name] | unique[]' | sort -u
+   gh label list --repo mintproject/monorepo --limit 100 --json name --jq '.[].name' | sort
+   ```
+
+   Done: `mint-ensemble-manager` 110, 109, 108, 105, 102, 101, 52, 40, 22, 14, 1
+   and `graphql_engine#13` became **monorepo#171 to #182**, in that order.
+   `enhancement` and `tapis` both survived.
 2. Close `mint-ensemble-manager#106`, "Add Claude Code GitHub Workflow",
    superseded by Phase 5c. Do not replay it.
+
+   **Correction: #106 is a pull request, not an issue.** So it is not one of the
+   12, and the arithmetic in step 1 already excludes it. `gh issue list` does not
+   show it, but `gh issue view 106` does — which reads as a missing issue unless
+   you check `.pull_request`. Close it with `gh pr close`.
 3. Commit one README line per source repository: the code moved to
    `mintproject/monorepo`, and this repository is read-only history. The GitHub
    archive banner says "archived", not "moved here".
-4. Add a deprecation note to the Docker Hub repositories `ensemble-manager`,
-   `mint-ui-lit` and `mint-ui-react`. They keep their last image and their pull
-   history — 21,436 and 18,076 pulls.
-5. `npm deprecate @mintproject/modelcatalog_client`. **Do not unpublish.**
-   `ui/package.json:30` still depends on `^8.0.3-alpha.8`, and unpublishing
-   breaks the `ui` build while
-   [#81](https://github.com/mintproject/monorepo/issues/81) is open.
+
+   `model-catalog-fetch-api-client` needs different wording. Its code did **not**
+   move into the single-repo — it was a dead submodule dropped in Phase 1. Point
+   it at `model-catalog-api/` and name the npm deprecation instead.
+4. ~~Add a deprecation note to the Docker Hub repositories `ensemble-manager`,
+   `mint-ui-lit` and `mint-ui-react`.~~
+5. ~~`npm deprecate @mintproject/modelcatalog_client`.~~
 6. Archive `model-catalog-api`, `mint-ensemble-manager`, `graphql_engine` and
    `model-catalog-fetch-api-client`.
+
+**Correction: steps 4 and 5 are dropped.** The dev decided on 2026-08-30 not to
+do them. Both are cosmetic notes on external registries, neither gates Phase 11,
+and neither is on the GitHub token — `npm whoami` returns `ENEEDAUTH` and
+`~/.docker/config.json` holds no auths, so each costs a separate login.
+
+Nothing breaks. Both artifacts keep working exactly as before:
+
+- The Docker Hub images keep their last tag and their pull history — 21,436 and
+  18,076 pulls. Chart `9.0.0-beta.8` already moved every MINT service to GHCR,
+  so no deployment reads them.
+- `@mintproject/modelcatalog_client` stays published, which is what
+  `ui/package.json:30` needs while
+  [#81](https://github.com/mintproject/monorepo/issues/81) is open. The original
+  step said "do not unpublish" for that reason; not deprecating is strictly
+  safer than deprecating.
+
+**Do not write that the npm package is deprecated.** The first
+`model-catalog-fetch-api-client` README notice said so and had to be corrected.
+Its README now states that the package stays published, and why.
+
+If you ever do want these notes, an archived repository does not block either
+write. Order them before step 1 next time, though: a step needing a login you do
+not have should surface before the irreversible one, not after it.
 
 **Why archive and not leave open.** Each repository holds a workflow that writes
 `<sha>`, `<safe-branch>` and `latest` to the same GHCR names the single-repo now
@@ -574,7 +831,18 @@ but the archive is their only copy.
 Off the critical path, after the archive. `dynamo` is private and MFA-gated.
 
 Replace the per-service tag keys with one `global.imageTag: 0.1.0`, and bump the
-chart pin to `9.0.0-beta.7`.
+chart pin to **`9.0.0-beta.10`** — `beta.7` ignores `global.imageTag`, so pinning
+it would leave production on whatever the per-service keys said.
+
+Two defaults changed under that pin, so read `dynamo` before it ships.
+
+- `components.ui.enabled` is `false` from `9.0.0-beta.9`. If `dynamo` relies on
+  the old `true`, the bump silently removes the legacy UI at TACC.
+  [#81](https://github.com/mintproject/monorepo/issues/81) is still open.
+- `components.ui_react` is enabled from `9.0.0-beta.10`, at host `mint.local`
+  with `client_id: mint-local`. If `dynamo` does not set its own
+  `components.ui_react.ingress.hosts` and `config.client_id`, the bump points the
+  React UI at the wrong host with the wrong OAuth2 client.
 
 **This is the point of no return.** Once production pins a single-repo tag,
 redoing the import means a new history, which invalidates every published SHA tag
@@ -589,9 +857,9 @@ mechanism. Do not delete them early.
 
 | After | How to undo | Cost |
 |---|---|---|
-| Phase 0 to 2 | Delete the branch. Remove the `9.0.0-beta.7` `.tgz`. | Free. Nothing pins it. |
+| Phase 0 to 2 | Delete the branch. Remove the `9.0.0-beta.8` `.tgz`. | Free. Nothing pins it. |
 | Phase 3 to 6 | `git revert -m 1 <merge-commit>` | Cheap. See the trap below. |
-| Phase 7 to 9 | Revert on `main`. Re-pin the chart to the last per-service SHA tag. | Cheap. The old tags are still in GHCR. |
+| Phase 7 to 9 | Revert on `main`. Re-pin the chart to the last per-service SHA tag. | Cheap. The old tags are still in GHCR, except `mint-ui-lit` SHAs, which are Docker Hub only. |
 | Phase 10 | Unarchive: one click. Un-deprecate the npm package. | Cheap, except the issue transfers. They do not come back. |
 | Phase 11 | None. Roll forward. | The point of no return. |
 
@@ -606,22 +874,36 @@ rolls back does not lose an afternoon to it.
 
 State these plainly. Do not let a reader assume otherwise.
 
-- **Nothing blocks a bad merge.** Neither `main` nor `develop` is protected, and
-  there are no required status checks. The publish gate in the workflow is real,
-  because it is a `needs:` inside one file. A merge gate does not exist. Adding
-  one is repo governance, and it would start failing merges immediately on the
-  next item.
+- ~~**Nothing blocks a bad merge.**~~ **Closed for `main`**, which now requires
+  `Lint & Format`, `TypeScript`, `Tests` and `Test`. **Still open for
+  `develop`**, which is unprotected — monorepo#168 was merged with four checks
+  still pending. The publish gate in the workflow is real, because it is a
+  `needs:` inside one file.
 - **`mint-ensemble-manager` has 475 eslint errors and 74 unformatted files.** CI
   runs neither check after cutover. Dropping husky and `lint-staged` does not
   make this worse: they only ever formatted files as they were touched, which is
   why the backlog exists.
 - **`graphql_engine` has no `CLAUDE.md` and no version file.** Both are content,
   and content is out of scope.
-- **The chart pins `mint-ui-lit` and `ensemble-manager` at `tag: latest`.** That
-  is [#148](https://github.com/mintproject/monorepo/issues/148), live today and
-  unrelated to this cutover.
+- **The chart pins `mint-ui-lit` at `tag: latest`.** That is
+  [#148](https://github.com/mintproject/monorepo/issues/148), live today and
+  unrelated to this cutover. `ensemble_manager` no longer does: `9.0.0-beta.8`
+  clears its tag so `global.imageTag` applies. `mint-ui-lit` keeps `latest`
+  because its GHCR repository has no SHA tags to pin instead.
 - **A stale `main` writes a stale pin, with no error.** The bump skill reads the
   tip of `main`. `dynamo` overrides every tag, so TACC is safe. Only fresh chart
   installs get stale code. The dev accepted this risk.
+- **The release re-tag is a manual step on every release.** See Phase 8.
+- **A bare chart install shipped no frontend** in `9.0.0-beta.9`. `ui` was off by
+  default and `ui_react` could not be on by default, because it hard-failed to
+  render without a `client_id`. `9.0.0-beta.10` closes this: `client_id` defaults
+  to `mint-local` and `ui_react` is on, at host `mint.local`.
+  [`mintproject/mint#113`](https://github.com/mintproject/mint/pull/113).
+- **`model-catalog-api/package.json` has no `"private": true`.** release-please
+  rewrites its version downwards. Nothing publishes it today.
 - **`ui` stays a submodule** until
   [#81](https://github.com/mintproject/monorepo/issues/81) removes Lit from TACC.
+- **The Docker Hub and npm deprecation notes are not posted, by decision.**
+  Phase 10 steps 4 and 5, dropped on 2026-08-30. The Docker Hub images are
+  unreferenced from chart `9.0.0-beta.8` on, and
+  `@mintproject/modelcatalog_client` must stay published for `ui` anyway.

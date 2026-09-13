@@ -54,6 +54,13 @@ export function buildEnvConfig(env = process.env) {
     DATA_CATALOG_BROWSE_URL:
       pick(env, 'DATA_CATALOG_BROWSE_URL', 'VITE_DATA_CATALOG_BROWSE_URL') ??
       'https://ckan.tacc.utexas.edu',
+    // The v2.0.0 model catalog REST API, version prefix included. The app reads
+    // the catalog through Hasura; this base is for the routes Hasura cannot
+    // serve — today the Tapis application proxy, which forwards the user's
+    // token to Tapis so the browser needs no Tapis CORS grant.
+    MODEL_CATALOG_API:
+      pick(env, 'MODEL_CATALOG_API', 'VITE_MODEL_CATALOG_API') ??
+      'http://api.models.mint.local/v2.0.0',
     // Which execution backend the deployment's Ensemble Manager runs, so the
     // app posts run submissions to the route that backend actually serves. It
     // is a property of that deployment, not a user choice: the chart configures
@@ -66,6 +73,15 @@ export function buildEnvConfig(env = process.env) {
     // legacy UI falls back to, so an unset value describes the same deployment
     // in all three places. A Tapis deployment — TACC's is one — must say so.
     EXECUTION_ENGINE: pick(env, 'EXECUTION_ENGINE', 'VITE_EXECUTION_ENGINE') ?? 'localex',
+    // Which co-branding the chrome shows: 'tacc' for the TACC and UT Austin
+    // strip, 'none' for no institutional logos. It names a preset in
+    // src/lib/branding.ts; the logo files, links and alt text are not
+    // configurable, so a deployment cannot ship the wrong alt text.
+    //
+    // 'none' by default. Only mint.tacc.utexas.edu may show UT's shield, and
+    // every other deployment gets it wrong by forgetting to opt out — so the
+    // opt-in is the one that must be written down.
+    BRANDING: pick(env, 'BRANDING', 'VITE_BRANDING') ?? 'none',
   });
 
   // No sensible default — the ensemble manager is deployment-specific, and the

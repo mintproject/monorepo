@@ -2,7 +2,11 @@
   "openapi": "3.0.0",
   "info": {
     "title": "Mint Ensemble Manager API",
-    "version": "1.0.0"
+    "version": "1.0.0",
+    "license": {
+      "name": "MIT",
+      "url": "https://opensource.org/license/mit"
+    }
   },
   "servers": [
     {
@@ -2516,83 +2520,13 @@
     }
   },
   "paths": {
-    "/executionQueue": {
-      "get": {
-        "summary": "Get the current execution queue",
-        "description": "Retrieves the current state of the execution queue",
-        "tags": [
-          "Execution Queue"
-        ],
-        "responses": {
-          "202": {
-            "description": "Successfully retrieved execution queue",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "result": {
-                      "type": "string",
-                      "example": "success"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "default": {
-            "description": "Default error response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      },
-      "delete": {
-        "summary": "Empty the execution queue",
-        "description": "Removes all items from the execution queue",
-        "tags": [
-          "Execution Queue"
-        ],
-        "responses": {
-          "202": {
-            "description": "Successfully emptied execution queue",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "result": {
-                      "type": "string",
-                      "example": "success"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "406": {
-            "description": "Error emptying execution queue"
-          },
-          "500": {
-            "description": "Server error"
-          }
-        }
-      }
-    },
-    "/executions": {
+    "/registration": {
       "post": {
-        "summary": "Submit modeling thread for execution.",
-        "operationId": "submitExecution",
+        "summary": "Register outputs of modeling thread in data catalog",
+        "operationId": "registerExecutionOutputs",
+        "tags": [
+          "Registration"
+        ],
         "security": [
           {
             "BearerAuth": []
@@ -2614,110 +2548,6 @@
         },
         "responses": {
           "202": {
-            "description": "Successful response"
-          },
-          "default": {
-            "description": "An error occurred"
-          }
-        }
-      }
-    },
-    "/executions/{executionId}/logs": {
-      "get": {
-        "summary": "Get Execution Logs",
-        "description": "Get the logs of an execution.",
-        "tags": [
-          "Executions"
-        ],
-        "security": [
-          {
-            "BearerAuth": []
-          },
-          {
-            "oauth2": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "executionId",
-            "required": true,
-            "schema": {
-              "type": "string"
-            },
-            "example": "9bc5bbfb-d76c-4d0b-87cc-f89e945a062e-007"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Execution Logs",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "result": {
-                      "type": "string",
-                      "example": "success"
-                    },
-                    "message": {
-                      "type": "string",
-                      "description": "The log content or success message",
-                      "example": "Execution logs fetched successfully"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "default": {
-            "description": "Default error response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "result": {
-                      "type": "string",
-                      "example": "error"
-                    },
-                    "message": {
-                      "type": "string",
-                      "example": "Internal server error"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/executionsLocal": {
-      "post": {
-        "summary": "Submit modeling thread for local execution.",
-        "operationId": "submitLocalExecution",
-        "security": [
-          {
-            "BearerAuth": []
-          },
-          {
-            "oauth2": []
-          }
-        ],
-        "requestBody": {
-          "description": "Modeling thread",
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ModelThread"
-              }
-            }
-          }
-        },
-        "responses": {
-          "202": {
             "description": "Successful response",
             "content": {
               "application/json": {
@@ -2730,303 +2560,7 @@
                     },
                     "message": {
                       "type": "string",
-                      "example": "Execution submitted successfully"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "default": {
-            "description": "Default error response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "result": {
-                      "type": "string",
-                      "example": "error"
-                    },
-                    "message": {
-                      "type": "string",
-                      "example": "Internal server error"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      },
-      "delete": {
-        "summary": "Delete cached results, cached models and cached data for local execution.",
-        "operationId": "deleteLocalExecutionCache",
-        "security": [
-          {
-            "BearerAuth": []
-          },
-          {
-            "oauth2": []
-          }
-        ],
-        "responses": {
-          "202": {
-            "description": "Successful response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "result": {
-                      "type": "string",
-                      "example": "success"
-                    },
-                    "message": {
-                      "type": "string",
-                      "example": "Execution cache deleted successfully"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "default": {
-            "description": "Default error response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "result": {
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/logs": {
-      "get": {
-        "summary": "Fetch logs for an execution.",
-        "operationId": "fetchLog",
-        "security": [
-          {
-            "BearerAuth": []
-          },
-          {
-            "oauth2": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "query",
-            "name": "ensemble_id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Log Details",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "type": "string",
-                  "example": "Log fetched successfully"
-                }
-              }
-            }
-          },
-          "default": {
-            "description": "Default error response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "result": {
-                      "type": "string",
-                      "example": "error"
-                    },
-                    "message": {
-                      "type": "string",
-                      "example": "Internal server error"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/modelBindings/data": {
-      "get": {
-        "summary": "Get model bindings",
-        "description": "Returns the model bindings",
-        "security": [
-          {
-            "BearerAuth": [],
-            "oauth2": []
-          }
-        ],
-        "tags": [
-          "Model Bindings"
-        ],
-        "parameters": [
-          {
-            "in": "query",
-            "name": "model_id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            },
-            "description": "The model id to use format http://api.models.mint.local/v1.8.0/modelconfigurations/modflow_2005_BartonSprings_avg?username=mint@isi.edu",
-            "example": "http://api.models.mint.local/v1.8.0/modelconfigurations/modflow_2005_BartonSprings_avg?username=mint@isi.edu"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Model bindings",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/DatasetSpecification"
-                  }
-                }
-              }
-            }
-          },
-          "default": {
-            "description": "Default error response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "result": {
-                      "type": "string",
-                      "example": "success"
-                    },
-                    "message": {
-                      "type": "string",
-                      "example": "Model bindings fetched successfully"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/modelBindings/parameters": {
-      "get": {
-        "summary": "Get model parameters",
-        "description": "Returns the model parameters",
-        "security": [
-          {
-            "BearerAuth": [],
-            "oauth2": []
-          }
-        ],
-        "tags": [
-          "Model Bindings"
-        ],
-        "parameters": [
-          {
-            "in": "query",
-            "name": "model_id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            },
-            "description": "The model id to use format http://api.models.mint.local/v1.8.0/modelconfigurations/modflow_2005_BartonSprings_avg?username=mint@isi.edu",
-            "example": "http://api.models.mint.local/v1.8.0/modelconfigurations/modflow_2005_BartonSprings_avg?username=mint@isi.edu"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Model parameters",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/Parameter"
-                  }
-                }
-              }
-            }
-          },
-          "default": {
-            "description": "Default error response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "result": {
-                      "type": "string",
-                      "example": "error"
-                    },
-                    "message": {
-                      "type": "string",
-                      "example": "Internal server error"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/modelCache": {
-      "delete": {
-        "summary": "Delete cached models from graphQL. WARNING - This will also result in deletion of all executions for that model, even from other threads !",
-        "operationId": "deleteModel",
-        "security": [
-          {
-            "BearerAuth": []
-          },
-          {
-            "oauth2": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "query",
-            "name": "model_id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "202": {
-            "description": "Successful response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "result": {
-                      "type": "string",
-                      "example": "success"
-                    },
-                    "message": {
-                      "type": "string",
-                      "example": "Model cache deleted successfully"
+                      "example": "Execution outputs registered successfully"
                     }
                   }
                 }
@@ -3195,13 +2729,10 @@
         }
       }
     },
-    "/registration": {
-      "post": {
-        "summary": "Register outputs of modeling thread in data catalog",
-        "operationId": "registerExecutionOutputs",
-        "tags": [
-          "Registration"
-        ],
+    "/modelCache": {
+      "delete": {
+        "summary": "Delete cached models from graphQL. WARNING - This will also result in deletion of all executions for that model, even from other threads !",
+        "operationId": "deleteModel",
         "security": [
           {
             "BearerAuth": []
@@ -3210,17 +2741,16 @@
             "oauth2": []
           }
         ],
-        "requestBody": {
-          "description": "Modeling thread scenario/subgoal/id",
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ModelThread"
-              }
+        "parameters": [
+          {
+            "in": "query",
+            "name": "model_id",
+            "required": true,
+            "schema": {
+              "type": "string"
             }
           }
-        },
+        ],
         "responses": {
           "202": {
             "description": "Successful response",
@@ -3235,7 +2765,7 @@
                     },
                     "message": {
                       "type": "string",
-                      "example": "Execution outputs registered successfully"
+                      "example": "Model cache deleted successfully"
                     }
                   }
                 }
@@ -3265,41 +2795,103 @@
         }
       }
     },
-    "/executionEngines/tapis": {
-      "post": {
-        "summary": "Submit modeling thread for execution using Tapis.",
-        "operationId": "submitTapisExecution",
-        "tags": [
-          "Execution Engine"
-        ],
-        "requestBody": {
-          "description": "Modeling thread",
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ModelThread"
-              },
-              "example": {
-                "thread_id": "108bguHTBBNLlZaPMLlM",
-                "model_id": "https://w3id.org/okn/i/mint/modflow_2005_BartonSprings_avg"
-              }
-            }
-          }
-        },
+    "/modelBindings/data": {
+      "get": {
+        "summary": "Get model bindings",
+        "description": "Returns the model bindings",
         "security": [
           {
             "BearerAuth": [],
             "oauth2": []
           }
         ],
+        "tags": [
+          "Model Bindings"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "model_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The model id to use format http://api.models.mint.local/v1.8.0/modelconfigurations/modflow_2005_BartonSprings_avg?username=mint@isi.edu",
+            "example": "http://api.models.mint.local/v1.8.0/modelconfigurations/modflow_2005_BartonSprings_avg?username=mint@isi.edu"
+          }
+        ],
         "responses": {
-          "202": {
-            "description": "Successful response",
+          "200": {
+            "description": "Model bindings",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SubmissionResult"
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DatasetSpecification"
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Default error response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "result": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Model bindings fetched successfully"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/modelBindings/parameters": {
+      "get": {
+        "summary": "Get model parameters",
+        "description": "Returns the model parameters",
+        "security": [
+          {
+            "BearerAuth": [],
+            "oauth2": []
+          }
+        ],
+        "tags": [
+          "Model Bindings"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "model_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The model id to use format http://api.models.mint.local/v1.8.0/modelconfigurations/modflow_2005_BartonSprings_avg?username=mint@isi.edu",
+            "example": "http://api.models.mint.local/v1.8.0/modelconfigurations/modflow_2005_BartonSprings_avg?username=mint@isi.edu"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Model parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Parameter"
+                  }
                 }
               }
             }
@@ -3318,6 +2910,735 @@
                     "message": {
                       "type": "string",
                       "example": "Internal server error"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/logs": {
+      "get": {
+        "summary": "Fetch logs for an execution.",
+        "operationId": "fetchLog",
+        "security": [
+          {
+            "BearerAuth": []
+          },
+          {
+            "oauth2": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "ensemble_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Log Details",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string",
+                  "example": "Log fetched successfully"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Default error response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "result": {
+                      "type": "string",
+                      "example": "error"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Internal server error"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/executionsLocal": {
+      "post": {
+        "summary": "Submit modeling thread for local execution.",
+        "operationId": "submitLocalExecution",
+        "security": [
+          {
+            "BearerAuth": []
+          },
+          {
+            "oauth2": []
+          }
+        ],
+        "requestBody": {
+          "description": "Modeling thread",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ModelThread"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "result": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Execution submitted successfully"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Default error response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "result": {
+                      "type": "string",
+                      "example": "error"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Internal server error"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete cached results, cached models and cached data for local execution.",
+        "operationId": "deleteLocalExecutionCache",
+        "security": [
+          {
+            "BearerAuth": []
+          },
+          {
+            "oauth2": []
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "result": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Execution cache deleted successfully"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Default error response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "result": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/executions": {
+      "post": {
+        "summary": "Submit modeling thread for execution.",
+        "operationId": "submitExecution",
+        "security": [
+          {
+            "BearerAuth": []
+          },
+          {
+            "oauth2": []
+          }
+        ],
+        "requestBody": {
+          "description": "Modeling thread scenario/subgoal/id",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ModelThread"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Successful response"
+          },
+          "default": {
+            "description": "An error occurred"
+          }
+        }
+      }
+    },
+    "/executions/{executionId}/logs": {
+      "get": {
+        "summary": "Get Execution Logs",
+        "description": "Get the logs of an execution.",
+        "tags": [
+          "Executions"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          },
+          {
+            "oauth2": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "executionId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "9bc5bbfb-d76c-4d0b-87cc-f89e945a062e-007"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Execution Logs",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "result": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "The log content or success message",
+                      "example": "Execution logs fetched successfully"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Default error response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "result": {
+                      "type": "string",
+                      "example": "error"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Internal server error"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/executionQueue": {
+      "get": {
+        "summary": "Get the current execution queue",
+        "description": "Retrieves the current state of the execution queue",
+        "tags": [
+          "Execution Queue"
+        ],
+        "responses": {
+          "202": {
+            "description": "Successfully retrieved execution queue",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "result": {
+                      "type": "string",
+                      "example": "success"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Default error response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Empty the execution queue",
+        "description": "Removes all items from the execution queue",
+        "tags": [
+          "Execution Queue"
+        ],
+        "responses": {
+          "202": {
+            "description": "Successfully emptied execution queue",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "result": {
+                      "type": "string",
+                      "example": "success"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "406": {
+            "description": "Error emptying execution queue"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/threads/{id}": {
+      "get": {
+        "summary": "Get modeling thread in MINT.",
+        "operationId": "getThread",
+        "tags": [
+          "Threads"
+        ],
+        "security": [
+          {
+            "BearerAuth": [],
+            "oauth2": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          },
+          "default": {
+            "description": "An error occurred"
+          }
+        }
+      }
+    },
+    "/threads": {
+      "post": {
+        "summary": "Create modeling thread in MINT",
+        "operationId": "createThread",
+        "tags": [
+          "Threads"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          },
+          {
+            "oauth2": []
+          }
+        ],
+        "requestBody": {
+          "description": "New modeling thread details",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewModelThread"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Successful response"
+          },
+          "default": {
+            "description": "An error occurred"
+          }
+        }
+      }
+    },
+    "/tapis/threads/{threadId}/executions/{executionId}/status": {
+      "put": {
+        "summary": "Update Execution Status",
+        "description": "Update the status of an execution.",
+        "operationId": "updateExecutionStatus",
+        "tags": [
+          "Tapis"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          },
+          {
+            "oauth2": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "threadId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Thread ID"
+          },
+          {
+            "name": "executionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Execution ID"
+          }
+        ],
+        "requestBody": {
+          "description": "Status Update",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReqUpdateExecutionStatus"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Status Updated Successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "An error occurred"
+          }
+        }
+      }
+    },
+    "/tapis/threads/{threadId}/executions/{executionId}/webhook": {
+      "post": {
+        "summary": "Webhook for Job Status Change",
+        "description": "Webhook for Job Status Change. TAPIS will send a POST request to this endpoint when a job status changes.",
+        "operationId": "tapisChangeJobStatus",
+        "tags": [
+          "Tapis"
+        ],
+        "parameters": [
+          {
+            "name": "threadId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Thread ID"
+          },
+          {
+            "name": "executionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Execution ID"
+          }
+        ],
+        "requestBody": {
+          "description": "Job Status",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WebHookEvent"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Log Details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "newStatus": {
+                      "type": "string",
+                      "example": "RUNNING"
+                    },
+                    "id": {
+                      "type": "string",
+                      "example": "9bc5bbfb-d76c-4d0b-87cc-f89e945a062e-007"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "An error occurred"
+          }
+        }
+      }
+    },
+    "/tapis/jobs": {
+      "post": {
+        "summary": "Submit Job",
+        "description": "Submit a job to the queue.",
+        "operationId": "tapisSubmitJob",
+        "tags": [
+          "Tapis"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          },
+          {
+            "oauth2": []
+          }
+        ],
+        "requestBody": {
+          "description": "Job",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReqSubmitTapisJob"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Job Submitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "job_id": {
+                      "type": "string",
+                      "example": "9bc5bbfb-d76c-4d0b-87cc-f89e945a062e-007"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "An error occurred"
+          }
+        }
+      }
+    },
+    "/tapis/jobs/{id}": {
+      "get": {
+        "summary": "Get Job Status",
+        "description": "Get the status of a job.",
+        "operationId": "tapisGetJobStatus",
+        "tags": [
+          "Tapis"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          },
+          {
+            "oauth2": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "9bc5bbfb-d76c-4d0b-87cc-f89e945a062e-007"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Job Status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string",
+                      "example": "RUNNING"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "An error occurred"
+          }
+        }
+      }
+    },
+    "/tapis/jobs/{id}/logs": {
+      "get": {
+        "summary": "Get Job Logs",
+        "description": "Get the logs of a job.",
+        "operationId": "tapisGetJobLogs",
+        "tags": [
+          "Tapis"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          },
+          {
+            "oauth2": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "9bc5bbfb-d76c-4d0b-87cc-f89e945a062e-007"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Job Logs",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "An error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
                     }
                   }
                 }
@@ -3656,197 +3977,6 @@
           },
           "default": {
             "description": "Default error response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/problemStatements/{problemStatementId}/tasks/{taskId}/subtasks/{subtaskId}/executions": {
-      "get": {
-        "summary": "Get all executions for a subtask",
-        "description": "Returns a list of all executions associated with a specific subtask",
-        "security": [
-          {
-            "BearerAuth": [],
-            "oauth2": []
-          }
-        ],
-        "tags": [
-          "Subtasks"
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "problemStatementId",
-            "required": true,
-            "schema": {
-              "type": "string"
-            },
-            "description": "The problem statement ID"
-          },
-          {
-            "in": "path",
-            "name": "taskId",
-            "required": true,
-            "schema": {
-              "type": "string"
-            },
-            "description": "The task ID"
-          },
-          {
-            "in": "path",
-            "name": "subtaskId",
-            "required": true,
-            "schema": {
-              "type": "string"
-            },
-            "description": "The subtask ID"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "List of executions for the subtask",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "executions": {
-                      "type": "array",
-                      "items": {
-                        "$ref": "#/components/schemas/Execution"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Subtask not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/problemStatements/{problemStatementId}/tasks/{taskId}/subtasks/{subtaskId}/executions/{executionId}/outputs": {
-      "post": {
-        "summary": "Register Tapis Execution Outputs",
-        "description": "Register the outputs of a successful Tapis execution in the data catalog",
-        "operationId": "registerTapisExecutionOutputs",
-        "tags": [
-          "Tapis"
-        ],
-        "security": [
-          {
-            "BearerAuth": []
-          },
-          {
-            "oauth2": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "problemStatementId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "taskId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "subtaskId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "executionId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Outputs registered successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/Execution_Result"
-                  }
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid request or registration failed",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Server error",
             "content": {
               "application/json": {
                 "schema": {
@@ -4825,355 +4955,107 @@
         }
       }
     },
-    "/tapis/jobs": {
-      "post": {
-        "summary": "Submit Job",
-        "description": "Submit a job to the queue.",
-        "operationId": "tapisSubmitJob",
-        "tags": [
-          "Tapis"
-        ],
-        "security": [
-          {
-            "BearerAuth": []
-          },
-          {
-            "oauth2": []
-          }
-        ],
-        "requestBody": {
-          "description": "Job",
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ReqSubmitTapisJob"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Job Submitted",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "job_id": {
-                      "type": "string",
-                      "example": "9bc5bbfb-d76c-4d0b-87cc-f89e945a062e-007"
-                    },
-                    "message": {
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "default": {
-            "description": "An error occurred"
-          }
-        }
-      }
-    },
-    "/tapis/jobs/{id}": {
+    "/problemStatements/{problemStatementId}/tasks/{taskId}/subtasks/{subtaskId}/executions": {
       "get": {
-        "summary": "Get Job Status",
-        "description": "Get the status of a job.",
-        "operationId": "tapisGetJobStatus",
-        "tags": [
-          "Tapis"
-        ],
-        "security": [
-          {
-            "BearerAuth": []
-          },
-          {
-            "oauth2": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            },
-            "example": "9bc5bbfb-d76c-4d0b-87cc-f89e945a062e-007"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Job Status",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "status": {
-                      "type": "string",
-                      "example": "RUNNING"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "default": {
-            "description": "An error occurred"
-          }
-        }
-      }
-    },
-    "/tapis/jobs/{id}/logs": {
-      "get": {
-        "summary": "Get Job Logs",
-        "description": "Get the logs of a job.",
-        "operationId": "tapisGetJobLogs",
-        "tags": [
-          "Tapis"
-        ],
-        "security": [
-          {
-            "BearerAuth": []
-          },
-          {
-            "oauth2": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            },
-            "example": "9bc5bbfb-d76c-4d0b-87cc-f89e945a062e-007"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Job Logs",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "type": "string"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "default": {
-            "description": "An error occurred",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/tapis/threads/{threadId}/executions/{executionId}/status": {
-      "put": {
-        "summary": "Update Execution Status",
-        "description": "Update the status of an execution.",
-        "operationId": "updateExecutionStatus",
-        "tags": [
-          "Tapis"
-        ],
-        "security": [
-          {
-            "BearerAuth": []
-          },
-          {
-            "oauth2": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "threadId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            },
-            "description": "Thread ID"
-          },
-          {
-            "name": "executionId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            },
-            "description": "Execution ID"
-          }
-        ],
-        "requestBody": {
-          "description": "Status Update",
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ReqUpdateExecutionStatus"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Status Updated Successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "default": {
-            "description": "An error occurred"
-          }
-        }
-      }
-    },
-    "/tapis/threads/{threadId}/executions/{executionId}/webhook": {
-      "post": {
-        "summary": "Webhook for Job Status Change",
-        "description": "Webhook for Job Status Change. TAPIS will send a POST request to this endpoint when a job status changes.",
-        "operationId": "tapisChangeJobStatus",
-        "tags": [
-          "Tapis"
-        ],
-        "parameters": [
-          {
-            "name": "threadId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            },
-            "description": "Thread ID"
-          },
-          {
-            "name": "executionId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            },
-            "description": "Execution ID"
-          }
-        ],
-        "requestBody": {
-          "description": "Job Status",
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/WebHookEvent"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Log Details",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "newStatus": {
-                      "type": "string",
-                      "example": "RUNNING"
-                    },
-                    "id": {
-                      "type": "string",
-                      "example": "9bc5bbfb-d76c-4d0b-87cc-f89e945a062e-007"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "default": {
-            "description": "An error occurred"
-          }
-        }
-      }
-    },
-    "/threads/{id}": {
-      "get": {
-        "summary": "Get modeling thread in MINT.",
-        "operationId": "getThread",
-        "tags": [
-          "Threads"
-        ],
+        "summary": "Get all executions for a subtask",
+        "description": "Returns a list of all executions associated with a specific subtask",
         "security": [
           {
             "BearerAuth": [],
             "oauth2": []
           }
         ],
+        "tags": [
+          "Subtasks"
+        ],
         "parameters": [
           {
             "in": "path",
-            "name": "id",
+            "name": "problemStatementId",
             "required": true,
             "schema": {
               "type": "string"
-            }
+            },
+            "description": "The problem statement ID"
+          },
+          {
+            "in": "path",
+            "name": "taskId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The task ID"
+          },
+          {
+            "in": "path",
+            "name": "subtaskId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The subtask ID"
           }
         ],
         "responses": {
           "200": {
-            "description": "Successful response"
+            "description": "List of executions for the subtask",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "executions": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Execution"
+                      }
+                    }
+                  }
+                }
+              }
+            }
           },
-          "default": {
-            "description": "An error occurred"
+          "404": {
+            "description": "Subtask not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
     },
-    "/threads": {
+    "/problemStatements/{problemStatementId}/tasks/{taskId}/subtasks/{subtaskId}/executions/{executionId}/outputs": {
       "post": {
-        "summary": "Create modeling thread in MINT",
-        "operationId": "createThread",
+        "summary": "Register Tapis Execution Outputs",
+        "description": "Register the outputs of a successful Tapis execution in the data catalog",
+        "operationId": "registerTapisExecutionOutputs",
         "tags": [
-          "Threads"
+          "Tapis"
         ],
         "security": [
           {
@@ -5183,23 +5065,145 @@
             "oauth2": []
           }
         ],
+        "parameters": [
+          {
+            "name": "problemStatementId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "taskId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "subtaskId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "executionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Outputs registered successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Execution_Result"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request or registration failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/executionEngines/tapis": {
+      "post": {
+        "summary": "Submit modeling thread for execution using Tapis.",
+        "operationId": "submitTapisExecution",
+        "tags": [
+          "Execution Engine"
+        ],
         "requestBody": {
-          "description": "New modeling thread details",
+          "description": "Modeling thread",
           "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/NewModelThread"
+                "$ref": "#/components/schemas/ModelThread"
+              },
+              "example": {
+                "thread_id": "108bguHTBBNLlZaPMLlM",
+                "model_id": "https://w3id.org/okn/i/mint/modflow_2005_BartonSprings_avg"
               }
             }
           }
         },
+        "security": [
+          {
+            "BearerAuth": [],
+            "oauth2": []
+          }
+        ],
         "responses": {
           "202": {
-            "description": "Successful response"
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubmissionResult"
+                }
+              }
+            }
           },
           "default": {
-            "description": "An error occurred"
+            "description": "Default error response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "result": {
+                      "type": "string",
+                      "example": "error"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Internal server error"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }

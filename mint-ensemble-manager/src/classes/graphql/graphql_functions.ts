@@ -116,7 +116,7 @@ import {
     Thread_Provenance_Insert_Input
 } from "./types";
 import { KeycloakAdapter } from "@/config/keycloak-adapter";
-import { InternalServerError, UnauthorizedError } from "../common/errors";
+import { InternalServerError, NotFoundError, UnauthorizedError } from "../common/errors";
 
 function getTokenFromAuthorizationHeader(authorizationHeader: string): string | null {
     if (!authorizationHeader || !authorizationHeader.startsWith("Bearer ")) {
@@ -1154,26 +1154,28 @@ export const mapHasuraOutputsToModelOutputs = (
 
 export const getModelOutputsByModelId = async (modelId: string): Promise<ModelOutput[]> => {
     const APOLLO_CLIENT = GraphQL.instance(KeycloakAdapter.getUser());
-    return APOLLO_CLIENT.query({
+    const result = await APOLLO_CLIENT.query({
         query: getModelOutputGQL,
         variables: {
             id: modelId
         }
-    })
-        .then((result) => {
-            if (!result || (result.errors && result.errors.length > 0)) {
-                console.log("ERROR");
-                console.log(result);
-                return [];
-            }
-            const model = result.data.modelcatalog_configuration_by_pk;
-            return mapHasuraOutputsToModelOutputs(model?.outputs);
-        })
-        .catch((e) => {
-            console.log("ERROR");
-            console.log(e);
-            return [];
-        });
+    });
+    if (!result) {
+        throw new InternalServerError(
+            `Hasura returned no response for the outputs of model configuration ${modelId}`
+        );
+    }
+    if (result.errors && result.errors.length > 0) {
+        const messages = result.errors.map((error) => error.message).join("; ");
+        throw new InternalServerError(
+            `Hasura returned an error for the outputs of model configuration ${modelId}: ${messages}`
+        );
+    }
+    const model = result.data?.modelcatalog_configuration_by_pk;
+    if (!model) {
+        throw new NotFoundError(`Model configuration ${modelId} does not exist`);
+    }
+    return mapHasuraOutputsToModelOutputs(model.outputs);
 };
 
 const _calculateBoundingBox = (geometries: any[]) => {

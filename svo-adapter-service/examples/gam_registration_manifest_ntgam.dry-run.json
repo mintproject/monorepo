@@ -1,0 +1,101 @@
+{
+  "manifest_version": "0.1.0",
+  "status": "completed",
+  "description": "NTGAM model capability registration completed via CKAN + MINT. All components created and verified.",
+  "gam": {
+    "id": "ntgam-v301",
+    "label": "Northern Trinity GAM v3.01",
+    "description": "TWDB Northern Trinity GAM (NTGAM) v3.01 — Trinity, Woodbine, Paluxy, Glen Rose, Hensell, Pearsall, Hosston aquifers. Covers GMAs 8, 12, and portions of 10, 11, 13.",
+    "gma_coverage": ["GMA 8", "GMA 10", "GMA 11", "GMA 12", "GMA 13"],
+    "aquifer_coverage": [
+      "Trinity",
+      "Woodbine",
+      "Paluxy",
+      "Glen Rose",
+      "Hensell",
+      "Pearsall",
+      "Hosston"
+    ],
+    "modflow_engine": "MODFLOW 6",
+    "modflow_version": "6.6.3",
+    "engine_confirmed": true,
+    "engine_confirmation_notes": "mfsim.nam explicitly states 'Simulation name file for MODFLOW 6 prepared by MF5to6' with GWF6/TDIS6/IMS6 keywords. Not MODFLOW-USG.",
+    "source_archive": {
+      "resource_url": "https://gw-models.s3.amazonaws.com/Download_GAMs/trnt_n/trnt_n_v301/NTGAM_Final_model_2025.7z",
+      "description": "NTGAM v3.01 full model archive from TWDB GAM distribution. Contains DIS, BAS, NPF, STO, OC, DRN, RCH, GHB, WEL, and all package input files.",
+      "format": "zip",
+      "size_bytes": 279905374,
+      "checksum_sha256": "044999ca0daf0ae8c8a345aa4464ad088c637bdc2872c8be08048da9b7878e04",
+      "source_authority": "Texas Water Development Board"
+    }
+  },
+  "phase_1_ckan": {
+    "description": "CKAN package and resource created/verified",
+    "package": {
+      "id": "f0e1bd64-2307-42cd-ace4-4c6f3ec1b33f",
+      "name": "ntgam-v301-inputs",
+      "title": "Northern Trinity GAM v3.01 — model inputs",
+      "owner_org": "twdb-gams"
+    },
+    "resource": {
+      "id": "82e67f4d-38a8-4945-95c9-3422ab45b26b",
+      "name": "NTGAM v3.01 — Full simulation archive (confirmed working)",
+      "url": "https://ckan.tacc.utexas.edu/dataset/ntgam-v301-inputs/resource/82e67f4d-38a8-4945-95c9-3422ab45b26b/download/NTGAM_Final_model_2025.7z",
+      "format": "zip",
+      "size": 279905374,
+      "checksum": "sha256:044999ca0daf0ae8c8a345aa4464ad088c637bdc2872c8be08048da9b7878e04"
+    }
+  },
+  "phase_2_mint": {
+    "description": "MINT resource, fixed input binding, model_io, modelcatalog_configuration with inputs/outputs/parameters all created",
+    "mint_rows_created": {
+      "resource": {
+        "id": "ntgam-v301-archive-resource",
+        "name": "NTGAM v3.01 model archive",
+        "url": "https://ckan.tacc.utexas.edu/dataset/ntgam-v301-inputs/resource/82e67f4d-38a8-4945-95c9-3422ab45b26b/download/NTGAM_Final_model_2025.7z",
+        "description": "NTGAM v3.01 full model input archive for MODFLOW 6 execution, sourced from CKAN"
+      },
+      "model_io": {
+        "id": "https://w3id.org/okn/i/mint/modflow6_input_simulation-archive",
+        "name": "mf6-simulation-archive",
+        "format": "zip",
+        "description": "NTGAM v3.01 full simulation input archive for MODFLOW 6",
+        "type": "input",
+        "modelcatalog_dataset_specification_id": "https://w3id.org/okn/i/mint/modflow6_input_simulation-archive"
+      },
+      "model_input_fixed_binding": {
+        "model_io_id": "https://w3id.org/okn/i/mint/modflow6_input_simulation-archive",
+        "resource_id": "ntgam-v301-archive-resource",
+        "note": "Binds NTGAM archive as the default simulation input for MODFLOW 6 configuration."
+      },
+      "modelcatalog_configuration": {
+        "id": "https://w3id.org/okn/i/mint/ntgam-v301",
+        "label": "NTGAM v3.01 — Northern Trinity GAM",
+        "description": "Executable configuration for NTGAM v3.01 using MODFLOW 6. Based on the TWDB Northern Trinity GAM v3.01 model archive.",
+        "has_software_image": "docker://ghcr.io/wmobley/modflow6:sha-09f0070",
+        "tapis_app_id": null,
+        "tapis_app_version": null,
+        "inputs_count": 12,
+        "outputs_count": 4,
+        "parameters_count": 1
+      }
+    }
+  },
+  "tapis_app_confirmed": {
+    "app_id": "modflow6-simulation",
+    "app_version": "0.0.09f0070",
+    "container_image": "docker://ghcr.io/wmobley/modflow6:sha-09f0070",
+    "execution_system": "ls6",
+    "runtime": "SINGULARITY",
+    "job_type": "BATCH"
+  },
+  "remaining_actions": [
+    "Admin must set tapis_app_id on modelcatalog_configuration (id: https://w3id.org/okn/i/mint/ntgam-v301) to 'modflow6-simulation' and tapis_app_version to '0.0.09f0070'",
+    "Layer/time mapping: Only Hosston Layer 8 / SP 132 mapped. Other aquifer-layer-year mappings need model documentation.",
+    "adapter_model_capability_metadata table does not exist in local MINT (requires migration) - skipped for now"
+  ],
+  "approval_gate": {
+    "required": false,
+    "message": "Registration completed successfully via Hasura admin secret. Only tapis_app_id remains to be set by admin."
+  }
+}

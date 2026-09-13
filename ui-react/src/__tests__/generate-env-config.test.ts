@@ -51,9 +51,25 @@ describe('buildEnvConfig', () => {
     expect(buildEnvConfig({ VITE_EXECUTION_ENGINE: 'wings' }).EXECUTION_ENGINE).toBe('wings');
   });
 
-  it('does not emit MODEL_CATALOG_API — the v1.8.0 SPARQL API has no callers', () => {
-    const c = buildEnvConfig({ MODEL_CATALOG_API: 'https://models.example.org/v2' });
-    expect('MODEL_CATALOG_API' in c).toBe(false);
+  it('defaults branding to none, overridable from env', () => {
+    // An unbranded deployment must be the default. Only mint.tacc.utexas.edu
+    // may show UT's shield, and every other deployment would get it wrong by
+    // forgetting to opt out.
+    expect(buildEnvConfig({}).BRANDING).toBe('none');
+    expect(buildEnvConfig({ BRANDING: 'tacc' }).BRANDING).toBe('tacc');
+    expect(buildEnvConfig({ VITE_BRANDING: 'tacc' }).BRANDING).toBe('tacc');
+    expect(buildEnvConfig({ BRANDING: '' }).BRANDING).toBe('none');
+  });
+
+  it('emits MODEL_CATALOG_API — the component location picker calls its Tapis proxy', () => {
+    expect(buildEnvConfig({}).MODEL_CATALOG_API).toBe('http://api.models.mint.local/v2.0.0');
+    expect(
+      buildEnvConfig({ MODEL_CATALOG_API: 'https://models.example.org/v2.0.0' }).MODEL_CATALOG_API,
+    ).toBe('https://models.example.org/v2.0.0');
+    expect(
+      buildEnvConfig({ VITE_MODEL_CATALOG_API: 'https://models.example.org/v2.0.0' })
+        .MODEL_CATALOG_API,
+    ).toBe('https://models.example.org/v2.0.0');
   });
 
   it('resolves the browse URL independently of the API base', () => {
