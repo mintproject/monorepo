@@ -17,6 +17,7 @@ import {
   ModelOutputFile,
   ThreadExecutionData,
 } from '@/graphql/generated/execution';
+import { EnsembleManagerError, NO_OUTPUTS_DECLARED } from '@/lib/ensemble-manager';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -68,6 +69,12 @@ interface MintResultsProps {
   onFetchRuns: (modelId: string, page: number, pageSize: number) => void;
   onIngestResults?: (modelId: string) => void;
   onPublishResults?: (modelId: string) => Promise<void>;
+  /**
+   * Take the user to the promote action — the Runs step, where each finished
+   * run lists its archived files. Shown instead of the raw 422 text when the
+   * model configuration declares no output.
+   */
+  onPromoteOutputs?: () => void;
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -84,6 +91,7 @@ export function MintResults({
   onFetchRuns,
   onIngestResults,
   onPublishResults,
+  onPromoteOutputs,
 }: MintResultsProps) {
   const modelIds = Object.keys(threadData.execution_summary ?? {});
 
@@ -98,6 +106,10 @@ export function MintResults({
   const [showAllOutputs, setShowAllOutputs] = useState(true);
   const [publishWaiting, setPublishWaiting] = useState<Record<string, boolean>>({});
   const [publishError, setPublishError] = useState<Record<string, string>>({});
+  // The server's own error code, kept beside the message. NO_OUTPUTS_DECLARED
+  // is not an error to read and dismiss: it names a missing declaration the
+  // user repairs by promoting a file (#267).
+  const [publishErrorCode, setPublishErrorCode] = useState<Record<string, string>>({});
 
   useEffect(() => {
     for (const mid of modelIds) {
@@ -123,6 +135,7 @@ export function MintResults({
       if (!onPublishResults) return;
       setPublishWaiting((w) => ({ ...w, [mid]: true }));
       setPublishError((e) => ({ ...e, [mid]: '' }));
+      setPublishErrorCode((c) => ({ ...c, [mid]: '' }));
       try {
         await onPublishResults(mid);
         // Registration writes the execution_result rows server-side, and this
@@ -138,6 +151,10 @@ export function MintResults({
         setPublishError((e) => ({
           ...e,
           [mid]: err instanceof Error ? err.message : 'Could not fetch results',
+        }));
+        setPublishErrorCode((c) => ({
+          ...c,
+          [mid]: err instanceof EnsembleManagerError ? (err.code ?? '') : '',
         }));
       } finally {
         setPublishWaiting((w) => ({ ...w, [mid]: false }));
@@ -318,14 +335,38 @@ export function MintResults({
                   )}
                 </div>
 
-                {publishError[mid] && (
-                  <p
+                {publishErrorCode[mid] === NO_OUTPUTS_DECLARED ? (
+                  <div
                     role="alert"
                     data-testid={`publish-error-${mid}`}
-                    className="text-xs text-red-600"
+                    className="space-y-1 rounded border border-orange-200 bg-orange-50 px-2 py-1.5"
                   >
-                    {publishError[mid]}
-                  </p>
+                    <p className="text-xs text-orange-800">
+                      This model configuration declares no output, so there is nothing to publish. A
+                      Tapis application does not declare its output files. Open a finished run and
+                      promote the files that are results.
+                    </p>
+                    {onPromoteOutputs && (
+                      <button
+                        type="button"
+                        data-testid={`promote-outputs-${mid}`}
+                        onClick={onPromoteOutputs}
+                        className="rounded bg-orange-600 px-2 py-0.5 text-xs text-white hover:bg-orange-700"
+                      >
+                        Choose output files
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  publishError[mid] && (
+                    <p
+                      role="alert"
+                      data-testid={`publish-error-${mid}`}
+                      className="text-xs text-red-600"
+                    >
+                      {publishError[mid]}
+                    </p>
+                  )
                 )}
 
                 {/* Pagination + controls */}

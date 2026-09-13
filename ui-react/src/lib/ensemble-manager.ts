@@ -1,8 +1,8 @@
 /**
  * Ensemble Manager REST calls.
  *
- * These are the only two places the app talks to mint-ensemble-manager over
- * REST (everything else goes through Hasura). Both need the user's access
+ * These are the only places the app talks to mint-ensemble-manager over REST
+ * (everything else goes through Hasura). All of them need the user's access
  * token, so the Authorization header is built here, once.
  *
  * Why one place: the two call sites used to read the token from localStorage
@@ -11,6 +11,49 @@
  * with no error (#85).
  */
 import { getAccessToken } from './auth/token-store';
+
+/**
+ * A failed Ensemble Manager response, carrying the machine-readable `code` the
+ * server sends beside the message.
+ *
+ * The status alone does not say what to do about it. `NO_OUTPUTS_DECLARED`
+ * (422) means the model configuration declares no output — a state the user
+ * fixes by promoting a file from a finished run, not an error to read and
+ * dismiss (#267). `message` keeps the shape the Results step already renders.
+ */
+export class EnsembleManagerError extends Error {
+  readonly status: number;
+  /** The server's own error code, when it sends one. */
+  readonly code?: string;
+
+  constructor(status: number, message: string, code?: string) {
+    super(message);
+    this.name = 'EnsembleManagerError';
+    this.status = status;
+    this.code = code;
+  }
+}
+
+/** The code the server sends when a model configuration declares no output. */
+export const NO_OUTPUTS_DECLARED = 'NO_OUTPUTS_DECLARED';
+
+/**
+ * Turn a failed response into an `EnsembleManagerError`.
+ *
+ * A body that is not JSON, or that carries no message, still yields the status
+ * — the Results step showed a bare status before the server learned to explain
+ * itself, and that path must keep working.
+ */
+async function toEnsembleManagerError(resp: Response): Promise<EnsembleManagerError> {
+  const body = await resp
+    .json()
+    .then((parsed: { message?: string; code?: string }) => parsed)
+    .catch(() => undefined);
+  const message = body?.message
+    ? `Ensemble manager returned ${resp.status}: ${body.message}`
+    : `Ensemble manager returned ${resp.status}`;
+  return new EnsembleManagerError(resp.status, message, body?.code);
+}
 
 /**
  * Request headers for the Ensemble Manager, carrying the stored access token
@@ -59,6 +102,28 @@ export async function submitRuns(
   }
 }
 
+/** The three path segments that address one thread on the publish routes. */
+export interface SubtaskIds {
+  problemStatementId: string;
+  taskId: string;
+  threadId: string;
+}
+
+/**
+ * Base URL of one subtask (thread) on the Ensemble Manager.
+ *
+ * Each id is one path segment. TACC's are opaque and need no escaping, but the
+ * legacy `mint://…/…` form carries slashes, which would otherwise split into
+ * extra segments and miss the route entirely.
+ */
+function subtaskUrl(ensembleManagerApi: string, ids: SubtaskIds): string {
+  return (
+    `${ensembleManagerApi}/problemStatements/${encodeURIComponent(ids.problemStatementId)}` +
+    `/tasks/${encodeURIComponent(ids.taskId)}` +
+    `/subtasks/${encodeURIComponent(ids.threadId)}`
+  );
+}
+
 /**
  * Register a thread's run outputs in the data catalog, so the Results step can
  * show them.
@@ -73,34 +138,74 @@ export async function submitRuns(
  * successes — so a 400 here means "all of them failed", not "there were none".
  * The caller surfaces the message rather than dropping it (#110).
  */
-export async function publishResults(
+export async function publishResults(ensembleManagerApi: string, ids: SubtaskIds): Promise<void> {
+  const resp = await fetch(`${subtaskUrl(ensembleManagerApi, ids)}/outputs`, {
+    method: 'POST',
+    headers: ensembleManagerHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify({}),
+  });
+  if (!resp.ok) {
+    throw await toEnsembleManagerError(resp);
+  }
+}
+
+/**
+ * Register the outputs of ONE execution.
+ *
+ * Nothing republishes by itself, so this is the call behind the per-run
+ * "Publish this execution now" button: the user promotes a file, then presses
+ * it (#261). The bulk route above walks every execution of the thread instead.
+ *
+ * It answers the same 422 `NO_OUTPUTS_DECLARED` as the bulk route when the
+ * model configuration declares no output.
+ */
+export async function publishExecution(
   ensembleManagerApi: string,
-  ids: { problemStatementId: string; taskId: string; threadId: string },
+  ids: SubtaskIds,
+  executionId: string,
 ): Promise<void> {
-  const { problemStatementId, taskId, threadId } = ids;
-  // Each id is one path segment. TACC's are opaque and need no escaping, but
-  // the legacy `mint://…/…` form carries slashes, which would otherwise split
-  // into extra segments and miss the route entirely.
-  const url =
-    `${ensembleManagerApi}/problemStatements/${encodeURIComponent(problemStatementId)}` +
-    `/tasks/${encodeURIComponent(taskId)}` +
-    `/subtasks/${encodeURIComponent(threadId)}/outputs`;
+  const url = `${subtaskUrl(ensembleManagerApi, ids)}/executions/${encodeURIComponent(executionId)}/outputs`;
   const resp = await fetch(url, {
     method: 'POST',
     headers: ensembleManagerHeaders({ 'Content-Type': 'application/json' }),
     body: JSON.stringify({}),
   });
   if (!resp.ok) {
-    const detail = await resp
-      .json()
-      .then((body: { message?: string }) => body?.message)
-      .catch(() => undefined);
-    throw new Error(
-      detail
-        ? `Ensemble manager returned ${resp.status}: ${detail}`
-        : `Ensemble manager returned ${resp.status}`,
-    );
+    throw await toEnsembleManagerError(resp);
   }
+}
+
+/** One file that an execution archived. Mirrors the server's `ExecutionFile`. */
+export interface ExecutionFile {
+  /** The file name, without the folder. */
+  name: string;
+  /** The path on the archive system. It tells two files of the same name apart. */
+  path: string;
+  /** The size in bytes. */
+  size: number;
+  /** The `tapis://` URI. CKAN reads this URI as it is. */
+  url: string;
+}
+
+/**
+ * List the files that an execution archived.
+ *
+ * MINT stores none of these files: the server reads them live from Tapis with
+ * the user's own token. An execution that archived nothing answers an empty
+ * list, which is not an error — the run may still be on its way.
+ */
+export async function fetchExecutionFiles(
+  ensembleManagerApi: string,
+  executionId: string,
+  signal?: AbortSignal,
+): Promise<ExecutionFile[]> {
+  const url = `${ensembleManagerApi}/executions/${encodeURIComponent(executionId)}/files`;
+  const resp = await fetch(url, { signal, headers: ensembleManagerHeaders() });
+  if (!resp.ok) {
+    throw await toEnsembleManagerError(resp);
+  }
+  const body = (await resp.json()) as { files?: ExecutionFile[] };
+  return body.files ?? [];
 }
 
 /** Fetch the raw log text for one execution. Caller handles ANSI cleanup. */
