@@ -1,7 +1,12 @@
 export class HttpError extends Error {
     constructor(
         public statusCode: number,
-        message: string
+        message: string,
+        /**
+         * A stable machine-readable name for the cause. The message is for a
+         * person and may change. A client branches on the code.
+         */
+        public code?: string
     ) {
         super(message);
         this.name = "HttpError";
@@ -33,6 +38,30 @@ export class ForbiddenError extends HttpError {
     constructor(message: string = "Forbidden") {
         super(403, message);
         this.name = "ForbiddenError";
+    }
+}
+
+export class UnprocessableEntityError extends HttpError {
+    constructor(message: string = "Unprocessable entity", code?: string) {
+        super(422, message, code);
+        this.name = "UnprocessableEntityError";
+    }
+}
+
+/**
+ * The execution succeeded and the model configuration declares no output.
+ * Nothing is broken. The user must promote a file from the execution before
+ * MINT can publish a result.
+ */
+export class NoOutputsDeclaredError extends UnprocessableEntityError {
+    static readonly CODE = "NO_OUTPUTS_DECLARED";
+
+    constructor() {
+        super(
+            "This model configuration declares no outputs. Promote a file from the execution first.",
+            NoOutputsDeclaredError.CODE
+        );
+        this.name = "NoOutputsDeclaredError";
     }
 }
 

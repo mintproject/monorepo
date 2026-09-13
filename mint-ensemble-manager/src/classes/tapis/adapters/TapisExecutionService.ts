@@ -8,7 +8,7 @@ import { getInputDatasets } from "@/classes/tapis/helpers";
 import { TapisJobService } from "@/classes/tapis/adapters/TapisJobService";
 import errorDecoder from "@/classes/tapis/utils/errorDecoder";
 import { TapisJobSubscriptionService } from "@/classes/tapis/adapters/TapisJobSubscriptionService";
-import { BadRequestError, NotFoundError } from "@/classes/common/errors";
+import { BadRequestError, NoOutputsDeclaredError, NotFoundError } from "@/classes/common/errors";
 
 interface SerializableError {
     message: string;
@@ -521,13 +521,13 @@ export class TapisExecutionService implements IExecutionService {
         console.log("The TAPIS files available to match to mint outputs", files);
         const mintOutputs = await getModelOutputsByModelId(execution.modelid);
         console.log("The MINT outputs available to match to TAPIS files", mintOutputs);
-        if (mintOutputs.length === 0 && files.length === 0) {
-            throw new NotFoundError(
-                "No outputs found and no mint outputs found for model " + execution.modelid
-            );
-        } else if (mintOutputs.length === 0) {
-            throw new NotFoundError("No mint outputs found for model " + execution.modelid);
-        } else if (files.length === 0) {
+        // A model configuration that declares no output is incomplete, not missing.
+        // The execution succeeded. Answer 422 with a code, so the client can offer
+        // the promote action instead of a raw error.
+        if (mintOutputs.length === 0) {
+            throw new NoOutputsDeclaredError();
+        }
+        if (files.length === 0) {
             throw new NotFoundError("No files found for model " + execution.modelid);
         }
         return matchTapisOutputsToMintOutputs(files, mintOutputs);
