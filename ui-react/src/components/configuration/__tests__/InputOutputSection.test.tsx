@@ -217,4 +217,41 @@ describe('InputRow variables (presentations)', () => {
       expect(screen.getByText(/this input carries zero standard variables/i)).toBeInTheDocument();
     });
   });
+
+  // A promoted file carries a label only (#267). The cost of that is real and
+  // late — the Variables step filters models by standard variable — so the row
+  // states it where the user can act on it.
+  it('warns that an output with no standard variable cannot match a modeling task', async () => {
+    renderWithProviders(<InputsFormWrapper prefix="outputs" allowMultipleVariables />, {
+      apolloMocks: [emptyRefDataMock],
+    });
+
+    await userEvent.click(screen.getByRole('button', { name: /add output/i }));
+
+    expect(await screen.findByText(/cannot match a modeling task/i)).toBeInTheDocument();
+    expect(screen.getByText(/this output carries zero standard variables/i)).toBeInTheDocument();
+  });
+
+  it('drops the warning once the output carries a variable', async () => {
+    renderWithProviders(<InputsFormWrapper prefix="outputs" allowMultipleVariables />, {
+      apolloMocks: [emptyRefDataMock],
+    });
+
+    await userEvent.click(screen.getByRole('button', { name: /add output/i }));
+    await userEvent.click(screen.getByRole('button', { name: /add variable/i }));
+
+    await waitFor(() => {
+      expect(screen.queryByText(/cannot match a modeling task/i)).not.toBeInTheDocument();
+    });
+  });
+
+  it('leaves the inputs section unchanged — the warning is about outputs', async () => {
+    renderWithProviders(<InputsFormWrapper prefix="inputs" allowMultipleVariables />, {
+      apolloMocks: [emptyRefDataMock],
+    });
+
+    await userEvent.click(screen.getByRole('button', { name: /add input/i }));
+
+    expect(screen.queryByText(/cannot match a modeling task/i)).not.toBeInTheDocument();
+  });
 });

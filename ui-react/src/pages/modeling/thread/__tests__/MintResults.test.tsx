@@ -5,6 +5,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { screen, fireEvent, waitFor } from '@testing-library/react';
 import { renderWithProviders } from '@/test/utils/render';
 import { MintResults } from '../MintResults';
+import { EnsembleManagerError } from '@/lib/ensemble-manager';
 import type { ThreadExecutionData, ModelExecutionsMap } from '@/graphql/generated/execution';
 
 // ─── Mock data ────────────────────────────────────────────────────────────────
@@ -312,6 +313,56 @@ describe('MintResults', () => {
     expect(await screen.findByTestId('publish-error-model-1')).toHaveTextContent(
       'No executions found to publish',
     );
+  });
+
+  // 422 NO_OUTPUTS_DECLARED is not an error to read and dismiss. A Tapis
+  // application declares no output file type, so the model configuration
+  // reaches its first run with none, and the repair is a promotion (#267).
+  it('offers the promote action when the configuration declares no output', async () => {
+    const onPromoteOutputs = vi.fn();
+    renderWithProviders(
+      <MintResults
+        threadData={threadDataFinished}
+        executions={{ 'model-1': { executions: [], loading: false } }}
+        canWrite
+        ingestionApiAvailable={false}
+        onContinue={vi.fn()}
+        onFetchRuns={vi.fn()}
+        onPublishResults={vi
+          .fn()
+          .mockRejectedValue(
+            new EnsembleManagerError(
+              422,
+              'Ensemble manager returned 422: no outputs',
+              'NO_OUTPUTS_DECLARED',
+            ),
+          )}
+        onPromoteOutputs={onPromoteOutputs}
+      />,
+    );
+
+    fireEvent.click(screen.getByTestId('fetch-results-model-1'));
+
+    expect(await screen.findByTestId('publish-error-model-1')).toHaveTextContent(
+      /declares no output/i,
+    );
+    fireEvent.click(screen.getByTestId('promote-outputs-model-1'));
+    expect(onPromoteOutputs).toHaveBeenCalled();
+  });
+
+  it('shows any other failure as the server wrote it', async () => {
+    renderFinished(
+      vi
+        .fn()
+        .mockRejectedValue(new EnsembleManagerError(403, 'Ensemble manager returned 403: nope')),
+    );
+
+    fireEvent.click(screen.getByTestId('fetch-results-model-1'));
+
+    expect(await screen.findByTestId('publish-error-model-1')).toHaveTextContent(
+      'Ensemble manager returned 403: nope',
+    );
+    expect(screen.queryByTestId('promote-outputs-model-1')).not.toBeInTheDocument();
   });
 
   it('shows ingestion button when ingestion API is available and runs are finished', () => {

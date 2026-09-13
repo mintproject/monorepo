@@ -7,7 +7,7 @@
  *
  * Legacy: ui/src/screens/modeling/thread/mint-runs.ts
  */
-import { ExternalLink, RefreshCw, X } from 'lucide-react';
+import { ExternalLink, FolderOpen, RefreshCw, X } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import {
@@ -17,6 +17,7 @@ import {
   ThreadExecutionData,
 } from '@/graphql/generated/execution';
 import { fetchExecutionLog } from '@/lib/ensemble-manager';
+import { ExecutionFilesDialog } from './ExecutionFilesDialog';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -132,6 +133,13 @@ interface MintRunsProps {
   onFetchRuns: (modelId: string, page: number, pageSize: number) => void;
   onSubmitRuns: (modelId: string) => Promise<void>;
   onExecutionSummaryChanged?: (summary: ExecutionSummaryMap) => void;
+  /**
+   * Publish one execution. Absent means publishing is not available, and the
+   * files dialog then only lists and promotes.
+   */
+  onPublishExecution?: (executionId: string) => Promise<void>;
+  /** Called after the user promotes a file, so the caller re-reads the thread. */
+  onOutputsChanged?: () => void | Promise<void>;
 }
 
 // ─── Component ───────────────────────────────────────────────────────────────
@@ -147,6 +155,8 @@ export function MintRuns({
   onContinue,
   onFetchRuns,
   onSubmitRuns,
+  onPublishExecution,
+  onOutputsChanged,
 }: MintRunsProps) {
   const modelIds = Object.keys(threadData.execution_summary ?? {});
 
@@ -176,6 +186,9 @@ export function MintRuns({
   const [logDialogOpen, setLogDialogOpen] = useState(false);
   const [logContent, setLogContent] = useState<string | null>(null);
   const logAbortRef = useRef<AbortController | null>(null);
+  // Which run's archive the files dialog shows. The model id travels with it
+  // because a promoted file is written onto that model's configuration.
+  const [filesFor, setFilesFor] = useState<{ executionId: string; modelId: string } | null>(null);
 
   // Auto-fetch runs when page/model changes
   useEffect(() => {
@@ -235,6 +248,8 @@ export function MintRuns({
     setLogDialogOpen(false);
     logAbortRef.current?.abort();
   }, []);
+
+  const handleCloseFiles = useCallback(() => setFilesFor(null), []);
 
   // ─ Guard: params not configured ─────────────────────────────────────────
   if (!paramsDone) {
@@ -391,7 +406,7 @@ export function MintRuns({
                       >
                         <thead className="sticky top-0 bg-gray-100">
                           <tr>
-                            <th colSpan={4} className="px-2 py-1 text-left font-semibold">
+                            <th colSpan={5} className="px-2 py-1 text-left font-semibold">
                               Run
                             </th>
                             {adjustableInputs.length > 0 && (
@@ -416,6 +431,7 @@ export function MintRuns({
                             <th className="px-2 py-1 font-medium">Start</th>
                             <th className="px-2 py-1 font-medium">End</th>
                             <th className="px-2 py-1 font-medium">Log</th>
+                            <th className="px-2 py-1 font-medium">Files</th>
                             {adjustableInputs.length + adjustableParams.length === 0 && (
                               <th className="px-2 py-1" />
                             )}
@@ -435,7 +451,7 @@ export function MintRuns({
                           {grouped.executions.length === 0 ? (
                             <tr>
                               <td
-                                colSpan={4 + adjustableInputs.length + adjustableParams.length || 5}
+                                colSpan={5 + adjustableInputs.length + adjustableParams.length}
                                 className="px-2 py-4 text-center text-gray-400"
                               >
                                 <div className="flex items-center justify-center gap-2">
@@ -472,6 +488,19 @@ export function MintRuns({
                                     >
                                       <ExternalLink className="h-3 w-3" />
                                       View Log
+                                    </button>
+                                  </td>
+                                  <td className="px-2 py-1">
+                                    <button
+                                      type="button"
+                                      data-testid={`view-files-${execution.id}`}
+                                      onClick={() =>
+                                        setFilesFor({ executionId: execution.id, modelId: mid })
+                                      }
+                                      className="flex items-center gap-1 rounded border px-1.5 py-0.5 text-xs hover:bg-gray-50"
+                                    >
+                                      <FolderOpen className="h-3 w-3" />
+                                      Files
                                     </button>
                                   </td>
                                   {adjustableInputs.length + adjustableParams.length === 0 && (
@@ -552,6 +581,23 @@ export function MintRuns({
 
       {/* Log dialog */}
       <LogDialog open={logDialogOpen} log={logContent} onClose={handleCloseLog} />
+
+      {/* Archived files of one run: promote a file, then publish it */}
+      {filesFor && (
+        <ExecutionFilesDialog
+          open
+          executionId={filesFor.executionId}
+          configurationId={filesFor.modelId}
+          declaredOutputLabels={(threadData.models[filesFor.modelId]?.output_files ?? []).map(
+            (o) => o.name,
+          )}
+          ensembleManagerApi={ensembleManagerApi}
+          canWrite={canWrite}
+          onClose={handleCloseFiles}
+          onPromoted={onOutputsChanged}
+          onPublish={onPublishExecution}
+        />
+      )}
     </div>
   );
 }

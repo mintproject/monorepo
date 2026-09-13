@@ -166,11 +166,24 @@ export function InputRow({
           )}
         </div>
 
+        {/*
+          A promoted output carries a label only (#267). Saying so here is what
+          stops that from reading as a bug later: the output publishes, but the
+          Variables step filters models by standard variable, so a model whose
+          outputs carry none never matches a modeling task.
+        */}
+        {prefix === 'outputs' && presentationFields.length === 0 && (
+          <p className="text-xs text-muted-foreground">
+            An output with no standard variable still publishes to the data catalog. It cannot match
+            a modeling task until you give it one.
+          </p>
+        )}
+
         {allowMultipleVariables ? (
           presentationFields.length === 0 ? (
             <p className="rounded-md border py-3 text-center text-xs text-muted-foreground">
-              No variables. This input carries zero standard variables. Click &ldquo;Add
-              Variable&rdquo; to add one.
+              No variables. This {prefix === 'inputs' ? 'input' : 'output'} carries zero standard
+              variables. Click &ldquo;Add Variable&rdquo; to add one.
             </p>
           ) : (
             <div className="space-y-2">
