@@ -35,6 +35,10 @@ import { TACC_CKAN_DataCatalog } from "@/classes/mint/data-catalog/TACC_CKAN_Dat
 
 export class TapisExecutionService implements IExecutionService {
     private readonly LOG_PATH = "tapisjob.out";
+    // The Tapis control files. They share one prefix: tapisjob.out and tapisjob.sh.
+    private static readonly CONTROL_FILE_PREFIX = "tapisjob.";
+    // How deep the adapter reads below the job output directory.
+    private static readonly MAX_OUTPUT_DEPTH = 2;
     private appsClient: Apps.ApplicationsApi;
     private jobsClient: Jobs.JobsApi;
     private subscriptionsClient: Jobs.SubscriptionsApi;
@@ -482,41 +486,80 @@ export class TapisExecutionService implements IExecutionService {
         }
     }
 
+    /**
+     * List the files that a Tapis job produced.
+     *
+     * Tapis resolves the job output directory itself. Before the job archives,
+     * that directory is `execSystemOutputDir`. After the job archives, it is
+     * `archiveSystemDir`. Every `outputPath` is relative to that directory, so
+     * the root listing is already the answer of the application. The adapter
+     * does not read `jobAttributes.execSystemOutputDir`: its value is an
+     * absolute path on the execution system, and it holds an unresolved macro.
+     *
+     * A directory at the root is listed too, up to MAX_OUTPUT_DEPTH levels.
+     * This replaces the earlier scan of 15 guessed folder names. On production
+     * on 2026-09-12 every one of those 15 names answered 404, and the three
+     * archived files sat at the root.
+     *
+     * The Tapis control files, `tapisjob.out` and `tapisjob.sh`, are not model
+     * results. The method hides them unless the caller asks for them. A failed
+     * execution needs `tapisjob.out`, so the flag stays.
+     */
+    async listJobFiles(
+        jobUuid: string,
+        options: { includeControlFiles?: boolean } = {}
+    ): Promise<Jobs.FileInfo[]> {
+        const files = await this.collectJobFiles(jobUuid, "", 0);
+        if (options.includeControlFiles) {
+            return files;
+        }
+        return files.filter((file) => !TapisExecutionService.isControlFile(file));
+    }
+
+    private static isDirectory(entry: Jobs.FileInfo): boolean {
+        return entry.type === Jobs.FileInfoTypeEnum.Dir;
+    }
+
+    private static isControlFile(entry: Jobs.FileInfo): boolean {
+        return (entry.name ?? "").startsWith(TapisExecutionService.CONTROL_FILE_PREFIX);
+    }
+
+    private async collectJobFiles(
+        jobUuid: string,
+        outputPath: string,
+        depth: number
+    ): Promise<Jobs.FileInfo[]> {
+        let entries: Jobs.FileInfo[];
+        try {
+            const { result } = await this.getJobOutputList(jobUuid, outputPath);
+            entries = result ?? [];
+        } catch (error) {
+            console.log(
+                `Tapis listed no file in "${outputPath || "/"}" of job ${jobUuid}: ${error.message}`
+            );
+            return [];
+        }
+
+        const files = entries.filter((entry) => !TapisExecutionService.isDirectory(entry));
+        if (depth >= TapisExecutionService.MAX_OUTPUT_DEPTH) {
+            return files;
+        }
+
+        const directories = entries.filter((entry) => TapisExecutionService.isDirectory(entry));
+        for (const directory of directories) {
+            const childPath = `${outputPath}${directory.name}/`;
+            files.push(...(await this.collectJobFiles(jobUuid, childPath, depth + 1)));
+        }
+        return files;
+    }
+
     private async getExecutionResultsFromJob(
         jobUuid: string,
         execution: Execution,
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         _isPublic: boolean
     ): Promise<Execution_Result[]> {
-        const outputFolders = [
-            "",
-            "outputs",
-            "results",
-            "result",
-            "data",
-            "output",
-            "out",
-            "simulation",
-            "model_output",
-            "generated",
-            "processed",
-            "final",
-            "export",
-            "analysis",
-            "computed"
-        ];
-        const files = [];
-
-        for (const folder of outputFolders) {
-            try {
-                const { result: folderFiles } = await this.getJobOutputList(jobUuid, folder);
-                files.push(...folderFiles);
-            } catch (error) {
-                console.log(
-                    `No files found for model in ${folder || "default"} path: ${execution.modelid}`
-                );
-            }
-        }
+        const files = await this.listJobFiles(jobUuid);
 
         console.log("The TAPIS files available to match to mint outputs", files);
         const mintOutputs = await getModelOutputsByModelId(execution.modelid);
