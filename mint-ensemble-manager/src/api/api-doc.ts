@@ -2355,6 +2355,12 @@ const ExecutionSchema = {
             statusCode: {
                 type: "integer",
                 description: "The HTTP status of the error, when the error carries one"
+            },
+            code: {
+                type: "string",
+                description:
+                    "A stable machine-readable name for the cause, for example NO_OUTPUTS_DECLARED",
+                example: "NO_OUTPUTS_DECLARED"
             }
         },
         required: ["executionId", "name", "message"]

@@ -4,7 +4,7 @@ import subtasksRouter from "../index";
 import executionOutputsService from "@/api/api-v1/services/tapis/executionOutputsService";
 import { getThread } from "@/classes/graphql/graphql_functions_v2";
 import { threadFromGQL } from "@/classes/graphql/graphql_adapter";
-import { NotFoundError } from "@/classes/common/errors";
+import { NoOutputsDeclaredError, NotFoundError } from "@/classes/common/errors";
 
 jest.mock("@/api/api-v1/services/subTasksService");
 jest.mock("@/api/api-v1/services/tapis/executionOutputsService");
@@ -97,6 +97,68 @@ describe("POST /subtasks/:subtaskId/outputs", () => {
                 message: "Hasura returned an error: permission denied"
             }
         ]);
+    });
+
+    it("answers 422 NO_OUTPUTS_DECLARED when every execution shares that cause", async () => {
+        (getThread as jest.Mock).mockResolvedValue(
+            threadWithExecutions(["execution-1", "execution-2"])
+        );
+        (executionOutputsService.registerOutputs as jest.Mock).mockRejectedValue(
+            new NoOutputsDeclaredError()
+        );
+
+        const response = await request(app).post(URL).set("Authorization", AUTH).expect(422);
+
+        expect(response.body.code).toBe("NO_OUTPUTS_DECLARED");
+        expect(response.body.message).toBe(
+            "This model configuration declares no outputs. Promote a file from the execution first."
+        );
+        expect(response.body.errors).toEqual([
+            {
+                executionId: "execution-1",
+                name: "NoOutputsDeclaredError",
+                message:
+                    "This model configuration declares no outputs. Promote a file from the execution first.",
+                statusCode: 422,
+                code: "NO_OUTPUTS_DECLARED"
+            },
+            {
+                executionId: "execution-2",
+                name: "NoOutputsDeclaredError",
+                message:
+                    "This model configuration declares no outputs. Promote a file from the execution first.",
+                statusCode: 422,
+                code: "NO_OUTPUTS_DECLARED"
+            }
+        ]);
+    });
+
+    it("keeps 400 when the executions fail for different reasons", async () => {
+        (getThread as jest.Mock).mockResolvedValue(
+            threadWithExecutions(["execution-1", "execution-2"])
+        );
+        (executionOutputsService.registerOutputs as jest.Mock)
+            .mockRejectedValueOnce(new NoOutputsDeclaredError())
+            .mockRejectedValueOnce(new NotFoundError("No files found for model configuration-1"));
+
+        const response = await request(app).post(URL).set("Authorization", AUTH).expect(400);
+
+        expect(response.body.message).toBe("Failed to publish 2 of 2 executions");
+        expect(response.body.code).toBeUndefined();
+    });
+
+    it("keeps 200 when one execution declares no output and another publishes", async () => {
+        (getThread as jest.Mock).mockResolvedValue(
+            threadWithExecutions(["execution-ok", "execution-bad"])
+        );
+        (executionOutputsService.registerOutputs as jest.Mock)
+            .mockResolvedValueOnce([{ resource: { id: "r1" } }])
+            .mockRejectedValueOnce(new NoOutputsDeclaredError());
+
+        const response = await request(app).post(URL).set("Authorization", AUTH).expect(200);
+
+        expect(response.body.published).toBe(1);
+        expect(response.body.errors[0].code).toBe("NO_OUTPUTS_DECLARED");
     });
 
     it("answers 'No executions found to publish' only when the subtask has no execution", async () => {

@@ -53,6 +53,7 @@ export interface PublicationError {
     name: string;
     message: string;
     statusCode?: number;
+    code?: string;
 }
 
 const toPublicationError = (executionId: string, error: unknown): PublicationError => {
@@ -61,13 +62,27 @@ const toPublicationError = (executionId: string, error: unknown): PublicationErr
             executionId,
             name: error.name,
             message: error.message,
-            statusCode: error.statusCode
+            statusCode: error.statusCode,
+            code: error.code
         };
     }
     if (error instanceof Error) {
         return { executionId, name: error.name, message: error.message };
     }
     return { executionId, name: "Error", message: String(error) };
+};
+
+/**
+ * The one cause that every execution shares, or undefined when the causes
+ * differ. The route answers with that cause, so a client can branch on the
+ * code instead of a count of failures.
+ */
+const sharedCause = (errors: PublicationError[]): PublicationError | undefined => {
+    const first = errors[0];
+    if (!first || !first.code || !first.statusCode) {
+        return undefined;
+    }
+    return errors.every((error) => error.code === first.code) ? first : undefined;
 };
 
 const subtasksRouter = (): Router => {
@@ -961,13 +976,33 @@ const subtasksRouter = (): Router => {
      *                   type: string
      *       400:
      *         description: >
-     *           No execution published. The errors array names the cause for
-     *           each execution, and is empty when the subtask has no execution.
+     *           No execution published, and the causes differ. The errors array
+     *           names the cause for each execution, and is empty when the
+     *           subtask has no execution.
      *         content:
      *           application/json:
      *             schema:
      *               type: object
      *               properties:
+     *                 message:
+     *                   type: string
+     *                 errors:
+     *                   type: array
+     *                   items:
+     *                     $ref: '#/components/schemas/PublicationError'
+     *       422:
+     *         description: >
+     *           No execution published, and every execution failed for the same
+     *           reason. NO_OUTPUTS_DECLARED means the model configuration
+     *           declares no output, and the user must promote a file first.
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 code:
+     *                   type: string
+     *                   example: NO_OUTPUTS_DECLARED
      *                 message:
      *                   type: string
      *                 errors:
@@ -1038,6 +1073,14 @@ const subtasksRouter = (): Router => {
             return res.status(400).json({ message: "No executions found to publish", errors });
         }
         if (executionsSubmitted === 0) {
+            const cause = sharedCause(errors);
+            if (cause) {
+                return res.status(cause.statusCode).json({
+                    code: cause.code,
+                    message: cause.message,
+                    errors
+                });
+            }
             return res.status(400).json({
                 message: `Failed to publish ${errors.length} of ${executionsFound} executions`,
                 errors
