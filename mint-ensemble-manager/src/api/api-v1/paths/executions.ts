@@ -3,6 +3,7 @@
 import { Router } from "express";
 import executionsService from "@/api/api-v1/services/executionsService";
 import logsService from "../services/logsService";
+import executionFilesService from "../services/executionFilesService";
 import { HttpError } from "@/classes/common/errors";
 
 export default function (service: typeof executionsService) {
@@ -96,6 +97,91 @@ export default function (service: typeof executionsService) {
                 req.headers.authorization
             );
             res.status(200).send(log);
+        } catch (error) {
+            if (error instanceof HttpError) {
+                res.status(error.statusCode).json({ result: "error", message: error.message });
+            } else {
+                res.status(500).json({ result: "error", message: error.message });
+            }
+        }
+    });
+
+    /**
+     * @swagger
+     * /executions/{executionId}/files:
+     *   get:
+     *     summary: List the files that an execution archived
+     *     description: >
+     *       Lists the files in the Tapis archive of an execution. MINT does not
+     *       store these files. The endpoint reads them live, and it forwards the
+     *       token of the user. A file that matches no declared output is a raw
+     *       artifact. The user promotes it to an output before MINT publishes it.
+     *     operationId: listExecutionFiles
+     *     tags: [Executions]
+     *     security:
+     *       - BearerAuth: []
+     *       - oauth2: []
+     *     parameters:
+     *       - in: path
+     *         name: executionId
+     *         required: true
+     *         schema:
+     *           type: string
+     *         example: "9bc5bbfb-d76c-4d0b-87cc-f89e945a062e-007"
+     *     responses:
+     *       200:
+     *         description: >
+     *           The archived files. The list is empty when the execution
+     *           archived nothing.
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 files:
+     *                   type: array
+     *                   items:
+     *                     $ref: '#/components/schemas/ExecutionFile'
+     *               required: [files]
+     *       400:
+     *         description: The instance does not run Tapis
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/ExecutionFilesError'
+     *       401:
+     *         description: The authorization header is absent or is not correct
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/ExecutionFilesError'
+     *       404:
+     *         description: The execution does not exist
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/ExecutionFilesError'
+     *       default:
+     *         description: Default error response
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 result:
+     *                   type: string
+     *                   example: "error"
+     *                 message:
+     *                   type: string
+     *                   example: "Internal server error"
+     */
+    router.get("/:executionId/files", async (req, res) => {
+        try {
+            const files = await executionFilesService.listFiles(
+                req.params.executionId,
+                req.headers.authorization
+            );
+            res.status(200).json({ files });
         } catch (error) {
             if (error instanceof HttpError) {
                 res.status(error.statusCode).json({ result: "error", message: error.message });

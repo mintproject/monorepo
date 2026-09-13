@@ -2179,6 +2179,45 @@ const TapisSchema = {
 };
 
 const ExecutionSchema = {
+    // One file in the Tapis archive of an execution. MINT does not store it.
+    // GET /executions/{executionId}/files reads the list live from Tapis.
+    ExecutionFile: {
+        type: "object",
+        description: "A file that an execution archived",
+        properties: {
+            name: {
+                type: "string",
+                description: "The file name, without the folder"
+            },
+            path: {
+                type: "string",
+                description: "The path on the archive system"
+            },
+            size: {
+                type: "integer",
+                description: "The size in bytes"
+            },
+            url: {
+                type: "string",
+                description: "The tapis:// URI of the file"
+            }
+        },
+        required: ["name", "path", "size", "url"]
+    },
+    ExecutionFilesError: {
+        type: "object",
+        description: "The error answer of the execution files endpoint",
+        properties: {
+            result: {
+                type: "string",
+                example: "error"
+            },
+            message: {
+                type: "string"
+            }
+        },
+        required: ["result", "message"]
+    },
     Execution: {
         type: "object",
         description: "An execution instance representing a model run",
