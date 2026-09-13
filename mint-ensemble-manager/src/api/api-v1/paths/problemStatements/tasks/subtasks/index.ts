@@ -48,6 +48,28 @@ export interface SetupModelConfigurationAndBindingsRequest {
     data?: DataInput[];
 }
 
+export interface PublicationError {
+    executionId: string;
+    name: string;
+    message: string;
+    statusCode?: number;
+}
+
+const toPublicationError = (executionId: string, error: unknown): PublicationError => {
+    if (error instanceof HttpError) {
+        return {
+            executionId,
+            name: error.name,
+            message: error.message,
+            statusCode: error.statusCode
+        };
+    }
+    if (error instanceof Error) {
+        return { executionId, name: error.name, message: error.message };
+    }
+    return { executionId, name: "Error", message: String(error) };
+};
+
 const subtasksRouter = (): Router => {
     const router = Router({ mergeParams: true });
 
@@ -912,7 +934,9 @@ const subtasksRouter = (): Router => {
      *           type: string
      *     responses:
      *       200:
-     *         description: All executions published successfully
+     *         description: >
+     *           At least one execution published. The errors array names every
+     *           execution that failed.
      *         content:
      *           application/json:
      *             schema:
@@ -920,6 +944,12 @@ const subtasksRouter = (): Router => {
      *               properties:
      *                 message:
      *                   type: string
+     *                 published:
+     *                   type: integer
+     *                 errors:
+     *                   type: array
+     *                   items:
+     *                     $ref: '#/components/schemas/PublicationError'
      *       404:
      *         description: Subtask not found
      *         content:
@@ -930,7 +960,9 @@ const subtasksRouter = (): Router => {
      *                 message:
      *                   type: string
      *       400:
-     *         description: No executions found to publish
+     *         description: >
+     *           No execution published. The errors array names the cause for
+     *           each execution, and is empty when the subtask has no execution.
      *         content:
      *           application/json:
      *             schema:
@@ -938,6 +970,10 @@ const subtasksRouter = (): Router => {
      *               properties:
      *                 message:
      *                   type: string
+     *                 errors:
+     *                   type: array
+     *                   items:
+     *                     $ref: '#/components/schemas/PublicationError'
      *       500:
      *         description: Server error
      *         content:
@@ -975,10 +1011,13 @@ const subtasksRouter = (): Router => {
         }
         const subtask = threadFromGQL(subtaskGraphql);
 
+        let executionsFound = 0;
         let executionsSubmitted = 0;
+        const errors: PublicationError[] = [];
         const thread_models = subtaskGraphql.thread_models;
         for (const thread_model of thread_models) {
             for (const execution of thread_model.executions) {
+                executionsFound += 1;
                 try {
                     await executionOutputsService.registerOutputs(
                         execution.execution.id,
@@ -991,13 +1030,24 @@ const subtasksRouter = (): Router => {
                 } catch (error) {
                     console.error(`Error publishing execution ${execution.execution.id}:`, error);
                     // Continue with other executions even if one fails
+                    errors.push(toPublicationError(execution.execution.id, error));
                 }
             }
         }
-        if (executionsSubmitted === 0) {
-            return res.status(400).json({ message: "No executions found to publish" });
+        if (executionsFound === 0) {
+            return res.status(400).json({ message: "No executions found to publish", errors });
         }
-        return res.status(200).json({ message: "Outputs registered successfully" });
+        if (executionsSubmitted === 0) {
+            return res.status(400).json({
+                message: `Failed to publish ${errors.length} of ${executionsFound} executions`,
+                errors
+            });
+        }
+        return res.status(200).json({
+            message: "Outputs registered successfully",
+            published: executionsSubmitted,
+            errors
+        });
     });
 
     return router;

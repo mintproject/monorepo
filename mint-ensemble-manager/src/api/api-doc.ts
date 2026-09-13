@@ -2335,6 +2335,29 @@ const ExecutionSchema = {
             }
         },
         required: ["resource"]
+    },
+    PublicationError: {
+        type: "object",
+        description: "The cause of a failed publication, for one execution",
+        properties: {
+            executionId: {
+                type: "string",
+                description: "The execution that failed to publish"
+            },
+            name: {
+                type: "string",
+                description: "The error class, for example NotFoundError"
+            },
+            message: {
+                type: "string",
+                description: "The error message"
+            },
+            statusCode: {
+                type: "integer",
+                description: "The HTTP status of the error, when the error carries one"
+            }
+        },
+        required: ["executionId", "name", "message"]
     }
 };
 
