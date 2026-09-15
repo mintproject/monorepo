@@ -28,6 +28,7 @@ class StorageTests(unittest.TestCase):
         specs = deploy.build_specs("mintproject", "develop", "https://portals.tapis.io")
         graphql = specs["graphql"]
         semantic = specs["semantic_search"]
+        ui = specs["ui"]
         self.assertEqual(
             graphql["environment_variables"]["SVO_SEMANTIC_SEARCH_WEBHOOK_URL"],
             "https://mintdevsemanticsearch.pods.portals.tapis.io/events/catalog",
@@ -35,6 +36,14 @@ class StorageTests(unittest.TestCase):
         self.assertEqual(semantic["pod_id"], "mintdevsemanticsearch")
         self.assertEqual(semantic["image"], "ghcr.io/mintproject/semantic-search:develop")
         self.assertEqual(semantic["networking"]["default"]["port"], 8091)
+        self.assertEqual(
+            semantic["environment_variables"]["SVO_CORS_ORIGINS"],
+            "https://mintdevui.pods.portals.tapis.io",
+        )
+        self.assertEqual(
+            ui["environment_variables"]["SEMANTIC_SEARCH_API"],
+            "https://mintdevsemanticsearch.pods.portals.tapis.io",
+        )
 
     def test_existing_storage_can_be_reused(self):
         deploy.check_postgres_storage(self.spec, recreate=False)

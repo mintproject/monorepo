@@ -431,6 +431,7 @@ services:
     environment:
       DATABASE_URL: postgresql://mint:mint@postgres:5432/mint
       SVO_EMBEDDING_REFRESH_SECONDS: ${SVO_EMBEDDING_REFRESH_SECONDS:-60}
+      SVO_CORS_ORIGINS: ${SVO_CORS_ORIGINS:-http://localhost:3000}
     ports:
       - "8091:8091"
     healthcheck:

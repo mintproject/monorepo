@@ -16,6 +16,7 @@ import * as React from 'react';
 import { Check, ChevronsUpDown } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
+import { getSemanticSearchApiUrl } from '@/lib/config';
 import { humanizeStandardVariable } from '@/lib/standard-variable-grammar';
 import { Button } from '@/components/ui/button';
 import {
@@ -91,6 +92,7 @@ export function StandardVariableCombobox({
   const { scoped, all, allLoaded, loading } = useScopedStandardVariables(scope, showAll);
 
   const options = narrowed && !showAll ? scoped : all;
+  const semanticSearchApiUrl = getSemanticSearchApiUrl();
 
   React.useEffect(() => {
     const query = search.trim();
@@ -99,7 +101,7 @@ export function StandardVariableCombobox({
       return;
     }
     const controller = new AbortController();
-    fetch(`http://localhost:8091/search?q=${encodeURIComponent(query)}&limit=50`, {
+    fetch(`${semanticSearchApiUrl}/search?q=${encodeURIComponent(query)}&limit=50`, {
       signal: controller.signal,
     })
       .then((response) => (response.ok ? response.json() : null))
@@ -116,7 +118,7 @@ export function StandardVariableCombobox({
       })
       .catch(() => setSemanticOptions(null));
     return () => controller.abort();
-  }, [search]);
+  }, [search, semanticSearchApiUrl]);
 
   /**
    * Semantic results are ranked over the whole catalog, so the scope has to be

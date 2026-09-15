@@ -59,6 +59,12 @@ The Tapis permitted-image list must include
 `ghcr.io/mintproject/semantic-search` before the first deployment that creates
 `mintdevsemanticsearch`; otherwise Tapis will reject the pod definition.
 
+The UI receives `https://mintdevsemanticsearch.pods.portals.tapis.io` as its
+`SEMANTIC_SEARCH_API` runtime setting and calls that service's `/search` route.
+The semantic-search pod receives the exact `mintdevui` origin through
+`SVO_CORS_ORIGINS`, so browser requests are permitted without a wildcard CORS
+policy.
+
 After pod registration, the deploy job waits for Hasura, then runs the
 migration CLI from the resolved GraphQL image tag. It starts semantic search
 after those migrations so its embedding query sees the current schema, then

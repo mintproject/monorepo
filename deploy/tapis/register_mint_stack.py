@@ -322,6 +322,7 @@ def build_specs(owner: str, tag: str, base_url: str) -> dict[str, dict[str, Any]
             "environment_variables": {
                 "DATABASE_URL": _database_url(base_url),
                 "SVO_EMBEDDING_REFRESH_SECONDS": _env("SVO_EMBEDDING_REFRESH_SECONDS", "60"),
+                "SVO_CORS_ORIGINS": urls["ui"],
             },
             "time_to_stop_default": -1,
         },
@@ -350,6 +351,7 @@ def build_specs(owner: str, tag: str, base_url: str) -> dict[str, dict[str, Any]
                 "AUTH_CLIENT_ID": _env("MINTDEV_AUTH_CLIENT_ID", "mint_dev"),
                 "AUTH_CALLBACK_ORIGIN": urls["ui"],
                 "ENSEMBLE_MANAGER_API": urls["ensemble"],
+                "SEMANTIC_SEARCH_API": urls["semantic_search"],
                 "DATA_CATALOG_API": _env("DATA_CATALOG_API", "https://ckan.tacc.utexas.edu"),
                 "DATA_CATALOG_BROWSE_URL": _env("DATA_CATALOG_BROWSE_URL", "https://ckan.tacc.utexas.edu"),
                 "EXECUTION_ENGINE": _env("EXECUTION_ENGINE", "tapis"),

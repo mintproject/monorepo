@@ -21,6 +21,7 @@ export function getRuntimeConfig() {
       DATA_CATALOG_API: import.meta.env.VITE_DATA_CATALOG_API ?? 'https://ckan.tacc.utexas.edu',
       DATA_CATALOG_BROWSE_URL:
         import.meta.env.VITE_DATA_CATALOG_BROWSE_URL ?? 'https://ckan.tacc.utexas.edu',
+      SEMANTIC_SEARCH_API: import.meta.env.VITE_SEMANTIC_SEARCH_API ?? 'http://localhost:8091',
     }
   );
 }
@@ -47,6 +48,15 @@ export function getDataCatalogApiUrl(): string {
  */
 export function getModelCatalogApiUrl(): string {
   const url = getRuntimeConfig().MODEL_CATALOG_API ?? 'http://api.models.mint.local/v2.0.0';
+  return url.replace(/\/$/, '');
+}
+
+/**
+ * Returns the standalone semantic-search service base URL (no trailing slash).
+ * The browser calls its existing `/search` endpoint directly.
+ */
+export function getSemanticSearchApiUrl(): string {
+  const url = getRuntimeConfig().SEMANTIC_SEARCH_API ?? 'http://localhost:8091';
   return url.replace(/\/$/, '');
 }
 
