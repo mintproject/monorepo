@@ -54,6 +54,10 @@ export function buildEnvConfig(env = process.env) {
     DATA_CATALOG_BROWSE_URL:
       pick(env, 'DATA_CATALOG_BROWSE_URL', 'VITE_DATA_CATALOG_BROWSE_URL') ??
       'https://ckan.tacc.utexas.edu',
+    // Public base URL for the standalone semantic-search service. The UI
+    // appends `/search`; local compose publishes it on port 8091.
+    SEMANTIC_SEARCH_API:
+      pick(env, 'SEMANTIC_SEARCH_API', 'VITE_SEMANTIC_SEARCH_API') ?? 'http://localhost:8091',
     // The v2.0.0 model catalog REST API, version prefix included. The app reads
     // the catalog through Hasura; this base is for the routes Hasura cannot
     // serve — today the Tapis application proxy, which forwards the user's

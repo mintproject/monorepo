@@ -12,7 +12,7 @@
 
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { StandardVariableCombobox } from '@/components/autocomplete/StandardVariableCombobox';
 import { UnitCombobox } from '@/components/autocomplete/UnitCombobox';
@@ -72,6 +72,11 @@ const prefetchMock = {
 // ─── StandardVariableCombobox ──────────────────────────────────────────────
 
 describe('StandardVariableCombobox', () => {
+  afterEach(() => {
+    Reflect.deleteProperty(window, '__MINT_CONFIG__');
+    vi.restoreAllMocks();
+  });
+
   it('shows placeholder after data loads when no value is selected', async () => {
     renderWithProviders(<StandardVariableCombobox value={null} onChange={vi.fn()} />, {
       apolloMocks: [prefetchMock],
@@ -149,6 +154,37 @@ describe('StandardVariableCombobox', () => {
       id: 'https://w3id.org/okn/i/mint/sv1',
       label: 'Precipitation',
       description: 'Amount of precipitation',
+    });
+  });
+
+  it('sends semantic searches to the configured service', async () => {
+    const user = userEvent.setup();
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+      ok: true,
+      json: async () => ({ results: [] }),
+    } as Response);
+    window.__MINT_CONFIG__ = {
+      HASURA_ENDPOINT: '',
+      AUTH_SERVER: '',
+      AUTH_CLIENT_ID: '',
+      AUTH_REALM: '',
+      AUTH_PROVIDER: 'tapis',
+      SEMANTIC_SEARCH_API: 'https://semantic.example.test/',
+    };
+
+    renderWithProviders(<StandardVariableCombobox value={null} onChange={vi.fn()} />, {
+      apolloMocks: [prefetchMock],
+    });
+
+    await waitFor(() => expect(screen.getByRole('combobox')).not.toBeDisabled());
+    await user.click(screen.getByRole('combobox'));
+    await user.type(screen.getByPlaceholderText('Search standard variables...'), 'temperature');
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        'https://semantic.example.test/search?q=temperature&limit=50',
+        expect.objectContaining({ signal: expect.any(AbortSignal) }),
+      );
     });
   });
 

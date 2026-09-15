@@ -10,7 +10,15 @@ from fastapi.middleware.cors import CORSMiddleware
 from sentence_transformers import SentenceTransformer
 
 app = FastAPI(title="MINT Semantic Search")
-app.add_middleware(CORSMiddleware, allow_origins=["http://localhost:3000"], allow_methods=["GET"], allow_headers=["*"])
+
+
+def cors_origins(value: str | None = None) -> list[str]:
+    """Return the exact browser origins allowed to call the search API."""
+    configured = value if value is not None else os.getenv("SVO_CORS_ORIGINS", "http://localhost:3000")
+    return [origin.strip() for origin in configured.split(",") if origin.strip()]
+
+
+app.add_middleware(CORSMiddleware, allow_origins=cors_origins(), allow_methods=["GET"], allow_headers=["*"])
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://mint:mint@postgres:5432/mint")
 MODEL_NAME = os.getenv("SVO_EMBEDDING_MODEL", "sentence-transformers/all-MiniLM-L6-v2")
 EMBEDDING_REFRESH_SECONDS = max(float(os.getenv("SVO_EMBEDDING_REFRESH_SECONDS", "60")), 5.0)
