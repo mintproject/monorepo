@@ -122,9 +122,10 @@ def _database_url(base_url: str) -> str:
     explicit = _env("MINTDEV_HASURA_DATABASE_URL") or _env("HASURA_GRAPHQL_DATABASE_URL")
     if explicit:
         return explicit
-    # Tapis database pod endpoints are exposed through the Pods TLS/SNI tunnel on
-    # :443, matching the pattern used by the STAC and SUBSIDE services.
-    host = f"{PODS['postgres']}.pods.{_pods_domain(base_url)}"
+    # The named Tapis postgres route is exposed through the Pods TLS/SNI tunnel
+    # on :443. The route name is part of the hostname, so the generic TCP route
+    # must not be used for psycopg clients.
+    host = f"{PODS['postgres']}-postgres.pods.{_pods_domain(base_url)}"
     return (
         f"postgres://{_postgres_user()}:{_postgres_password()}@"
         f"{host}:443/{_postgres_db()}?sslmode=require"
@@ -220,7 +221,7 @@ def build_specs(owner: str, tag: str, base_url: str) -> dict[str, dict[str, Any]
             "image": POSTGRES_IMAGE,
             "template": POSTGRES_TEMPLATE,
             "description": "MINT dev PostgreSQL database",
-            "networking": {"default": {"protocol": "tcp", "port": 5432}},
+            "networking": {"postgres": {"protocol": "postgres", "port": 5432}},
             "environment_variables": {
                 "POSTGRES_USER": _postgres_user(),
                 "POSTGRES_PASSWORD": _postgres_password(),

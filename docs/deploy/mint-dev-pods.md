@@ -6,7 +6,7 @@ This runbook covers the MINT-only dev stack deployed to Tapis Pods from this rep
 
 | Service | Pod ID | URL |
 |---|---|---|
-| PostgreSQL | `mintdevpostgres` | internal/pod template |
+| PostgreSQL | `mintdevpostgres` | `mintdevpostgres-postgres.pods.portals.tapis.io:443` |
 | Redis | `mintdevredis` | internal/pod template |
 | Hasura GraphQL | `mintdevgraphql` | `https://mintdevgraphql.pods.portals.tapis.io` |
 | Model Catalog API | `mintdevapi` | `https://mintdevapi.pods.portals.tapis.io` |
@@ -64,6 +64,13 @@ The UI receives `https://mintdevsemanticsearch.pods.portals.tapis.io` as its
 The semantic-search pod receives the exact `mintdevui` origin through
 `SVO_CORS_ORIGINS`, so browser requests are permitted without a wildcard CORS
 policy.
+
+PostgreSQL uses the Tapis named `postgres` networking route on port 5432. Tapis
+exposes that route externally through
+`mintdevpostgres-postgres.pods.portals.tapis.io:443`; Hasura and semantic search
+both receive that hostname in their database URL. Do not replace it with the
+bare `mintdevpostgres.pods.portals.tapis.io` generic TCP route, because
+PostgreSQL TLS negotiation fails through that route.
 
 After pod registration, the deploy job waits for Hasura, then runs the
 migration CLI from the resolved GraphQL image tag. It starts semantic search
