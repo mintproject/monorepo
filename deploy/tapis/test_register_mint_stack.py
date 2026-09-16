@@ -18,6 +18,10 @@ class StorageTests(unittest.TestCase):
     def test_database_uses_postgis_and_pgdata_within_persistent_mount(self):
         self.assertEqual(self.spec["image"], "ghcr.io/mintproject/postgres-pgvector:develop")
         self.assertEqual(self.spec["template"], "postgres:16postgis3.5")
+        self.assertEqual(
+            self.spec["networking"],
+            {"postgres": {"protocol": "postgres", "port": 5432}},
+        )
         data = self.spec["environment_variables"]["PGDATA"]
         mount, source = next(iter(self.spec["volume_mounts"].items()))
         self.assertTrue(data.startswith(mount + "/"))
@@ -44,6 +48,33 @@ class StorageTests(unittest.TestCase):
             ui["environment_variables"]["SEMANTIC_SEARCH_API"],
             "https://mintdevsemanticsearch.pods.portals.tapis.io",
         )
+
+    def test_graphql_and_semantic_search_share_named_postgres_route(self):
+        with patch.dict(
+            os.environ,
+            {
+                "MINTDEV_POSTGRES_USER": "mint",
+                "MINTDEV_POSTGRES_PASSWORD": "test-password",
+                "MINTDEV_POSTGRES_DB": "mintdb",
+            },
+            clear=True,
+        ):
+            specs = deploy.build_specs("mintproject", "develop", "https://portals.tapis.io")
+
+        expected = (
+            "postgres://mint:test-password@"
+            "mintdevpostgres-postgres.pods.portals.tapis.io:443/mintdb?sslmode=require"
+        )
+        self.assertEqual(specs["graphql"]["environment_variables"]["HASURA_GRAPHQL_DATABASE_URL"], expected)
+        self.assertEqual(specs["semantic_search"]["environment_variables"]["DATABASE_URL"], expected)
+
+    def test_explicit_database_url_override_remains_shared(self):
+        override = "postgres://override:secret@db.example.test:5432/mintdb?sslmode=disable"
+        with patch.dict(os.environ, {"MINTDEV_HASURA_DATABASE_URL": override}, clear=True):
+            specs = deploy.build_specs("mintproject", "develop", "https://portals.tapis.io")
+
+        self.assertEqual(specs["graphql"]["environment_variables"]["HASURA_GRAPHQL_DATABASE_URL"], override)
+        self.assertEqual(specs["semantic_search"]["environment_variables"]["DATABASE_URL"], override)
 
     def test_existing_storage_can_be_reused(self):
         deploy.check_postgres_storage(self.spec, recreate=False)

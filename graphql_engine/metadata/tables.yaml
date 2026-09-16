@@ -3391,6 +3391,21 @@
   - role: user
     permission:
       filter: {}
+  event_triggers:
+  - name: semantic_search_model_category
+    definition:
+      enable_manual: false
+      insert:
+        columns: '*'
+      update:
+        columns: '*'
+      delete:
+        columns: '*'
+    webhook_from_env: SVO_SEMANTIC_SEARCH_WEBHOOK_URL
+    retry_conf:
+      num_retries: 3
+      interval_sec: 10
+      timeout_sec: 30
 - table:
     name: modelcatalog_region
     schema: public
@@ -3445,6 +3460,21 @@
   - role: user
     permission:
       filter: {}
+  event_triggers:
+  - name: semantic_search_region
+    definition:
+      enable_manual: false
+      insert:
+        columns: '*'
+      update:
+        columns: '*'
+      delete:
+        columns: '*'
+    webhook_from_env: SVO_SEMANTIC_SEARCH_WEBHOOK_URL
+    retry_conf:
+      num_retries: 3
+      interval_sec: 10
+      timeout_sec: 30
 - table:
     name: modelcatalog_process
     schema: public
@@ -3743,6 +3773,21 @@
   - role: user
     permission:
       filter: {}
+  event_triggers:
+  - name: semantic_search_unit
+    definition:
+      enable_manual: false
+      insert:
+        columns: '*'
+      update:
+        columns: '*'
+      delete:
+        columns: '*'
+    webhook_from_env: SVO_SEMANTIC_SEARCH_WEBHOOK_URL
+    retry_conf:
+      num_retries: 3
+      interval_sec: 10
+      timeout_sec: 30
 - table:
     name: modelcatalog_variable_presentation
     schema: public
@@ -4215,6 +4260,21 @@
   - role: user
     permission:
       filter: {}
+  event_triggers:
+  - name: semantic_search_configuration_region
+    definition:
+      enable_manual: false
+      insert:
+        columns: '*'
+      update:
+        columns: '*'
+      delete:
+        columns: '*'
+    webhook_from_env: SVO_SEMANTIC_SEARCH_WEBHOOK_URL
+    retry_conf:
+      num_retries: 3
+      interval_sec: 10
+      timeout_sec: 30
 - table:
     name: modelcatalog_configuration_calibrated_variable
     schema: public
@@ -4502,6 +4562,21 @@
   - role: user
     permission:
       filter: {}
+  event_triggers:
+  - name: semantic_search_configuration_category
+    definition:
+      enable_manual: false
+      insert:
+        columns: '*'
+      update:
+        columns: '*'
+      delete:
+        columns: '*'
+    webhook_from_env: SVO_SEMANTIC_SEARCH_WEBHOOK_URL
+    retry_conf:
+      num_retries: 3
+      interval_sec: 10
+      timeout_sec: 30
 - table:
     name: modelcatalog_dataset_specification_presentation
     schema: public
