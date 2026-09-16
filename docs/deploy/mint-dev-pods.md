@@ -41,8 +41,8 @@ the moving `:develop` tags.
   no-op manifest.
 - `Deploy MINT Dev Pods` consumes that exact manifest after a successful image
   workflow on `develop`, plus manual dispatch. It updates/restarts changed
-services and restarts dependent services when a schema or database change
-requires it.
+  services and restarts dependent services when a schema or database change
+  requires it.
 - PRs build images with `push: false` and never deploy.
 
 Changes only to `.github/**` or `deploy/**` produce a no-op manifest;
