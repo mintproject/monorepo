@@ -16,11 +16,11 @@ class StorageTests(unittest.TestCase):
         self.spec = deploy.build_specs("mintproject", "sha-test", "https://portals.tapis.io")["postgres"]
 
     def test_database_uses_postgis_and_pgdata_within_persistent_mount(self):
-        self.assertEqual(self.spec["image"], "ghcr.io/mintproject/postgres-pgvector:develop")
+        self.assertEqual(self.spec["image"], "ghcr.io/mintproject/postgres-pgvector:sha-test")
         self.assertEqual(self.spec["template"], "postgres:16postgis3.5")
         self.assertEqual(
             self.spec["networking"],
-            {"postgres": {"protocol": "postgres", "port": 5432}},
+            {"default": {"protocol": "postgres", "port": 5432}},
         )
         data = self.spec["environment_variables"]["PGDATA"]
         mount, source = next(iter(self.spec["volume_mounts"].items()))
@@ -49,7 +49,7 @@ class StorageTests(unittest.TestCase):
             "https://mintdevsemanticsearch.pods.portals.tapis.io",
         )
 
-    def test_graphql_and_semantic_search_share_named_postgres_route(self):
+    def test_graphql_and_semantic_search_share_default_postgres_route(self):
         with patch.dict(
             os.environ,
             {
@@ -63,7 +63,7 @@ class StorageTests(unittest.TestCase):
 
         expected = (
             "postgres://mint:test-password@"
-            "mintdevpostgres-postgres.pods.portals.tapis.io:443/mintdb?sslmode=require"
+            "mintdevpostgres.pods.portals.tapis.io:443/mintdb?sslmode=require"
         )
         self.assertEqual(specs["graphql"]["environment_variables"]["HASURA_GRAPHQL_DATABASE_URL"], expected)
         self.assertEqual(specs["semantic_search"]["environment_variables"]["DATABASE_URL"], expected)
@@ -227,6 +227,25 @@ class StorageTests(unittest.TestCase):
         t.pods.update_pod.assert_not_called()
         t.pods.delete_pod.assert_not_called()
 
+    def test_postgres_tag_change_replaces_pod_only_with_migration_flag(self):
+        t = Mock()
+        existing = {**self.spec, "image": "ghcr.io/mintproject/postgres-pgvector:sha-old", "status": "AVAILABLE"}
+        t.pods.get_pod.return_value = existing
+        with patch.object(deploy, "wait_for_pod_absent"), patch.object(
+            deploy, "wait_for_pod_image"
+        ):
+            deploy.upsert_pod(
+                t,
+                self.spec,
+                migrate_postgres_image=True,
+                recreate=False,
+                start=False,
+                restart=True,
+            )
+        t.pods.delete_pod.assert_called_once_with(pod_id=deploy.PODS["postgres"])
+        t.pods.create_pod.assert_called_once_with(**self.spec)
+        t.pods.update_pod.assert_not_called()
+
     def test_postgres_transition_replaces_only_the_pod_and_retains_volume(self):
         t = Mock()
         legacy = {**self.spec, "image": "postgis/postgis:16-3.5", "status": "AVAILABLE"}
@@ -383,9 +402,15 @@ class LifecycleTests(unittest.TestCase):
         t.pods.restart_pod.assert_not_called()
         t.pods.create_pod.assert_not_called()
 
-    def test_restart_existing_pods_rejects_protected_services(self):
-        with self.assertRaises(RuntimeError):
-            deploy.restart_existing_pods(Mock(), ["graphql"])
+    def test_restart_existing_pods_supports_graphql_dependency_restart(self):
+        t = Mock()
+        t.pods.get_pod.return_value = {
+            "image": "ghcr.io/mintproject/graphql-engine:sha-new",
+            "status_container": {"start_time": "old"},
+        }
+        with patch.object(deploy, "wait_for_pod_restart"):
+            deploy.restart_existing_pods(t, ["graphql"])
+        t.pods.restart_pod.assert_called_once_with(pod_id=deploy.PODS["graphql"])
 
     def test_mismatch_without_opt_in_does_not_delete_or_restart(self):
         t = Mock()

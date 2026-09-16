@@ -40,7 +40,7 @@ PODS = {
 }
 
 ORDER = ["postgres", "redis", "graphql", "api", "ensemble", "svo", "semantic_search", "ui"]
-RESTART_ONLY_PODS = ("api", "ui", "ensemble", "svo")
+RESTART_ONLY_PODS = ("graphql", "api", "ensemble", "svo", "semantic_search", "ui")
 
 # Recreating a pod is destructive. Only stateless application services may use
 # this fallback; Redis queue state and PostgreSQL data are protected.
@@ -122,10 +122,9 @@ def _database_url(base_url: str) -> str:
     explicit = _env("MINTDEV_HASURA_DATABASE_URL") or _env("HASURA_GRAPHQL_DATABASE_URL")
     if explicit:
         return explicit
-    # The named Tapis postgres route is exposed through the Pods TLS/SNI tunnel
-    # on :443. The route name is part of the hostname, so the generic TCP route
-    # must not be used for psycopg clients.
-    host = f"{PODS['postgres']}-postgres.pods.{_pods_domain(base_url)}"
+    # Tapis's working PostgreSQL route uses the default entry name and is
+    # exposed through the Pods TLS/SNI tunnel on :443.
+    host = f"{PODS['postgres']}.pods.{_pods_domain(base_url)}"
     return (
         f"postgres://{_postgres_user()}:{_postgres_password()}@"
         f"{host}:443/{_postgres_db()}?sslmode=require"
@@ -194,6 +193,7 @@ def _ensemble_config(urls: dict[str, str]) -> str:
 
 def build_specs(owner: str, tag: str, base_url: str) -> dict[str, dict[str, Any]]:
     urls = pod_urls(base_url)
+    postgres_image = f"ghcr.io/{owner}/postgres-pgvector:{tag}"
     graphql_endpoint = f"{urls['graphql']}/v1/graphql"
     admin_secret = _admin_secret()
     browser_cors = {
@@ -218,10 +218,10 @@ def build_specs(owner: str, tag: str, base_url: str) -> dict[str, dict[str, Any]
     specs: dict[str, dict[str, Any]] = {
         "postgres": {
             "pod_id": PODS["postgres"],
-            "image": POSTGRES_IMAGE,
+            "image": postgres_image,
             "template": POSTGRES_TEMPLATE,
             "description": "MINT dev PostgreSQL database",
-            "networking": {"postgres": {"protocol": "postgres", "port": 5432}},
+            "networking": {"default": {"protocol": "postgres", "port": 5432}},
             "environment_variables": {
                 "POSTGRES_USER": _postgres_user(),
                 "POSTGRES_PASSWORD": _postgres_password(),
@@ -497,7 +497,7 @@ def wait_for_pod_restart(
     raise RuntimeError(f"[{pod_id}] did not become AVAILABLE on the requested image after restart")
 
 
-def check_postgres_storage(pod: Any, *, recreate: bool) -> None:
+def check_postgres_storage(pod: Any, *, recreate: bool, expected_image: str | None = None) -> None:
     if pod is None:
         return
     if recreate:
@@ -508,6 +508,11 @@ def check_postgres_storage(pod: Any, *, recreate: bool) -> None:
     mount = _field(mounts, POSTGRES_MOUNT)
     mount_paths = mounts.keys() if isinstance(mounts, dict) else vars(mounts).keys()
     env = _field(pod, "environment_variables", {})
+    observed_image = _field(pod, "image")
+    allowed_image_prefix = (expected_image or POSTGRES_IMAGE).rsplit(":", 1)[0] + ":"
+    image_is_allowed = observed_image in LEGACY_POSTGRES_IMAGES or (
+        isinstance(observed_image, str) and observed_image.startswith(allowed_image_prefix)
+    )
     if (
         _field(mount, "type") != "tapisvolume"
         or _field(mount, "source_id") != POSTGRES_VOLUME
@@ -515,7 +520,7 @@ def check_postgres_storage(pod: Any, *, recreate: bool) -> None:
         or _field(mount, "read_only", False) is not False
         or any(path.startswith(POSTGRES_MOUNT + "/") for path in mount_paths)
         or _field(env, "PGDATA") != POSTGRES_DATA
-        or _field(pod, "image") not in {POSTGRES_IMAGE, *LEGACY_POSTGRES_IMAGES}
+        or not image_is_allowed
     ):
         raise RuntimeError("PostgreSQL image/storage differs; preserve data and perform a deliberate migration before deploying")
 
@@ -705,14 +710,14 @@ def upsert_pod(
     existing = _get_or_missing(t.pods.get_pod, pod_id=pid)
     exists = existing is not None
     if pid == PODS["postgres"]:
-        check_postgres_storage(existing, recreate=recreate)
+        check_postgres_storage(existing, recreate=recreate, expected_image=spec["image"])
         if (
             existing is not None
-            and _field(existing, "image") in LEGACY_POSTGRES_IMAGES
+            and _field(existing, "image") != spec["image"]
             and not migrate_postgres_image
         ):
             raise RuntimeError(
-                "PostgreSQL uses the known legacy image; rerun with --migrate-postgres-image "
+                "PostgreSQL image differs from the requested tag; rerun with --migrate-postgres-image "
                 "for the protected volume-preserving transition"
             )
 
@@ -723,7 +728,7 @@ def upsert_pod(
         exists = False
 
     if exists:
-        if pid == PODS["postgres"] and _field(existing, "image") in LEGACY_POSTGRES_IMAGES:
+        if pid == PODS["postgres"] and _field(existing, "image") != spec["image"]:
             _replace_postgres_pod(t, existing, spec, start=start, owners=owners)
             return
         previous_start = _field(_field(existing, "status_container", {}), "start_time")
@@ -967,7 +972,7 @@ def main(argv: list[str] | None = None) -> int:
     postgres_restarted = False
     if "postgres" in selected:
         postgres = _get_or_missing(t.pods.get_pod, pod_id=PODS["postgres"])
-        check_postgres_storage(postgres, recreate=args.recreate)
+        check_postgres_storage(postgres, recreate=args.recreate, expected_image=specs["postgres"]["image"])
         postgres_image_migration = (
             args.migrate_postgres_image
             and postgres is not None
