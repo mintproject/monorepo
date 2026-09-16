@@ -1,11 +1,10 @@
 /**
  * ModelsBrowsePage — the model find/configure experience.
  *
- * Left column: text search + facet filters (Region / Category / Output
+ * Left column: semantic text search + facet filters (Region / Category / Output
  * variable) over a server-side-filtered, client-grouped Model -> Config -> Setup
  * list. Right column: detail for the config/setup in the URL. The URL is the
- * source of truth for facet filters and selection; the text search is
- * local-only and never touches it.
+ * source of truth for facet filters and selection; text search never touches it.
  *
  * Mounted at two routes that share the same left panel:
  *   - /models + /modelconfigurations/:slugid — read-only browse.
@@ -16,8 +15,11 @@ import { useMemo, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { Search } from 'lucide-react';
 
-import { useSearchModelConfigurationsQuery } from '@/graphql/generated/graphql';
-import { groupConfigurations } from '@/lib/groupConfigurations';
+import {
+  useSearchModelConfigurationsQuery,
+  type SearchModelConfigurationsQuery,
+} from '@/graphql/generated/graphql';
+import { groupConfigurations, rankModelGroups } from '@/lib/groupConfigurations';
 import {
   buildConfigurationWhere,
   filtersToParams,
@@ -27,6 +29,7 @@ import {
 } from '@/lib/modelBrowseFilters';
 import { slugMatchPattern } from '@/lib/uri';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
+import { useSemanticSearch } from '@/hooks/useSemanticSearch';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ConfigurationDetail } from '@/components/configuration/ConfigurationDetail';
@@ -35,6 +38,8 @@ import { FacetSelect } from './FacetSelect';
 import { ModelGroupList } from './ModelGroupList';
 import { useFacetOptions } from './useFacetOptions';
 import { useGetConfigurationBySlugQuery } from '@/graphql/generated/graphql';
+
+type ModelConfigurationRow = SearchModelConfigurationsQuery['modelcatalog_configuration'][number];
 
 export interface ModelsBrowsePageProps {
   /** When true, the detail pane allows editing the selected configuration. */
@@ -52,8 +57,7 @@ export function ModelsBrowsePage({
   // Drop any `q` from the URL — text search is intentionally not URL-driven.
   const facetFilters = useMemo(() => ({ ...parseFilters(searchParams), q: '' }), [searchParams]);
 
-  // Text search is local-only — it filters results but never touches the URL.
-  // Only the facets (Region / Category / Output variable) live in the URL.
+  // Text search is not URL-driven. Facets remain URL-backed hard filters.
   const [text, setText] = useState('');
   const debouncedText = useDebouncedValue(text, 300);
 
@@ -62,16 +66,59 @@ export function ModelsBrowsePage({
     [facetFilters, debouncedText],
   );
 
+  const semanticQuery = debouncedText.trim();
+  const semanticQueryActive = semanticQuery.length >= 2;
+  const semanticFilters = useMemo(
+    () => ({
+      regionIds: facetFilters.regionIds,
+      categoryIds: facetFilters.categoryIds,
+      outputVariableIds: facetFilters.variableIds,
+    }),
+    [facetFilters],
+  );
+  const semanticSearch = useSemanticSearch(semanticQuery, {
+    target: 'model_configuration',
+    limit: 100,
+    filters: semanticFilters,
+  });
+
   const updateFacet = (partial: Partial<ModelBrowseFilters>) => {
     setSearchParams(filtersToParams({ ...facetFilters, ...partial }));
   };
 
   const facetOptions = useFacetOptions();
-  const where = useMemo(() => buildConfigurationWhere(filters), [filters]);
+  const hasuraFilters = useMemo(
+    () => (semanticQueryActive && !semanticSearch.error ? { ...facetFilters, q: '' } : filters),
+    [facetFilters, filters, semanticQueryActive, semanticSearch.error],
+  );
+  const where = useMemo(() => buildConfigurationWhere(hasuraFilters), [hasuraFilters]);
   const { data, loading, error } = useSearchModelConfigurationsQuery({ variables: { where } });
 
-  const groups = useMemo(() => groupConfigurations(data?.modelcatalog_configuration ?? []), [data]);
+  const semanticRows = useMemo(() => {
+    if (!semanticQueryActive || !semanticSearch.results) return null;
+    const rankById = new Map(semanticSearch.results.map((result, index) => [result.id, index]));
+    const rows = (data?.modelcatalog_configuration ?? [])
+      .map((row) => {
+        const rank =
+          rankById.get(row.id) ??
+          (row.model_configuration_id ? rankById.get(row.model_configuration_id) : undefined) ??
+          (row.parent_configuration ? rankById.get(row.parent_configuration.id) : undefined);
+        return rank === undefined ? null : { row, rank };
+      })
+      .filter((item): item is { row: ModelConfigurationRow; rank: number } => item !== null)
+      .sort((a, b) => a.rank - b.rank)
+      .map((item) => item.row);
+    return { rows, rankById };
+  }, [data, semanticQueryActive, semanticSearch.results]);
+
+  const groups = useMemo(() => {
+    const grouped = groupConfigurations(
+      semanticRows?.rows ?? data?.modelcatalog_configuration ?? [],
+    );
+    return semanticRows ? rankModelGroups(grouped, semanticRows.rankById) : grouped;
+  }, [data, semanticRows]);
   const active = hasActiveFilters(filters);
+  const listLoading = loading || (semanticQueryActive && semanticSearch.loading);
 
   return (
     <div className="flex h-full overflow-hidden">
@@ -112,7 +159,7 @@ export function ModelsBrowsePage({
           </div>
         </div>
         <div className="flex-1 overflow-auto p-2">
-          {loading ? (
+          {listLoading ? (
             <ListSkeleton />
           ) : error ? (
             <p className="px-1 py-8 text-center text-sm text-destructive">{error.message}</p>

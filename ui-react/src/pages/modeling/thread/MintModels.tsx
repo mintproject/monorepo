@@ -23,6 +23,8 @@ import {
 } from '@/graphql/generated/modeling';
 import { useAuth } from '@/lib/auth/useAuth';
 import { diffThreadModels } from '@/lib/thread-models';
+import { useDebouncedValue } from '@/hooks/useDebouncedValue';
+import { useSemanticSearch } from '@/hooks/useSemanticSearch';
 import { useToast } from '@/components/ui/use-toast';
 import { cn } from '@/lib/utils';
 
@@ -31,6 +33,7 @@ import { cn } from '@/lib/utils';
 interface ModelRow {
   /** The modelcatalog_configuration id (setup level) */
   id: string;
+  searchIds: string[];
   name: string;
   description?: string | null;
   category: string;
@@ -81,6 +84,7 @@ function flattenToRows(
 function configToRow(cfg: ModelConfigInfo): ModelRow {
   return {
     id: cfg.id,
+    searchIds: [cfg.id],
     name: cfg.label ?? cfg.id,
     description: null,
     category: '',
@@ -91,6 +95,7 @@ function configToRow(cfg: ModelConfigInfo): ModelRow {
 function setupToRow(setup: ModelSetupInfo, parentCfg: ModelConfigInfo): ModelRow {
   return {
     id: setup.id,
+    searchIds: [setup.id, parentCfg.id],
     name: setup.label ?? setup.id,
     description: setup.description,
     category: '',
@@ -234,6 +239,11 @@ export function MintModels({ thread, onContinue, onThreadUpdated }: MintModelsPr
   const { data, loading, error } = useGetModelTreeWithRegionsQuery();
 
   const [setThreadModels] = useSetThreadModelsMutation();
+  const debouncedSearchText = useDebouncedValue(searchText, 300);
+  const semanticSearch = useSemanticSearch(debouncedSearchText, {
+    target: 'model_configuration',
+    limit: 100,
+  });
 
   // ── Derive latest SELECT_MODELS event ──────────────────────────────────────
 
@@ -246,7 +256,7 @@ export function MintModels({ thread, onContinue, onThreadUpdated }: MintModelsPr
 
   // ── Filter rows ─────────────────────────────────────────────────────────────
 
-  const filteredRows = useMemo(() => {
+  const localFilteredRows = useMemo(() => {
     if (!searchText.trim()) return allRows;
     const q = searchText.toLowerCase();
     return allRows.filter(
@@ -257,6 +267,23 @@ export function MintModels({ thread, onContinue, onThreadUpdated }: MintModelsPr
         r.category.toLowerCase().includes(q),
     );
   }, [allRows, searchText]);
+
+  const filteredRows = useMemo(() => {
+    if (!debouncedSearchText.trim() || !semanticSearch.results) return localFilteredRows;
+    const rankById = new Map(semanticSearch.results.map((result, index) => [result.id, index]));
+    return allRows
+      .map((row) => ({
+        row,
+        rank: Math.min(
+          ...row.searchIds
+            .map((id) => rankById.get(id))
+            .filter((rank): rank is number => rank !== undefined),
+        ),
+      }))
+      .filter((item) => Number.isFinite(item.rank))
+      .sort((a, b) => a.rank - b.rank)
+      .map((item) => item.row);
+  }, [allRows, debouncedSearchText, localFilteredRows, semanticSearch.results]);
 
   // Thread region for matching — derive from region_id
   const threadRegionId = thread.region_id ?? null;

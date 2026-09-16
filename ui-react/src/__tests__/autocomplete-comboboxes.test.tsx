@@ -182,7 +182,7 @@ describe('StandardVariableCombobox', () => {
 
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledWith(
-        'https://semantic.example.test/search?q=temperature&limit=50',
+        'https://semantic.example.test/search?q=temperature&target=svo&limit=50',
         expect.objectContaining({ signal: expect.any(AbortSignal) }),
       );
     });
