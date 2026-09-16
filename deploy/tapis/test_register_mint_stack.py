@@ -371,6 +371,39 @@ class LifecycleTests(unittest.TestCase):
             deploy.upsert_pod(t, self.spec, recreate=False, start=False, restart=True)
         self.assertEqual(events, ["update", "verify", "restart", "ready"])
 
+    def test_existing_graphql_update_preserves_live_networking(self):
+        desired = deploy.build_specs(
+            "mintproject", "sha-new", "https://portals.tapis.io"
+        )["graphql"]
+        live_networking = {
+            "default": {
+                "protocol": "http",
+                "port": 8080,
+                "cors_allow_origins": ["https://live-ui.example"],
+                "cors_allow_methods": ["GET"],
+                "cors_allow_headers": ["Authorization"],
+                "cors_allow_credentials": False,
+                "cors_max_age": 42,
+            }
+        }
+        existing = {
+            **desired,
+            "image": "ghcr.io/mintproject/graphql-engine:sha-old",
+            "networking": live_networking,
+        }
+        t = Mock()
+        t.pods.get_pod.return_value = existing
+
+        with patch.object(deploy, "wait_for_pod_image"):
+            deploy.upsert_pod(
+                t, desired, recreate=False, start=False, restart=False
+            )
+
+        sent = t.pods.update_pod.call_args.kwargs
+        self.assertNotIn("networking", sent)
+        self.assertEqual(sent["image"], desired["image"])
+        self.assertEqual(existing["networking"], live_networking)
+
     def test_restart_existing_pods_only_restarts_selected_apps(self):
         existing_api = {"image": "ghcr.io/mintproject/model-catalog-api:develop", "status_container": {"start_time": "api-old"}}
         existing_ui = {"image": "ghcr.io/mintproject/ui:develop", "status_container": {"start_time": "ui-old"}}
