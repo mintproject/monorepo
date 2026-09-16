@@ -70,6 +70,7 @@ class SemanticSearchContractTests(unittest.TestCase):
 
         self.assertEqual(results, [])
         self.assertIn("role_links", connection.queries[0][0])
+        self.assertIn("CAST(%s AS text) IS NULL", connection.queries[0][0])
         self.assertEqual(connection.queries[0][1][9:11], ("output", "output"))
 
     def test_region_filter_accepts_legacy_and_catalog_identifiers(self):

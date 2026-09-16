@@ -6,7 +6,7 @@ This runbook covers the MINT-only dev stack deployed to Tapis Pods from this rep
 
 | Service | Pod ID | URL |
 |---|---|---|
-| PostgreSQL | `mintdevpostgres` | `mintdevpostgres-postgres.pods.portals.tapis.io:443` |
+| PostgreSQL | `mintdevpostgres` | `mintdevpostgres.pods.portals.tapis.io:443` |
 | Redis | `mintdevredis` | internal/pod template |
 | Hasura GraphQL | `mintdevgraphql` | `https://mintdevgraphql.pods.portals.tapis.io` |
 | Model Catalog API | `mintdevapi` | `https://mintdevapi.pods.portals.tapis.io` |
@@ -17,35 +17,48 @@ This runbook covers the MINT-only dev stack deployed to Tapis Pods from this rep
 
 ## Images
 
-The build workflow publishes one shared stack tag across all custom images:
+The build workflow publishes immutable commit tags for only the services changed
+by a commit. The image names are:
 
 ```text
-ghcr.io/mintproject/graphql-engine:develop
-ghcr.io/mintproject/postgres-pgvector:develop
-ghcr.io/mintproject/model-catalog-api:develop
-ghcr.io/mintproject/ensemble-manager:develop
-ghcr.io/mintproject/svo-adapter:develop
-ghcr.io/mintproject/semantic-search:develop
-ghcr.io/mintproject/ui:develop
+ghcr.io/mintproject/graphql-engine:<tag>
+ghcr.io/mintproject/postgres-pgvector:<tag>
+ghcr.io/mintproject/model-catalog-api:<tag>
+ghcr.io/mintproject/ensemble-manager:<tag>
+ghcr.io/mintproject/svo-adapter:<tag>
+ghcr.io/mintproject/semantic-search:<tag>
+ghcr.io/mintproject/ui:<tag>
 ```
 
-The `develop` branch also publishes a moving `:develop` tag for each image. The
-automatic and manually dispatched dev deployments use that tag. Use a separate
-workflow change before attempting an immutable rollback.
+For a source commit, `<tag>` is `sha-<7-character-commit>`. Pushes also publish
+a branch tag, and the default branch publishes `latest`. Manual deployment uses
+the moving `:develop` tags.
 
 ## GitHub Actions
 
-- `MINT Dev Images` builds the seven custom images on `develop`, PRs, and manual dispatch.
-- `Deploy MINT Dev Pods` runs after a successful `MINT Dev Images` run on `develop`, plus manual dispatch.
+- `MINT Dev Images` classifies changed paths, builds only affected custom images,
+  and uploads an exact change manifest. Documentation-only changes produce a
+  no-op manifest.
+- `Deploy MINT Dev Pods` consumes that exact manifest after a successful image
+  workflow on `develop`, plus manual dispatch. It updates/restarts changed
+  services and restarts dependent services when a schema or database change
+  requires it.
 - PRs build images with `push: false` and never deploy.
 
-The automated deploy first updates and restarts the PostgreSQL and Hasura pods
-with the `develop` images. After the embedding migrations are applied, it
-creates or updates `mintdevsemanticsearch`, restarts Hasura with its webhook
-URL, and verifies both health endpoints. Only after metadata and the schema
-smoke test pass does it restart these existing application pods:
-`mintdevapi`, `mintdevui`, `mintdevensemble`, and `mintdevsvo`. A missing
-or incomplete pod lookup stops the workflow before that pod action is requested.
+The manifest uses conservative dependency expansion: PostgreSQL changes
+restart PostgreSQL, Hasura, the catalog API, Ensemble Manager, SVO Adapter,
+and semantic search; GraphQL migrations restart Hasura and semantic search;
+unknown, shared, or deployment changes select the full custom stack. A
+dependency-only restart never changes that service's image.
+
+The automated deploy validates that the manifest's source SHA matches the
+completed image workflow before making any Tapis request. A missing, malformed,
+or mismatched manifest fails closed. A no-op manifest skips deployment.
+
+PostgreSQL image changes use the protected volume-preserving replacement path;
+the pod is replaced only with `--migrate-postgres-image`, and the existing
+`mintdevpostgresdata` volume is retained. All other image mismatches may use
+the stateless recreation fallback.
 
 After each restart, the script waits for `AVAILABLE` and a new container start
 time. `AVAILABLE` confirms the Tapis lifecycle state; it is not a substitute
@@ -91,19 +104,15 @@ routes return SVO and model-configuration results. They return
 context; hard filters are never relaxed silently. Dataset search remains on
 the CKAN path.
 
-PostgreSQL uses the Tapis named `postgres` networking route on port 5432. Tapis
+PostgreSQL uses Tapis's default PostgreSQL networking route on port 5432. Tapis
 exposes that route externally through
-`mintdevpostgres-postgres.pods.portals.tapis.io:443`; Hasura and semantic search
-both receive that hostname in their database URL. Do not replace it with the
-bare `mintdevpostgres.pods.portals.tapis.io` generic TCP route, because
-PostgreSQL TLS negotiation fails through that route.
+`mintdevpostgres.pods.portals.tapis.io:443`; Hasura and semantic search both
+receive that hostname in their database URL.
 
-After pod registration, the deploy job waits for Hasura, then runs the
-migration CLI from the resolved GraphQL image tag. It starts semantic search
-after those migrations so its embedding query sees the current schema, then
-runs metadata application and the final schema smoke test. It finishes by
-restarting the dependent application pods. The schema smoke test covers the
-ETL process and problem statement event relationships. This step uses the protected
+For schema changes, the deploy job runs the migration CLI, applies metadata,
+reloads metadata, and performs a read-only schema smoke test using the resolved
+GraphQL image tag. The smoke test covers the ETL process and problem statement
+event relationships. This step uses the protected
 `HASURA_GRAPHQL_ADMIN_SECRET` and does not apply seeds.
 
 ## Required environment secrets
@@ -130,9 +139,8 @@ This mode only restarts existing pods and refuses to create or update them.
 
 ## Manual restart
 
-Use GitHub Actions → `Deploy MINT Dev Pods` → `workflow_dispatch`. It performs
-the same four-pod restart and has no image, pod-selection, or registration
-inputs.
+Use GitHub Actions → `Deploy MINT Dev Pods` → `workflow_dispatch` to perform a
+full deployment from the selected ref using the moving `:develop` image tags.
 
 ## Caveats
 

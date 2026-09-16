@@ -409,7 +409,7 @@ CONFIGURATION_FILTER_SQL = """
         )
       )
       AND (
-        %s IS NULL
+        CAST(%s AS text) IS NULL
         OR EXISTS (
           SELECT 1
           FROM (
