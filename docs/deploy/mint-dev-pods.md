@@ -45,11 +45,16 @@ the moving `:develop` tags.
   requires it.
 - PRs build images with `push: false` and never deploy.
 
+Changes only to `.github/**` or `deploy/**` produce a no-op manifest;
+use manual dispatch when a deployment-code change needs to be applied to the
+running stack.
+
 The manifest uses conservative dependency expansion: PostgreSQL changes
 restart PostgreSQL, Hasura, the catalog API, Ensemble Manager, SVO Adapter,
 and semantic search; GraphQL migrations restart Hasura and semantic search;
-unknown, shared, or deployment changes select the full custom stack. A
-dependency-only restart never changes that service's image.
+root build/dependency files and unknown paths select the full custom stack.
+CI/deployment plumbing changes are intentionally no-op. A dependency-only
+restart never changes that service's image.
 
 The automated deploy validates that the manifest's source SHA matches the
 completed image workflow before making any Tapis request. A missing, malformed,
