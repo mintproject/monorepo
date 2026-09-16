@@ -165,7 +165,23 @@ export function ProblemStatementsList({ regionId = 'DEFAULT' }: ProblemStatement
   const [deleteTarget, setDeleteTarget] = useState<ProblemStatement | null>(null);
 
   // ── derived ───────────────────────────────────────────────────────────────
-  const statements = data?.problem_statement ?? [];
+  const statements = useMemo(() => {
+    const provenance = data?.problem_statement_provenance ?? [];
+    const eventsByStatement = new Map<string, typeof provenance>();
+    for (const event of provenance) {
+      if (!event.problem_statement_id) continue;
+      const events = eventsByStatement.get(event.problem_statement_id) ?? [];
+      events.push(event);
+      eventsByStatement.set(event.problem_statement_id, events);
+    }
+    return (data?.problem_statement ?? []).map((ps) => ({
+      ...ps,
+      // Older deployed Hasura metadata does not expose the reverse `events`
+      // relationship. Use the direct provenance query there, while retaining
+      // mocked/compatible responses that still include the relationship.
+      events: eventsByStatement.get(ps.id) ?? ps.events ?? [],
+    }));
+  }, [data]);
 
   const filtered = statements
     .filter((ps) => !filter || (ps.name ?? '').toLowerCase().includes(filter.toLowerCase()))

@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import {
   Folder,
@@ -149,7 +149,17 @@ export function MintProblemStatement() {
     fetchPolicy: 'cache-and-network',
   });
 
-  const ps = data?.problem_statement_by_pk as PSWithTasks | undefined | null;
+  const ps = useMemo(() => {
+    const raw = data?.problem_statement_by_pk as PSWithTasks | undefined | null;
+    if (!raw) return raw;
+    const provenance = data?.problem_statement_provenance ?? [];
+    return {
+      ...raw,
+      // Read provenance directly because some deployed Hasura metadata does
+      // not expose problem_statement.events as a reverse relationship.
+      events: provenance.length > 0 ? provenance : (raw.events ?? []),
+    };
+  }, [data]);
 
   // ── local state ───────────────────────────────────────────────────────────
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
