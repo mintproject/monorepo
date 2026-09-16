@@ -60,6 +60,12 @@ The automated deploy validates that the manifest's source SHA matches the
 completed image workflow before making any Tapis request. A missing, malformed,
 or mismatched manifest fails closed. A no-op manifest skips deployment.
 
+For an existing pod, an image deployment updates the image/runtime definition
+and restarts the pod without resubmitting its `networking` block. This preserves
+the live Tapis CORS, auth, and proxy settings. The UI auth allowlist is the
+explicit exception: its dedicated sync step intentionally updates the UI
+networking definition.
+
 PostgreSQL image changes use the protected volume-preserving replacement path;
 the pod is replaced only with `--migrate-postgres-image`, and the existing
 `mintdevpostgresdata` volume is retained. All other image mismatches may use

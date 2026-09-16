@@ -734,6 +734,12 @@ def upsert_pod(
         previous_start = _field(_field(existing, "status_container", {}), "start_time")
         print(f"  [{pid}] updating…")
         update = dict(spec)
+        # Preserve the live networking definition on ordinary image/runtime
+        # updates. Tapis networking may contain privileged CORS or auth
+        # settings; those should not be resubmitted just because an image is
+        # changing. Explicit networking changes use their dedicated paths,
+        # such as --sync-ui-auth.
+        update.pop("networking", None)
         if pid == PODS["postgres"]:
             # Tapis UpdatePod does not accept an image field. A known legacy
             # image is handled by _replace_postgres_pod above; this path is
