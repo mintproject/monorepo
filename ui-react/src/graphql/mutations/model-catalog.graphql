@@ -135,6 +135,12 @@ mutation DeleteConfigurationInput($configurationId: String!, $inputId: String!) 
   }
 }
 
+mutation DeleteModelConfiguration($id: String!) {
+  delete_modelcatalog_configuration_by_pk(id: $id) {
+    id
+  }
+}
+
 mutation DeleteConfigurationOutput($configurationId: String!, $outputId: String!) {
   delete_modelcatalog_configuration_output_by_pk(
     configuration_id: $configurationId
@@ -263,6 +269,7 @@ mutation RegisterModel(
   $configurationId: String!
   $configurationLabel: String!
   $configurationDescription: String
+  $ownerUsername: String!
 ) {
   insert_modelcatalog_software_one(
     object: {
@@ -283,6 +290,7 @@ mutation RegisterModel(
                   id: $configurationId
                   label: $configurationLabel
                   description: $configurationDescription
+                  owner_username: $ownerUsername
                 }
               ]
             }
@@ -387,6 +395,7 @@ mutation CreateConfiguration(
   $description: String
   $softwareVersionId: String
   $componentLocation: String
+  $ownerUsername: String!
 ) {
   insert_modelcatalog_configuration_one(
     object: {
@@ -395,6 +404,7 @@ mutation CreateConfiguration(
       description: $description
       software_version_id: $softwareVersionId
       has_component_location: $componentLocation
+      owner_username: $ownerUsername
     }
   ) {
     id

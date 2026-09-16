@@ -70,6 +70,14 @@ npm run test:watch # watch mode
 
 Requires Node 20+. If `npm test` fails with a `crypto.getRandomValues` error, switch to Node 20 (`nvm use 20` or set PATH to use `/opt/homebrew/opt/node@20/bin`).
 
+## Model ownership
+
+Signed-in users can enable **My models** on the model browse page to filter to
+configurations they registered. Owned configurations are marked **Yours** and
+can be deleted from their detail view after confirmation. Existing catalog
+configurations without registration ownership remain browseable but cannot be
+deleted through this control.
+
 ## Build
 
 ```bash

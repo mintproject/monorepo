@@ -37,7 +37,7 @@ jobs:
           else
             BASE_SHA="${{ github.event.before }}"
             if [[ -z "$BASE_SHA" || "$BASE_SHA" =~ ^0+$ ]]; then
-              BASE_SHA="$(git rev-list --max-parents=0 HEAD | head -n 1)"
+              BASE_SHA="$(git rev-list --max-parents=0 HEAD | sed -n '1p')"
             fi
           fi
           git diff --name-only "$BASE_SHA" "$GITHUB_SHA" > changed_paths.txt
