@@ -67,7 +67,7 @@ publishing images.
 - `graphql_engine/**` → `graphql`
 - `docker/postgres-pgvector/**` → `postgres`
 
-Changes to `.github/**` and `deploy/tapis/**` are control-only and produce a
+Changes to `.github/**` and `deploy/**` are control-only and produce a
 no-op deployment manifest. This prevents changing CI/CD code from mutating the
 running stack. Shared Docker/build configuration, root dependency manifests,
 or other unowned paths expand to `deploy_all`.
@@ -257,7 +257,7 @@ rollout and debrief are complete.
 
 ### 2026-09-16 - Do not self-deploy CI/CD changes
 
-- **Decision:** `.github/**` and `deploy/tapis/**` changes do not select an
+- **Decision:** `.github/**` and `deploy/**` changes do not select an
   image or pod. A manual dispatch is required to apply deployment-code changes
   to the running stack.
 - **Reason:** The first rollout of this workflow classified its own workflow

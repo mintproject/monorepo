@@ -33,7 +33,7 @@ SERVICE_PREFIXES = (
 SCHEMA_PREFIXES = ("graphql_engine/migrations/", "graphql_engine/metadata/")
 # CI and deployment implementation changes affect how a future rollout runs;
 # they must not themselves trigger a service rollout.
-CONTROL_ONLY_PREFIXES = (".github/", "deploy/tapis/")
+CONTROL_ONLY_PREFIXES = (".github/", "deploy/")
 SHARED_FILES = {
     "compose.yaml",
     "docker-compose.yml",

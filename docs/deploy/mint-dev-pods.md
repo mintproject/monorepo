@@ -45,7 +45,7 @@ services and restarts dependent services when a schema or database change
 requires it.
 - PRs build images with `push: false` and never deploy.
 
-Changes only to `.github/**` or `deploy/tapis/**` produce a no-op manifest;
+Changes only to `.github/**` or `deploy/**` produce a no-op manifest;
 use manual dispatch when a deployment-code change needs to be applied to the
 running stack.
 

@@ -51,7 +51,7 @@ class MintChangePlanTests(unittest.TestCase):
                 self.assertEqual(plan["restart_services"], list(SERVICE_ORDER))
 
     def test_ci_and_deployment_plumbing_changes_are_noop(self):
-        for path in (".github/workflows/build.yml", "deploy/tapis/register_mint_stack.py", "deploy/mint_change_plan.py"):
+        for path in (".github/workflows/build.yml", "deploy/tapis/register_mint_stack.py", "deploy/mint_change_plan.py", "deploy/test_mint_change_plan.py"):
             with self.subTest(path=path):
                 plan = make_plan([path])
                 self.assertFalse(plan["has_changes"])
