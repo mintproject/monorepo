@@ -31,13 +31,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/components/ui/use-toast';
 import {
-  useCreateConfigurationMutation,
   useCreateModelFamilyMutation,
   useAddConfigurationInputMutation,
   useAddConfigurationOutputMutation,
   useAddConfigurationParameterMutation,
   useAddConfigurationRegionMutation,
 } from '@/graphql/generated/graphql';
+import { CREATE_OWNED_MODEL_CONFIGURATION } from '@/graphql/owned-model-configurations';
+import { useAuth } from '@/lib/auth/useAuth';
 import { InputOutputSection } from '@/components/configuration/InputOutputSection';
 import { ParameterSection } from '@/components/configuration/ParameterSection';
 import {
@@ -61,6 +62,7 @@ import { OptionalDetailsSection } from './OptionalDetailsSection';
 export function CreateModelForm() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
   const [submitError, setSubmitError] = React.useState<string | null>(null);
 
   const form = useForm<CreateModelSchema>({
@@ -69,7 +71,7 @@ export function CreateModelForm() {
   });
 
   const [createModelFamily] = useCreateModelFamilyMutation();
-  const [createConfiguration] = useCreateConfigurationMutation();
+  const [createConfiguration] = useMutation(CREATE_OWNED_MODEL_CONFIGURATION);
   const [addInput] = useAddConfigurationInputMutation();
   const [addOutput] = useAddConfigurationOutputMutation();
   const [addParameter] = useAddConfigurationParameterMutation();
@@ -78,6 +80,10 @@ export function CreateModelForm() {
 
   const onSubmit = async (data: CreateModelSchema) => {
     setSubmitError(null);
+    if (!user?.username) {
+      setSubmitError('You must be signed in to register a model configuration.');
+      return;
+    }
     const configurationId = generateMintUri();
     const plan = resolveSubmitPlan(data);
 
@@ -93,6 +99,7 @@ export function CreateModelForm() {
           description: data.description || null,
           softwareVersionId: plan.softwareVersionId,
           componentLocation: data.componentLocation?.trim() || null,
+          ownerUsername: user.username,
         },
       });
 

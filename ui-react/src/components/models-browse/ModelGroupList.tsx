@@ -27,6 +27,10 @@ export interface ModelGroupListProps {
   expandAll: boolean;
   /** Route prefix for row links (the slug is appended). */
   basePath?: string;
+  /** IDs owned by the current authenticated user. */
+  ownedIds?: ReadonlySet<string>;
+  /** Empty-state copy for filtered views. */
+  emptyMessage?: string;
 }
 
 export function ModelGroupList({
@@ -34,6 +38,8 @@ export function ModelGroupList({
   selectedSlug,
   expandAll,
   basePath = '/modelconfigurations',
+  ownedIds,
+  emptyMessage = 'No models match your filters.',
 }: ModelGroupListProps) {
   const signature = groups.map((g) => g.softwareId).join('|');
   const [open, setOpen] = useState<string[]>([]);
@@ -45,11 +51,7 @@ export function ModelGroupList({
   }, [expandAll, signature]);
 
   if (groups.length === 0) {
-    return (
-      <p className="px-1 py-8 text-center text-sm text-muted-foreground">
-        No models match your filters.
-      </p>
-    );
+    return <p className="px-1 py-8 text-center text-sm text-muted-foreground">{emptyMessage}</p>;
   }
 
   return (
@@ -67,6 +69,7 @@ export function ModelGroupList({
                   config={config}
                   selectedSlug={selectedSlug}
                   basePath={basePath}
+                  isOwned={ownedIds?.has(config.id) ?? false}
                 />
               ))}
             </div>
@@ -81,10 +84,12 @@ function ConfigBlock({
   config,
   selectedSlug,
   basePath,
+  isOwned,
 }: {
   config: ConfigNode;
   selectedSlug: string | null;
   basePath: string;
+  isOwned: boolean;
 }) {
   return (
     <div>
@@ -95,6 +100,11 @@ function ConfigBlock({
         dimmed={config.synthesized}
       >
         <span className="truncate">{config.label}</span>
+        {isOwned && (
+          <Badge variant="secondary" className="shrink-0 text-[10px]">
+            Yours
+          </Badge>
+        )}
         {config.versionId && (
           <Badge variant="outline" className="ml-auto shrink-0 text-[10px]">
             {config.versionId}
