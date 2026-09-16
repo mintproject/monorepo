@@ -52,6 +52,36 @@ export interface ModelGroup {
   configs: ConfigNode[];
 }
 
+/** Apply semantic result order without changing the grouping shape. */
+export function rankModelGroups(
+  groups: ModelGroup[],
+  rankById: ReadonlyMap<string, number>,
+): ModelGroup[] {
+  const rank = (id: string) => rankById.get(id) ?? Number.POSITIVE_INFINITY;
+  const configRank = (config: ConfigNode) => {
+    const setupRanks = config.setups.map((setup) => rank(setup.id));
+    return Math.min(rank(config.id), ...setupRanks);
+  };
+
+  return groups
+    .map((group) => ({
+      ...group,
+      configs: group.configs
+        .map((config) => ({
+          ...config,
+          setups: [...config.setups].sort(
+            (a, b) => rank(a.id) - rank(b.id) || a.label.localeCompare(b.label),
+          ),
+        }))
+        .sort((a, b) => configRank(a) - configRank(b) || a.label.localeCompare(b.label)),
+    }))
+    .sort((a, b) => {
+      const aRank = Math.min(...a.configs.map(configRank));
+      const bRank = Math.min(...b.configs.map(configRank));
+      return aRank - bRank || a.softwareLabel.localeCompare(b.softwareLabel);
+    });
+}
+
 const UNKNOWN_SOFTWARE: RowSoftware = { id: '__unknown__', label: 'Unknown model' };
 
 export function groupConfigurations(rows: SearchConfigurationRow[]): ModelGroup[] {

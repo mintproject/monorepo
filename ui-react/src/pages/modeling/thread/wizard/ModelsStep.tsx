@@ -15,6 +15,8 @@ import {
 import { useAuth } from '@/lib/auth/useAuth';
 import { diffThreadModels } from '@/lib/thread-models';
 import { slugFromUri } from '@/lib/uri';
+import { useDebouncedValue } from '@/hooks/useDebouncedValue';
+import { useSemanticSearch } from '@/hooks/useSemanticSearch';
 import { useToast } from '@/components/ui/use-toast';
 import { cn } from '@/lib/utils';
 import { StepShell } from './StepShell';
@@ -151,12 +153,22 @@ export function ModelsStep({
   // prefer the label the relationship carries. A thread whose relationship did
   // not resolve falls back to the URI's trailing slug — never the whole URI.
   const indicatorLabel = thread.response_variable?.label ?? (indicator && slugFromUri(indicator));
+  const debouncedSearchText = useDebouncedValue(searchText, 300);
+  const semanticFilters = useMemo(
+    () => ({ outputVariableIds: indicator ? [indicator] : undefined }),
+    [indicator],
+  );
+  const semanticSearch = useSemanticSearch(debouncedSearchText, {
+    target: 'model_configuration',
+    limit: 100,
+    filters: semanticFilters,
+  });
   const indicatorRows = useMemo(
     () => (indicator ? allRows.filter((r) => r.producesIds.includes(indicator)) : allRows),
     [allRows, indicator],
   );
 
-  const searchedRows = useMemo(() => {
+  const localSearchedRows = useMemo(() => {
     if (!searchText.trim()) return indicatorRows;
     const q = searchText.toLowerCase();
     return indicatorRows.filter(
@@ -166,6 +178,14 @@ export function ModelsStep({
         r.region.toLowerCase().includes(q),
     );
   }, [indicatorRows, searchText]);
+
+  const searchedRows = useMemo(() => {
+    if (!debouncedSearchText.trim() || !semanticSearch.results) return localSearchedRows;
+    const rankById = new Map(semanticSearch.results.map((result, index) => [result.id, index]));
+    return indicatorRows
+      .filter((row) => rankById.has(row.id))
+      .sort((a, b) => (rankById.get(a.id) ?? 0) - (rankById.get(b.id) ?? 0));
+  }, [debouncedSearchText, indicatorRows, localSearchedRows, semanticSearch.results]);
 
   const threadRegionId = thread.region_id ?? null;
   const { regionRows, otherRows } = useMemo(() => {
@@ -259,7 +279,7 @@ export function ModelsStep({
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
         <input
           type="text"
-          placeholder="Filter models by name, region or description…"
+          placeholder="Search models semantically…"
           value={searchText}
           onChange={(e) => setSearchText(e.target.value)}
           className="w-full rounded border py-2 pl-9 pr-3 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"

@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { groupConfigurations, type SearchConfigurationRow } from '@/lib/groupConfigurations';
+import {
+  groupConfigurations,
+  rankModelGroups,
+  type SearchConfigurationRow,
+} from '@/lib/groupConfigurations';
 
 const sw = (id: string, label: string) => ({ id, label });
 
@@ -107,5 +111,24 @@ describe('groupConfigurations', () => {
       'Alpha region',
       'Beta region',
     ]);
+  });
+
+  it('applies semantic ranking while preserving config/setup nesting', () => {
+    const groups = groupConfigurations([
+      config('c1', 'Alpha', sw('m1', 'Model')),
+      config('c2', 'Beta', sw('m1', 'Model')),
+      setup('s1', 'Beta setup', 'c2', 'Beta', sw('m1', 'Model')),
+    ]);
+
+    const ranked = rankModelGroups(
+      groups,
+      new Map([
+        ['s1', 0],
+        ['c1', 1],
+      ]),
+    );
+
+    expect(ranked[0]!.configs.map((c) => c.id)).toEqual(['c2', 'c1']);
+    expect(ranked[0]!.configs[0]!.setups).toEqual([{ id: 's1', label: 'Beta setup' }]);
   });
 });

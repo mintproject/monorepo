@@ -325,6 +325,9 @@ should be deleted.
 
 ### 2026-09-16 - API implementation deviations
 
+> The first deviation below described the API-only phase and is superseded by
+> the UI rollout decision immediately following it.
+
 - **Deviation:** The UI remains unchanged in this phase because the user asked
   to establish the API contract first. Existing SVO callers continue to work
   with the default target; model and recommendation targets are ready for the
@@ -337,6 +340,25 @@ should be deleted.
 - **Deviation:** Evidence is relationship-backed context evidence (linked
   model/configuration, variable role, category, or region); exact per-field
   lexical attribution is deferred until the evaluation set is available.
+
+### 2026-09-16 - Roll out one shared client across approved UI surfaces
+
+- **Decision:** Adopt a shared abort-safe semantic-search hook for the SVO
+  comboboxes, Explore Variables, the model browse page, and both modeling-thread
+  model selectors. Keep local/Apollo/Hasura paths as fallbacks and leave unit
+  and CKAN search unchanged.
+- **Reason:** The approved inference matrix calls for consistent target and
+  hard-filter handling without duplicating request cancellation and stale-result
+  logic in each control.
+- **Alternatives rejected:** Replacing controlled-vocabulary lookups wholesale
+  was rejected because unit search must remain exact; removing local/Hasura
+  fallbacks was rejected because semantic-service availability must not make
+  existing controls unusable.
+- **User feedback:** The user approved the planned UI rollout with “Ok Do it”.
+- **Impact on implementation:** Added `useSemanticSearch`, explicit `target`
+  and repeated hard-filter parameters, semantic ranking preservation for model
+  groups, loading/cancellation/error-safe fallback behavior, focused tests, and
+  UI README documentation. No API or database schema changes.
 
 ## User feedback / decisions
 

@@ -23,6 +23,8 @@ import {
 } from '@/graphql/generated/modeling';
 import { useAuth } from '@/lib/auth/useAuth';
 import { diffThreadModels } from '@/lib/thread-models';
+import { useDebouncedValue } from '@/hooks/useDebouncedValue';
+import { useSemanticSearch } from '@/hooks/useSemanticSearch';
 import { useToast } from '@/components/ui/use-toast';
 import { cn } from '@/lib/utils';
 
@@ -234,6 +236,11 @@ export function MintModels({ thread, onContinue, onThreadUpdated }: MintModelsPr
   const { data, loading, error } = useGetModelTreeWithRegionsQuery();
 
   const [setThreadModels] = useSetThreadModelsMutation();
+  const debouncedSearchText = useDebouncedValue(searchText, 300);
+  const semanticSearch = useSemanticSearch(debouncedSearchText, {
+    target: 'model_configuration',
+    limit: 100,
+  });
 
   // ── Derive latest SELECT_MODELS event ──────────────────────────────────────
 
@@ -246,7 +253,7 @@ export function MintModels({ thread, onContinue, onThreadUpdated }: MintModelsPr
 
   // ── Filter rows ─────────────────────────────────────────────────────────────
 
-  const filteredRows = useMemo(() => {
+  const localFilteredRows = useMemo(() => {
     if (!searchText.trim()) return allRows;
     const q = searchText.toLowerCase();
     return allRows.filter(
@@ -257,6 +264,14 @@ export function MintModels({ thread, onContinue, onThreadUpdated }: MintModelsPr
         r.category.toLowerCase().includes(q),
     );
   }, [allRows, searchText]);
+
+  const filteredRows = useMemo(() => {
+    if (!debouncedSearchText.trim() || !semanticSearch.results) return localFilteredRows;
+    const rankById = new Map(semanticSearch.results.map((result, index) => [result.id, index]));
+    return allRows
+      .filter((row) => rankById.has(row.id))
+      .sort((a, b) => (rankById.get(a.id) ?? 0) - (rankById.get(b.id) ?? 0));
+  }, [allRows, debouncedSearchText, localFilteredRows, semanticSearch.results]);
 
   // Thread region for matching — derive from region_id
   const threadRegionId = thread.region_id ?? null;
@@ -397,7 +412,7 @@ export function MintModels({ thread, onContinue, onThreadUpdated }: MintModelsPr
         <input
           id="model-search"
           type="text"
-          placeholder="Filter models by name, region or description…"
+          placeholder="Search models semantically…"
           value={searchText}
           onChange={(e) => setSearchText(e.target.value)}
           className="w-full rounded border py-2 pl-9 pr-3 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"

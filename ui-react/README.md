@@ -114,6 +114,15 @@ is treated as unset):
 | `AUTH_PREVIEW_ORIGIN_ALLOWLIST` | omitted when unset |
 | `WELCOME_MESSAGE` | omitted when unset |
 
+## Semantic search
+
+Free-text searches for standard variables use the configured semantic-search
+service at `/search?target=svo`; model browse and model-selection searches use
+`target=model_configuration`. Region, category, output-variable, scope, and
+indicator selections remain hard filters. If the service is unavailable, the
+UI falls back to its existing Apollo/local ranking paths. Unit lookup remains
+local and exact, and dataset search continues to use CKAN.
+
 Because the entrypoint writes into the nginx document root, the container does
 not support a read-only root filesystem as-is.
 

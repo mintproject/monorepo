@@ -29,6 +29,7 @@ import {
   type StandardVariableCategory,
 } from '@/lib/standard-variable-taxonomy';
 import { searchVariableRows } from '@/lib/variable-catalog-search';
+import { useSemanticSearch } from '@/hooks/useSemanticSearch';
 
 type StandardVariable =
   GetStandardVariablesWithUnitsQuery['modelcatalog_standard_variable'][number];
@@ -278,6 +279,7 @@ export function VariablesHome() {
 
   const query = search.trim();
   const isSearching = query !== '';
+  const semanticSearch = useSemanticSearch(query, { target: 'svo', limit: 100 });
 
   const rows = useMemo<StandardVariableRow[]>(
     () =>
@@ -312,13 +314,25 @@ export function VariablesHome() {
     [demotedRows, selectedCategory],
   );
 
-  // While searching, results are relevance-ranked (name > description > unit
-  // label) and column sorting is disabled; otherwise the (demoted, category-
-  // filtered) list is shown and columns are sortable. Pagination applies to the
-  // resulting list in both states.
+  const semanticRows = useMemo<StandardVariableRow[] | null>(() => {
+    if (!semanticSearch.results) return null;
+    const rowsById = new Map(categoryFiltered.map((row) => [row.id, row]));
+    return semanticSearch.results.flatMap((result) => {
+      const row = rowsById.get(result.id);
+      return row ? [row] : [];
+    });
+  }, [categoryFiltered, semanticSearch.results]);
+
+  // While searching, semantic results preserve the catalog rows (including
+  // units and categories) and their service ranking. A failed/unavailable
+  // service falls back to the existing local ranker; category remains local
+  // and therefore a hard filter in both paths.
   const displayRows = useMemo<StandardVariableRow[]>(
-    () => (isSearching ? searchVariableRows(categoryFiltered, query) : categoryFiltered),
-    [categoryFiltered, query, isSearching],
+    () =>
+      isSearching
+        ? (semanticRows ?? searchVariableRows(categoryFiltered, query))
+        : categoryFiltered,
+    [categoryFiltered, isSearching, query, semanticRows],
   );
 
   const columns = useMemo(() => buildColumns(query), [query]);
@@ -375,6 +389,11 @@ export function VariablesHome() {
             className="border-none text-[#495057] shadow-none placeholder:text-[#adb5bd] focus-visible:ring-0"
             aria-label="Search standard variables"
           />
+          {isSearching && semanticSearch.loading && (
+            <span className="sr-only" role="status">
+              Searching standard variables…
+            </span>
+          )}
         </div>
         <Select value={selectedCategory} onValueChange={setSelectedCategory}>
           <SelectTrigger className="w-[220px] bg-white shadow-sm" aria-label="Filter by category">
