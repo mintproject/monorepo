@@ -174,7 +174,7 @@ export function StandardVariableCombobox({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
-        <Command>
+        <Command shouldFilter={semanticOptions === null}>
           <CommandInput placeholder={placeholder} onValueChange={setSearch} />
           <CommandList>
             <CommandEmpty>

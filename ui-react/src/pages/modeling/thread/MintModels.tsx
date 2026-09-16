@@ -33,6 +33,7 @@ import { cn } from '@/lib/utils';
 interface ModelRow {
   /** The modelcatalog_configuration id (setup level) */
   id: string;
+  searchIds: string[];
   name: string;
   description?: string | null;
   category: string;
@@ -83,6 +84,7 @@ function flattenToRows(
 function configToRow(cfg: ModelConfigInfo): ModelRow {
   return {
     id: cfg.id,
+    searchIds: [cfg.id],
     name: cfg.label ?? cfg.id,
     description: null,
     category: '',
@@ -93,6 +95,7 @@ function configToRow(cfg: ModelConfigInfo): ModelRow {
 function setupToRow(setup: ModelSetupInfo, parentCfg: ModelConfigInfo): ModelRow {
   return {
     id: setup.id,
+    searchIds: [setup.id, parentCfg.id],
     name: setup.label ?? setup.id,
     description: setup.description,
     category: '',
@@ -269,8 +272,17 @@ export function MintModels({ thread, onContinue, onThreadUpdated }: MintModelsPr
     if (!debouncedSearchText.trim() || !semanticSearch.results) return localFilteredRows;
     const rankById = new Map(semanticSearch.results.map((result, index) => [result.id, index]));
     return allRows
-      .filter((row) => rankById.has(row.id))
-      .sort((a, b) => (rankById.get(a.id) ?? 0) - (rankById.get(b.id) ?? 0));
+      .map((row) => ({
+        row,
+        rank: Math.min(
+          ...row.searchIds
+            .map((id) => rankById.get(id))
+            .filter((rank): rank is number => rank !== undefined),
+        ),
+      }))
+      .filter((item) => Number.isFinite(item.rank))
+      .sort((a, b) => a.rank - b.rank)
+      .map((item) => item.row);
   }, [allRows, debouncedSearchText, localFilteredRows, semanticSearch.results]);
 
   // Thread region for matching — derive from region_id
@@ -412,7 +424,7 @@ export function MintModels({ thread, onContinue, onThreadUpdated }: MintModelsPr
         <input
           id="model-search"
           type="text"
-          placeholder="Search models semantically…"
+          placeholder="Filter models by name, region or description…"
           value={searchText}
           onChange={(e) => setSearchText(e.target.value)}
           className="w-full rounded border py-2 pl-9 pr-3 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"

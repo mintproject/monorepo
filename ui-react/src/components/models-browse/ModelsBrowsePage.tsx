@@ -130,7 +130,7 @@ export function ModelsBrowsePage({
             <Input
               value={text}
               onChange={(e) => setText(e.target.value)}
-              placeholder="Search models semantically…"
+              placeholder="Filter by model name…"
               className="h-9 pl-8"
             />
           </div>

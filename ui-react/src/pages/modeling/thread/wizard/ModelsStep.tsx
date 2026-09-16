@@ -24,6 +24,7 @@ import { FilteredByBanner } from './FilteredByBanner';
 
 interface ModelRow {
   id: string;
+  searchIds: string[];
   name: string;
   description?: string | null;
   region: string;
@@ -46,6 +47,7 @@ function rowFromConfig(cfg: ModelConfigInfo | ModelSetupInfo, parent?: ModelConf
   const regions = cfg.regions.length > 0 ? cfg.regions : (parent?.regions ?? []);
   return {
     id: cfg.id,
+    searchIds: parent ? [cfg.id, parent.id] : [cfg.id],
     name: cfg.label ?? cfg.id,
     description: 'description' in cfg ? cfg.description : null,
     region: regions.map((r) => r.region.label ?? r.region.id).join(', '),
@@ -183,8 +185,17 @@ export function ModelsStep({
     if (!debouncedSearchText.trim() || !semanticSearch.results) return localSearchedRows;
     const rankById = new Map(semanticSearch.results.map((result, index) => [result.id, index]));
     return indicatorRows
-      .filter((row) => rankById.has(row.id))
-      .sort((a, b) => (rankById.get(a.id) ?? 0) - (rankById.get(b.id) ?? 0));
+      .map((row) => ({
+        row,
+        rank: Math.min(
+          ...row.searchIds
+            .map((id) => rankById.get(id))
+            .filter((rank): rank is number => rank !== undefined),
+        ),
+      }))
+      .filter((item) => Number.isFinite(item.rank))
+      .sort((a, b) => a.rank - b.rank)
+      .map((item) => item.row);
   }, [debouncedSearchText, indicatorRows, localSearchedRows, semanticSearch.results]);
 
   const threadRegionId = thread.region_id ?? null;
@@ -279,7 +290,7 @@ export function ModelsStep({
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
         <input
           type="text"
-          placeholder="Search models semantically…"
+          placeholder="Filter models by name, region or description…"
           value={searchText}
           onChange={(e) => setSearchText(e.target.value)}
           className="w-full rounded border py-2 pl-9 pr-3 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
