@@ -645,7 +645,14 @@ def _start_pod_if_needed(t: Any, pod_id: str) -> None:
     print(f"  [{pod_id}] start requested")
 
 
-def _recreate_pod(t: Any, spec: dict[str, Any], *, start: bool, owners: list[str] | None = None) -> None:
+def _recreate_pod(
+    t: Any,
+    spec: dict[str, Any],
+    *,
+    start: bool,
+    owners: list[str] | None = None,
+    networking: Any = None,
+) -> None:
     pid = spec["pod_id"]
     pod_name = next((name for name, pod_id in PODS.items() if pod_id == pid), None)
     if pod_name not in RECREATE_ON_IMAGE_MISMATCH_PODS:
@@ -656,7 +663,16 @@ def _recreate_pod(t: Any, spec: dict[str, Any], *, start: bool, owners: list[str
     t.pods.delete_pod(pod_id=pid)
     wait_for_pod_absent(t, pid)
     print(f"  [{pid}] creating with requested image…")
-    t.pods.create_pod(**spec)
+    recreate_spec = dict(spec)
+    # Tapis may remove the old pod while processing UpdatePod before reporting
+    # an image mismatch. Recreate with the networking definition that was
+    # already live, instead of resubmitting the desired CORS/auth payload.
+    # The latter requires APPROVEDADMIN and is unrelated to an image update.
+    if networking is None:
+        recreate_spec.pop("networking", None)
+    else:
+        recreate_spec["networking"] = networking
+    t.pods.create_pod(**recreate_spec)
     if owners:
         set_pod_owners(t, pid, owners)
     if start:
@@ -751,7 +767,13 @@ def upsert_pod(
         except PodImageMismatchError:
             if not recreate_on_image_mismatch:
                 raise
-            _recreate_pod(t, spec, start=start, owners=owners)
+            _recreate_pod(
+                t,
+                spec,
+                start=start,
+                owners=owners,
+                networking=_field(existing, "networking", None),
+            )
             return
         if restart:
             t.pods.restart_pod(pod_id=pid)

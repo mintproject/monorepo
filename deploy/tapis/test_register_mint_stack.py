@@ -457,8 +457,10 @@ class LifecycleTests(unittest.TestCase):
     def test_opt_in_recovery_recreates_ui_after_confirmed_delete(self):
         missing = Exception()
         missing.response = SimpleNamespace(status_code=404)
+        live_networking = {"default": {"protocol": "http", "port": 8080, "cors_allow_origins": ["https://mintdevui.example"]}}
+        existing = dict(self.spec, networking=live_networking)
         t = Mock()
-        t.pods.get_pod.side_effect = [self.spec, missing]
+        t.pods.get_pod.side_effect = [existing, missing]
         with patch.object(
             deploy,
             "wait_for_pod_image",
@@ -473,7 +475,8 @@ class LifecycleTests(unittest.TestCase):
                 restart=True,
             )
         t.pods.delete_pod.assert_called_once_with(pod_id=deploy.PODS["ui"])
-        t.pods.create_pod.assert_called_once_with(**self.spec)
+        recreated = t.pods.create_pod.call_args.kwargs
+        self.assertEqual(recreated["networking"], live_networking)
         t.pods.restart_pod.assert_not_called()
 
     def test_opt_in_recovery_cannot_recreate_postgres(self):
