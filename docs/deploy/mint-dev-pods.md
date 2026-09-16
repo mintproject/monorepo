@@ -65,6 +65,32 @@ The semantic-search pod receives the exact `mintdevui` origin through
 `SVO_CORS_ORIGINS`, so browser requests are permitted without a wildcard CORS
 policy.
 
+### Semantic-search API targets
+
+`GET /search?q=<text>&target=<target>&limit=<n>` supports `target=svo` (the
+backward-compatible default) and `target=model_configuration`. Both targets
+return ranked rows with `score`, `ranking_source`, and relationship `evidence`. Repeated
+`region_id`, `category_id`, `variable_id`, and `output_variable_id` parameters
+are deterministic hard filters; `role=input|output` scopes variable links.
+SVO rows include attached model/configuration links. Model-configuration rows
+include attached standard variables, categories, regions, and software-version
+metadata.
+
+Problem-statement-driven discovery is exposed as the named
+`problem_statement_recommendations` capability:
+
+```text
+POST /problem-statements/recommendations
+GET  /problem-statements/{id}/recommendations
+```
+
+The POST body can contain `title`/`name`, `description`, `goals`,
+`region_id`, selected variable or configuration IDs, and `category_ids`. Both
+routes return SVO and model-configuration results. They return
+`status=abstained` with empty result lists when there is insufficient text
+context; hard filters are never relaxed silently. Dataset search remains on
+the CKAN path.
+
 PostgreSQL uses the Tapis named `postgres` networking route on port 5432. Tapis
 exposes that route externally through
 `mintdevpostgres-postgres.pods.portals.tapis.io:443`; Hasura and semantic search
