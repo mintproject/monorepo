@@ -4,7 +4,7 @@
  * Tabular display of inputs, outputs, parameters with an Edit button
  * that transitions to ConfigurationForm.
  */
-import { ArrowUpRight, Pencil } from 'lucide-react';
+import { ArrowUpRight, Pencil, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 import { useGetConfigurationQuery } from '@/graphql/generated/graphql';
@@ -16,9 +16,14 @@ import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 export interface ConfigurationDetailProps {
   configurationId: string;
   onEdit?: () => void;
+  onDelete?: (label: string) => void;
 }
 
-export function ConfigurationDetail({ configurationId, onEdit }: ConfigurationDetailProps) {
+export function ConfigurationDetail({
+  configurationId,
+  onEdit,
+  onDelete,
+}: ConfigurationDetailProps) {
   const { data, loading, error } = useGetConfigurationQuery({
     variables: { id: configurationId },
     fetchPolicy: 'cache-first',
@@ -64,19 +69,32 @@ export function ConfigurationDetail({ configurationId, onEdit }: ConfigurationDe
             <p className="mt-1 text-sm text-muted-foreground">{config.description}</p>
           )}
         </div>
-        {onEdit ? (
-          <Button variant="outline" size="sm" onClick={onEdit} className="shrink-0 gap-1.5">
-            <Pencil className="h-3.5 w-3.5" />
-            Edit
-          </Button>
-        ) : (
-          <Button asChild variant="outline" size="sm" className="shrink-0 gap-1.5">
-            <Link to={`/models/configure/${slugFromUri(config.id)}`}>
-              Configure
-              <ArrowUpRight className="h-3.5 w-3.5" />
-            </Link>
-          </Button>
-        )}
+        <div className="flex shrink-0 gap-2">
+          {onEdit ? (
+            <Button variant="outline" size="sm" onClick={onEdit} className="gap-1.5">
+              <Pencil className="h-3.5 w-3.5" />
+              Edit
+            </Button>
+          ) : (
+            <Button asChild variant="outline" size="sm" className="gap-1.5">
+              <Link to={`/models/configure/${slugFromUri(config.id)}`}>
+                Configure
+                <ArrowUpRight className="h-3.5 w-3.5" />
+              </Link>
+            </Button>
+          )}
+          {onDelete && (
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => onDelete(config.label)}
+              className="gap-1.5"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              Delete
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Authors */}

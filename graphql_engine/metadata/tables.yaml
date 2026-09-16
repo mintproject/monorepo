@@ -2876,11 +2876,12 @@
   insert_permissions:
   - role: user
     permission:
-      check: {}
+      check:
+        owner_username:
+          _eq: X-Hasura-User-Id
       columns: &id003
       - id
       - software_version_id
-      - model_configuration_id
       - label
       - description
       - keywords
@@ -2895,6 +2896,7 @@
       - parameter_assignment_method
       - valid_until
       - author_id
+      - owner_username
   select_permissions:
   - role: anonymous
     permission:
@@ -2919,18 +2921,56 @@
       filter: {}
   - role: user
     permission:
-      columns: *id003
+      columns:
+      - id
+      - software_version_id
+      - model_configuration_id
+      - label
+      - description
+      - keywords
+      - usage_notes
+      - has_component_location
+      - has_implementation_script_location
+      - has_software_image
+      - has_model_result_table
+      - has_region
+      - calibration_interval
+      - calibration_method
+      - parameter_assignment_method
+      - valid_until
+      - author_id
       filter: {}
   update_permissions:
   - role: user
     permission:
-      columns: *id003
+      columns:
+      - id
+      - software_version_id
+      - label
+      - description
+      - keywords
+      - usage_notes
+      - has_component_location
+      - has_implementation_script_location
+      - has_software_image
+      - has_model_result_table
+      - has_region
+      - calibration_interval
+      - calibration_method
+      - parameter_assignment_method
+      - valid_until
+      - author_id
       filter: {}
       check: null
   delete_permissions:
   - role: user
     permission:
-      filter: {}
+      filter:
+        _and:
+        - owner_username:
+            _eq: X-Hasura-User-Id
+        - model_configuration_id:
+            _is_null: true
   event_triggers:
   - name: semantic_search_configuration
     definition:

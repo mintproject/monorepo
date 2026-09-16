@@ -73,6 +73,24 @@ query GetConfigurationBySlug($pattern: String!) {
   }
 }
 
+# Ownership is filtered by the authenticated identity supplied by the UI.
+# The owner field itself is intentionally not selected or exposed to anonymous users.
+query GetOwnedModelConfigurations($ownerUsername: String!) {
+  modelcatalog_configuration(
+    where: {
+      owner_username: { _eq: $ownerUsername }
+      model_configuration_id: { _is_null: true }
+    }
+    order_by: { label: asc }
+    limit: 500
+  ) {
+    id
+    child_configurations {
+      id
+    }
+  }
+}
+
 # Facet option sources. Counts are intentionally omitted: the runtime anonymous
 # Hasura role exposes no _aggregate fields. Output-variable options are deduped
 # client-side from the configuration_output -> standard_variable path.
