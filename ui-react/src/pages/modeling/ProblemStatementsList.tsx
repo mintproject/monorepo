@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useQuery } from '@apollo/client';
 import { useNavigate } from 'react-router-dom';
 import { Pencil, Trash2, Plus, Search, X, ClipboardList, MapPin } from 'lucide-react';
@@ -107,43 +107,37 @@ interface ListTopRegionsData {
 // ─── Component ───────────────────────────────────────────────────────────────
 
 interface ProblemStatementsListProps {
-  /** Region ID to scope the list (required — same as legacy). */
+  /** Optional initial region scope; leaving it unset shows all regions. */
   regionId?: string;
 }
 
+const ALL_REGIONS = '__all__';
+
 /**
- * ProblemStatementsList — lists all problem statements for the selected region.
+ * ProblemStatementsList — lists all problem statements, with an optional region filter.
  * Supports create, edit, delete, and free-text search. Permission-gated
  * edit/delete icons match the legacy LitElement component exactly.
  */
-export function ProblemStatementsList({ regionId = 'DEFAULT' }: ProblemStatementsListProps) {
+export function ProblemStatementsList({ regionId }: ProblemStatementsListProps) {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
 
   // ── regions ─────────────────────────────────────────────────────────────────
-  // problem_statement.region_id is a FK to the region table, so we must scope
-  // the list to (and create against) a region that actually exists. The legacy
-  // placeholder 'DEFAULT' is not a real region and caused FK violations.
+  // problem_statement.region_id is a FK to the region table, so creates still
+  // require a real region. Listing is intentionally unscoped by default; the
+  // selector below applies an optional client-side region filter.
   const { data: regionsData } = useQuery<ListTopRegionsData>(LIST_TOP_REGIONS);
   const regions = useMemo(() => regionsData?.region ?? [], [regionsData]);
 
-  const [selectedRegionId, setSelectedRegionId] = useState<string | undefined>(undefined);
+  const [selectedRegionId, setSelectedRegionId] = useState(() =>
+    regionId && regionId !== 'DEFAULT' ? regionId : ALL_REGIONS,
+  );
   const selectedRegionName = regions.find((r) => r.id === selectedRegionId)?.name ?? '';
-
-  useEffect(() => {
-    if (!selectedRegionId && regions.length > 0) {
-      // Honour the requested region when it exists, otherwise fall back to the
-      // first available region instead of the bogus 'DEFAULT'.
-      const initial = regions.find((r) => r.id === regionId)?.id ?? regions[0]?.id;
-      if (initial) setSelectedRegionId(initial);
-    }
-  }, [regions, selectedRegionId, regionId]);
 
   // ── data ──────────────────────────────────────────────────────────────────
   const { data, loading, error, refetch } = useListProblemStatementsQuery({
-    variables: { regionId: selectedRegionId ?? '' },
-    skip: !selectedRegionId,
+    variables: {},
     fetchPolicy: 'cache-and-network',
   });
 
@@ -184,6 +178,7 @@ export function ProblemStatementsList({ regionId = 'DEFAULT' }: ProblemStatement
   }, [data]);
 
   const filtered = statements
+    .filter((ps) => selectedRegionId === ALL_REGIONS || ps.region_id === selectedRegionId)
     .filter((ps) => !filter || (ps.name ?? '').toLowerCase().includes(filter.toLowerCase()))
     .sort((a, b) => {
       const ta = getLatestEvent(a.events)?.timestamp ?? '';
@@ -193,7 +188,7 @@ export function ProblemStatementsList({ regionId = 'DEFAULT' }: ProblemStatement
 
   // ── form helpers ──────────────────────────────────────────────────────────
   function openAddDialog() {
-    setForm({ ...EMPTY_FORM, regionId: selectedRegionId ?? '' });
+    setForm({ ...EMPTY_FORM, regionId: selectedRegionId === ALL_REGIONS ? '' : selectedRegionId });
     setDialogOpen(true);
   }
 
@@ -337,8 +332,8 @@ export function ProblemStatementsList({ regionId = 'DEFAULT' }: ProblemStatement
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Problem Statements</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Problem statements belong to a region. Choose a region, then pick a problem from the list
-          or click Add to create a new one.
+          Problem statements belong to a region. View them across all regions, or narrow the list to
+          a specific region before picking one or creating a new one.
         </p>
       </div>
 
@@ -368,6 +363,7 @@ export function ProblemStatementsList({ regionId = 'DEFAULT' }: ProblemStatement
               <SelectValue placeholder="Select a region…" />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value={ALL_REGIONS}>All regions</SelectItem>
               {regions.map((r) => (
                 <SelectItem key={r.id} value={r.id}>
                   {r.name}
@@ -411,10 +407,16 @@ export function ProblemStatementsList({ regionId = 'DEFAULT' }: ProblemStatement
       </div>
 
       {/* ── Scope summary ─────────────────────────────────────────────────── */}
-      {selectedRegionName && !loading && !error && (
+      {!loading && !error && (
         <p className="-mt-3 text-sm text-muted-foreground" aria-live="polite">
-          {filtered.length} problem {filtered.length === 1 ? 'statement' : 'statements'} in{' '}
-          <span className="font-medium text-foreground">{selectedRegionName}</span>
+          {filtered.length} problem {filtered.length === 1 ? 'statement' : 'statements'}{' '}
+          {selectedRegionName ? (
+            <>
+              in <span className="font-medium text-foreground">{selectedRegionName}</span>
+            </>
+          ) : (
+            'across all regions'
+          )}
           {filter && <> that match “{filter}”</>}
         </p>
       )}
@@ -442,12 +444,14 @@ export function ProblemStatementsList({ regionId = 'DEFAULT' }: ProblemStatement
           title={
             filter
               ? 'No matches'
-              : `No problem statements in ${selectedRegionName || 'this region'}`
+              : selectedRegionName
+                ? `No problem statements in ${selectedRegionName}`
+                : 'No problem statements yet'
           }
           description={
             filter
-              ? `No problem statement in ${selectedRegionName || 'this region'} matches your search. Clear the search or choose another region.`
-              : 'Choose another region, or click Add to create the first problem statement here.'
+              ? `No problem statement${selectedRegionName ? ` in ${selectedRegionName}` : ''} matches your search. Clear the search or choose another region.`
+              : 'Click Add to create your first problem statement.'
           }
         />
       )}

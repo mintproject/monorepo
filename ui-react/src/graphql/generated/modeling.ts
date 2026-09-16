@@ -339,9 +339,7 @@ const THREAD_INFO = gql`
 
 // ─── Query: ListProblemStatements ────────────────────────────────────────────
 
-export type ListProblemStatementsQueryVariables = {
-  regionId: string;
-};
+export type ListProblemStatementsQueryVariables = Record<string, never>;
 
 export type ListProblemStatementsQuery = {
   __typename?: 'query_root';
@@ -351,11 +349,8 @@ export type ListProblemStatementsQuery = {
 
 export const ListProblemStatementsDocument = gql`
   ${PROBLEM_STATEMENT_INFO}
-  query ListProblemStatements($regionId: String!) {
-    problem_statement(
-      where: { region_id: { _eq: $regionId } }
-      order_by: { id: desc }
-    ) {
+  query ListProblemStatements {
+    problem_statement(order_by: { id: desc }) {
       ...problem_statement_info
       tasks {
         id

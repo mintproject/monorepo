@@ -32,9 +32,9 @@ const regionsMock: MockedResponse = {
   result: { data: { region: mockRegions } },
 };
 
-function listMock(regionId: string): MockedResponse {
+function listMock(): MockedResponse {
   return {
-    request: { query: ListProblemStatementsDocument, variables: { regionId } },
+    request: { query: ListProblemStatementsDocument, variables: {} },
     result: { data: { problem_statement: [] } },
     maxUsageCount: Number.POSITIVE_INFINITY,
   };
@@ -43,14 +43,11 @@ function listMock(regionId: string): MockedResponse {
 describe('ProblemStatementsList region selection', () => {
   it('offers a region selector populated from the real top-level regions', async () => {
     renderWithProviders(<ProblemStatementsList />, {
-      apolloMocks: [regionsMock, listMock('south_sudan'), listMock('ethiopia')],
+      apolloMocks: [regionsMock, listMock()],
       initialEntries: ['/modeling/problem-statements'],
     });
 
-    const addBtn = await screen.findByRole('button', { name: /add problem statement/i });
-    await userEvent.click(addBtn);
-
-    const regionSelect = await screen.findByRole('combobox', { name: /region/i });
+    const regionSelect = await screen.findByRole('combobox', { name: /filter by region/i });
     expect(regionSelect).toBeInTheDocument();
     await userEvent.click(regionSelect);
     // Real regions are present; the bogus 'DEFAULT' value is not offered.
@@ -78,20 +75,14 @@ describe('ProblemStatementsList region selection', () => {
     };
 
     renderWithProviders(<ProblemStatementsList />, {
-      apolloMocks: [
-        regionsMock,
-        listMock('south_sudan'),
-        listMock('ethiopia'),
-        insertMock,
-        provenanceMock,
-      ],
+      apolloMocks: [regionsMock, listMock(), insertMock, provenanceMock],
       initialEntries: ['/modeling/problem-statements'],
     });
 
     await userEvent.click(await screen.findByRole('button', { name: /add problem statement/i }));
 
-    await screen.findByRole('combobox', { name: /region/i });
-    await userEvent.click(screen.getByRole('combobox', { name: /region/i }));
+    const dialog = await screen.findByRole('dialog');
+    await userEvent.click(within(dialog).getByRole('combobox', { name: /^region$/i }));
     await userEvent.click(await screen.findByRole('option', { name: 'Ethiopia' }));
 
     await userEvent.type(screen.getByLabelText(/problem statement name/i), 'Test PS');
@@ -117,8 +108,7 @@ describe('ProblemStatementsList region selection', () => {
 
     const mocks: MockedResponse[] = [
       regionsMock,
-      listMock('south_sudan'),
-      listMock('ethiopia'),
+      listMock(),
       {
         request: { query: InsertProblemStatementDocument },
         variableMatcher: () => true,
@@ -157,8 +147,8 @@ describe('ProblemStatementsList region selection', () => {
     });
 
     await userEvent.click(await screen.findByRole('button', { name: /add problem statement/i }));
-    await screen.findByRole('combobox', { name: /region/i });
-    await userEvent.click(screen.getByRole('combobox', { name: /region/i }));
+    const dialog = await screen.findByRole('dialog');
+    await userEvent.click(within(dialog).getByRole('combobox', { name: /^region$/i }));
     await userEvent.click(await screen.findByRole('option', { name: 'Ethiopia' }));
     await userEvent.type(screen.getByLabelText(/problem statement name/i), 'Flood study');
     await userEvent.click(screen.getByRole('button', { name: /submit/i }));
@@ -209,15 +199,26 @@ describe('ProblemStatementsList region selection', () => {
         },
       ],
     };
+    const psInEthiopia = {
+      __typename: 'problem_statement',
+      id: 'ps-ethiopia',
+      name: 'Ethiopia study',
+      start_date: '2000-01-01',
+      end_date: '2020-01-01',
+      region_id: 'ethiopia',
+      events: [],
+      permissions: [],
+      tasks: [],
+    };
 
     const listWithData: MockedResponse = {
-      request: { query: ListProblemStatementsDocument, variables: { regionId: 'south_sudan' } },
-      result: { data: { problem_statement: [psWithCounts] } },
+      request: { query: ListProblemStatementsDocument, variables: {} },
+      result: { data: { problem_statement: [psWithCounts, psInEthiopia] } },
       maxUsageCount: Number.POSITIVE_INFINITY,
     };
 
     renderWithProviders(<ProblemStatementsList />, {
-      apolloMocks: [regionsMock, listWithData, listMock('ethiopia')],
+      apolloMocks: [regionsMock, listWithData],
       initialEntries: ['/modeling/problem-statements'],
     });
 
@@ -228,5 +229,15 @@ describe('ProblemStatementsList region selection', () => {
     expect(within(card).getByText('tasks', { exact: false })).toBeInTheDocument();
     expect(within(card).getByText('sub-tasks', { exact: false })).toBeInTheDocument();
     expect(within(card).getByText('with a model', { exact: false })).toBeInTheDocument();
+
+    expect(screen.getByText(/2 problem statements across all regions/i)).toBeInTheDocument();
+
+    const regionFilter = screen.getByRole('combobox', { name: /filter by region/i });
+    await userEvent.click(regionFilter);
+    await userEvent.click(await screen.findByRole('option', { name: 'Ethiopia' }));
+    await waitFor(() => {
+      expect(screen.queryByRole('listitem', { name: 'Counted study' })).not.toBeInTheDocument();
+      expect(screen.getByRole('listitem', { name: 'Ethiopia study' })).toBeInTheDocument();
+    });
   });
 });
