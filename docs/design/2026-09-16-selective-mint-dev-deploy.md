@@ -67,9 +67,10 @@ publishing images.
 - `graphql_engine/**` → `graphql`
 - `docker/postgres-pgvector/**` → `postgres`
 
-Changes to `.github/workflows/**`, `deploy/tapis/**`, shared Docker/build
-configuration, root dependency manifests, or other unowned paths expand to
-`deploy_all` pending an explicit allowlist decision.
+Changes to `.github/**` and `deploy/tapis/**` are control-only and produce a
+no-op deployment manifest. This prevents changing CI/CD code from mutating the
+running stack. Shared Docker/build configuration, root dependency manifests,
+or other unowned paths expand to `deploy_all`.
 
 ### Dependency expansion
 
@@ -150,7 +151,8 @@ migrations, metadata, and health endpoints.
 ## Risks and tradeoffs
 
 - Path classification can miss a shared dependency. An explicit conservative
-  fallback to `deploy_all` is safer than silently omitting a service.
+  fallback to `deploy_all` is safer than silently omitting a service, while
+  control-only CI/deployment changes are excluded to avoid self-deployments.
 - A workflow-run trigger cannot directly consume job outputs, so the manifest
   artifact must be retained and downloaded with exact-run and SHA checks.
 - Immutable tags improve rollback but require the deploy script to support
@@ -243,8 +245,8 @@ rollout and debrief are complete.
 ### 2026-09-16 - Use conservative dependency expansion
 
 - **Decision:** Unowned/shared paths expand to all services, while ordinary
-  application paths map to one service and known schema paths expand to their
-  dependents.
+  application paths map to one service, known schema paths expand to their
+  dependents, and CI/deployment plumbing paths are no-op.
 - **Reason:** Missing a dependency is riskier than an occasional extra restart.
 - **Alternatives rejected:** An aggressive minimal map that treats every path
   as isolated.
@@ -252,6 +254,16 @@ rollout and debrief are complete.
   allowing for services attached to different monorepo areas.
 - **Impact on implementation:** Change detection needs explicit service and
   dependency outputs plus an all-services fallback.
+
+### 2026-09-16 - Do not self-deploy CI/CD changes
+
+- **Decision:** `.github/**` and `deploy/tapis/**` changes do not select an
+  image or pod. A manual dispatch is required to apply deployment-code changes
+  to the running stack.
+- **Reason:** The first rollout of this workflow classified its own workflow
+  and deploy-script changes as `deploy_all`, unexpectedly selecting PostgreSQL.
+- **Impact on implementation:** The change classifier now treats those paths
+  as control-only and tests both control-only and mixed service/control changes.
 
 ### 2026-09-16 - Use protected PostgreSQL image migration for selected tags
 

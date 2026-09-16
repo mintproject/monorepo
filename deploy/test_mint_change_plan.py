@@ -43,12 +43,24 @@ class MintChangePlanTests(unittest.TestCase):
         )
 
     def test_shared_and_unknown_paths_fail_closed_to_full_stack(self):
-        for path in (".github/workflows/build.yml", "deploy/tapis/register_mint_stack.py", "unknown.txt"):
+        for path in ("Makefile", "unknown.txt"):
             with self.subTest(path=path):
                 plan = make_plan([path])
                 self.assertTrue(plan["deploy_all"])
                 self.assertEqual(plan["build_services"], list(SERVICE_ORDER))
                 self.assertEqual(plan["restart_services"], list(SERVICE_ORDER))
+
+    def test_ci_and_deployment_plumbing_changes_are_noop(self):
+        for path in (".github/workflows/build.yml", "deploy/tapis/register_mint_stack.py", "deploy/mint_change_plan.py"):
+            with self.subTest(path=path):
+                plan = make_plan([path])
+                self.assertFalse(plan["has_changes"])
+                self.assertFalse(plan["deploy_all"])
+
+    def test_service_change_with_ci_change_does_not_expand_to_full_stack(self):
+        plan = make_plan(["ui-react/src/App.tsx", ".github/workflows/build.yml"])
+        self.assertEqual(plan["build_services"], ["ui"])
+        self.assertEqual(plan["restart_services"], ["ui"])
 
     def test_documentation_only_change_is_noop(self):
         plan = make_plan(["docs/deploy/mint-dev-pods.md", "README.md"])

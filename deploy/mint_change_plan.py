@@ -31,7 +31,9 @@ SERVICE_PREFIXES = (
 )
 
 SCHEMA_PREFIXES = ("graphql_engine/migrations/", "graphql_engine/metadata/")
-SHARED_PREFIXES = (".github/workflows/", "deploy/tapis/")
+# CI and deployment implementation changes affect how a future rollout runs;
+# they must not themselves trigger a service rollout.
+CONTROL_ONLY_PREFIXES = (".github/", "deploy/tapis/")
 SHARED_FILES = {
     "compose.yaml",
     "docker-compose.yml",
@@ -77,7 +79,9 @@ def make_plan(paths: Iterable[str], source_sha: str | None = None) -> dict[str, 
         path = _clean_path(raw_path)
         if _is_ignored(path):
             continue
-        if path.startswith(SHARED_PREFIXES) or path in SHARED_FILES or path == "deploy/mint_change_plan.py":
+        if path.startswith(CONTROL_ONLY_PREFIXES) or path == "deploy/mint_change_plan.py":
+            continue
+        if path in SHARED_FILES:
             deploy_all = True
             continue
         if path.startswith(SCHEMA_PREFIXES) or path == "graphql_engine/config.yaml":
