@@ -689,10 +689,6 @@ def _recreate_pod(
         raise RuntimeError(f"[{pid}] image mismatch; automatic recreation is disabled for this protected pod")
     if pid == PODS["postgres"]:
         raise RuntimeError("PostgreSQL recreation is disabled; image mismatch requires deliberate recovery")
-    print(f"  [{pid}] deleting before image-mismatch recovery…")
-    t.pods.delete_pod(pod_id=pid)
-    wait_for_pod_absent(t, pid)
-    print(f"  [{pid}] creating with requested image…")
     recreate_spec = dict(spec)
     # Tapis may remove the old pod while processing UpdatePod before reporting
     # an image mismatch. Recreate with the networking definition that was
@@ -704,6 +700,12 @@ def _recreate_pod(
         recreate_spec["networking"] = _plain_data(networking)
     if environment_variables is not None:
         recreate_spec["environment_variables"] = environment_variables
+    # Validate the request before deleting the old pod so a malformed SDK
+    # response cannot leave a stateless service unavailable.
+    print(f"  [{pid}] deleting before image-mismatch recovery…")
+    t.pods.delete_pod(pod_id=pid)
+    wait_for_pod_absent(t, pid)
+    print(f"  [{pid}] creating with requested image…")
     t.pods.create_pod(**recreate_spec)
     if owners:
         set_pod_owners(t, pid, owners)

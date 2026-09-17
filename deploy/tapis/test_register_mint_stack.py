@@ -578,6 +578,23 @@ class LifecycleTests(unittest.TestCase):
         t.pods.delete_pod.assert_not_called()
         t.pods.create_pod.assert_not_called()
 
+    def test_recovery_validates_networking_before_delete(self):
+        existing = dict(self.spec, networking=object())
+        t = Mock()
+        t.pods.get_pod.return_value = existing
+        with patch.object(deploy, "wait_for_pod_image", side_effect=deploy.PodImageMismatchError("stale")):
+            with self.assertRaisesRegex(RuntimeError, "non-JSON networking data"):
+                deploy.upsert_pod(
+                    t,
+                    self.spec,
+                    recreate=False,
+                    recreate_on_image_mismatch=True,
+                    start=False,
+                    restart=False,
+                )
+        t.pods.delete_pod.assert_not_called()
+        t.pods.create_pod.assert_not_called()
+
     def test_opt_in_recovery_cannot_recreate_redis(self):
         redis = deploy.build_specs("mintproject", "sha-new", "https://portals.tapis.io")["redis"]
         t = Mock()
