@@ -408,6 +408,14 @@ def _field(value: Any, key: str, default: Any = None) -> Any:
     return value.get(key, default) if isinstance(value, dict) else getattr(value, key, default)
 
 
+def _plain_data(value: Any) -> Any:
+    """Convert SDK response objects into values accepted by JSON request bodies."""
+    try:
+        return json.loads(json.dumps(value, default=vars))
+    except (TypeError, ValueError) as exc:
+        raise RuntimeError("Tapis returned non-JSON networking data; refusing to recreate pod") from exc
+
+
 def _get_or_missing(operation: Any, **kwargs: Any) -> Any:
     """Only a confirmed HTTP 404 permits creation; other errors must abort."""
     try:
@@ -693,7 +701,7 @@ def _recreate_pod(
     if networking is None:
         recreate_spec.pop("networking", None)
     else:
-        recreate_spec["networking"] = networking
+        recreate_spec["networking"] = _plain_data(networking)
     if environment_variables is not None:
         recreate_spec["environment_variables"] = environment_variables
     t.pods.create_pod(**recreate_spec)

@@ -1,5 +1,6 @@
 """Offline regression checks for database data-loss boundaries."""
 
+import json
 import os
 import unittest
 from types import SimpleNamespace
@@ -521,7 +522,13 @@ class LifecycleTests(unittest.TestCase):
     def test_opt_in_recovery_recreates_ui_after_confirmed_delete(self):
         missing = Exception()
         missing.response = SimpleNamespace(status_code=404)
-        live_networking = {"default": {"protocol": "http", "port": 8080, "cors_allow_origins": ["https://mintdevui.example"]}}
+        live_networking = SimpleNamespace(
+            default=SimpleNamespace(
+                protocol="http",
+                port=8080,
+                cors_allow_origins=["https://mintdevui.example"],
+            )
+        )
         existing = dict(self.spec, networking=live_networking)
         t = Mock()
         t.pods.get_pod.side_effect = [existing, missing]
@@ -540,7 +547,17 @@ class LifecycleTests(unittest.TestCase):
             )
         t.pods.delete_pod.assert_called_once_with(pod_id=deploy.PODS["ui"])
         recreated = t.pods.create_pod.call_args.kwargs
-        self.assertEqual(recreated["networking"], live_networking)
+        self.assertEqual(
+            recreated["networking"],
+            {
+                "default": {
+                    "protocol": "http",
+                    "port": 8080,
+                    "cors_allow_origins": ["https://mintdevui.example"],
+                }
+            },
+        )
+        json.dumps(recreated)
         t.pods.restart_pod.assert_not_called()
 
     def test_opt_in_recovery_cannot_recreate_postgres(self):
