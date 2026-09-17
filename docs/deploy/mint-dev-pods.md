@@ -63,9 +63,11 @@ or mismatched manifest fails closed. A no-op manifest skips deployment.
 
 For an existing pod, an image deployment updates the image/runtime definition
 and restarts the pod without resubmitting its `networking` block. This preserves
-the live Tapis CORS, auth, and proxy settings. The UI auth allowlist is the
-explicit exception: its dedicated sync step intentionally updates the UI
-networking definition.
+the live Tapis CORS, auth, and proxy settings. Newly-created GraphQL pods
+submit only the HTTP route and do not submit Tapis CORS settings; Hasura's
+application-level CORS environment setting remains unchanged. The UI auth
+allowlist is the explicit exception: its dedicated sync step intentionally
+updates the UI networking definition.
 
 PostgreSQL image changes use the protected volume-preserving replacement path;
 the pod is replaced only with `--migrate-postgres-image`, and the existing

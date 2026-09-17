@@ -300,6 +300,20 @@ rollout and debrief are complete.
   path plans exclude PostgreSQL; focused planner tests cover the protected
   selection boundary.
 
+### 2026-09-17 - Do not submit Tapis CORS settings during GraphQL creation
+
+- **Decision:** Newly-created GraphQL pod specs include only the Tapis HTTP
+  route. They do not submit `cors_allow_*` settings; existing pod updates omit
+  networking and therefore preserve the live configuration.
+- **Reason:** Tapis requires `APPROVEDADMIN` to submit CORS settings, and the
+  normal deployment identity should not need that permission just to deploy an
+  image. Hasura's application-level CORS environment setting remains separate.
+- **Alternatives rejected:** Requiring every normal deployment to carry the
+  privileged Tapis CORS payload, which blocked recovery when GraphQL was absent.
+- **User feedback:** The user explicitly directed: “Then don't configure cors.”
+- **Impact on implementation:** GraphQL spec generation and regression tests
+  now enforce the route-only Tapis networking payload.
+
 ## User feedback / decisions
 
 - User approved implementing service-aware deployment on 2026-09-16.

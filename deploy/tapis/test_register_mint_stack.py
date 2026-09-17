@@ -50,6 +50,14 @@ class StorageTests(unittest.TestCase):
             "https://mintdevsemanticsearch.pods.portals.tapis.io",
         )
 
+    def test_graphql_tapis_route_does_not_submit_cors_settings(self):
+        graphql = deploy.build_specs("mintproject", "develop", "https://portals.tapis.io")["graphql"]
+        self.assertEqual(
+            graphql["networking"],
+            {"default": {"protocol": "http", "port": 8080}},
+        )
+        self.assertNotIn("cors_allow_origins", graphql["networking"]["default"])
+
     def test_graphql_live_deploy_requires_auth_configuration(self):
         with patch.dict(os.environ, {}, clear=True):
             with self.assertRaises(SystemExit) as ctx:
