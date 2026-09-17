@@ -7,6 +7,7 @@ on:
   workflow_dispatch:
 
 permissions:
+  actions: read
   contents: read
   packages: read
 
@@ -15,17 +16,166 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  restart:
-    name: Restart MINT dev application pods
+  plan:
+    name: Validate deploy manifest
     runs-on: ubuntu-latest
-    environment: Tapis Dev Deploy
     if: >-
       ${{
         github.event_name == 'workflow_dispatch' ||
         (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'develop')
       }}
+    outputs:
+      has_changes: ${{ steps.validate.outputs.has_changes }}
+      build_services: ${{ steps.validate.outputs.build_services }}
+      restart_services: ${{ steps.validate.outputs.restart_services }}
+      image_tag: ${{ steps.validate.outputs.image_tag }}
+      schema_changed: ${{ steps.validate.outputs.schema_changed }}
+      deploy_all: ${{ steps.validate.outputs.deploy_all }}
+      source_sha: ${{ steps.validate.outputs.source_sha }}
+    steps:
+      - name: Check out the workflow source commit
+        if: github.event_name == 'workflow_run'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: Check out the manually dispatched ref
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/checkout@v4
+
+      - name: Download exact build manifest
+        if: github.event_name == 'workflow_run'
+        uses: actions/download-artifact@v4
+        with:
+          name: mint-dev-change-plan-${{ github.event.workflow_run.id }}
+          path: manifest
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ github.token }}
+
+      - name: Create manual full-deploy manifest
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          set -euo pipefail
+          mkdir -p manifest
+          python - <<'PY'
+          import json
+          # PostgreSQL is persistent state. A manual application deploy must
+          # not migrate or restart it; database image changes are selected
+          # only by an explicit postgres source change in the manifest.
+          services = ["graphql", "api", "ensemble", "svo", "semantic_search", "ui"]
+          images = {
+              service: {
+                  "image": f"ghcr.io/mintproject/{name}",
+                  "tag": "develop",
+                  "image_ref": f"ghcr.io/mintproject/{name}:develop",
+              }
+              for service, name in {
+                  "graphql": "graphql-engine",
+                  "api": "model-catalog-api",
+                  "ensemble": "ensemble-manager",
+                  "svo": "svo-adapter",
+                  "semantic_search": "semantic-search",
+                  "ui": "ui",
+              }.items()
+          }
+          with open("manifest/changed-services.json", "w", encoding="utf-8") as stream:
+              json.dump({
+                  "schema_version": 1,
+                  "source_sha": "manual",
+                  "short_sha": "manual",
+                  "build_services": services,
+                  "restart_services": services,
+                  "schema_changed": True,
+                  "deploy_all": True,
+                  "images": images,
+                  "has_changes": True,
+                  "matrix": {"include": []},
+              }, stream, indent=2)
+              stream.write("\n")
+          PY
+
+      - name: Validate exact manifest and export deploy plan
+        id: validate
+        env:
+          EXPECTED_SHA: ${{ github.event.workflow_run.head_sha }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          path = Path("manifest/changed-services.json")
+          try:
+              plan = json.loads(path.read_text(encoding="utf-8"))
+          except Exception as exc:
+              raise SystemExit(f"invalid deploy manifest: {exc}") from exc
+
+          required = {
+              "schema_version", "source_sha", "build_services", "restart_services",
+              "short_sha", "schema_changed", "deploy_all", "has_changes", "images",
+          }
+          missing = required - plan.keys()
+          if missing:
+              raise SystemExit("deploy manifest is missing: " + ", ".join(sorted(missing)))
+          if plan["schema_version"] != 1:
+              raise SystemExit("unsupported deploy manifest schema")
+          expected_sha = os.environ.get("EXPECTED_SHA", "")
+          if os.environ["EVENT_NAME"] == "workflow_run" and plan["source_sha"] != expected_sha:
+              raise SystemExit("deploy manifest source_sha does not match the completed build run")
+          if os.environ["EVENT_NAME"] == "workflow_run" and plan["short_sha"] != plan["source_sha"][:7]:
+              raise SystemExit("deploy manifest short_sha does not match source_sha")
+          if not isinstance(plan["build_services"], list) or not isinstance(plan["restart_services"], list):
+              raise SystemExit("deploy manifest service sets must be arrays")
+          if not isinstance(plan["images"], dict):
+              raise SystemExit("deploy manifest images must be an object")
+          services = {"postgres", "graphql", "api", "ensemble", "svo", "semantic_search", "ui"}
+          if any(service not in services for service in plan["build_services"] + plan["restart_services"]):
+              raise SystemExit("deploy manifest contains an invalid service name")
+          if not isinstance(plan["schema_changed"], bool) or not isinstance(plan["deploy_all"], bool) or not isinstance(plan["has_changes"], bool):
+              raise SystemExit("deploy manifest flags must be booleans")
+          if plan["has_changes"] != bool(plan["build_services"] or plan["restart_services"]):
+              raise SystemExit("deploy manifest has_changes flag is inconsistent with service sets")
+          if any(service not in plan["images"] for service in plan["build_services"]):
+              raise SystemExit("deploy manifest is missing an image for a build service")
+          image_names = {
+              "postgres": "postgres-pgvector",
+              "graphql": "graphql-engine",
+              "api": "model-catalog-api",
+              "ensemble": "ensemble-manager",
+              "svo": "svo-adapter",
+              "semantic_search": "semantic-search",
+              "ui": "ui",
+          }
+          if os.environ["EVENT_NAME"] == "workflow_run":
+              for service in plan["build_services"]:
+                  image = plan["images"][service]
+                  expected_ref = f"ghcr.io/mintproject/{image_names[service]}:sha-{plan['short_sha']}"
+                  if image.get("image_ref") != expected_ref or image.get("tag") != f"sha-{plan['short_sha']}":
+                      raise SystemExit(f"deploy manifest image does not match source SHA for {service}")
+
+          output = os.environ["GITHUB_OUTPUT"]
+          with open(output, "a", encoding="utf-8") as stream:
+              stream.write(f"has_changes={str(bool(plan['has_changes'])).lower()}\n")
+              stream.write(f"build_services={','.join(plan['build_services'])}\n")
+              stream.write(f"restart_services={','.join(plan['restart_services'])}\n")
+              stream.write(f"image_tag={'develop' if os.environ['EVENT_NAME'] == 'workflow_dispatch' else 'sha-' + plan['short_sha']}\n")
+              stream.write(f"schema_changed={str(bool(plan['schema_changed'])).lower()}\n")
+              stream.write(f"deploy_all={str(bool(plan['deploy_all'])).lower()}\n")
+              stream.write(f"source_sha={plan['source_sha']}\n")
+          print(json.dumps(plan, indent=2))
+
+  deploy:
+    name: Deploy selected MINT dev services
+    needs: plan
+    if: needs.plan.result == 'success' && needs.plan.outputs.has_changes == 'true'
+    runs-on: ubuntu-latest
+    environment: Tapis Dev Deploy
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.plan.outputs.source_sha != 'manual' && needs.plan.outputs.source_sha || github.ref }}
 
       - uses: actions/setup-python@v5
         with:
@@ -34,147 +184,118 @@ jobs:
       - name: Install deploy dependencies
         run: pip install tapipy python-dotenv
 
-      # A later step can fail and skip the pods it owns, so grant ADMIN on
-      # every pod first. This step only sets permissions.
-      - name: Grant pod owners on every existing pod
+      - name: Grant pod owners on affected pods
         env:
           TAPIS_USERNAME: ${{ secrets.TAPIS_USERNAME }}
           TAPIS_ID: ${{ secrets.TAPIS_ID }}
           TAPIS_PASSWORD: ${{ secrets.TAPIS_PASSWORD }}
-        run: >-
-          python deploy/tapis/register_mint_stack.py
-          --set-owners-only
-          --pods all
+          RESTART_SERVICES: ${{ needs.plan.outputs.restart_services }}
+        run: |
+          set -euo pipefail
+          python deploy/tapis/register_mint_stack.py --set-owners-only --pods "$RESTART_SERVICES"
 
-      # The UI allowlist lives in the pod definition, and the deploy reaches
-      # the UI pod last. Push the allowlist now, and keep the running image.
-      - name: Sync the UI auth allowlist
+      - name: Sync the UI auth allowlist when UI is affected
+        if: contains(needs.plan.outputs.restart_services, 'ui')
         env:
           TAPIS_USERNAME: ${{ secrets.TAPIS_USERNAME }}
           TAPIS_ID: ${{ secrets.TAPIS_ID }}
           TAPIS_PASSWORD: ${{ secrets.TAPIS_PASSWORD }}
-        run: >-
-          python deploy/tapis/register_mint_stack.py
-          --sync-ui-auth
+        run: python deploy/tapis/register_mint_stack.py --sync-ui-auth
 
-      - name: Update PostgreSQL and Hasura pod definitions
+      - name: Update and restart changed image pods
+        if: needs.plan.outputs.build_services != ''
         env:
           TAPIS_USERNAME: ${{ secrets.TAPIS_USERNAME }}
           TAPIS_ID: ${{ secrets.TAPIS_ID }}
           TAPIS_PASSWORD: ${{ secrets.TAPIS_PASSWORD }}
           MINTDEV_POSTGRES_PASSWORD: ${{ secrets.MINTDEV_POSTGRES_PASSWORD }}
           HASURA_GRAPHQL_ADMIN_SECRET: ${{ secrets.HASURA_GRAPHQL_ADMIN_SECRET }}
-        run: >-
-          python deploy/tapis/register_mint_stack.py
-          --image-tag develop
-          --pods postgres,graphql
-          --restart-pods postgres,graphql
-          --migrate-postgres-image
+          MINTDEV_HASURA_AUTH_HOOK: ${{ secrets.MINTDEV_HASURA_AUTH_HOOK }}
+          MINTDEV_HASURA_AUTH_HOOK_MODE: ${{ secrets.MINTDEV_HASURA_AUTH_HOOK_MODE }}
+          MINTDEV_HASURA_JWT_SECRET: ${{ secrets.MINTDEV_HASURA_JWT_SECRET }}
+          IMAGE_TAG: ${{ needs.plan.outputs.image_tag }}
+          BUILD_SERVICES: ${{ needs.plan.outputs.build_services }}
+        run: |
+          set -euo pipefail
+          EXTRA_ARGS=()
+          if [[ ",${BUILD_SERVICES}," == *",postgres,"* ]]; then
+            EXTRA_ARGS+=(--migrate-postgres-image)
+          fi
+          python deploy/tapis/register_mint_stack.py \
+            --image-tag "$IMAGE_TAG" \
+            --pods "$BUILD_SERVICES" \
+            --restart-pods "$BUILD_SERVICES" \
+            --recreate-on-image-mismatch \
+            "${EXTRA_ARGS[@]}"
 
-      - name: Log in to GHCR for Hasura migration client
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Apply Hasura migrations
+      - name: Apply Hasura migrations for schema changes
+        if: needs.plan.outputs.schema_changed == 'true'
         env:
           HASURA_GRAPHQL_ADMIN_SECRET: ${{ secrets.HASURA_GRAPHQL_ADMIN_SECRET }}
           GRAPHQL_ENDPOINT: https://mintdevgraphql.pods.portals.tapis.io
-          IMAGE_TAG: develop
+          IMAGE_TAG: ${{ needs.plan.outputs.image_tag }}
         run: |
           set -euo pipefail
-
-          # Tapis starts the pod asynchronously. Wait for the endpoint before
-          # asking the CLI to connect, with a bounded retry window.
-          curl --fail --silent --show-error --retry 30 --retry-delay 5 \
-            --retry-all-errors "$GRAPHQL_ENDPOINT/healthz" >/dev/null
-
-          # The image contains the CLI and the /hasura project. Running the
-          # same resolved tag keeps migrations and metadata aligned with the
-          # GraphQL image that was just deployed.
-          docker run --rm --pull=always \
-            --entrypoint hasura \
-            --workdir /hasura \
+          curl --fail --silent --show-error --retry 30 --retry-delay 5 --retry-all-errors "$GRAPHQL_ENDPOINT/healthz" >/dev/null
+          docker run --rm --pull=always --entrypoint hasura --workdir /hasura \
             --env HASURA_GRAPHQL_ENDPOINT="$GRAPHQL_ENDPOINT" \
             --env HASURA_GRAPHQL_ADMIN_SECRET \
-            "ghcr.io/mintproject/graphql-engine:$IMAGE_TAG" \
-            migrate status --skip-update-check
+            "ghcr.io/mintproject/graphql-engine:$IMAGE_TAG" migrate apply --skip-update-check
 
-          docker run --rm --pull=always \
-            --entrypoint hasura \
-            --workdir /hasura \
-            --env HASURA_GRAPHQL_ENDPOINT="$GRAPHQL_ENDPOINT" \
-            --env HASURA_GRAPHQL_ADMIN_SECRET \
-            "ghcr.io/mintproject/graphql-engine:$IMAGE_TAG" \
-            migrate apply --skip-update-check
-
-      - name: Start semantic search then restart Hasura endpoint
+      - name: Restart dependency-only services
         env:
           TAPIS_USERNAME: ${{ secrets.TAPIS_USERNAME }}
           TAPIS_ID: ${{ secrets.TAPIS_ID }}
           TAPIS_PASSWORD: ${{ secrets.TAPIS_PASSWORD }}
-          MINTDEV_POSTGRES_PASSWORD: ${{ secrets.MINTDEV_POSTGRES_PASSWORD }}
-          HASURA_GRAPHQL_ADMIN_SECRET: ${{ secrets.HASURA_GRAPHQL_ADMIN_SECRET }}
+          BUILD_SERVICES: ${{ needs.plan.outputs.build_services }}
+          RESTART_SERVICES: ${{ needs.plan.outputs.restart_services }}
         run: |
           set -euo pipefail
+          DEPENDENCY_SERVICES="$(python - "$BUILD_SERVICES" "$RESTART_SERVICES" <<'PY'
+          import sys
+          built = set(filter(None, sys.argv[1].split(",")))
+          ordered = [service for service in sys.argv[2].split(",") if service and service not in built]
+          print(",".join(ordered))
+          PY
+          )"
+          if [[ -n "$DEPENDENCY_SERVICES" ]]; then
+            python deploy/tapis/register_mint_stack.py --restart-existing-pods "$DEPENDENCY_SERVICES"
+          else
+            echo "No dependency-only restarts required"
+          fi
 
-          # parse_pods preserves dependency order, so use separate invocations
-          # to guarantee the migrated database is available before semantic
-          # search starts, and semantic search is available before Hasura's
-          # metadata is applied.
-          python deploy/tapis/register_mint_stack.py \
-            --image-tag develop \
-            --pods semantic_search \
-            --restart-pods semantic_search \
-            --recreate-on-image-mismatch
-
-          python deploy/tapis/register_mint_stack.py \
-            --image-tag develop \
-            --pods graphql \
-            --restart-pods graphql \
-            --recreate-on-image-mismatch
-
-      - name: Verify semantic search and Hasura health
+      - name: Verify affected health endpoints
         env:
-          SEMANTIC_SEARCH_ENDPOINT: https://mintdevsemanticsearch.pods.portals.tapis.io
-          GRAPHQL_ENDPOINT: https://mintdevgraphql.pods.portals.tapis.io
+          RESTART_SERVICES: ${{ needs.plan.outputs.restart_services }}
         run: |
           set -euo pipefail
-          curl --fail --silent --show-error --retry 30 --retry-delay 5 \
-            --retry-all-errors --connect-timeout 10 --max-time 30 \
-            "$SEMANTIC_SEARCH_ENDPOINT/health" >/dev/null
-          curl --fail --silent --show-error --retry 30 --retry-delay 5 \
-            --retry-all-errors --connect-timeout 10 --max-time 30 \
-            "$GRAPHQL_ENDPOINT/healthz" >/dev/null
+          if [[ ",${RESTART_SERVICES}," == *",semantic_search,"* ]]; then
+            curl --fail --silent --show-error --retry 30 --retry-delay 5 --retry-all-errors \
+              --connect-timeout 10 --max-time 30 \
+              https://mintdevsemanticsearch.pods.portals.tapis.io/health >/dev/null
+          fi
+          if [[ ",${RESTART_SERVICES}," == *",graphql,"* ]]; then
+            curl --fail --silent --show-error --retry 30 --retry-delay 5 --retry-all-errors \
+              --connect-timeout 10 --max-time 30 \
+              https://mintdevgraphql.pods.portals.tapis.io/healthz >/dev/null
+          fi
 
       - name: Apply Hasura metadata and verify schema
+        if: needs.plan.outputs.schema_changed == 'true'
         env:
           HASURA_GRAPHQL_ADMIN_SECRET: ${{ secrets.HASURA_GRAPHQL_ADMIN_SECRET }}
           GRAPHQL_ENDPOINT: https://mintdevgraphql.pods.portals.tapis.io
-          IMAGE_TAG: develop
+          IMAGE_TAG: ${{ needs.plan.outputs.image_tag }}
         run: |
           set -euo pipefail
-
-          docker run --rm --pull=always \
-            --entrypoint hasura \
-            --workdir /hasura \
+          docker run --rm --pull=always --entrypoint hasura --workdir /hasura \
             --env HASURA_GRAPHQL_ENDPOINT="$GRAPHQL_ENDPOINT" \
             --env HASURA_GRAPHQL_ADMIN_SECRET \
-            "ghcr.io/mintproject/graphql-engine:$IMAGE_TAG" \
-            metadata apply --skip-update-check
-
-          docker run --rm --pull=always \
-            --entrypoint hasura \
-            --workdir /hasura \
+            "ghcr.io/mintproject/graphql-engine:$IMAGE_TAG" metadata apply --skip-update-check
+          docker run --rm --pull=always --entrypoint hasura --workdir /hasura \
             --env HASURA_GRAPHQL_ENDPOINT="$GRAPHQL_ENDPOINT" \
             --env HASURA_GRAPHQL_ADMIN_SECRET \
-            "ghcr.io/mintproject/graphql-engine:$IMAGE_TAG" \
-            metadata reload --skip-update-check
-
-          # A bounded, read-only schema smoke test catches both classes of
-          # regression without printing rows or GraphQL error payloads.
+            "ghcr.io/mintproject/graphql-engine:$IMAGE_TAG" metadata reload --skip-update-check
           response="$(curl --fail --silent --show-error \
             -H "content-type: application/json" \
             -H "x-hasura-admin-secret: $HASURA_GRAPHQL_ADMIN_SECRET" \
@@ -186,20 +307,10 @@ jobs:
           fi
           echo "Hasura migrations, metadata, and schema smoke test passed"
 
-      - name: Restart existing application pods
-        env:
-          TAPIS_USERNAME: ${{ secrets.TAPIS_USERNAME }}
-          TAPIS_ID: ${{ secrets.TAPIS_ID }}
-          TAPIS_PASSWORD: ${{ secrets.TAPIS_PASSWORD }}
-        run: >-
-          python deploy/tapis/register_mint_stack.py
-          --restart-existing-pods "api,ui,ensemble,svo"
-
       - name: Summary
         run: |
-          echo "## MINT dev application pods restarted" >> "$GITHUB_STEP_SUMMARY"
-          echo "- UI: https://mintdevui.pods.portals.tapis.io" >> "$GITHUB_STEP_SUMMARY"
-          echo "- API: https://mintdevapi.pods.portals.tapis.io" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Ensemble: https://mintdevensemble.pods.portals.tapis.io" >> "$GITHUB_STEP_SUMMARY"
-          echo "- SVO Adapter: https://mintdevsvo.pods.portals.tapis.io" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Semantic Search: https://mintdevsemanticsearch.pods.portals.tapis.io" >> "$GITHUB_STEP_SUMMARY"
+          echo "## MINT dev selective deployment" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Source: `${{ needs.plan.outputs.source_sha }}`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Built: `${{ needs.plan.outputs.build_services || 'none' }}`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Restarted: `${{ needs.plan.outputs.restart_services }}`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Image tag: `${{ needs.plan.outputs.image_tag }}`" >> "$GITHUB_STEP_SUMMARY"

@@ -1,11 +1,10 @@
 /**
  * ModelsBrowsePage — the model find/configure experience.
  *
- * Left column: text search + facet filters (Region / Category / Output
+ * Left column: semantic text search + facet filters (Region / Category / Output
  * variable) over a server-side-filtered, client-grouped Model -> Config -> Setup
  * list. Right column: detail for the config/setup in the URL. The URL is the
- * source of truth for facet filters and selection; the text search is
- * local-only and never touches it.
+ * source of truth for facet filters and selection; text search never touches it.
  *
  * Mounted at two routes that share the same left panel:
  *   - /models + /modelconfigurations/:slugid — read-only browse.
@@ -13,11 +12,15 @@
  *     exposes an Edit button that opens the inline ConfigurationForm.
  */
 import { useMemo, useState } from 'react';
-import { useParams, useSearchParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Search } from 'lucide-react';
+import { useApolloClient, useMutation, useQuery } from '@apollo/client';
 
-import { useSearchModelConfigurationsQuery } from '@/graphql/generated/graphql';
-import { groupConfigurations } from '@/lib/groupConfigurations';
+import {
+  useSearchModelConfigurationsQuery,
+  type SearchModelConfigurationsQuery,
+} from '@/graphql/generated/graphql';
+import { groupConfigurations, rankModelGroups } from '@/lib/groupConfigurations';
 import {
   buildConfigurationWhere,
   filtersToParams,
@@ -27,6 +30,7 @@ import {
 } from '@/lib/modelBrowseFilters';
 import { slugMatchPattern } from '@/lib/uri';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
+import { useSemanticSearch } from '@/hooks/useSemanticSearch';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ConfigurationDetail } from '@/components/configuration/ConfigurationDetail';
@@ -35,6 +39,17 @@ import { FacetSelect } from './FacetSelect';
 import { ModelGroupList } from './ModelGroupList';
 import { useFacetOptions } from './useFacetOptions';
 import { useGetConfigurationBySlugQuery } from '@/graphql/generated/graphql';
+import {
+  DELETE_MODEL_CONFIGURATION,
+  GET_OWNED_MODEL_CONFIGURATIONS,
+  type OwnedModelConfigurationsData,
+} from '@/graphql/owned-model-configurations';
+import { useAuth } from '@/lib/auth/useAuth';
+import { useToast } from '@/components/ui/use-toast';
+import { ConfirmDialog } from '@/components/common/ConfirmDialog';
+import { Switch } from '@/components/ui/switch';
+
+type ModelConfigurationRow = SearchModelConfigurationsQuery['modelcatalog_configuration'][number];
 
 export interface ModelsBrowsePageProps {
   /** When true, the detail pane allows editing the selected configuration. */
@@ -47,13 +62,16 @@ export function ModelsBrowsePage({
   editable = false,
   basePath = '/modelconfigurations',
 }: ModelsBrowsePageProps = {}) {
+  const navigate = useNavigate();
+  const apolloClient = useApolloClient();
+  const { toast } = useToast();
+  const { user } = useAuth();
   const { slugid } = useParams<{ slugid: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
   // Drop any `q` from the URL — text search is intentionally not URL-driven.
   const facetFilters = useMemo(() => ({ ...parseFilters(searchParams), q: '' }), [searchParams]);
 
-  // Text search is local-only — it filters results but never touches the URL.
-  // Only the facets (Region / Category / Output variable) live in the URL.
+  // Text search is not URL-driven. Facets remain URL-backed hard filters.
   const [text, setText] = useState('');
   const debouncedText = useDebouncedValue(text, 300);
 
@@ -62,16 +80,130 @@ export function ModelsBrowsePage({
     [facetFilters, debouncedText],
   );
 
+  const semanticQuery = debouncedText.trim();
+  const semanticQueryActive = semanticQuery.length >= 2;
+  const semanticFilters = useMemo(
+    () => ({
+      regionIds: facetFilters.regionIds,
+      categoryIds: facetFilters.categoryIds,
+      outputVariableIds: facetFilters.variableIds,
+    }),
+    [facetFilters],
+  );
+  const semanticSearch = useSemanticSearch(semanticQuery, {
+    target: 'model_configuration',
+    limit: 100,
+    filters: semanticFilters,
+  });
+
   const updateFacet = (partial: Partial<ModelBrowseFilters>) => {
     setSearchParams(filtersToParams({ ...facetFilters, ...partial }));
   };
 
   const facetOptions = useFacetOptions();
-  const where = useMemo(() => buildConfigurationWhere(filters), [filters]);
-  const { data, loading, error } = useSearchModelConfigurationsQuery({ variables: { where } });
+  const hasuraFilters = useMemo(
+    () => (semanticQueryActive && !semanticSearch.error ? { ...facetFilters, q: '' } : filters),
+    [facetFilters, filters, semanticQueryActive, semanticSearch.error],
+  );
+  const where = useMemo(() => buildConfigurationWhere(hasuraFilters), [hasuraFilters]);
+  const { data, loading, error, refetch } = useSearchModelConfigurationsQuery({
+    variables: { where },
+  });
+  const {
+    data: ownedData,
+    loading: ownedLoading,
+    refetch: refetchOwned,
+  } = useQuery<OwnedModelConfigurationsData>(GET_OWNED_MODEL_CONFIGURATIONS, {
+    variables: { ownerUsername: user?.username ?? '' },
+    skip: !user?.username,
+  });
+  const [deleteConfiguration] = useMutation(DELETE_MODEL_CONFIGURATION);
+  const [showOwnedOnly, setShowOwnedOnly] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; label: string } | null>(null);
 
-  const groups = useMemo(() => groupConfigurations(data?.modelcatalog_configuration ?? []), [data]);
+  const ownedIds = useMemo(
+    () => new Set<string>((ownedData?.modelcatalog_configuration ?? []).map((row) => row.id)),
+    [ownedData],
+  );
+  const deletableIds = useMemo(
+    () =>
+      new Set<string>(
+        (ownedData?.modelcatalog_configuration ?? [])
+          .filter((row) => row.child_configurations.length === 0)
+          .map((row) => row.id),
+      ),
+    [ownedData],
+  );
+
+  const semanticRows = useMemo(() => {
+    if (!semanticQueryActive || !semanticSearch.results) return null;
+    const rankById = new Map(semanticSearch.results.map((result, index) => [result.id, index]));
+    const rows = (data?.modelcatalog_configuration ?? [])
+      .map((row) => {
+        const rank =
+          rankById.get(row.id) ??
+          (row.model_configuration_id ? rankById.get(row.model_configuration_id) : undefined) ??
+          (row.parent_configuration ? rankById.get(row.parent_configuration.id) : undefined);
+        return rank === undefined ? null : { row, rank };
+      })
+      .filter((item): item is { row: ModelConfigurationRow; rank: number } => item !== null)
+      .sort((a, b) => a.rank - b.rank)
+      .map((item) => item.row);
+    return { rows, rankById };
+  }, [data, semanticQueryActive, semanticSearch.results]);
+
+  const groups = useMemo(() => {
+    const grouped = groupConfigurations(
+      semanticRows?.rows ?? data?.modelcatalog_configuration ?? [],
+    );
+    return semanticRows ? rankModelGroups(grouped, semanticRows.rankById) : grouped;
+  }, [data, semanticRows]);
+  const visibleGroups = useMemo(
+    () =>
+      showOwnedOnly
+        ? groups
+            .map((group) => ({
+              ...group,
+              configs: group.configs.filter((config) => ownedIds.has(config.id)),
+            }))
+            .filter((group) => group.configs.length > 0)
+        : groups,
+    [groups, ownedIds, showOwnedOnly],
+  );
   const active = hasActiveFilters(filters);
+  const listLoading =
+    loading || (semanticQueryActive && semanticSearch.loading) || (showOwnedOnly && ownedLoading);
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    const target = deleteTarget;
+    try {
+      const result = await deleteConfiguration({ variables: { id: target.id } });
+      if (!result.data?.delete_modelcatalog_configuration_by_pk) {
+        throw new Error('The model configuration was not deleted. You may no longer own it.');
+      }
+      await Promise.all([refetch(), refetchOwned()]);
+      apolloClient.cache.evict({
+        id: apolloClient.cache.identify({
+          __typename: 'modelcatalog_configuration',
+          id: target.id,
+        }),
+      });
+      apolloClient.cache.gc();
+      setDeleteTarget(null);
+      navigate('/models');
+      toast({
+        title: 'Model configuration deleted',
+        description: `${target.label} was deleted successfully.`,
+      });
+    } catch (err) {
+      toast({
+        title: 'Could not delete model configuration',
+        description: err instanceof Error ? err.message : 'Deletion failed.',
+        variant: 'destructive',
+      });
+    }
+  };
 
   return (
     <div className="flex h-full overflow-hidden">
@@ -109,32 +241,74 @@ export function ModelsBrowsePage({
               onChange={(ids) => updateFacet({ variableIds: ids })}
               loading={facetOptions.loading}
             />
+            {user?.username && (
+              <label className="flex items-center gap-2 rounded-md border px-2 py-1 text-xs">
+                <Switch
+                  checked={showOwnedOnly}
+                  onCheckedChange={setShowOwnedOnly}
+                  aria-label="Show my models only"
+                />
+                My models
+              </label>
+            )}
           </div>
         </div>
         <div className="flex-1 overflow-auto p-2">
-          {loading ? (
+          {listLoading ? (
             <ListSkeleton />
           ) : error ? (
             <p className="px-1 py-8 text-center text-sm text-destructive">{error.message}</p>
           ) : (
             <ModelGroupList
-              groups={groups}
+              groups={visibleGroups}
               selectedSlug={slugid ?? null}
               expandAll={active}
               basePath={basePath}
+              ownedIds={ownedIds}
+              emptyMessage={
+                showOwnedOnly ? 'You have not registered any model configurations.' : undefined
+              }
             />
           )}
         </div>
       </aside>
 
       <main className="flex-1 overflow-auto p-6">
-        <DetailPane slug={slugid} editable={editable} />
+        <DetailPane
+          slug={slugid}
+          editable={editable}
+          deletableIds={deletableIds}
+          onRequestDelete={(target) => setDeleteTarget(target)}
+        />
       </main>
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+        title="Delete model configuration?"
+        description={
+          deleteTarget
+            ? `Delete ${deleteTarget.label}? This removes its catalog metadata. Existing execution records are preserved, but their configuration link may be cleared.`
+            : ''
+        }
+        onConfirm={handleDelete}
+        confirmLabel="Delete configuration"
+        variant="destructive"
+      />
     </div>
   );
 }
 
-function DetailPane({ slug, editable }: { slug?: string; editable: boolean }) {
+function DetailPane({
+  slug,
+  editable,
+  deletableIds,
+  onRequestDelete,
+}: {
+  slug?: string;
+  editable: boolean;
+  deletableIds: ReadonlySet<string>;
+  onRequestDelete: (target: { id: string; label: string }) => void;
+}) {
   const { data, loading } = useGetConfigurationBySlugQuery({
     variables: { pattern: slug ? slugMatchPattern(slug) : '' },
     skip: !slug,
@@ -155,9 +329,16 @@ function DetailPane({ slug, editable }: { slug?: string; editable: boolean }) {
     return <p className="text-sm text-destructive">Configuration not found.</p>;
   }
   return editable ? (
-    <EditableDetail key={id} configurationId={id} />
+    <EditableDetail
+      key={id}
+      configurationId={id}
+      onRequestDelete={deletableIds.has(id) ? (label) => onRequestDelete({ id, label }) : undefined}
+    />
   ) : (
-    <ConfigurationDetail configurationId={id} />
+    <ConfigurationDetail
+      configurationId={id}
+      onDelete={deletableIds.has(id) ? (label) => onRequestDelete({ id, label }) : undefined}
+    />
   );
 }
 
@@ -165,7 +346,13 @@ function DetailPane({ slug, editable }: { slug?: string; editable: boolean }) {
  * Read-only detail first, with an Edit button that opens the inline form.
  * Keyed by configurationId so switching selection resets edit state.
  */
-function EditableDetail({ configurationId }: { configurationId: string }) {
+function EditableDetail({
+  configurationId,
+  onRequestDelete,
+}: {
+  configurationId: string;
+  onRequestDelete?: (label: string) => void;
+}) {
   const [isEditing, setIsEditing] = useState(false);
 
   if (isEditing) {
@@ -178,7 +365,11 @@ function EditableDetail({ configurationId }: { configurationId: string }) {
     );
   }
   return (
-    <ConfigurationDetail configurationId={configurationId} onEdit={() => setIsEditing(true)} />
+    <ConfigurationDetail
+      configurationId={configurationId}
+      onEdit={() => setIsEditing(true)}
+      onDelete={onRequestDelete}
+    />
   );
 }
 

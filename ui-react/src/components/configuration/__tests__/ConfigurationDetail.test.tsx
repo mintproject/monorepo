@@ -186,6 +186,18 @@ describe('ConfigurationDetail', () => {
     expect(onEdit).toHaveBeenCalledOnce();
   });
 
+  it('shows and invokes Delete when onDelete is provided', async () => {
+    const onDelete = vi.fn();
+    renderWithProviders(<ConfigurationDetail configurationId="cfg1" onDelete={onDelete} />, {
+      apolloMocks: [configQueryMock],
+    });
+
+    const deleteButton = await screen.findByRole('button', { name: /delete/i });
+    await userEvent.click(deleteButton);
+
+    expect(onDelete).toHaveBeenCalledWith('Default Configuration');
+  });
+
   it('shows a Configure link to the configure page when onEdit is absent', async () => {
     renderWithProviders(<ConfigurationDetail configurationId="cfg1" />, {
       apolloMocks: [configQueryMock],

@@ -34,6 +34,31 @@ describe('ModelGroupList', () => {
     expect(screen.getByText(/no models match/i)).toBeInTheDocument();
   });
 
+  it('marks configurations owned by the current user', () => {
+    renderWithProviders(
+      <ModelGroupList
+        groups={groups}
+        selectedSlug={null}
+        expandAll
+        ownedIds={new Set([groups[0]!.configs[0]!.id])}
+      />,
+    );
+    expect(screen.getByText('Yours')).toBeInTheDocument();
+    expect(screen.getAllByText('Yours')).toHaveLength(1);
+  });
+
+  it('supports a custom empty message for owned-model views', () => {
+    renderWithProviders(
+      <ModelGroupList
+        groups={[]}
+        selectedSlug={null}
+        expandAll={false}
+        emptyMessage="You have not registered any model configurations."
+      />,
+    );
+    expect(screen.getByText(/not registered any model configurations/i)).toBeInTheDocument();
+  });
+
   it('renders model, configs, version badge, and nested setups when expanded', () => {
     renderWithProviders(<ModelGroupList groups={groups} selectedSlug={null} expandAll />);
     expect(screen.getByText('MODFLOW')).toBeInTheDocument();

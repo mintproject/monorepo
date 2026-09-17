@@ -2,11 +2,8 @@ import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
-import {
-  GetRegionsDocument,
-  GetModelFamiliesDocument,
-  CreateConfigurationDocument,
-} from '@/graphql/generated/graphql';
+import { GetRegionsDocument, GetModelFamiliesDocument } from '@/graphql/generated/graphql';
+import { CREATE_OWNED_MODEL_CONFIGURATION } from '@/graphql/owned-model-configurations';
 import { renderWithProviders } from '@/test/utils/render';
 import { CreateModelForm } from '@/components/registration/CreateModelForm';
 
@@ -45,7 +42,7 @@ describe('CreateModelForm', () => {
     const user = userEvent.setup();
     navigateMock.mockClear();
     const createConfig = {
-      request: { query: CreateConfigurationDocument },
+      request: { query: CREATE_OWNED_MODEL_CONFIGURATION },
       variableMatcher: () => true,
       result: {
         data: {
@@ -76,7 +73,7 @@ describe('CreateModelForm', () => {
     navigateMock.mockClear();
     const variableMatcher = vi.fn().mockReturnValue(true);
     const createConfig = {
-      request: { query: CreateConfigurationDocument },
+      request: { query: CREATE_OWNED_MODEL_CONFIGURATION },
       variableMatcher,
       result: {
         data: {
@@ -105,6 +102,7 @@ describe('CreateModelForm', () => {
       expect(variableMatcher).toHaveBeenCalledWith(
         expect.objectContaining({
           componentLocation: 'https://example.org/components/model.zip',
+          ownerUsername: 'testuser',
         }),
       ),
     );
@@ -115,7 +113,7 @@ describe('CreateModelForm', () => {
     navigateMock.mockClear();
     const variableMatcher = vi.fn().mockReturnValue(true);
     const createConfig = {
-      request: { query: CreateConfigurationDocument },
+      request: { query: CREATE_OWNED_MODEL_CONFIGURATION },
       variableMatcher,
       result: {
         data: {

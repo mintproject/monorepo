@@ -12,6 +12,8 @@ interface MintConfig {
   DATA_CATALOG_API?: string;
   /** Human-browsable data catalog UI URL, used as the datasets browse iframe src. */
   DATA_CATALOG_BROWSE_URL?: string;
+  /** Standalone semantic-search service base URL. */
+  SEMANTIC_SEARCH_API?: string;
   /** Ensemble Manager REST API base URL. */
   ENSEMBLE_MANAGER_API?: string;
   /**

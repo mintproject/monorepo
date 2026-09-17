@@ -1,8 +1,8 @@
 /**
  * StandardVariableCombobox
  *
- * Client-side filtered combobox for Standard Variables.
- * Data is prefetched from Apollo cache (cache-first policy) — no network call per keystroke.
+ * Semantic-search-backed combobox for Standard Variables.
+ * Apollo's cache remains the local fallback and supplies the scoped catalog.
  *
  * Filter: case-insensitive substring match on label (primary) and description (secondary).
  * Keyboard: full ARIA combobox pattern via cmdk + Radix Popover.
@@ -17,6 +17,7 @@ import { Check, ChevronsUpDown } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 import { humanizeStandardVariable } from '@/lib/standard-variable-grammar';
+import { useSemanticSearch } from '@/hooks/useSemanticSearch';
 import { Button } from '@/components/ui/button';
 import {
   Command,
@@ -81,9 +82,6 @@ export function StandardVariableCombobox({
   const [open, setOpen] = React.useState(false);
   const [search, setSearch] = React.useState('');
   const [showAll, setShowAll] = React.useState(false);
-  const [semanticOptions, setSemanticOptions] = React.useState<StandardVariableOption[] | null>(
-    null,
-  );
 
   // Reads from Apollo cache — cache-first means no network call if already fetched.
   // The full catalog is fetched only once the user widens a narrowed picker.
@@ -91,32 +89,17 @@ export function StandardVariableCombobox({
   const { scoped, all, allLoaded, loading } = useScopedStandardVariables(scope, showAll);
 
   const options = narrowed && !showAll ? scoped : all;
-
-  React.useEffect(() => {
-    const query = search.trim();
-    if (query.length < 2) {
-      setSemanticOptions(null);
-      return;
-    }
-    const controller = new AbortController();
-    fetch(`http://localhost:8091/search?q=${encodeURIComponent(query)}&limit=50`, {
-      signal: controller.signal,
-    })
-      .then((response) => (response.ok ? response.json() : null))
-      .then((body) => {
-        if (!body?.results) return;
-        setSemanticOptions(
-          body.results.map((result: StandardVariableOption) => ({
-            id: result.id,
-            label: result.label ?? '',
-            description: result.description ?? null,
-            models: result.models ?? [],
-          })),
-        );
-      })
-      .catch(() => setSemanticOptions(null));
-    return () => controller.abort();
-  }, [search]);
+  const semanticSearch = useSemanticSearch(search, { target: 'svo', limit: 50 });
+  const semanticOptions = React.useMemo(
+    () =>
+      semanticSearch.results?.map((result) => ({
+        id: result.id,
+        label: result.label ?? '',
+        description: result.description ?? null,
+        models: Array.isArray(result.models) ? result.models : [],
+      })) ?? null,
+    [semanticSearch.results],
+  );
 
   /**
    * Semantic results are ranked over the whole catalog, so the scope has to be
@@ -125,11 +108,12 @@ export function StandardVariableCombobox({
    * the plain list rather than showing nothing.
    */
   const rankedOptions = React.useMemo(() => {
-    if (!semanticOptions?.length) return null;
+    if (semanticOptions === null) return null;
+    if (!semanticOptions.length) return [];
     if (!narrowed || showAll) return semanticOptions;
     const inScope = new Set(scoped.map((o) => o.id));
     const kept = semanticOptions.filter((o) => inScope.has(o.id));
-    return kept.length ? kept : null;
+    return kept;
   }, [semanticOptions, narrowed, showAll, scoped]);
 
   /**
@@ -190,10 +174,12 @@ export function StandardVariableCombobox({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
-        <Command>
+        <Command shouldFilter={semanticOptions === null}>
           <CommandInput placeholder={placeholder} onValueChange={setSearch} />
           <CommandList>
-            <CommandEmpty>No matching standard variables.</CommandEmpty>
+            <CommandEmpty>
+              {semanticSearch.loading ? 'Searching…' : 'No matching standard variables.'}
+            </CommandEmpty>
             <CommandGroup>
               {visibleOptions.map((sv) => (
                 <CommandItem

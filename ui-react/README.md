@@ -70,6 +70,14 @@ npm run test:watch # watch mode
 
 Requires Node 20+. If `npm test` fails with a `crypto.getRandomValues` error, switch to Node 20 (`nvm use 20` or set PATH to use `/opt/homebrew/opt/node@20/bin`).
 
+## Model ownership
+
+Signed-in users can enable **My models** on the model browse page to filter to
+configurations they registered. Owned configurations are marked **Yours** and
+can be deleted from their detail view after confirmation. Existing catalog
+configurations without registration ownership remain browseable but cannot be
+deleted through this control.
+
 ## Build
 
 ```bash
@@ -104,7 +112,8 @@ is treated as unset):
 | `AUTH_PROVIDER` | `tapis` |
 | `GOOGLE_MAPS_KEY` | (shared development key) |
 | `DATA_CATALOG_API` | `https://ckan.tacc.utexas.edu` (CKAN REST API base, no `/api` suffix) |
-| `DATA_CATALOG_BROWSE_URL` | `https://ckan.tacc.utexas.edu` (human-browsable catalog UI, iframe src) |
+| `DATA_CATALOG_BROWSE_URL` | `https://ckan.tacc.utexas.edu` (legacy human-browsable catalog URL) |
+| `SEMANTIC_SEARCH_API` | `http://localhost:8091` (standalone semantic-search service base; the UI appends `/search`) |
 | `ENSEMBLE_MANAGER_API` | omitted when unset |
 | `MODEL_CATALOG_API` | `http://api.models.mint.local/v2.0.0` (version prefix included; serves the Tapis application proxy) |
 | `EXECUTION_ENGINE` | `localex` (`tapis` / `localex` / `wings` — the backend that Ensemble Manager runs) |
@@ -112,6 +121,16 @@ is treated as unset):
 | `AUTH_CALLBACK_ORIGIN` | omitted when unset |
 | `AUTH_PREVIEW_ORIGIN_ALLOWLIST` | omitted when unset |
 | `WELCOME_MESSAGE` | omitted when unset |
+
+## Semantic search
+
+Free-text searches for standard variables use the configured semantic-search
+service at `/search?target=svo`; model browse and model-selection searches use
+`target=model_configuration`. Region, category, output-variable, scope, and
+indicator selections remain hard filters. If the service is unavailable, the
+dataset browse page falls back to CKAN name search. Dataset results are then
+matched against exact MINT Standard Variable annotations on CKAN resources.
+Unit lookup remains local and exact.
 
 Because the entrypoint writes into the nginx document root, the container does
 not support a read-only root filesystem as-is.

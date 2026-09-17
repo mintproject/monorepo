@@ -4,21 +4,25 @@ import { describe, expect, it, vi } from 'vitest';
 import { DatasetsBrowse } from '../../pages/datasets/DatasetsBrowse';
 import { renderWithProviders } from '../../test/utils/render';
 
-// Mock the config so getDataCatalogBrowseUrl returns a predictable value
-vi.mock('../../lib/config', () => ({
-  getDataCatalogBrowseUrl: () => 'https://data.mint.isi.edu',
+vi.mock('../../lib/datasets/data-catalog-api', () => ({
+  searchDatasets: vi.fn().mockResolvedValue([]),
+  fetchDatasetDetail: vi.fn(),
+}));
+vi.mock('../../lib/datasets/discovery', () => ({
+  discoverDatasets: vi.fn().mockResolvedValue({ datasets: [], semanticResults: [] }),
 }));
 
 describe('DatasetsBrowse', () => {
-  it('renders iframe to external catalog when no id in route', () => {
+  it('renders the first-party discovery surface when no id is in the route', () => {
     renderWithProviders(<DatasetsBrowse />, { initialEntries: ['/datasets/browse'] });
-    const iframe = screen.getByTitle('MINT Data Catalog');
-    expect(iframe).toBeInTheDocument();
-    expect(iframe).toHaveAttribute('src', 'https://data.mint.isi.edu');
+    expect(screen.getByRole('heading', { name: 'Datasets' })).toBeInTheDocument();
+    expect(screen.getByLabelText('Search MINT datasets')).toBeInTheDocument();
+    expect(screen.queryByTitle('MINT Data Catalog')).not.toBeInTheDocument();
   });
 
-  it('wraps iframe in accessible container', () => {
+  it('exposes the two discovery modes', () => {
     renderWithProviders(<DatasetsBrowse />, { initialEntries: ['/datasets/browse'] });
-    expect(screen.getByLabelText(/external data catalog/i)).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /browse mint-ready datasets/i })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /find data for a model/i })).toBeInTheDocument();
   });
 });

@@ -1,7 +1,5 @@
 name: MINT Dev Images
 
-# Build all deployable MINT images from one commit so one sha-* tag names the
-# whole dev stack. Service-level workflows still run their deeper test suites.
 on:
   push:
     branches: ['**']
@@ -18,56 +16,64 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  detect-changes:
+    name: Plan changed services
+    runs-on: ubuntu-latest
+    outputs:
+      has_changes: ${{ steps.plan.outputs.has_changes }}
+      plan: ${{ steps.plan.outputs.plan }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Create change plan
+        id: plan
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            BASE_SHA="${{ github.event.pull_request.base.sha }}"
+          else
+            BASE_SHA="${{ github.event.before }}"
+            if [[ -z "$BASE_SHA" || "$BASE_SHA" =~ ^0+$ ]]; then
+              BASE_SHA="$(git rev-list --max-parents=0 HEAD | sed -n '1p')"
+            fi
+          fi
+          git diff --name-only "$BASE_SHA" "$GITHUB_SHA" > changed_paths.txt
+          PLAN="$(python deploy/mint_change_plan.py --source-sha "$GITHUB_SHA" < changed_paths.txt)"
+          HAS_CHANGES="$(python -c 'import json,sys; print(str(json.load(sys.stdin)["has_changes"]).lower())' <<< "$PLAN")"
+          {
+            echo "plan<<PLAN_EOF"
+            echo "$PLAN"
+            echo "PLAN_EOF"
+            echo "has_changes=$HAS_CHANGES"
+          } >> "$GITHUB_OUTPUT"
+          echo "$PLAN" | python -m json.tool
+
   build:
     name: Build ${{ matrix.service }}
+    needs: detect-changes
+    if: needs.detect-changes.outputs.has_changes == 'true'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
-      matrix:
-        include:
-          - service: graphql-engine
-            image: graphql-engine
-            context: graphql_engine
-            dockerfile: graphql_engine/Dockerfile
-          - service: postgres-pgvector
-            image: postgres-pgvector
-            context: docker/postgres-pgvector
-            dockerfile: docker/postgres-pgvector/Dockerfile
-          - service: model-catalog-api
-            image: model-catalog-api
-            context: model-catalog-api
-            dockerfile: model-catalog-api/Dockerfile
-          - service: ensemble-manager
-            image: ensemble-manager
-            context: mint-ensemble-manager
-            dockerfile: mint-ensemble-manager/Dockerfile
-          - service: ui
-            image: ui
-            context: ui-react
-            dockerfile: ui-react/Dockerfile
-          - service: svo-adapter
-            image: svo-adapter
-            context: svo-adapter-service
-            dockerfile: svo-adapter-service/Dockerfile
-          - service: semantic-search
-            image: semantic-search
-            context: semantic-search-service
-            dockerfile: semantic-search-service/Dockerfile
-
+      matrix: ${{ fromJSON(needs.detect-changes.outputs.plan).matrix }}
     steps:
       - uses: actions/checkout@v4
 
       - name: Compute image tags
         id: tags
+        shell: bash
         run: |
+          set -euo pipefail
           SHORT_SHA="${GITHUB_SHA::7}"
           SAFE_BRANCH="${GITHUB_REF_NAME//\//-}"
           IMAGE="ghcr.io/mintproject/${{ matrix.image }}"
           TAGS="${IMAGE}:sha-${SHORT_SHA},${IMAGE}:${SAFE_BRANCH}"
-          if [ "${GITHUB_REF_NAME}" = "${{ github.event.repository.default_branch }}" ]; then
+          if [[ "${GITHUB_REF_NAME}" == "${{ github.event.repository.default_branch }}" ]]; then
             TAGS="${TAGS},${IMAGE}:latest"
           fi
-          echo "short_sha=${SHORT_SHA}" >> "$GITHUB_OUTPUT"
           echo "tags=${TAGS}" >> "$GITHUB_OUTPUT"
 
       - uses: docker/setup-buildx-action@v3
@@ -96,3 +102,32 @@ jobs:
         run: |
           echo "## ${{ matrix.service }}" >> "$GITHUB_STEP_SUMMARY"
           echo "${{ steps.tags.outputs.tags }}" | tr ',' '\n' | sed 's/^/- /' >> "$GITHUB_STEP_SUMMARY"
+
+  publish-change-manifest:
+    name: Publish deploy manifest
+    needs: [detect-changes, build]
+    if: >-
+      ${{
+        always() &&
+        github.event_name != 'pull_request' &&
+        needs.detect-changes.result == 'success' &&
+        (needs.build.result == 'success' || needs.build.result == 'skipped')
+      }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Write exact change manifest
+        env:
+          PLAN: ${{ needs.detect-changes.outputs.plan }}
+        run: |
+          set -euo pipefail
+          mkdir -p manifest
+          printf '%s\n' "$PLAN" > manifest/changed-services.json
+          python -m json.tool manifest/changed-services.json >/dev/null
+
+      - name: Upload exact change manifest
+        uses: actions/upload-artifact@v4
+        with:
+          name: mint-dev-change-plan-${{ github.run_id }}
+          path: manifest/changed-services.json
+          if-no-files-found: error
+          retention-days: 14

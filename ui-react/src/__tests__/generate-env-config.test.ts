@@ -10,6 +10,7 @@ describe('buildEnvConfig', () => {
     expect(c.AUTH_PROVIDER).toBe('tapis');
     expect(c.AUTH_REALM).toBe('');
     expect(c.HASURA_ENDPOINT).toBe('http://graphql.mint.local/v1/graphql');
+    expect(c.SEMANTIC_SEARCH_API).toBe('http://localhost:8091');
     expect('AUTH_CALLBACK_ORIGIN' in c).toBe(false);
   });
 
@@ -86,10 +87,12 @@ describe('buildEnvConfig', () => {
       DATA_CATALOG_API: 'https://data.example.org',
       VITE_DATA_CATALOG_BROWSE_URL: 'https://catalog.example.org',
       ENSEMBLE_MANAGER_API: 'https://ensemble.example.org',
+      VITE_SEMANTIC_SEARCH_API: 'https://semantic.example.org',
     });
     expect(c.DATA_CATALOG_API).toBe('https://data.example.org');
     expect(c.DATA_CATALOG_BROWSE_URL).toBe('https://catalog.example.org');
     expect(c.ENSEMBLE_MANAGER_API).toBe('https://ensemble.example.org');
+    expect(c.SEMANTIC_SEARCH_API).toBe('https://semantic.example.org');
   });
 
   it('prefers the bare name over the VITE_-prefixed one', () => {

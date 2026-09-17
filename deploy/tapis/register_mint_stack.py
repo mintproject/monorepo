@@ -40,7 +40,7 @@ PODS = {
 }
 
 ORDER = ["postgres", "redis", "graphql", "api", "ensemble", "svo", "semantic_search", "ui"]
-RESTART_ONLY_PODS = ("api", "ui", "ensemble", "svo")
+RESTART_ONLY_PODS = ("graphql", "api", "ensemble", "svo", "semantic_search", "ui")
 
 # Recreating a pod is destructive. Only stateless application services may use
 # this fallback; Redis queue state and PostgreSQL data are protected.
@@ -61,6 +61,14 @@ SECRET_KEYS = {
     "TAPIS_CLIENT_KEY",
     "MINTDEV_HASURA_JWT_SECRET",
 }
+
+HASURA_AUTH_ENV_KEYS = frozenset(
+    {
+        "HASURA_GRAPHQL_AUTH_HOOK",
+        "HASURA_GRAPHQL_AUTH_HOOK_MODE",
+        "HASURA_GRAPHQL_JWT_SECRET",
+    }
+)
 
 
 def _load_dotenv() -> None:
@@ -118,12 +126,24 @@ def _hasura_auth_env() -> dict[str, str]:
     return {}
 
 
+def _preserve_hasura_auth_env(existing: Any, desired: dict[str, Any]) -> dict[str, Any]:
+    """Keep live Hasura auth settings when a desired spec omits them."""
+    live = _field(existing, "environment_variables", {}) or {}
+    if not isinstance(live, dict):
+        return desired
+    merged = dict(desired)
+    for key in HASURA_AUTH_ENV_KEYS:
+        if key not in merged and live.get(key):
+            merged[key] = live[key]
+    return merged
+
+
 def _database_url(base_url: str) -> str:
     explicit = _env("MINTDEV_HASURA_DATABASE_URL") or _env("HASURA_GRAPHQL_DATABASE_URL")
     if explicit:
         return explicit
-    # Tapis database pod endpoints are exposed through the Pods TLS/SNI tunnel on
-    # :443, matching the pattern used by the STAC and SUBSIDE services.
+    # Tapis's working PostgreSQL route uses the default entry name and is
+    # exposed through the Pods TLS/SNI tunnel on :443.
     host = f"{PODS['postgres']}.pods.{_pods_domain(base_url)}"
     return (
         f"postgres://{_postgres_user()}:{_postgres_password()}@"
@@ -193,34 +213,16 @@ def _ensemble_config(urls: dict[str, str]) -> str:
 
 def build_specs(owner: str, tag: str, base_url: str) -> dict[str, dict[str, Any]]:
     urls = pod_urls(base_url)
+    postgres_image = f"ghcr.io/{owner}/postgres-pgvector:{tag}"
     graphql_endpoint = f"{urls['graphql']}/v1/graphql"
     admin_secret = _admin_secret()
-    browser_cors = {
-        "cors_allow_origins": [
-            "https://mintdevui.pods.portals.tapis.io",
-            "https://*.tapis.io",
-            "http://localhost:3000",
-        ],
-        "cors_allow_methods": ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"],
-        "cors_allow_headers": [
-            "Authorization",
-            "Content-Type",
-            "X-Hasura-Role",
-            "X-Hasura-User-Id",
-            "X-Hasura-Allowed-Roles",
-            "X-Hasura-Admin-Secret",
-        ],
-        "cors_allow_credentials": False,
-        "cors_max_age": 100,
-    }
-
     specs: dict[str, dict[str, Any]] = {
         "postgres": {
             "pod_id": PODS["postgres"],
-            "image": POSTGRES_IMAGE,
+            "image": postgres_image,
             "template": POSTGRES_TEMPLATE,
             "description": "MINT dev PostgreSQL database",
-            "networking": {"default": {"protocol": "tcp", "port": 5432}},
+            "networking": {"default": {"protocol": "postgres", "port": 5432}},
             "environment_variables": {
                 "POSTGRES_USER": _postgres_user(),
                 "POSTGRES_PASSWORD": _postgres_password(),
@@ -247,14 +249,15 @@ def build_specs(owner: str, tag: str, base_url: str) -> dict[str, dict[str, Any]
             "pod_id": PODS["graphql"],
             "image": f"ghcr.io/{owner}/graphql-engine:{tag}",
             "description": "MINT dev Hasura GraphQL Engine",
-            "networking": {"default": {"protocol": "http", "port": 8080, **browser_cors}},
+            # Keep the Tapis route only. CORS is already configured on the
+            # live pod and requires APPROVEDADMIN when submitted to Tapis.
+            "networking": {"default": {"protocol": "http", "port": 8080}},
             "resources": {"cpu_request": 250, "cpu_limit": 1000, "mem_request": 512, "mem_limit": 2048},
             "environment_variables": {
                 "HASURA_GRAPHQL_DATABASE_URL": _database_url(base_url),
                 "HASURA_GRAPHQL_ADMIN_SECRET": admin_secret,
                 "HASURA_GRAPHQL_ENABLE_CONSOLE": _env("HASURA_GRAPHQL_ENABLE_CONSOLE", "true"),
                 "HASURA_GRAPHQL_DEV_MODE": _env("HASURA_GRAPHQL_DEV_MODE", "false"),
-                "HASURA_GRAPHQL_UNAUTHORIZED_ROLE": _env("HASURA_GRAPHQL_UNAUTHORIZED_ROLE", "anonymous"),
                 "HASURA_GRAPHQL_CORS_ORIGINS": _env(
                     "HASURA_GRAPHQL_CORS_ORIGINS",
                     "https://mintdevui.pods.portals.tapis.io",
@@ -322,6 +325,7 @@ def build_specs(owner: str, tag: str, base_url: str) -> dict[str, dict[str, Any]
             "environment_variables": {
                 "DATABASE_URL": _database_url(base_url),
                 "SVO_EMBEDDING_REFRESH_SECONDS": _env("SVO_EMBEDDING_REFRESH_SECONDS", "60"),
+                "SVO_CORS_ORIGINS": urls["ui"],
             },
             "time_to_stop_default": -1,
         },
@@ -350,6 +354,7 @@ def build_specs(owner: str, tag: str, base_url: str) -> dict[str, dict[str, Any]
                 "AUTH_CLIENT_ID": _env("MINTDEV_AUTH_CLIENT_ID", "mint_dev"),
                 "AUTH_CALLBACK_ORIGIN": urls["ui"],
                 "ENSEMBLE_MANAGER_API": urls["ensemble"],
+                "SEMANTIC_SEARCH_API": urls["semantic_search"],
                 "DATA_CATALOG_API": _env("DATA_CATALOG_API", "https://ckan.tacc.utexas.edu"),
                 "DATA_CATALOG_BROWSE_URL": _env("DATA_CATALOG_BROWSE_URL", "https://ckan.tacc.utexas.edu"),
                 "EXECUTION_ENGINE": _env("EXECUTION_ENGINE", "tapis"),
@@ -384,6 +389,14 @@ def resolve_restart_pods(selected: list[str], *, restart: bool, restart_pods: st
 
 def _field(value: Any, key: str, default: Any = None) -> Any:
     return value.get(key, default) if isinstance(value, dict) else getattr(value, key, default)
+
+
+def _plain_data(value: Any) -> Any:
+    """Convert SDK response objects into values accepted by JSON request bodies."""
+    try:
+        return json.loads(json.dumps(value, default=vars))
+    except (TypeError, ValueError) as exc:
+        raise RuntimeError("Tapis returned non-JSON networking data; refusing to recreate pod") from exc
 
 
 def _get_or_missing(operation: Any, **kwargs: Any) -> Any:
@@ -494,7 +507,7 @@ def wait_for_pod_restart(
     raise RuntimeError(f"[{pod_id}] did not become AVAILABLE on the requested image after restart")
 
 
-def check_postgres_storage(pod: Any, *, recreate: bool) -> None:
+def check_postgres_storage(pod: Any, *, recreate: bool, expected_image: str | None = None) -> None:
     if pod is None:
         return
     if recreate:
@@ -505,6 +518,11 @@ def check_postgres_storage(pod: Any, *, recreate: bool) -> None:
     mount = _field(mounts, POSTGRES_MOUNT)
     mount_paths = mounts.keys() if isinstance(mounts, dict) else vars(mounts).keys()
     env = _field(pod, "environment_variables", {})
+    observed_image = _field(pod, "image")
+    allowed_image_prefix = (expected_image or POSTGRES_IMAGE).rsplit(":", 1)[0] + ":"
+    image_is_allowed = observed_image in LEGACY_POSTGRES_IMAGES or (
+        isinstance(observed_image, str) and observed_image.startswith(allowed_image_prefix)
+    )
     if (
         _field(mount, "type") != "tapisvolume"
         or _field(mount, "source_id") != POSTGRES_VOLUME
@@ -512,7 +530,7 @@ def check_postgres_storage(pod: Any, *, recreate: bool) -> None:
         or _field(mount, "read_only", False) is not False
         or any(path.startswith(POSTGRES_MOUNT + "/") for path in mount_paths)
         or _field(env, "PGDATA") != POSTGRES_DATA
-        or _field(pod, "image") not in {POSTGRES_IMAGE, *LEGACY_POSTGRES_IMAGES}
+        or not image_is_allowed
     ):
         raise RuntimeError("PostgreSQL image/storage differs; preserve data and perform a deliberate migration before deploying")
 
@@ -573,6 +591,8 @@ def validate_live_requirements(selected: list[str]) -> None:
         missing.append("MINTDEV_POSTGRES_PASSWORD (or PGPASSWORD)")
     if any(p in selected for p in ("graphql", "api", "ensemble", "svo")) and not _admin_secret():
         missing.append("HASURA_GRAPHQL_ADMIN_SECRET (or HASURA_ADMIN_SECRET)")
+    if "graphql" in selected and not _hasura_auth_env():
+        missing.append("MINTDEV_HASURA_AUTH_HOOK or MINTDEV_HASURA_JWT_SECRET")
     if missing:
         print("Missing required live-deploy secret(s): " + ", ".join(missing), file=sys.stderr)
         raise SystemExit(2)
@@ -637,18 +657,39 @@ def _start_pod_if_needed(t: Any, pod_id: str) -> None:
     print(f"  [{pod_id}] start requested")
 
 
-def _recreate_pod(t: Any, spec: dict[str, Any], *, start: bool, owners: list[str] | None = None) -> None:
+def _recreate_pod(
+    t: Any,
+    spec: dict[str, Any],
+    *,
+    start: bool,
+    owners: list[str] | None = None,
+    networking: Any = None,
+    environment_variables: dict[str, Any] | None = None,
+) -> None:
     pid = spec["pod_id"]
     pod_name = next((name for name, pod_id in PODS.items() if pod_id == pid), None)
     if pod_name not in RECREATE_ON_IMAGE_MISMATCH_PODS:
         raise RuntimeError(f"[{pid}] image mismatch; automatic recreation is disabled for this protected pod")
     if pid == PODS["postgres"]:
         raise RuntimeError("PostgreSQL recreation is disabled; image mismatch requires deliberate recovery")
+    recreate_spec = dict(spec)
+    # Tapis may remove the old pod while processing UpdatePod before reporting
+    # an image mismatch. Recreate with the networking definition that was
+    # already live, instead of resubmitting the desired CORS/auth payload.
+    # The latter requires APPROVEDADMIN and is unrelated to an image update.
+    if networking is None:
+        recreate_spec.pop("networking", None)
+    else:
+        recreate_spec["networking"] = _plain_data(networking)
+    if environment_variables is not None:
+        recreate_spec["environment_variables"] = environment_variables
+    # Validate the request before deleting the old pod so a malformed SDK
+    # response cannot leave a stateless service unavailable.
     print(f"  [{pid}] deleting before image-mismatch recovery…")
     t.pods.delete_pod(pod_id=pid)
     wait_for_pod_absent(t, pid)
     print(f"  [{pid}] creating with requested image…")
-    t.pods.create_pod(**spec)
+    t.pods.create_pod(**recreate_spec)
     if owners:
         set_pod_owners(t, pid, owners)
     if start:
@@ -702,14 +743,14 @@ def upsert_pod(
     existing = _get_or_missing(t.pods.get_pod, pod_id=pid)
     exists = existing is not None
     if pid == PODS["postgres"]:
-        check_postgres_storage(existing, recreate=recreate)
+        check_postgres_storage(existing, recreate=recreate, expected_image=spec["image"])
         if (
             existing is not None
-            and _field(existing, "image") in LEGACY_POSTGRES_IMAGES
+            and _field(existing, "image") != spec["image"]
             and not migrate_postgres_image
         ):
             raise RuntimeError(
-                "PostgreSQL uses the known legacy image; rerun with --migrate-postgres-image "
+                "PostgreSQL image differs from the requested tag; rerun with --migrate-postgres-image "
                 "for the protected volume-preserving transition"
             )
 
@@ -720,12 +761,21 @@ def upsert_pod(
         exists = False
 
     if exists:
-        if pid == PODS["postgres"] and _field(existing, "image") in LEGACY_POSTGRES_IMAGES:
+        if pid == PODS["postgres"] and _field(existing, "image") != spec["image"]:
             _replace_postgres_pod(t, existing, spec, start=start, owners=owners)
             return
         previous_start = _field(_field(existing, "status_container", {}), "start_time")
         print(f"  [{pid}] updating…")
         update = dict(spec)
+        update["environment_variables"] = _preserve_hasura_auth_env(
+            existing, spec.get("environment_variables", {})
+        )
+        # Preserve the live networking definition on ordinary image/runtime
+        # updates. Tapis networking may contain privileged CORS or auth
+        # settings; those should not be resubmitted just because an image is
+        # changing. Explicit networking changes use their dedicated paths,
+        # such as --sync-ui-auth.
+        update.pop("networking", None)
         if pid == PODS["postgres"]:
             # Tapis UpdatePod does not accept an image field. A known legacy
             # image is handled by _replace_postgres_pod above; this path is
@@ -737,7 +787,14 @@ def upsert_pod(
         except PodImageMismatchError:
             if not recreate_on_image_mismatch:
                 raise
-            _recreate_pod(t, spec, start=start, owners=owners)
+            _recreate_pod(
+                t,
+                spec,
+                start=start,
+                owners=owners,
+                networking=_field(existing, "networking", None),
+                environment_variables=update["environment_variables"],
+            )
             return
         if restart:
             t.pods.restart_pod(pod_id=pid)
@@ -964,7 +1021,7 @@ def main(argv: list[str] | None = None) -> int:
     postgres_restarted = False
     if "postgres" in selected:
         postgres = _get_or_missing(t.pods.get_pod, pod_id=PODS["postgres"])
-        check_postgres_storage(postgres, recreate=args.recreate)
+        check_postgres_storage(postgres, recreate=args.recreate, expected_image=specs["postgres"]["image"])
         postgres_image_migration = (
             args.migrate_postgres_image
             and postgres is not None
