@@ -10,6 +10,7 @@
  */
 import { gql } from '@apollo/client';
 import * as Apollo from '@apollo/client';
+import type { Problem_Statement_Bool_Exp } from './graphql';
 
 // ─── Scalar types (reused from graphql.ts) ───────────────────────────────────
 
@@ -340,7 +341,7 @@ const THREAD_INFO = gql`
 // ─── Query: ListProblemStatements ────────────────────────────────────────────
 
 export type ListProblemStatementsQueryVariables = {
-  regionId: string;
+  where: Problem_Statement_Bool_Exp;
 };
 
 export type ListProblemStatementsQuery = {
@@ -351,11 +352,8 @@ export type ListProblemStatementsQuery = {
 
 export const ListProblemStatementsDocument = gql`
   ${PROBLEM_STATEMENT_INFO}
-  query ListProblemStatements($regionId: String!) {
-    problem_statement(
-      where: { region_id: { _eq: $regionId } }
-      order_by: { id: desc }
-    ) {
+  query ListProblemStatements($where: problem_statement_bool_exp!) {
+    problem_statement(where: $where, order_by: { id: desc }) {
       ...problem_statement_info
       tasks {
         id

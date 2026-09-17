@@ -2939,6 +2939,7 @@
       - parameter_assignment_method
       - valid_until
       - author_id
+      - owner_username
       filter: {}
   update_permissions:
   - role: user
