@@ -49,6 +49,24 @@ class StorageTests(unittest.TestCase):
             "https://mintdevsemanticsearch.pods.portals.tapis.io",
         )
 
+    def test_graphql_live_deploy_requires_auth_configuration(self):
+        with patch.dict(os.environ, {}, clear=True):
+            with self.assertRaises(SystemExit) as ctx:
+                deploy.validate_live_requirements(["graphql"])
+        self.assertEqual(ctx.exception.code, 2)
+
+    def test_graphql_live_deploy_accepts_auth_hook_configuration(self):
+        with patch.dict(
+            os.environ,
+            {
+                "MINTDEV_HASURA_AUTH_HOOK": "http://mintdevauthwebhook:3000/auth-webhook",
+                "HASURA_GRAPHQL_ADMIN_SECRET": "admin-secret",
+                "MINTDEV_POSTGRES_PASSWORD": "postgres-password",
+            },
+            clear=True,
+        ):
+            deploy.validate_live_requirements(["graphql"])
+
     def test_graphql_and_semantic_search_share_default_postgres_route(self):
         with patch.dict(
             os.environ,
@@ -403,6 +421,34 @@ class LifecycleTests(unittest.TestCase):
         self.assertNotIn("networking", sent)
         self.assertEqual(sent["image"], desired["image"])
         self.assertEqual(existing["networking"], live_networking)
+
+    def test_existing_graphql_update_preserves_live_auth_env(self):
+        desired = deploy.build_specs(
+            "mintproject", "sha-new", "https://portals.tapis.io"
+        )["graphql"]
+        existing = {
+            **desired,
+            "image": "ghcr.io/mintproject/graphql-engine:sha-old",
+            "environment_variables": {
+                **desired["environment_variables"],
+                "HASURA_GRAPHQL_AUTH_HOOK": "http://mintdevauthwebhook:3000/auth-webhook",
+                "HASURA_GRAPHQL_AUTH_HOOK_MODE": "POST",
+            },
+        }
+        t = Mock()
+        t.pods.get_pod.return_value = existing
+
+        with patch.object(deploy, "wait_for_pod_image"):
+            deploy.upsert_pod(
+                t, desired, recreate=False, start=False, restart=False
+            )
+
+        sent = t.pods.update_pod.call_args.kwargs
+        self.assertEqual(
+            sent["environment_variables"]["HASURA_GRAPHQL_AUTH_HOOK"],
+            "http://mintdevauthwebhook:3000/auth-webhook",
+        )
+        self.assertEqual(sent["environment_variables"]["HASURA_GRAPHQL_AUTH_HOOK_MODE"], "POST")
 
     def test_restart_existing_pods_only_restarts_selected_apps(self):
         existing_api = {"image": "ghcr.io/mintproject/model-catalog-api:develop", "status_container": {"start_time": "api-old"}}
