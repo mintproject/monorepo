@@ -13,9 +13,11 @@ import {
   packageTags,
   packageTimePeriod,
   parseDate,
+  packagesMatchingCanonicalVariables,
   resourceStandardVariables,
   searchAllPackages,
   showPackage,
+  overlapsDateRange,
   type CkanPackage,
   type CkanResource,
 } from './ckan';
@@ -57,7 +59,7 @@ function packageStandardVariables(pkg: CkanPackage): string[] {
   return [...seen];
 }
 
-function mapDataset(pkg: CkanPackage): Dataset {
+export function mapDataset(pkg: CkanPackage): Dataset {
   const resources = pkg.resources ?? [];
 
   return {
@@ -110,7 +112,12 @@ export async function searchDatasets(params: DatasetQueryParameters): Promise<Da
     ...(params.spatialCoverage ? { boundingBox: params.spatialCoverage } : {}),
   });
 
-  const matched = packagesMatchingVariableSubstring(packages, params.variableSubstring ?? '');
+  const variableMatched = params.standardVariables?.length
+    ? packagesMatchingCanonicalVariables(packages, params.standardVariables)
+    : packagesMatchingVariableSubstring(packages, params.variableSubstring ?? '');
+  const matched = variableMatched.filter((pkg) =>
+    overlapsDateRange(pkg, params.dateRange?.start_date, params.dateRange?.end_date),
+  );
   return matched.map(mapDataset);
 }
 

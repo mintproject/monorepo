@@ -57,6 +57,12 @@ export interface Dataset {
   spatial_coverage?: SpatialCoverage;
 }
 
+/** Dataset enriched with the semantic SVO match that led to its discovery. */
+export interface DatasetDiscoveryResult extends Dataset {
+  matched_variables?: string[];
+  semantic_score?: number;
+}
+
 /** Query parameter shape for the data catalog search endpoint. */
 export interface DatasetQueryParameters {
   name?: string;
@@ -67,6 +73,8 @@ export interface DatasetQueryParameters {
    * query — Solr cannot answer it.
    */
   variableSubstring?: string;
+  /** Exact canonical SVO labels, matched against resource annotations. */
+  standardVariables?: string[];
   spatialCoverage?: {
     xmin: number;
     xmax: number;

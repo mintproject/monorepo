@@ -10,6 +10,7 @@ import { http, HttpResponse } from 'msw';
 import { server } from '@/test/msw/server';
 import {
   buildSearchQuery,
+  canonicalStandardVariable,
   cleanString,
   overlapsDateRange,
   packageExtraFlag,
@@ -18,8 +19,10 @@ import {
   packagesMatchingVariables,
   packagesMatchingVariableSubstring,
   packageTimePeriod,
+  packagesMatchingCanonicalVariables,
   parseDate,
   resourceMatchesVariables,
+  resourceMatchesCanonicalVariables,
   resourceMatchesVariableSubstring,
   resourceStandardVariables,
   searchAllPackages,
@@ -349,6 +352,46 @@ describe('resourceMatchesVariables', () => {
 
   it('passes everything through when no variable is requested', () => {
     expect(resourceMatchesVariables({ format: 'CSV' }, [])).toBe(true);
+  });
+});
+
+describe('canonical standard-variable matching', () => {
+  it('normalizes labels, URI tails, and case for exact matching', () => {
+    expect(
+      canonicalStandardVariable('https://w3id.org/okn/i/mint/Groundwater__Hydraulic_Head'),
+    ).toBe('groundwater__hydraulic_head');
+    expect(
+      resourceMatchesCanonicalVariables(
+        { mint_standard_variables: 'https://w3id.org/okn/i/mint/groundwater__hydraulic_head' },
+        ['Groundwater__Hydraulic_Head'],
+      ),
+    ).toBe(true);
+  });
+
+  it('keeps malformed percent-encoding from breaking discovery', () => {
+    expect(canonicalStandardVariable('rain%fall')).toBe('rain%fall');
+  });
+
+  it('does not turn a prose or partial match into an SVO match', () => {
+    expect(
+      resourceMatchesCanonicalVariables(
+        { mint_standard_variables: 'groundwater__hydraulic_head' },
+        ['groundwater'],
+      ),
+    ).toBe(false);
+  });
+
+  it('keeps only resources carrying one of the requested SVOs', () => {
+    const packageWithTwoResources: CkanPackage = {
+      name: 'annotated-dataset',
+      resources: [
+        { id: 'match', mint_standard_variables: 'https://w3id.org/okn/i/mint/rainfall' },
+        { id: 'other', mint_standard_variables: 'temperature' },
+      ],
+    };
+    expect(
+      packagesMatchingCanonicalVariables([packageWithTwoResources], ['rainfall'])[0]?.resources,
+    ).toEqual([{ id: 'match', mint_standard_variables: 'https://w3id.org/okn/i/mint/rainfall' }]);
   });
 });
 
