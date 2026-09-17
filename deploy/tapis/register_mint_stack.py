@@ -275,7 +275,6 @@ def build_specs(owner: str, tag: str, base_url: str) -> dict[str, dict[str, Any]
                 "HASURA_GRAPHQL_ADMIN_SECRET": admin_secret,
                 "HASURA_GRAPHQL_ENABLE_CONSOLE": _env("HASURA_GRAPHQL_ENABLE_CONSOLE", "true"),
                 "HASURA_GRAPHQL_DEV_MODE": _env("HASURA_GRAPHQL_DEV_MODE", "false"),
-                "HASURA_GRAPHQL_UNAUTHORIZED_ROLE": _env("HASURA_GRAPHQL_UNAUTHORIZED_ROLE", "anonymous"),
                 "HASURA_GRAPHQL_CORS_ORIGINS": _env(
                     "HASURA_GRAPHQL_CORS_ORIGINS",
                     "https://mintdevui.pods.portals.tapis.io",

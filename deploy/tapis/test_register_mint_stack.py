@@ -67,6 +67,24 @@ class StorageTests(unittest.TestCase):
         ):
             deploy.validate_live_requirements(["graphql"])
 
+    def test_graphql_auth_hook_does_not_set_unauthorized_role(self):
+        with patch.dict(
+            os.environ,
+            {
+                "MINTDEV_HASURA_AUTH_HOOK": "https://mintdevauthwebhook.pods.portals.tapis.io/auth-webhook",
+                "HASURA_GRAPHQL_ADMIN_SECRET": "admin-secret",
+                "MINTDEV_POSTGRES_PASSWORD": "postgres-password",
+            },
+            clear=True,
+        ):
+            graphql = deploy.build_specs("mintproject", "develop", "https://portals.tapis.io")["graphql"]
+
+        self.assertNotIn("HASURA_GRAPHQL_UNAUTHORIZED_ROLE", graphql["environment_variables"])
+        self.assertEqual(
+            graphql["environment_variables"]["HASURA_GRAPHQL_AUTH_HOOK"],
+            "https://mintdevauthwebhook.pods.portals.tapis.io/auth-webhook",
+        )
+
     def test_graphql_and_semantic_search_share_default_postgres_route(self):
         with patch.dict(
             os.environ,
