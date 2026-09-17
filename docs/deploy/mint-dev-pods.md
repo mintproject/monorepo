@@ -135,6 +135,7 @@ TAPIS_USERNAME or TAPIS_ID
 TAPIS_PASSWORD
 MINTDEV_POSTGRES_PASSWORD
 HASURA_GRAPHQL_ADMIN_SECRET
+MINTDEV_HASURA_AUTH_HOOK or MINTDEV_HASURA_JWT_SECRET
 ```
 
 ## Local restart
@@ -161,7 +162,7 @@ full deployment from the selected ref using the moving `:develop` image tags.
   `register_mint_stack.py` remains responsible only for Tapis pod and volume
   lifecycle.
 - The Ensemble Manager image entrypoint materializes `ENSEMBLE_MANAGER_CONFIG_JSON` into a runtime config file and sets `ENSEMBLE_MANAGER_CONFIG_FILE` before starting the app.
-- Authenticated Hasura writes need either `MINTDEV_HASURA_JWT_SECRET` or `MINTDEV_HASURA_AUTH_HOOK`; without one, the stack may boot but write paths that forward user JWTs can fail.
+- GraphQL deployment fails closed unless either `MINTDEV_HASURA_JWT_SECRET` or `MINTDEV_HASURA_AUTH_HOOK` is configured. Existing Hasura auth environment variables are preserved during image-mismatch recovery, and the GitHub Actions deploy passes these secrets through to the pod definition.
 - Tapis Pod template details for Redis/PostgreSQL should be validated during the first dev deployment.
 
 ## Persistent PostgreSQL storage

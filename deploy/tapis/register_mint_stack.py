@@ -62,6 +62,14 @@ SECRET_KEYS = {
     "MINTDEV_HASURA_JWT_SECRET",
 }
 
+HASURA_AUTH_ENV_KEYS = frozenset(
+    {
+        "HASURA_GRAPHQL_AUTH_HOOK",
+        "HASURA_GRAPHQL_AUTH_HOOK_MODE",
+        "HASURA_GRAPHQL_JWT_SECRET",
+    }
+)
+
 
 def _load_dotenv() -> None:
     try:
@@ -116,6 +124,18 @@ def _hasura_auth_env() -> dict[str, str]:
     if _env("MINTDEV_HASURA_JWT_SECRET"):
         return {"HASURA_GRAPHQL_JWT_SECRET": _env("MINTDEV_HASURA_JWT_SECRET")}
     return {}
+
+
+def _preserve_hasura_auth_env(existing: Any, desired: dict[str, Any]) -> dict[str, Any]:
+    """Keep live Hasura auth settings when a desired spec omits them."""
+    live = _field(existing, "environment_variables", {}) or {}
+    if not isinstance(live, dict):
+        return desired
+    merged = dict(desired)
+    for key in HASURA_AUTH_ENV_KEYS:
+        if key not in merged and live.get(key):
+            merged[key] = live[key]
+    return merged
 
 
 def _database_url(base_url: str) -> str:
@@ -255,7 +275,6 @@ def build_specs(owner: str, tag: str, base_url: str) -> dict[str, dict[str, Any]
                 "HASURA_GRAPHQL_ADMIN_SECRET": admin_secret,
                 "HASURA_GRAPHQL_ENABLE_CONSOLE": _env("HASURA_GRAPHQL_ENABLE_CONSOLE", "true"),
                 "HASURA_GRAPHQL_DEV_MODE": _env("HASURA_GRAPHQL_DEV_MODE", "false"),
-                "HASURA_GRAPHQL_UNAUTHORIZED_ROLE": _env("HASURA_GRAPHQL_UNAUTHORIZED_ROLE", "anonymous"),
                 "HASURA_GRAPHQL_CORS_ORIGINS": _env(
                     "HASURA_GRAPHQL_CORS_ORIGINS",
                     "https://mintdevui.pods.portals.tapis.io",
@@ -581,6 +600,8 @@ def validate_live_requirements(selected: list[str]) -> None:
         missing.append("MINTDEV_POSTGRES_PASSWORD (or PGPASSWORD)")
     if any(p in selected for p in ("graphql", "api", "ensemble", "svo")) and not _admin_secret():
         missing.append("HASURA_GRAPHQL_ADMIN_SECRET (or HASURA_ADMIN_SECRET)")
+    if "graphql" in selected and not _hasura_auth_env():
+        missing.append("MINTDEV_HASURA_AUTH_HOOK or MINTDEV_HASURA_JWT_SECRET")
     if missing:
         print("Missing required live-deploy secret(s): " + ", ".join(missing), file=sys.stderr)
         raise SystemExit(2)
@@ -645,7 +666,15 @@ def _start_pod_if_needed(t: Any, pod_id: str) -> None:
     print(f"  [{pod_id}] start requested")
 
 
-def _recreate_pod(t: Any, spec: dict[str, Any], *, start: bool, owners: list[str] | None = None) -> None:
+def _recreate_pod(
+    t: Any,
+    spec: dict[str, Any],
+    *,
+    start: bool,
+    owners: list[str] | None = None,
+    networking: Any = None,
+    environment_variables: dict[str, Any] | None = None,
+) -> None:
     pid = spec["pod_id"]
     pod_name = next((name for name, pod_id in PODS.items() if pod_id == pid), None)
     if pod_name not in RECREATE_ON_IMAGE_MISMATCH_PODS:
@@ -656,7 +685,18 @@ def _recreate_pod(t: Any, spec: dict[str, Any], *, start: bool, owners: list[str
     t.pods.delete_pod(pod_id=pid)
     wait_for_pod_absent(t, pid)
     print(f"  [{pid}] creating with requested image…")
-    t.pods.create_pod(**spec)
+    recreate_spec = dict(spec)
+    # Tapis may remove the old pod while processing UpdatePod before reporting
+    # an image mismatch. Recreate with the networking definition that was
+    # already live, instead of resubmitting the desired CORS/auth payload.
+    # The latter requires APPROVEDADMIN and is unrelated to an image update.
+    if networking is None:
+        recreate_spec.pop("networking", None)
+    else:
+        recreate_spec["networking"] = networking
+    if environment_variables is not None:
+        recreate_spec["environment_variables"] = environment_variables
+    t.pods.create_pod(**recreate_spec)
     if owners:
         set_pod_owners(t, pid, owners)
     if start:
@@ -734,6 +774,9 @@ def upsert_pod(
         previous_start = _field(_field(existing, "status_container", {}), "start_time")
         print(f"  [{pid}] updating…")
         update = dict(spec)
+        update["environment_variables"] = _preserve_hasura_auth_env(
+            existing, spec.get("environment_variables", {})
+        )
         # Preserve the live networking definition on ordinary image/runtime
         # updates. Tapis networking may contain privileged CORS or auth
         # settings; those should not be resubmitted just because an image is
@@ -751,7 +794,14 @@ def upsert_pod(
         except PodImageMismatchError:
             if not recreate_on_image_mismatch:
                 raise
-            _recreate_pod(t, spec, start=start, owners=owners)
+            _recreate_pod(
+                t,
+                spec,
+                start=start,
+                owners=owners,
+                networking=_field(existing, "networking", None),
+                environment_variables=update["environment_variables"],
+            )
             return
         if restart:
             t.pods.restart_pod(pod_id=pid)

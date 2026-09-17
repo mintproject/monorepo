@@ -208,6 +208,9 @@ jobs:
           TAPIS_PASSWORD: ${{ secrets.TAPIS_PASSWORD }}
           MINTDEV_POSTGRES_PASSWORD: ${{ secrets.MINTDEV_POSTGRES_PASSWORD }}
           HASURA_GRAPHQL_ADMIN_SECRET: ${{ secrets.HASURA_GRAPHQL_ADMIN_SECRET }}
+          MINTDEV_HASURA_AUTH_HOOK: ${{ secrets.MINTDEV_HASURA_AUTH_HOOK }}
+          MINTDEV_HASURA_AUTH_HOOK_MODE: ${{ secrets.MINTDEV_HASURA_AUTH_HOOK_MODE }}
+          MINTDEV_HASURA_JWT_SECRET: ${{ secrets.MINTDEV_HASURA_JWT_SECRET }}
           IMAGE_TAG: ${{ needs.plan.outputs.image_tag }}
           BUILD_SERVICES: ${{ needs.plan.outputs.build_services }}
         run: |

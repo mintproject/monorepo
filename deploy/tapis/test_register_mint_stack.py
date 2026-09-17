@@ -49,6 +49,42 @@ class StorageTests(unittest.TestCase):
             "https://mintdevsemanticsearch.pods.portals.tapis.io",
         )
 
+    def test_graphql_live_deploy_requires_auth_configuration(self):
+        with patch.dict(os.environ, {}, clear=True):
+            with self.assertRaises(SystemExit) as ctx:
+                deploy.validate_live_requirements(["graphql"])
+        self.assertEqual(ctx.exception.code, 2)
+
+    def test_graphql_live_deploy_accepts_auth_hook_configuration(self):
+        with patch.dict(
+            os.environ,
+            {
+                "MINTDEV_HASURA_AUTH_HOOK": "http://mintdevauthwebhook:3000/auth-webhook",
+                "HASURA_GRAPHQL_ADMIN_SECRET": "admin-secret",
+                "MINTDEV_POSTGRES_PASSWORD": "postgres-password",
+            },
+            clear=True,
+        ):
+            deploy.validate_live_requirements(["graphql"])
+
+    def test_graphql_auth_hook_does_not_set_unauthorized_role(self):
+        with patch.dict(
+            os.environ,
+            {
+                "MINTDEV_HASURA_AUTH_HOOK": "https://mintdevauthwebhook.pods.portals.tapis.io/auth-webhook",
+                "HASURA_GRAPHQL_ADMIN_SECRET": "admin-secret",
+                "MINTDEV_POSTGRES_PASSWORD": "postgres-password",
+            },
+            clear=True,
+        ):
+            graphql = deploy.build_specs("mintproject", "develop", "https://portals.tapis.io")["graphql"]
+
+        self.assertNotIn("HASURA_GRAPHQL_UNAUTHORIZED_ROLE", graphql["environment_variables"])
+        self.assertEqual(
+            graphql["environment_variables"]["HASURA_GRAPHQL_AUTH_HOOK"],
+            "https://mintdevauthwebhook.pods.portals.tapis.io/auth-webhook",
+        )
+
     def test_graphql_and_semantic_search_share_default_postgres_route(self):
         with patch.dict(
             os.environ,
@@ -404,6 +440,34 @@ class LifecycleTests(unittest.TestCase):
         self.assertEqual(sent["image"], desired["image"])
         self.assertEqual(existing["networking"], live_networking)
 
+    def test_existing_graphql_update_preserves_live_auth_env(self):
+        desired = deploy.build_specs(
+            "mintproject", "sha-new", "https://portals.tapis.io"
+        )["graphql"]
+        existing = {
+            **desired,
+            "image": "ghcr.io/mintproject/graphql-engine:sha-old",
+            "environment_variables": {
+                **desired["environment_variables"],
+                "HASURA_GRAPHQL_AUTH_HOOK": "http://mintdevauthwebhook:3000/auth-webhook",
+                "HASURA_GRAPHQL_AUTH_HOOK_MODE": "POST",
+            },
+        }
+        t = Mock()
+        t.pods.get_pod.return_value = existing
+
+        with patch.object(deploy, "wait_for_pod_image"):
+            deploy.upsert_pod(
+                t, desired, recreate=False, start=False, restart=False
+            )
+
+        sent = t.pods.update_pod.call_args.kwargs
+        self.assertEqual(
+            sent["environment_variables"]["HASURA_GRAPHQL_AUTH_HOOK"],
+            "http://mintdevauthwebhook:3000/auth-webhook",
+        )
+        self.assertEqual(sent["environment_variables"]["HASURA_GRAPHQL_AUTH_HOOK_MODE"], "POST")
+
     def test_restart_existing_pods_only_restarts_selected_apps(self):
         existing_api = {"image": "ghcr.io/mintproject/model-catalog-api:develop", "status_container": {"start_time": "api-old"}}
         existing_ui = {"image": "ghcr.io/mintproject/ui:develop", "status_container": {"start_time": "ui-old"}}
@@ -457,8 +521,10 @@ class LifecycleTests(unittest.TestCase):
     def test_opt_in_recovery_recreates_ui_after_confirmed_delete(self):
         missing = Exception()
         missing.response = SimpleNamespace(status_code=404)
+        live_networking = {"default": {"protocol": "http", "port": 8080, "cors_allow_origins": ["https://mintdevui.example"]}}
+        existing = dict(self.spec, networking=live_networking)
         t = Mock()
-        t.pods.get_pod.side_effect = [self.spec, missing]
+        t.pods.get_pod.side_effect = [existing, missing]
         with patch.object(
             deploy,
             "wait_for_pod_image",
@@ -473,7 +539,8 @@ class LifecycleTests(unittest.TestCase):
                 restart=True,
             )
         t.pods.delete_pod.assert_called_once_with(pod_id=deploy.PODS["ui"])
-        t.pods.create_pod.assert_called_once_with(**self.spec)
+        recreated = t.pods.create_pod.call_args.kwargs
+        self.assertEqual(recreated["networking"], live_networking)
         t.pods.restart_pod.assert_not_called()
 
     def test_opt_in_recovery_cannot_recreate_postgres(self):

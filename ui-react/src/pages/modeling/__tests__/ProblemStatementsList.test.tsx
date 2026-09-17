@@ -32,9 +32,9 @@ const regionsMock: MockedResponse = {
   result: { data: { region: mockRegions } },
 };
 
-function listMock(regionId: string): MockedResponse {
+function listMock(where: Record<string, unknown> = {}): MockedResponse {
   return {
-    request: { query: ListProblemStatementsDocument, variables: { regionId } },
+    request: { query: ListProblemStatementsDocument, variables: { where } },
     result: { data: { problem_statement: [] } },
     maxUsageCount: Number.POSITIVE_INFINITY,
   };
@@ -43,7 +43,7 @@ function listMock(regionId: string): MockedResponse {
 describe('ProblemStatementsList region selection', () => {
   it('offers a region selector populated from the real top-level regions', async () => {
     renderWithProviders(<ProblemStatementsList />, {
-      apolloMocks: [regionsMock, listMock('south_sudan'), listMock('ethiopia')],
+      apolloMocks: [regionsMock, listMock()],
       initialEntries: ['/modeling/problem-statements'],
     });
 
@@ -80,8 +80,8 @@ describe('ProblemStatementsList region selection', () => {
     renderWithProviders(<ProblemStatementsList />, {
       apolloMocks: [
         regionsMock,
-        listMock('south_sudan'),
-        listMock('ethiopia'),
+        listMock(),
+        listMock({ region_id: { _eq: 'ethiopia' } }),
         insertMock,
         provenanceMock,
       ],
@@ -117,8 +117,8 @@ describe('ProblemStatementsList region selection', () => {
 
     const mocks: MockedResponse[] = [
       regionsMock,
-      listMock('south_sudan'),
-      listMock('ethiopia'),
+      listMock(),
+      listMock({ region_id: { _eq: 'ethiopia' } }),
       {
         request: { query: InsertProblemStatementDocument },
         variableMatcher: () => true,
@@ -177,7 +177,7 @@ describe('ProblemStatementsList region selection', () => {
     expect(threadProvVars[0]?.threadId).toBe(threadVars[0]?.id);
   });
 
-  it('shows task / sub-task / with-a-model counts on each card', async () => {
+  it('shows all regions by default and counts on each card', async () => {
     const ev = {
       __typename: 'problem_statement_provenance',
       event: 'CREATE',
@@ -211,17 +211,18 @@ describe('ProblemStatementsList region selection', () => {
     };
 
     const listWithData: MockedResponse = {
-      request: { query: ListProblemStatementsDocument, variables: { regionId: 'south_sudan' } },
+      request: { query: ListProblemStatementsDocument, variables: { where: {} } },
       result: { data: { problem_statement: [psWithCounts] } },
       maxUsageCount: Number.POSITIVE_INFINITY,
     };
 
     renderWithProviders(<ProblemStatementsList />, {
-      apolloMocks: [regionsMock, listWithData, listMock('ethiopia')],
+      apolloMocks: [regionsMock, listWithData],
       initialEntries: ['/modeling/problem-statements'],
     });
 
     const card = await screen.findByRole('listitem', { name: 'Counted study' });
+    expect(screen.getByText('all regions')).toBeInTheDocument();
     // 1 task · 2 sub-tasks · 1 with a model
     expect(within(card).getByText('2')).toBeInTheDocument(); // sub-task count
     expect(within(card).getAllByText('1')).toHaveLength(2); // task count + with-a-model
