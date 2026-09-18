@@ -15,6 +15,12 @@ schemas.
 Swagger UI splits the Core API into five task-oriented groups: Registry, Planning,
 Workflows, Runs, and Catalog/objectives.
 
+The OpenAPI document also groups integration and use-case routes under
+`Integrations`, `DFC/GAM`, and `NTGAM forecast`. These tags match the route
+organization shown in `/docs`; the fixture-backed DFC/objective routes are
+read-only lookups except for plan-evaluation/fan-out operations, which persist
+plans through the existing adapter workflow tables.
+
 ### Service and registry
 
 | Method | Path | Purpose |

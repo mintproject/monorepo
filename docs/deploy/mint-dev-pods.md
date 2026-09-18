@@ -178,6 +178,40 @@ PostgreSQL or Redis.
 - GraphQL deployment fails closed unless either `MINTDEV_HASURA_JWT_SECRET` or `MINTDEV_HASURA_AUTH_HOOK` is configured. Existing Hasura auth environment variables are preserved during image-mismatch recovery, and the GitHub Actions deploy passes these secrets through to the pod definition.
 - Tapis Pod template details for Redis/PostgreSQL should be validated during the first dev deployment.
 
+## SVO adapter schema rollout
+
+The SVO adapter requires the `adapter` PostgreSQL schema and its Hasura table
+metadata. The application image can be deployed independently, so an image
+restart alone will still produce HTTP 500 responses for `/transform-specs`
+and `/data-objects` until this rollout is applied.
+
+From the Hasura pod, after PostgreSQL is ready, apply the migration before
+applying metadata:
+
+```bash
+cd /hasura
+hasura migrate apply --skip-update-check
+hasura metadata apply --skip-update-check
+hasura metadata reload --skip-update-check
+hasura metadata inconsistency list --skip-update-check
+```
+
+Run the migration only once against the persistent database; do not run the
+down migration or use `DROP SCHEMA ... CASCADE` as a recovery step. Verify the
+generated GraphQL fields with an authenticated admin request before restarting
+the adapter:
+
+```bash
+curl -sS "$HASURA_GRAPHQL_ENDPOINT/v1/graphql" \
+  -H "X-Hasura-Admin-Secret: $HASURA_GRAPHQL_ADMIN_SECRET" \
+  -H "Content-Type: application/json" \
+  --data '{"query":"{ adapter_transform_spec(limit: 1) { id } adapter_data_object(limit: 1) { id } }"}'
+```
+
+The expected response contains `data.adapter_transform_spec` and
+`data.adapter_data_object`, even when both arrays are empty. Only then should
+the SVO adapter pod be restarted and its `/health` endpoint checked.
+
 ## Persistent PostgreSQL storage
 
 The registration script uses the Tapis `postgres:16postgis3.5` template with the
