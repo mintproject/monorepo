@@ -517,12 +517,8 @@ class LifecycleTests(unittest.TestCase):
         self.assertEqual(sent["environment_variables"]["HASURA_GRAPHQL_AUTH_HOOK_MODE"], "POST")
 
     def test_restart_existing_pods_only_restarts_selected_apps(self):
-        existing_api = {"image": "ghcr.io/mintproject/model-catalog-api:develop", "status_container": {"start_time": "api-old"}}
-        existing_ui = {"image": "ghcr.io/mintproject/ui:develop", "status_container": {"start_time": "ui-old"}}
         t = Mock()
-        t.pods.get_pod.side_effect = [existing_api, existing_ui]
-        with patch.object(deploy, "wait_for_pod_batch") as ready:
-            deploy.restart_existing_pods(t, ["api", "ui"])
+        deploy.restart_existing_pods(t, ["api", "ui"])
         self.assertEqual(
             t.pods.restart_pod.call_args_list,
             [
@@ -530,100 +526,49 @@ class LifecycleTests(unittest.TestCase):
                 unittest.mock.call(pod_id=deploy.PODS["ui"]),
             ],
         )
-        ready.assert_called_once()
-        self.assertEqual(
-            ready.call_args.args[1],
-            [
-                {
-                    "pod_id": deploy.PODS["api"],
-                    "expected_image": existing_api["image"],
-                    "previous_start": "api-old",
-                },
-                {
-                    "pod_id": deploy.PODS["ui"],
-                    "expected_image": existing_ui["image"],
-                    "previous_start": "ui-old",
-                },
-            ],
-        )
+        t.pods.get_pod.assert_not_called()
         t.pods.update_pod.assert_not_called()
         t.pods.create_pod.assert_not_called()
         t.pods.delete_pod.assert_not_called()
         t.pods.set_pod_permission.assert_not_called()
 
-    def test_restart_existing_pods_refuses_missing_pod(self):
-        missing = Exception()
-        missing.response = SimpleNamespace(status_code=404)
+    def test_update_pod_images_changes_only_image_field(self):
         t = Mock()
-        t.pods.get_pod.side_effect = missing
-        with self.assertRaises(RuntimeError) as ctx:
-            deploy.restart_existing_pods(t, ["api"])
-        self.assertIn("will not create it", str(ctx.exception))
+        images = {"api": "ghcr.io/mintproject/model-catalog-api:sha-new"}
+        deploy.update_pod_images(t, ["api"], images)
+        t.pods.update_pod.assert_called_once_with(
+            pod_id=deploy.PODS["api"], image=images["api"]
+        )
         t.pods.restart_pod.assert_not_called()
         t.pods.create_pod.assert_not_called()
 
-    def test_restart_existing_pods_supports_graphql_dependency_restart(self):
+    def test_update_pod_images_requires_exact_image_for_each_pod(self):
         t = Mock()
-        t.pods.get_pod.return_value = {
-            "image": "ghcr.io/mintproject/graphql-engine:sha-new",
-            "status_container": {"start_time": "old"},
-        }
-        with patch.object(deploy, "wait_for_pod_batch"):
-            deploy.restart_existing_pods(t, ["graphql"])
-        t.pods.restart_pod.assert_called_once_with(pod_id=deploy.PODS["graphql"])
+        with self.assertRaises(RuntimeError):
+            deploy.update_pod_images(t, ["api", "ui"], {"api": "ghcr.io/mintproject/model-catalog-api:sha-new"})
+        t.pods.update_pod.assert_not_called()
 
-    def test_batch_dispatches_all_restarts_before_readiness_wait(self):
+    def test_restart_dispatches_all_requests_without_polling(self):
         t = Mock()
-        t.pods.get_pod.side_effect = [
-            {"image": "ghcr.io/mintproject/model-catalog-api:sha-old", "status_container": {"start_time": "api-old"}},
-            {"image": "ghcr.io/mintproject/ensemble-manager:sha-old", "status_container": {"start_time": "ensemble-old"}},
-            {"image": "ghcr.io/mintproject/ui:sha-old", "status_container": {"start_time": "ui-old"}},
-        ]
         events = []
         t.pods.restart_pod.side_effect = lambda **kwargs: events.append(("restart", kwargs["pod_id"]))
-        with patch.object(deploy, "wait_for_pod_batch", side_effect=lambda _t, _targets: events.append(("wait",))):
-            deploy.restart_existing_pods(t, ["api", "ensemble", "ui"])
+        deploy.restart_existing_pods(t, ["api", "ensemble", "ui"])
         self.assertEqual(
             events,
             [
                 ("restart", deploy.PODS["api"]),
                 ("restart", deploy.PODS["ensemble"]),
                 ("restart", deploy.PODS["ui"]),
-                ("wait",),
             ],
         )
+        t.pods.get_pod.assert_not_called()
 
-    def test_batch_rejects_wrong_built_image_before_restart(self):
+    def test_image_and_restart_modes_reject_static_infrastructure_pods(self):
         t = Mock()
-        t.pods.get_pod.return_value = {
-            "image": "ghcr.io/mintproject/ui:sha-old",
-            "status_container": {"start_time": "old"},
-        }
-        with self.assertRaises(deploy.PodImageMismatchError):
-            deploy.restart_existing_pods(
-                t,
-                ["ui"],
-                {"ui": "ghcr.io/mintproject/ui:sha-new"},
-            )
-        t.pods.restart_pod.assert_not_called()
-
-    def test_batch_rejects_static_infrastructure_pods(self):
         with self.assertRaises(RuntimeError):
-            deploy.restart_existing_pods(Mock(), ["postgres"])
+            deploy.update_pod_images(t, ["postgres"], {"postgres": "ghcr.io/mintproject/postgres-pgvector:sha-new"})
         with self.assertRaises(RuntimeError):
-            deploy.restart_existing_pods(Mock(), ["redis"])
-
-    def test_batch_starts_created_pod_without_previous_lifecycle_timestamp(self):
-        t = Mock()
-        t.pods.get_pod.return_value = {
-            "image": "ghcr.io/mintproject/ui:sha-new",
-            "status": "STOPPED",
-            "status_container": {},
-        }
-        with patch.object(deploy, "wait_for_pod_batch"):
-            deploy.restart_existing_pods(t, ["ui"], {"ui": "ghcr.io/mintproject/ui:sha-new"})
-        t.pods.start_pod.assert_called_once_with(pod_id=deploy.PODS["ui"])
-        t.pods.restart_pod.assert_not_called()
+            deploy.restart_existing_pods(t, ["redis"])
 
     def test_mismatch_without_opt_in_does_not_delete_or_restart(self):
         t = Mock()
@@ -769,9 +714,22 @@ class OwnerGrantTests(unittest.TestCase):
         rc = deploy.grant_pod_owners(t, ["semantic_search", "ui"], ["mosorio"])
         self.assertEqual(rc, 0)
         t.pods.set_pod_permission.assert_called_once_with(
-            pod_id=deploy.PODS["ui"], user="mosorio", level="ADMIN"
+            pod_id=deploy.PODS["ui"], user="mosorio", level="APPROVEDADMIN"
         )
         t.pods.create_pod.assert_not_called()
+
+    def test_require_all_owner_grants_fails_for_absent_pod(self):
+        missing = Exception()
+        missing.response = SimpleNamespace(status_code=404)
+        t = Mock()
+        t.pods.get_pod.side_effect = [missing, {"image": "any"}]
+        rc = deploy.grant_pod_owners(
+            t, ["semantic_search", "ui"], ["wmobley"], require_all=True
+        )
+        self.assertEqual(rc, 1)
+        t.pods.set_pod_permission.assert_called_once_with(
+            pod_id=deploy.PODS["ui"], user="wmobley", level="APPROVEDADMIN"
+        )
 
     def test_one_rejected_grant_does_not_hide_the_others(self):
         t = Mock()

@@ -551,48 +551,6 @@ def wait_for_pod_restart(
     raise RuntimeError(f"[{pod_id}] did not become AVAILABLE on the requested image after restart")
 
 
-def wait_for_pod_batch(
-    t: Any,
-    targets: list[dict[str, Any]],
-    *,
-    timeout: float = POD_RESTART_TIMEOUT,
-) -> None:
-    """Wait for every dispatched application lifecycle operation as one batch."""
-    pending = {target["pod_id"]: target for target in targets}
-    observed: dict[str, dict[str, Any]] = {}
-    deadline = time.monotonic() + timeout
-    while pending and time.monotonic() < deadline:
-        for pod_id, target in list(pending.items()):
-            try:
-                pod = _pod_lookup_for_verification(t, pod_id)
-            except TransientPodLookupError:
-                continue
-            started = _field(_field(pod, "status_container", {}), "start_time")
-            observed[pod_id] = {
-                "status": _field(pod, "status"),
-                "image": _field(pod, "image"),
-                "start_time": started,
-            }
-            if (
-                _field(pod, "status") == "AVAILABLE"
-                and _field(pod, "image") == target["expected_image"]
-                and (
-                    not target.get("previous_start")
-                    or (started and started != target["previous_start"])
-                )
-            ):
-                del pending[pod_id]
-        if pending:
-            time.sleep(min(5, max(0, deadline - time.monotonic())))
-
-    if pending:
-        details = "; ".join(
-            f"{pod_id}: {observed.get(pod_id, {'status': 'unobserved'})}"
-            for pod_id in pending
-        )
-        raise RuntimeError(f"application pod batch did not become ready: {details}")
-
-
 def check_postgres_storage(pod: Any, *, recreate: bool, expected_image: str | None = None) -> None:
     if pod is None:
         return
@@ -685,11 +643,11 @@ def validate_live_requirements(selected: list[str]) -> None:
 
 
 def set_pod_owners(t: Any, pod_id: str, owners: list[str]) -> list[str]:
-    """Add owners to a pod with ADMIN permissions. Return the owners that failed."""
+    """Add owners to a pod with APPROVEDADMIN permissions. Return failures."""
     failed = []
     for owner in owners:
         try:
-            t.pods.set_pod_permission(pod_id=pod_id, user=owner, level="ADMIN")
+            t.pods.set_pod_permission(pod_id=pod_id, user=owner, level="APPROVEDADMIN")
             print(f"  [{pod_id}] added owner: {owner}")
         except Exception as exc:  # noqa: BLE001
             failed.append(owner)
@@ -697,12 +655,19 @@ def set_pod_owners(t: Any, pod_id: str, owners: list[str]) -> list[str]:
     return failed
 
 
-def grant_pod_owners(t: Any, selected: list[str], owners: list[str]) -> int:
-    """Grant ADMIN on every existing selected pod; never touch a pod definition.
+def grant_pod_owners(
+    t: Any,
+    selected: list[str],
+    owners: list[str],
+    *,
+    require_all: bool = False,
+) -> int:
+    """Grant APPROVEDADMIN on every selected pod; never touch a pod definition.
 
     A later deploy step can fail and skip the pods it owns, so this runs first
     and independently. One rejected grant must not hide the others, so the
-    result is a summary. Only a total failure is fatal.
+    result is a summary. Strict mode additionally requires every selected pod
+    to exist and accept every requested grant.
     """
     granted: list[str] = []
     failed: list[str] = []
@@ -720,10 +685,15 @@ def grant_pod_owners(t: Any, selected: list[str], owners: list[str]) -> int:
         f"\nOwner grants: {len(granted)} succeeded, {len(failed)} failed, "
         f"{len(absent)} pod(s) absent"
     )
+    if require_all and absent:
+        failed.extend(f"{pid}:absent" for pid in absent)
+        print("Required pods absent: " + ", ".join(absent), file=sys.stderr)
     if failed:
         print("Failed grants: " + ", ".join(failed), file=sys.stderr)
     if not granted and failed:
         print("No grant succeeded; treating this as a deploy failure", file=sys.stderr)
+        return 1
+    if require_all and failed:
         return 1
     return 0
 
@@ -947,54 +917,34 @@ def sync_ui_auth(t: Any, spec: dict[str, Any], *, restart: bool = True) -> int:
     return 0
 
 
-def restart_existing_pods(
-    t: Any,
-    selected: list[str],
-    expected_images: dict[str, str] | None = None,
-) -> None:
-    """Dispatch all application lifecycle requests, then wait for the batch."""
+def update_pod_images(t: Any, selected: list[str], expected_images: dict[str, str]) -> None:
+    """Update only the image field for selected application pods."""
+    invalid = [key for key in selected if key not in RESTART_ONLY_PODS]
+    if invalid:
+        raise RuntimeError(
+            "Image-only mode is limited to: " + ", ".join(RESTART_ONLY_PODS)
+        )
+    missing = [key for key in selected if key not in expected_images]
+    if missing:
+        raise RuntimeError("Image-only mode requires an exact image for: " + ", ".join(missing))
+    for key in selected:
+        pid = PODS[key]
+        image = expected_images[key]
+        print(f"  [{pid}] updating image to {image}…")
+        t.pods.update_pod(pod_id=pid, image=image)
+
+
+def restart_existing_pods(t: Any, selected: list[str]) -> None:
+    """Dispatch restart requests for selected application pods without polling."""
     invalid = [key for key in selected if key not in RESTART_ONLY_PODS]
     if invalid:
         raise RuntimeError(
             "Restart-only mode is limited to: " + ", ".join(RESTART_ONLY_PODS)
         )
-    targets = []
-    expected_images = expected_images or {}
     for key in selected:
         pid = PODS[key]
-        pod = _get_or_missing(t.pods.get_pod, pod_id=pid)
-        if pod is None:
-            raise RuntimeError(f"[{pid}] was not found; restart-only mode will not create it")
-        previous_start = _field(_field(pod, "status_container", {}), "start_time")
-        current_image = _field(pod, "image")
-        expected_image = expected_images.get(key, current_image)
-        if not expected_image:
-            raise RuntimeError(f"[{pid}] is missing image data; restart stopped")
-        if current_image != expected_image:
-            raise PodImageMismatchError(
-                f"[{pid}] image changed before restart; expected {expected_image!r}, observed {current_image!r}"
-            )
-        targets.append(
-            {
-                "pod_id": pid,
-                "expected_image": expected_image,
-                "previous_start": previous_start,
-            }
-        )
-
-    # Dispatch every lifecycle request before beginning readiness polling.
-    for target in targets:
-        pid = target["pod_id"]
-        if target["previous_start"]:
-            print(f"  [{pid}] restarting existing pod…")
-            t.pods.restart_pod(pod_id=pid)
-            print(f"  [{pid}] restart requested")
-        else:
-            print(f"  [{pid}] starting existing pod…")
-            t.pods.start_pod(pod_id=pid)
-            print(f"  [{pid}] start requested")
-
-    wait_for_pod_batch(t, targets)
+        print(f"  [{pid}] restart requested")
+        t.pods.restart_pod(pod_id=pid)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -1008,7 +958,7 @@ def main(argv: list[str] | None = None) -> int:
         help="JSON object of service image references from the deploy manifest",
     )
     parser.add_argument("--pods", default="all", help="all or comma-separated: postgres,redis,graphql,api,ensemble,svo,semantic_search,ui")
-    parser.add_argument("--owners", default="wmobley,mosorio", help="comma-separated list of pod owners (ADMIN permission)")
+    parser.add_argument("--owners", default="wmobley,mosorio", help="comma-separated list of pod owners (APPROVEDADMIN permission)")
     parser.add_argument("--recreate", action="store_true")
     parser.add_argument(
         "--recreate-on-image-mismatch",
@@ -1027,12 +977,22 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument(
         "--restart-existing-pods",
-        help="restart only these existing application pods; never create or update pod definitions",
+        help="restart these application pods without polling or changing their definitions",
+    )
+    parser.add_argument(
+        "--update-images-only",
+        action="store_true",
+        help="update only exact application image references; do not change networking or lifecycle",
     )
     parser.add_argument(
         "--set-owners-only",
         action="store_true",
-        help="only grant ADMIN on the selected existing pods; never create, update or restart a pod",
+        help="only grant APPROVEDADMIN on the selected existing pods; never create, update or restart a pod",
+    )
+    parser.add_argument(
+        "--require-all-owner-grants",
+        action="store_true",
+        help="fail if any selected pod is absent or rejects an owner grant",
     )
     parser.add_argument(
         "--sync-ui-auth",
@@ -1048,14 +1008,31 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args(argv)
     if args.restart_existing_pods is not None and (
-        args.restart
+        args.update_images_only
+        or args.set_owners_only
+        or args.restart
         or args.restart_pods is not None
         or args.recreate
         or args.recreate_on_image_mismatch
         or args.no_start
         or args.dry_run
     ):
-        parser.error("--restart-existing-pods cannot be combined with lifecycle or dry-run options")
+        parser.error("--restart-existing-pods cannot be combined with image or lifecycle options")
+    if args.update_images_only and (
+        args.restart_existing_pods is not None
+        or args.set_owners_only
+        or args.sync_ui_auth
+        or args.restart
+        or args.restart_pods is not None
+        or args.recreate
+        or args.recreate_on_image_mismatch
+        or args.migrate_postgres_image
+        or args.no_start
+        or args.dry_run
+    ):
+        parser.error("--update-images-only cannot be combined with lifecycle or dry-run options")
+    if args.require_all_owner_grants and not args.set_owners_only:
+        parser.error("--require-all-owner-grants requires --set-owners-only")
     if args.set_owners_only and (
         args.restart_existing_pods is not None
         or args.restart
@@ -1096,6 +1073,8 @@ def main(argv: list[str] | None = None) -> int:
             )
     else:
         selected = parse_pods(args.pods)
+    if args.update_images_only and any(key not in RESTART_ONLY_PODS for key in selected):
+        parser.error("--update-images-only accepts only: " + ", ".join(RESTART_ONLY_PODS))
     if args.migrate_postgres_image and "postgres" not in selected:
         parser.error("--migrate-postgres-image requires postgres in --pods")
     if args.migrate_postgres_image and args.recreate:
@@ -1120,7 +1099,12 @@ def main(argv: list[str] | None = None) -> int:
             print(f"  {key:8} {urls[key]}")
         return 0
 
-    if args.restart_existing_pods is None and not args.set_owners_only and not args.sync_ui_auth:
+    if (
+        args.restart_existing_pods is None
+        and not args.update_images_only
+        and not args.set_owners_only
+        and not args.sync_ui_auth
+    ):
         validate_live_requirements(selected)
 
     try:
@@ -1134,8 +1118,15 @@ def main(argv: list[str] | None = None) -> int:
     t.requests_session.send = partial(t.requests_session.send, timeout=30)
     t.get_tokens()
 
+    if args.update_images_only:
+        update_pod_images(t, selected, image_overrides)
+        print("\nMINT dev application image tags updated:")
+        for key in selected:
+            print(f"  {key:8} {PODS[key]}")
+        return 0
+
     if args.restart_existing_pods is not None:
-        restart_existing_pods(t, selected, image_overrides)
+        restart_existing_pods(t, selected)
         print("\nMINT dev application pods restarted:")
         for key in selected:
             print(f"  {key:8} {PODS[key]}")
@@ -1147,7 +1138,12 @@ def main(argv: list[str] | None = None) -> int:
     if args.set_owners_only:
         if not owners:
             parser.error("--set-owners-only requires a non-empty --owners list")
-        return grant_pod_owners(t, selected, owners)
+        return grant_pod_owners(
+            t,
+            selected,
+            owners,
+            require_all=args.require_all_owner_grants,
+        )
 
     if args.sync_ui_auth:
         return sync_ui_auth(t, specs["ui"], restart=not args.defer_ui_restart)

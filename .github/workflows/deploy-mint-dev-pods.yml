@@ -171,7 +171,7 @@ jobs:
   deploy:
     name: Deploy selected MINT dev services
     needs: plan
-    if: needs.plan.result == 'success' && needs.plan.outputs.has_changes == 'true'
+    if: needs.plan.result == 'success'
     runs-on: ubuntu-latest
     environment: Tapis Dev Deploy
     steps:
@@ -186,28 +186,25 @@ jobs:
       - name: Install deploy dependencies
         run: pip install tapipy python-dotenv
 
-      - name: Grant pod owners on affected pods
+      - name: Ensure wmobley is an approved admin on every pod
         env:
           TAPIS_USERNAME: ${{ secrets.TAPIS_USERNAME }}
           TAPIS_ID: ${{ secrets.TAPIS_ID }}
           TAPIS_PASSWORD: ${{ secrets.TAPIS_PASSWORD }}
-          RESTART_SERVICES: ${{ needs.plan.outputs.restart_services }}
         run: |
           set -euo pipefail
-          python deploy/tapis/register_mint_stack.py --set-owners-only --pods "$RESTART_SERVICES"
+          python deploy/tapis/register_mint_stack.py \
+            --set-owners-only \
+            --require-all-owner-grants \
+            --pods all \
+            --owners wmobley
 
-      - name: Update changed image pod definitions
+      - name: Update application SHA tags
         if: needs.plan.outputs.build_services != ''
         env:
           TAPIS_USERNAME: ${{ secrets.TAPIS_USERNAME }}
           TAPIS_ID: ${{ secrets.TAPIS_ID }}
           TAPIS_PASSWORD: ${{ secrets.TAPIS_PASSWORD }}
-          MINTDEV_POSTGRES_PASSWORD: ${{ secrets.MINTDEV_POSTGRES_PASSWORD }}
-          HASURA_GRAPHQL_ADMIN_SECRET: ${{ secrets.HASURA_GRAPHQL_ADMIN_SECRET }}
-          MINTDEV_HASURA_AUTH_HOOK: ${{ secrets.MINTDEV_HASURA_AUTH_HOOK }}
-          MINTDEV_HASURA_AUTH_HOOK_MODE: ${{ secrets.MINTDEV_HASURA_AUTH_HOOK_MODE }}
-          MINTDEV_HASURA_JWT_SECRET: ${{ secrets.MINTDEV_HASURA_JWT_SECRET }}
-          IMAGE_TAG: ${{ needs.plan.outputs.image_tag }}
           IMAGE_MAP_JSON: ${{ needs.plan.outputs.images_json }}
           BUILD_SERVICES: ${{ needs.plan.outputs.build_services }}
         run: |
@@ -217,38 +214,19 @@ jobs:
           print(",".join(service for service in sys.argv[1].split(",") if service and service not in {"postgres", "redis"}))
           PY
           )"
-          if [[ ",${BUILD_SERVICES}," == *",postgres,"* ]]; then
-            python deploy/tapis/register_mint_stack.py \
-              --image-tag "$IMAGE_TAG" \
-              --image-map "$IMAGE_MAP_JSON" \
-              --pods postgres \
-              --restart-pods postgres \
-              --migrate-postgres-image
-          fi
           if [[ -n "$APP_BUILD_SERVICES" ]]; then
             python deploy/tapis/register_mint_stack.py \
-              --image-tag "$IMAGE_TAG" \
               --image-map "$IMAGE_MAP_JSON" \
               --pods "$APP_BUILD_SERVICES" \
-              --no-start \
-              --recreate-on-image-mismatch
+              --update-images-only
           fi
 
-      - name: Sync and restart the UI auth allowlist when UI is affected
-        if: contains(needs.plan.outputs.restart_services, 'ui')
-        env:
-          TAPIS_USERNAME: ${{ secrets.TAPIS_USERNAME }}
-          TAPIS_ID: ${{ secrets.TAPIS_ID }}
-          TAPIS_PASSWORD: ${{ secrets.TAPIS_PASSWORD }}
-        run: python deploy/tapis/register_mint_stack.py --sync-ui-auth --defer-ui-restart
-
-      - name: Dispatch and wait for affected application pods
+      - name: Restart affected application pods
         env:
           TAPIS_USERNAME: ${{ secrets.TAPIS_USERNAME }}
           TAPIS_ID: ${{ secrets.TAPIS_ID }}
           TAPIS_PASSWORD: ${{ secrets.TAPIS_PASSWORD }}
           RESTART_SERVICES: ${{ needs.plan.outputs.restart_services }}
-          IMAGE_MAP_JSON: ${{ needs.plan.outputs.images_json }}
         run: |
           set -euo pipefail
           APPLICATION_SERVICES="$(python - "$RESTART_SERVICES" <<'PY'
@@ -258,68 +236,10 @@ jobs:
           )"
           if [[ -n "$APPLICATION_SERVICES" ]]; then
             python deploy/tapis/register_mint_stack.py \
-              --restart-existing-pods "$APPLICATION_SERVICES" \
-              --image-map "$IMAGE_MAP_JSON"
+              --restart-existing-pods "$APPLICATION_SERVICES"
           else
-            echo "No application pod lifecycle requests required"
+            echo "No application pod restarts required"
           fi
-
-      - name: Apply Hasura migrations for schema changes
-        if: needs.plan.outputs.schema_changed == 'true'
-        env:
-          HASURA_GRAPHQL_ADMIN_SECRET: ${{ secrets.HASURA_GRAPHQL_ADMIN_SECRET }}
-          GRAPHQL_ENDPOINT: https://mintdevgraphql.pods.portals.tapis.io
-          IMAGE_TAG: ${{ needs.plan.outputs.image_tag }}
-        run: |
-          set -euo pipefail
-          curl --fail --silent --show-error --retry 30 --retry-delay 5 --retry-all-errors "$GRAPHQL_ENDPOINT/healthz" >/dev/null
-          docker run --rm --pull=always --entrypoint hasura --workdir /hasura \
-            --env HASURA_GRAPHQL_ENDPOINT="$GRAPHQL_ENDPOINT" \
-            --env HASURA_GRAPHQL_ADMIN_SECRET \
-            "ghcr.io/mintproject/graphql-engine:$IMAGE_TAG" migrate apply --skip-update-check
-
-      - name: Verify affected health endpoints
-        env:
-          RESTART_SERVICES: ${{ needs.plan.outputs.restart_services }}
-        run: |
-          set -euo pipefail
-          if [[ ",${RESTART_SERVICES}," == *",semantic_search,"* ]]; then
-            curl --fail --silent --show-error --retry 30 --retry-delay 5 --retry-all-errors \
-              --connect-timeout 10 --max-time 30 \
-              https://mintdevsemanticsearch.pods.portals.tapis.io/health >/dev/null
-          fi
-          if [[ ",${RESTART_SERVICES}," == *",graphql,"* ]]; then
-            curl --fail --silent --show-error --retry 30 --retry-delay 5 --retry-all-errors \
-              --connect-timeout 10 --max-time 30 \
-              https://mintdevgraphql.pods.portals.tapis.io/healthz >/dev/null
-          fi
-
-      - name: Apply Hasura metadata and verify schema
-        if: needs.plan.outputs.schema_changed == 'true'
-        env:
-          HASURA_GRAPHQL_ADMIN_SECRET: ${{ secrets.HASURA_GRAPHQL_ADMIN_SECRET }}
-          GRAPHQL_ENDPOINT: https://mintdevgraphql.pods.portals.tapis.io
-          IMAGE_TAG: ${{ needs.plan.outputs.image_tag }}
-        run: |
-          set -euo pipefail
-          docker run --rm --pull=always --entrypoint hasura --workdir /hasura \
-            --env HASURA_GRAPHQL_ENDPOINT="$GRAPHQL_ENDPOINT" \
-            --env HASURA_GRAPHQL_ADMIN_SECRET \
-            "ghcr.io/mintproject/graphql-engine:$IMAGE_TAG" metadata apply --skip-update-check
-          docker run --rm --pull=always --entrypoint hasura --workdir /hasura \
-            --env HASURA_GRAPHQL_ENDPOINT="$GRAPHQL_ENDPOINT" \
-            --env HASURA_GRAPHQL_ADMIN_SECRET \
-            "ghcr.io/mintproject/graphql-engine:$IMAGE_TAG" metadata reload --skip-update-check
-          response="$(curl --fail --silent --show-error \
-            -H "content-type: application/json" \
-            -H "x-hasura-admin-secret: $HASURA_GRAPHQL_ADMIN_SECRET" \
-            --data '{"query":"{ modelcatalog_etl_process(limit: 1) { id } problem_statement(limit: 1) { id events(limit: 1) { event } } }"}' \
-            "$GRAPHQL_ENDPOINT/v1/graphql")"
-          if [[ "$response" == *'"errors"'* ]]; then
-            echo "GraphQL schema smoke test failed" >&2
-            exit 1
-          fi
-          echo "Hasura migrations, metadata, and schema smoke test passed"
 
       - name: Summary
         run: |

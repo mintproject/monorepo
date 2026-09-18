@@ -5,9 +5,8 @@ Status: Implemented
 ## Objective
 
 Change the MINT dev deployment lifecycle so the normal application rollout
-dispatches all selected application pod updates/restarts before waiting for
-readiness. Then verify the affected pods as a group instead of waiting for one
-pod to become available before starting the next.
+updates only the selected application pods' exact SHA image references and
+dispatches restart requests for the affected application set without polling.
 
 PostgreSQL and Redis remain persistent/static infrastructure and are excluded
 from the normal application restart batch.
@@ -19,21 +18,27 @@ waits for each pod before proceeding. This makes a full application restart
 take the sum of every pod's startup time and creates unnecessary coupling
 between services that can boot independently.
 
-The desired behavior is to restart the application pieces together, then wait
-for the selected set to become available.
+The desired behavior is a narrow image-tag update followed by pod restarts. The
+deploy action must not mutate networking/CORS, apply schema changes, grant
+owners, run health checks, or wait for readiness.
 
 ## Current code/system summary
 
 `deploy/tapis/register_mint_stack.py` defines the pod order as PostgreSQL,
-Redis, GraphQL, API, Ensemble Manager, SVO, semantic search, and UI. Its main
-upsert loop processes that order sequentially. Existing-pod restarts and image
-updates wait inside each pod operation before the loop advances.
+Redis, GraphQL, API, Ensemble Manager, SVO, semantic search, and UI. The
+deployment workflow uses dedicated image-only and restart-only paths; full pod
+registration and protected database migration remain available as separate
+manual operations.
 
-The GitHub workflow invokes the script for changed images and separately invokes
-restart-only mode for dependency-only services. Both paths inherit the
-per-pod wait behavior. PostgreSQL has an explicit SQL-readiness gate and is
-protected by persistent storage handling. Redis is not normally selected by the
-change planner.
+The GitHub workflow invokes image-only mode for changed application services and
+restart-only mode for dependency services. PostgreSQL and Redis are filtered out
+of both operations. Apart from the explicit admin-permission step below, the
+workflow does not invoke UI auth sync, schema migration, metadata, health, or
+readiness steps.
+
+Every deploy run separately ensures that `wmobley` has Tapis `APPROVEDADMIN` permission
+on every pod, including PostgreSQL and Redis. This permission step is strict:
+an absent pod or rejected grant fails the deploy.
 
 The application dependency relationships are:
 
@@ -49,19 +54,12 @@ The application dependency relationships are:
 
 ### Normal application rollout
 
-Refactor lifecycle handling into dispatch and verification phases:
-
 1. Resolve the selected application pods from `build_services` and
-   `restart_services`.
-2. Update or create the selected pod definitions without waiting for each pod
-   to become `AVAILABLE`.
-3. Dispatch starts/restarts for all selected application pods. Dispatch may
-   retain canonical request ordering for deterministic Tapis behavior, but it
-   must not perform a readiness wait between requests.
-4. After all lifecycle requests have been submitted, wait for every selected
-   pod to report the expected image, a new container start time when a restart
-   was requested, and `AVAILABLE` status.
-5. Run the existing application health checks for the affected endpoints.
+   `restart_services`, excluding PostgreSQL and Redis.
+2. For each changed application service, send a Tapis update containing only
+   its pod ID and exact manifest image reference.
+3. Dispatch restart requests for all affected application pods in canonical
+   order without waiting between requests or polling afterward.
 
 Image selection is per service, never one shared tag for the whole batch:
 
@@ -73,82 +71,46 @@ Image selection is per service, never one shared tag for the whole batch:
 - Manual dispatch may explicitly use `:develop`, as it does today, but that
   tag must be intentional and limited to the services selected by the manual
   manifest.
-- Aggregate readiness verification checks each pod against its own expected
-  image reference. A pod reporting a different tag is a rollout failure even if
-  its lifecycle status is `AVAILABLE`.
-
-The same aggregate behavior applies to dependency-only restarts. The
-restart-only path must collect the prior start time and image for every pod,
-submit every restart request, and only then wait for the complete set.
+The image-only path requires an exact image reference for every changed service;
+it does not submit environment variables, resources, networking, CORS, or auth
+settings. Dependency-only services are restarted with their existing image.
 
 ### Static infrastructure
 
 Normal application deployment does not select, update, restart, or recreate
-PostgreSQL or Redis. PostgreSQL remains an explicit protected migration path
-only when its own image/context is selected. Redis remains an existing static
-dependency for Ensemble Manager.
-
-The existing PostgreSQL SQL-readiness gate remains unchanged for the explicit
-database migration path. This change does not make database startup parallel
-with application startup.
+PostgreSQL or Redis. Protected database migration remains a separate explicit
+operation outside this workflow.
 
 ### Schema-change rollout
 
-Schema changes retain a GraphQL readiness gate before migrations are applied.
-The deployment must not run Hasura migrations until GraphQL is healthy.
-
-After the migration step, the affected application pods can be dispatched as a
-batch and verified together. Semantic search may start before its first index
-query completes because its current startup code retries when catalog tables
-are temporarily unavailable; the final health check still must pass.
-
-If implementation testing shows that a particular schema migration requires
-semantic search to remain stopped until migrations complete, semantic search is
-the only permitted dependency-specific exception; API, Ensemble Manager, SVO,
-and UI still use the aggregate dispatch/wait behavior.
+Schema migrations, metadata updates, and schema smoke tests are not part of the
+deploy action. They must be run separately when required.
 
 ### UI authentication synchronization
 
-The UI allowlist update must be folded into the same UI lifecycle plan so the UI
-is not restarted once during image deployment and again during the auth-sync
-step. The implementation should either:
-
-- apply the networking allowlist before the batch and let the batch perform the
-  single restart; or
-- make the auth-sync operation update the definition without restarting and let
-  the batch perform the single restart.
-
-The chosen option must preserve the current behavior that the running Tapis
-proxy uses the updated allowlist.
+The deploy action does not synchronize UI networking or auth allowlists. Existing
+manual auth-sync functionality remains outside this rollout.
 
 ### Failure behavior
 
-The deployment fails if any selected pod does not converge within the existing
-bounded timeout. The final error must identify every pod that failed and its
-last observed status/image/start time where available.
-
-Already-dispatched pods are not automatically rolled back by this change.
-Existing explicit rollback procedures and immutable image tags remain the
+Tapis update or restart request failures stop the workflow. Already-dispatched
+pods are not automatically rolled back; immutable image tags remain the
 recovery mechanism.
 
 ## Files likely affected
 
 - `deploy/tapis/register_mint_stack.py`
-  - separate lifecycle dispatch from readiness verification;
-  - accept/resolve per-service expected image references;
-  - add aggregate restart/readiness helpers;
-  - preserve PostgreSQL protection and existing image-mismatch safeguards;
-  - coordinate UI auth synchronization with the batch restart.
+  - add an image-only update path that sends only `pod_id` and `image`;
+  - add a restart-only dispatch path with no readiness polling;
+  - preserve the existing full-registration and protected PostgreSQL paths.
 - `deploy/tapis/test_register_mint_stack.py`
-  - test that all restart requests are issued before any readiness wait;
-  - test aggregate success and aggregate timeout/failure reporting;
-  - test no duplicate UI restart;
-  - preserve PostgreSQL/static infrastructure boundaries.
+  - test image-only update payloads;
+  - test restart dispatch without pod lookups or polling;
+  - preserve PostgreSQL/Redis static infrastructure boundaries.
 - `.github/workflows/deploy-mint-dev-pods.yml`
-  - pass the manifest's per-service image references into the aggregate
-    lifecycle API;
-  - adjust step boundaries only if needed to use the aggregate lifecycle API;
-  - preserve migration-before-dependent-health behavior.
+  - ensure `wmobley` is an approved admin on every pod;
+  - remove UI auth, migration, metadata, health, and readiness steps;
+  - invoke only image-tag update and application restart operations.
 - `docs/deploy/mint-dev-pods.md`
   - document batch dispatch, aggregate readiness, static PostgreSQL/Redis, and
     schema-change behavior.
@@ -165,66 +127,39 @@ image names, environment variables, and external service URLs remain unchanged.
 
 ## Data flow
 
-1. The image workflow produces `build_services` and `restart_services`.
-2. The deploy workflow grants owners on the affected existing pods.
-3. The deploy script resolves the application batch, excluding normal
-   PostgreSQL and Redis lifecycle operations.
-4. Pod definitions are updated/created and lifecycle requests are dispatched
-   without per-pod readiness blocking.
-5. The script waits for all selected pods to converge as a group.
-6. Schema changes use the existing GraphQL health/migration/metadata sequence.
-7. The workflow runs affected endpoint health checks and reports the complete
-   rollout result.
+1. The image workflow produces `build_services`, `restart_services`, and exact
+   image references.
+2. The deploy workflow ensures `wmobley` has `APPROVEDADMIN` permission on every pod.
+3. It filters PostgreSQL and Redis from image and restart sets.
+4. The image-only path updates only changed application image fields.
+5. The restart-only path dispatches all affected application restart requests
+   without readiness polling.
 
 ## Risks and tradeoffs
 
-- Services may briefly observe an unavailable dependency because they start in
-  parallel. Existing request-time clients and the semantic-search retry loop
-  must tolerate this transient state.
-- A later pod may be dispatched even if an earlier pod's update request failed;
-  the implementation must stop dispatching on unrecoverable Tapis API errors
-  and report which requests were already submitted.
-- Aggregate waiting reduces wall-clock startup time but makes partial rollout
-  failures more visible at the end rather than immediately after one pod.
-- Tapis may impose request-rate or lifecycle concurrency limits. The first
-  implementation should batch lifecycle requests without unbounded local
-  threading; concurrency can be increased only if measured behavior supports
-  it.
-- UI auth synchronization has a separate networking mutation and can cause a
-  duplicate restart unless it is explicitly integrated with the batch.
+- Services may briefly observe an unavailable dependency because restarts are
+  dispatched without readiness polling.
+- A later pod may be dispatched even if an earlier request failed; Tapis errors
+  stop the local sequence but do not roll back requests already submitted.
+- The action intentionally provides no runtime health signal; operators must
+  inspect the pods separately when needed.
 
 ## Alternatives considered
 
 - **Keep serial start-and-wait behavior:** rejected because it unnecessarily
   adds independent startup times and is the behavior being changed.
-- **Start every pod with unconstrained parallel threads:** rejected initially
-  because Tapis lifecycle rate limits and partial-failure handling are not yet
-  established.
-- **Start GraphQL, then serially start all dependents:** safer but still leaves
-  avoidable sequential startup latency; retained only as a schema-migration
-  fallback if testing reveals a real dependency.
-- **Remove all readiness checks:** rejected because dispatch success does not
-  prove that a pod is running the requested image or serving traffic.
+- **Update complete pod definitions:** rejected because the deploy action should
+  not mutate networking, CORS, auth, resources, or environment variables.
+- **Run migrations and endpoint health checks:** rejected because this action is
+  intentionally limited to image-tag updates and pod restarts.
 
 ## Test plan
 
-- Unit-test a multi-pod restart with a fake Tapis client and record the call
-  sequence. Assert that all restart requests occur before the first readiness
-  polling call.
-- Test aggregate readiness success when pods become available in different
-  orders.
-- Test aggregate timeout/failure reporting for one or more unavailable pods.
-- Test image convergence and new-start-time requirements for restarted pods.
-- Test mixed batches where some pods receive a new immutable SHA image and
-  dependency-only pods retain their current image.
-- Test that a wrong image tag fails verification even when the pod is
-  `AVAILABLE`.
-- Test dependency-only restart batching.
+- Test that image-only updates send only `pod_id` and exact `image`.
+- Test that all restart requests are dispatched without pod lookups or polling.
+- Test that static PostgreSQL and Redis pods are rejected by these paths.
 - Test that normal application deployment does not touch PostgreSQL or Redis.
-- Test explicit PostgreSQL migration behavior remains protected and unchanged.
-- Test UI allowlist synchronization results in one restart, not two.
-- Test schema-change workflow ordering: GraphQL health before migration, then
-  aggregate application rollout verification.
+- Test that the manifest image map still rejects wrong repositories/tags.
 - Run the existing deployment unit-test suite and workflow/static validation.
 
 ## Documentation plan
@@ -232,35 +167,26 @@ image names, environment variables, and external service URLs remain unchanged.
 Update `docs/deploy/mint-dev-pods.md` with:
 
 - static PostgreSQL/Redis policy;
-- batch restart and aggregate readiness semantics;
-- schema-change exception;
-- timeout and partial-failure behavior;
-- the fact that Tapis request dispatch ordering is not readiness ordering.
+- image-only update and restart-only dispatch semantics;
+- the fact that the action does not modify networking or run readiness checks.
 
 ## Rollout/rollback plan
 
-1. Implement the lifecycle split behind the existing deployment script
-   commands, without changing pod IDs, images, or secrets.
+1. Implement the image-only and restart-only paths without changing pod IDs or
+   image names.
 2. Run offline tests using fake Tapis responses.
-3. Exercise a dry-run and inspect the planned application batch; do not touch
-   PostgreSQL or Redis in the normal path.
+3. Inspect the planned application image map; do not touch PostgreSQL or Redis
+   in the normal path.
 4. Test a low-risk UI-only or semantic-search-only develop deployment and
-   confirm all restart requests precede readiness polling.
-5. Test a full application restart and a schema-change deployment separately.
-6. If the batch rollout is unhealthy, revert the deployment-script/workflow
+   confirm only image and restart requests are sent.
+5. If the rollout is unhealthy, revert the deployment-script/workflow
    change and restore prior immutable image tags using the existing rollback
    procedure. Do not delete persistent infrastructure volumes.
 
 ## Open questions
 
-- Should missing application pods be created and started in the same batch as
-  existing-pod restarts, or should creation remain a separate recovery path?
-- Should the first implementation dispatch lifecycle requests sequentially
-  without waits, or use bounded concurrency for the Tapis API calls?
-- Should semantic search be allowed to start before schema migrations finish,
-  relying on its retry loop, or remain the one schema-specific startup gate?
-- Should the workflow perform application health checks for API and Ensemble
-  Manager in addition to the existing GraphQL and semantic-search checks?
+- Should a separate operator workflow provide readiness and health checks when
+  needed, or remain entirely manual?
 
 ## Decisions
 
@@ -305,16 +231,42 @@ Update `docs/deploy/mint-dev-pods.md` with:
   resolution and verification, and the workflow must pass the manifest image
   map rather than relying on a single global tag.
 
+### 2026-09-18 - Narrow deploy action to image update and restart
+
+- **Decision:** The application lifecycle portion of the deploy workflow sends
+  only exact application image updates and restart requests. It does not modify
+  UI networking/CORS, apply migrations or metadata, run endpoint health checks,
+  or poll for pod readiness. A separate strict admin-permission step runs first.
+- **Reason:** The user requested a cleanup that makes deployment responsible
+  only for updating the SHA tag and restarting pods.
+- **Alternatives rejected:** Keeping the broader orchestration in the deploy
+  action, which mixed pod lifecycle with application configuration and runtime
+  verification.
+- **User feedback:** “It should ONLY restart the pods and update the SHA tag.
+  Don't do cors don't do any other checks JUST restart the pods.”
+- **Impact on implementation:** The workflow uses a strict owner-grant path plus
+  image-only and restart-only script paths; database and Redis remain excluded
+  from image and lifecycle operations.
+
+### 2026-09-18 - Ensure wmobley is admin on every pod
+
+- **Decision:** Every deploy run grants `wmobley` Tapis `APPROVEDADMIN` permission on
+  every MINT dev pod and fails if any pod is absent or rejects the grant.
+- **Reason:** The user explicitly requested that `wmobley` be an approved admin
+  on all pods.
+- **Impact on implementation:** The workflow runs the strict owner-grant path
+  before image updates and application restarts; it includes PostgreSQL and
+  Redis.
+
 ## User feedback / decisions
 
 - User clarified that the desired change is startup/restart ordering, not pod
   deletion.
 - User clarified that PostgreSQL and Redis should remain static and outside the
   normal restart batch.
-- User requested batch restart dispatch followed by aggregate availability
-  waiting.
-- User required exact per-service image-tag preservation and verification during
-  the batch restart.
+- User requested batch restart dispatch, then narrowed the deploy action to
+  image-tag updates and restart requests without readiness polling.
+- User required the exact SHA image tag to be applied.
 - User approved implementation on 2026-09-18.
 
 ## Implementation result
@@ -324,10 +276,11 @@ Implemented in `deploy/tapis/register_mint_stack.py`,
 `deploy/tapis/test_register_mint_stack.py`, and
 `docs/deploy/mint-dev-pods.md`.
 
-The implementation keeps image-definition convergence as a precondition before
-dispatching lifecycle requests, then dispatches all selected application starts
-or restarts before a single aggregate readiness wait. It passes the manifest's
-per-service image map through the workflow, preserves current images for
-dependency-only restarts, defers the UI auth restart into the application
-batch, and filters PostgreSQL/Redis out of normal application lifecycle work.
-The explicit PostgreSQL migration path remains serialized and protected.
+The implementation ensures `wmobley` is an admin on every pod, passes the
+manifest's per-service image map through the
+workflow, updates only changed application image fields, dispatches restart
+requests without polling, and filters PostgreSQL/Redis out of normal lifecycle
+work. Owner grants, UI auth synchronization, schema migration/metadata, and
+endpoint health checks were removed from the deploy workflow. The broader
+registration and protected PostgreSQL paths remain available outside this
+workflow.
