@@ -1,5 +1,5 @@
 {
-  "_about": "SUBSIDE WERC OPERA DISP-S1 pipeline modeled for the svo-adapter. SUBSIDE runs the whole WERC analysis as ONE monolithic Tapis job (STAGE=run on subside-werc-opera-analysis; see subside/tapis/workflows/pipelines/werc-opera.yaml). The adapter does NOT decompose that job — it submits it as a single step (run-werc), then chains the ETL/load tail (format-convert + publish + stac-publish) to make the output model-ready and discoverable. So a generated pipeline is: [one Tapis job] -> [adapter ETL transforms as the target needs] -> [catalog register]. Registry is in the shape app.hasura.TRANSFORM_REGISTRY_QUERY returns; `catalog` round-trips via transform_contract.metadata_json.",
+  "_about": "SUBSIDE WERC OPERA DISP-S1 pipeline modeled for the svo-adapter. SUBSIDE runs the whole WERC analysis as ONE monolithic Tapis job (STAGE=run on subside-werc-opera-analysis; see subside/tapis/workflows/pipelines/werc-opera.yaml). The adapter does NOT decompose that job — it submits it as a single step (run-werc), then chains the ETL/load tail (format-convert + publish + stac-publish) to make the output model-ready and discoverable. So a generated pipeline is: [one Tapis job] -> [adapter ETL transforms as the target needs] -> [catalog register]. Registry is in the shape app.hasura.TRANSFORM_REGISTRY_QUERY returns; `catalog` round-trips via transform_contract.metadata_json. The stac-publish piece is shared with H2I; publish is WERC-specific because its contract is geotiff.",
   "_svo": {
     "displacement": "https://www.geoscienceontology.org/svo/svl/variable/land_surface__displacement",
     "displacement_rate": "https://www.geoscienceontology.org/svo/svl/variable/land_surface__displacement_rate"
@@ -60,7 +60,7 @@
       ]
     },
     {
-      "id": "ts-subside-publish",
+      "id": "ts-subside-werc-publish",
       "name": "publish",
       "version": "0.1.1",
       "description": "Emit the unified subside-run-manifest.json describing the run's products.",
@@ -78,7 +78,7 @@
       "id": "ts-subside-stac-publish",
       "name": "stac-publish",
       "version": "0.1.1",
-      "description": "Dual-write the product to the CKAN FileStore + the STAC API (stacmap.publish, the stac-platform backend) as one discoverable Item. The load step; shared by BOTH SUBSIDE pipelines.",
+      "description": "Dual-write the product to the CKAN FileStore + the STAC API (stacmap.publish, the stac-platform backend) as one discoverable Item. Shared by BOTH SUBSIDE pipelines.",
       "transform_type": "catalog_register",
       "is_lossy": false,
       "method": "tapis_function",
