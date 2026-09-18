@@ -25,6 +25,9 @@ import {
 } from '@/lib/thread-datasets';
 import { useAuth } from '@/lib/auth/useAuth';
 import { useToast } from '@/components/ui/use-toast';
+import { DatasetSpatialMap } from '@/components/datasets/DatasetSpatialMap';
+import { boundingBoxesOverlap, type BoundingBox } from '@/lib/geo/bbox';
+import { spatialCoverageBoundingBox } from '@/lib/datasets/spatial';
 import { cn } from '@/lib/utils';
 import { StepShell } from './StepShell';
 import { FilteredByBanner } from './FilteredByBanner';
@@ -256,6 +259,16 @@ export function splitByRegion(datasets: DataCatalogDataset[]): {
   };
 }
 
+/** Keep datasets with no declared extent visible, but hide known non-overlaps. */
+export function matchesSpatialBox(
+  dataset: Pick<DataCatalogDataset, 'spatial_coverage'>,
+  box: BoundingBox | null,
+): boolean {
+  if (!box) return true;
+  const datasetBox = spatialCoverageBoundingBox(dataset.spatial_coverage);
+  return !datasetBox || boundingBoxesOverlap(datasetBox, box);
+}
+
 function coverageBarClass(coverage: DateCoverage, selected: boolean): string {
   const selectedRing = selected ? 'ring-2 ring-blue-500 ring-offset-1' : '';
   switch (coverage) {
@@ -423,6 +436,7 @@ function InputPicker({
   thread,
   variables,
   regionGeometry,
+  spatialBox,
   requested,
   assignedId,
   suggestedDatasetIds,
@@ -431,6 +445,7 @@ function InputPicker({
   thread: Thread;
   variables: string[];
   regionGeometry?: unknown;
+  spatialBox: BoundingBox | null;
   requested: RequestedRange | null;
   assignedId: string | null;
   suggestedDatasetIds?: string[];
@@ -448,15 +463,25 @@ function InputPicker({
     skip: false,
   });
 
-  const { inRegion, noLocation, outside } = useMemo(() => splitByRegion(datasets), [datasets]);
+  const spatialCandidates = useMemo(
+    () => datasets.filter((dataset) => matchesSpatialBox(dataset, spatialBox)),
+    [datasets, spatialBox],
+  );
+  const spatiallyExcludedCount = datasets.length - spatialCandidates.length;
+  const { inRegion, noLocation, outside } = useMemo(
+    () => splitByRegion(spatialCandidates),
+    [spatialCandidates],
+  );
 
   useEffect(() => {
     if (assignedId || !suggestedDatasetIds?.length) return;
-    const suggestion = datasets.find((dataset) => suggestedDatasetIds.includes(dataset.id));
+    const suggestion = spatialCandidates.find((dataset) =>
+      suggestedDatasetIds.includes(dataset.id),
+    );
     if (suggestion) onAssign(suggestion.id, suggestion);
-  }, [assignedId, datasets, onAssign, suggestedDatasetIds]);
+  }, [assignedId, onAssign, spatialCandidates, suggestedDatasetIds]);
 
-  const offered = showOutside ? datasets : [...inRegion, ...noLocation];
+  const offered = showOutside ? spatialCandidates : [...inRegion, ...noLocation];
   const assignedDataset = assignedId ? datasets.find((dataset) => dataset.id === assignedId) : null;
   const candidates =
     assignedDataset && !offered.some((dataset) => dataset.id === assignedDataset.id)
@@ -485,16 +510,26 @@ function InputPicker({
       outside this region
     </button>
   );
+  const spatialFilterNotice = spatiallyExcludedCount > 0 && (
+    <p className="rounded bg-slate-50 px-2 py-1 text-xs text-slate-600">
+      {spatiallyExcludedCount} dataset{spatiallyExcludedCount !== 1 ? 's' : ''} outside the drawn
+      box {spatiallyExcludedCount !== 1 ? 'are' : 'is'} hidden. Datasets without a declared location
+      remain available.
+    </p>
+  );
 
   if (loading) {
     return <span className="text-xs text-gray-400">Loading datasets…</span>;
   }
   if (candidates.length === 0) {
     return (
-      <span className="flex flex-wrap items-center gap-2 text-xs text-gray-400">
-        No matching datasets in this region.
-        {outsideToggle}
-      </span>
+      <div className="space-y-2">
+        <span className="flex flex-wrap items-center gap-2 text-xs text-gray-400">
+          No matching datasets in this region.
+          {outsideToggle}
+        </span>
+        {spatialFilterNotice}
+      </div>
     );
   }
 
@@ -535,10 +570,12 @@ function InputPicker({
 
       {assignedIsPinned && (
         <p className="rounded bg-blue-50 px-2 py-1 text-xs text-blue-800">
-          The selected dataset remains visible even though it does not match the current search or
-          coverage filter.
+          The selected dataset remains visible even though it does not match the current search,
+          coverage, or spatial filter.
         </p>
       )}
+
+      {spatialFilterNotice}
 
       {visibleDatasets.length > 0 ? (
         <DatasetCoverageTimeline
@@ -572,6 +609,7 @@ export function DatasetsStep({
   const { toast } = useToast();
   const perm = getUserPermission(thread.permissions, thread.events, user?.username ?? null);
   const [saving, setSaving] = useState(false);
+  const [spatialBox, setSpatialBox] = useState<BoundingBox | null>(null);
 
   // What the database already holds. Recomputed whenever the thread execution
   // query refetches, so a save is reflected without remounting the step.
@@ -771,6 +809,8 @@ export function DatasetsStep({
     >
       <FilteredByBanner chips={chips} />
 
+      <DatasetSpatialMap value={spatialBox} onChange={setSpatialBox} />
+
       <div className="space-y-4">
         {modelIds.map((modelId) => {
           const model = models[modelId]!;
@@ -826,6 +866,7 @@ export function DatasetsStep({
                         thread={thread}
                         variables={input.variables ?? []}
                         regionGeometry={regionGeometry}
+                        spatialBox={spatialBox}
                         requested={requested}
                         assignedId={current?.datasetId ?? null}
                         suggestedDatasetIds={initialDatasetIds}
