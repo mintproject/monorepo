@@ -49,12 +49,13 @@ Changes only to `.github/**` or `deploy/**` produce a no-op manifest;
 use manual dispatch when a deployment-code change needs to be applied to the
 running stack.
 
-The manifest uses conservative dependency expansion: PostgreSQL changes
-restart PostgreSQL, Hasura, the catalog API, Ensemble Manager, SVO Adapter,
-and semantic search; GraphQL migrations restart Hasura and semantic search;
-root build/dependency files and unknown paths select the full custom stack.
-CI/deployment plumbing changes are intentionally no-op. A dependency-only
-restart never changes that service's image.
+The manifest uses conservative dependency expansion: PostgreSQL source changes
+explicitly select PostgreSQL and restart Hasura, the catalog API, Ensemble
+Manager, SVO Adapter, and semantic search; GraphQL migrations restart Hasura
+and semantic search; root build/dependency files and unknown paths select the
+full application stack but deliberately exclude PostgreSQL. CI/deployment
+plumbing changes are intentionally no-op. A dependency-only restart never
+changes that service's image.
 
 The automated deploy validates that the manifest's source SHA matches the
 completed image workflow before making any Tapis request. A missing, malformed,
@@ -62,9 +63,11 @@ or mismatched manifest fails closed. A no-op manifest skips deployment.
 
 For an existing pod, an image deployment updates the image/runtime definition
 and restarts the pod without resubmitting its `networking` block. This preserves
-the live Tapis CORS, auth, and proxy settings. The UI auth allowlist is the
-explicit exception: its dedicated sync step intentionally updates the UI
-networking definition.
+the live Tapis CORS, auth, and proxy settings. Newly-created GraphQL pods
+submit only the HTTP route and do not submit Tapis CORS settings; Hasura's
+application-level CORS environment setting remains unchanged. The UI auth
+allowlist is the explicit exception: its dedicated sync step intentionally
+updates the UI networking definition.
 
 PostgreSQL image changes use the protected volume-preserving replacement path;
 the pod is replaced only with `--migrate-postgres-image`, and the existing
@@ -152,7 +155,10 @@ This mode only restarts existing pods and refuses to create or update them.
 ## Manual restart
 
 Use GitHub Actions → `Deploy MINT Dev Pods` → `workflow_dispatch` to perform a
-full deployment from the selected ref using the moving `:develop` image tags.
+full application deployment from the selected ref using the moving `:develop`
+image tags. This does not update, restart, or recreate PostgreSQL. PostgreSQL
+is touched only when its image/context is explicitly selected for a protected
+volume-preserving migration.
 
 ## Caveats
 

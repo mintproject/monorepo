@@ -85,7 +85,10 @@ or other unowned paths expand to `deploy_all`.
 - GraphQL image-only changes deploy GraphQL only unless the changed files also
   match the schema/configuration paths.
 - Application service changes deploy only that application service.
-- `deploy_all` preserves the existing dependency order and health gates.
+- `deploy_all` preserves the existing dependency order and health gates for the
+  application stack, but deliberately excludes persistent PostgreSQL. A
+  PostgreSQL image/context change is the only automatic selector for the
+  protected database pod.
 
 `build_services` controls which images receive the new immutable SHA tag.
 `restart_services` controls which pods are restarted. A dependency-only
@@ -151,8 +154,9 @@ migrations, metadata, and health endpoints.
 ## Risks and tradeoffs
 
 - Path classification can miss a shared dependency. An explicit conservative
-  fallback to `deploy_all` is safer than silently omitting a service, while
-  control-only CI/deployment changes are excluded to avoid self-deployments.
+  fallback to `deploy_all` is safer than silently omitting an application
+  service, while persistent PostgreSQL is excluded from that fallback and can
+  only be selected by its explicit image/context path.
 - A workflow-run trigger cannot directly consume job outputs, so the manifest
   artifact must be retained and downloaded with exact-run and SHA checks.
 - Immutable tags improve rollback but require the deploy script to support
@@ -173,7 +177,8 @@ migrations, metadata, and health endpoints.
 - **Recompute changed paths in the deploy workflow:** rejected as the primary
   source because it can disagree with the image workflow's base/head range.
 - **Always deploy the full stack for schema or shared changes:** retained as a
-  conservative fallback, but not for ordinary application changes.
+  conservative fallback for application services, but PostgreSQL remains
+  excluded unless its own image/context changes.
 - **Use only mutable `develop` tags:** retained for compatibility but not for
   selective deployment, where immutable SHA tags are safer.
 
@@ -277,6 +282,37 @@ rollout and debrief are complete.
   tag, storage validation accepts tags from the expected pgvector repository,
   and the workflow passes the protected migration flag only when PostgreSQL is
   selected.
+
+### 2026-09-17 - Keep PostgreSQL out of normal full deploys
+
+- **Decision:** Manual dispatches and conservative `deploy_all` fallbacks must
+  exclude PostgreSQL. PostgreSQL is selected only for an explicit change under
+  `docker/postgres-pgvector/` and then uses the protected migration path.
+- **Reason:** PostgreSQL owns persistent state; routine application deploys
+  must not restart or recreate it. The manual full deploy incorrectly passed
+  PostgreSQL to the migration path because it expected `:develop` while the
+  live pod used an immutable SHA image.
+- **Alternatives rejected:** Treating every full application deploy as an
+  opportunity to reconcile the database image, which caused the failed
+  PostgreSQL replacement observed on 2026-09-17.
+- **User feedback:** The user explicitly directed: “so don't do that.”
+- **Impact on implementation:** Manual workflow manifests and unknown/shared
+  path plans exclude PostgreSQL; focused planner tests cover the protected
+  selection boundary.
+
+### 2026-09-17 - Do not submit Tapis CORS settings during GraphQL creation
+
+- **Decision:** Newly-created GraphQL pod specs include only the Tapis HTTP
+  route. They do not submit `cors_allow_*` settings; existing pod updates omit
+  networking and therefore preserve the live configuration.
+- **Reason:** Tapis requires `APPROVEDADMIN` to submit CORS settings, and the
+  normal deployment identity should not need that permission just to deploy an
+  image. Hasura's application-level CORS environment setting remains separate.
+- **Alternatives rejected:** Requiring every normal deployment to carry the
+  privileged Tapis CORS payload, which blocked recovery when GraphQL was absent.
+- **User feedback:** The user explicitly directed: “Then don't configure cors.”
+- **Impact on implementation:** GraphQL spec generation and regression tests
+  now enforce the route-only Tapis networking payload.
 
 ## User feedback / decisions
 

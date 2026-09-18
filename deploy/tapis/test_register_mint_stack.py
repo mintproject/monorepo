@@ -1,5 +1,6 @@
 """Offline regression checks for database data-loss boundaries."""
 
+import json
 import os
 import unittest
 from types import SimpleNamespace
@@ -48,6 +49,14 @@ class StorageTests(unittest.TestCase):
             ui["environment_variables"]["SEMANTIC_SEARCH_API"],
             "https://mintdevsemanticsearch.pods.portals.tapis.io",
         )
+
+    def test_graphql_tapis_route_does_not_submit_cors_settings(self):
+        graphql = deploy.build_specs("mintproject", "develop", "https://portals.tapis.io")["graphql"]
+        self.assertEqual(
+            graphql["networking"],
+            {"default": {"protocol": "http", "port": 8080}},
+        )
+        self.assertNotIn("cors_allow_origins", graphql["networking"]["default"])
 
     def test_graphql_live_deploy_requires_auth_configuration(self):
         with patch.dict(os.environ, {}, clear=True):
@@ -521,7 +530,13 @@ class LifecycleTests(unittest.TestCase):
     def test_opt_in_recovery_recreates_ui_after_confirmed_delete(self):
         missing = Exception()
         missing.response = SimpleNamespace(status_code=404)
-        live_networking = {"default": {"protocol": "http", "port": 8080, "cors_allow_origins": ["https://mintdevui.example"]}}
+        live_networking = SimpleNamespace(
+            default=SimpleNamespace(
+                protocol="http",
+                port=8080,
+                cors_allow_origins=["https://mintdevui.example"],
+            )
+        )
         existing = dict(self.spec, networking=live_networking)
         t = Mock()
         t.pods.get_pod.side_effect = [existing, missing]
@@ -540,7 +555,17 @@ class LifecycleTests(unittest.TestCase):
             )
         t.pods.delete_pod.assert_called_once_with(pod_id=deploy.PODS["ui"])
         recreated = t.pods.create_pod.call_args.kwargs
-        self.assertEqual(recreated["networking"], live_networking)
+        self.assertEqual(
+            recreated["networking"],
+            {
+                "default": {
+                    "protocol": "http",
+                    "port": 8080,
+                    "cors_allow_origins": ["https://mintdevui.example"],
+                }
+            },
+        )
+        json.dumps(recreated)
         t.pods.restart_pod.assert_not_called()
 
     def test_opt_in_recovery_cannot_recreate_postgres(self):
@@ -558,6 +583,23 @@ class LifecycleTests(unittest.TestCase):
                     restart=False,
                 )
         self.assertIn("protected pod", str(ctx.exception))
+        t.pods.delete_pod.assert_not_called()
+        t.pods.create_pod.assert_not_called()
+
+    def test_recovery_validates_networking_before_delete(self):
+        existing = dict(self.spec, networking=object())
+        t = Mock()
+        t.pods.get_pod.return_value = existing
+        with patch.object(deploy, "wait_for_pod_image", side_effect=deploy.PodImageMismatchError("stale")):
+            with self.assertRaisesRegex(RuntimeError, "non-JSON networking data"):
+                deploy.upsert_pod(
+                    t,
+                    self.spec,
+                    recreate=False,
+                    recreate_on_image_mismatch=True,
+                    start=False,
+                    restart=False,
+                )
         t.pods.delete_pod.assert_not_called()
         t.pods.create_pod.assert_not_called()
 

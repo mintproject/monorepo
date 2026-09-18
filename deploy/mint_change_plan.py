@@ -19,6 +19,9 @@ SERVICE_IMAGES = {
     "semantic_search": "semantic-search",
 }
 SERVICE_ORDER = ("postgres", "graphql", "api", "ensemble", "svo", "semantic_search", "ui")
+# PostgreSQL is persistent state, not part of a normal full application deploy.
+# It is selected only when its own image/context changes.
+DEPLOY_ALL_SERVICES = tuple(service for service in SERVICE_ORDER if service != "postgres")
 
 SERVICE_PREFIXES = (
     ("graphql", "graphql_engine/"),
@@ -95,8 +98,8 @@ def make_plan(paths: Iterable[str], source_sha: str | None = None) -> dict[str, 
             deploy_all = True
 
     if deploy_all:
-        build = set(SERVICE_ORDER)
-        restart = set(SERVICE_ORDER)
+        build = set(DEPLOY_ALL_SERVICES)
+        restart = set(DEPLOY_ALL_SERVICES)
     else:
         restart = set(build)
         if "postgres" in build:

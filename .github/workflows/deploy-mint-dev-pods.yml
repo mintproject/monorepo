@@ -59,7 +59,10 @@ jobs:
           mkdir -p manifest
           python - <<'PY'
           import json
-          services = ["postgres", "graphql", "api", "ensemble", "svo", "semantic_search", "ui"]
+          # PostgreSQL is persistent state. A manual application deploy must
+          # not migrate or restart it; database image changes are selected
+          # only by an explicit postgres source change in the manifest.
+          services = ["graphql", "api", "ensemble", "svo", "semantic_search", "ui"]
           images = {
               service: {
                   "image": f"ghcr.io/mintproject/{name}",
@@ -67,7 +70,6 @@ jobs:
                   "image_ref": f"ghcr.io/mintproject/{name}:develop",
               }
               for service, name in {
-                  "postgres": "postgres-pgvector",
                   "graphql": "graphql-engine",
                   "api": "model-catalog-api",
                   "ensemble": "ensemble-manager",

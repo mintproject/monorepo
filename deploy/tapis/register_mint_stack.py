@@ -216,25 +216,6 @@ def build_specs(owner: str, tag: str, base_url: str) -> dict[str, dict[str, Any]
     postgres_image = f"ghcr.io/{owner}/postgres-pgvector:{tag}"
     graphql_endpoint = f"{urls['graphql']}/v1/graphql"
     admin_secret = _admin_secret()
-    browser_cors = {
-        "cors_allow_origins": [
-            "https://mintdevui.pods.portals.tapis.io",
-            "https://*.tapis.io",
-            "http://localhost:3000",
-        ],
-        "cors_allow_methods": ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"],
-        "cors_allow_headers": [
-            "Authorization",
-            "Content-Type",
-            "X-Hasura-Role",
-            "X-Hasura-User-Id",
-            "X-Hasura-Allowed-Roles",
-            "X-Hasura-Admin-Secret",
-        ],
-        "cors_allow_credentials": False,
-        "cors_max_age": 100,
-    }
-
     specs: dict[str, dict[str, Any]] = {
         "postgres": {
             "pod_id": PODS["postgres"],
@@ -268,7 +249,9 @@ def build_specs(owner: str, tag: str, base_url: str) -> dict[str, dict[str, Any]
             "pod_id": PODS["graphql"],
             "image": f"ghcr.io/{owner}/graphql-engine:{tag}",
             "description": "MINT dev Hasura GraphQL Engine",
-            "networking": {"default": {"protocol": "http", "port": 8080, **browser_cors}},
+            # Keep the Tapis route only. CORS is already configured on the
+            # live pod and requires APPROVEDADMIN when submitted to Tapis.
+            "networking": {"default": {"protocol": "http", "port": 8080}},
             "resources": {"cpu_request": 250, "cpu_limit": 1000, "mem_request": 512, "mem_limit": 2048},
             "environment_variables": {
                 "HASURA_GRAPHQL_DATABASE_URL": _database_url(base_url),
@@ -406,6 +389,14 @@ def resolve_restart_pods(selected: list[str], *, restart: bool, restart_pods: st
 
 def _field(value: Any, key: str, default: Any = None) -> Any:
     return value.get(key, default) if isinstance(value, dict) else getattr(value, key, default)
+
+
+def _plain_data(value: Any) -> Any:
+    """Convert SDK response objects into values accepted by JSON request bodies."""
+    try:
+        return json.loads(json.dumps(value, default=vars))
+    except (TypeError, ValueError) as exc:
+        raise RuntimeError("Tapis returned non-JSON networking data; refusing to recreate pod") from exc
 
 
 def _get_or_missing(operation: Any, **kwargs: Any) -> Any:
@@ -681,10 +672,6 @@ def _recreate_pod(
         raise RuntimeError(f"[{pid}] image mismatch; automatic recreation is disabled for this protected pod")
     if pid == PODS["postgres"]:
         raise RuntimeError("PostgreSQL recreation is disabled; image mismatch requires deliberate recovery")
-    print(f"  [{pid}] deleting before image-mismatch recovery…")
-    t.pods.delete_pod(pod_id=pid)
-    wait_for_pod_absent(t, pid)
-    print(f"  [{pid}] creating with requested image…")
     recreate_spec = dict(spec)
     # Tapis may remove the old pod while processing UpdatePod before reporting
     # an image mismatch. Recreate with the networking definition that was
@@ -693,9 +680,15 @@ def _recreate_pod(
     if networking is None:
         recreate_spec.pop("networking", None)
     else:
-        recreate_spec["networking"] = networking
+        recreate_spec["networking"] = _plain_data(networking)
     if environment_variables is not None:
         recreate_spec["environment_variables"] = environment_variables
+    # Validate the request before deleting the old pod so a malformed SDK
+    # response cannot leave a stateless service unavailable.
+    print(f"  [{pid}] deleting before image-mismatch recovery…")
+    t.pods.delete_pod(pod_id=pid)
+    wait_for_pod_absent(t, pid)
+    print(f"  [{pid}] creating with requested image…")
     t.pods.create_pod(**recreate_spec)
     if owners:
         set_pod_owners(t, pid, owners)

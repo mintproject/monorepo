@@ -1,6 +1,6 @@
 import unittest
 
-from mint_change_plan import SERVICE_ORDER, make_plan
+from mint_change_plan import DEPLOY_ALL_SERVICES, make_plan
 
 
 class MintChangePlanTests(unittest.TestCase):
@@ -42,13 +42,15 @@ class MintChangePlanTests(unittest.TestCase):
             ["postgres", "graphql", "api", "ensemble", "svo", "semantic_search"],
         )
 
-    def test_shared_and_unknown_paths_fail_closed_to_full_stack(self):
+    def test_shared_and_unknown_paths_fail_closed_to_full_application_stack(self):
         for path in ("Makefile", "unknown.txt"):
             with self.subTest(path=path):
                 plan = make_plan([path])
                 self.assertTrue(plan["deploy_all"])
-                self.assertEqual(plan["build_services"], list(SERVICE_ORDER))
-                self.assertEqual(plan["restart_services"], list(SERVICE_ORDER))
+                self.assertEqual(plan["build_services"], list(DEPLOY_ALL_SERVICES))
+                self.assertEqual(plan["restart_services"], list(DEPLOY_ALL_SERVICES))
+                self.assertNotIn("postgres", plan["build_services"])
+                self.assertNotIn("postgres", plan["restart_services"])
 
     def test_ci_and_deployment_plumbing_changes_are_noop(self):
         for path in (".github/workflows/build.yml", "deploy/tapis/register_mint_stack.py", "deploy/mint_change_plan.py", "deploy/test_mint_change_plan.py"):

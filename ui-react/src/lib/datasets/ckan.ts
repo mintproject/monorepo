@@ -312,6 +312,35 @@ export function resourceStandardVariables(row: CkanResource): string[] {
   return parts.map((v) => v.trim()).filter(Boolean);
 }
 
+/** Normalize SVO identifiers/labels for exact cross-service comparison. */
+export function canonicalStandardVariable(value: string): string {
+  let decoded = value.trim();
+  try {
+    decoded = decodeURIComponent(decoded);
+  } catch {
+    // Keep a malformed annotation comparable instead of making the whole listing fail.
+  }
+  const tail = decoded.split('/').pop() ?? decoded;
+  return tail.trim().toLowerCase();
+}
+
+/** Exact annotation match after normalizing URI-vs-label representations. */
+export function resourceMatchesCanonicalVariables(row: CkanResource, variables: string[]): boolean {
+  if (!variables.length) return true;
+  const wanted = new Set(variables.map(canonicalStandardVariable).filter(Boolean));
+  return resourceStandardVariables(row).some((v) => wanted.has(canonicalStandardVariable(v)));
+}
+
+/** Keep packages carrying one of the exact canonical SVO annotations. */
+export function packagesMatchingCanonicalVariables(
+  packages: CkanPackage[],
+  variables: string[],
+): CkanPackage[] {
+  const wanted = variables.map(canonicalStandardVariable).filter(Boolean);
+  if (!wanted.length) return packages;
+  return narrowToMatchingResources(packages, (r) => resourceMatchesCanonicalVariables(r, wanted));
+}
+
 /** Does this resource carry any of the requested standard variables? */
 export function resourceMatchesVariables(row: CkanResource, variables: string[]): boolean {
   if (!variables.length) return true;

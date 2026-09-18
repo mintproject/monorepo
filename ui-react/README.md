@@ -112,7 +112,7 @@ is treated as unset):
 | `AUTH_PROVIDER` | `tapis` |
 | `GOOGLE_MAPS_KEY` | (shared development key) |
 | `DATA_CATALOG_API` | `https://ckan.tacc.utexas.edu` (CKAN REST API base, no `/api` suffix) |
-| `DATA_CATALOG_BROWSE_URL` | `https://ckan.tacc.utexas.edu` (human-browsable catalog UI, iframe src) |
+| `DATA_CATALOG_BROWSE_URL` | `https://ckan.tacc.utexas.edu` (legacy human-browsable catalog URL) |
 | `SEMANTIC_SEARCH_API` | `http://localhost:8091` (standalone semantic-search service base; the UI appends `/search`) |
 | `ENSEMBLE_MANAGER_API` | omitted when unset |
 | `MODEL_CATALOG_API` | `http://api.models.mint.local/v2.0.0` (version prefix included; serves the Tapis application proxy) |
@@ -128,8 +128,9 @@ Free-text searches for standard variables use the configured semantic-search
 service at `/search?target=svo`; model browse and model-selection searches use
 `target=model_configuration`. Region, category, output-variable, scope, and
 indicator selections remain hard filters. If the service is unavailable, the
-UI falls back to its existing Apollo/local ranking paths. Unit lookup remains
-local and exact, and dataset search continues to use CKAN.
+dataset browse page falls back to CKAN name search. Dataset results are then
+matched against exact MINT Standard Variable annotations on CKAN resources.
+Unit lookup remains local and exact.
 
 Because the entrypoint writes into the nginx document root, the container does
 not support a read-only root filesystem as-is.
