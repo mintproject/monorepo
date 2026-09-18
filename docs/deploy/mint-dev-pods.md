@@ -67,7 +67,10 @@ the live Tapis CORS, auth, and proxy settings. Newly-created GraphQL pods
 submit only the HTTP route and do not submit Tapis CORS settings; Hasura's
 application-level CORS environment setting remains unchanged. The UI auth
 allowlist is the explicit exception: its dedicated sync step intentionally
-updates the UI networking definition.
+updates the UI networking definition and requests a UI pod restart so the
+running proxy uses the new allowlist. When the UI image is also being built,
+the image update leaves the UI restart to this sync step so it is restarted
+only once.
 
 PostgreSQL image changes use the protected volume-preserving replacement path;
 the pod is replaced only with `--migrate-postgres-image`, and the existing

@@ -194,14 +194,6 @@ jobs:
           set -euo pipefail
           python deploy/tapis/register_mint_stack.py --set-owners-only --pods "$RESTART_SERVICES"
 
-      - name: Sync the UI auth allowlist when UI is affected
-        if: contains(needs.plan.outputs.restart_services, 'ui')
-        env:
-          TAPIS_USERNAME: ${{ secrets.TAPIS_USERNAME }}
-          TAPIS_ID: ${{ secrets.TAPIS_ID }}
-          TAPIS_PASSWORD: ${{ secrets.TAPIS_PASSWORD }}
-        run: python deploy/tapis/register_mint_stack.py --sync-ui-auth
-
       - name: Update and restart changed image pods
         if: needs.plan.outputs.build_services != ''
         env:
@@ -221,12 +213,25 @@ jobs:
           if [[ ",${BUILD_SERVICES}," == *",postgres,"* ]]; then
             EXTRA_ARGS+=(--migrate-postgres-image)
           fi
+          RESTART_BUILD_SERVICES="$(python - "$BUILD_SERVICES" <<'PY'
+          import sys
+          print(",".join(service for service in sys.argv[1].split(",") if service and service != "ui"))
+          PY
+          )"
           python deploy/tapis/register_mint_stack.py \
             --image-tag "$IMAGE_TAG" \
             --pods "$BUILD_SERVICES" \
-            --restart-pods "$BUILD_SERVICES" \
+            --restart-pods "$RESTART_BUILD_SERVICES" \
             --recreate-on-image-mismatch \
             "${EXTRA_ARGS[@]}"
+
+      - name: Sync and restart the UI auth allowlist when UI is affected
+        if: contains(needs.plan.outputs.restart_services, 'ui')
+        env:
+          TAPIS_USERNAME: ${{ secrets.TAPIS_USERNAME }}
+          TAPIS_ID: ${{ secrets.TAPIS_ID }}
+          TAPIS_PASSWORD: ${{ secrets.TAPIS_PASSWORD }}
+        run: python deploy/tapis/register_mint_stack.py --sync-ui-auth
 
       - name: Apply Hasura migrations for schema changes
         if: needs.plan.outputs.schema_changed == 'true'

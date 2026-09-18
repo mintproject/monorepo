@@ -713,9 +713,17 @@ class UiAuthSyncTests(unittest.TestCase):
         return {"networking": {"default": {"tapis_auth_allowed_users": list(self.allowed)}}}
 
     def test_sync_keeps_the_running_image(self):
-        running = {"image": "ghcr.io/mintproject/ui:sha-old"}
+        running = {
+            "image": "ghcr.io/mintproject/ui:sha-old",
+            "status_container": {"start_time": "old-start"},
+        }
+        ready = {
+            "image": "ghcr.io/mintproject/ui:sha-old",
+            "status": "AVAILABLE",
+            "status_container": {"start_time": "new-start"},
+        }
         t = Mock()
-        t.pods.get_pod.side_effect = [running, self._converged()]
+        t.pods.get_pod.side_effect = [running, self._converged(), ready]
         rc = deploy.sync_ui_auth(t, self.spec)
         self.assertEqual(rc, 0)
         sent = t.pods.update_pod.call_args.kwargs
@@ -724,11 +732,21 @@ class UiAuthSyncTests(unittest.TestCase):
             sent["networking"]["default"]["tapis_auth_allowed_users"], self.allowed
         )
 
-    def test_sync_never_starts_or_restarts_the_pod(self):
+    def test_sync_requests_restart_after_allowlist_update(self):
+        running = {
+            "image": "ghcr.io/mintproject/ui:sha-old",
+            "status_container": {"start_time": "old-start"},
+        }
+        ready = {
+            "image": "ghcr.io/mintproject/ui:sha-old",
+            "status": "AVAILABLE",
+            "status_container": {"start_time": "new-start"},
+        }
         t = Mock()
-        t.pods.get_pod.side_effect = [{"image": "ghcr.io/mintproject/ui:sha-old"}, self._converged()]
-        deploy.sync_ui_auth(t, self.spec)
-        t.pods.restart_pod.assert_not_called()
+        t.pods.get_pod.side_effect = [running, self._converged(), ready]
+        with patch.object(deploy.time, "sleep"):
+            deploy.sync_ui_auth(t, self.spec)
+        t.pods.restart_pod.assert_called_once_with(pod_id=deploy.PODS["ui"])
         t.pods.start_pod.assert_not_called()
         t.pods.create_pod.assert_not_called()
         t.pods.delete_pod.assert_not_called()
@@ -754,7 +772,10 @@ class UiAuthSyncTests(unittest.TestCase):
     def test_sync_is_fail_closed_when_the_allowlist_does_not_converge(self):
         stale = {"networking": {"default": {"tapis_auth_allowed_users": ["wmobley"]}}}
         t = Mock()
-        t.pods.get_pod.side_effect = [{"image": "ghcr.io/mintproject/ui:sha-old"}, stale]
+        t.pods.get_pod.side_effect = [
+            {"image": "ghcr.io/mintproject/ui:sha-old", "status_container": {"start_time": "old-start"}},
+            stale,
+        ]
         with self.assertRaises(RuntimeError) as ctx:
             deploy.sync_ui_auth(t, self.spec)
         self.assertIn("did not converge", str(ctx.exception))

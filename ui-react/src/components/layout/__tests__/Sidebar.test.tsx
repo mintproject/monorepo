@@ -44,6 +44,18 @@ describe('Sidebar', () => {
       expect(screen.getByRole('link', { name: /browse models/i })).toBeInTheDocument();
     });
 
+    it('uses Browse as the only Datasets navigation entry', async () => {
+      renderSidebar(false);
+      await userEvent.click(screen.getByRole('button', { name: /datasets/i }));
+
+      expect(screen.getByRole('link', { name: 'Browse' })).toHaveAttribute(
+        'href',
+        '/datasets/browse',
+      );
+      expect(screen.queryByRole('link', { name: 'Overview' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('link', { name: 'Search' })).not.toBeInTheDocument();
+    });
+
     it('renders the goal-based group captions', () => {
       renderSidebar(false);
       expect(screen.getByText('Explore')).toBeInTheDocument();
