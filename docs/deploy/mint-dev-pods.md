@@ -60,12 +60,27 @@ full application stack but deliberately exclude PostgreSQL. CI/deployment
 plumbing changes are intentionally no-op. A dependency-only restart never
 changes that service's image.
 
+Normal application rollouts leave PostgreSQL and Redis alone. The deployment
+first updates changed application pod definitions with the manifest's exact
+per-service image references, without starting them. It then dispatches starts
+or restarts for the complete affected application set—GraphQL, API, Ensemble
+Manager, SVO, semantic search, and UI—before waiting for readiness. The final
+wait verifies each pod's own expected image, `AVAILABLE` status, and a new
+container start time when applicable. Dependency-only pods retain their
+currently running image; they are never forced onto the changed service's tag.
+
+The explicit PostgreSQL image-migration path remains separate and protected.
+It may wait for PostgreSQL SQL readiness before the application batch is
+dispatched. This is the exception to the normal static-infrastructure policy.
+
 The automated deploy validates that the manifest's source SHA matches the
 completed image workflow before making any Tapis request. A missing, malformed,
 or mismatched manifest fails closed. A no-op manifest skips deployment.
 
 For an existing pod, an image deployment updates the image/runtime definition
-and restarts the pod without resubmitting its `networking` block. This preserves
+without immediately starting or restarting it, then the application batch
+dispatches its lifecycle request without resubmitting its `networking` block.
+This preserves
 the live Tapis CORS, auth, and proxy settings. Newly-created GraphQL pods
 submit only the HTTP route and do not submit Tapis CORS settings; Hasura's
 application-level CORS environment setting remains unchanged. The UI auth
@@ -157,6 +172,8 @@ python deploy/tapis/register_mint_stack.py \
 ```
 
 This mode only restarts existing pods and refuses to create or update them.
+It dispatches all selected restart requests first, then waits for the selected
+set to become available.
 
 ## Manual restart
 

@@ -41,6 +41,15 @@ PODS = {
 
 ORDER = ["postgres", "redis", "graphql", "api", "ensemble", "svo", "semantic_search", "ui"]
 RESTART_ONLY_PODS = ("graphql", "api", "ensemble", "svo", "semantic_search", "ui")
+IMAGE_NAMES = {
+    "postgres": "postgres-pgvector",
+    "graphql": "graphql-engine",
+    "api": "model-catalog-api",
+    "ensemble": "ensemble-manager",
+    "svo": "svo-adapter",
+    "semantic_search": "semantic-search",
+    "ui": "ui",
+}
 
 # Recreating a pod is destructive. Only stateless application services may use
 # this fallback; Redis queue state and PostgreSQL data are protected.
@@ -211,15 +220,48 @@ def _ensemble_config(urls: dict[str, str]) -> str:
     return json.dumps(config, separators=(",", ":"))
 
 
-def build_specs(owner: str, tag: str, base_url: str) -> dict[str, dict[str, Any]]:
+def parse_image_map(value: str, owner: str) -> dict[str, str]:
+    if not value:
+        return {}
+    try:
+        raw = json.loads(value)
+    except json.JSONDecodeError as exc:
+        raise SystemExit(f"invalid image map: {exc}") from exc
+    if not isinstance(raw, dict):
+        raise SystemExit("image map must be an object")
+    result: dict[str, str] = {}
+    for service, entry in raw.items():
+        if service not in PODS:
+            raise SystemExit(f"image map contains an invalid service: {service}")
+        image = entry.get("image_ref") if isinstance(entry, dict) else entry
+        expected_prefix = f"ghcr.io/{owner}/{IMAGE_NAMES[service]}:"
+        if not isinstance(image, str) or not image.startswith(expected_prefix):
+            raise SystemExit(f"image map has an invalid image for {service}")
+        result[service] = image
+    return result
+
+
+def build_specs(
+    owner: str,
+    tag: str,
+    base_url: str,
+    image_overrides: dict[str, str] | None = None,
+) -> dict[str, dict[str, Any]]:
+    image_overrides = image_overrides or {}
+
+    def image(service: str) -> str:
+        return image_overrides.get(
+            service,
+            f"ghcr.io/{owner}/{IMAGE_NAMES[service]}:{tag}",
+        )
+
     urls = pod_urls(base_url)
-    postgres_image = f"ghcr.io/{owner}/postgres-pgvector:{tag}"
     graphql_endpoint = f"{urls['graphql']}/v1/graphql"
     admin_secret = _admin_secret()
     specs: dict[str, dict[str, Any]] = {
         "postgres": {
             "pod_id": PODS["postgres"],
-            "image": postgres_image,
+            "image": image("postgres"),
             "template": POSTGRES_TEMPLATE,
             "description": "MINT dev PostgreSQL database",
             "networking": {"default": {"protocol": "postgres", "port": 5432}},
@@ -247,7 +289,7 @@ def build_specs(owner: str, tag: str, base_url: str) -> dict[str, dict[str, Any]
         },
         "graphql": {
             "pod_id": PODS["graphql"],
-            "image": f"ghcr.io/{owner}/graphql-engine:{tag}",
+            "image": image("graphql"),
             "description": "MINT dev Hasura GraphQL Engine",
             # Keep the Tapis route only. CORS is already configured on the
             # live pod and requires APPROVEDADMIN when submitted to Tapis.
@@ -269,7 +311,7 @@ def build_specs(owner: str, tag: str, base_url: str) -> dict[str, dict[str, Any]
         },
         "api": {
             "pod_id": PODS["api"],
-            "image": f"ghcr.io/{owner}/model-catalog-api:{tag}",
+            "image": image("api"),
             "description": "MINT dev Model Catalog API",
             "networking": {"default": {"protocol": "http", "port": 3000}},
             "resources": {"cpu_request": 250, "cpu_limit": 1000, "mem_request": 512, "mem_limit": 2048},
@@ -283,7 +325,7 @@ def build_specs(owner: str, tag: str, base_url: str) -> dict[str, dict[str, Any]
         },
         "ensemble": {
             "pod_id": PODS["ensemble"],
-            "image": f"ghcr.io/{owner}/ensemble-manager:{tag}",
+            "image": image("ensemble"),
             "description": "MINT dev Ensemble Manager",
             "networking": {"default": {"protocol": "http", "port": 3000}},
             "resources": {"cpu_request": 500, "cpu_limit": 2000, "mem_request": 1024, "mem_limit": 4096},
@@ -298,7 +340,7 @@ def build_specs(owner: str, tag: str, base_url: str) -> dict[str, dict[str, Any]
         },
         "svo": {
             "pod_id": PODS["svo"],
-            "image": f"ghcr.io/{owner}/svo-adapter:{tag}",
+            "image": image("svo"),
             "description": "MINT dev SVO Adapter service",
             "networking": {"default": {"protocol": "http", "port": 8090}},
             "resources": {"cpu_request": 250, "cpu_limit": 1000, "mem_request": 512, "mem_limit": 2048},
@@ -318,7 +360,7 @@ def build_specs(owner: str, tag: str, base_url: str) -> dict[str, dict[str, Any]
         },
         "semantic_search": {
             "pod_id": PODS["semantic_search"],
-            "image": f"ghcr.io/{owner}/semantic-search:{tag}",
+            "image": image("semantic_search"),
             "description": "MINT dev semantic search service",
             "networking": {"default": {"protocol": "http", "port": 8091}},
             "resources": {"cpu_request": 500, "cpu_limit": 2000, "mem_request": 1024, "mem_limit": 4096},
@@ -331,7 +373,7 @@ def build_specs(owner: str, tag: str, base_url: str) -> dict[str, dict[str, Any]
         },
         "ui": {
             "pod_id": PODS["ui"],
-            "image": f"ghcr.io/{owner}/ui:{tag}",
+            "image": image("ui"),
             "description": "MINT dev React UI",
             "networking": {
                 "default": {
@@ -507,6 +549,48 @@ def wait_for_pod_restart(
             return pod
         time.sleep(min(5, max(0, deadline - time.monotonic())))
     raise RuntimeError(f"[{pod_id}] did not become AVAILABLE on the requested image after restart")
+
+
+def wait_for_pod_batch(
+    t: Any,
+    targets: list[dict[str, Any]],
+    *,
+    timeout: float = POD_RESTART_TIMEOUT,
+) -> None:
+    """Wait for every dispatched application lifecycle operation as one batch."""
+    pending = {target["pod_id"]: target for target in targets}
+    observed: dict[str, dict[str, Any]] = {}
+    deadline = time.monotonic() + timeout
+    while pending and time.monotonic() < deadline:
+        for pod_id, target in list(pending.items()):
+            try:
+                pod = _pod_lookup_for_verification(t, pod_id)
+            except TransientPodLookupError:
+                continue
+            started = _field(_field(pod, "status_container", {}), "start_time")
+            observed[pod_id] = {
+                "status": _field(pod, "status"),
+                "image": _field(pod, "image"),
+                "start_time": started,
+            }
+            if (
+                _field(pod, "status") == "AVAILABLE"
+                and _field(pod, "image") == target["expected_image"]
+                and (
+                    not target.get("previous_start")
+                    or (started and started != target["previous_start"])
+                )
+            ):
+                del pending[pod_id]
+        if pending:
+            time.sleep(min(5, max(0, deadline - time.monotonic())))
+
+    if pending:
+        details = "; ".join(
+            f"{pod_id}: {observed.get(pod_id, {'status': 'unobserved'})}"
+            for pod_id in pending
+        )
+        raise RuntimeError(f"application pod batch did not become ready: {details}")
 
 
 def check_postgres_storage(pod: Any, *, recreate: bool, expected_image: str | None = None) -> None:
@@ -818,8 +902,8 @@ def upsert_pod(
     wait_for_pod_image(t, pid, spec["image"])
 
 
-def sync_ui_auth(t: Any, spec: dict[str, Any]) -> int:
-    """Push the UI auth allowlist and restart the pod with its current image.
+def sync_ui_auth(t: Any, spec: dict[str, Any], *, restart: bool = True) -> int:
+    """Push the UI auth allowlist and optionally restart the pod.
 
     tapis_auth_allowed_users lives in the pod definition, so only an update
     applies it. The UI must restart before the running proxy can use the new
@@ -833,7 +917,7 @@ def sync_ui_auth(t: Any, spec: dict[str, Any]) -> int:
     if not current_image:
         raise RuntimeError(f"[{pid}] reports no image; refusing to rewrite the definition")
     previous_start = _field(_field(existing, "status_container", {}), "start_time")
-    if not previous_start:
+    if restart and not previous_start:
         raise RuntimeError(f"[{pid}] reports no container start time; refusing to restart")
 
     allowed = spec["networking"]["default"]["tapis_auth_allowed_users"]
@@ -855,32 +939,62 @@ def sync_ui_auth(t: Any, spec: dict[str, Any]) -> int:
             f"[{pid}] allowlist did not converge; missing: " + ", ".join(missing)
         )
     print(f"  [{pid}] allowlist applied: {', '.join(applied)}")
+    if not restart:
+        return 0
     t.pods.restart_pod(pod_id=pid)
     print(f"  [{pid}] restart requested")
     wait_for_pod_restart(t, pid, current_image, previous_start)
     return 0
 
 
-def restart_existing_pods(t: Any, selected: list[str]) -> None:
-    """Restart only already-existing application pods; never mutate definitions."""
+def restart_existing_pods(
+    t: Any,
+    selected: list[str],
+    expected_images: dict[str, str] | None = None,
+) -> None:
+    """Dispatch all application lifecycle requests, then wait for the batch."""
     invalid = [key for key in selected if key not in RESTART_ONLY_PODS]
     if invalid:
         raise RuntimeError(
             "Restart-only mode is limited to: " + ", ".join(RESTART_ONLY_PODS)
         )
+    targets = []
+    expected_images = expected_images or {}
     for key in selected:
         pid = PODS[key]
         pod = _get_or_missing(t.pods.get_pod, pod_id=pid)
         if pod is None:
             raise RuntimeError(f"[{pid}] was not found; restart-only mode will not create it")
         previous_start = _field(_field(pod, "status_container", {}), "start_time")
-        expected_image = _field(pod, "image")
-        if not previous_start or not expected_image:
-            raise RuntimeError(f"[{pid}] is missing lifecycle or image data; restart stopped")
-        print(f"  [{pid}] restarting existing pod…")
-        t.pods.restart_pod(pod_id=pid)
-        print(f"  [{pid}] restart requested")
-        wait_for_pod_restart(t, pid, expected_image, previous_start)
+        current_image = _field(pod, "image")
+        expected_image = expected_images.get(key, current_image)
+        if not expected_image:
+            raise RuntimeError(f"[{pid}] is missing image data; restart stopped")
+        if current_image != expected_image:
+            raise PodImageMismatchError(
+                f"[{pid}] image changed before restart; expected {expected_image!r}, observed {current_image!r}"
+            )
+        targets.append(
+            {
+                "pod_id": pid,
+                "expected_image": expected_image,
+                "previous_start": previous_start,
+            }
+        )
+
+    # Dispatch every lifecycle request before beginning readiness polling.
+    for target in targets:
+        pid = target["pod_id"]
+        if target["previous_start"]:
+            print(f"  [{pid}] restarting existing pod…")
+            t.pods.restart_pod(pod_id=pid)
+            print(f"  [{pid}] restart requested")
+        else:
+            print(f"  [{pid}] starting existing pod…")
+            t.pods.start_pod(pod_id=pid)
+            print(f"  [{pid}] start requested")
+
+    wait_for_pod_batch(t, targets)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -888,6 +1002,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--base-url", default=_env("TAPIS_BASE_URL", "https://portals.tapis.io"))
     parser.add_argument("--owner", default=_env("GHCR_OWNER", "mintproject"))
     parser.add_argument("--image-tag", default=_env("IMAGE_TAG", "latest"))
+    parser.add_argument(
+        "--image-map",
+        default="",
+        help="JSON object of service image references from the deploy manifest",
+    )
     parser.add_argument("--pods", default="all", help="all or comma-separated: postgres,redis,graphql,api,ensemble,svo,semantic_search,ui")
     parser.add_argument("--owners", default="wmobley,mosorio", help="comma-separated list of pod owners (ADMIN permission)")
     parser.add_argument("--recreate", action="store_true")
@@ -919,6 +1038,11 @@ def main(argv: list[str] | None = None) -> int:
         "--sync-ui-auth",
         action="store_true",
         help="push the UI auth allowlist and restart the pod with its current image",
+    )
+    parser.add_argument(
+        "--defer-ui-restart",
+        action="store_true",
+        help="apply the UI auth allowlist without restarting; a later batch handles it",
     )
     parser.add_argument("--no-start", action="store_true")
     parser.add_argument("--dry-run", action="store_true")
@@ -955,8 +1079,10 @@ def main(argv: list[str] | None = None) -> int:
         or args.dry_run
     ):
         parser.error("--sync-ui-auth cannot be combined with lifecycle or dry-run options")
-    if args.no_start and (args.restart or args.restart_pods is not None or args.recreate_on_image_mismatch):
-        parser.error("--no-start cannot be combined with --restart, --restart-pods, or --recreate-on-image-mismatch")
+    if args.defer_ui_restart and not args.sync_ui_auth:
+        parser.error("--defer-ui-restart requires --sync-ui-auth")
+    if args.no_start and (args.restart or args.restart_pods is not None):
+        parser.error("--no-start cannot be combined with --restart or --restart-pods")
     if args.recreate and args.recreate_on_image_mismatch:
         parser.error("--recreate and --recreate-on-image-mismatch cannot be combined")
 
@@ -979,7 +1105,8 @@ def main(argv: list[str] | None = None) -> int:
         restart=args.restart,
         restart_pods=args.restart_pods,
     )
-    specs = build_specs(args.owner, args.image_tag, args.base_url)
+    image_overrides = parse_image_map(args.image_map, args.owner)
+    specs = build_specs(args.owner, args.image_tag, args.base_url, image_overrides)
     urls = specs.pop("_urls")
 
     if args.dry_run:
@@ -1008,7 +1135,7 @@ def main(argv: list[str] | None = None) -> int:
     t.get_tokens()
 
     if args.restart_existing_pods is not None:
-        restart_existing_pods(t, selected)
+        restart_existing_pods(t, selected, image_overrides)
         print("\nMINT dev application pods restarted:")
         for key in selected:
             print(f"  {key:8} {PODS[key]}")
@@ -1023,7 +1150,7 @@ def main(argv: list[str] | None = None) -> int:
         return grant_pod_owners(t, selected, owners)
 
     if args.sync_ui_auth:
-        return sync_ui_auth(t, specs["ui"])
+        return sync_ui_auth(t, specs["ui"], restart=not args.defer_ui_restart)
 
     previous_start = None
     postgres_restarted = False

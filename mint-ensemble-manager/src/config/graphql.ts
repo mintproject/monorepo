@@ -5,6 +5,14 @@ import { User } from "../classes/mint/mint-types";
 import { KeycloakAdapter } from "./keycloak-adapter";
 import { getConfiguration } from "../classes/mint/mint-functions";
 
+export const getGraphqlUri = (endpoint: string, enable_ssl: boolean) => {
+    const normalizedEndpoint = endpoint.trim();
+    if (/^https?:\/\//i.test(normalizedEndpoint)) return normalizedEndpoint;
+
+    const protocol = enable_ssl ? "https://" : "http://";
+    return protocol + normalizedEndpoint;
+};
+
 export class GraphQL {
     static client: ApolloClient<NormalizedCacheObject>;
     static userId;
@@ -29,8 +37,7 @@ export class GraphQL {
 
     static instanceUsingAccessToken = (access_token: string) => {
         const prefs = getConfiguration();
-        const protocol = prefs.graphql.enable_ssl ? "https://" : "http://";
-        const uri = protocol + prefs.graphql.endpoint;
+        const uri = getGraphqlUri(prefs.graphql.endpoint, prefs.graphql.enable_ssl);
         return new ApolloClient({
             link: createHttpLink({
                 uri: uri,
@@ -49,8 +56,7 @@ export class GraphQL {
         const prefs = getConfiguration();
 
         // Normal HTTP Link
-        const protocol = prefs.graphql.enable_ssl ? "https://" : "http://";
-        const uri = protocol + prefs.graphql.endpoint;
+        const uri = getGraphqlUri(prefs.graphql.endpoint, prefs.graphql.enable_ssl);
 
         return createHttpLink({
             uri: uri,

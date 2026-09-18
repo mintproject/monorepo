@@ -32,6 +32,7 @@ jobs:
       schema_changed: ${{ steps.validate.outputs.schema_changed }}
       deploy_all: ${{ steps.validate.outputs.deploy_all }}
       source_sha: ${{ steps.validate.outputs.source_sha }}
+      images_json: ${{ steps.validate.outputs.images_json }}
     steps:
       - name: Check out the workflow source commit
         if: github.event_name == 'workflow_run'
@@ -164,6 +165,7 @@ jobs:
               stream.write(f"schema_changed={str(bool(plan['schema_changed'])).lower()}\n")
               stream.write(f"deploy_all={str(bool(plan['deploy_all'])).lower()}\n")
               stream.write(f"source_sha={plan['source_sha']}\n")
+              stream.write("images_json=" + json.dumps(plan["images"], separators=(",", ":")) + "\n")
           print(json.dumps(plan, indent=2))
 
   deploy:
@@ -194,7 +196,7 @@ jobs:
           set -euo pipefail
           python deploy/tapis/register_mint_stack.py --set-owners-only --pods "$RESTART_SERVICES"
 
-      - name: Update and restart changed image pods
+      - name: Update changed image pod definitions
         if: needs.plan.outputs.build_services != ''
         env:
           TAPIS_USERNAME: ${{ secrets.TAPIS_USERNAME }}
@@ -206,24 +208,31 @@ jobs:
           MINTDEV_HASURA_AUTH_HOOK_MODE: ${{ secrets.MINTDEV_HASURA_AUTH_HOOK_MODE }}
           MINTDEV_HASURA_JWT_SECRET: ${{ secrets.MINTDEV_HASURA_JWT_SECRET }}
           IMAGE_TAG: ${{ needs.plan.outputs.image_tag }}
+          IMAGE_MAP_JSON: ${{ needs.plan.outputs.images_json }}
           BUILD_SERVICES: ${{ needs.plan.outputs.build_services }}
         run: |
           set -euo pipefail
-          EXTRA_ARGS=()
-          if [[ ",${BUILD_SERVICES}," == *",postgres,"* ]]; then
-            EXTRA_ARGS+=(--migrate-postgres-image)
-          fi
-          RESTART_BUILD_SERVICES="$(python - "$BUILD_SERVICES" <<'PY'
+          APP_BUILD_SERVICES="$(python - "$BUILD_SERVICES" <<'PY'
           import sys
-          print(",".join(service for service in sys.argv[1].split(",") if service and service != "ui"))
+          print(",".join(service for service in sys.argv[1].split(",") if service and service not in {"postgres", "redis"}))
           PY
           )"
-          python deploy/tapis/register_mint_stack.py \
-            --image-tag "$IMAGE_TAG" \
-            --pods "$BUILD_SERVICES" \
-            --restart-pods "$RESTART_BUILD_SERVICES" \
-            --recreate-on-image-mismatch \
-            "${EXTRA_ARGS[@]}"
+          if [[ ",${BUILD_SERVICES}," == *",postgres,"* ]]; then
+            python deploy/tapis/register_mint_stack.py \
+              --image-tag "$IMAGE_TAG" \
+              --image-map "$IMAGE_MAP_JSON" \
+              --pods postgres \
+              --restart-pods postgres \
+              --migrate-postgres-image
+          fi
+          if [[ -n "$APP_BUILD_SERVICES" ]]; then
+            python deploy/tapis/register_mint_stack.py \
+              --image-tag "$IMAGE_TAG" \
+              --image-map "$IMAGE_MAP_JSON" \
+              --pods "$APP_BUILD_SERVICES" \
+              --no-start \
+              --recreate-on-image-mismatch
+          fi
 
       - name: Sync and restart the UI auth allowlist when UI is affected
         if: contains(needs.plan.outputs.restart_services, 'ui')
@@ -231,7 +240,29 @@ jobs:
           TAPIS_USERNAME: ${{ secrets.TAPIS_USERNAME }}
           TAPIS_ID: ${{ secrets.TAPIS_ID }}
           TAPIS_PASSWORD: ${{ secrets.TAPIS_PASSWORD }}
-        run: python deploy/tapis/register_mint_stack.py --sync-ui-auth
+        run: python deploy/tapis/register_mint_stack.py --sync-ui-auth --defer-ui-restart
+
+      - name: Dispatch and wait for affected application pods
+        env:
+          TAPIS_USERNAME: ${{ secrets.TAPIS_USERNAME }}
+          TAPIS_ID: ${{ secrets.TAPIS_ID }}
+          TAPIS_PASSWORD: ${{ secrets.TAPIS_PASSWORD }}
+          RESTART_SERVICES: ${{ needs.plan.outputs.restart_services }}
+          IMAGE_MAP_JSON: ${{ needs.plan.outputs.images_json }}
+        run: |
+          set -euo pipefail
+          APPLICATION_SERVICES="$(python - "$RESTART_SERVICES" <<'PY'
+          import sys
+          print(",".join(service for service in sys.argv[1].split(",") if service and service not in {"postgres", "redis"}))
+          PY
+          )"
+          if [[ -n "$APPLICATION_SERVICES" ]]; then
+            python deploy/tapis/register_mint_stack.py \
+              --restart-existing-pods "$APPLICATION_SERVICES" \
+              --image-map "$IMAGE_MAP_JSON"
+          else
+            echo "No application pod lifecycle requests required"
+          fi
 
       - name: Apply Hasura migrations for schema changes
         if: needs.plan.outputs.schema_changed == 'true'
@@ -246,28 +277,6 @@ jobs:
             --env HASURA_GRAPHQL_ENDPOINT="$GRAPHQL_ENDPOINT" \
             --env HASURA_GRAPHQL_ADMIN_SECRET \
             "ghcr.io/mintproject/graphql-engine:$IMAGE_TAG" migrate apply --skip-update-check
-
-      - name: Restart dependency-only services
-        env:
-          TAPIS_USERNAME: ${{ secrets.TAPIS_USERNAME }}
-          TAPIS_ID: ${{ secrets.TAPIS_ID }}
-          TAPIS_PASSWORD: ${{ secrets.TAPIS_PASSWORD }}
-          BUILD_SERVICES: ${{ needs.plan.outputs.build_services }}
-          RESTART_SERVICES: ${{ needs.plan.outputs.restart_services }}
-        run: |
-          set -euo pipefail
-          DEPENDENCY_SERVICES="$(python - "$BUILD_SERVICES" "$RESTART_SERVICES" <<'PY'
-          import sys
-          built = set(filter(None, sys.argv[1].split(",")))
-          ordered = [service for service in sys.argv[2].split(",") if service and service not in built]
-          print(",".join(ordered))
-          PY
-          )"
-          if [[ -n "$DEPENDENCY_SERVICES" ]]; then
-            python deploy/tapis/register_mint_stack.py --restart-existing-pods "$DEPENDENCY_SERVICES"
-          else
-            echo "No dependency-only restarts required"
-          fi
 
       - name: Verify affected health endpoints
         env:

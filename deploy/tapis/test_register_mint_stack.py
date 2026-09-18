@@ -117,6 +117,31 @@ class StorageTests(unittest.TestCase):
         self.assertEqual(specs["graphql"]["environment_variables"]["HASURA_GRAPHQL_DATABASE_URL"], expected)
         self.assertEqual(specs["semantic_search"]["environment_variables"]["DATABASE_URL"], expected)
 
+    def test_manifest_image_map_overrides_each_service_exactly(self):
+        image_map = json.dumps(
+            {
+                "graphql": {"image_ref": "ghcr.io/mintproject/graphql-engine:sha-abc1234"},
+                "ui": {"image_ref": "ghcr.io/mintproject/ui:sha-def5678"},
+            }
+        )
+        overrides = deploy.parse_image_map(image_map, "mintproject")
+        specs = deploy.build_specs(
+            "mintproject",
+            "develop",
+            "https://portals.tapis.io",
+            overrides,
+        )
+        self.assertEqual(specs["graphql"]["image"], "ghcr.io/mintproject/graphql-engine:sha-abc1234")
+        self.assertEqual(specs["ui"]["image"], "ghcr.io/mintproject/ui:sha-def5678")
+        self.assertEqual(specs["api"]["image"], "ghcr.io/mintproject/model-catalog-api:develop")
+
+    def test_manifest_image_map_rejects_wrong_repository(self):
+        with self.assertRaises(SystemExit):
+            deploy.parse_image_map(
+                json.dumps({"ui": {"image_ref": "ghcr.io/other/ui:sha-new"}}),
+                "mintproject",
+            )
+
     def test_explicit_database_url_override_remains_shared(self):
         override = "postgres://override:secret@db.example.test:5432/mintdb?sslmode=disable"
         with patch.dict(os.environ, {"MINTDEV_HASURA_DATABASE_URL": override}, clear=True):
@@ -241,9 +266,19 @@ class StorageTests(unittest.TestCase):
         with self.assertRaises(SystemExit), patch("sys.stderr"):
             deploy.main(["--no-start", "--restart"])
 
-    def test_no_start_rejects_image_mismatch_recovery(self):
-        with self.assertRaises(SystemExit), patch("sys.stderr"):
-            deploy.main(["--no-start", "--recreate-on-image-mismatch"])
+    def test_no_start_allows_image_mismatch_recovery(self):
+        self.assertEqual(
+            deploy.main(
+                [
+                    "--no-start",
+                    "--recreate-on-image-mismatch",
+                    "--dry-run",
+                    "--pods",
+                    "ui",
+                ]
+            ),
+            0,
+        )
 
     def test_recreate_modes_cannot_be_combined(self):
         with self.assertRaises(SystemExit), patch("sys.stderr"):
@@ -486,7 +521,7 @@ class LifecycleTests(unittest.TestCase):
         existing_ui = {"image": "ghcr.io/mintproject/ui:develop", "status_container": {"start_time": "ui-old"}}
         t = Mock()
         t.pods.get_pod.side_effect = [existing_api, existing_ui]
-        with patch.object(deploy, "wait_for_pod_restart") as ready:
+        with patch.object(deploy, "wait_for_pod_batch") as ready:
             deploy.restart_existing_pods(t, ["api", "ui"])
         self.assertEqual(
             t.pods.restart_pod.call_args_list,
@@ -495,7 +530,22 @@ class LifecycleTests(unittest.TestCase):
                 unittest.mock.call(pod_id=deploy.PODS["ui"]),
             ],
         )
-        self.assertEqual(ready.call_count, 2)
+        ready.assert_called_once()
+        self.assertEqual(
+            ready.call_args.args[1],
+            [
+                {
+                    "pod_id": deploy.PODS["api"],
+                    "expected_image": existing_api["image"],
+                    "previous_start": "api-old",
+                },
+                {
+                    "pod_id": deploy.PODS["ui"],
+                    "expected_image": existing_ui["image"],
+                    "previous_start": "ui-old",
+                },
+            ],
+        )
         t.pods.update_pod.assert_not_called()
         t.pods.create_pod.assert_not_called()
         t.pods.delete_pod.assert_not_called()
@@ -518,9 +568,62 @@ class LifecycleTests(unittest.TestCase):
             "image": "ghcr.io/mintproject/graphql-engine:sha-new",
             "status_container": {"start_time": "old"},
         }
-        with patch.object(deploy, "wait_for_pod_restart"):
+        with patch.object(deploy, "wait_for_pod_batch"):
             deploy.restart_existing_pods(t, ["graphql"])
         t.pods.restart_pod.assert_called_once_with(pod_id=deploy.PODS["graphql"])
+
+    def test_batch_dispatches_all_restarts_before_readiness_wait(self):
+        t = Mock()
+        t.pods.get_pod.side_effect = [
+            {"image": "ghcr.io/mintproject/model-catalog-api:sha-old", "status_container": {"start_time": "api-old"}},
+            {"image": "ghcr.io/mintproject/ensemble-manager:sha-old", "status_container": {"start_time": "ensemble-old"}},
+            {"image": "ghcr.io/mintproject/ui:sha-old", "status_container": {"start_time": "ui-old"}},
+        ]
+        events = []
+        t.pods.restart_pod.side_effect = lambda **kwargs: events.append(("restart", kwargs["pod_id"]))
+        with patch.object(deploy, "wait_for_pod_batch", side_effect=lambda _t, _targets: events.append(("wait",))):
+            deploy.restart_existing_pods(t, ["api", "ensemble", "ui"])
+        self.assertEqual(
+            events,
+            [
+                ("restart", deploy.PODS["api"]),
+                ("restart", deploy.PODS["ensemble"]),
+                ("restart", deploy.PODS["ui"]),
+                ("wait",),
+            ],
+        )
+
+    def test_batch_rejects_wrong_built_image_before_restart(self):
+        t = Mock()
+        t.pods.get_pod.return_value = {
+            "image": "ghcr.io/mintproject/ui:sha-old",
+            "status_container": {"start_time": "old"},
+        }
+        with self.assertRaises(deploy.PodImageMismatchError):
+            deploy.restart_existing_pods(
+                t,
+                ["ui"],
+                {"ui": "ghcr.io/mintproject/ui:sha-new"},
+            )
+        t.pods.restart_pod.assert_not_called()
+
+    def test_batch_rejects_static_infrastructure_pods(self):
+        with self.assertRaises(RuntimeError):
+            deploy.restart_existing_pods(Mock(), ["postgres"])
+        with self.assertRaises(RuntimeError):
+            deploy.restart_existing_pods(Mock(), ["redis"])
+
+    def test_batch_starts_created_pod_without_previous_lifecycle_timestamp(self):
+        t = Mock()
+        t.pods.get_pod.return_value = {
+            "image": "ghcr.io/mintproject/ui:sha-new",
+            "status": "STOPPED",
+            "status_container": {},
+        }
+        with patch.object(deploy, "wait_for_pod_batch"):
+            deploy.restart_existing_pods(t, ["ui"], {"ui": "ghcr.io/mintproject/ui:sha-new"})
+        t.pods.start_pod.assert_called_once_with(pod_id=deploy.PODS["ui"])
+        t.pods.restart_pod.assert_not_called()
 
     def test_mismatch_without_opt_in_does_not_delete_or_restart(self):
         t = Mock()
@@ -754,6 +857,19 @@ class UiAuthSyncTests(unittest.TestCase):
         t.pods.start_pod.assert_not_called()
         t.pods.create_pod.assert_not_called()
         t.pods.delete_pod.assert_not_called()
+
+    def test_sync_can_defer_restart_for_application_batch(self):
+        running = {
+            "image": "ghcr.io/mintproject/ui:sha-old",
+            "status_container": {"start_time": "old-start"},
+        }
+        t = Mock()
+        t.pods.get_pod.side_effect = [running, self._converged()]
+        rc = deploy.sync_ui_auth(t, self.spec, restart=False)
+        self.assertEqual(rc, 0)
+        t.pods.update_pod.assert_called_once()
+        t.pods.restart_pod.assert_not_called()
+        t.pods.start_pod.assert_not_called()
 
     def test_sync_refuses_a_missing_pod(self):
         missing = Exception()
