@@ -306,6 +306,25 @@ describe('findDatasetsByVariables', () => {
     expect(found.map((d) => d.id)).toEqual([CARRIER.name]);
     expect(found[0]?.variables).toEqual(['groundwater__initial_head']);
   });
+
+  it('can retain datasets outside the requested period for coverage comparison', async () => {
+    stubSearch([
+      {
+        ...CARRIER,
+        temporal_coverage_start: '1990-01-01',
+        temporal_coverage_end: '1995-01-01',
+      },
+    ]);
+    const found = await findDatasetsByVariables({
+      variableNames: ['groundwater__initial_head'],
+      startDate: new Date('2020-01-01'),
+      endDate: new Date('2025-01-01'),
+      includeOutsideDateRange: true,
+    });
+    expect(found.map((d) => d.id)).toEqual([CARRIER.name]);
+    expect(searchRequests[0]?.searchParams.has('end_time__lte')).toBe(false);
+    expect(searchRequests[0]?.searchParams.has('start_time__gte')).toBe(false);
+  });
 });
 
 describe('loadDatasetResources', () => {

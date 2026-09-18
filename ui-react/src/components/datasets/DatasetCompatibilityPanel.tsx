@@ -172,7 +172,7 @@ export function DatasetCompatibilityPanel({
                     variant={match.complete ? 'default' : 'secondary'}
                     onClick={() =>
                       navigate(
-                        `/modeling/problem-statements?modelId=${encodeURIComponent(match.id)}&datasetId=${encodeURIComponent(dataset.id)}`,
+                        `/modeling/problem-statements/start?modelId=${encodeURIComponent(match.id)}&datasetId=${encodeURIComponent(dataset.id)}`,
                       )
                     }
                   >

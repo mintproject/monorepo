@@ -77,6 +77,20 @@ describe('dateCoverage', () => {
       'partial',
     );
   });
+  it('returns "outside" when the dataset does not overlap the window', () => {
+    expect(dateCoverage(req, { start: new Date('1990-01-01'), end: new Date('1999-12-31') })).toBe(
+      'outside',
+    );
+  });
+  it('returns "unknown" for missing or open-ended coverage', () => {
+    expect(dateCoverage(req, null)).toBe('unknown');
+    expect(dateCoverage(req, { start: new Date('2010-01-01'), end: null })).toBe('unknown');
+  });
+  it('treats coverage bounds as inclusive', () => {
+    expect(dateCoverage(req, { start: new Date('2000-01-01'), end: new Date('2026-01-01') })).toBe(
+      'full',
+    );
+  });
 });
 
 describe('assignmentsFromBindings', () => {
@@ -252,6 +266,14 @@ describe('DatasetsStep region filter', () => {
     await screen.findByLabelText('Choose dataset');
     await userEvent.click(screen.getByRole('button', { name: /Show 1 dataset/ }));
     expect(screen.getByLabelText('Choose dataset')).toHaveTextContent('bethel-elevation');
+  });
+
+  it('searches candidates without clearing the coverage view', async () => {
+    renderStep();
+    await screen.findByLabelText('Choose dataset');
+    await userEvent.type(screen.getByLabelText('Search datasets'), 'austin');
+    expect(screen.getByLabelText('Choose dataset')).toHaveTextContent('austin-rain');
+    expect(screen.getByLabelText('Choose dataset')).not.toHaveTextContent('gam-model-files');
   });
 
   it('applies no region filter when the thread region carries no geometry', async () => {

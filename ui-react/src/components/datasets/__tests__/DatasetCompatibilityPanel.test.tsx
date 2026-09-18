@@ -69,7 +69,12 @@ const dataset: DatasetDiscoveryResult = {
 
 function LocationProbe() {
   const location = useLocation();
-  return <output data-testid="location">{location.pathname}</output>;
+  return (
+    <output data-testid="location">
+      {location.pathname}
+      {location.search}
+    </output>
+  );
 }
 
 describe('DatasetCompatibilityPanel', () => {
@@ -87,6 +92,23 @@ describe('DatasetCompatibilityPanel', () => {
 
     expect(screen.getByTestId('location')).toHaveTextContent(
       '/modelconfigurations/modflow_2005_BartonSprings_drought',
+    );
+  });
+
+  it('opens guided model setup with the model and dataset context', async () => {
+    const user = userEvent.setup();
+
+    renderWithProviders(
+      <>
+        <DatasetCompatibilityPanel dataset={dataset} open onClose={vi.fn()} />
+        <LocationProbe />
+      </>,
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Start model setup' }));
+
+    expect(screen.getByTestId('location')).toHaveTextContent(
+      `/modeling/problem-statements/start?modelId=${encodeURIComponent(configurationId)}&datasetId=dataset-1`,
     );
   });
 });
