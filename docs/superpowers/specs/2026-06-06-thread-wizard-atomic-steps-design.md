@@ -45,31 +45,31 @@ scientists.
 
 ## Approved Decisions
 
-| Decision | Choice |
-|---|---|
-| Navigation model | **Left vertical rail** (replaces horizontal tab strip), content pane on the right |
-| Step granularity | **Atomic** — Configure shrinks to "Framing" only; Models/Datasets/Parameters become real steps |
-| Gating | **Lock until ready** — a step unlocks when the previous step's required Continue is satisfied. Only Framing (Goal), Models (≥1 model), Datasets (all inputs) are required; optional steps never lock the next. Models unlocks as soon as a Goal exists. |
-| Rail detail | **Name + one-line summary** of the choice made (e.g. "Texas Gulf · 2000–2026") |
-| Datasets scope | **Isolated per model** — each selected model has its own dataset assignments |
-| Partial-date data | **Selectable**, flagged with an amber "partial" tag (not disabled) |
-| Build scope | **Full flow redesign** (rail + all atomic step screens) |
+| Decision          | Choice                                                                                                                                                                                                                                                  |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Navigation model  | **Left vertical rail** (replaces horizontal tab strip), content pane on the right                                                                                                                                                                       |
+| Step granularity  | **Atomic** — Configure shrinks to "Framing" only; Models/Datasets/Parameters become real steps                                                                                                                                                          |
+| Gating            | **Lock until ready** — a step unlocks when the previous step's required Continue is satisfied. Only Framing (Goal), Models (≥1 model), Datasets (all inputs) are required; optional steps never lock the next. Models unlocks as soon as a Goal exists. |
+| Rail detail       | **Name + one-line summary** of the choice made (e.g. "Texas Gulf · 2000–2026")                                                                                                                                                                          |
+| Datasets scope    | **Isolated per model** — each selected model has its own dataset assignments                                                                                                                                                                            |
+| Partial-date data | **Selectable**, flagged with an amber "partial" tag (not disabled)                                                                                                                                                                                      |
+| Build scope       | **Full flow redesign** (rail + all atomic step screens)                                                                                                                                                                                                 |
 
 ## Step Model
 
-| # | Step | One job | Required to leave (own Continue) | Filters its options by | Thread field(s) |
-|---|---|---|---|---|---|
-| 1 | **Framing** | Set name + optional region/time scope | **Goal non-empty** | — | `name`, `region_id`, date range |
-| 2 | **Variables** | Optionally pick indicator & adjustable variable | **nothing (skippable)** | — | `response_variable_id`, `driving_variable_id` |
-| 3 | **Models** | Choose one or more models | **≥1 model selected** | **indicator** (if set; else all) | model selections |
-| 4 | **Datasets** | Assign a dataset to every input, **per model** | **all inputs assigned** | model **inputs** + **region** + **dates** (whichever set) | dataset bindings per model input |
-| 5 | **Parameters** | Set parameter values per selected model | per-model params valid | — | parameter values |
-| 6 | **Runs** | Execute the generated run matrix | — | — | execution records |
-| 7 | **Results** | View outputs | — | — | — |
-| 8 | **Summary** | Review the whole sub-task | — (always viewable) | — | — |
+| #   | Step           | One job                                            | Required to leave (own Continue) | Filters its options by                                    | Thread field(s)                               |
+| --- | -------------- | -------------------------------------------------- | -------------------------------- | --------------------------------------------------------- | --------------------------------------------- |
+| 1   | **Framing**    | Set name + optional region/time scope              | **Goal non-empty**               | —                                                         | `name`, `region_id`, date range               |
+| 2   | **Variables**  | Choose a response variable and optionally a driver | **nothing (skippable)**          | —                                                         | `response_variable_id`, `driving_variable_id` |
+| 3   | **Models**     | Choose one or more models                          | **≥1 model selected**            | **response variable** (if set; else all)                  | model selections                              |
+| 4   | **Datasets**   | Assign a dataset to every input, **per model**     | **all inputs assigned**          | model **inputs** + **region** + **dates** (whichever set) | dataset bindings per model input              |
+| 5   | **Parameters** | Set parameter values per selected model            | per-model params valid           | —                                                         | parameter values                              |
+| 6   | **Runs**       | Execute the generated run matrix                   | —                                | —                                                         | execution records                             |
+| 7   | **Results**    | View outputs                                       | —                                | —                                                         | —                                             |
+| 8   | **Summary**    | Review the whole sub-task                          | — (always viewable)              | —                                                         | —                                             |
 
 "Framing" is the renamed `Configure` step — name + optional region/time only. The model and
-dataset accordions move out of it into steps 3 and 4. The **gate to *enter* a step is "the
+dataset accordions move out of it into steps 3 and 4. The **gate to _enter_ a step is "the
 previous step's Continue was satisfied"** — not a per-step required-field list. Only Framing,
 Models, and Datasets have required selections; everything else is optional.
 
@@ -78,7 +78,9 @@ Models, and Datasets have required selections; everything else is optional.
 New, reusable, each with one clear purpose:
 
 ### `WizardRail`
+
 Vertical stepper that replaces `ThreadBreadcrumb`.
+
 - **Props:** `steps` (id, label, status, summary, locked), `currentStep`, `onSelect`.
 - Renders each step with a status glyph (`✓` done / `●` active / `○` upcoming / `🔒` locked),
   the step name, and a one-line summary of the choice made.
@@ -88,21 +90,25 @@ Vertical stepper that replaces `ThreadBreadcrumb`.
 - **Depends on:** step status derived from thread state (see Data flow).
 
 ### `StepShell`
+
 Frame around each step's content: title, optional description, the content slot, and a
 footer with **Back** + **Continue** buttons. Continue is disabled until the step's
 completion predicate is satisfied; it shows a live progress hint (e.g. "1 of 3 inputs
 assigned"). This generalizes today's `MintConfigure` "Select & Continue" footer.
 
 ### `FilteredByBanner`
+
 The blue provenance banner shown at the top of filtered steps (Models, Datasets).
+
 - **Props:** `chips` — each `{ icon, label, value, source? }`. `source` (e.g. "from Framing")
   renders as muted suffix text. Optional `onEdit` link jumps back to the source step.
-- Communicates *why* the list is narrowed and offers one-click return to the filter source.
+- Communicates _why_ the list is narrowed and offers one-click return to the filter source.
 
 ### Step components (one per step) — see per-step detail sections below
+
 - `FramingStep` — Goal (required) + optional region/time toggles (refactor of
   `ThreadExpansionConfigure`, variable fields removed).
-- `VariablesStep` — refactor of `MintVariables`; optional indicator + adjustable variable
+- `VariablesStep` — refactor of `MintVariables`; optional response variable + potential driver
   via catalog autocomplete, with a live model-count preview.
 - `ModelsStep` — refactor of `MintModels`; adds `FilteredByBanner`
   ("Showing N of M models that produce <variable>") and surfaces each model's inputs.
@@ -127,14 +133,15 @@ Renamed from `Configure`. One job: set the **scope** of the sub-task. Refactor o
 **Goal (name) is the only required field.** Region and time period are **optional scope
 filters** — symmetric: each narrows the dataset list when set, and means "any" when unset.
 
-| Field | Required | Control | Validation | Downstream effect |
-|---|---|---|---|---|
-| **Goal** (`name`) | **yes** | text input | non-empty | sub-task label, shown in rail summary |
-| **Region** (`region_id`) | no | **toggle** → reveals searchable region picker + map preview | — | when enabled+set, filters datasets to those covering the region |
-| **Time period** (`start_date`, `end_date`) | no | **toggle** → reveals two date inputs | start < end **only when both present** | when enabled+set, filters datasets to those overlapping the window |
+| Field                                      | Required | Control                                                     | Validation                             | Downstream effect                                                  |
+| ------------------------------------------ | -------- | ----------------------------------------------------------- | -------------------------------------- | ------------------------------------------------------------------ |
+| **Goal** (`name`)                          | **yes**  | text input                                                  | non-empty                              | sub-task label, shown in rail summary                              |
+| **Region** (`region_id`)                   | no       | **toggle** → reveals searchable region picker + map preview | —                                      | when enabled+set, filters datasets to those covering the region    |
+| **Time period** (`start_date`, `end_date`) | no       | **toggle** → reveals two date inputs                        | start < end **only when both present** | when enabled+set, filters datasets to those overlapping the window |
 
 **Optional-filter pattern (toggle).** Region and dates live in a "Narrow the data —
 optional" subsection. Each is gated by a **toggle**:
+
 - **Off** (default): constraint not applied; row collapsed, reads "off · any region/period".
 - **On**: reveals the control. Turning the toggle on signals intent; the value completes it.
   A toggle that is on but left blank applies no filter (treated as not-yet-set).
@@ -156,7 +163,7 @@ optional" subsection. Each is gated by a **toggle**:
 - **Completion predicate:** **Goal non-empty** → Continue enables. Region and dates are
   optional and never block Continue. (This loosens today's `getConfigureStatus`, which
   required `name && region_id`.) When dates are both present, validate start < end.
-- **Downstream behavior:** the Datasets "filtered by" banner renders a chip *only* for
+- **Downstream behavior:** the Datasets "filtered by" banner renders a chip _only_ for
   filters that are set (the model input variable is always present). With no region → no
   spatial filter; with no dates → no date filter and no partial-date warnings. Rail summary
   reflects what's set ("Flood extent · Texas Gulf", "Flood extent · any region").
@@ -166,20 +173,24 @@ Save still uses `useUpdateThreadMutation` + `useInsertThreadProvenanceMutation`
 
 ## Variables Step — detail
 
-Refactor of `MintVariables`. Lets the user optionally focus the sub-task by indicator and
-adjustable variable. **Both fields are optional — the whole step is skippable.**
+Refactor of `MintVariables`. The response variable is the primary framing choice; the driver is
+secondary and is informed by the inputs of the selected models. **Both fields are optional — the
+whole step is skippable.**
 
-| Field | Required | Control | Downstream effect |
-|---|---|---|---|
-| **Indicator** (`response_variable_id`) | no | **catalog-backed autocomplete** (standard variable name + unit) | when set, filters Models to those that produce it |
-| **Adjustable variable** (`driving_variable_id`) | no | same autocomplete | marks an input the user intends to vary |
+| Field                                                            | Required | Control                                                         | Downstream effect                                               |
+| ---------------------------------------------------------------- | -------- | --------------------------------------------------------------- | --------------------------------------------------------------- |
+| **Desired outcome / response variable** (`response_variable_id`) | no       | **catalog-backed autocomplete** (standard variable name + unit) | when set, filters Models to those that produce it               |
+| **Potential driver** (`driving_variable_id`)                     | no       | same autocomplete, plus shortcuts from selected model inputs    | marks an input the user intends to vary; does not filter Models |
 
 - **Free-text → autocomplete.** Today both are raw text inputs (typo-prone). Replace with a
   searchable typeahead over standard MINT variables (the `components/autocomplete/`
   placeholder). Each option shows the standard variable name and unit.
-- **Live filter preview.** Below the indicator, show the consequence before the user leaves:
-  - indicator set → "**N of M models** produce this indicator" (green).
-  - indicator empty → "No indicator set — **all M models** will be available next" (neutral).
+- **Live filter preview.** Below the response variable, show the consequence before the user leaves:
+  - response variable set → models will be filtered to those that produce the selected outcome.
+  - response variable empty → "No desired outcome selected — **all M models** will be available next" (neutral).
+- **Model-informed drivers.** Once model inputs are known, show them as one-click driver
+  candidates. Choosing a driver does not narrow the model list; it marks an input for later
+  scenario or parameter exploration.
 - **Completion predicate:** none. Continue is always enabled; the step can be skipped.
 - **Single vs. multiple:** matches today's data model — **one** indicator + **one** adjustable
   variable. (Multi-select would require a thread schema change; out of scope unless raised.)
@@ -187,14 +198,19 @@ adjustable variable. **Both fields are optional — the whole step is skippable.
 ## Models Step — detail
 
 Refactor of `MintModels`. Lets the user pick one or more calibrated model configurations
-from the catalog, filtered by the indicator (if set) and grouped by region.
+from the catalog, filtered by the response variable (if set) and grouped by region.
 
 - **Table → cards.** Each model renders as a card carrying variable chips:
-  green **`produces: <output var>`** and blue **`needs N: <input vars>`**. The "needs" chips
-  preview exactly what the Datasets step will request per input.
+  green **`Produces: <output var>`** and blue **`Model inputs (N): <input vars>`**. The input
+  chips preview exactly what the Datasets step will request and which variables can become
+  drivers. If catalog I/O metadata is incomplete, the card says so instead of implying that the
+  model has no inputs or outputs.
+- **Stale selections stay visible.** If a response variable changes or a previously selected
+  model no longer matches it, the model is called out with an explicit remove action and Continue
+  remains disabled until the selection is resolved.
 - **`FilteredByBanner`** at the top:
-  - indicator set → "Showing **N of M** models that produce **<indicator>**" + "edit indicator".
-  - indicator unset → "Showing **all M** models".
+- response variable set → "Showing **N of M** models that produce **<outcome>**" + "edit outcome".
+- response variable unset → "Showing **all M** models" plus an explanation that the full model list is available.
 - **Region grouping (kept).** Models matching the Framing region show first; a
   "Show N models calibrated for other regions" disclosure reveals the rest (existing
   `regionRows`/`otherRows` logic). With no region set, all show.
@@ -232,7 +248,7 @@ For each **selected model**, render a card:
 ## Parameters Step — detail
 
 The thread Parameters step is distinct from the model-authoring `ParameterRow`/
-`ParameterSection` in `components/configuration/` (those *define* a parameter's metadata).
+`ParameterSection` in `components/configuration/` (those _define_ a parameter's metadata).
 Here the scientist **assigns values** to the parameters a selected model exposes, optionally
 **sweeping** several values; the combinations generate the run ensemble.
 
@@ -308,7 +324,7 @@ status is a pure function of thread state.
   non-empty), **Models** (≥1 model), **Datasets** (all inputs assigned). Optional steps
   (Variables, and the optional region/date filters) have no predicate, so they pass through
   instantly and never lock what follows.
-- **Consequence for Models:** Models is gated *only* by Framing's Goal — not by Variables.
+- **Consequence for Models:** Models is gated _only_ by Framing's Goal — not by Variables.
   On a fresh thread with no Goal, Models is locked; **as soon as a Goal is set, Models
   unlocks** and the user may click straight to it, skipping the optional Variables step.
   (Chosen over "never locked" and "require Variables visit": a sub-task must at least be
@@ -335,9 +351,9 @@ Per `ui-react` conventions (Vitest + Testing Library + MSW), co-located
 - `FilteredByBanner` — renders chips + source suffix; `onEdit` fires.
 - `FramingStep` — Goal required (Continue gated on it); region/date toggles optional;
   date validation only when both present.
-- `VariablesStep` — both fields optional; Continue always enabled; filter preview shows
-  model count with/without indicator.
-- `ModelsStep` — indicator filter (banner count) when set vs "all models" when unset;
+- `VariablesStep` — both fields optional; Continue always enabled; response preview explains
+  the model filter, and selected model inputs can be promoted to driver shortcuts.
+- `ModelsStep` — response-variable filter (banner count) when set vs "all models" when unset;
   multi-select; Compare needs 2+; region disclosure; Continue gated on ≥1 model.
 - `DatasetsStep` — one card per selected model; per-input assignment independent across
   models; partial-date selectable; Continue gated on all-inputs-assigned.
@@ -352,11 +368,9 @@ Per `ui-react` conventions (Vitest + Testing Library + MSW), co-located
 
 ## Open items for the implementation plan
 
-- **Model I/O variables in the catalog query (prerequisite).** Extend
-  `GetModelTreeWithRegions` (or add a query) to return each configuration's input and
-  output standard variables. Required for the Models indicator filter, the produces/needs
-  chips, and per-input dataset filtering. Confirm the Hasura relationships exist
-  (`modelcatalog_*` input/output → variable_presentation → standard variable).
+- **Model I/O variables in the catalog query (implemented).** `GetModelTreeWithRegions` now
+  returns each configuration's input and output standard variables. The wizard uses them for the
+  response-variable filter, Produces/Input chips, and model-informed driver candidates.
 - Exact shape of dataset-binding mutations per model input (reuse `MintDatasets` logic).
 - Whether Parameters/Runs/Results ship in the same PR or follow the rail + Framing +
   Models + Datasets core (full flow is in scope, but may be sequenced across PRs).

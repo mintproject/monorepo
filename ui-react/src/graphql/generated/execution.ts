@@ -39,6 +39,8 @@ export interface ModelInputFile {
     resources?: Array<{ id: string; name: string; url?: string | null; selected?: boolean | null }>;
   } | null;
   variables?: string[];
+  /** Stable standard-variable ids parallel to `variables`, when catalog metadata provides them. */
+  variableIds?: string[];
   /** The model runs without this input bound; the Datasets step may skip it. */
   isOptional?: boolean;
 }

@@ -112,7 +112,7 @@ describe('ModelsStep', () => {
       { apolloMocks: [treeMock] },
     );
     expect(await screen.findByText('PIHM Flood A')).toBeInTheDocument();
-    expect(screen.getByText('produces: flood extent')).toBeInTheDocument();
+    expect(screen.getByText('Produces: flood extent')).toBeInTheDocument();
     expect(screen.getByTestId('filtered-by-banner')).toHaveTextContent(/all/i);
   });
 
@@ -129,6 +129,36 @@ describe('ModelsStep', () => {
     expect(await screen.findByText('PIHM Flood A')).toBeInTheDocument();
     expect(screen.queryByText('Crop Model B')).not.toBeInTheDocument();
     expect(screen.getByTestId('filtered-by-banner')).toHaveTextContent(/1 of 2/i);
+  });
+
+  it('warns when a selected model no longer produces the desired outcome', async () => {
+    renderWithProviders(
+      <ModelsStep
+        thread={makeThread({
+          response_variable_id: 'sv-flood',
+          response_variable: {
+            __typename: 'modelcatalog_standard_variable',
+            id: 'sv-flood',
+            label: 'flood extent',
+          },
+          thread_models: [
+            {
+              __typename: 'thread_model',
+              id: 'tm-b',
+              thread_id: 't1',
+              modelcatalog_configuration_id: 'cfgB',
+            },
+          ],
+        })}
+        onUpdated={vi.fn()}
+        onContinue={vi.fn()}
+        onBack={vi.fn()}
+      />,
+      { apolloMocks: [treeMock] },
+    );
+    expect(await screen.findByRole('alert')).toHaveTextContent(/does not produce flood extent/i);
+    expect(screen.getByRole('button', { name: /remove crop model b/i })).toBeInTheDocument();
+    expect(screen.getByTestId('step-continue')).toBeDisabled();
   });
 
   // ── An indicator that reaches nothing (monorepo#103) ──────────────────────
