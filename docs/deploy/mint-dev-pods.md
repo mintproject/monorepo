@@ -45,9 +45,12 @@ the moving `:develop` tags.
   requires it.
 - PRs build images with `push: false` and never deploy.
 
-Changes only to `.github/**` or `deploy/**` produce a no-op manifest;
-use manual dispatch when a deployment-code change needs to be applied to the
-running stack.
+Changes only to `.github/**` or most `deploy/**` paths produce a no-op manifest.
+The Tapis pod-spec registration script is the exception: changes to
+`deploy/tapis/register_mint_stack.py` build and restart the affected UI pod so
+environment-variable and runtime-definition changes reach the running stack.
+Use manual dispatch for other deployment-code changes that need to be applied
+to the running stack.
 
 The manifest uses conservative dependency expansion: PostgreSQL source changes
 explicitly select PostgreSQL and restart Hasura, the catalog API, Ensemble

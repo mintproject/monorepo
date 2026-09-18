@@ -34,9 +34,13 @@ SERVICE_PREFIXES = (
 )
 
 SCHEMA_PREFIXES = ("graphql_engine/migrations/", "graphql_engine/metadata/")
-# CI and deployment implementation changes affect how a future rollout runs;
-# they must not themselves trigger a service rollout.
+# CI changes affect how a future rollout runs and must not themselves trigger a
+# service rollout. Pod-spec changes are handled separately because they must be
+# applied to the running service definition.
 CONTROL_ONLY_PREFIXES = (".github/", "deploy/")
+DEPLOYMENT_CONFIG_SERVICES = {
+    "deploy/tapis/register_mint_stack.py": ("ui",),
+}
 SHARED_FILES = {
     "compose.yaml",
     "docker-compose.yml",
@@ -81,6 +85,10 @@ def make_plan(paths: Iterable[str], source_sha: str | None = None) -> dict[str, 
     for raw_path in paths:
         path = _clean_path(raw_path)
         if _is_ignored(path):
+            continue
+        config_services = DEPLOYMENT_CONFIG_SERVICES.get(path)
+        if config_services:
+            build.update(config_services)
             continue
         if path.startswith(CONTROL_ONLY_PREFIXES) or path == "deploy/mint_change_plan.py":
             continue
