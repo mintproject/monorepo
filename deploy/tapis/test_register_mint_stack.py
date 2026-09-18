@@ -53,6 +53,10 @@ class StorageTests(unittest.TestCase):
             ui["environment_variables"]["ENSEMBLE_MANAGER_API"],
             "https://mintdevensemble.pods.portals.tapis.io/v1",
         )
+        self.assertEqual(
+            ui["environment_variables"]["MODEL_CATALOG_API"],
+            "https://mintdevapi.pods.portals.tapis.io/v2.0.0",
+        )
 
     def test_graphql_tapis_route_does_not_submit_cors_settings(self):
         graphql = deploy.build_specs("mintproject", "develop", "https://portals.tapis.io")["graphql"]

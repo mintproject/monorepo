@@ -398,6 +398,10 @@ def build_specs(
                 # Ensemble Manager mounts its API under /v1. Keep the route
                 # prefix in the UI base URL so requests reach the API router.
                 "ENSEMBLE_MANAGER_API": f"{urls['ensemble']}/v1",
+                # The Tapis app picker calls the model-catalog API from the
+                # user's browser, so it needs the public pod URL and API
+                # version prefix rather than the in-cluster default.
+                "MODEL_CATALOG_API": f"{urls['api']}/v2.0.0",
                 "SEMANTIC_SEARCH_API": urls["semantic_search"],
                 "DATA_CATALOG_API": _env("DATA_CATALOG_API", "https://ckan.tacc.utexas.edu"),
                 "DATA_CATALOG_BROWSE_URL": _env("DATA_CATALOG_BROWSE_URL", "https://ckan.tacc.utexas.edu"),

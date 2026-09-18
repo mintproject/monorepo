@@ -98,6 +98,11 @@ The semantic-search pod receives the exact `mintdevui` origin through
 `SVO_CORS_ORIGINS`, so browser requests are permitted without a wildcard CORS
 policy.
 
+The UI receives `https://mintdevapi.pods.portals.tapis.io/v2.0.0` as its
+`MODEL_CATALOG_API` runtime setting. This is the browser-facing model-catalog
+API base used by the Tapis application picker; the `/v2.0.0` prefix is required
+by the API router.
+
 ### Semantic-search API targets
 
 `GET /search?q=<text>&target=<target>&limit=<n>` supports `target=svo` (the
