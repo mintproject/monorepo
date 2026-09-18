@@ -209,7 +209,7 @@ export function DatasetDiscovery() {
       </div>
 
       <div className="grid items-stretch gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(24rem,0.9fr)]">
-        <Card className="h-full">
+        <Card className="relative z-10 h-full">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               <Search className="h-4 w-4" /> Search and filters
@@ -283,7 +283,9 @@ export function DatasetDiscovery() {
             </div>
           </CardContent>
         </Card>
-        <DatasetSpatialMap value={spatialBox} onChange={setSpatialBox} />
+        <div className="relative z-0">
+          <DatasetSpatialMap value={spatialBox} onChange={setSpatialBox} />
+        </div>
       </div>
 
       {semanticFallback && (

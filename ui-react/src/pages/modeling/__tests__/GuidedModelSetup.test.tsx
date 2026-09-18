@@ -6,16 +6,22 @@ import { LIST_TOP_REGIONS } from '@/graphql/queries/regions';
 import { renderWithProviders } from '@/test/utils/render';
 import { GuidedModelSetup } from '../GuidedModelSetup';
 
-const { recommendProblemStatement, findDatasetsByVariables } = vi.hoisted(() => ({
-  recommendProblemStatement: vi.fn(),
-  findDatasetsByVariables: vi.fn(),
-}));
+const { recommendProblemStatement, findDatasetsByVariables, fetchDatasetDetail } = vi.hoisted(
+  () => ({
+    recommendProblemStatement: vi.fn(),
+    findDatasetsByVariables: vi.fn(),
+    fetchDatasetDetail: vi.fn(),
+  }),
+);
 
 vi.mock('@/lib/modeling/problemStatementRecommendations', () => ({
   recommendProblemStatement,
 }));
 vi.mock('@/lib/data-catalog', () => ({
   findDatasetsByVariables,
+}));
+vi.mock('@/lib/datasets/data-catalog-api', () => ({
+  fetchDatasetDetail,
 }));
 vi.mock('@/graphql/generated/modeling', () => ({
   generateModelingId: vi.fn(() => 'ps-1'),
@@ -60,6 +66,7 @@ describe('GuidedModelSetup', () => {
       },
     });
     findDatasetsByVariables.mockResolvedValue([]);
+    fetchDatasetDetail.mockResolvedValue(null);
   });
 
   it('asks framing questions before requesting recommendations', async () => {
@@ -107,5 +114,71 @@ describe('GuidedModelSetup', () => {
 
     expect(screen.getByRole('button', { name: /model: model-1/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /dataset: dataset-1/i })).toBeInTheDocument();
+  });
+
+  it('prefills framing dates and region from selected dataset metadata', async () => {
+    fetchDatasetDetail.mockResolvedValue({
+      id: 'dataset-1',
+      name: 'Texas groundwater observations',
+      region: '',
+      variables: ['groundwater__hydraulic_head'],
+      datatype: 'CSV',
+      time_period: {
+        start_date: new Date('2012-01-01T00:00:00Z'),
+        end_date: new Date('2020-12-31T00:00:00Z'),
+      },
+      description: '',
+      version: '',
+      limitations: '',
+      source: { name: '', url: '', type: '' },
+      resources: [],
+      spatial_coverage: {
+        type: 'BoundingBox',
+        value: { xmin: -106, xmax: -93, ymin: 25, ymax: 37 },
+      },
+    });
+
+    renderWithProviders(<GuidedModelSetup initialDatasetId="dataset-1" />, {
+      initialEntries: ['/modeling/problem-statements/start?datasetId=dataset-1'],
+      apolloMocks: [
+        {
+          request: { query: LIST_TOP_REGIONS },
+          result: {
+            data: {
+              region: [
+                {
+                  id: 'texas',
+                  name: 'Texas',
+                  model_catalog_uri: null,
+                  geometries: [
+                    {
+                      geometry: {
+                        type: 'Polygon',
+                        coordinates: [
+                          [
+                            [-106, 25],
+                            [-93, 25],
+                            [-93, 37],
+                            [-106, 37],
+                            [-106, 25],
+                          ],
+                        ],
+                      },
+                    },
+                  ],
+                },
+              ],
+            },
+          },
+        },
+      ],
+    });
+
+    await waitFor(() => {
+      expect(screen.getByLabelText('Start date *')).toHaveValue('2012-01-01');
+      expect(screen.getByLabelText('End date *')).toHaveValue('2020-12-31');
+      expect(screen.getByRole('combobox', { name: 'Region' })).toHaveTextContent('Texas');
+    });
+    expect(screen.getByText(/prefilled from the selected dataset metadata/i)).toBeInTheDocument();
   });
 });

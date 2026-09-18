@@ -1,6 +1,7 @@
 import {
   useEffect,
   useMemo,
+  useRef,
   useState,
   type Dispatch,
   type ReactNode,
@@ -41,6 +42,10 @@ import {
   type StandardVariableRecommendation,
 } from '@/lib/modeling/problemStatementRecommendations';
 import { findDatasetsByVariables, type DataCatalogDataset } from '@/lib/data-catalog';
+import { fetchDatasetDetail } from '@/lib/datasets/data-catalog-api';
+import { spatialCoverageBoundingBox } from '@/lib/datasets/spatial';
+import type { Dataset } from '@/lib/datasets/types';
+import { boundingBoxesOverlap, unionBoundingBox, type BoundingBox } from '@/lib/geo/bbox';
 import { useAuth } from '@/lib/auth/useAuth';
 
 interface Region {
@@ -80,6 +85,36 @@ function initialIds(value: string | null, searchValue: string | null): string[] 
   return [...new Set(values)];
 }
 
+function dateInputValue(value: Date | null | undefined): string {
+  if (!value) return '';
+  const date = value instanceof Date ? value : new Date(value);
+  return Number.isNaN(date.getTime()) ? '' : date.toISOString().slice(0, 10);
+}
+
+function combinedDatasetCoverage(datasets: Dataset[]): BoundingBox | null {
+  const boxes = datasets
+    .map((dataset) => spatialCoverageBoundingBox(dataset.spatial_coverage))
+    .filter((box): box is BoundingBox => Boolean(box));
+  if (!boxes.length) return null;
+  return boxes.reduce((combined, box) => ({
+    xmin: Math.min(combined.xmin, box.xmin),
+    xmax: Math.max(combined.xmax, box.xmax),
+    ymin: Math.min(combined.ymin, box.ymin),
+    ymax: Math.max(combined.ymax, box.ymax),
+  }));
+}
+
+function regionForDatasetCoverage(datasets: Dataset[], regions: Region[]): string | null {
+  const datasetBox = combinedDatasetCoverage(datasets);
+  if (!datasetBox) return null;
+  return (
+    regions.find((region) => {
+      const regionBox = unionBoundingBox(region.geometries.map((geometry) => geometry.geometry));
+      return regionBox ? boundingBoxesOverlap(datasetBox, regionBox) : false;
+    })?.id ?? null
+  );
+}
+
 export function GuidedModelSetup({
   initialModelId = null,
   initialDatasetId = null,
@@ -99,7 +134,7 @@ export function GuidedModelSetup({
   );
 
   const { data: regionData } = useQuery<RegionData>(LIST_TOP_REGIONS);
-  const regions = regionData?.region ?? [];
+  const regions = useMemo(() => regionData?.region ?? [], [regionData]);
   const { data: statementsData, loading: statementsLoading } = useListProblemStatementsQuery({
     variables: { where: {} },
     fetchPolicy: 'cache-and-network',
@@ -119,6 +154,7 @@ export function GuidedModelSetup({
   const [regionId, setRegionId] = useState('');
   const [startDate, setStartDate] = useState('2000-01-01');
   const [endDate, setEndDate] = useState(new Date().toISOString().slice(0, 10));
+  const [selectedDatasetMetadata, setSelectedDatasetMetadata] = useState<Dataset[]>([]);
   const [destination, setDestination] = useState<'new' | 'existing'>('new');
   const [existingProblemStatementId, setExistingProblemStatementId] = useState('');
   const [problemStatementName, setProblemStatementName] = useState('');
@@ -137,6 +173,71 @@ export function GuidedModelSetup({
   const [loadingRecommendations, setLoadingRecommendations] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const framingEdits = useRef({ region: false, startDate: false, endDate: false });
+
+  useEffect(() => {
+    if (!startingDatasetIds.length) {
+      setSelectedDatasetMetadata([]);
+      return;
+    }
+
+    let active = true;
+    void Promise.all(
+      startingDatasetIds.map(async (id) => {
+        try {
+          return await fetchDatasetDetail(id);
+        } catch {
+          // A selected dataset should not prevent framing the problem if its
+          // catalog detail is temporarily unavailable.
+          return null;
+        }
+      }),
+    ).then((datasets) => {
+      if (active)
+        setSelectedDatasetMetadata(datasets.filter((dataset): dataset is Dataset => !!dataset));
+    });
+
+    return () => {
+      active = false;
+    };
+  }, [startingDatasetIds]);
+
+  useEffect(() => {
+    if (!selectedDatasetMetadata.length) return;
+
+    const periods = selectedDatasetMetadata
+      .map((dataset) => dataset.time_period)
+      .filter((period): period is NonNullable<Dataset['time_period']> => Boolean(period));
+    const starts = periods
+      .map((period) => period.start_date)
+      .filter((date): date is Date => Boolean(date));
+    const ends = periods
+      .map((period) => period.end_date)
+      .filter((date): date is Date => Boolean(date));
+    const derivedStart = starts.length
+      ? dateInputValue(new Date(Math.max(...starts.map((date) => date.getTime()))))
+      : '';
+    const derivedEnd = ends.length
+      ? dateInputValue(new Date(Math.min(...ends.map((date) => date.getTime()))))
+      : '';
+
+    // Use the common period for multiple selected datasets. If the metadata
+    // has no common interval, leave the editable defaults in place rather than
+    // creating an invalid start/end pair.
+    if (derivedStart && derivedEnd && derivedStart < derivedEnd) {
+      if (!framingEdits.current.startDate && startDate === '2000-01-01') {
+        setStartDate(derivedStart);
+      }
+      if (!framingEdits.current.endDate && endDate === new Date().toISOString().slice(0, 10)) {
+        setEndDate(derivedEnd);
+      }
+    }
+
+    if (!framingEdits.current.region && !regionId) {
+      const derivedRegionId = regionForDatasetCoverage(selectedDatasetMetadata, regions);
+      if (derivedRegionId) setRegionId(derivedRegionId);
+    }
+  }, [endDate, regionId, regions, selectedDatasetMetadata, startDate]);
 
   useEffect(() => {
     if (!problemStatementName && goal.trim()) setProblemStatementName(goal.trim());
@@ -377,7 +478,13 @@ export function GuidedModelSetup({
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="guided-region">Region *</Label>
-            <Select value={regionId} onValueChange={setRegionId}>
+            <Select
+              value={regionId}
+              onValueChange={(value) => {
+                framingEdits.current.region = true;
+                setRegionId(value);
+              }}
+            >
               <SelectTrigger id="guided-region" aria-label="Region">
                 <SelectValue placeholder="Choose a region" />
               </SelectTrigger>
@@ -397,7 +504,10 @@ export function GuidedModelSetup({
                 id="guided-start"
                 type="date"
                 value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
+                onChange={(e) => {
+                  framingEdits.current.startDate = true;
+                  setStartDate(e.target.value);
+                }}
               />
             </div>
             <div className="space-y-1.5">
@@ -406,11 +516,20 @@ export function GuidedModelSetup({
                 id="guided-end"
                 type="date"
                 value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
+                onChange={(e) => {
+                  framingEdits.current.endDate = true;
+                  setEndDate(e.target.value);
+                }}
               />
             </div>
           </div>
         </div>
+        {selectedDatasetMetadata.length > 0 && (
+          <p className="mt-3 text-xs text-muted-foreground">
+            Region and dates were prefilled from the selected dataset metadata. Review them before
+            continuing.
+          </p>
+        )}
         {!datesValid && (
           <p className="mt-3 text-sm text-destructive">End date must be after start date.</p>
         )}

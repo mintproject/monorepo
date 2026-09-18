@@ -817,11 +817,11 @@ def upsert_pod(
 
 
 def sync_ui_auth(t: Any, spec: dict[str, Any]) -> int:
-    """Push the UI auth allowlist and keep the image the pod runs now.
+    """Push the UI auth allowlist and restart the pod with its current image.
 
     tapis_auth_allowed_users lives in the pod definition, so only an update
-    applies it. The deploy reaches the UI pod in its last step, and an earlier
-    failure skips that step. This mode runs early and changes nothing else.
+    applies it. The UI must restart before the running proxy can use the new
+    networking definition. This mode changes nothing else.
     """
     pid = spec["pod_id"]
     existing = _get_or_missing(t.pods.get_pod, pod_id=pid)
@@ -830,6 +830,9 @@ def sync_ui_auth(t: Any, spec: dict[str, Any]) -> int:
     current_image = _field(existing, "image")
     if not current_image:
         raise RuntimeError(f"[{pid}] reports no image; refusing to rewrite the definition")
+    previous_start = _field(_field(existing, "status_container", {}), "start_time")
+    if not previous_start:
+        raise RuntimeError(f"[{pid}] reports no container start time; refusing to restart")
 
     allowed = spec["networking"]["default"]["tapis_auth_allowed_users"]
     update = dict(spec)
@@ -850,6 +853,9 @@ def sync_ui_auth(t: Any, spec: dict[str, Any]) -> int:
             f"[{pid}] allowlist did not converge; missing: " + ", ".join(missing)
         )
     print(f"  [{pid}] allowlist applied: {', '.join(applied)}")
+    t.pods.restart_pod(pod_id=pid)
+    print(f"  [{pid}] restart requested")
+    wait_for_pod_restart(t, pid, current_image, previous_start)
     return 0
 
 
@@ -910,7 +916,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--sync-ui-auth",
         action="store_true",
-        help="only push the UI auth allowlist; keep the running image and never restart the pod",
+        help="push the UI auth allowlist and restart the pod with its current image",
     )
     parser.add_argument("--no-start", action="store_true")
     parser.add_argument("--dry-run", action="store_true")

@@ -44,11 +44,7 @@ const NAV_GROUPS: NavGroup[] = [
       {
         label: 'Datasets',
         icon: Database,
-        items: [
-          { href: '/datasets', label: 'Overview' },
-          { href: '/datasets/browse', label: 'Browse' },
-          { href: '/datasets/search', label: 'Search' },
-        ],
+        items: [{ href: '/datasets/browse', label: 'Browse' }],
       },
       {
         label: 'Regions',
