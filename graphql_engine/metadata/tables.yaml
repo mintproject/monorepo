@@ -4739,3 +4739,141 @@
     permission:
       columns: [etl_process_id, role, position, standard_variable_uri, unit, format, dimensionality, spatial_type, crs_requirement, temporal_resolution, schema_requirement_json]
       filter: {}
+- table:
+    name: data_object
+    schema: adapter
+  array_relationships:
+  - name: variables
+    using:
+      foreign_key_constraint_on:
+        column: data_object_id
+        table:
+          name: data_object_variable
+          schema: adapter
+  - name: readiness_assessments
+    using:
+      foreign_key_constraint_on:
+        column: data_object_id
+        table:
+          name: readiness_assessment
+          schema: adapter
+  - name: workflow_plans
+    using:
+      foreign_key_constraint_on:
+        column: source_data_object_id
+        table:
+          name: workflow_plan
+          schema: adapter
+  - name: workflow_runs
+    using:
+      foreign_key_constraint_on:
+        column: output_data_object_id
+        table:
+          name: workflow_run
+          schema: adapter
+  - name: provenance_events
+    using:
+      foreign_key_constraint_on:
+        column: data_object_id
+        table:
+          name: provenance_event
+          schema: adapter
+- table:
+    name: data_object_variable
+    schema: adapter
+  object_relationships:
+  - name: data_object
+    using:
+      foreign_key_constraint_on: data_object_id
+- table:
+    name: transform_spec
+    schema: adapter
+  array_relationships:
+  - name: contracts
+    using:
+      foreign_key_constraint_on:
+        column: transform_spec_id
+        table:
+          name: transform_contract
+          schema: adapter
+- table:
+    name: transform_contract
+    schema: adapter
+  object_relationships:
+  - name: transform_spec
+    using:
+      foreign_key_constraint_on: transform_spec_id
+  - name: source_edges
+    using:
+      foreign_key_constraint_on:
+        column: source_contract_id
+        table:
+          name: transform_edge
+          schema: adapter
+  - name: target_edges
+    using:
+      foreign_key_constraint_on:
+        column: target_contract_id
+        table:
+          name: transform_edge
+          schema: adapter
+- table:
+    name: transform_edge
+    schema: adapter
+  object_relationships:
+  - name: source_contract
+    using:
+      foreign_key_constraint_on: source_contract_id
+  - name: target_contract
+    using:
+      foreign_key_constraint_on: target_contract_id
+- table:
+    name: readiness_assessment
+    schema: adapter
+  object_relationships:
+  - name: data_object
+    using:
+      foreign_key_constraint_on: data_object_id
+- table:
+    name: workflow_plan
+    schema: adapter
+  object_relationships:
+  - name: source_data_object
+    using:
+      foreign_key_constraint_on: source_data_object_id
+  array_relationships:
+  - name: workflow_runs
+    using:
+      foreign_key_constraint_on:
+        column: workflow_plan_id
+        table:
+          name: workflow_run
+          schema: adapter
+- table:
+    name: workflow_run
+    schema: adapter
+  object_relationships:
+  - name: workflow_plan
+    using:
+      foreign_key_constraint_on: workflow_plan_id
+  - name: output_data_object
+    using:
+      foreign_key_constraint_on: output_data_object_id
+  array_relationships:
+  - name: provenance_events
+    using:
+      foreign_key_constraint_on:
+        column: workflow_run_id
+        table:
+          name: provenance_event
+          schema: adapter
+- table:
+    name: provenance_event
+    schema: adapter
+  object_relationships:
+  - name: workflow_run
+    using:
+      foreign_key_constraint_on: workflow_run_id
+  - name: data_object
+    using:
+      foreign_key_constraint_on: data_object_id
