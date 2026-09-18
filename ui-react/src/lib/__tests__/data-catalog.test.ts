@@ -243,6 +243,15 @@ describe('findDatasets', () => {
     ]);
   });
 
+  it('exposes a dataset bounding box for local spatial filtering', async () => {
+    stubSearch([IN_TEXAS]);
+    const found = await findDatasets({ standard_variable_names__in: ['a'] });
+    expect(found[0]?.spatial_coverage).toEqual({
+      type: 'BoundingBox',
+      value: TEXAS,
+    });
+  });
+
   it('labels a dataset with no spatial field unknown, not outside', async () => {
     // The defect this guards: ext_bbox filtered on *having* a location, so
     // these never reached the client — 11 of TACC's 33 annotated packages.

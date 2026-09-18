@@ -245,6 +245,24 @@ export function GuidedModelSetup({
 
   const selectedRegion = regions.find((region) => region.id === regionId);
   const problemStatements = (statementsData?.problem_statement ?? []) as ProblemStatement[];
+  const visibleModelRecommendations = useMemo(() => {
+    if (!recommendations || !selectedSvoId) return recommendations?.models ?? [];
+
+    // Keep models with incomplete output metadata visible. A missing catalog
+    // relationship is unknown, not proof that the model cannot produce the
+    // selected outcome.
+    const modelsWithOutputMetadata = recommendations.models.filter((model) =>
+      (model.standard_variables ?? []).some((variable) => variable.role === 'output'),
+    );
+    if (modelsWithOutputMetadata.length === 0) return recommendations.models;
+
+    return recommendations.models.filter((model) => {
+      const outputs = (model.standard_variables ?? []).filter(
+        (variable) => variable.role === 'output',
+      );
+      return outputs.length === 0 || outputs.some((variable) => variable.id === selectedSvoId);
+    });
+  }, [recommendations, selectedSvoId]);
   const datesValid = Boolean(startDate && endDate && startDate < endDate);
   const framingValid = Boolean(goal.trim() && regionId && datesValid);
   const canConfirm = Boolean(
@@ -466,15 +484,16 @@ export function GuidedModelSetup({
             />
           </div>
           <div className="space-y-1.5 md:col-span-2">
-            <Label htmlFor="guided-outcome">
-              What outcome or indicator matters most? (optional)
-            </Label>
+            <Label htmlFor="guided-outcome">What should the model produce? (optional)</Label>
             <Input
               id="guided-outcome"
               value={outcome}
               onChange={(event) => setOutcome(event.target.value)}
-              placeholder="For example: groundwater hydraulic head"
+              placeholder="For example: groundwater hydraulic head or flood extent"
             />
+            <p className="text-xs text-muted-foreground">
+              This helps identify the response variable and models that can produce it.
+            </p>
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="guided-region">Region *</Label>
@@ -559,7 +578,7 @@ export function GuidedModelSetup({
           </p>
           <div className="grid gap-5 lg:grid-cols-3">
             <RecommendationGroup
-              title="Standard variables"
+              title="Response variables"
               empty="No standard variables suggested."
             >
               {recommendations.svo.map((item) => (
@@ -575,8 +594,15 @@ export function GuidedModelSetup({
                 />
               ))}
             </RecommendationGroup>
-            <RecommendationGroup title="Models" empty="No models suggested.">
-              {recommendations.models.map((item) => (
+            <RecommendationGroup
+              title="Models that can help"
+              empty={
+                selectedSvoId
+                  ? 'No returned model declares this response variable as an output.'
+                  : 'No models suggested.'
+              }
+            >
+              {visibleModelRecommendations.map((item) => (
                 <RecommendationCard
                   key={item.id}
                   title={displayLabel(item.id, item.label)}

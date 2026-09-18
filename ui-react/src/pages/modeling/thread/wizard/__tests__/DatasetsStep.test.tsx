@@ -4,11 +4,31 @@ import { renderWithProviders, screen } from '@/test/utils/render';
 import type { Thread } from '@/graphql/generated/modeling';
 import type { ModelEnsembleMap, ThreadModel } from '@/graphql/generated/execution';
 import type { DataCatalogDataset } from '@/lib/data-catalog';
+vi.mock('@/components/datasets/DatasetSpatialMap', () => ({
+  DatasetSpatialMap: ({
+    value,
+    onChange,
+  }: {
+    value: { xmin: number; xmax: number; ymin: number; ymax: number } | null;
+    onChange: (value: { xmin: number; xmax: number; ymin: number; ymax: number } | null) => void;
+  }) => (
+    <div data-testid="dataset-spatial-map">
+      <button
+        type="button"
+        onClick={() => onChange(value ? null : { xmin: -101, xmax: -99, ymin: 29, ymax: 32 })}
+      >
+        {value ? 'Clear spatial filter' : 'Draw spatial filter'}
+      </button>
+    </div>
+  ),
+}));
+
 import {
   DatasetsStep,
   assignmentsFromBindings,
   datasetOptionLabel,
   dateCoverage,
+  matchesSpatialBox,
   splitByRegion,
 } from '../DatasetsStep';
 
@@ -159,6 +179,34 @@ describe('splitByRegion', () => {
   });
 });
 
+describe('matchesSpatialBox', () => {
+  const box = { xmin: -101, xmax: -99, ymin: 29, ymax: 32 };
+
+  it('matches overlapping declared coverage', () => {
+    expect(matchesSpatialBox({ spatial_coverage: { type: 'BoundingBox', value: box } }, box)).toBe(
+      true,
+    );
+  });
+
+  it('keeps datasets without a declared extent available', () => {
+    expect(matchesSpatialBox({}, box)).toBe(true);
+  });
+
+  it('filters known non-overlapping coverage', () => {
+    expect(
+      matchesSpatialBox(
+        {
+          spatial_coverage: {
+            type: 'BoundingBox',
+            value: { xmin: -110, xmax: -109, ymin: 40, ymax: 41 },
+          },
+        },
+        box,
+      ),
+    ).toBe(false);
+  });
+});
+
 describe('datasetOptionLabel', () => {
   const requested = { start: new Date('2000-01-01'), end: new Date('2026-01-01') };
 
@@ -292,6 +340,29 @@ describe('DatasetsStep region filter', () => {
     const picker = await screen.findByLabelText('Choose dataset');
     expect(picker).toHaveTextContent('Choose · 3 options');
     expect(screen.getByTestId('filtered-by-banner')).toHaveTextContent(/no extent, not applied/);
+  });
+
+  it('down-selects candidates using the shared spatial bounding box', async () => {
+    renderWithProviders(
+      <DatasetsStep
+        thread={makeThread()}
+        models={models}
+        ensembles={ensembles}
+        persistedData={{}}
+        regionGeometry={[]}
+        onUpdated={vi.fn()}
+        onContinue={vi.fn()}
+        onBack={vi.fn()}
+      />,
+    );
+    const picker = await screen.findByLabelText('Choose dataset');
+    expect(picker).toHaveTextContent('Choose · 3 options');
+
+    await userEvent.click(screen.getByRole('button', { name: 'Draw spatial filter' }));
+
+    const filteredPicker = await screen.findByLabelText('Choose dataset');
+    expect(filteredPicker).toHaveTextContent('Choose · 2 options');
+    expect(screen.getByText(/outside the drawn box/)).toBeInTheDocument();
   });
 });
 

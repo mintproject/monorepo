@@ -14,6 +14,7 @@
 import {
   cleanString,
   overlapsDateRange,
+  packageBoundingBox,
   packageRegionMatch,
   packagesMatchingVariables,
   packageTags,
@@ -26,6 +27,7 @@ import {
   type CkanResource,
   type RegionMatch,
 } from './datasets/ckan';
+import type { SpatialCoverage } from './datasets/types';
 import { geoJsonBoundingBox, unionBoundingBox, type BoundingBox } from './geo/bbox';
 
 // ─── Domain types ─────────────────────────────────────────────────────────────
@@ -66,6 +68,8 @@ export interface DataCatalogDataset {
   version: string;
   limitations: string;
   source: DataCatalogSource;
+  /** Dataset extent reduced to a bounding box for local spatial filtering. */
+  spatial_coverage?: SpatialCoverage;
   categories?: string[];
   resource_count?: number;
   resources: DataCatalogResource[];
@@ -99,6 +103,7 @@ function datasetFromCkanPackage(
   regionMatch: RegionMatch,
 ): DataCatalogDataset {
   const resources = pkg.resources ?? [];
+  const spatialBox = packageBoundingBox(pkg);
   return {
     // Prefer the name slug: it is what CKAN URLs use and package_show accepts.
     id: cleanString(pkg.name) || cleanString(pkg.id),
@@ -118,6 +123,7 @@ function datasetFromCkanPackage(
       url: cleanString(pkg.url),
       type: '',
     },
+    ...(spatialBox ? { spatial_coverage: { type: 'BoundingBox', value: spatialBox } } : {}),
     categories: packageTags(pkg),
     resource_count: pkg.num_resources ?? resources.length,
     resources: [],

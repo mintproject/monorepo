@@ -30,7 +30,7 @@ interface ModelRow {
   region: string;
   producesIds: string[];
   producesLabels: string[];
-  needs: { name: string; varLabels: string[] }[];
+  needs: { name: string; varIds: string[]; varLabels: string[] }[];
 }
 
 interface ModelsStepProps {
@@ -53,7 +53,11 @@ function rowFromConfig(cfg: ModelConfigInfo | ModelSetupInfo, parent?: ModelConf
     region: regions.map((r) => r.region.label ?? r.region.id).join(', '),
     producesIds: io.producesVariableIds,
     producesLabels: io.outputs.flatMap((o) => o.variableLabels),
-    needs: io.inputs.map((i) => ({ name: i.name, varLabels: i.variableLabels })),
+    needs: io.inputs.map((i) => ({
+      name: i.name,
+      varIds: i.variableIds,
+      varLabels: i.variableLabels,
+    })),
   };
 }
 
@@ -106,14 +110,28 @@ function ModelCard({
           <p className="mt-0.5 line-clamp-2 text-xs text-gray-500">{row.description}</p>
         )}
         <div className="mt-1.5 flex flex-wrap gap-1">
-          {row.producesLabels.map((p) => (
-            <span key={p} className="rounded bg-green-100 px-1.5 py-0.5 text-xs text-green-800">
-              produces: {p}
+          {row.producesLabels.length > 0 ? (
+            row.producesLabels.map((p, index) => (
+              <span
+                key={`${row.id}-produces-${index}`}
+                className="rounded bg-green-100 px-1.5 py-0.5 text-xs text-green-800"
+              >
+                Produces: {p}
+              </span>
+            ))
+          ) : (
+            <span className="rounded bg-gray-100 px-1.5 py-0.5 text-xs text-gray-600">
+              Output metadata unavailable
             </span>
-          ))}
-          {row.needs.length > 0 && (
+          )}
+          {row.needs.length > 0 ? (
             <span className="rounded bg-blue-100 px-1.5 py-0.5 text-xs text-blue-800">
-              needs {row.needs.length}: {row.needs.map((n) => n.varLabels[0] ?? n.name).join(', ')}
+              Model inputs ({row.needs.length}):{' '}
+              {row.needs.map((n) => n.varLabels[0] ?? n.name).join(', ')}
+            </span>
+          ) : (
+            <span className="rounded bg-gray-100 px-1.5 py-0.5 text-xs text-gray-600">
+              Input metadata unavailable
             </span>
           )}
         </div>
@@ -166,7 +184,10 @@ export function ModelsStep({
     filters: semanticFilters,
   });
   const indicatorRows = useMemo(
-    () => (indicator ? allRows.filter((r) => r.producesIds.includes(indicator)) : allRows),
+    () =>
+      indicator
+        ? allRows.filter((r) => r.producesIds.length === 0 || r.producesIds.includes(indicator))
+        : allRows,
     [allRows, indicator],
   );
 
@@ -212,6 +233,14 @@ export function ModelsStep({
   }, [searchedRows, threadRegionId]);
 
   const displayedRows = showAllRegions ? searchedRows : regionRows;
+  const incompatibleSelectedRows = useMemo(() => {
+    if (!indicator) return [];
+    const selected = new Set(selectedIds);
+    return allRows.filter(
+      (row) =>
+        selected.has(row.id) && row.producesIds.length > 0 && !row.producesIds.includes(indicator),
+    );
+  }, [allRows, indicator, selectedIds]);
 
   const toggleModel = useCallback((id: string, checked: boolean) => {
     setSelectedIds((prev) => {
@@ -258,23 +287,36 @@ export function ModelsStep({
         chips: [
           {
             icon: '🎯',
-            label: 'Indicator',
+            label: 'Desired outcome',
             value: `${indicatorRows.length} of ${totalCount} models`,
-            source: indicatorLabel ?? undefined,
+            source: indicatorLabel ? `produces ${indicatorLabel}` : undefined,
           },
         ],
       }
-    : { chips: [{ icon: '🎯', label: 'Indicator', value: `all ${totalCount} models` }] };
+    : {
+        chips: [
+          {
+            icon: '🎯',
+            label: 'Desired outcome',
+            value: `all ${totalCount} models`,
+          },
+        ],
+      };
 
-  const canContinue = selectedIds.size >= 1 && !saving && perm.write;
+  const canContinue =
+    selectedIds.size >= 1 && incompatibleSelectedRows.length === 0 && !saving && perm.write;
 
   return (
     <StepShell
       title="Models"
-      description="Choose one or more calibrated model configurations."
+      description="Choose one or more calibrated models. Each card shows what it produces and which inputs can become drivers and datasets."
       canContinue={canContinue}
       continueHint={
-        selectedIds.size === 0 ? 'Select at least one model' : `${selectedIds.size} selected`
+        incompatibleSelectedRows.length > 0
+          ? `Remove ${incompatibleSelectedRows.length} model${incompatibleSelectedRows.length === 1 ? '' : 's'} that do not produce the desired outcome`
+          : selectedIds.size === 0
+            ? 'Select at least one model'
+            : `${selectedIds.size} selected`
       }
       continueLabel={saving ? 'Saving…' : 'Continue'}
       onContinue={handleContinue}
@@ -283,8 +325,45 @@ export function ModelsStep({
       <FilteredByBanner
         chips={banner.chips}
         onEdit={indicator ? onEditIndicator : undefined}
-        editLabel="edit indicator"
+        editLabel="edit outcome"
       />
+
+      {indicator && !loading && !error && incompatibleSelectedRows.length > 0 && (
+        <div
+          className="mb-4 rounded border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900"
+          role="alert"
+        >
+          <p className="font-medium">
+            {incompatibleSelectedRows.length === 1 ? 'One selected model' : 'Some selected models'}{' '}
+            {incompatibleSelectedRows.length === 1 ? 'does' : 'do'} not produce{' '}
+            {indicatorLabel ?? 'the desired outcome'}.
+          </p>
+          <p className="mt-1 text-xs">
+            Remove {incompatibleSelectedRows.length === 1 ? 'it' : 'them'} or choose a different
+            outcome before continuing.
+          </p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {incompatibleSelectedRows.map((row) => (
+              <button
+                key={row.id}
+                type="button"
+                className="rounded border border-amber-400 bg-white px-2 py-1 text-xs text-amber-900 hover:bg-amber-100"
+                onClick={() => toggleModel(row.id, false)}
+                aria-label={`Remove ${row.name}`}
+              >
+                Remove {row.name}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {!indicator && !loading && !error && (
+        <p className="mb-4 text-xs text-gray-600" role="status">
+          No desired outcome selected — all models are available. Choose an outcome in Outcome &
+          drivers to narrow this list to models that produce it.
+        </p>
+      )}
 
       <div className="relative mb-3">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />

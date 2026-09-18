@@ -67,10 +67,13 @@ publishing images.
 - `graphql_engine/**` → `graphql`
 - `docker/postgres-pgvector/**` → `postgres`
 
-Changes to `.github/**` and `deploy/**` are control-only and produce a
-no-op deployment manifest. This prevents changing CI/CD code from mutating the
-running stack. Shared Docker/build configuration, root dependency manifests,
-or other unowned paths expand to `deploy_all`.
+Changes to `.github/**` are control-only and produce a no-op deployment
+manifest. Most `deploy/**` changes are also control-only, but
+`deploy/tapis/register_mint_stack.py` is an exception: it defines live pod
+configuration, so it selects the UI service and applies the updated pod
+definition through the existing image-deploy path. Shared Docker/build
+configuration, root dependency manifests, or other unowned paths expand to
+`deploy_all`.
 
 ### Dependency expansion
 
@@ -313,6 +316,17 @@ rollout and debrief are complete.
 - **User feedback:** The user explicitly directed: “Then don't configure cors.”
 - **Impact on implementation:** GraphQL spec generation and regression tests
   now enforce the route-only Tapis networking payload.
+
+### 2026-09-18 - Apply Ensemble Manager API prefix in the deployed UI
+
+- **Decision:** The UI pod receives the Ensemble Manager base URL with the
+  `/v1` prefix, and changes to the Tapis pod-spec registration script select
+  the UI deployment path.
+- **Reason:** Ensemble Manager mounts the Tapis execution-engine route under
+  `/v1/executionEngines/tapis`; the deployed UI was calling the pod root and
+  received HTTP 404 responses.
+- **Impact on implementation:** Pod-spec and change-plan regression tests now
+  verify both the URL and the rollout selection.
 
 ## User feedback / decisions
 

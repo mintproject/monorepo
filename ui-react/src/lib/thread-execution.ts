@@ -95,6 +95,7 @@ export function threadModelFromGQL(tm: ThreadModelRow): ThreadModel | null {
       id: i.id,
       name: i.name,
       variables: i.variableLabels,
+      variableIds: i.variableIds,
       isOptional: i.optional,
     })),
     output_files: io.outputs.map((o) => ({

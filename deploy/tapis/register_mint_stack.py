@@ -353,7 +353,9 @@ def build_specs(owner: str, tag: str, base_url: str) -> dict[str, dict[str, Any]
                 "AUTH_SERVER": _env("AUTH_SERVER", "https://portals.tapis.io"),
                 "AUTH_CLIENT_ID": _env("MINTDEV_AUTH_CLIENT_ID", "mint_dev"),
                 "AUTH_CALLBACK_ORIGIN": urls["ui"],
-                "ENSEMBLE_MANAGER_API": urls["ensemble"],
+                # Ensemble Manager mounts its API under /v1. Keep the route
+                # prefix in the UI base URL so requests reach the API router.
+                "ENSEMBLE_MANAGER_API": f"{urls['ensemble']}/v1",
                 "SEMANTIC_SEARCH_API": urls["semantic_search"],
                 "DATA_CATALOG_API": _env("DATA_CATALOG_API", "https://ckan.tacc.utexas.edu"),
                 "DATA_CATALOG_BROWSE_URL": _env("DATA_CATALOG_BROWSE_URL", "https://ckan.tacc.utexas.edu"),

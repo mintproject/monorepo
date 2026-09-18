@@ -53,7 +53,7 @@ describe('VariablesStep', () => {
     expect(screen.getByTestId('step-continue')).toBeEnabled();
   });
 
-  it('shows the neutral "no indicator" preview when none is set', () => {
+  it('shows the neutral "no desired outcome" preview when none is set', () => {
     renderWithProviders(
       <VariablesStep
         thread={makeThread()}
@@ -62,7 +62,7 @@ describe('VariablesStep', () => {
         onBack={vi.fn()}
       />,
     );
-    expect(screen.getByText(/no indicator set/i)).toBeInTheDocument();
+    expect(screen.getByText(/no desired outcome selected/i)).toBeInTheDocument();
   });
 
   // #106: the thread stores a standard variable URI. Showing that URI in the
@@ -101,7 +101,7 @@ describe('VariablesStep', () => {
     );
   });
 
-  it('renders both the indicator and adjustable-variable labels', () => {
+  it('renders the response and driver labels', () => {
     renderWithProviders(
       <VariablesStep
         thread={makeThread()}
@@ -110,8 +110,8 @@ describe('VariablesStep', () => {
         onBack={vi.fn()}
       />,
     );
-    expect(screen.getByText('Indicator')).toBeInTheDocument();
-    expect(screen.getByText('Adjustable variable')).toBeInTheDocument();
+    expect(screen.getByText('Desired outcome (response variable)')).toBeInTheDocument();
+    expect(screen.getByText('Potential driver')).toBeInTheDocument();
   });
 
   // ── Scoping the two pickers (monorepo#103) ────────────────────────────────
@@ -136,7 +136,7 @@ describe('VariablesStep', () => {
     expect(await screen.findByRole('button', { name: /a model produces/i })).toBeInTheDocument();
   });
 
-  it('asks the Adjustable picker for the variables a model takes or adjusts', async () => {
+  it('asks the Potential driver picker for the variables a model uses or adjusts', async () => {
     renderWithProviders(
       <VariablesStep
         thread={makeThread()}
@@ -149,7 +149,29 @@ describe('VariablesStep', () => {
     const adjustableTrigger = screen.getAllByRole('combobox')[1];
     await userEvent.click(adjustableTrigger!);
     expect(
-      await screen.findByRole('button', { name: /a model takes or adjusts/i }),
+      await screen.findByRole('button', { name: /a model uses or adjusts/i }),
     ).toBeInTheDocument();
+  });
+
+  it('surfaces inputs from selected models as driver shortcuts', () => {
+    renderWithProviders(
+      <VariablesStep
+        thread={makeThread()}
+        modelDriverOptions={[
+          { id: 'sv-precip', label: 'precipitation', description: null },
+          { id: 'sv-soil', label: 'soil moisture', description: null },
+          { id: 'sv-precip', label: 'precipitation duplicate', description: null },
+        ]}
+        onUpdated={vi.fn()}
+        onContinue={vi.fn()}
+        onBack={vi.fn()}
+      />,
+    );
+    expect(screen.getByText('Inputs from selected models')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'precipitation' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'soil moisture' })).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'precipitation duplicate' }),
+    ).not.toBeInTheDocument();
   });
 });

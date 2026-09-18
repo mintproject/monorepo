@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import {
   Thread,
@@ -16,6 +16,8 @@ import { StepShell } from './StepShell';
 
 interface VariablesStepProps {
   thread: Thread;
+  /** Input variables from the models currently selected for this thread. */
+  modelDriverOptions?: StandardVariableOption[];
   onUpdated: () => void;
   onContinue: () => void;
   onBack?: () => void;
@@ -34,7 +36,13 @@ function optionFromId(id?: string | null, label?: string | null): StandardVariab
   return { id, label: label || id, description: null };
 }
 
-export function VariablesStep({ thread, onUpdated, onContinue, onBack }: VariablesStepProps) {
+export function VariablesStep({
+  thread,
+  modelDriverOptions = [],
+  onUpdated,
+  onContinue,
+  onBack,
+}: VariablesStepProps) {
   const { user } = useAuth();
   const { toast } = useToast();
   const perm = getUserPermission(thread.permissions, thread.events, user?.username ?? null);
@@ -49,6 +57,14 @@ export function VariablesStep({ thread, onUpdated, onContinue, onBack }: Variabl
 
   const [updateThread] = useUpdateThreadMutation();
   const [insertProvenance] = useInsertThreadProvenanceMutation();
+
+  const uniqueModelDriverOptions = useMemo(() => {
+    const byId = new Map<string, StandardVariableOption>();
+    for (const option of modelDriverOptions) {
+      if (!byId.has(option.id)) byId.set(option.id, option);
+    }
+    return [...byId.values()];
+  }, [modelDriverOptions]);
 
   async function handleContinue() {
     setSaving(true);
@@ -82,47 +98,91 @@ export function VariablesStep({ thread, onUpdated, onContinue, onBack }: Variabl
 
   return (
     <StepShell
-      title="Variables"
-      description="Optionally focus this sub-task by indicator and adjustable variable. You can skip this step."
+      title="Outcome & drivers"
+      description="Start with what the model should produce. After you choose models, their inputs become the best driver and dataset candidates."
       canContinue={!saving}
       continueLabel={saving ? 'Saving…' : 'Continue'}
       onContinue={handleContinue}
       onBack={onBack}
     >
       <div className="max-w-xl space-y-5 text-sm">
-        <div className="space-y-1">
-          <label className="font-semibold">Indicator</label>
+        <section className="space-y-2 rounded-lg border border-blue-200 bg-blue-50/50 p-4">
+          <div>
+            <h3 className="font-semibold">Desired outcome (response variable)</h3>
+            <p className="mt-1 text-xs text-gray-600">
+              What should the model produce or help you understand? This is the primary way to
+              narrow the Models step.
+            </p>
+          </div>
           <StandardVariableCombobox
+            id="response-variable"
             value={indicator}
             onChange={setIndicator}
             disabled={readOnly}
-            placeholder="Search standard variables…"
+            placeholder="Choose the model outcome…"
             scope="indicator"
             scopeLabel="a model produces"
           />
           {indicator ? (
-            <p className="text-xs text-green-700">
+            <p className="text-xs text-green-700" role="status">
               Models will be filtered to those that produce <strong>{indicator.label}</strong>.
             </p>
           ) : (
-            <p className="text-xs text-gray-500">
-              No indicator set — all models will be available next.
+            <p className="text-xs text-gray-500" role="status">
+              No desired outcome selected — all models will be available next.
             </p>
           )}
-        </div>
+        </section>
 
-        <div className="space-y-1">
-          <label className="font-semibold">Adjustable variable</label>
+        <section className="space-y-2 rounded-lg border p-4">
+          <div>
+            <h3 className="font-semibold">Potential driver</h3>
+            <p className="mt-1 text-xs text-gray-600">
+              Which input might you vary or investigate? The list contains variables that models
+              take or adjust; after selecting a model, use its input chips to confirm the relevant
+              driver.
+            </p>
+          </div>
           <StandardVariableCombobox
+            id="driving-variable"
             value={adjustable}
             onChange={setAdjustable}
             disabled={readOnly}
-            placeholder="Search standard variables…"
+            placeholder="Choose a model input to vary…"
             scope="driver"
-            scopeLabel="a model takes or adjusts"
+            scopeLabel="a model uses or adjusts"
           />
-          <p className="text-xs text-gray-500">Marks an input you intend to vary across runs.</p>
-        </div>
+          {uniqueModelDriverOptions.length > 0 && (
+            <div className="space-y-1.5 rounded border border-blue-100 bg-blue-50/40 p-2">
+              <p className="text-xs font-medium text-blue-900">Inputs from selected models</p>
+              <div className="flex flex-wrap gap-1.5">
+                {uniqueModelDriverOptions.map((option) => (
+                  <button
+                    key={option.id}
+                    type="button"
+                    className={`rounded-full border px-2 py-1 text-xs transition-colors ${
+                      adjustable?.id === option.id
+                        ? 'border-blue-500 bg-blue-100 text-blue-900'
+                        : 'border-blue-200 bg-white text-blue-800 hover:bg-blue-100'
+                    }`}
+                    onClick={() => setAdjustable(adjustable?.id === option.id ? null : option)}
+                    disabled={readOnly}
+                    aria-pressed={adjustable?.id === option.id}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+              <p className="text-[11px] text-blue-800">
+                These are the most direct driver candidates for the selected models.
+              </p>
+            </div>
+          )}
+          <p className="text-xs text-gray-500">
+            This does not narrow the model list by itself; it marks an input for later scenario or
+            parameter exploration.
+          </p>
+        </section>
       </div>
     </StepShell>
   );
