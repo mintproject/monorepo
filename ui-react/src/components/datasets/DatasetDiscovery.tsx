@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, SlidersHorizontal } from 'lucide-react';
+import { Search } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -11,12 +11,14 @@ import { searchDatasets } from '@/lib/datasets/data-catalog-api';
 import { discoverDatasets } from '@/lib/datasets/discovery';
 import { canonicalStandardVariable } from '@/lib/datasets/ckan';
 import type { DatasetDiscoveryResult } from '@/lib/datasets/types';
+import { datasetOverlapsBoundingBox } from '@/lib/datasets/spatial';
+import type { BoundingBox } from '@/lib/geo/bbox';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 
 import { DatasetCompatibilityPanel } from './DatasetCompatibilityPanel';
+import { DatasetSpatialMap } from './DatasetSpatialMap';
 
 type Mode = 'browse' | 'model';
-type CoverageFilter = 'all' | 'known' | 'unknown';
 
 interface ModelOption {
   id: string;
@@ -85,7 +87,7 @@ function datasetMatchesModel(dataset: DatasetDiscoveryResult, model: ModelOption
 export function DatasetDiscovery() {
   const [mode, setMode] = useState<Mode>('browse');
   const [query, setQuery] = useState('');
-  const [coverage, setCoverage] = useState<CoverageFilter>('all');
+  const [spatialBox, setSpatialBox] = useState<BoundingBox | null>(null);
   const [startYear, setStartYear] = useState(1900);
   const [endYear, setEndYear] = useState(2030);
   const [selectedModelId, setSelectedModelId] = useState('');
@@ -164,9 +166,8 @@ export function DatasetDiscovery() {
 
   const visibleDatasets = useMemo(() => {
     let result = datasets.filter((dataset) => overlapsYear(dataset, startYear, endYear));
-    if (coverage === 'known')
-      result = result.filter((dataset) => Boolean(dataset.spatial_coverage));
-    if (coverage === 'unknown') result = result.filter((dataset) => !dataset.spatial_coverage);
+    if (spatialBox)
+      result = result.filter((dataset) => datasetOverlapsBoundingBox(dataset, spatialBox));
     if (selectedModel) {
       result = result
         .map((dataset) => ({
@@ -177,7 +178,7 @@ export function DatasetDiscovery() {
         .sort((a, b) => b.modelMatchCount - a.modelMatchCount || a.name.localeCompare(b.name));
     }
     return result;
-  }, [coverage, datasets, endYear, selectedModel, startYear]);
+  }, [datasets, endYear, selectedModel, spatialBox, startYear]);
 
   return (
     <div className="space-y-6">
@@ -207,93 +208,83 @@ export function DatasetDiscovery() {
         </Button>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Search className="h-4 w-4" /> Search and filters
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex flex-col gap-2 sm:flex-row">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-              <Input
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder="Try “rainfall for the Edwards Aquifer”"
-                className="pl-9"
-                aria-label="Search MINT datasets"
-              />
-            </div>
-            <Button variant="outline" onClick={() => setQuery('')}>
-              Clear
-            </Button>
-          </div>
-          <div className="grid gap-4 md:grid-cols-3">
-            <label className="space-y-1 text-sm">
-              <span className="font-medium">Region / spatial coverage</span>
-              <select
-                value={coverage}
-                onChange={(event) => setCoverage(event.target.value as CoverageFilter)}
-                className="h-10 w-full rounded-md border border-input bg-background px-3"
-              >
-                <option value="all">Any coverage</option>
-                <option value="known">Has spatial coverage</option>
-                <option value="unknown">Spatial coverage unknown</option>
-              </select>
-            </label>
-            <div className="space-y-2 text-sm">
-              <span className="font-medium">Temporal coverage</span>
-              <div className="flex items-center gap-2">
-                <input
-                  type="range"
-                  min="1900"
-                  max="2030"
-                  value={startYear}
-                  onChange={(event) => setStartYear(Math.min(Number(event.target.value), endYear))}
-                  aria-label="Temporal coverage start year"
-                  className="w-full"
+      <div className="grid items-stretch gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(24rem,0.9fr)]">
+        <Card className="h-full">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Search className="h-4 w-4" /> Search and filters
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                  placeholder="Try “rainfall for the Edwards Aquifer”"
+                  className="pl-9"
+                  aria-label="Search MINT datasets"
                 />
-                <span className="w-10 text-right text-xs text-muted-foreground">{startYear}</span>
               </div>
-              <div className="flex items-center gap-2">
-                <input
-                  type="range"
-                  min="1900"
-                  max="2030"
-                  value={endYear}
-                  onChange={(event) => setEndYear(Math.max(Number(event.target.value), startYear))}
-                  aria-label="Temporal coverage end year"
-                  className="w-full"
-                />
-                <span className="w-10 text-right text-xs text-muted-foreground">{endYear}</span>
-              </div>
+              <Button variant="outline" onClick={() => setQuery('')}>
+                Clear
+              </Button>
             </div>
-            {mode === 'model' ? (
-              <label className="space-y-1 text-sm">
-                <span className="font-medium">Model / configuration</span>
-                <select
-                  value={selectedModelId}
-                  onChange={(event) => setSelectedModelId(event.target.value)}
-                  className="h-10 w-full rounded-md border border-input bg-background px-3"
-                  aria-label="Select model"
-                >
-                  {models.map((model) => (
-                    <option key={model.id} value={model.id}>
-                      {model.label} · {model.family}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            ) : (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <SlidersHorizontal className="h-4 w-4" /> Semantic search resolves to SVOs before
-                dataset matching.
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2 text-sm">
+                <span className="font-medium">Temporal coverage</span>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="range"
+                    min="1900"
+                    max="2030"
+                    value={startYear}
+                    onChange={(event) =>
+                      setStartYear(Math.min(Number(event.target.value), endYear))
+                    }
+                    aria-label="Temporal coverage start year"
+                    className="w-full"
+                  />
+                  <span className="w-10 text-right text-xs text-muted-foreground">{startYear}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="range"
+                    min="1900"
+                    max="2030"
+                    value={endYear}
+                    onChange={(event) =>
+                      setEndYear(Math.max(Number(event.target.value), startYear))
+                    }
+                    aria-label="Temporal coverage end year"
+                    className="w-full"
+                  />
+                  <span className="w-10 text-right text-xs text-muted-foreground">{endYear}</span>
+                </div>
               </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+              {mode === 'model' ? (
+                <label className="space-y-1 text-sm">
+                  <span className="font-medium">Model / configuration</span>
+                  <select
+                    value={selectedModelId}
+                    onChange={(event) => setSelectedModelId(event.target.value)}
+                    className="h-10 w-full rounded-md border border-input bg-background px-3"
+                    aria-label="Select model"
+                  >
+                    {models.map((model) => (
+                      <option key={model.id} value={model.id}>
+                        {model.label} · {model.family}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ) : null}
+            </div>
+          </CardContent>
+        </Card>
+        <DatasetSpatialMap value={spatialBox} onChange={setSpatialBox} />
+      </div>
 
       {semanticFallback && (
         <div className="rounded-md border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">

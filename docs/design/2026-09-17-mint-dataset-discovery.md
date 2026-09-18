@@ -4,7 +4,7 @@
 
 ## Objective
 
-Replace the primary CKAN iframe on `/datasets/browse` with a first-party MINT-aware discovery surface. The surface resolves free-text queries through Vector Search to MINT Standard Variables, retrieves matching CKAN datasets, exposes compact coverage filters, and shows model compatibility in a side panel.
+Replace the primary CKAN iframe on `/datasets/browse` with a first-party MINT-aware discovery surface. The surface resolves free-text queries through Vector Search to MINT Standard Variables, retrieves matching CKAN datasets, exposes a map-based spatial bounding-box filter and temporal coverage filters, and shows model compatibility in a side panel.
 
 ## User need
 
@@ -33,14 +33,16 @@ Free-text search uses Vector Search with `target=svo`, normalizes the returned S
 
 The result card shows title, description, source, SVO chips, compact spatial/temporal coverage, format, profile link, and a `Models` action. `Models` opens a lazy side panel grouping complete and partial model matches. Complete matches link to model setup; partial matches link to build-complete-run context. No model is executed by this feature.
 
-Region/spatial coverage is represented as one compact filter for the MVP. Temporal coverage uses two year range sliders. Validation status, metadata freshness, file size, and resource count are intentionally excluded from the MVP.
+Spatial coverage is selected by drawing a bounding box on a map positioned beside the search/filter card; the map spans the card height. Temporal coverage uses two year range sliders. Validation status, metadata freshness, file size, and resource count are intentionally excluded from the MVP.
 
 ## Files likely affected
 
 - `ui-react/src/pages/datasets/DatasetsBrowse.tsx`
 - `ui-react/src/components/datasets/DatasetDiscovery.tsx`
 - `ui-react/src/components/datasets/DatasetCompatibilityPanel.tsx`
+- `ui-react/src/components/datasets/DatasetSpatialMap.tsx`
 - `ui-react/src/lib/datasets/discovery.ts`
+- `ui-react/src/lib/datasets/spatial.ts`
 - `ui-react/src/lib/datasets/ckan.ts`
 - `ui-react/src/lib/datasets/data-catalog-api.ts`
 - `ui-react/src/lib/datasets/types.ts`
@@ -92,7 +94,7 @@ Rollout is a frontend-only replacement of the browse page. Rollback is to restor
 
 - Whether CKAN packages/resources should eventually be indexed directly by Vector Search.
 - How the modeling workflow should consume `modelId` and `datasetId` query parameters to prepopulate a new thread.
-- Whether a true map geometry picker should replace the MVP coverage-status filter.
+- Whether spatial filtering should later use named regions or server-side geometry queries in addition to the client-side bounding-box overlap filter.
 
 ## Decisions
 
@@ -122,9 +124,21 @@ Rollout is a frontend-only replacement of the browse page. Rollback is to restor
 
 ### 2026-09-17 - Implementation deviations
 
+**Status:** Superseded by the 2026-09-18 map-based spatial bounding-box decision below.
+
 - **Decision:** The initial spatial control is a coverage-status selector rather than a full named-region/map geometry picker.
 - **Reason:** The current browse route does not carry a region geometry and the user did not request a new map-selection API in this implementation pass.
 - **Impact:** A true region/map intersection control remains an open follow-up.
+
+### 2026-09-18 — Map-based spatial bounding-box filter
+
+- **Decision:** Replace the coverage-status selector with an interactive map that lets users draw a bounding box; place it to the right of the search/filter card and match the card height.
+- **Reason:** A facilitator or data scientist needs to filter by an actual area rather than only whether spatial metadata exists.
+- **Alternatives rejected:** Keeping the `Has spatial coverage` / `Spatial coverage unknown` selector was too coarse; adding named-region selection would require a separate region-selection workflow and geometry source.
+- **User feedback:** The user requested a map with a bounding box positioned to the right of the search box.
+- **Impact on implementation:** Added `DatasetSpatialMap.tsx` and spatial normalization/overlap helpers; dataset results with declared coverage are filtered client-side by overlap, while datasets without usable geometry are excluded when a box is active. Added map rendering and spatial helper tests.
+
+The 2026-09-17 implementation-deviation entry is superseded by this decision.
 
 ## User feedback / decisions
 

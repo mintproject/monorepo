@@ -18,6 +18,7 @@ import { renderWithProviders, screen } from '@/test/utils/render';
 import { mockUnauthenticatedState } from '@/test/utils/auth-mocks';
 
 const USER_SCOPED_ROUTES = [
+  '/modeling/problem-statements/start',
   '/modeling/problem-statements',
   '/modeling/problem-statement/ps-123',
   '/modeling/thread/th-123',

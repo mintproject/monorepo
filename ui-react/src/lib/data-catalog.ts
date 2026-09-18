@@ -218,6 +218,8 @@ export async function findDatasetsByVariables(params: {
   regionGeometry?: unknown;
   startDate?: Date | null;
   endDate?: Date | null;
+  /** Keep datasets outside the requested period so the UI can explain coverage. */
+  includeOutsideDateRange?: boolean;
 }): Promise<DataCatalogDataset[]> {
   if (!params.variableNames.length) return [];
 
@@ -229,11 +231,13 @@ export async function findDatasetsByVariables(params: {
   if (params.regionGeometry) {
     query.spatial_coverage__intersects = params.regionGeometry;
   }
-  if (params.startDate) {
-    query.end_time__lte = params.startDate.toISOString().replace(/\.\d{3}Z$/, '');
-  }
-  if (params.endDate) {
-    query.start_time__gte = params.endDate.toISOString().replace(/\.\d{3}Z$/, '');
+  if (!params.includeOutsideDateRange) {
+    if (params.startDate) {
+      query.end_time__lte = params.startDate.toISOString().replace(/\.\d{3}Z$/, '');
+    }
+    if (params.endDate) {
+      query.start_time__gte = params.endDate.toISOString().replace(/\.\d{3}Z$/, '');
+    }
   }
 
   return findDatasets(query);

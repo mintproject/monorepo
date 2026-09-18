@@ -1,5 +1,5 @@
-import { useMemo, useState, type ReactNode } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
 import {
   Folder,
   FolderOpen,
@@ -139,6 +139,7 @@ function StatusDot({ active, title }: { active: boolean; title: string }) {
  */
 export function MintProblemStatement() {
   const { id: problemStatementId } = useParams<{ id: string }>();
+  const [searchParams] = useSearchParams();
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -164,6 +165,11 @@ export function MintProblemStatement() {
   // ── local state ───────────────────────────────────────────────────────────
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [selectedThreadId, setSelectedThreadId] = useState<string | null>(null);
+
+  const initialDatasetIds = useMemo(
+    () => searchParams.get('datasetIds')?.split(',').filter(Boolean) ?? [],
+    [searchParams],
+  );
 
   // Task dialog
   const [taskDialogOpen, setTaskDialogOpen] = useState(false);
@@ -201,6 +207,21 @@ export function MintProblemStatement() {
     const tb = getLatestEvent(b.events)?.timestamp ?? '';
     return ta < tb ? 1 : -1;
   });
+
+  // Guided setup passes the new thread in the query string so this detail page
+  // can open the exact thread that was just created instead of showing the
+  // problem-statement overview.
+  useEffect(() => {
+    const requestedThreadId = searchParams.get('threadId');
+    if (!requestedThreadId || selectedThreadId) return;
+    for (const task of tasks) {
+      if (task.threads?.some((thread) => thread.id === requestedThreadId)) {
+        setSelectedTaskId(task.id);
+        setSelectedThreadId(requestedThreadId);
+        return;
+      }
+    }
+  }, [searchParams, selectedThreadId, tasks]);
 
   // ── task form helpers ─────────────────────────────────────────────────────
   function openAddTaskDialog() {
@@ -683,7 +704,11 @@ export function MintProblemStatement() {
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
           {selectedThreadId ? (
             <div className="flex-1 overflow-hidden p-4">
-              <MintThread key={selectedThreadId} threadId={selectedThreadId} />
+              <MintThread
+                key={selectedThreadId}
+                threadId={selectedThreadId}
+                initialDatasetIds={initialDatasetIds}
+              />
             </div>
           ) : (
             <div className="flex-1 overflow-auto p-6">

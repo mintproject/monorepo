@@ -360,6 +360,21 @@ should be deleted.
   groups, loading/cancellation/error-safe fallback behavior, focused tests, and
   UI README documentation. No API or database schema changes.
 
+### 2026-09-18 - Adopt recommendations in guided model setup
+
+- **Decision:** The guided model setup flow uses
+  `POST /problem-statements/recommendations` after the user provides a goal,
+  region, and time period. Results remain editable until explicit confirmation.
+- **Reason:** Problem formulation needs SVO and model suggestions before the
+  detailed thread wizard, while users must remain responsible for accepting
+  those suggestions.
+- **Dataset boundary:** Dataset suggestions reuse the existing SVO-to-CKAN
+  matching path after recommendation results arrive. No dataset target or new
+  semantic-search endpoint is introduced by this flow.
+- **Impact on implementation:** The UI now owns the draft/review state and
+  persists only confirmed model/thread selections; the existing Datasets step
+  remains responsible for final resource binding and run completeness.
+
 ## User feedback / decisions
 
 - The user wants a search such as `wildfire` to retrieve SVOs attached to

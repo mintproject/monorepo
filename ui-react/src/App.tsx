@@ -18,6 +18,7 @@ import { ModelingHome } from './pages/modeling/ModelingHome';
 import { ProblemStatementsList } from './pages/modeling/ProblemStatementsList';
 import { MintProblemStatement } from './pages/modeling/MintProblemStatement';
 import { MintThread } from './pages/modeling/MintThread';
+import { GuidedModelSetup } from './pages/modeling/GuidedModelSetup';
 
 // Pages — datasets
 import { DatasetsHome } from './pages/datasets/DatasetsHome';
@@ -87,6 +88,14 @@ export function App() {
 
           {/* Modeling */}
           <Route path="/modeling" element={<ModelingHome />} />
+          <Route
+            path="/modeling/problem-statements/start"
+            element={
+              <ProtectedRoute>
+                <GuidedModelSetup />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/modeling/problem-statements"
             element={

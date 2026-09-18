@@ -18,6 +18,8 @@ export interface UseDataCatalogDatasetsOptions {
   regionGeometry?: unknown;
   startDate?: Date | null;
   endDate?: Date | null;
+  /** Keep outside-range candidates visible for temporal comparison. */
+  includeOutsideDateRange?: boolean;
   /** Skip fetching (e.g. when bindings already exist and not in edit mode) */
   skip?: boolean;
 }
@@ -56,6 +58,7 @@ export function useDataCatalogDatasets(
         regionGeometry: opts.regionGeometry,
         startDate: opts.startDate,
         endDate: opts.endDate,
+        includeOutsideDateRange: opts.includeOutsideDateRange,
       });
       setDatasets(results);
     } catch (err) {
@@ -72,6 +75,7 @@ export function useDataCatalogDatasets(
     JSON.stringify(opts.regionGeometry),
     opts.startDate?.toISOString(),
     opts.endDate?.toISOString(),
+    opts.includeOutsideDateRange,
     opts.skip,
   ]);
 

@@ -73,9 +73,14 @@ interface MintThreadProps {
    * route. Falls back to the `:id` route param when omitted.
    */
   threadId?: string;
+  /** Dataset suggestions confirmed by guided setup and carried into the picker. */
+  initialDatasetIds?: string[];
 }
 
-export function MintThread({ threadId: threadIdProp }: MintThreadProps = {}) {
+export function MintThread({
+  threadId: threadIdProp,
+  initialDatasetIds = [],
+}: MintThreadProps = {}) {
   const { id: routeThreadId } = useParams<{ id: string }>();
   const threadId = threadIdProp ?? routeThreadId;
   const { user } = useAuth();
@@ -378,6 +383,7 @@ export function MintThread({ threadId: threadIdProp }: MintThreadProps = {}) {
             ensembles={execData.model_ensembles}
             persistedData={execData.data}
             regionGeometry={regionGeometry}
+            initialDatasetIds={initialDatasetIds}
             onUpdated={handleThreadUpdated}
             onContinue={goNext}
             onBack={goBack}

@@ -11,6 +11,7 @@ import {
 } from '@/graphql/generated/modeling';
 import { canonicalStandardVariable } from '@/lib/datasets/ckan';
 import type { DatasetDiscoveryResult } from '@/lib/datasets/types';
+import { slugFromUri } from '@/lib/uri';
 
 interface DatasetCompatibilityPanelProps {
   dataset: DatasetDiscoveryResult | null;
@@ -171,7 +172,7 @@ export function DatasetCompatibilityPanel({
                     variant={match.complete ? 'default' : 'secondary'}
                     onClick={() =>
                       navigate(
-                        `/modeling/problem-statements?modelId=${encodeURIComponent(match.id)}&datasetId=${encodeURIComponent(dataset.id)}`,
+                        `/modeling/problem-statements/start?modelId=${encodeURIComponent(match.id)}&datasetId=${encodeURIComponent(dataset.id)}`,
                       )
                     }
                   >
@@ -180,7 +181,9 @@ export function DatasetCompatibilityPanel({
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => navigate(`/modelconfigurations/${encodeURIComponent(match.id)}`)}
+                    onClick={() =>
+                      navigate(`/modelconfigurations/${encodeURIComponent(slugFromUri(match.id))}`)
+                    }
                   >
                     View model
                   </Button>
