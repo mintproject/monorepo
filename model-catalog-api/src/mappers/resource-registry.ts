@@ -36,6 +36,8 @@ export interface RelationshipConfig {
    * e.g. softwares.hasVersion: childFkColumn = 'software_id' (column on modelcatalog_software_version).
    */
   childFkColumn?: string;
+  /** FK column on this entity table for a supported single-object relationship. */
+  objectFkColumn?: string;
   /** The API resource name of the target type (for nested transforms) */
   targetResource: string;
   /**
@@ -583,11 +585,13 @@ export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
       hasStandardVariable: {
         hasuraRelName: 'standard_variable',
         type: 'object',
+        objectFkColumn: 'has_standard_variable',
         targetResource: 'standardvariables',
       },
       usesUnit: {
         hasuraRelName: 'unit',
         type: 'object',
+        objectFkColumn: 'uses_unit',
         targetResource: 'units',
       },
     },

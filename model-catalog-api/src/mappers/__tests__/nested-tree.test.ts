@@ -60,6 +60,48 @@ describe('nested-tree types and constants', () => {
   });
 });
 
+describe('buildTree — object FK relationships', () => {
+  it('builds a link-only object FK edge for VariablePresentation.hasStandardVariable', () => {
+    const cfg = getResourceConfig('variablepresentations')!;
+    const tree = buildTree(
+      {
+        id: 'vp-1',
+        hasStandardVariable: [{ id: 'https://w3id.org/okn/i/mint/sv-1' }],
+      },
+      cfg,
+    );
+
+    expect(tree.objectFks).toEqual([
+      {
+        apiFieldName: 'hasStandardVariable',
+        objectFkColumn: 'has_standard_variable',
+        targetId: 'https://w3id.org/okn/i/mint/sv-1',
+      },
+    ]);
+  });
+
+  it('builds a clearing object FK edge for an empty relationship array', () => {
+    const cfg = getResourceConfig('variablepresentations')!;
+    const tree = buildTree({ id: 'vp-2', hasStandardVariable: [] }, cfg);
+    expect(tree.objectFks?.[0].targetId).toBeNull();
+  });
+
+  it('rejects nested object writes instead of silently dropping them', () => {
+    const cfg = getResourceConfig('variablepresentations')!;
+    expect(() =>
+      buildTree(
+        { id: 'vp-3', hasStandardVariable: [{ id: 'sv-3', label: 'not a link-only object' }] },
+        cfg,
+      ),
+    ).toThrow(
+      expect.objectContaining({
+        code: 'OBJECT_RELATIONSHIP_NESTED_WRITE_UNSUPPORTED',
+        httpStatus: 400,
+      }),
+    );
+  });
+});
+
 describe('buildTree — single-level junction', () => {
   it('builds tree for ModelConfiguration with hasInput id-only payload', () => {
     const cfg = getResourceConfig('modelconfigurations')!;
