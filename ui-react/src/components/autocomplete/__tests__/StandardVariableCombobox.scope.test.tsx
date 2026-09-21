@@ -131,6 +131,48 @@ const outcomeInferenceMock = {
           ],
           parameters: [],
         },
+        {
+          id: 'cfg-unrelated',
+          inputs: [
+            {
+              configuration_id: 'cfg-unrelated',
+              input_id: 'ds-air',
+              input: {
+                id: 'ds-air',
+                presentations: [
+                  {
+                    dataset_specification_id: 'ds-air',
+                    presentation_id: 'pres-air',
+                    presentation: {
+                      id: 'pres-air',
+                      standard_variable: sv('sv-air', 'air__temperature'),
+                    },
+                  },
+                ],
+              },
+            },
+          ],
+          outputs: [
+            {
+              configuration_id: 'cfg-unrelated',
+              output_id: 'ds-draw',
+              output: {
+                id: 'ds-draw',
+                presentations: [
+                  {
+                    dataset_specification_id: 'ds-draw',
+                    presentation_id: 'pres-draw',
+                    presentation: {
+                      id: 'pres-draw',
+                      standard_variable: sv('sv-draw', 'drawdown'),
+                    },
+                  },
+                ],
+              },
+            },
+          ],
+          parameters: [],
+        },
       ],
       etlProcesses: [
         {
@@ -204,6 +246,17 @@ describe('StandardVariableCombobox scope', () => {
     expect(screen.getByText('sv-forcing')).toBeInTheDocument();
     expect(screen.queryByText('soil__porosity')).not.toBeInTheDocument();
     expect(screen.queryByText('drawdown')).not.toBeInTheDocument();
+  });
+
+  it('limits outcome inference to the selected model configurations', async () => {
+    renderCombobox({
+      scope: 'driver',
+      driverOutcomeId: 'sv-draw',
+      driverConfigurationIds: ['cfg-outcome'],
+    });
+    await openList();
+    await waitFor(() => expect(screen.getByText('middle')).toBeInTheDocument());
+    expect(screen.queryByText('air__temperature')).not.toBeInTheDocument();
   });
 
   it('widens to the whole catalog when the escape link is clicked', async () => {
