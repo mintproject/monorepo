@@ -14,6 +14,7 @@ import {
   cleanString,
   overlapsDateRange,
   packageExtraFlag,
+  packageBoundingBox,
   packageSpatialCoverage,
   packageTags,
   packagesMatchingVariables,
@@ -281,6 +282,18 @@ describe('packageSpatialCoverage', () => {
     // One level shallower than the GeoJSON nesting.
     expect(coverage?.coordinates?.[0]).toEqual([-97.7, 30.3]);
     expect(coverage?.coordinates).toHaveLength(5);
+  });
+
+  it('reads legacy package spatial extras when canonical spatial is absent', () => {
+    const packageWithExtra = { extras: [{ key: 'spatial', value: polygon }] };
+    const coverage = packageSpatialCoverage(packageWithExtra);
+    expect(coverage?.type).toBe('Polygon');
+    expect(packageBoundingBox(packageWithExtra)).toEqual({
+      xmin: -97.7,
+      xmax: -97.6,
+      ymin: 30.3,
+      ymax: 30.4,
+    });
   });
 
   it('returns undefined when spatial is absent', () => {
