@@ -15,11 +15,11 @@
  *                 end. This is the default, and it costs no extra query.
  * - `indicator` — the variables a listed configuration produces (thread
  *                 response_variable_id).
- * - `driver`    — the variables a listed configuration takes as an input, plus
- *                 the variables its parameters adjust (thread
- *                 driving_variable_id). The knowledge base defines a driver as
- *                 "input variables or adjustable parameters", so the union is
- *                 the right set, not either half.
+ * - `driver`    — with no selected outcome, the variables a listed
+ *                 configuration takes as an input, plus the variables its
+ *                 parameters adjust. With an outcome selected, this becomes
+ *                 the upstream variables reachable through model and ETL
+ *                 transforms, including multi-step chains.
  *
  * The full catalog is loaded only when it is asked for — scope `all`, or a
  * narrowed picker whose user has clicked the widen link. Measured against TACC,
@@ -27,6 +27,7 @@
  * list 20.8 KB. Loading the full list eagerly beside a scoped one would more
  * than double the step's cost for a list most users never open.
  */
+import { gql, useQuery } from '@apollo/client';
 import { useMemo } from 'react';
 
 import {
@@ -35,12 +36,17 @@ import {
   usePrefetchReferenceDataQuery,
 } from '@/graphql/generated/graphql';
 import type { StandardVariableOption } from './StandardVariableCombobox';
+import {
+  inferOutcomeDriverOptions,
+  type InferenceVariable,
+  type VariableTransform,
+} from '@/lib/modeling/outcome-driver-inference';
 
 export type StandardVariableScope = 'all' | 'indicator' | 'driver';
 
 interface StandardVariableFields {
   id: string;
-  label: string;
+  label?: string | null;
   description?: string | null;
 }
 
@@ -70,6 +76,180 @@ function dedupe(rows: Array<StandardVariableFields | null | undefined>): Standar
   return [...byId.values()].sort(byLabel);
 }
 
+/**
+ * Kept inline until the generated schema includes the MINT ETL and SVO adapter
+ * registries. Both are exposed through the same authenticated Apollo client.
+ */
+export const OutcomeDriverInferenceDocument = gql`
+  query GetOutcomeDriverInference {
+    modelConfigurations: modelcatalog_configuration(
+      where: {
+        _or: [
+          { software_version_id: { _is_null: false }, _not: { child_configurations: {} } }
+          { parent_configuration: { software_version_id: { _is_null: false } } }
+        ]
+      }
+    ) {
+      id
+      inputs {
+        configuration_id
+        input_id
+        input {
+          id
+          presentations {
+            dataset_specification_id
+            presentation_id
+            presentation {
+              id
+              standard_variable {
+                id
+                label
+                description
+              }
+            }
+          }
+        }
+      }
+      outputs {
+        configuration_id
+        output_id
+        output {
+          id
+          presentations {
+            dataset_specification_id
+            presentation_id
+            presentation {
+              id
+              standard_variable {
+                id
+                label
+                description
+              }
+            }
+          }
+        }
+      }
+      parameters {
+        configuration_id
+        parameter_id
+        parameter {
+          id
+          adjusts_variables {
+            parameter_id
+            variable_id
+            variable {
+              id
+              standard_variable {
+                id
+                label
+                description
+              }
+            }
+          }
+        }
+      }
+    }
+    etlProcesses: modelcatalog_etl_process {
+      contracts(order_by: [{ role: asc }, { position: asc }]) {
+        role
+        standard_variable_uri
+      }
+    }
+    adapterTransforms: adapter_transform_spec {
+      contracts {
+        role
+        standard_variable_uri
+      }
+    }
+  }
+`;
+
+interface InferenceStandardVariable extends InferenceVariable {
+  id: string;
+}
+
+interface InferencePresentation {
+  presentation?: { standard_variable?: InferenceStandardVariable | null } | null;
+}
+
+interface InferenceConfigurationInput {
+  input?: { presentations?: InferencePresentation[] | null } | null;
+}
+
+interface InferenceConfigurationOutput {
+  output?: { presentations?: InferencePresentation[] | null } | null;
+}
+
+interface InferenceParameter {
+  parameter?: {
+    adjusts_variables?: Array<{
+      variable?: { standard_variable?: InferenceStandardVariable | null } | null;
+    }> | null;
+  } | null;
+}
+
+interface InferenceModelConfiguration {
+  inputs?: InferenceConfigurationInput[] | null;
+  outputs?: InferenceConfigurationOutput[] | null;
+  parameters?: InferenceParameter[] | null;
+}
+
+interface InferenceEtlProcess {
+  contracts?: Array<{ role: string; standard_variable_uri?: string | null }> | null;
+}
+
+interface OutcomeDriverInferenceData {
+  modelConfigurations: InferenceModelConfiguration[];
+  etlProcesses: InferenceEtlProcess[];
+  adapterTransforms: InferenceEtlProcess[];
+}
+
+function presentationVariables(
+  presentations: InferencePresentation[] | null | undefined,
+): InferenceVariable[] {
+  return (presentations ?? [])
+    .map((row) => row.presentation?.standard_variable)
+    .filter((variable): variable is InferenceVariable => Boolean(variable?.id));
+}
+
+function modelTransforms(data: OutcomeDriverInferenceData | undefined): VariableTransform[] {
+  return (data?.modelConfigurations ?? []).map((configuration) => {
+    const outputs =
+      configuration.outputs?.flatMap((row) => presentationVariables(row.output?.presentations)) ??
+      [];
+    const inputs =
+      configuration.inputs?.flatMap((row) => presentationVariables(row.input?.presentations)) ?? [];
+    const adjusted =
+      configuration.parameters?.flatMap(
+        (row) =>
+          row.parameter?.adjusts_variables
+            ?.map((adjustment) => adjustment.variable?.standard_variable)
+            .filter((variable): variable is InferenceVariable => Boolean(variable?.id)) ?? [],
+      ) ?? [];
+    return { outputs, inputs: [...inputs, ...adjusted] };
+  });
+}
+
+function contractTransforms(processes: InferenceEtlProcess[] | undefined): VariableTransform[] {
+  return (processes ?? []).map((process) => {
+    const contracts = process.contracts ?? [];
+    const toVariable = (uri: string | null | undefined): InferenceVariable | null => {
+      const id = uri?.trim();
+      return id ? { id, label: id, description: null } : null;
+    };
+    return {
+      outputs: contracts
+        .filter((contract) => contract.role === 'output')
+        .map((contract) => toVariable(contract.standard_variable_uri))
+        .filter((variable): variable is InferenceVariable => Boolean(variable)),
+      inputs: contracts
+        .filter((contract) => contract.role === 'input')
+        .map((contract) => toVariable(contract.standard_variable_uri))
+        .filter((variable): variable is InferenceVariable => Boolean(variable)),
+    };
+  });
+}
+
 export interface ScopedStandardVariables {
   /** Options for the scope. Equals `all` when the scope is `all`. */
   scoped: StandardVariableOption[];
@@ -87,6 +267,7 @@ export interface ScopedStandardVariables {
 export function useScopedStandardVariables(
   scope: StandardVariableScope = 'all',
   loadAll = false,
+  driverOutcomeId?: string | null,
 ): ScopedStandardVariables {
   const wantAll = scope === 'all' || loadAll;
   const allQ = usePrefetchReferenceDataQuery({ fetchPolicy: 'cache-first', skip: !wantAll });
@@ -97,6 +278,10 @@ export function useScopedStandardVariables(
   const driverQ = useGetDriverVariableOptionsQuery({
     fetchPolicy: 'cache-first',
     skip: scope !== 'driver',
+  });
+  const outcomeDriverQ = useQuery<OutcomeDriverInferenceData>(OutcomeDriverInferenceDocument, {
+    fetchPolicy: 'cache-first',
+    skip: scope !== 'driver' || !driverOutcomeId,
   });
 
   const all = useMemo(() => dedupe(allQ.data?.modelcatalog_standard_variable ?? []), [allQ.data]);
@@ -109,16 +294,25 @@ export function useScopedStandardVariables(
     if (scope === 'driver') {
       const inputs = driverQ.data?.inputs ?? [];
       const adjusted = driverQ.data?.adjusted ?? [];
-      return dedupe([
+      const legacy = dedupe([
         ...inputs.map((r) => r.presentation.standard_variable),
         ...adjusted.map((r) => r.variable.standard_variable),
       ]);
+      if (!driverOutcomeId || !outcomeDriverQ.data) return legacy;
+      return dedupe(
+        inferOutcomeDriverOptions(driverOutcomeId, [
+          ...modelTransforms(outcomeDriverQ.data),
+          ...contractTransforms(outcomeDriverQ.data.etlProcesses),
+          ...contractTransforms(outcomeDriverQ.data.adapterTransforms),
+        ]),
+      );
     }
     return all;
-  }, [scope, indicatorQ.data, driverQ.data, all]);
+  }, [scope, indicatorQ.data, driverQ.data, outcomeDriverQ.data, driverOutcomeId, all]);
 
   const scopeLoading =
-    (scope === 'indicator' && indicatorQ.loading) || (scope === 'driver' && driverQ.loading);
+    (scope === 'indicator' && indicatorQ.loading) ||
+    (scope === 'driver' && (driverQ.loading || outcomeDriverQ.loading));
 
   return {
     scoped,

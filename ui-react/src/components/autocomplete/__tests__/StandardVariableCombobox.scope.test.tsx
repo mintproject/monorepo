@@ -17,6 +17,7 @@ import {
   GetIndicatorVariableOptionsDocument,
   PrefetchReferenceDataDocument,
 } from '@/graphql/generated/graphql';
+import { OutcomeDriverInferenceDocument } from '@/components/autocomplete/useScopedStandardVariables';
 
 const sv = (id: string, label: string, description: string | null = null) => ({
   __typename: 'modelcatalog_standard_variable',
@@ -83,7 +84,75 @@ const driverMock = {
   },
 };
 
-const mocks = [prefetchMock, indicatorMock, driverMock];
+const outcomeInferenceMock = {
+  request: { query: OutcomeDriverInferenceDocument },
+  result: {
+    data: {
+      modelConfigurations: [
+        {
+          id: 'cfg-outcome',
+          inputs: [
+            {
+              configuration_id: 'cfg-outcome',
+              input_id: 'ds-middle',
+              input: {
+                id: 'ds-middle',
+                presentations: [
+                  {
+                    dataset_specification_id: 'ds-middle',
+                    presentation_id: 'pres-middle',
+                    presentation: {
+                      id: 'pres-middle',
+                      standard_variable: sv('sv-middle', 'middle'),
+                    },
+                  },
+                ],
+              },
+            },
+          ],
+          outputs: [
+            {
+              configuration_id: 'cfg-outcome',
+              output_id: 'ds-draw',
+              output: {
+                id: 'ds-draw',
+                presentations: [
+                  {
+                    dataset_specification_id: 'ds-draw',
+                    presentation_id: 'pres-draw',
+                    presentation: {
+                      id: 'pres-draw',
+                      standard_variable: sv('sv-draw', 'drawdown'),
+                    },
+                  },
+                ],
+              },
+            },
+          ],
+          parameters: [],
+        },
+      ],
+      etlProcesses: [
+        {
+          contracts: [
+            { role: 'input', standard_variable_uri: 'sv-forcing' },
+            { role: 'output', standard_variable_uri: 'sv-rain' },
+          ],
+        },
+      ],
+      adapterTransforms: [
+        {
+          contracts: [
+            { role: 'input', standard_variable_uri: 'sv-rain' },
+            { role: 'output', standard_variable_uri: 'sv-middle' },
+          ],
+        },
+      ],
+    },
+  },
+};
+
+const mocks = [prefetchMock, indicatorMock, driverMock, outcomeInferenceMock];
 
 function renderCombobox(props: Partial<React.ComponentProps<typeof StandardVariableCombobox>>) {
   return render(
@@ -126,6 +195,15 @@ describe('StandardVariableCombobox scope', () => {
     await waitFor(() => expect(screen.getByText('soil__porosity')).toBeInTheDocument());
     expect(screen.getByText('drawdown')).toBeInTheDocument();
     expect(screen.queryByText('100hr_dead_moisture')).not.toBeInTheDocument();
+  });
+
+  it('infers drivers from a selected outcome across model and ETL steps', async () => {
+    renderCombobox({ scope: 'driver', driverOutcomeId: 'sv-draw' });
+    await openList();
+    await waitFor(() => expect(screen.getByText('middle')).toBeInTheDocument());
+    expect(screen.getByText('sv-forcing')).toBeInTheDocument();
+    expect(screen.queryByText('soil__porosity')).not.toBeInTheDocument();
+    expect(screen.queryByText('drawdown')).not.toBeInTheDocument();
   });
 
   it('widens to the whole catalog when the escape link is clicked', async () => {

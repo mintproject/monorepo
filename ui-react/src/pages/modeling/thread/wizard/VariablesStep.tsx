@@ -99,7 +99,7 @@ export function VariablesStep({
   return (
     <StepShell
       title="Outcome & drivers"
-      description="Start with what the model should produce. After you choose models, their inputs become the best driver and dataset candidates."
+      description="Start with what the model should produce. Driver candidates are inferred from models and registered ETL transformations that can produce that outcome."
       canContinue={!saving}
       continueLabel={saving ? 'Saving…' : 'Continue'}
       onContinue={handleContinue}
@@ -139,8 +139,7 @@ export function VariablesStep({
             <h3 className="font-semibold">Potential driver</h3>
             <p className="mt-1 text-xs text-gray-600">
               Which input might you vary or investigate? The list contains variables that models
-              take or adjust; after selecting a model, use its input chips to confirm the relevant
-              driver.
+              take or adjust, including upstream inputs from multi-step model and ETL chains.
             </p>
           </div>
           <StandardVariableCombobox
@@ -148,9 +147,10 @@ export function VariablesStep({
             value={adjustable}
             onChange={setAdjustable}
             disabled={readOnly}
-            placeholder="Choose a model input to vary…"
+            placeholder="Choose a possible driver to vary…"
             scope="driver"
-            scopeLabel="a model uses or adjusts"
+            scopeLabel={indicator ? 'possible upstream drivers' : 'a model uses or adjusts'}
+            driverOutcomeId={indicator?.id}
           />
           {uniqueModelDriverOptions.length > 0 && (
             <div className="space-y-1.5 rounded border border-blue-100 bg-blue-50/40 p-2">
