@@ -69,6 +69,8 @@ export interface StandardVariableComboboxProps {
   scopeLabel?: string;
   /** Selected outcome used to infer upstream driver variables. */
   driverOutcomeId?: string | null;
+  /** Selected model configurations used to keep inference task-specific. */
+  driverConfigurationIds?: ReadonlyArray<string>;
 }
 
 export function StandardVariableCombobox({
@@ -81,6 +83,7 @@ export function StandardVariableCombobox({
   scope = 'all',
   scopeLabel = 'used by a model',
   driverOutcomeId,
+  driverConfigurationIds = [],
 }: StandardVariableComboboxProps) {
   const [open, setOpen] = React.useState(false);
   const [search, setSearch] = React.useState('');
@@ -93,6 +96,7 @@ export function StandardVariableCombobox({
     scope,
     showAll,
     driverOutcomeId,
+    driverConfigurationIds,
   );
 
   const options = narrowed && !showAll ? scoped : all;

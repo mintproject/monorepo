@@ -66,6 +66,14 @@ export function VariablesStep({
     return [...byId.values()];
   }, [modelDriverOptions]);
 
+  const selectedModelConfigurationIds = useMemo(
+    () =>
+      (thread.thread_models ?? [])
+        .map((model) => model.modelcatalog_configuration_id)
+        .filter((id): id is string => Boolean(id)),
+    [thread.thread_models],
+  );
+
   async function handleContinue() {
     setSaving(true);
     try {
@@ -151,6 +159,7 @@ export function VariablesStep({
             scope="driver"
             scopeLabel={indicator ? 'possible upstream drivers' : 'a model uses or adjusts'}
             driverOutcomeId={indicator?.id}
+            driverConfigurationIds={selectedModelConfigurationIds}
           />
           {uniqueModelDriverOptions.length > 0 && (
             <div className="space-y-1.5 rounded border border-blue-100 bg-blue-50/40 p-2">

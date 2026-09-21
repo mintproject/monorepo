@@ -19,7 +19,10 @@
  *                 configuration takes as an input, plus the variables its
  *                 parameters adjust. With an outcome selected, this becomes
  *                 the upstream variables reachable through model and ETL
- *                 transforms, including multi-step chains.
+ *                 transforms, including multi-step chains. When the thread
+ *                 already has selected model configurations, only those
+ *                 model transforms seed the graph; this prevents unrelated
+ *                 catalog models from leaking into the driver list.
  *
  * The full catalog is loaded only when it is asked for — scope `all`, or a
  * narrowed picker whose user has clicked the widen link. Measured against TACC,
@@ -189,6 +192,7 @@ interface InferenceParameter {
 }
 
 interface InferenceModelConfiguration {
+  id: string;
   inputs?: InferenceConfigurationInput[] | null;
   outputs?: InferenceConfigurationOutput[] | null;
   parameters?: InferenceParameter[] | null;
@@ -212,8 +216,15 @@ function presentationVariables(
     .filter((variable): variable is InferenceVariable => Boolean(variable?.id));
 }
 
-function modelTransforms(data: OutcomeDriverInferenceData | undefined): VariableTransform[] {
-  return (data?.modelConfigurations ?? []).map((configuration) => {
+function modelTransforms(
+  data: OutcomeDriverInferenceData | undefined,
+  selectedConfigurationIds: ReadonlyArray<string> = [],
+): VariableTransform[] {
+  const selectedIds = new Set(selectedConfigurationIds);
+  const configurations = (data?.modelConfigurations ?? []).filter(
+    (configuration) => selectedIds.size === 0 || selectedIds.has(configuration.id),
+  );
+  return configurations.map((configuration) => {
     const outputs =
       configuration.outputs?.flatMap((row) => presentationVariables(row.output?.presentations)) ??
       [];
@@ -268,6 +279,7 @@ export function useScopedStandardVariables(
   scope: StandardVariableScope = 'all',
   loadAll = false,
   driverOutcomeId?: string | null,
+  selectedConfigurationIds: ReadonlyArray<string> = [],
 ): ScopedStandardVariables {
   const wantAll = scope === 'all' || loadAll;
   const allQ = usePrefetchReferenceDataQuery({ fetchPolicy: 'cache-first', skip: !wantAll });
@@ -301,14 +313,22 @@ export function useScopedStandardVariables(
       if (!driverOutcomeId || !outcomeDriverQ.data) return legacy;
       return dedupe(
         inferOutcomeDriverOptions(driverOutcomeId, [
-          ...modelTransforms(outcomeDriverQ.data),
+          ...modelTransforms(outcomeDriverQ.data, selectedConfigurationIds),
           ...contractTransforms(outcomeDriverQ.data.etlProcesses),
           ...contractTransforms(outcomeDriverQ.data.adapterTransforms),
         ]),
       );
     }
     return all;
-  }, [scope, indicatorQ.data, driverQ.data, outcomeDriverQ.data, driverOutcomeId, all]);
+  }, [
+    scope,
+    indicatorQ.data,
+    driverQ.data,
+    outcomeDriverQ.data,
+    driverOutcomeId,
+    selectedConfigurationIds,
+    all,
+  ]);
 
   const scopeLoading =
     (scope === 'indicator' && indicatorQ.loading) ||
