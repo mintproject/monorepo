@@ -164,3 +164,20 @@ or a `tapis_app_id`/version for a heavier `tapis_job`. Generated workflows can m
 both task types. The adapter stores the definition and materializes function tasks
 inline when registering each generated pipeline; it never executes submitted Python
 locally.
+
+### Bulk-register the checked-in ETL catalog
+
+The checked-in transform manifests can be registered into the MINT Model Catalog
+with the idempotent loader below. It is dry-run by default:
+
+```bash
+python3 scripts/register_existing_etl_pieces.py
+python3 scripts/register_existing_etl_pieces.py \
+  --apply \
+  --endpoint https://mintdevgraphql.pods.portals.tapis.io/v1/graphql \
+  --admin-secret "$HASURA_GRAPHQL_ADMIN_SECRET"
+```
+
+The loader registers one row per stable ETL ID, collapses identical shared
+definitions, and fails on conflicting definitions instead of silently letting
+one pipeline overwrite another.

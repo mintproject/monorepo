@@ -6,6 +6,7 @@ pieces; the catalog IDs are stable, so this is safe to rerun.
 import argparse
 import json
 from pathlib import Path
+from typing import Iterable
 import urllib.request
 
 MUTATION = """mutation UpsertETL($object: modelcatalog_etl_process_insert_input!) {
@@ -61,14 +62,34 @@ def to_object(spec):
     }
 
 
+def unique_rows(entries: Iterable[tuple[str, dict]]) -> list[dict]:
+    """Return one row per stable ID and reject conflicting definitions."""
+    by_id: dict[str, dict] = {}
+    sources: dict[str, str] = {}
+    for source, spec in entries:
+        row = to_object(spec)
+        process_id = row["id"]
+        previous = by_id.get(process_id)
+        if previous is None:
+            by_id[process_id] = row
+            sources[process_id] = source
+            continue
+        if row != previous:
+            raise ValueError(
+                f"conflicting ETL definition for {process_id}: "
+                f"{sources[process_id]} vs {source}"
+            )
+    return list(by_id.values())
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--apply", action="store_true")
     parser.add_argument("--endpoint", default="http://localhost:8082/v1/graphql")
     parser.add_argument("--admin-secret", default="mint")
     args = parser.parse_args()
-    rows = [to_object(spec) for _, spec in manifests(Path(__file__).parents[1] / "examples")]
-    print(f"Found {len(rows)} adapter ETL pieces")
+    rows = unique_rows(manifests(Path(__file__).parents[1] / "examples"))
+    print(f"Found {len(rows)} unique adapter ETL pieces")
     if not args.apply:
         for row in rows:
             print(f"DRY RUN {row['id']} — {row['label']}")

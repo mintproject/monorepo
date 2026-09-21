@@ -1,5 +1,5 @@
 {
-  "_about": "SUBSIDE H2I OPERA DISP-S1 pipeline (Pipeline A) modeled for the svo-adapter. Like WERC, SUBSIDE runs it as ONE Tapis job (STAGE=run on subside-h2i-opera-analysis: discover + download + preview + zip; see subside/tapis/workflows/pipelines/h2i-opera.yaml). The adapter submits that single job (run-h2i) unchanged, then chains the load tail (publish + stac-publish). Reuses the SHARED publish / stac-publish pieces (same spec ids as the WERC fixture, so a combined registry holds one copy of each).",
+  "_about": "SUBSIDE H2I OPERA DISP-S1 pipeline (Pipeline A) modeled for the svo-adapter. Like WERC, SUBSIDE runs it as ONE Tapis job (STAGE=run on subside-h2i-opera-analysis: discover + download + preview + zip; see subside/tapis/workflows/pipelines/h2i-opera.yaml). The adapter submits that single job (run-h2i) unchanged, then chains the load tail (publish + stac-publish). The stac-publish piece is shared with WERC; publish is H2I-specific because its contract is displacement-product.",
   "_svo": {
     "displacement": "https://www.geoscienceontology.org/svo/svl/variable/land_surface__displacement"
   },
@@ -41,7 +41,7 @@
       ]
     },
     {
-      "id": "ts-subside-publish",
+      "id": "ts-subside-h2i-publish",
       "name": "publish",
       "version": "0.1.1",
       "description": "Emit the unified subside-run-manifest.json describing the run's products.",
