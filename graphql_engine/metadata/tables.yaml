@@ -4796,6 +4796,11 @@
         table:
           name: transform_contract
           schema: adapter
+  select_permissions:
+  - role: user
+    permission:
+      columns: [id]
+      filter: {}
 - table:
     name: transform_contract
     schema: adapter
@@ -4817,6 +4822,11 @@
         table:
           name: transform_edge
           schema: adapter
+  select_permissions:
+  - role: user
+    permission:
+      columns: [id, transform_spec_id, role, standard_variable_uri]
+      filter: {}
 - table:
     name: transform_edge
     schema: adapter

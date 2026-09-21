@@ -28,6 +28,7 @@ import {
   assignmentsFromBindings,
   datasetOptionLabel,
   dateCoverage,
+  matchesSelectedDatasetContext,
   matchesSpatialBox,
   splitByRegion,
 } from '../DatasetsStep';
@@ -75,6 +76,16 @@ const models: Record<string, ThreadModel> = {
     ],
     output_files: [],
     input_parameters: [],
+  },
+};
+
+const twoInputModels: Record<string, ThreadModel> = {
+  cfgA: {
+    ...models.cfgA!,
+    input_files: [
+      { id: 'inA', name: 'precipitation', variables: ['sv-precip'], isOptional: false },
+      { id: 'inB', name: 'temperature', variables: ['sv-temp'], isOptional: false },
+    ],
   },
 };
 
@@ -149,6 +160,7 @@ function dataset(
   id: string,
   region_match: DataCatalogDataset['region_match'],
   time_period: DataCatalogDataset['time_period'] = null,
+  spatial_coverage?: DataCatalogDataset['spatial_coverage'],
 ): DataCatalogDataset {
   return {
     id,
@@ -162,6 +174,7 @@ function dataset(
     version: '',
     limitations: '',
     source: { name: '', url: '', type: '' },
+    ...(spatial_coverage ? { spatial_coverage } : {}),
     resources: [],
   };
 }
@@ -204,6 +217,75 @@ describe('matchesSpatialBox', () => {
         box,
       ),
     ).toBe(false);
+  });
+});
+
+describe('matchesSelectedDatasetContext', () => {
+  const selected = {
+    datasetId: 'selected',
+    datasetName: 'Selected dataset',
+    timePeriod: {
+      start_date: new Date('2000-01-01'),
+      end_date: new Date('2010-01-01'),
+    },
+    spatialCoverage: {
+      type: 'BoundingBox',
+      value: { xmin: -101, xmax: -99, ymin: 29, ymax: 32 },
+    },
+  };
+
+  it('keeps candidates that overlap in both space and time', () => {
+    expect(
+      matchesSelectedDatasetContext(
+        dataset(
+          'candidate',
+          'inside',
+          { start_date: new Date('2005-01-01'), end_date: new Date('2015-01-01') },
+          { type: 'BoundingBox', value: { xmin: -100.5, xmax: -99.5, ymin: 30, ymax: 31 } },
+        ),
+        [selected],
+      ),
+    ).toBe(true);
+  });
+
+  it('filters candidates that are outside the selected dataset in space or time', () => {
+    expect(
+      matchesSelectedDatasetContext(
+        dataset(
+          'far-away',
+          'inside',
+          { start_date: new Date('2005-01-01'), end_date: new Date('2015-01-01') },
+          { type: 'BoundingBox', value: { xmin: -110, xmax: -109, ymin: 40, ymax: 41 } },
+        ),
+        [selected],
+      ),
+    ).toBe(false);
+    expect(
+      matchesSelectedDatasetContext(
+        dataset(
+          'out-of-time',
+          'inside',
+          { start_date: new Date('2015-01-01'), end_date: new Date('2020-01-01') },
+          selected.spatialCoverage,
+        ),
+        [selected],
+      ),
+    ).toBe(false);
+  });
+
+  it('keeps candidates when either dataset has unknown coverage', () => {
+    expect(matchesSelectedDatasetContext(dataset('unknown', 'unknown'), [selected])).toBe(true);
+    expect(
+      matchesSelectedDatasetContext(
+        dataset(
+          'open-ended',
+          'inside',
+          { start_date: new Date('2005-01-01'), end_date: null },
+          selected.spatialCoverage,
+        ),
+        [selected],
+      ),
+    ).toBe(true);
   });
 });
 
@@ -363,6 +445,95 @@ describe('DatasetsStep region filter', () => {
     const filteredPicker = await screen.findByLabelText('Choose dataset');
     expect(filteredPicker).toHaveTextContent('Choose · 2 options');
     expect(screen.getByText(/outside the drawn box/)).toBeInTheDocument();
+  });
+
+  it('filters other input pickers after a dataset is selected', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          success: true,
+          result: {
+            count: 3,
+            results: [
+              {
+                id: 'uuid-compatible',
+                name: 'compatible',
+                title: 'compatible',
+                temporal_coverage_start: '2000-01-01',
+                temporal_coverage_end: '2010-01-01',
+                spatial: JSON.stringify({
+                  type: 'Point',
+                  coordinates: [-100, 30],
+                }),
+                resources: [
+                  {
+                    id: 'r-compatible',
+                    format: 'csv',
+                    mint_standard_variables: 'sv-precip,sv-temp',
+                  },
+                ],
+              },
+              {
+                id: 'uuid-incompatible',
+                name: 'incompatible',
+                title: 'incompatible',
+                temporal_coverage_start: '2000-01-01',
+                temporal_coverage_end: '2010-01-01',
+                spatial: JSON.stringify({
+                  type: 'Point',
+                  coordinates: [-160, 60],
+                }),
+                resources: [
+                  {
+                    id: 'r-incompatible',
+                    format: 'csv',
+                    mint_standard_variables: 'sv-precip,sv-temp',
+                  },
+                ],
+              },
+              {
+                id: 'uuid-unknown',
+                name: 'unknown-coverage',
+                title: 'unknown-coverage',
+                resources: [
+                  {
+                    id: 'r-unknown',
+                    format: 'csv',
+                    mint_standard_variables: 'sv-precip,sv-temp',
+                  },
+                ],
+              },
+            ],
+          },
+        }),
+      }),
+    );
+
+    renderWithProviders(
+      <DatasetsStep
+        thread={makeThread()}
+        models={twoInputModels}
+        ensembles={ensembles}
+        persistedData={{}}
+        regionGeometry={[]}
+        onUpdated={vi.fn()}
+        onContinue={vi.fn()}
+        onBack={vi.fn()}
+      />,
+    );
+
+    const pickers = await screen.findAllByLabelText('Choose dataset');
+    expect(pickers).toHaveLength(2);
+    await userEvent.click(screen.getAllByRole('radio', { name: /compatible/ })[0]!);
+
+    const filteredPickers = await screen.findAllByLabelText('Choose dataset');
+    expect(filteredPickers[1]).not.toHaveTextContent('incompatible');
+    expect(filteredPickers[1]).toHaveTextContent('unknown-coverage');
+    expect(
+      screen.getAllByText(/coverage is incompatible with a dataset already selected/i),
+    ).toHaveLength(2);
   });
 });
 

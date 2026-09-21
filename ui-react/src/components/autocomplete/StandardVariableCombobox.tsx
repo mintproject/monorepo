@@ -67,6 +67,8 @@ export interface StandardVariableComboboxProps {
   scope?: StandardVariableScope;
   /** Noun used in the widen/narrow links, e.g. "produces a model". */
   scopeLabel?: string;
+  /** Selected outcome used to infer upstream driver variables. */
+  driverOutcomeId?: string | null;
 }
 
 export function StandardVariableCombobox({
@@ -78,6 +80,7 @@ export function StandardVariableCombobox({
   className,
   scope = 'all',
   scopeLabel = 'used by a model',
+  driverOutcomeId,
 }: StandardVariableComboboxProps) {
   const [open, setOpen] = React.useState(false);
   const [search, setSearch] = React.useState('');
@@ -86,7 +89,11 @@ export function StandardVariableCombobox({
   // Reads from Apollo cache — cache-first means no network call if already fetched.
   // The full catalog is fetched only once the user widens a narrowed picker.
   const narrowed = scope !== 'all';
-  const { scoped, all, allLoaded, loading } = useScopedStandardVariables(scope, showAll);
+  const { scoped, all, allLoaded, loading } = useScopedStandardVariables(
+    scope,
+    showAll,
+    driverOutcomeId,
+  );
 
   const options = narrowed && !showAll ? scoped : all;
   const semanticSearch = useSemanticSearch(search, { target: 'svo', limit: 50 });

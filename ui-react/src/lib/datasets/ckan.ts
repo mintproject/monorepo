@@ -233,11 +233,22 @@ export function packageTimePeriod(pkg: CkanPackage): DateRange | null {
   return { start_date: start, end_date: end };
 }
 
+/**
+ * Resolve dataset spatial metadata from the canonical CKAN field, with a
+ * fallback for legacy `subside_dataset` records that store the same GeoJSON
+ * in a package extra named `spatial`.
+ */
+function packageSpatialValue(pkg: CkanPackage): string | undefined {
+  if (pkg.spatial) return pkg.spatial;
+  return pkg.extras?.find((extra) => extra.key === 'spatial' && extra.value)?.value;
+}
+
 /** Parse ckanext-spatial's stringified GeoJSON geometry. */
 export function packageSpatialCoverage(pkg: CkanPackage): SpatialCoverage | undefined {
-  if (!pkg.spatial) return undefined;
+  const spatial = packageSpatialValue(pkg);
+  if (!spatial) return undefined;
   try {
-    const geo = JSON.parse(pkg.spatial) as { type?: string; coordinates?: unknown };
+    const geo = JSON.parse(spatial) as { type?: string; coordinates?: unknown };
     if (!geo?.type) return undefined;
     // GeoJSON polygons nest one ring deeper than SpatialCoverage.coordinates allows.
     const ring = Array.isArray(geo.coordinates) ? geo.coordinates[0] : undefined;
@@ -268,7 +279,7 @@ export type RegionMatch = 'inside' | 'outside' | 'unknown';
  * `coordinates[0]` and understands a bare Polygon only.
  */
 export function packageBoundingBox(pkg: CkanPackage): BoundingBox | null {
-  return geoJsonBoundingBox(pkg.spatial);
+  return geoJsonBoundingBox(packageSpatialValue(pkg));
 }
 
 /**

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Search } from 'lucide-react';
 
 import {
@@ -52,8 +52,15 @@ interface Assignment {
   datasetId: string;
   datasetName: string;
   timePeriod?: DataCatalogTimePeriod | null;
+  spatialCoverage?: DataCatalogDataset['spatial_coverage'];
   resources?: DataCatalogResource[];
 }
+
+/** Metadata from a selected dataset used to constrain the other inputs. */
+export type DatasetCompatibilityContext = Pick<
+  Assignment,
+  'datasetId' | 'datasetName' | 'timePeriod' | 'spatialCoverage'
+>;
 
 /** Classify a dataset's temporal coverage against the requested window. */
 export function dateCoverage(
@@ -269,6 +276,45 @@ export function matchesSpatialBox(
   return !datasetBox || boundingBoxesOverlap(datasetBox, box);
 }
 
+/**
+ * A temporal overlap check that treats missing or open-ended bounds as
+ * unknown. Unknown metadata stays available because it cannot prove that a
+ * candidate is incompatible with the selected dataset.
+ */
+function temporalCoverageCompatible(
+  candidate: DataCatalogTimePeriod | null | undefined,
+  selected: DataCatalogTimePeriod | null | undefined,
+): boolean {
+  const candidateStart = validDate(candidate?.start_date);
+  const candidateEnd = validDate(candidate?.end_date);
+  const selectedStart = validDate(selected?.start_date);
+  const selectedEnd = validDate(selected?.end_date);
+
+  if (candidateEnd && selectedStart && candidateEnd < selectedStart) return false;
+  if (selectedEnd && candidateStart && selectedEnd < candidateStart) return false;
+  return true;
+}
+
+/**
+ * Keep a candidate when every selected dataset is spatially and temporally
+ * compatible with it. A missing spatial extent or date bound is unknown, not a
+ * contradiction, so it remains visible for the user to evaluate.
+ */
+export function matchesSelectedDatasetContext(
+  candidate: Pick<DataCatalogDataset, 'spatial_coverage' | 'time_period'>,
+  selectedDatasets: DatasetCompatibilityContext[],
+): boolean {
+  const candidateBox = spatialCoverageBoundingBox(candidate.spatial_coverage);
+  return selectedDatasets.every((selected) => {
+    const selectedBox = spatialCoverageBoundingBox(selected.spatialCoverage);
+    const spatiallyCompatible =
+      !candidateBox || !selectedBox || boundingBoxesOverlap(candidateBox, selectedBox);
+    return (
+      spatiallyCompatible && temporalCoverageCompatible(candidate.time_period, selected.timePeriod)
+    );
+  });
+}
+
 function coverageBarClass(coverage: DateCoverage, selected: boolean): string {
   const selectedRing = selected ? 'ring-2 ring-blue-500 ring-offset-1' : '';
   switch (coverage) {
@@ -440,6 +486,8 @@ function InputPicker({
   requested,
   assignedId,
   suggestedDatasetIds,
+  selectedDatasets = [],
+  onDatasetMetadata,
   onAssign,
 }: {
   thread: Thread;
@@ -449,6 +497,8 @@ function InputPicker({
   requested: RequestedRange | null;
   assignedId: string | null;
   suggestedDatasetIds?: string[];
+  selectedDatasets?: DatasetCompatibilityContext[];
+  onDatasetMetadata?: (dataset: DataCatalogDataset) => void;
   onAssign: (datasetId: string | null, dataset?: DataCatalogDataset) => void;
 }) {
   const [showOutside, setShowOutside] = useState(false);
@@ -468,21 +518,34 @@ function InputPicker({
     [datasets, spatialBox],
   );
   const spatiallyExcludedCount = datasets.length - spatialCandidates.length;
+  const compatibleCandidates = useMemo(
+    () =>
+      spatialCandidates.filter((dataset) =>
+        matchesSelectedDatasetContext(dataset, selectedDatasets),
+      ),
+    [selectedDatasets, spatialCandidates],
+  );
+  const consistencyExcludedCount = spatialCandidates.length - compatibleCandidates.length;
   const { inRegion, noLocation, outside } = useMemo(
-    () => splitByRegion(spatialCandidates),
-    [spatialCandidates],
+    () => splitByRegion(compatibleCandidates),
+    [compatibleCandidates],
   );
 
   useEffect(() => {
     if (assignedId || !suggestedDatasetIds?.length) return;
-    const suggestion = spatialCandidates.find((dataset) =>
+    const suggestion = compatibleCandidates.find((dataset) =>
       suggestedDatasetIds.includes(dataset.id),
     );
     if (suggestion) onAssign(suggestion.id, suggestion);
-  }, [assignedId, onAssign, spatialCandidates, suggestedDatasetIds]);
+  }, [assignedId, compatibleCandidates, onAssign, suggestedDatasetIds]);
 
-  const offered = showOutside ? spatialCandidates : [...inRegion, ...noLocation];
   const assignedDataset = assignedId ? datasets.find((dataset) => dataset.id === assignedId) : null;
+
+  useEffect(() => {
+    if (assignedDataset) onDatasetMetadata?.(assignedDataset);
+  }, [assignedDataset, onDatasetMetadata]);
+
+  const offered = showOutside ? compatibleCandidates : [...inRegion, ...noLocation];
   const candidates =
     assignedDataset && !offered.some((dataset) => dataset.id === assignedDataset.id)
       ? [assignedDataset, ...offered]
@@ -517,6 +580,14 @@ function InputPicker({
       remain available.
     </p>
   );
+  const consistencyFilterNotice = consistencyExcludedCount > 0 && selectedDatasets.length > 0 && (
+    <p className="rounded bg-blue-50 px-2 py-1 text-xs text-blue-800">
+      {consistencyExcludedCount} dataset{consistencyExcludedCount !== 1 ? 's' : ''} with declared
+      coverage {consistencyExcludedCount !== 1 ? 'are' : 'is'} hidden because their spatial or
+      temporal coverage is incompatible with a dataset already selected for this model. Datasets
+      without comparable coverage remain available.
+    </p>
+  );
 
   if (loading) {
     return <span className="text-xs text-gray-400">Loading datasets…</span>;
@@ -529,6 +600,7 @@ function InputPicker({
           {outsideToggle}
         </span>
         {spatialFilterNotice}
+        {consistencyFilterNotice}
       </div>
     );
   }
@@ -576,6 +648,7 @@ function InputPicker({
       )}
 
       {spatialFilterNotice}
+      {consistencyFilterNotice}
 
       {visibleDatasets.length > 0 ? (
         <DatasetCoverageTimeline
@@ -621,6 +694,12 @@ export function DatasetsStep({
   // Edits made in this session. `null` is a deliberate clear, which is why the
   // lookup below tests for `undefined` rather than falsiness.
   const [overrides, setOverrides] = useState<Record<string, Record<string, Assignment | null>>>({});
+  // Existing bindings only store a dataset id and name. InputPicker reports
+  // the catalog metadata when it sees such a binding, allowing persisted
+  // selections to constrain the other inputs without adding a new API call.
+  const [knownDatasetMetadata, setKnownDatasetMetadata] = useState<
+    Record<string, DataCatalogDataset>
+  >({});
 
   const [updateThreadData] = useUpdateThreadDataMutation();
 
@@ -630,6 +709,29 @@ export function DatasetsStep({
     const override = overrides[modelId]?.[inputId];
     if (override !== undefined) return override;
     return persisted[modelId]?.[inputId] ?? null;
+  }
+
+  const reportKnownDatasetMetadata = useCallback((dataset: DataCatalogDataset) => {
+    setKnownDatasetMetadata((previous) =>
+      previous[dataset.id] === dataset ? previous : { ...previous, [dataset.id]: dataset },
+    );
+  }, []);
+
+  const selectedDatasetContextsByModel: Record<string, DatasetCompatibilityContext[]> = {};
+  for (const [modelId, model] of Object.entries(models)) {
+    const contexts: DatasetCompatibilityContext[] = [];
+    for (const input of model.input_files) {
+      const assignment = assignmentFor(modelId, input.id);
+      if (!assignment) continue;
+      const metadata = knownDatasetMetadata[assignment.datasetId];
+      contexts.push({
+        datasetId: assignment.datasetId,
+        datasetName: assignment.datasetName,
+        timePeriod: assignment.timePeriod ?? metadata?.time_period ?? null,
+        spatialCoverage: assignment.spatialCoverage ?? metadata?.spatial_coverage,
+      });
+    }
+    selectedDatasetContextsByModel[modelId] = contexts;
   }
 
   const requested: RequestedRange | null = useMemo(() => {
@@ -666,7 +768,12 @@ export function DatasetsStep({
       const bucket = { ...(prev[modelId] ?? {}) };
       bucket[inputId] =
         datasetId && dataset
-          ? { datasetId, datasetName: dataset.name, timePeriod: dataset.time_period }
+          ? {
+              datasetId,
+              datasetName: dataset.name,
+              timePeriod: dataset.time_period,
+              spatialCoverage: dataset.spatial_coverage,
+            }
           : null;
       return { ...prev, [modelId]: bucket };
     });
@@ -870,6 +977,8 @@ export function DatasetsStep({
                         requested={requested}
                         assignedId={current?.datasetId ?? null}
                         suggestedDatasetIds={initialDatasetIds}
+                        selectedDatasets={selectedDatasetContextsByModel[modelId]}
+                        onDatasetMetadata={reportKnownDatasetMetadata}
                         onAssign={(dsId, ds) => assign(modelId, input.id, dsId, ds)}
                       />
                     </li>
