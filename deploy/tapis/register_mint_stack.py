@@ -57,6 +57,8 @@ RECREATE_ON_IMAGE_MISMATCH_PODS = frozenset({"graphql", "api", "ensemble", "svo"
 POD_IMAGE_VERIFY_TIMEOUT = 120
 POD_RESTART_TIMEOUT = 600
 HASURA_MIGRATION_TIMEOUT = 600
+POD_UPDATE_RETRIES = 3
+POD_UPDATE_BACKOFF = 5
 
 SECRET_KEYS = {
     "HASURA_GRAPHQL_ADMIN_SECRET",
@@ -478,6 +480,14 @@ def _is_transient_lookup_error(exc: Exception) -> bool:
     # Tapipy wraps transport exceptions in BaseTapyException without an HTTP
     # response. Keep this narrow so auth and service HTTP errors still fail fast.
     return getattr(exc, "response", None) is None and "unable to make request" in str(exc).lower()
+
+
+def _is_transient_update_error(exc: Exception) -> bool:
+    """Return whether an idempotent pod update may be retried safely."""
+    status_code = getattr(getattr(exc, "response", None), "status_code", None)
+    if status_code in {500, 502, 503, 504}:
+        return True
+    return _is_transient_lookup_error(exc)
 
 
 def _pod_lookup_for_verification(t: Any, pod_id: str) -> Any:
@@ -1030,8 +1040,21 @@ def update_pod_images(t: Any, selected: list[str], expected_images: dict[str, st
     for key in selected:
         pid = PODS[key]
         image = expected_images[key]
-        print(f"  [{pid}] updating image to {image}…")
-        t.pods.update_pod(pod_id=pid, image=image)
+        for attempt in range(1, POD_UPDATE_RETRIES + 1):
+            print(f"  [{pid}] updating image to {image} (attempt {attempt}/{POD_UPDATE_RETRIES})…", flush=True)
+            try:
+                t.pods.update_pod(pod_id=pid, image=image)
+                break
+            except Exception as exc:  # noqa: BLE001
+                status_code = getattr(getattr(exc, "response", None), "status_code", None)
+                if not _is_transient_update_error(exc) or attempt == POD_UPDATE_RETRIES:
+                    suffix = f" (HTTP {status_code})" if status_code else ""
+                    raise RuntimeError(f"[{pid}] image update failed for {image}{suffix}") from None
+                print(
+                    f"  [{pid}] transient image update failure; retrying in {POD_UPDATE_BACKOFF}s…",
+                    flush=True,
+                )
+                time.sleep(POD_UPDATE_BACKOFF)
 
 
 def restart_existing_pods(t: Any, selected: list[str]) -> None:
