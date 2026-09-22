@@ -1,6 +1,6 @@
 import unittest
 
-from mint_change_plan import DEPLOY_ALL_SERVICES, make_plan
+from mint_change_plan import DEPLOY_ALL_SERVICES, develop_image_map, make_plan
 
 
 class MintChangePlanTests(unittest.TestCase):
@@ -10,6 +10,13 @@ class MintChangePlanTests(unittest.TestCase):
         self.assertEqual(plan["restart_services"], ["ui"])
         self.assertFalse(plan["deploy_all"])
         self.assertEqual(plan["images"]["ui"]["tag"], "sha-abcdef1")
+
+    def test_develop_runtime_map_is_separate_from_sha_manifest(self):
+        plan = make_plan(["ui-react/src/App.tsx"], "abcdef123456")
+        runtime = develop_image_map(plan["build_services"])
+        self.assertEqual(plan["images"]["ui"]["image_ref"], "ghcr.io/mintproject/ui:sha-abcdef1")
+        self.assertEqual(runtime["ui"]["tag"], "develop")
+        self.assertEqual(runtime["ui"]["image_ref"], "ghcr.io/mintproject/ui:develop")
 
     def test_each_owned_service_has_a_build_matrix_entry(self):
         expected = {

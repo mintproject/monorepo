@@ -57,6 +57,18 @@ IGNORED_PREFIXES = (".wolf/", "docs/", ".git/")
 IGNORED_FILES = {"LICENSE", "README.md", ".gitignore", ".gitattributes"}
 
 
+def develop_image_map(services: Iterable[str]) -> dict[str, dict[str, str]]:
+    """Build the mutable runtime image map used by the MINT dev stack."""
+    return {
+        service: {
+            "image": f"ghcr.io/mintproject/{SERVICE_IMAGES[service]}",
+            "tag": "develop",
+            "image_ref": f"ghcr.io/mintproject/{SERVICE_IMAGES[service]}:develop",
+        }
+        for service in services
+    }
+
+
 def _clean_path(path: str) -> str:
     return path.strip().removeprefix("./")
 

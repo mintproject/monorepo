@@ -1,6 +1,6 @@
 # Selective MINT Dev Service Deployment
 
-Status: Implementing
+Status: Implemented
 
 ## Objective
 
@@ -108,9 +108,12 @@ it. Missing, malformed, or mismatched artifacts fail closed.
 
 ### Image and pod behavior
 
-Use immutable short-SHA image tags for the changed services during deployment;
-do not force unchanged pods onto a moving `develop` tag. Keep branch tags for
-convenience and retain the existing protected image-mismatch behavior.
+Use the exact short-SHA image references in the build manifest as provenance
+and fail-closed validation. Automatic dev deployment itself uses the moving
+`:develop` runtime tag for each changed service, matching the dev stack's
+runtime policy. Keep branch tags for convenience and retain the existing
+protected image-mismatch behavior. Explicit image maps and direct deployment
+script invocations may still use an immutable SHA tag for recovery or rollback.
 
 Extend the deployment script only as needed to accept the manifest's
 `build_services` and `restart_services` separately, update image definitions
@@ -162,8 +165,9 @@ migrations, metadata, and health endpoints.
   only be selected by its explicit image/context path.
 - A workflow-run trigger cannot directly consume job outputs, so the manifest
   artifact must be retained and downloaded with exact-run and SHA checks.
-- Immutable tags improve rollback but require the deploy script to support
-  per-service tags and to avoid assuming one shared tag for the whole stack.
+- Immutable tags improve rollback and provenance, but the normal dev runtime
+  uses a mutable `develop` tag and therefore does not provide immutable
+  rollback semantics by itself.
 - PostgreSQL image/config changes remain higher risk because the volume is
   persistent; automatic recreation stays disabled.
 - Schema changes may require more dependent restarts than initially modeled;
@@ -182,8 +186,12 @@ migrations, metadata, and health endpoints.
 - **Always deploy the full stack for schema or shared changes:** retained as a
   conservative fallback for application services, but PostgreSQL remains
   excluded unless its own image/context changes.
-- **Use only mutable `develop` tags:** retained for compatibility but not for
-  selective deployment, where immutable SHA tags are safer.
+- **Use only mutable `develop` tags with no SHA validation:** rejected because
+  the deployment must still prove that the completed image workflow produced
+  the manifest being deployed. The runtime map uses `develop`, but the
+  manifest's SHA references remain validated first.
+- **Use immutable SHA tags for automatic dev runtime:** rejected because the
+  dev Tapis stack is intentionally maintained on the moving `develop` tag.
 
 ## Test plan
 
@@ -327,6 +335,24 @@ rollout and debrief are complete.
   received HTTP 404 responses.
 - **Impact on implementation:** Pod-spec and change-plan regression tests now
   verify both the URL and the rollout selection.
+
+### 2026-09-22 - Use develop tags for automatic dev runtime
+
+- **Decision:** Automatic MINT dev deployments validate the immutable SHA
+  references in the build manifest, then update selected Tapis pods with their
+  corresponding `:develop` image references. Manual deployment already follows
+  this policy.
+- **Reason:** The dev stack is intentionally maintained on the moving
+  `develop` tag. The previous workflow requested a SHA image while the live
+  pod correctly reported `:develop`, causing the convergence guard to fail.
+- **Alternatives rejected:** Sending SHA references to Tapis for automatic
+  deployment, or using `develop` without validating the source manifest.
+- **User feedback:** The user explicitly directed that all dev pods should use
+  the `develop` tag.
+- **Impact on implementation:** The deployment workflow now emits a separate
+  develop-tag image map for Tapis updates and Hasura migrations while keeping
+  the manifest's SHA map for provenance checks. The runbook and deployment
+  design now document the two roles.
 
 ## User feedback / decisions
 

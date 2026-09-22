@@ -33,6 +33,7 @@ jobs:
       deploy_all: ${{ steps.validate.outputs.deploy_all }}
       source_sha: ${{ steps.validate.outputs.source_sha }}
       images_json: ${{ steps.validate.outputs.images_json }}
+      deploy_images_json: ${{ steps.validate.outputs.deploy_images_json }}
     steps:
       - name: Check out the workflow source commit
         if: github.event_name == 'workflow_run'
@@ -107,6 +108,8 @@ jobs:
           import os
           from pathlib import Path
 
+          from deploy.mint_change_plan import develop_image_map
+
           path = Path("manifest/changed-services.json")
           try:
               plan = json.loads(path.read_text(encoding="utf-8"))
@@ -152,20 +155,23 @@ jobs:
           if os.environ["EVENT_NAME"] == "workflow_run":
               for service in plan["build_services"]:
                   image = plan["images"][service]
-                  expected_ref = f"ghcr.io/mintproject/{image_names[service]}:sha-{plan['short_sha']}"
+                  image_name = image_names[service]
+                  expected_ref = f"ghcr.io/mintproject/{image_name}:sha-{plan['short_sha']}"
                   if image.get("image_ref") != expected_ref or image.get("tag") != f"sha-{plan['short_sha']}":
                       raise SystemExit(f"deploy manifest image does not match source SHA for {service}")
+          deploy_images = develop_image_map(plan["build_services"])
 
           output = os.environ["GITHUB_OUTPUT"]
           with open(output, "a", encoding="utf-8") as stream:
               stream.write(f"has_changes={str(bool(plan['has_changes'])).lower()}\n")
               stream.write(f"build_services={','.join(plan['build_services'])}\n")
               stream.write(f"restart_services={','.join(plan['restart_services'])}\n")
-              stream.write(f"image_tag={'develop' if os.environ['EVENT_NAME'] == 'workflow_dispatch' else 'sha-' + plan['short_sha']}\n")
+              stream.write("image_tag=develop\n")
               stream.write(f"schema_changed={str(bool(plan['schema_changed'])).lower()}\n")
               stream.write(f"deploy_all={str(bool(plan['deploy_all'])).lower()}\n")
               stream.write(f"source_sha={plan['source_sha']}\n")
               stream.write("images_json=" + json.dumps(plan["images"], separators=(",", ":")) + "\n")
+              stream.write("deploy_images_json=" + json.dumps(deploy_images, separators=(",", ":")) + "\n")
           print(json.dumps(plan, indent=2))
 
   deploy:
@@ -199,13 +205,13 @@ jobs:
             --pods all \
             --owners wmobley
 
-      - name: Update application SHA tags
+      - name: Update application develop tags
         if: needs.plan.outputs.build_services != ''
         env:
           TAPIS_USERNAME: ${{ secrets.TAPIS_USERNAME }}
           TAPIS_ID: ${{ secrets.TAPIS_ID }}
           TAPIS_PASSWORD: ${{ secrets.TAPIS_PASSWORD }}
-          IMAGE_MAP_JSON: ${{ needs.plan.outputs.images_json }}
+          IMAGE_MAP_JSON: ${{ needs.plan.outputs.deploy_images_json }}
           BUILD_SERVICES: ${{ needs.plan.outputs.build_services }}
         run: |
           set -euo pipefail
@@ -227,7 +233,7 @@ jobs:
           TAPIS_USERNAME: ${{ secrets.TAPIS_USERNAME }}
           TAPIS_ID: ${{ secrets.TAPIS_ID }}
           TAPIS_PASSWORD: ${{ secrets.TAPIS_PASSWORD }}
-          IMAGE_MAP_JSON: ${{ needs.plan.outputs.images_json }}
+          IMAGE_MAP_JSON: ${{ needs.plan.outputs.deploy_images_json }}
         run: |
           set -euo pipefail
           python deploy/tapis/register_mint_stack.py \
