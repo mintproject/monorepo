@@ -623,6 +623,31 @@ class LifecycleTests(unittest.TestCase):
         t.pods.restart_pod.assert_not_called()
         t.pods.create_pod.assert_not_called()
 
+    def test_update_pod_images_retries_transient_server_errors(self):
+        t = Mock()
+        error = Exception("temporary Tapis failure")
+        error.response = SimpleNamespace(status_code=500)
+        t.pods.update_pod.side_effect = [error, None]
+        images = {"api": "ghcr.io/mintproject/model-catalog-api:sha-new"}
+
+        with patch.object(deploy.time, "sleep") as sleep:
+            deploy.update_pod_images(t, ["api"], images)
+
+        self.assertEqual(t.pods.update_pod.call_count, 2)
+        sleep.assert_called_once_with(deploy.POD_UPDATE_BACKOFF)
+
+    def test_update_pod_images_reports_pod_and_image_on_nontransient_error(self):
+        t = Mock()
+        error = Exception("forbidden")
+        error.response = SimpleNamespace(status_code=403)
+        t.pods.update_pod.side_effect = error
+        image = "ghcr.io/mintproject/model-catalog-api:sha-new"
+
+        with self.assertRaisesRegex(RuntimeError, r"\[mintdevapi\].*" + image + r".*HTTP 403"):
+            deploy.update_pod_images(t, ["api"], {"api": image})
+
+        t.pods.update_pod.assert_called_once_with(pod_id=deploy.PODS["api"], image=image)
+
     def test_update_pod_images_requires_exact_image_for_each_pod(self):
         t = Mock()
         with self.assertRaises(RuntimeError):
