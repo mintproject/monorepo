@@ -1706,6 +1706,13 @@
         table:
           name: thread_model_parameter
           schema: public
+  - name: adapter_plans
+    using:
+      foreign_key_constraint_on:
+        column: thread_model_id
+        table:
+          name: thread_adapter_plan
+          schema: public
   insert_permissions:
   - role: user
     permission:
@@ -1926,6 +1933,144 @@
                     _eq: CREATE
                 - userid:
                     _eq: X-Hasura-User-Id
+- table:
+    name: thread_adapter_plan
+    schema: public
+  object_relationships:
+  - name: thread_model
+    using:
+      foreign_key_constraint_on: thread_model_id
+  insert_permissions:
+  - role: user
+    permission:
+      check:
+        thread_model:
+          thread:
+            _or:
+            - permissions:
+                _and:
+                - user_id:
+                    _in:
+                    - X-Hasura-User-Id
+                    - '*'
+                - write:
+                    _eq: true
+            - events:
+                _and:
+                - event:
+                    _eq: CREATE
+                - userid:
+                    _eq: X-Hasura-User-Id
+      columns:
+      - thread_model_id
+      - model_io_id
+      - source_resource_id
+      - executor
+      - adapter_plan_id
+      - status
+      - plan_json
+      - parameter_values
+  select_permissions:
+  - role: anonymous
+    permission:
+      columns:
+      - id
+      - thread_model_id
+      - model_io_id
+      - source_resource_id
+      - executor
+      - adapter_plan_id
+      - status
+      - plan_json
+      - parameter_values
+      - created_at
+      - updated_at
+      filter: {}
+  - role: user
+    permission:
+      columns:
+      - id
+      - thread_model_id
+      - model_io_id
+      - source_resource_id
+      - executor
+      - adapter_plan_id
+      - status
+      - plan_json
+      - parameter_values
+      - created_at
+      - updated_at
+      filter:
+        thread_model:
+          thread:
+            _or:
+            - permissions:
+                _and:
+                - user_id:
+                    _in:
+                    - X-Hasura-User-Id
+                    - '*'
+                - read:
+                    _eq: true
+            - events:
+                _and:
+                - event:
+                    _eq: CREATE
+                - userid:
+                    _eq: X-Hasura-User-Id
+  update_permissions:
+  - role: user
+    permission:
+      columns:
+      - adapter_plan_id
+      - status
+      - plan_json
+      - parameter_values
+      - updated_at
+      filter:
+        thread_model:
+          thread:
+            _or:
+            - permissions:
+                _and:
+                - user_id:
+                    _in:
+                    - X-Hasura-User-Id
+                    - '*'
+                - write:
+                    _eq: true
+            - events:
+                _and:
+                - event:
+                    _eq: CREATE
+                - userid:
+                    _eq: X-Hasura-User-Id
+      check: null
+  delete_permissions:
+  - role: user
+    permission:
+      backend_only: false
+      filter:
+        thread_model:
+          thread:
+            _or:
+            - permissions:
+                _and:
+                - user_id:
+                    _in:
+                    - X-Hasura-User-Id
+                    - '*'
+                - write:
+                    _eq: true
+            - events:
+                _and:
+                - event:
+                    _eq: CREATE
+                - userid:
+                    _eq: X-Hasura-User-Id
+- table:
+    name: unified_execution
+    schema: public
 - table:
     name: thread_model_execution_summary
     schema: public
@@ -2911,6 +3056,8 @@
       - has_component_location
       - has_implementation_script_location
       - has_software_image
+      - tapis_app_id
+      - tapis_app_version
       - has_model_result_table
       - has_region
       - calibration_interval
@@ -2932,6 +3079,8 @@
       - has_component_location
       - has_implementation_script_location
       - has_software_image
+      - tapis_app_id
+      - tapis_app_version
       - has_model_result_table
       - has_region
       - calibration_interval

@@ -40,6 +40,19 @@ def test_adapter_migration_creates_and_rolls_back_all_tables():
     assert "DROP SCHEMA IF EXISTS adapter CASCADE;" in down
 
 
+def test_adapter_sync_migration_is_separate_and_reversible():
+    migration = ROOT / "graphql_engine" / "migrations" / "1771300000017_svo_adapter_sync_schema"
+    up = (migration / "up.sql").read_text()
+    down = (migration / "down.sql").read_text()
+
+    assert "ADD COLUMN IF NOT EXISTS tapis_app_id TEXT" in up
+    assert "ADD COLUMN IF NOT EXISTS tapis_app_version TEXT" in up
+    assert "ADD COLUMN IF NOT EXISTS compatibility_json JSONB" in up
+    assert "DROP COLUMN IF EXISTS compatibility_json" in down
+    assert "DROP COLUMN IF EXISTS tapis_app_version" in down
+    assert "DROP COLUMN IF EXISTS tapis_app_id" in down
+
+
 def test_adapter_metadata_tracks_all_tables_without_duplicate_relationship_sections():
     metadata = METADATA.read_text()
     adapter_section = metadata[metadata.index("    name: data_object\n    schema: adapter") :]

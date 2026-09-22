@@ -25,12 +25,15 @@ export class EnsembleManagerError extends Error {
   readonly status: number;
   /** The server's own error code, when it sends one. */
   readonly code?: string;
+  /** Structured server details, when present. */
+  readonly details?: unknown;
 
-  constructor(status: number, message: string, code?: string) {
+  constructor(status: number, message: string, code?: string, details?: unknown) {
     super(message);
     this.name = 'EnsembleManagerError';
     this.status = status;
     this.code = code;
+    this.details = details;
   }
 }
 
@@ -44,15 +47,34 @@ export const NO_OUTPUTS_DECLARED = 'NO_OUTPUTS_DECLARED';
  * — the Results step showed a bare status before the server learned to explain
  * itself, and that path must keep working.
  */
+function formatErrorValue(value: unknown): string | undefined {
+  if (typeof value === 'string' && value.length > 0) return value;
+  if (value == null) return undefined;
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return String(value);
+  }
+}
+
 async function toEnsembleManagerError(resp: Response): Promise<EnsembleManagerError> {
   const body = await resp
     .json()
-    .then((parsed: { message?: string; code?: string }) => parsed)
+    .then(
+      (parsed: { message?: unknown; code?: unknown; detail?: unknown; details?: unknown }) =>
+        parsed,
+    )
     .catch(() => undefined);
-  const message = body?.message
-    ? `Ensemble manager returned ${resp.status}: ${body.message}`
+  const serverMessage = formatErrorValue(body?.message ?? body?.detail ?? body?.details);
+  const message = serverMessage
+    ? `Ensemble manager returned ${resp.status}: ${serverMessage}`
     : `Ensemble manager returned ${resp.status}`;
-  return new EnsembleManagerError(resp.status, message, body?.code);
+  return new EnsembleManagerError(
+    resp.status,
+    message,
+    typeof body?.code === 'string' ? body.code : undefined,
+    body?.details ?? body?.detail,
+  );
 }
 
 /**
@@ -100,6 +122,114 @@ export async function submitRuns(
   if (!resp.ok) {
     throw new Error(`Ensemble manager returned ${resp.status}`);
   }
+}
+
+export type UnifiedExecutor = 'ensemble_manager' | 'svo_adapter';
+
+export interface UnifiedParameterDefinition {
+  name: string;
+  type?: string;
+  required?: boolean;
+  default?: unknown;
+  description?: string;
+  allowed_values?: unknown[];
+  minimum?: number;
+  maximum?: number;
+  source_transform?: string;
+  transform_spec_id?: string;
+}
+
+export interface UnifiedExecutionPlan {
+  plan_id: string | null;
+  executor: UnifiedExecutor;
+  version: number;
+  status: string;
+  parameters: UnifiedParameterDefinition[];
+  parameter_values: Record<string, unknown>;
+  [key: string]: unknown;
+}
+
+async function unifiedRequest<T>(
+  ensembleManagerApi: string,
+  path: string,
+  method: 'GET' | 'POST',
+  body?: unknown,
+  signal?: AbortSignal,
+): Promise<T> {
+  const resp = await fetch(`${ensembleManagerApi}${path}`, {
+    method,
+    signal,
+    headers: ensembleManagerHeaders({ 'Content-Type': 'application/json' }),
+    ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+  });
+  if (!resp.ok) throw await toEnsembleManagerError(resp);
+  return (await resp.json()) as T;
+}
+
+/** Create one public plan for either the legacy engine or the SVO adapter. */
+export function createExecutionPlan(
+  ensembleManagerApi: string,
+  body: {
+    executor: UnifiedExecutor;
+    thread_id?: string;
+    model_id?: string;
+    execution_engine?: string;
+    adapter_request?: Record<string, unknown>;
+    adapter_steps?: Array<{
+      adapter_plan_id: string;
+      model_io_id: string;
+      source_resource_id: string;
+    }>;
+  },
+): Promise<UnifiedExecutionPlan> {
+  return unifiedRequest<UnifiedExecutionPlan>(ensembleManagerApi, '/plans', 'POST', body);
+}
+
+/** Submit a previously-created plan; adapter validation happens server-side. */
+export function submitExecutionPlan(
+  ensembleManagerApi: string,
+  body: {
+    plan_id: string;
+    parameter_values?: Record<string, unknown>;
+    run_name?: string;
+    recreate?: boolean;
+    dry_run?: boolean;
+    execution_id?: string;
+    idempotency_key?: string;
+    adapter_parameter_values?: Record<string, Record<string, unknown>>;
+  },
+): Promise<Record<string, unknown>> {
+  return unifiedRequest<Record<string, unknown>>(ensembleManagerApi, '/plans/submit', 'POST', body);
+}
+
+/** Retrieve the immutable plan snapshot and its adapter parameter definitions. */
+export function fetchExecutionPlan(
+  ensembleManagerApi: string,
+  planId: string,
+  signal?: AbortSignal,
+): Promise<UnifiedExecutionPlan> {
+  return unifiedRequest<UnifiedExecutionPlan>(
+    ensembleManagerApi,
+    `/plans/${encodeURIComponent(planId)}`,
+    'GET',
+    undefined,
+    signal,
+  );
+}
+
+/** Retrieve adapter child-run status through Ensemble Manager. */
+export function fetchUnifiedRun(
+  ensembleManagerApi: string,
+  runId: string,
+  signal?: AbortSignal,
+): Promise<Record<string, unknown>> {
+  return unifiedRequest<Record<string, unknown>>(
+    ensembleManagerApi,
+    `/plans/runs/${encodeURIComponent(runId)}`,
+    'GET',
+    undefined,
+    signal,
+  );
 }
 
 /** The three path segments that address one thread on the publish routes. */

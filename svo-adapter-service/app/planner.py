@@ -378,6 +378,9 @@ def build_plan_json(path: list[dict[str, Any]]) -> dict[str, Any]:
                 val = hints.get(key)
             if val is not None:
                 step[key] = val
+        schema = spec.get("parameters_schema_json") or {}
+        if isinstance(schema, dict) and schema.get("properties"):
+            step["parameters_schema_json"] = schema
         metadata = (spec.get("parameters_schema_json") or {}).get("metadata") or {}
         source = metadata.get("source")
         if isinstance(source, dict) and isinstance(source.get("code"), str):
@@ -385,7 +388,79 @@ def build_plan_json(path: list[dict[str, Any]]) -> dict[str, Any]:
             if source.get("entrypoint"):
                 step["python_entrypoint"] = source["entrypoint"]
         steps.append(step)
-    return {"steps": steps, "lossy": any(s["is_lossy"] for s in steps)}
+    return {
+        "steps": steps,
+        "lossy": any(s["is_lossy"] for s in steps),
+        "parameters": parameter_definitions(steps),
+    }
+
+
+def parameter_definitions(
+    steps: list[dict[str, Any]],
+    standard_params: dict[str, dict[str, Any]] | None = None,
+) -> list[dict[str, Any]]:
+    """Return the typed, plan-scoped arguments required by a transform path.
+
+    Transform registry rows predate a single parameter contract: some declare
+    JSON Schema properties while older rows only expose ``env_from_args`` or
+    ``file_inputs``.  This function normalizes both forms into the contract
+    stored with a plan.  ``standard_params`` is supplied by the workflow
+    backend so pipeline-wide arguments (for example ``allocation``) are
+    represented alongside transform-specific arguments.
+    """
+    definitions: dict[str, dict[str, Any]] = {}
+
+    def add(name: str, definition: dict[str, Any], transform: dict[str, Any]) -> None:
+        current = definitions.setdefault(name, {
+            "name": name,
+            "type": "string",
+            "required": True,
+        })
+        current.update({k: v for k, v in definition.items() if v is not None})
+        current["name"] = name
+        current["source_transform"] = current.get("source_transform") or transform.get("name")
+        current["transform_spec_id"] = current.get("transform_spec_id") or transform.get("transform_spec_id")
+
+    for step in steps:
+        schema = step.get("parameters_schema_json") or {}
+        properties = schema.get("properties") if isinstance(schema, dict) else None
+        required = set(schema.get("required") or []) if isinstance(schema, dict) else set()
+        if isinstance(properties, dict):
+            for name, prop in properties.items():
+                if not isinstance(prop, dict):
+                    prop = {}
+                definition = {
+                    "type": prop.get("type", "string"),
+                    "required": name in required,
+                    "description": prop.get("description"),
+                    "default": prop.get("default"),
+                    "allowed_values": prop.get("enum"),
+                    "minimum": prop.get("minimum"),
+                    "maximum": prop.get("maximum"),
+                }
+                add(name, definition, step)
+
+        for arg in (step.get("env_from_args") or {}).values():
+            add(str(arg), {}, step)
+        for file_input in step.get("file_inputs") or []:
+            arg = file_input.get("from_arg")
+            if arg:
+                add(str(arg), {"type": "string"}, step)
+
+    for name, definition in (standard_params or {}).items():
+        # Keep the backend's system token out of the user-facing parameter
+        # form.  It is injected from the caller's bearer token at submission.
+        if name == "tapis_token":
+            continue
+        if name in definitions:
+            definitions[name].update({
+                k: v for k, v in definition.items()
+                if k in {"type", "required", "default", "description"} and v is not None
+            })
+        elif name == "allocation":
+            add(name, definition, {"name": "workflow"})
+
+    return [definitions[name] for name in sorted(definitions)]
 
 
 # ---------------------------------------------------------------------------
@@ -410,6 +485,9 @@ def _step_from_spec(idx: int, spec: dict[str, Any], depends_on: list[int]) -> di
         val = spec.get(key) if spec.get(key) is not None else hints.get(key)
         if val is not None:
             step[key] = val
+    schema = spec.get("parameters_schema_json") or {}
+    if isinstance(schema, dict) and schema.get("properties"):
+        step["parameters_schema_json"] = schema
     metadata = (spec.get("parameters_schema_json") or {}).get("metadata") or {}
     source = metadata.get("source")
     if isinstance(source, dict) and isinstance(source.get("code"), str):
@@ -471,5 +549,10 @@ def build_model_run_plan_json(plan: dict[str, Any]) -> dict[str, Any]:
             tails.append(prev)  # this branch needed conversion(s)
     run = _step_from_spec(idx, plan["run_spec"], sorted(tails))
     steps.append(run)
-    return {"steps": steps, "lossy": any(s["is_lossy"] for s in steps),
-            "multi_input": True, "complete": plan["complete"]}
+    return {
+        "steps": steps,
+        "lossy": any(s["is_lossy"] for s in steps),
+        "parameters": parameter_definitions(steps),
+        "multi_input": True,
+        "complete": plan["complete"],
+    }

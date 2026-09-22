@@ -8,6 +8,7 @@
  * The execution lifecycle (submit → monitor → results) is orchestrated via the
  * mint-ensemble-manager REST API, not via Hasura directly.
  */
+import type { ThreadAdapterPlan } from '@/lib/adapter-execution';
 
 // ─── Parameter / Input file descriptors ──────────────────────────────────────
 
@@ -160,4 +161,6 @@ export interface ThreadExecutionData {
   data: Record<string, { selected_resources: number; [k: string]: unknown }>;
   /** Response variable IDs */
   response_variables?: string[];
+  /** Adapter plans discovered for each selected model, keyed by model id. */
+  adapter_plans?: Record<string, ThreadAdapterPlan[]>;
 }

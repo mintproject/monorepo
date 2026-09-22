@@ -247,6 +247,58 @@ None for this change. Additional MODFLOW releases should receive their own forma
   three-file contract.
 - **Rollback:** The down migration restores the seven package-file links.
 
+### 2026-09-22 - Repair missing legacy configuration parents during normalization
+
+- **Decision:** Make the 0009 input-contract migration idempotently restore the
+  canonical MODFLOW 2000 and MODFLOW 96 configuration rows, output metadata,
+  and native output links when they are absent from a persistent catalog.
+- **Reason:** The deployed database was created from an older catalog snapshot
+  that did not contain the fixture rows targeted by the normalization. The
+  migration otherwise failed on its configuration foreign key before it could
+  apply the intended input contracts.
+- **Alternatives rejected:** A manual SQL repair would fix only the current
+  dev database and would leave future persistent environments vulnerable to the
+  same migration failure. A new later migration cannot help because Hasura
+  stops at 0009 before it can reach it.
+- **Impact on implementation:** The 0009 migration now inserts or normalizes
+  only the missing canonical rows, preserving existing relationships and
+  allowing the remaining migrations to apply normally.
+
+### 2026-09-22 - Complete the MODFLOW 6 input contract
+
+- **Decision:** Keep exactly three visible MF6 inputs: the required
+  version-specific simulation archive, plus optional WEL and RCH override
+  inputs. Remove the stale generic simulation archive relationship and the
+  three duplicate RCHA relationships.
+- **Reason:** The persistent dev catalog retained relationships from an older
+  MF6 configuration after the versioned archive was added. Those rows caused
+  the UI to display both the old bundle contract and the new archive contract.
+- **Migration:** Add `1771300000020_complete_modflow6_input_contract` with a
+  configuration-scoped forward cleanup and reversible relationship restore.
+- **Ordering:** This migration follows the separate `1771300000019` Tapis-host
+  migration and does not depend on or modify it.
+- **Validation:** Read back the dev Hasura configuration and require exactly
+  three input rows with archive required and WEL/RCH optional.
+
+### 2026-09-22 - Align MF6 plan submission with the Tapis app contract
+
+- **Decision:** Keep semantic MF6 input labels in the model catalog and map
+  them to the Tapis manifest names (`mf6-simulation-archive`, `mf6-wel`, and
+  `mf6-rch`) only when constructing the job request.
+- **Reason:** The catalog describes meaning while Tapis validates the file
+  input names in the app manifest. Exact-name matching made a valid archive
+  contract fail with the old `mf6-nam` app version and also rejected optional
+  manifest inputs that the model does not use.
+- **Implementation:** `TapisJobService` now performs the narrow MF6 semantic
+  mapping, skips unmodeled optional app inputs, and retains strict failures for
+  missing required inputs. Migration
+  `1771300000022_normalize_modflow6_tapis_component` moves the canonical MF6
+  configuration from `0.0.fb606ee` to the archive-capable `0.0.febed09`
+  manifest.
+- **Prerequisite:** The `modflow6-simulation/0.0.febed09` Tapis app must be
+  registered in the target Tapis tenant before the catalog migration is
+  applied there.
+
 ## User feedback / decisions
 
 - User asked to implement the fix after identifying that the existing adapter registrations already cover MODFLOW 6, USG, 2000, and 96.

@@ -17,6 +17,14 @@ import {
   ThreadExecutionData,
 } from '@/graphql/generated/execution';
 import { parametersComplete, totalConfigs } from '@/lib/thread-execution';
+import {
+  adapterParameterKey,
+  adapterPlanIsTransformRequired,
+  adapterPlanParameters,
+  adapterValueText,
+  type ThreadAdapterPlan,
+} from '@/lib/adapter-execution';
+import type { UnifiedParameterDefinition } from '@/lib/ensemble-manager';
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
 
@@ -44,8 +52,11 @@ interface MintParametersProps {
     modelEnsembles: ModelEnsembleMap,
     executionSummary: ExecutionSummaryMap,
     notes: string,
+    adapterPlans: ThreadAdapterPlan[],
   ) => Promise<void>;
   onContinue: () => void;
+  adapterPlanError?: string | null;
+  adapterPlanLoading?: boolean;
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -57,6 +68,8 @@ export function MintParameters({
   problemEndDate,
   onSave,
   onContinue,
+  adapterPlanError,
+  adapterPlanLoading = false,
 }: MintParametersProps) {
   const modelIds = Object.keys(threadData.models ?? {});
   const isConfigured = modelIds.length > 0;
@@ -105,6 +118,53 @@ export function MintParameters({
       .filter(Boolean);
   }
 
+  function getAdapterParamValues(modelId: string, name: string, fallback: unknown): string[] {
+    const form = formRefs.current[modelId];
+    const fieldName = adapterParameterKey(modelId, name);
+    const el =
+      (form?.elements.namedItem(fieldName) as HTMLInputElement | null) ??
+      Array.from(document.querySelectorAll<HTMLInputElement>('input')).find(
+        (input) => input.name === fieldName,
+      );
+    const raw = el?.value ?? adapterValueText(fallback);
+    return raw.trim() ? [raw.trim()] : [];
+  }
+
+  function validateAdapterValue(
+    parameter: {
+      type?: string;
+      allowed_values?: unknown[];
+      minimum?: number;
+      maximum?: number;
+    },
+    value: string,
+  ): string | null {
+    if (
+      parameter.allowed_values?.length &&
+      !parameter.allowed_values.some((item) => String(item) === value)
+    ) {
+      return `Accepted values: ${parameter.allowed_values.join(', ')}`;
+    }
+    if (parameter.type && ['integer', 'int', 'number', 'float'].includes(parameter.type)) {
+      const numberValue = Number(value);
+      if (!Number.isFinite(numberValue)) return 'Enter a number';
+      if (parameter.minimum != null && numberValue < parameter.minimum) {
+        return `Min is ${parameter.minimum}`;
+      }
+      if (parameter.maximum != null && numberValue > parameter.maximum) {
+        return `Max is ${parameter.maximum}`;
+      }
+    }
+    return null;
+  }
+
+  function adapterValueForStorage(parameter: { type?: string }, value: string): unknown {
+    if (parameter.type === 'boolean' || parameter.type === 'bool') return value === 'true';
+    if (parameter.type === 'integer' || parameter.type === 'int') return Number.parseInt(value, 10);
+    if (parameter.type === 'number' || parameter.type === 'float') return Number(value);
+    return value;
+  }
+
   // ─ Save handler ───────────────────────────────────────────────────────────
   async function handleSave() {
     const newErrors: Record<string, string> = {};
@@ -117,12 +177,61 @@ export function MintParameters({
       ),
     };
     const newSummary: ExecutionSummaryMap = {};
+    const newAdapterPlans: ThreadAdapterPlan[] = [];
     let allOk = true;
 
     for (const mid of modelIds) {
       const model = threadData.models[mid]!;
       const adjustable = model.input_parameters.filter((p) => !p.value);
       const bindings = newEnsembles[mid]?.bindings ?? {};
+      const adapterPlans = threadData.adapter_plans?.[mid] ?? [];
+      const adapterParameters = new Map<string, UnifiedParameterDefinition>();
+      for (const plan of adapterPlans) {
+        if (!adapterPlanIsTransformRequired(plan)) continue;
+        for (const parameter of adapterPlanParameters(plan)) {
+          if (!adapterParameters.has(parameter.name))
+            adapterParameters.set(parameter.name, parameter);
+        }
+      }
+      const existingAdapterValues: Record<string, unknown> = {};
+      for (const parameter of adapterParameters.values()) {
+        const existing = adapterPlans.find(
+          (plan) => plan.parameter_values?.[parameter.name] !== undefined,
+        );
+        if (existing)
+          existingAdapterValues[parameter.name] = existing.parameter_values[parameter.name];
+      }
+
+      const nextAdapterValues = { ...existingAdapterValues };
+      for (const parameter of adapterParameters.values()) {
+        const current = nextAdapterValues[parameter.name];
+        if (!editMode && current !== undefined && adapterValueText(current).trim()) continue;
+        const values = getAdapterParamValues(mid, parameter.name, current);
+        const value = values[0];
+        if (value === undefined) {
+          delete nextAdapterValues[parameter.name];
+          continue;
+        }
+        const error = validateAdapterValue(parameter, value);
+        if (error) {
+          newErrors[`${mid}::adapter::${parameter.name}`] = error;
+          allOk = false;
+        } else {
+          nextAdapterValues[parameter.name] = adapterValueForStorage(parameter, value);
+        }
+      }
+
+      for (const plan of adapterPlans) {
+        const names = new Set(adapterPlanParameters(plan).map((parameter) => parameter.name));
+        newAdapterPlans.push({
+          ...plan,
+          parameter_values: Object.fromEntries(
+            Object.entries({ ...plan.parameter_values, ...nextAdapterValues }).filter(([name]) =>
+              names.has(name),
+            ),
+          ),
+        });
+      }
 
       for (const param of adjustable) {
         const current = bindings[param.id ?? ''];
@@ -163,7 +272,7 @@ export function MintParameters({
 
     setWaiting(true);
     try {
-      await onSave(newEnsembles, newSummary, notesRef.current?.value ?? '');
+      await onSave(newEnsembles, newSummary, notesRef.current?.value ?? '', newAdapterPlans);
       setEditMode(false);
     } finally {
       setWaiting(false);
@@ -198,6 +307,21 @@ export function MintParameters({
         This step is for specifying values for the adjustable parameters of the models that you
         selected earlier.
       </p>
+
+      {adapterPlanError && (
+        <p
+          className="mb-4 rounded border border-red-200 bg-red-50 p-2 text-sm text-red-700"
+          role="alert"
+        >
+          Unable to discover the SVO adapter plan: {adapterPlanError}
+        </p>
+      )}
+
+      {adapterPlanLoading && (
+        <p className="mb-4 rounded border border-blue-200 bg-blue-50 p-2 text-sm text-blue-700">
+          Discovering SVO adapter requirements for the selected resources…
+        </p>
+      )}
 
       {isDone && canWrite && !editMode && (
         <p className="mb-4 text-sm text-gray-500">
@@ -241,6 +365,19 @@ export function MintParameters({
                 if (a.position != null && b.position != null) return a.position - b.position;
                 return (a.name ?? '').localeCompare(b.name ?? '');
               });
+
+            const adapterPlans = threadData.adapter_plans?.[mid] ?? [];
+            const adapterParams = new Map<
+              string,
+              ReturnType<typeof adapterPlanParameters>[number]
+            >();
+            for (const plan of adapterPlans) {
+              if (!adapterPlanIsTransformRequired(plan)) continue;
+              for (const parameter of adapterPlanParameters(plan)) {
+                if (!adapterParams.has(parameter.name))
+                  adapterParams.set(parameter.name, parameter);
+              }
+            }
 
             return (
               <li key={mid} className="px-4 py-3">
@@ -378,6 +515,91 @@ export function MintParameters({
                       </p>
                     </li>
                   )}
+                  {adapterParams.size > 0 && (
+                    <li>
+                      <p className="mb-1 text-xs font-semibold">SVO adapter parameters</p>
+                      <p className="mb-1 text-xs text-gray-600">
+                        These values configure the inferred conversion for the selected input. They
+                        are saved with the adapter plan and are required before submission.
+                      </p>
+                      <table className="w-full border-collapse text-xs">
+                        <thead>
+                          <tr className="bg-gray-100">
+                            <th className="w-3/5 px-2 py-1 text-left font-semibold">
+                              Adapter parameter
+                            </th>
+                            <th className="px-2 py-1 text-left font-semibold">Value</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {[...adapterParams.values()].map((parameter) => {
+                            const existingPlan = adapterPlans.find(
+                              (plan) => plan.parameter_values?.[parameter.name] !== undefined,
+                            );
+                            const displayValue = existingPlan
+                              ? adapterValueText(existingPlan.parameter_values[parameter.name])
+                              : adapterValueText(parameter.default);
+                            const errKey = `${mid}::adapter::${parameter.name}`;
+                            return (
+                              <tr key={parameter.name} className="odd:bg-white even:bg-gray-50">
+                                <td className="px-2 py-1">
+                                  <div className="font-medium">
+                                    {parameter.name.replace(/_/g, ' ')}
+                                    {parameter.required ? ' *' : ''}
+                                  </div>
+                                  {parameter.description && (
+                                    <div className="text-gray-500">{parameter.description}</div>
+                                  )}
+                                  {parameter.source_transform && (
+                                    <div className="text-gray-400">
+                                      Transform: {parameter.source_transform}
+                                    </div>
+                                  )}
+                                  {(parameter.minimum != null || parameter.maximum != null) && (
+                                    <div className="text-gray-400">
+                                      {parameter.minimum != null && parameter.maximum != null
+                                        ? `Range: ${parameter.minimum} – ${parameter.maximum}`
+                                        : parameter.minimum != null
+                                          ? `Min: ${parameter.minimum}`
+                                          : `Max: ${parameter.maximum}`}
+                                    </div>
+                                  )}
+                                </td>
+                                <td className="px-2 py-1">
+                                  {!editMode ? (
+                                    <span>{displayValue || '—'}</span>
+                                  ) : (
+                                    <div>
+                                      <input
+                                        type="text"
+                                        name={adapterParameterKey(mid, parameter.name)}
+                                        data-testid={`adapter-param-input-${parameter.name}`}
+                                        defaultValue={displayValue}
+                                        placeholder={
+                                          parameter.default == null
+                                            ? ''
+                                            : adapterValueText(parameter.default)
+                                        }
+                                        className="w-full rounded border px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-blue-400"
+                                      />
+                                      {errors[errKey] && (
+                                        <div
+                                          className="mt-0.5 text-xs text-red-500"
+                                          data-testid={`adapter-param-error-${parameter.name}`}
+                                        >
+                                          {errors[errKey]}
+                                        </div>
+                                      )}
+                                    </div>
+                                  )}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </li>
+                  )}
                 </ul>
               </li>
             );
@@ -403,7 +625,7 @@ export function MintParameters({
               type="button"
               data-testid="parameters-save-btn"
               onClick={() => void handleSave()}
-              disabled={waiting}
+              disabled={waiting || adapterPlanLoading}
               className="rounded bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700 disabled:opacity-50"
             >
               {waiting ? (

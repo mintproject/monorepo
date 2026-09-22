@@ -66,6 +66,46 @@ Subtasks contain the actual model configurations, parameters, and data inputs fo
 
 ### API Endpoints
 
+#### Unified execution plans
+
+`/plans` is the browser-facing orchestration boundary for both ordinary
+Ensemble Manager runs and SVO-adapter-backed runs. The adapter URL is
+server-side; the browser never submits directly to the adapter.
+
+```http
+POST /plans
+```
+
+For an existing model thread, send `executor: "ensemble_manager"` with
+`thread_id`, `model_id`, and the deployment's `execution_engine`. For an
+adapter-backed variable, send `executor: "svo_adapter"` and an
+`adapter_request` matching the adapter's planning request. The response
+contains `plan_id`, `executor`, and plan-scoped `parameters`.
+
+When an Ensemble Manager plan contains `adapter_steps`, the service creates a
+durable parent execution, submits the adapter children, and reconciles them
+through `GET /plans/runs/{run_id}`. The existing model executor is dispatched
+only after every adapter output has a registered resource URI. Parent statuses
+include `adapter_running`, `output_verifying`, `model_dispatching`,
+`model_submitted`, `failed`, `adapter_unknown`, and `model_unknown`; the
+`*_unknown` states are not retried automatically because the downstream
+request may have been accepted.
+
+```http
+GET /plans/{plan_id}
+POST /plans/submit
+GET /plans/runs/{run_id}
+```
+
+Submission accepts the plan ID and optional `parameter_values`. Adapter plans
+are validated against their immutable parameter definitions; missing, unknown,
+or invalid required values return `422` and no workflow is started. Ordinary
+model plans continue through the existing execution engine path.
+
+Deployments using ordinary plans must configure `unified_plan_secret` in the
+Ensemble Manager config (or `UNIFIED_PLAN_SECRET` in the environment); it is
+used to sign the opaque legacy plan ID. Do not reuse the Hasura admin secret.
+
 #### Problem Statements
 
 **Create a Problem Statement**
@@ -208,6 +248,7 @@ POST /problemStatements/{problemStatementId}/tasks/{taskId}/subtasks
 ```
 
 **Dataset ID Support:**
+
 - The `dataset_id` field is optional and allows you to associate a dataset with the subtask at creation time
 - Dataset IDs are fully supported throughout the subtask lifecycle
 - You can also configure datasets later using the `/data` endpoint for more detailed dataset specifications
@@ -322,9 +363,9 @@ This endpoint returns the complete model configuration blueprint for all models 
 
 **Query Parameters:**
 
--   `detailed` (optional, boolean, default: false): Controls the level of parameter detail returned
-    -   `false` or omitted: Returns basic parameter info (id, value) only
-    -   `true`: Returns full ModelParameter details including type, description, min, max, etc.
+- `detailed` (optional, boolean, default: false): Controls the level of parameter detail returned
+    - `false` or omitted: Returns basic parameter info (id, value) only
+    - `true`: Returns full ModelParameter details including type, description, min, max, etc.
 
 ## Programmatic Workflow Guide
 
@@ -816,36 +857,36 @@ curl -X POST "https://ensemble-manager.mint.tacc.utexas.edu/v1/problemStatements
 
 #### Model Selection
 
--   **ModelConfiguration**: Specific model instances with pre-defined parameters
--   **ModelConfigurationSetup**: Model templates that allow parameter customization
--   Use the `/models` endpoint to add these to your subtask
+- **ModelConfiguration**: Specific model instances with pre-defined parameters
+- **ModelConfigurationSetup**: Model templates that allow parameter customization
+- Use the `/models` endpoint to add these to your subtask
 
 #### Blueprint-Driven Configuration
 
--   Always call the `/blueprint` endpoint after adding models
--   The blueprint shows you exactly what parameters and inputs are available
--   Use blueprint information to guide your parameter and data configuration
--   Use `?detailed=true` to get comprehensive parameter metadata (type, description, min/max values, etc.)
--   Default blueprint returns basic parameter info (id, value) for faster responses
+- Always call the `/blueprint` endpoint after adding models
+- The blueprint shows you exactly what parameters and inputs are available
+- Use blueprint information to guide your parameter and data configuration
+- Use `?detailed=true` to get comprehensive parameter metadata (type, description, min/max values, etc.)
+- Default blueprint returns basic parameter info (id, value) for faster responses
 
 #### Parameter Values
 
--   Parameters can have single values: `"150"`
--   Parameters can have multiple values for ensemble runs: `["100", "150", "200"]`
--   The system will create execution combinations based on parameter arrays
+- Parameters can have single values: `"150"`
+- Parameters can have multiple values for ensemble runs: `["100", "150", "200"]`
+- The system will create execution combinations based on parameter arrays
 
 #### Data Binding
 
--   Each data input requires a dataset with resources
--   Resources specify the actual data files to use
--   Dataset IDs typically come from CKAN or other data catalogs
+- Each data input requires a dataset with resources
+- Resources specify the actual data files to use
+- Dataset IDs typically come from CKAN or other data catalogs
 
 #### Error Handling
 
--   Always check HTTP status codes
--   400 errors typically indicate missing required parameters
--   404 errors indicate resources not found
--   Use the blueprint endpoint to verify available options
+- Always check HTTP status codes
+- 400 errors typically indicate missing required parameters
+- 404 errors indicate resources not found
+- Use the blueprint endpoint to verify available options
 
 #### Execution Management
 
@@ -1090,12 +1131,12 @@ GET /threads/{id}
 
 The API returns standard HTTP status codes:
 
--   `200` - Success
--   `201` - Created
--   `400` - Bad Request
--   `401` - Unauthorized
--   `404` - Not Found
--   `500` - Internal Server Error
+- `200` - Success
+- `201` - Created
+- `400` - Bad Request
+- `401` - Unauthorized
+- `404` - Not Found
+- `500` - Internal Server Error
 
 Error responses include a JSON object with error details:
 
@@ -1110,9 +1151,9 @@ Error responses include a JSON object with error details:
 
 The API implements rate limiting to ensure fair usage. Check the response headers for rate limit information:
 
--   `X-RateLimit-Limit` - Request limit per window
--   `X-RateLimit-Remaining` - Remaining requests in current window
--   `X-RateLimit-Reset` - Time when the rate limit resets
+- `X-RateLimit-Limit` - Request limit per window
+- `X-RateLimit-Remaining` - Remaining requests in current window
+- `X-RateLimit-Reset` - Time when the rate limit resets
 
 ### Webhooks
 
@@ -1150,11 +1191,11 @@ The API supports webhook notifications for job status changes. Configure webhook
 
 For API support and questions:
 
--   **Production**: Interactive documentation: [https://ensemble-manager.mint.tacc.utexas.edu/v1/ui](https://ensemble-manager.mint.tacc.utexas.edu/v1/ui)
--   **Local Development**: Interactive documentation: `http://localhost:3000/v1/ui`
--   Check the logs for detailed error information
--   Ensure your JWT token is valid and not expired
--   **Production Access**: Requires a TACC account with client ID `mint-ensemble-manager`
+- **Production**: Interactive documentation: [https://ensemble-manager.mint.tacc.utexas.edu/v1/ui](https://ensemble-manager.mint.tacc.utexas.edu/v1/ui)
+- **Local Development**: Interactive documentation: `http://localhost:3000/v1/ui`
+- Check the logs for detailed error information
+- Ensure your JWT token is valid and not expired
+- **Production Access**: Requires a TACC account with client ID `mint-ensemble-manager`
 
 ## Environment Variables
 
@@ -1167,19 +1208,19 @@ If you are facing authorization issues, rollback to version 5.0.0.
 
 ### Authentication
 
--   `PUBLIC_KEY`: RSA public key in PEM format for JWT verification
--   `JWT_ALGORITHMS`: Comma-separated list of JWT algorithms (defaults to RS256)
--   `CLIENT_ID`: OAuth2 client ID for Swagger UI
--   `AUTHORIZATION_URL`: OAuth2 authorization URL for API documentation
+- `PUBLIC_KEY`: RSA public key in PEM format for JWT verification
+- `JWT_ALGORITHMS`: Comma-separated list of JWT algorithms (defaults to RS256)
+- `CLIENT_ID`: OAuth2 client ID for Swagger UI
+- `AUTHORIZATION_URL`: OAuth2 authorization URL for API documentation
 
 ### Server Configuration
 
--   `PORT`: Server port number (defaults to 3000)
--   `VERSION`: API version
+- `PORT`: Server port number (defaults to 3000)
+- `VERSION`: API version
 
 ### Redis Configuration
 
--   `REDIS_URL`: Redis connection URL for the job queues
+- `REDIS_URL`: Redis connection URL for the job queues
 
 ## GraphQL Type Generation
 
@@ -1189,9 +1230,9 @@ This project uses GraphQL Code Generator to automatically generate TypeScript ty
 
 The project includes the following GraphQL codegen dependencies:
 
--   `@graphql-codegen/cli`: Command-line interface for GraphQL Code Generator
--   `@graphql-codegen/client-preset`: Preset for generating TypeScript types
--   `@graphql-typed-document-node/core`: Type-safe GraphQL document nodes
+- `@graphql-codegen/cli`: Command-line interface for GraphQL Code Generator
+- `@graphql-codegen/client-preset`: Preset for generating TypeScript types
+- `@graphql-typed-document-node/core`: Type-safe GraphQL document nodes
 
 ### Generating Types
 
@@ -1258,25 +1299,25 @@ declare module "*.graphql" {
 
 ## Setup
 
--   Configure MINT servers
+- Configure MINT servers
 
 ```
 edit src/config/config.json
 ```
 
--   Generate GraphQL types (if schema changed)
+- Generate GraphQL types (if schema changed)
 
 ```
 npm run codegen
 ```
 
--   Start node
+- Start node
 
 ```
 npm start
 ```
 
--   Go to http://localhost:3000/v1/ui
+- Go to http://localhost:3000/v1/ui
 
 ## License
 

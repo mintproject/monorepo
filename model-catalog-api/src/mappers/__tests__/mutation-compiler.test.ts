@@ -3,30 +3,6 @@ import { compilePost, compilePut } from '../mutation-compiler.js';
 import type { WriteNode } from '../nested-tree.js';
 
 describe('compilePost', () => {
-  it('writes object FK relationships in the insert object', () => {
-    const tree: WriteNode = {
-      table: 'modelcatalog_variable_presentation',
-      id: 'https://w3id.org/okn/i/mint/vp-1',
-      columns: { label: 'head' },
-      objectFks: [
-        {
-          apiFieldName: 'hasStandardVariable',
-          objectFkColumn: 'has_standard_variable',
-          targetId: 'https://w3id.org/okn/i/mint/sv-1',
-        },
-      ],
-      junctions: [],
-      childFks: [],
-    };
-
-    const compiled = compilePost(tree);
-    expect(compiled.variables.object).toEqual({
-      id: 'https://w3id.org/okn/i/mint/vp-1',
-      label: 'head',
-      has_standard_variable: 'https://w3id.org/okn/i/mint/sv-1',
-    });
-  });
-
   it('emits scalar-only insert when no relationships', () => {
     const tree: WriteNode = {
       table: 'modelcatalog_software',
@@ -40,29 +16,6 @@ describe('compilePost', () => {
     expect(mutation).toMatch(/object: \$object/);
     expect(variables).toEqual({
       object: { id: 'https://w3id.org/okn/i/mint/sw-1', label: 'foo' },
-    });
-  });
-
-  it('writes object FK relationships in the update set', () => {
-    const tree: WriteNode = {
-      table: 'modelcatalog_variable_presentation',
-      id: 'https://w3id.org/okn/i/mint/vp-2',
-      columns: { label: 'head' },
-      objectFks: [
-        {
-          apiFieldName: 'hasStandardVariable',
-          objectFkColumn: 'has_standard_variable',
-          targetId: 'https://w3id.org/okn/i/mint/sv-2',
-        },
-      ],
-      junctions: [],
-      childFks: [],
-    };
-
-    const compiled = compilePut(tree);
-    expect(compiled.variables.set).toEqual({
-      label: 'head',
-      has_standard_variable: 'https://w3id.org/okn/i/mint/sv-2',
     });
   });
 

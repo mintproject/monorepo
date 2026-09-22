@@ -134,15 +134,6 @@ Several resource types (`models`, `empiricalmodels`, `hybridmodels`, `emulators`
 
 All resource IDs are full URIs (e.g. `https://w3id.org/okn/i/mint/<uuid>`). The API accepts plain short IDs and prepends the prefix automatically. New resources created via POST get a `randomUUID()`-based URI.
 
-### Object relationship writes
-
-Supported single-object relationships accept the same array-wrapped shape as the
-OpenAPI schema, using a link-only object such as
-`"hasStandardVariable": [{"id": "https://w3id.org/okn/i/mint/<id>"}]`.
-Variable presentations support `hasStandardVariable` and `usesUnit`. Send an
-empty array or `null` to clear the FK. Nested fields on the related object are
-rejected; create or update the related resource separately before linking it.
-
 ## GraphQL codegen
 
 To regenerate TypeScript types from the live Hasura schema:

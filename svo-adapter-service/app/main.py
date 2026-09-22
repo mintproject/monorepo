@@ -67,9 +67,18 @@ from .planner import (
     build_plan_json,
     compatibility,
     find_path,
+    parameter_definitions,
     plan_model_run,
     reachable_variables,
 )
+
+
+def _plan_with_parameters(plan_json: dict[str, Any]) -> dict[str, Any]:
+    """Attach the public, plan-scoped parameter contract to a generated DAG."""
+    plan_json["parameters"] = parameter_definitions(
+        plan_json.get("steps") or [], tapis.STANDARD_PARAMS
+    )
+    return plan_json
 
 class TestTransformIn(BaseModel):
     args: dict[str, Any] = {}
@@ -310,6 +319,14 @@ query GetRun($id: String!) {
 }
 """
 
+GET_DATA_OBJECT = """
+query GetDataObject($id: String!) {
+  adapter_data_object_by_pk(id: $id) {
+    id label resource_uri format extension mime_type source_catalog
+  }
+}
+"""
+
 LIST_RUNS = """
 query ListRuns($limit: Int!, $offset: Int!) {
   adapter_workflow_run(
@@ -480,6 +497,15 @@ async def register_data_object(body: DataObjectIn, authorization: str | None = H
         "payload_json": {"label": created["label"]},
     }})
     return created
+
+
+@app.get("/data-objects/{object_id}", tags=["Core: Registry"])
+async def get_data_object(object_id: str, authorization: str | None = Header(None)):
+    h = get_client(_bearer(authorization))
+    obj = (await h.execute(GET_DATA_OBJECT, {"id": object_id}))["adapter_data_object_by_pk"]
+    if not obj:
+        raise HTTPException(404, "data object not found")
+    return obj
 
 
 # Real adapter.transform_spec columns. Job-shaping hints with no column
@@ -998,7 +1024,9 @@ async def evaluate_objective_plan(
         key=lambda item: (item[0], item[1], item[2].get("label") or ""),
     )
 
-    plan_json = build_plan_json(path) if path else {"steps": [], "lossy": False}
+    plan_json = _plan_with_parameters(build_plan_json(path)) if path else {
+        "steps": [], "lossy": False, "parameters": []
+    }
     plan_json["source"] = best.get("resource_uri", "")
     plan_json["source_data_object_id"] = best.get("id")
     plan_id = f"obj-{objective_id}"
@@ -1051,7 +1079,7 @@ async def create_dfc_fanout_plan(
     if path is None:
         raise HTTPException(422, "no transform path found from source contract to target contract")
 
-    base = build_plan_json(path)
+    base = _plan_with_parameters(build_plan_json(path))
     steps: list[dict[str, Any]] = []
     step_idx = 0
     for record in target_records:
@@ -1137,7 +1165,7 @@ async def create_plan(body: PlanIn, authorization: str | None = Header(None)):
     if path is None:
         raise HTTPException(422, "no transform path found from source contract to target contract")
 
-    plan_json = build_plan_json(path)
+    plan_json = _plan_with_parameters(build_plan_json(path))
     created = (await h.execute(INSERT_PLAN, {"obj": {
         "source_data_object_id": body.data_object_id,
         "target_model_configuration_id": body.target_model_configuration_id,
@@ -1604,7 +1632,7 @@ async def plan_model_run_endpoint(body: ModelRunIn, authorization: str | None = 
 
     edge_map = await _load_edge_map(registry)
     plan = plan_model_run(run_spec, sources, registry, edge_map=edge_map)
-    dag = build_model_run_plan_json(plan)
+    dag = _plan_with_parameters(build_model_run_plan_json(plan))
     branches = [
         {
             "standard_variable": (b.get("standard_variable_uri") or "").rsplit("/", 1)[-1],
@@ -1637,6 +1665,79 @@ def _wrap_args(args: dict[str, Any]) -> dict[str, dict[str, Any]]:
     return out
 
 
+def _public_workflow_args(args: dict[str, dict[str, Any]]) -> dict[str, dict[str, Any]]:
+    """Remove server-injected credentials from workflow responses."""
+    return {key: value for key, value in args.items() if key != "tapis_token"}
+
+
+def _validate_plan_args(
+    plan_json: dict[str, Any],
+    args: dict[str, Any],
+    authorization_token: str | None,
+    require_required: bool = True,
+) -> dict[str, dict[str, Any]]:
+    """Validate submission values against the immutable plan snapshot.
+
+    The adapter accepts legacy plain values and SUBSIDE-style ``{value: ...}``
+    values, but validation always runs on the normalized representation.  The
+    caller token is an execution credential, not a user-entered plan
+    parameter, so it is injected after the user argument allowlist is checked.
+    """
+    normalized = _wrap_args(args)
+    definitions = plan_json.get("parameters") or []
+    allowed = {str(d.get("name")) for d in definitions if d.get("name")}
+    allowed.add("tapis_token")
+    unknown = sorted(set(normalized) - allowed)
+    if unknown:
+        raise HTTPException(
+            422,
+            detail={"code": "UNKNOWN_PARAMETERS", "parameters": unknown},
+        )
+
+    errors: dict[str, str] = {}
+    for definition in definitions:
+        name = str(definition.get("name"))
+        if not name:
+            continue
+        value = normalized.get(name, {}).get("value")
+        if value is None or value == "":
+            if definition.get("default") is not None:
+                normalized[name] = {"value": definition["default"]}
+            elif require_required and definition.get("required"):
+                errors[name] = "required"
+            continue
+
+        expected = definition.get("type", "string")
+        if expected in {"number", "integer", "int", "float"}:
+            try:
+                number = float(value)
+                if expected in {"integer", "int"} and number != int(number):
+                    raise ValueError
+                if definition.get("minimum") is not None and number < float(definition["minimum"]):
+                    errors[name] = f"must be >= {definition['minimum']}"
+                if definition.get("maximum") is not None and number > float(definition["maximum"]):
+                    errors[name] = f"must be <= {definition['maximum']}"
+            except (TypeError, ValueError):
+                errors[name] = f"must be {expected}"
+        elif expected == "boolean" and not isinstance(value, bool):
+            errors[name] = "must be boolean"
+
+        allowed_values = definition.get("allowed_values")
+        if allowed_values and value not in allowed_values:
+            errors[name] = f"must be one of {', '.join(map(str, allowed_values))}"
+
+    if require_required and not authorization_token:
+        raise HTTPException(401, "provide a Tapis bearer token or set SVO_ADAPTER_TAPIS_TOKEN")
+    if authorization_token:
+        normalized["tapis_token"] = {"value": authorization_token}
+    if errors:
+        raise HTTPException(
+            422,
+            detail={"code": "INVALID_PARAMETERS", "parameters": errors},
+        )
+    return normalized
+
+
 @app.post("/workflows/submit", tags=["Core: Workflows"])
 async def submit_workflow(body: SubmitWorkflowIn, authorization: str | None = Header(None)):
     """Register the generated pipeline into its Workflows group and run it,
@@ -1649,7 +1750,9 @@ async def submit_workflow(body: SubmitWorkflowIn, authorization: str | None = He
         raise HTTPException(404, "plan not found")
 
     pipeline = tapis.generate_tapis_workflow(plan)
-    args = _wrap_args(body.args)
+    args = _validate_plan_args(
+        plan.get("plan_json") or {}, body.args, token, require_required=not body.dry_run
+    )
 
     # Record the run before triggering, so a failed submit still leaves a trail.
     run_obj: dict[str, Any] = {
@@ -1668,7 +1771,7 @@ async def submit_workflow(body: SubmitWorkflowIn, authorization: str | None = He
     if body.dry_run:
         await h.execute(UPDATE_RUN, {"id": run["id"], "set": {"status": "generated"}})
         return {"run_id": run["id"], "status": "generated",
-                "tapis_workflow_definition": pipeline, "args": args}
+                "tapis_workflow_definition": pipeline, "args": _public_workflow_args(args)}
 
     try:
         result = await run_in_threadpool(
@@ -1765,12 +1868,24 @@ async def poll_run(run_id: str, authorization: str | None = Header(None)):
         update["status"] = "running"
 
     if update:
-        run = (await h.execute(UPDATE_RUN, {"id": run_id, "set": update}))["update_adapter_workflow_run_by_pk"] or run
+        updated_run = (await h.execute(UPDATE_RUN, {"id": run_id, "set": update}))["update_adapter_workflow_run_by_pk"]
+        # The mutation returns only a projection of the row. Preserve the
+        # workflow/parent identifiers needed by output registration and
+        # reconciliation instead of replacing the full GET result with it.
+        run = {**run, **(updated_run or {})}
         await h.execute(INSERT_PROVENANCE, {"obj": {
             "workflow_run_id": run_id,
             "event_type": "run_status_polled",
             "payload_json": {"tapis_status": tapis_status, "adapter_status": update.get("status")},
         }})
+        if adapter_status == "completed" and run.get("execution_id"):
+            # Reuse the same output-registration path as the background poller
+            # so a unified parent can reconcile even when the poller is disabled.
+            from .poller import _auto_bind_completed_run
+            bind_result = await _auto_bind_completed_run(
+                h, get_client(None), {**run, **update}, token
+            )
+            run = {**run, "auto_bind": bind_result}
     return {**run, **detail}
 
 
@@ -2004,7 +2119,7 @@ async def _resolve_forecast_plan(h, lat: float, lon: float,
             "selection": {"model_layer": layer, "layer_source": layer_source,
                           "available_layers": present, "lat": lat, "lon": lon},
             "aquifer": detected, "nearest_well": nearest_well, "branches": branches,
-            "plan_json": build_model_run_plan_json(plan)}
+            "plan_json": _plan_with_parameters(build_model_run_plan_json(plan))}
 
 
 @app.post("/forecast/plan", tags=["NTGAM forecast"])

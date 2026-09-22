@@ -78,9 +78,9 @@ automatically when the service starts.
 SVO_ADAPTER_HASURA_ADMIN_SECRET=<hasura-admin-secret>
 ```
 
-The anonymous Hasura role does not have column-level access to the
-`tapis_app_id`/`tapis_app_version` fields on `modelcatalog_configuration`, so the
-admin secret is required for sync queries.
+The adapter uses the Hasura admin secret for synchronization because this is a
+system reconciliation operation and must not depend on the caller's catalog
+role or row-level permissions.
 
 **Unresolved Tapis apps:** `GET /admin/sync-status` reports `unresolved_count` —
 specs that were synced but have no `tapis_app_id`. These use OWE function tasks

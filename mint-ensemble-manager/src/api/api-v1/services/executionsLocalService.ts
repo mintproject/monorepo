@@ -7,6 +7,7 @@ import {
     saveAndRunExecutionsLocally,
     deleteExecutableCacheLocally
 } from "@/classes/mint/mint-local-functions";
+import { applyExecutionInputOverrides } from "@/classes/common/execution-input-overrides";
 
 const executionsLocalService = {
     async submitExecution(threadmodel: any) {
@@ -15,6 +16,11 @@ const executionsLocalService = {
 
         const thread: Thread = await getThread(threadmodel.thread_id); //.then((thread: Thread) => {
         if (thread) {
+            applyExecutionInputOverrides(
+                thread,
+                threadmodel.model_id,
+                threadmodel.adapter_resource_overrides || []
+            );
             const ok = await saveAndRunExecutionsLocally(thread, threadmodel.model_id, prefs);
             if (ok) {
                 return createResponse(

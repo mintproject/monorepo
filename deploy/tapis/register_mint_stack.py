@@ -188,6 +188,12 @@ def _ensemble_config(urls: dict[str, str]) -> str:
         "data_catalog_api": _env("DATA_CATALOG_API", "https://ckan.tacc.utexas.edu"),
         "data_catalog_type": _env("DATA_CATALOG_TYPE", "CKAN"),
         "ensemble_manager_api": f"{urls['ensemble']}/v1",
+        # Internal service-to-service URL; the browser only calls Ensemble
+        # Manager's unified /plans boundary.
+        "svo_adapter_api": _env("SVO_ADAPTER_API_URL", f"http://{PODS['svo']}:8090"),
+        # Required to sign opaque legacy unified-plan IDs. Never reuse the
+        # Hasura admin secret for this purpose.
+        "unified_plan_secret": _env("UNIFIED_PLAN_SECRET", ""),
         "tapis_webhook_base_url": urls["ensemble"],
         "graphql": {
             "endpoint": f"{urls['graphql']}/v1/graphql",
@@ -608,7 +614,7 @@ def run_hasura_migrations(t: Any, *, expected_image: str | None = None) -> None:
     response="$(curl -fsS http://127.0.0.1:8080/v1/graphql \
       -H "X-Hasura-Admin-Secret: $HASURA_GRAPHQL_ADMIN_SECRET" \
       -H "Content-Type: application/json" \
-      --data '{"query":"{ modelcatalog_standard_variable(where:{label:{_in:[\"groundwater_model_modflow6_simulation_archive\",\"groundwater_model_modflow2000_simulation_archive\",\"groundwater_model_modflow2005_simulation_archive\",\"groundwater_model_modflow96_simulation_archive\"]}}){ label }}'}")"
+      --data '{"query":"{ modelcatalog_standard_variable(where:{label:{_in:[\"groundwater_model_modflow6_simulation_archive\",\"groundwater_model_modflow2000_simulation_archive\",\"groundwater_model_modflow2005_simulation_archive\",\"groundwater_model_modflow96_simulation_archive\"]}}){ label }}"}')"
     case "$response" in
       *'"errors"'*) printf '%s\n' "$response" >&2; exit 1 ;;
     esac

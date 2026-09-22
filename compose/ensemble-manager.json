@@ -13,6 +13,8 @@
     },
 
     "ensemble_manager_api": "http://localhost:3001/v1",
+    "svo_adapter_api": "http://svo-adapter:8090",
+    "unified_plan_secret": "local-unified-plan-secret",
     "tapis_webhook_base_url": "",
 
     "data_catalog_api": "https://ckan.tacc.utexas.edu",
