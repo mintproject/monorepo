@@ -555,21 +555,30 @@ def wait_for_pod_restart(
 ) -> Any:
     """Confirm an application pod is available on a new container instance."""
     deadline = time.monotonic() + timeout
+    observed_status = None
+    observed_image = None
+    observed_start = None
     while time.monotonic() < deadline:
         try:
             pod = _pod_lookup_for_verification(t, pod_id)
         except TransientPodLookupError:
             time.sleep(min(5, max(0, deadline - time.monotonic())))
             continue
-        started = _field(_field(pod, "status_container", {}), "start_time")
+        observed_status = _field(pod, "status")
+        observed_image = _field(pod, "image")
+        observed_start = _field(_field(pod, "status_container", {}), "start_time")
         if (
-            _field(pod, "status") == "AVAILABLE"
-            and _field(pod, "image") == expected_image
-            and (not previous_start or (started and started != previous_start))
+            observed_status == "AVAILABLE"
+            and observed_image == expected_image
+            and (not previous_start or (observed_start and observed_start != previous_start))
         ):
             return pod
         time.sleep(min(5, max(0, deadline - time.monotonic())))
-    raise RuntimeError(f"[{pod_id}] did not become AVAILABLE on the requested image after restart")
+    raise RuntimeError(
+        f"[{pod_id}] did not become AVAILABLE on the requested image after restart "
+        f"(last status={observed_status!r}, image={observed_image!r}, "
+        f"start_time={observed_start!r}, previous_start={previous_start!r})"
+    )
 
 
 def run_hasura_migrations(t: Any, *, expected_image: str | None = None) -> None:
@@ -1050,7 +1059,6 @@ def update_pod_images(t: Any, selected: list[str], expected_images: dict[str, st
             print(f"  [{pid}] updating image to {image} (attempt {attempt}/{POD_UPDATE_RETRIES})…", flush=True)
             try:
                 t.pods.update_pod(pod_id=pid, image=image)
-                break
             except Exception as exc:  # noqa: BLE001
                 status_code = getattr(getattr(exc, "response", None), "status_code", None)
                 if not _is_transient_update_error(exc) or attempt == POD_UPDATE_RETRIES:
@@ -1061,6 +1069,14 @@ def update_pod_images(t: Any, selected: list[str], expected_images: dict[str, st
                     flush=True,
                 )
                 time.sleep(POD_UPDATE_BACKOFF)
+                continue
+            # Tapis accepts the pod-definition update before the new image is
+            # visible to subsequent lifecycle operations. Confirm the
+            # read-after-write state before a caller can restart the pod;
+            # otherwise the restart may launch the previous image and the
+            # migration stage will wait forever for an impossible state.
+            wait_for_pod_image(t, pid, image)
+            break
 
 
 def restart_existing_pods(t: Any, selected: list[str]) -> None:
