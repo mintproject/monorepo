@@ -30,8 +30,22 @@ STDVAR_TO_SVO: dict[str, str] = {
     # Groundwater
     "groundwater__saturated_thickness":       f"{SVO_NS}groundwater__saturated_thickness",
     "groundwater__hydraulic_head":            f"{SVO_NS}groundwater__hydraulic_head",
+    "groundwater__initial_head":              f"{SVO_NS}GROUNDWATER__INITIAL_HEAD",
+    "groundwater__drawdown":                  f"{SVO_NS}wmobley-standard-variable-groundwater-drawdown",
+    "groundwater__recharge_volume_flux":      f"{SVO_NS}GROUNDWATER__RECHARGE_VOLUME_FLUX",
+    "groundwater_well__volume_flow_rate":     f"{SVO_NS}61e86974-f1bb-406c-ae52-f6c6eccb6c59",
+    "groundwater__horizontal_hydraulic_conductivity": f"{SVO_NS}GROUNDWATER__HORIZONTAL_HYDRAULIC_CONDUCTIVITY",
+    "groundwater__vertical_hydraulic_conductivity":   f"{SVO_NS}GROUNDWATER__VERTICAL_HYDRAULIC_CONDUCTIVITY",
     "groundwater_drain__volume_flow_rate":    f"{SVO_NS}groundwater_drain__volume_flow_rate",
     "groundwater__volume_flow_rate":          f"{SVO_NS}groundwater__volume_flow_rate",
+    # Complete model-input bundles. Keep the generic alias for historical CKAN
+    # rows while allowing each MODFLOW family to advertise compatibility with
+    # its own archive contract.
+    "groundwater_model__simulation_archive": f"{SVO_NS}wmobley-standard-variable-groundwater-model-simulation-archive",
+    "groundwater_model_modflow6_simulation_archive": f"{SVO_NS}wmobley-standard-variable-groundwater-model-modflow6-simulation-archive",
+    "groundwater_model_modflow2000_simulation_archive": f"{SVO_NS}wmobley-standard-variable-groundwater-model-modflow2000-simulation-archive",
+    "groundwater_model_modflow2005_simulation_archive": f"{SVO_NS}wmobley-standard-variable-groundwater-model-modflow2005-simulation-archive",
+    "groundwater_model_modflow96_simulation_archive": f"{SVO_NS}wmobley-standard-variable-groundwater-model-modflow96-simulation-archive",
     # Surface water
     "river_water__volume_flow_rate":          f"{SVO_NS}river_water__volume_flow_rate",
     "spring__volume_flow_rate":               f"{SVO_NS}spring__volume_flow_rate",
@@ -41,6 +55,10 @@ STDVAR_TO_SVO: dict[str, str] = {
     # Climate / forcing
     "atmosphere_water__precipitation_rate":   f"{SVO_NS}atmosphere_water__precipitation_rate",
     "land_surface_air__temperature":          f"{SVO_NS}land_surface_air__temperature",
+    "land_surface_water__evapotranspiration_flux": f"{SVO_NS}0bce8a6e-9df5-4272-88cd-41af089a3684",
+    # Model grid geometry
+    "model_grid_layer~topmost_top__elevation": f"{SVO_NS}MODEL_GRID_LAYER~TOPMOST_TOP__ELEVATION",
+    "model_grid_layer_bottom__elevation":      f"{SVO_NS}MODEL_GRID_LAYER_BOTTOM__ELEVATION",
     # Generic raster
     "land_surface__elevation_contour":        f"{SVO_NS}land_surface__elevation_contour",
     # MODFLOW package standard variables (from models_metadata.json svo_bindings)
@@ -68,9 +86,14 @@ STDVAR_TO_SVO: dict[str, str] = {
 # CKAN stores these in the `format` field; values are normalised to uppercase
 # before lookup.
 CKAN_FORMAT_TO_ADAPTER: dict[str, str] = {
+    "BAS":      "modflow-bas",
     "CBB":      "cbc-mfusg",
     "CBC":      "cbc-mfusg",
+    "DDN":      "hds-mfusg",
+    "DIS":      "modflow-dis",
+    "EVT":      "modflow-evt",
     "HDS":      "hds-mfusg",
+    "LPF":      "modflow-lpf",
     "NETCDF":   "netcdf",
     "NC":       "netcdf",
     "GEOTIFF":  "geotiff",
@@ -78,11 +101,17 @@ CKAN_FORMAT_TO_ADAPTER: dict[str, str] = {
     "TIF":      "geotiff",
     "TIFF":     "geotiff",
     "CSV":      "csv",
+    "PARQUET":  "parquet",
     "JSON":     "json",
     "GEOJSON":  "geojson",
     "SHP":      "shapefile-zip",
     "SHAPEFILE":"shapefile-zip",
     "ZIP":      "zip",
+    "ZIPX":     "zip",
+    "7Z":       "zip",
+    "SIMULATION-ARCHIVE": "zip",
+    "RCH":      "modflow-rch",
+    "WEL":      "modflow-wel",
     "ESRI REST":"arcgis-layer",
 }
 
@@ -111,6 +140,7 @@ BOUNDARY_METADATA_KEYS = (
 @dataclass
 class CkanSyncResult:
     upserted: int = 0
+    deleted: int = 0
     skipped: int = 0
     warnings: list[str] = field(default_factory=list)
 
@@ -137,7 +167,8 @@ def _adapter_format(resource: dict[str, Any], fmt_raw: str) -> str | None:
     if adapter_fmt == "zip":
         url = str(resource.get("url") or "").lower()
         name = str(resource.get("name") or "").lower()
-        if "shapefile" in name or url.endswith(".zip"):
+        resource_type = str(resource.get("resource_type") or "").lower()
+        if "shapefile" in name or "shapefile" in url or resource_type == "shapefile":
             return "shapefile-zip"
     return adapter_fmt
 
@@ -205,6 +236,9 @@ def _resource_to_data_object(
                 "has no SVO URI mapping — variable skipped. Add it to STDVAR_TO_SVO."
             )
 
+    if not variables:
+        return None
+
     # Build the source_catalog value: "ckan:{pkg_name}" when a package name is known,
     # otherwise fall back to plain "ckan".
     catalog = f"ckan:{pkg_name}" if pkg_name else "ckan"
@@ -223,8 +257,7 @@ def _resource_to_data_object(
     desc = resource.get("description") or pkg_title or ""
     if desc:
         obj["description"] = desc
-    if variables:
-        obj["variables"] = {"data": variables}
+    obj["variables"] = {"data": variables}
 
     return obj
 
@@ -276,10 +309,19 @@ async def _fetch_all_resources(
     return resources
 
 
-# Reuse the INSERT_DATA_OBJECT mutation from main.py to keep the upsert logic
-# consistent. Import lazily to avoid circular imports.
-_INSERT_DATA_OBJECT = """
-mutation InsertDataObject($obj: adapter_data_object_insert_input!) {
+# CKAN is authoritative for its own data objects. Replacing child variables in
+# the same mutation keeps repeated syncs idempotent and removes obsolete tags.
+_EXISTING_CKAN_DATA_OBJECTS = """
+query ExistingCkanDataObjects($ids: [String!]!) {
+  adapter_data_object(where: {id: {_in: $ids}}) { id }
+}
+"""
+
+_RECONCILE_DATA_OBJECT = """
+mutation ReconcileCkanDataObject($id: String!, $obj: adapter_data_object_insert_input!) {
+  delete_adapter_data_object_variable(where: {data_object_id: {_eq: $id}}) {
+    affected_rows
+  }
   insert_adapter_data_object_one(
     object: $obj
     on_conflict: {
@@ -287,6 +329,12 @@ mutation InsertDataObject($obj: adapter_data_object_insert_input!) {
       update_columns: [label description resource_uri format extension mime_type source_catalog]
     }
   ) { id label resource_uri }
+}
+"""
+
+_DELETE_CKAN_DATA_OBJECT = """
+mutation DeleteCkanDataObject($id: String!) {
+  delete_adapter_data_object_by_pk(id: $id) { id }
 }
 """
 
@@ -315,6 +363,19 @@ async def sync_ckan_to_adapter(
     resources = await _fetch_all_resources(url, token, org)
     log.info("ckan_sync: found %d total resources", len(resources))
 
+    candidate_ids = [
+        f"ckan-{resource['id']}"
+        for resource in resources
+        if resource.get("id")
+    ]
+    existing_data = await hasura_client.execute(
+        _EXISTING_CKAN_DATA_OBJECTS,
+        {"ids": candidate_ids},
+    )
+    existing_ids = {
+        row["id"] for row in existing_data.get("adapter_data_object", [])
+    }
+
     for resource in resources:
         obj = _resource_to_data_object(
             resource, warnings,
@@ -323,6 +384,20 @@ async def sync_ckan_to_adapter(
         )
         if obj is None:
             result.skipped += 1
+            object_id = f"ckan-{resource.get('id', '')}"
+            if object_id in existing_ids:
+                if dry_run:
+                    log.info("ckan_sync [DRY_RUN] would delete stale object: %s", object_id)
+                    result.deleted += 1
+                else:
+                    try:
+                        await hasura_client.execute(
+                            _DELETE_CKAN_DATA_OBJECT,
+                            {"id": object_id},
+                        )
+                        result.deleted += 1
+                    except Exception as exc:
+                        warnings.append(f"Failed to delete {object_id}: {exc}")
             continue
 
         if dry_run:
@@ -331,15 +406,18 @@ async def sync_ckan_to_adapter(
             continue
 
         try:
-            await hasura_client.execute(_INSERT_DATA_OBJECT, {"obj": obj})
+            await hasura_client.execute(
+                _RECONCILE_DATA_OBJECT,
+                {"id": obj["id"], "obj": obj},
+            )
             result.upserted += 1
         except Exception as exc:
             warnings.append(f"Failed to upsert {obj['id']}: {exc}")
 
     result.warnings = warnings
     log.info(
-        "ckan_sync: done — upserted=%d skipped=%d warnings=%d",
-        result.upserted, result.skipped, len(result.warnings),
+        "ckan_sync: done — upserted=%d deleted=%d skipped=%d warnings=%d",
+        result.upserted, result.deleted, result.skipped, len(result.warnings),
     )
     for w in warnings:
         log.warning("ckan_sync: %s", w)

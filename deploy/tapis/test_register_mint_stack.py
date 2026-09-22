@@ -266,6 +266,83 @@ class StorageTests(unittest.TestCase):
                 deploy.wait_for_postgres(t, "old", restarted=True)
         t.pods.exec_pod_commands.assert_not_called()
 
+    def test_hasura_migration_runs_in_exact_graphql_image_and_verifies_catalog(self):
+        t = Mock()
+        t.pods.get_pod.side_effect = [{
+            "status": "AVAILABLE",
+            "image": "ghcr.io/mintproject/graphql-engine:sha-abc1234",
+            "status_container": {"start_time": "old"},
+        }, {
+            "status": "AVAILABLE",
+            "image": "ghcr.io/mintproject/graphql-engine:sha-abc1234",
+            "status_container": {"start_time": "new"},
+        }]
+        t.pods.exec_pod_commands.return_value = {
+            "execution_results": [{
+                "exit_code": 0,
+                "stdout": "Hasura migration and catalog verification succeeded.\n",
+            }],
+        }
+
+        deploy.run_hasura_migrations(
+            t,
+            expected_image="ghcr.io/mintproject/graphql-engine:sha-abc1234",
+        )
+
+        command = t.pods.exec_pod_commands.call_args.kwargs["commands"][0][2]
+        self.assertIn("hasura migrate apply --skip-update-check", command)
+        self.assertIn("hasura metadata apply --skip-update-check", command)
+        self.assertIn("status=\"$(hasura migrate status --skip-update-check --no-color 2>&1)\"", command)
+        self.assertIn("Not Present", command)
+        self.assertIn("metadata inconsistency list --skip-update-check --no-color", command)
+        self.assertIn("metadata is consistent", command)
+        self.assertIn("groundwater_model_modflow6_simulation_archive", command)
+        self.assertEqual(
+            t.pods.exec_pod_commands.call_args.kwargs["pod_id"],
+            deploy.PODS["graphql"],
+        )
+        t.pods.restart_pod.assert_called_once_with(pod_id=deploy.PODS["graphql"])
+
+    def test_hasura_migration_failure_is_fatal(self):
+        t = Mock()
+        t.pods.get_pod.side_effect = [{
+            "status": "AVAILABLE",
+            "image": "ghcr.io/mintproject/graphql-engine:sha-abc1234",
+            "status_container": {"start_time": "old"},
+        }, {
+            "status": "AVAILABLE",
+            "image": "ghcr.io/mintproject/graphql-engine:sha-abc1234",
+            "status_container": {"start_time": "new"},
+        }]
+        t.pods.exec_pod_commands.return_value = {
+            "execution_results": [{"exit_code": 1, "stderr": "migration failed"}],
+        }
+
+        with self.assertRaisesRegex(RuntimeError, "Hasura migration/verification failed"):
+            deploy.run_hasura_migrations(
+                t,
+                expected_image="ghcr.io/mintproject/graphql-engine:sha-abc1234",
+            )
+
+    def test_hasura_migration_requires_restart_timestamp(self):
+        t = Mock()
+        t.pods.get_pod.return_value = {
+            "status": "AVAILABLE",
+            "image": "ghcr.io/mintproject/graphql-engine:sha-abc1234",
+            "status_container": {},
+        }
+
+        with self.assertRaisesRegex(RuntimeError, "previous container start time"):
+            deploy.run_hasura_migrations(
+                t,
+                expected_image="ghcr.io/mintproject/graphql-engine:sha-abc1234",
+            )
+        t.pods.restart_pod.assert_not_called()
+
+    def test_migrate_hasura_requires_graphql_only(self):
+        with self.assertRaises(SystemExit), patch("sys.stderr"):
+            deploy.main(["--migrate-hasura", "--pods", "ui"])
+
     def test_conflicting_start_flags_rejected_before_any_connection(self):
         with self.assertRaises(SystemExit), patch("sys.stderr"):
             deploy.main(["--no-start", "--restart"])

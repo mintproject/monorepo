@@ -3,10 +3,12 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
+import pytest
+
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from app.ckan_sync import _resource_to_data_object  # noqa: E402
+from app.ckan_sync import _resource_to_data_object, sync_ckan_to_adapter  # noqa: E402
 
 
 def test_ckan_sync_maps_arcgis_boundary_resource_to_data_object():
@@ -80,3 +82,188 @@ def test_ckan_sync_maps_boundary_aliases_and_shapefile_zip_format():
         "boundary_type": "gma",
         "source_updated": "2021-05-24",
     }
+
+
+@pytest.mark.parametrize("fmt", ["ZIP", "ZIPX", "7Z", "SIMULATION-ARCHIVE"])
+def test_ckan_sync_keeps_model_archives_distinct_from_shapefile_zips(fmt):
+    warnings: list[str] = []
+    obj = _resource_to_data_object(
+        {
+            "id": "model-archive",
+            "name": "Groundwater Availability Model — Model",
+            "url": f"https://example.test/model.{fmt.lower()}",
+            "format": fmt,
+            "resource_type": "model_archive",
+            "mint_standard_variables": "groundwater__hydraulic_head",
+        },
+        warnings,
+        pkg_name="groundwater-model",
+    )
+
+    assert warnings == []
+    assert obj is not None
+    assert obj["format"] == "zip"
+
+
+@pytest.mark.parametrize(
+    "stdvar",
+    [
+        "groundwater_model_modflow6_simulation_archive",
+        "groundwater_model_modflow2000_simulation_archive",
+        "groundwater_model_modflow2005_simulation_archive",
+        "groundwater_model_modflow96_simulation_archive",
+    ],
+)
+def test_ckan_sync_maps_version_specific_model_archive_variables(stdvar):
+    warnings: list[str] = []
+    obj = _resource_to_data_object(
+        {
+            "id": "versioned-model-archive",
+            "name": "Versioned MODFLOW model archive",
+            "url": "https://example.test/model.zip",
+            "format": "SIMULATION-ARCHIVE",
+            "resource_type": "model_archive",
+            "mint_standard_variables": stdvar,
+        },
+        warnings,
+        pkg_name="groundwater-model",
+    )
+
+    assert warnings == []
+    assert obj is not None
+    assert obj["format"] == "zip"
+    assert obj["variables"]["data"][0]["local_name"] == stdvar
+    assert obj["variables"]["data"][0]["standard_variable_uri"].endswith(
+        stdvar.replace("groundwater_model_", "groundwater-model-").replace("_", "-")
+    )
+
+
+@pytest.mark.parametrize(
+    ("stdvar", "fmt", "expected_uri", "expected_format"),
+    [
+        (
+            "groundwater__initial_head",
+            "BAS",
+            "https://w3id.org/okn/i/mint/GROUNDWATER__INITIAL_HEAD",
+            "modflow-bas",
+        ),
+        (
+            "groundwater__drawdown",
+            "DDN",
+            "https://w3id.org/okn/i/mint/wmobley-standard-variable-groundwater-drawdown",
+            "hds-mfusg",
+        ),
+        (
+            "groundwater_well__volume_flow_rate",
+            "WEL",
+            "https://w3id.org/okn/i/mint/61e86974-f1bb-406c-ae52-f6c6eccb6c59",
+            "modflow-wel",
+        ),
+        (
+            "model_grid_layer~topmost_top__elevation",
+            "DIS",
+            "https://w3id.org/okn/i/mint/MODEL_GRID_LAYER~TOPMOST_TOP__ELEVATION",
+            "modflow-dis",
+        ),
+        (
+            "land_surface_water__evapotranspiration_flux",
+            "EVT",
+            "https://w3id.org/okn/i/mint/0bce8a6e-9df5-4272-88cd-41af089a3684",
+            "modflow-evt",
+        ),
+    ],
+)
+def test_ckan_sync_maps_canonical_modflow_variables(stdvar, fmt, expected_uri, expected_format):
+    warnings: list[str] = []
+    obj = _resource_to_data_object(
+        {
+            "id": "resource-id",
+            "name": "MODFLOW resource",
+            "url": "https://example.test/resource",
+            "format": fmt,
+            "mint_standard_variables": stdvar,
+        },
+        warnings,
+        pkg_name="capitan-reef-complex-gam",
+    )
+
+    assert warnings == []
+    assert obj is not None
+    assert obj["format"] == expected_format
+    assert obj["variables"]["data"][0]["standard_variable_uri"] == expected_uri
+
+
+def test_ckan_sync_skips_resource_when_every_variable_is_unmapped():
+    warnings: list[str] = []
+    obj = _resource_to_data_object(
+        {
+            "id": "resource-id",
+            "url": "https://example.test/resource",
+            "mint_standard_variables": "unknown_one, unknown_two",
+        },
+        warnings,
+    )
+
+    assert obj is None
+    assert len(warnings) == 2
+
+
+@pytest.mark.asyncio
+async def test_ckan_sync_reconciles_variables_and_deletes_stale_objects(monkeypatch):
+    resources = [
+        {
+            "id": "active",
+            "name": "Heads",
+            "url": "https://example.test/active.hds",
+            "format": "HDS",
+            "mint_standard_variables": "groundwater__hydraulic_head",
+            "_pkg_name": "gam",
+        },
+        {
+            "id": "stale",
+            "name": "Archive",
+            "url": "https://example.test/archive.zip",
+            "format": "ZIP",
+            "mint_standard_variables": "",
+            "_pkg_name": "gam",
+        },
+    ]
+
+    async def fake_fetch(*args, **kwargs):
+        return resources
+
+    monkeypatch.setattr("app.ckan_sync._fetch_all_resources", fake_fetch)
+
+    class FakeHasura:
+        def __init__(self):
+            self.operations: list[str] = []
+
+        async def execute(self, query, variables):
+            operation = query.split()[1].split("(")[0]
+            self.operations.append(operation)
+            if operation == "ExistingCkanDataObjects":
+                return {"adapter_data_object": [{"id": "ckan-stale"}]}
+            if operation == "ReconcileCkanDataObject":
+                return {
+                    "delete_adapter_data_object_variable": {"affected_rows": 0},
+                    "insert_adapter_data_object_one": {"id": variables["id"]},
+                }
+            if operation == "DeleteCkanDataObject":
+                return {"delete_adapter_data_object_by_pk": {"id": variables["id"]}}
+            raise AssertionError(operation)
+
+    hasura = FakeHasura()
+    result = await sync_ckan_to_adapter(
+        hasura,
+        ckan_url="https://ckan.example.test",
+    )
+
+    assert result.upserted == 1
+    assert result.deleted == 1
+    assert result.skipped == 1
+    assert result.warnings == []
+    assert hasura.operations == [
+        "ExistingCkanDataObjects",
+        "ReconcileCkanDataObject",
+        "DeleteCkanDataObject",
+    ]

@@ -1,4 +1,5 @@
 import { Search } from 'lucide-react';
+import { gql, useQuery } from '@apollo/client';
 import { useCallback, useMemo, useState } from 'react';
 
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
@@ -19,6 +20,11 @@ import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { useSemanticSearch } from '@/hooks/useSemanticSearch';
 import { useToast } from '@/components/ui/use-toast';
 import { cn } from '@/lib/utils';
+import {
+  inferReachableModelConfigurationIds,
+  type ContractTransform,
+  type InferenceModelOutput,
+} from '@/lib/modeling/outcome-driver-inference';
 import { StepShell } from './StepShell';
 import { FilteredByBanner } from './FilteredByBanner';
 
@@ -30,7 +36,30 @@ interface ModelRow {
   region: string;
   producesIds: string[];
   producesLabels: string[];
+  outputContracts: { id: string; format?: string | null }[];
   needs: { name: string; varIds: string[]; varLabels: string[] }[];
+}
+
+export const ModelOutcomeAdapterInferenceDocument = gql`
+  query GetModelOutcomeAdapterInference {
+    adapterTransforms: adapter_transform_spec {
+      contracts {
+        role
+        standard_variable_uri
+        format
+      }
+    }
+  }
+`;
+
+interface ModelOutcomeAdapterInferenceData {
+  adapterTransforms: Array<{
+    contracts: Array<{
+      role: string;
+      standard_variable_uri?: string | null;
+      format?: string | null;
+    }>;
+  }>;
 }
 
 interface ModelsStepProps {
@@ -53,6 +82,10 @@ function rowFromConfig(cfg: ModelConfigInfo | ModelSetupInfo, parent?: ModelConf
     region: regions.map((r) => r.region.label ?? r.region.id).join(', '),
     producesIds: io.producesVariableIds,
     producesLabels: io.outputs.flatMap((o) => o.variableLabels),
+    outputContracts: io.outputs.flatMap((output) => {
+      const ids = output.variableIds.length > 0 ? output.variableIds : [''];
+      return ids.map((id) => ({ id, format: output.format }));
+    }),
     needs: io.inputs.map((i) => ({
       name: i.name,
       varIds: i.variableIds,
@@ -162,33 +195,67 @@ export function ModelsStep({
     return ids;
   });
 
+  const indicator = thread.response_variable_id ?? null;
   const { data, loading, error } = useGetModelTreeWithRegionsQuery();
+  const adapterInferenceQ = useQuery<ModelOutcomeAdapterInferenceData>(
+    ModelOutcomeAdapterInferenceDocument,
+    { fetchPolicy: 'cache-first', skip: !indicator },
+  );
   const [setThreadModels] = useSetThreadModelsMutation();
 
   const allRows = useMemo(() => flattenToRows(data), [data]);
   const totalCount = allRows.length;
 
-  const indicator = thread.response_variable_id ?? null;
   // The stored id is a standard-variable URI (#106), which is unreadable, so
   // prefer the label the relationship carries. A thread whose relationship did
   // not resolve falls back to the URI's trailing slug — never the whole URI.
   const indicatorLabel = thread.response_variable?.label ?? (indicator && slugFromUri(indicator));
   const debouncedSearchText = useDebouncedValue(searchText, 300);
-  const semanticFilters = useMemo(
-    () => ({ outputVariableIds: indicator ? [indicator] : undefined }),
-    [indicator],
-  );
+  // Outcome compatibility is evaluated locally from model outputs and the
+  // adapter graph. Applying the semantic endpoint's direct-output filter here
+  // would hide a model that reaches the outcome through an adapter chain.
+  const semanticFilters = useMemo(() => ({ outputVariableIds: undefined }), []);
   const semanticSearch = useSemanticSearch(debouncedSearchText, {
     target: 'model_configuration',
     limit: 100,
     filters: semanticFilters,
   });
+  const adapterTransforms = useMemo<ContractTransform[]>(
+    () =>
+      (adapterInferenceQ.data?.adapterTransforms ?? []).map((process) => ({
+        kind: 'adapter' as const,
+        outputs: process.contracts
+          .filter((contract) => contract.role === 'output')
+          .map((contract) => ({
+            id: contract.standard_variable_uri?.trim() ?? '',
+            format: contract.format,
+          })),
+        inputs: process.contracts
+          .filter((contract) => contract.role === 'input')
+          .map((contract) => ({
+            id: contract.standard_variable_uri?.trim() ?? '',
+            format: contract.format,
+          })),
+      })),
+    [adapterInferenceQ.data],
+  );
+  const inferredModelIds = useMemo(() => {
+    if (!indicator || !adapterInferenceQ.data) return new Set<string>();
+    const modelOutputs: InferenceModelOutput[] = allRows.flatMap((row) =>
+      row.outputContracts.map((output) => ({ configurationId: row.id, output })),
+    );
+    return inferReachableModelConfigurationIds(
+      { id: indicator, label: indicatorLabel },
+      modelOutputs,
+      adapterTransforms,
+    );
+  }, [adapterInferenceQ.data, adapterTransforms, allRows, indicator, indicatorLabel]);
   const indicatorRows = useMemo(
     () =>
       indicator
-        ? allRows.filter((r) => r.producesIds.length === 0 || r.producesIds.includes(indicator))
+        ? allRows.filter((r) => r.producesIds.includes(indicator) || inferredModelIds.has(r.id))
         : allRows,
-    [allRows, indicator],
+    [allRows, indicator, inferredModelIds],
   );
 
   const localSearchedRows = useMemo(() => {
@@ -238,9 +305,11 @@ export function ModelsStep({
     const selected = new Set(selectedIds);
     return allRows.filter(
       (row) =>
-        selected.has(row.id) && row.producesIds.length > 0 && !row.producesIds.includes(indicator),
+        selected.has(row.id) &&
+        !row.producesIds.includes(indicator) &&
+        !inferredModelIds.has(row.id),
     );
-  }, [allRows, indicator, selectedIds]);
+  }, [allRows, indicator, inferredModelIds, selectedIds]);
 
   const toggleModel = useCallback((id: string, checked: boolean) => {
     setSelectedIds((prev) => {
@@ -289,7 +358,7 @@ export function ModelsStep({
             icon: '🎯',
             label: 'Desired outcome',
             value: `${indicatorRows.length} of ${totalCount} models`,
-            source: indicatorLabel ? `produces ${indicatorLabel}` : undefined,
+            source: indicatorLabel ? `produces or transforms to ${indicatorLabel}` : undefined,
           },
         ],
       }
@@ -400,7 +469,7 @@ export function ModelsStep({
                 // which choice empties the list, rather than a bare "none".
                 <>
                   <p className="text-gray-600">
-                    No model produces <strong>{indicatorLabel}</strong>.
+                    No model produces or transforms to <strong>{indicatorLabel}</strong>.
                   </p>
                   <p className="mt-1 text-xs">
                     This sub-task stores it as its indicator, but no configuration in the catalog

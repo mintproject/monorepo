@@ -49,4 +49,9 @@ describe('model-tree queries do not filter software by ontology type', () => {
     const args = rootField && rootField.kind === 'Field' ? (rootField.arguments ?? []) : [];
     expect(args.map((a) => a.name.value)).toEqual(['order_by']);
   });
+
+  it('selects dataset formats for model inputs and outputs', () => {
+    const query = print(GetModelTreeWithRegionsDocument);
+    expect(query.match(/has_format/g)?.length).toBe(4);
+  });
 });

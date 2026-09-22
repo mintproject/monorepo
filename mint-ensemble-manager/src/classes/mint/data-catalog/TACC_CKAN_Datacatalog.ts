@@ -44,6 +44,9 @@ interface CKANExtra {
 
 interface CKANPackageWithExtras extends CKANDataset {
     extras?: CKANExtra[];
+    spatial?: string | null;
+    temporal_coverage_start?: string | null;
+    temporal_coverage_end?: string | null;
 }
 
 export class TACC_CKAN_DataCatalog implements IDataCatalog {
@@ -226,11 +229,19 @@ export class TACC_CKAN_DataCatalog implements IDataCatalog {
     private extractTemporalCoverage(
         pkg: CKANPackageWithExtras
     ): { start_date: Date | null; end_date: Date | null } | null {
-        // Extract temporal coverage from CKAN extras if available
-        const spatialExtra = pkg.extras?.find((e: CKANExtra) => e.key === "temporal_coverage");
-        if (spatialExtra) {
+        // Prefer the dataset-level CKAN fields. The legacy JSON extra remains
+        // supported for older datasets during the catalog migration.
+        if (pkg.temporal_coverage_start || pkg.temporal_coverage_end) {
+            return {
+                start_date: pkg.temporal_coverage_start ? new Date(pkg.temporal_coverage_start) : null,
+                end_date: pkg.temporal_coverage_end ? new Date(pkg.temporal_coverage_end) : null
+            };
+        }
+
+        const temporalExtra = pkg.extras?.find((e: CKANExtra) => e.key === "temporal_coverage");
+        if (temporalExtra) {
             try {
-                const temporal = JSON.parse(spatialExtra.value);
+                const temporal = JSON.parse(temporalExtra.value);
                 return {
                     start_date: temporal.start_time ? new Date(temporal.start_time) : null,
                     end_date: temporal.end_time ? new Date(temporal.end_time) : null
@@ -243,6 +254,9 @@ export class TACC_CKAN_DataCatalog implements IDataCatalog {
     }
 
     private extractSpatialCoverage(pkg: CKANPackageWithExtras): string | undefined {
+        // Prefer the canonical dataset field. The extra fallback supports
+        // older CKAN records during the schema migration.
+        if (pkg.spatial) return pkg.spatial;
         const spatialExtra = pkg.extras?.find((e: CKANExtra) => e.key === "spatial");
         return spatialExtra?.value;
     }

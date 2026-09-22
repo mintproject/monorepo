@@ -56,6 +56,7 @@ IMAGE_NAMES = {
 RECREATE_ON_IMAGE_MISMATCH_PODS = frozenset({"graphql", "api", "ensemble", "svo", "semantic_search", "ui"})
 POD_IMAGE_VERIFY_TIMEOUT = 120
 POD_RESTART_TIMEOUT = 600
+HASURA_MIGRATION_TIMEOUT = 600
 
 SECRET_KEYS = {
     "HASURA_GRAPHQL_ADMIN_SECRET",
@@ -555,6 +556,101 @@ def wait_for_pod_restart(
     raise RuntimeError(f"[{pod_id}] did not become AVAILABLE on the requested image after restart")
 
 
+def run_hasura_migrations(t: Any, *, expected_image: str | None = None) -> None:
+    """Apply bundled Hasura migrations and verify the dev catalog in-pod."""
+    if expected_image:
+        pod = _pod_lookup_for_verification(t, PODS["graphql"])
+        previous_start = _field(_field(pod, "status_container", {}), "start_time")
+        if not previous_start:
+            raise RuntimeError("Cannot verify Hasura restart; previous container start time is missing")
+        t.pods.restart_pod(pod_id=PODS["graphql"])
+        print(f"  [{PODS['graphql']}] restart requested for migration stage")
+        wait_for_pod_restart(
+            t,
+            PODS["graphql"],
+            expected_image,
+            previous_start=previous_start,
+            timeout=HASURA_MIGRATION_TIMEOUT,
+        )
+    else:
+        wait_for_pod_available(t, PODS["graphql"], timeout=HASURA_MIGRATION_TIMEOUT)
+
+    command = r'''set -eu
+    cd /hasura
+    hasura migrate apply --skip-update-check
+    hasura metadata apply --skip-update-check
+    hasura metadata reload --skip-update-check
+    status="$(hasura migrate status --skip-update-check --no-color 2>&1)"
+    printf '%s\n' "$status"
+    if printf '%s\n' "$status" | grep -Eq '(^|[[:space:]])(Not Present|Pending)([[:space:]]|$)'; then
+      printf '%s\n' 'Hasura migration status contains unapplied or pending migrations.' >&2
+      exit 1
+    fi
+    inconsistencies="$(hasura metadata inconsistency list --skip-update-check --no-color 2>&1)"
+    printf '%s\n' "$inconsistencies"
+    case "$inconsistencies" in
+      *'metadata is consistent'*) ;;
+      *)
+        printf '%s\n' 'Hasura metadata inconsistency check did not report a consistent catalog.' >&2
+        exit 1
+        ;;
+    esac
+    response="$(curl -fsS http://127.0.0.1:8080/v1/graphql \
+      -H "X-Hasura-Admin-Secret: $HASURA_GRAPHQL_ADMIN_SECRET" \
+      -H "Content-Type: application/json" \
+      --data '{"query":"{ modelcatalog_standard_variable(where:{label:{_in:[\"groundwater_model_modflow6_simulation_archive\",\"groundwater_model_modflow2000_simulation_archive\",\"groundwater_model_modflow2005_simulation_archive\",\"groundwater_model_modflow96_simulation_archive\"]}}){ label }}'}")"
+    case "$response" in
+      *'"errors"'*) printf '%s\n' "$response" >&2; exit 1 ;;
+    esac
+    for label in \
+      groundwater_model_modflow6_simulation_archive \
+      groundwater_model_modflow2000_simulation_archive \
+      groundwater_model_modflow2005_simulation_archive \
+      groundwater_model_modflow96_simulation_archive; do
+      printf '%s' "$response" | grep -Fq "\"label\":\"$label\"" || {
+        printf 'missing expected catalog label: %s\n' "$label" >&2
+        exit 1
+      }
+    done
+    printf '%s\n' 'Hasura migration and catalog verification succeeded.'
+    '''
+    result = t.pods.exec_pod_commands(
+        pod_id=PODS["graphql"],
+        commands=[["sh", "-c", command]],
+        command_timeout=HASURA_MIGRATION_TIMEOUT,
+        total_timeout=HASURA_MIGRATION_TIMEOUT + 30,
+    )
+    results = _field(result, "execution_results", [])
+    if not results:
+        raise RuntimeError("Hasura migration command returned no execution result")
+    execution = results[0]
+    stdout = _field(execution, "stdout", "")
+    stderr = _field(execution, "stderr", "")
+    if stdout:
+        print(stdout.rstrip())
+    if _field(execution, "exit_code") != 0:
+        if stderr:
+            print(stderr.rstrip(), file=sys.stderr)
+        raise RuntimeError(
+            f"Hasura migration/verification failed with exit code {_field(execution, 'exit_code')}"
+        )
+
+
+def wait_for_pod_available(t: Any, pod_id: str, *, timeout: float = POD_RESTART_TIMEOUT) -> Any:
+    """Wait until a pod is available when no image transition is being checked."""
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        try:
+            pod = _pod_lookup_for_verification(t, pod_id)
+        except TransientPodLookupError:
+            time.sleep(min(5, max(0, deadline - time.monotonic())))
+            continue
+        if _field(pod, "status") == "AVAILABLE":
+            return pod
+        time.sleep(min(5, max(0, deadline - time.monotonic())))
+    raise RuntimeError(f"[{pod_id}] did not become AVAILABLE")
+
+
 def check_postgres_storage(pod: Any, *, recreate: bool, expected_image: str | None = None) -> None:
     if pod is None:
         return
@@ -994,6 +1090,11 @@ def main(argv: list[str] | None = None) -> int:
         help="only grant APPROVEDADMIN on the selected existing pods; never create, update or restart a pod",
     )
     parser.add_argument(
+        "--migrate-hasura",
+        action="store_true",
+        help="apply bundled Hasura migrations/metadata and verify the dev catalog",
+    )
+    parser.add_argument(
         "--require-all-owner-grants",
         action="store_true",
         help="fail if any selected pod is absent or rejects an owner grant",
@@ -1037,6 +1138,20 @@ def main(argv: list[str] | None = None) -> int:
         parser.error("--update-images-only cannot be combined with lifecycle or dry-run options")
     if args.require_all_owner_grants and not args.set_owners_only:
         parser.error("--require-all-owner-grants requires --set-owners-only")
+    if args.migrate_hasura and (
+        args.restart_existing_pods is not None
+        or args.update_images_only
+        or args.set_owners_only
+        or args.sync_ui_auth
+        or args.restart
+        or args.restart_pods is not None
+        or args.recreate
+        or args.recreate_on_image_mismatch
+        or args.migrate_postgres_image
+        or args.no_start
+        or args.dry_run
+    ):
+        parser.error("--migrate-hasura cannot be combined with pod lifecycle options")
     if args.set_owners_only and (
         args.restart_existing_pods is not None
         or args.restart
@@ -1079,6 +1194,8 @@ def main(argv: list[str] | None = None) -> int:
         selected = parse_pods(args.pods)
     if args.update_images_only and any(key not in RESTART_ONLY_PODS for key in selected):
         parser.error("--update-images-only accepts only: " + ", ".join(RESTART_ONLY_PODS))
+    if args.migrate_hasura and selected != ["graphql"]:
+        parser.error("--migrate-hasura requires --pods graphql")
     if args.migrate_postgres_image and "postgres" not in selected:
         parser.error("--migrate-postgres-image requires postgres in --pods")
     if args.migrate_postgres_image and args.recreate:
@@ -1108,6 +1225,7 @@ def main(argv: list[str] | None = None) -> int:
         and not args.update_images_only
         and not args.set_owners_only
         and not args.sync_ui_auth
+        and not args.migrate_hasura
     ):
         validate_live_requirements(selected)
 
@@ -1127,6 +1245,11 @@ def main(argv: list[str] | None = None) -> int:
         print("\nMINT dev application image tags updated:")
         for key in selected:
             print(f"  {key:8} {PODS[key]}")
+        return 0
+
+    if args.migrate_hasura:
+        run_hasura_migrations(t, expected_image=specs["graphql"]["image"])
+        print("\nHasura migrations applied and verified.")
         return 0
 
     if args.restart_existing_pods is not None:

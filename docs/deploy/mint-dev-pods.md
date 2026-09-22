@@ -65,12 +65,14 @@ changes that service's image.
 
 Normal application rollouts leave PostgreSQL and Redis alone. The deployment
 updates only the image field on changed application pods with the manifest's
-exact SHA image references, then sends restart requests for the complete
-affected application set—GraphQL, API, Ensemble Manager, SVO, semantic search,
-and UI. Dependency-only pods retain their current image. The deploy job does
-not change networking or CORS, apply schema changes, run health checks, or poll
-for readiness. Its separate admin-permission step is the only non-lifecycle
-mutation.
+exact SHA image references, then sends restart requests for the affected
+application set—API, Ensemble Manager, SVO, semantic search, and UI. On a
+schema-changing rollout, GraphQL is restarted and verified by the gated
+migration stage before those dependent application pods are restarted.
+Dependency-only pods retain their current image. The deploy job does not
+change networking or CORS, apply schema changes outside that migration stage,
+or run seeds/resets. Its separate admin-permission step is the only other
+non-lifecycle mutation.
 
 The automated deploy validates only the manifest identity and exact SHA image
 references before making any image or restart request. A missing, malformed, or
@@ -78,8 +80,10 @@ mismatched manifest fails closed. A no-op manifest skips image updates and
 restarts, but still runs the strict `wmobley` admin-permission step.
 
 The image-update request sends only `pod_id` and `image`; it does not resubmit
-environment variables, resources, networking, CORS, or auth settings. Restart
-requests are dispatched without readiness polling.
+environment variables, resources, networking, CORS, or auth settings. The
+schema-changing migration stage owns the GraphQL restart and waits for a new
+container start time before executing Hasura CLI commands. Other restart-only
+deploys remain dispatch-only.
 
 PostgreSQL image changes use the protected volume-preserving replacement path;
 the pod is replaced only with `--migrate-postgres-image`, and the existing
@@ -134,8 +138,28 @@ exposes that route externally through
 `mintdevpostgres.pods.portals.tapis.io:443`; Hasura and semantic search both
 receive that hostname in their database URL.
 
-Schema migrations, metadata updates, and application health checks are outside
-the deploy action. Run them separately when a schema change requires them.
+Schema migrations are applied by a separate, gated step in the dev deployment
+workflow when `graphql_engine/migrations/` or Hasura metadata changes. The step
+restarts the exact GraphQL image first, runs the Hasura CLI from `/hasura`,
+applies/reloads metadata, checks migration status and metadata consistency, and
+verifies the catalog GraphQL contract before the dependent application pods are
+restarted. A failed migration fails the deployment and leaves dependent pods
+untouched.
+
+Manual recovery remains available from the Hasura pod when the workflow is not
+being used:
+
+```bash
+cd /hasura
+hasura migrate apply --skip-update-check
+hasura metadata apply --skip-update-check
+hasura metadata reload --skip-update-check
+hasura migrate status --skip-update-check
+hasura metadata inconsistency list --skip-update-check
+```
+
+Do not run down migrations, apply seeds to an existing database, or reset the
+persistent PostgreSQL volume as an automated recovery step.
 
 ## Required environment secrets
 
@@ -172,8 +196,10 @@ PostgreSQL or Redis.
 ## Caveats
 
 - Production deployment is out of scope.
-- PostgreSQL schema initialization and Hasura metadata synchronization are not
-  part of the `Deploy MINT Dev Pods` workflow.
+- PostgreSQL initialization and seed loading are not part of the `Deploy MINT
+  Dev Pods` workflow. Pending Hasura migrations and metadata synchronization
+  are part of schema-changing dev deployments and run in their gated migration
+  stage.
 - The Ensemble Manager image entrypoint materializes `ENSEMBLE_MANAGER_CONFIG_JSON` into a runtime config file and sets `ENSEMBLE_MANAGER_CONFIG_FILE` before starting the app.
 - GraphQL deployment fails closed unless either `MINTDEV_HASURA_JWT_SECRET` or `MINTDEV_HASURA_AUTH_HOOK` is configured. Existing Hasura auth environment variables are preserved during image-mismatch recovery, and the GitHub Actions deploy passes these secrets through to the pod definition.
 - Tapis Pod template details for Redis/PostgreSQL should be validated during the first dev deployment.
@@ -181,9 +207,10 @@ PostgreSQL or Redis.
 ## SVO adapter schema rollout
 
 The SVO adapter requires the `adapter` PostgreSQL schema and its Hasura table
-metadata. The application image can be deployed independently, so an image
-restart alone will still produce HTTP 500 responses for `/transform-specs`
-and `/data-objects` until this rollout is applied.
+metadata. The automated migration stage handles this schema path before the
+dependent SVO pod is restarted. An image restart alone can still produce HTTP
+500 responses for `/transform-specs` and `/data-objects` if the migration stage
+fails or is bypassed.
 
 From the Hasura pod, after PostgreSQL is ready, apply the migration before
 applying metadata:
@@ -210,7 +237,10 @@ curl -sS "$HASURA_GRAPHQL_ENDPOINT/v1/graphql" \
 
 The expected response contains `data.adapter_transform_spec` and
 `data.adapter_data_object`, even when both arrays are empty. Only then should
-the SVO adapter pod be restarted and its `/health` endpoint checked.
+the SVO adapter pod be restarted and its `/health` endpoint checked. Because
+the modeling UI reads transform specs and contracts for driver inference,
+repeat the transform-spec query with an authenticated modeling-user token as
+well; an admin-only success does not prove that the UI role can see the fields.
 
 ## Persistent PostgreSQL storage
 

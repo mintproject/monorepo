@@ -366,6 +366,18 @@ describe('resourceMatchesVariables', () => {
   it('passes everything through when no variable is requested', () => {
     expect(resourceMatchesVariables({ format: 'CSV' }, [])).toBe(true);
   });
+
+  it('keeps version-specific MODFLOW archive labels distinct', () => {
+    const modflow6 = {
+      mint_standard_variables: 'groundwater_model_modflow6_simulation_archive',
+    };
+    expect(
+      resourceMatchesVariables(modflow6, ['groundwater_model_modflow6_simulation_archive']),
+    ).toBe(true);
+    expect(
+      resourceMatchesVariables(modflow6, ['groundwater_model_modflow2000_simulation_archive']),
+    ).toBe(false);
+  });
 });
 
 describe('canonical standard-variable matching', () => {

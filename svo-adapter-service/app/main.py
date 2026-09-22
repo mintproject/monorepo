@@ -154,8 +154,8 @@ async def lifespan(app: FastAPI):
                     org=settings.ckan_sync_org or None,
                 )
                 log.info(
-                    "startup ckan sync: upserted=%d skipped=%d warnings=%d",
-                    result.upserted, result.skipped, len(result.warnings),
+                    "startup ckan sync: upserted=%d deleted=%d skipped=%d warnings=%d",
+                    result.upserted, result.deleted, result.skipped, len(result.warnings),
                 )
             except Exception:
                 log.exception("startup ckan sync failed (non-fatal)")
@@ -818,9 +818,10 @@ async def sync_from_ckan(
     org: str | None = Query(None, description="Limit to a CKAN organization slug"),
     authorization: str | None = Header(None),
 ):
-    """Pull CKAN resources tagged with mint_standard_variables and upsert them
-    as adapter data objects.  Each resource becomes one data object whose SVO
-    URI and format are resolved via the mapping tables in ckan_sync.py.
+    """Pull CKAN resources and reconcile their resource-level SVO annotations
+    as adapter data objects. Each usable resource becomes one data object whose
+    SVO URI and format are resolved via the mapping tables in ckan_sync.py;
+    removed annotations delete only the corresponding CKAN-owned object.
 
     Pass dry_run=true to preview counts without writing to the database.
     Pass org=<slug> to limit the sync to a single CKAN organization.
@@ -834,12 +835,13 @@ async def sync_from_ckan(
         dry_run=dry_run,
     )
 
-    if not dry_run and result.upserted:
+    if not dry_run and (result.upserted or result.deleted):
         asyncio.create_task(_recompute_edges_bg(), name="recompute-edges-post-ckan-sync")
 
     return {
         "dry_run": dry_run,
         "upserted": result.upserted,
+        "deleted": result.deleted,
         "skipped": result.skipped,
         "warnings": result.warnings,
     }

@@ -1,0 +1,1008 @@
+{
+  "matrix_version": "2026-09-22.3",
+  "generated_from": "https://ckan.tacc.utexas.edu/api/3/action/package_search?fq=organization:twdb-gams&rows=1000&start=0",
+  "scope": {
+    "organization": "twdb-gams",
+    "package_count": 36,
+    "model_archive_resource_count": 33
+  },
+  "policy": {
+    "evidence_precedence": [
+      "archive_member",
+      "official_report",
+      "official_page",
+      "curator_reviewed_ckan"
+    ],
+    "unknown_or_conflicting": "hold",
+    "unsupported_engine": "hold_missing_mint_contract",
+    "archive_svo_labels": {
+      "MODFLOW-6": "groundwater_model_modflow6_simulation_archive",
+      "MODFLOW-2000": "groundwater_model_modflow2000_simulation_archive",
+      "MODFLOW-2005": "groundwater_model_modflow2005_simulation_archive",
+      "MODFLOW-96": "groundwater_model_modflow96_simulation_archive"
+    }
+  },
+  "summary": {
+    "package_dispositions": {
+      "alternative/research": 3,
+      "derived": 2,
+      "historical": 1,
+      "hold": 11,
+      "not_executable": 1,
+      "register": 18
+    },
+    "resource_registrations": {
+      "register": 21,
+      "hold": 12
+    },
+    "engines": {
+      "GWSIM": 1,
+      "MODFLOW-2000": 11,
+      "MODFLOW-2005": 1,
+      "MODFLOW-6": 6,
+      "MODFLOW-96": 5,
+      "MODFLOW-NWT": 3,
+      "MODFLOW-USG": 6
+    }
+  },
+  "packages": [
+    {
+      "package_id": "18896c0d-2182-40b4-ad78-5a8ab6683030",
+      "package_name": "blossom-aquifer-model-files",
+      "title": "Blossom Aquifer GAM",
+      "package_url": "https://ckan.tacc.utexas.edu/dataset/blossom-aquifer-model-files",
+      "model_code": "blsm",
+      "model_archive_resource_ids": [
+        "0885d036-b73b-4373-aa4c-16ca96d61ef1"
+      ],
+      "model_archive_count": 1,
+      "disposition": "hold",
+      "reason": "Executable archive exists; exact engine evidence is incomplete or the MINT contract is not yet approved."
+    },
+    {
+      "package_id": "f46529ac-18d3-4d19-9fab-23eafc3f3cbb",
+      "package_name": "carrizo-wilcox-aquifer-northern-portion",
+      "title": "Carrizo-Wilcox Aquifer (northern portion) GAM (version 3.01)",
+      "package_url": "https://ckan.tacc.utexas.edu/dataset/carrizo-wilcox-aquifer-northern-portion",
+      "model_code": "czwx_n",
+      "model_archive_resource_ids": [
+        "7b5e6cee-b68f-40e1-9105-1700bf54b1ed"
+      ],
+      "model_archive_count": 1,
+      "disposition": "register",
+      "reason": "Every executable archive in this package has confirmed evidence and an existing exact-engine archive SVO contract."
+    },
+    {
+      "package_id": "ca7524c2-5bd7-42ad-80a5-881fe09708f5",
+      "package_name": "carrizo-wilcox-aquifer-southern-portion",
+      "title": "Carrizo-Wilcox Aquifer (southern portion) GAM (version 3.1)",
+      "package_url": "https://ckan.tacc.utexas.edu/dataset/carrizo-wilcox-aquifer-southern-portion",
+      "model_code": "czwx_s",
+      "model_archive_resource_ids": [
+        "48fbf141-fbfa-4c88-9e8a-96b1e4f5aa31"
+      ],
+      "model_archive_count": 1,
+      "disposition": "hold",
+      "reason": "Executable archive exists; exact engine evidence is incomplete or the MINT contract is not yet approved."
+    },
+    {
+      "package_id": "3442ea46-8508-4403-8a58-a07ce8c4d216",
+      "package_name": "carrizo-wilcox-gam-central-portion",
+      "title": "Carrizo-Wilcox Aquifer (central portion) GAM (version 3.02)",
+      "package_url": "https://ckan.tacc.utexas.edu/dataset/carrizo-wilcox-gam-central-portion",
+      "model_code": "czwx_c",
+      "model_archive_resource_ids": [
+        "91900e12-978a-4896-93c5-12a8fe851d02"
+      ],
+      "model_archive_count": 1,
+      "disposition": "hold",
+      "reason": "Executable archive exists; exact engine evidence is incomplete or the MINT contract is not yet approved."
+    },
+    {
+      "package_id": "3c0c4d61-90f1-489a-baa5-3c6357a01a84",
+      "package_name": "edwards-bfz-barton-springs-segment-gam",
+      "title": "Edwards (BFZ) Aquifer (Barton Springs Segment) GAM",
+      "package_url": "https://ckan.tacc.utexas.edu/dataset/edwards-bfz-barton-springs-segment-gam",
+      "model_code": "ebfz_b",
+      "model_archive_resource_ids": [
+        "3a9a635f-6330-46a3-84bc-579cd557ae5c"
+      ],
+      "model_archive_count": 1,
+      "disposition": "register",
+      "reason": "Every executable archive in this package has confirmed evidence and an existing exact-engine archive SVO contract."
+    },
+    {
+      "package_id": "11dfa0b6-3d39-455b-824f-0ed6a4cdfd1f",
+      "package_name": "edwards-bfz-northern-segment-gam",
+      "title": "Edwards (BFZ) Aquifer (Northern Segment) GAM",
+      "package_url": "https://ckan.tacc.utexas.edu/dataset/edwards-bfz-northern-segment-gam",
+      "model_code": "ebfz_n",
+      "model_archive_resource_ids": [
+        "12a42603-f17b-4d35-9c5e-a7a7e2ee7307"
+      ],
+      "model_archive_count": 1,
+      "disposition": "hold",
+      "reason": "Executable archive exists; exact engine evidence is incomplete or the MINT contract is not yet approved."
+    },
+    {
+      "package_id": "3d5b4b97-cc54-49ef-9d34-6a94a872d36b",
+      "package_name": "edwards-bfz-san-antonio-segment-gam",
+      "title": "Edwards (BFZ) Aquifer (San Antonio Segment) GAM",
+      "package_url": "https://ckan.tacc.utexas.edu/dataset/edwards-bfz-san-antonio-segment-gam",
+      "model_code": "ebfz_s",
+      "model_archive_resource_ids": [
+        "5097bb8b-0624-48e6-a3d8-6e1b70bec545"
+      ],
+      "model_archive_count": 1,
+      "disposition": "hold",
+      "reason": "Executable archive exists; exact engine evidence is incomplete or the MINT contract is not yet approved."
+    },
+    {
+      "package_id": "f1c47627-b313-4b02-922d-80bec8b0d849",
+      "package_name": "edwards-trinity-plateau-pecos-valley-gam",
+      "title": "Edwards-Trinity (Plateau) and Pecos Valley aquifers GAM",
+      "package_url": "https://ckan.tacc.utexas.edu/dataset/edwards-trinity-plateau-pecos-valley-gam",
+      "model_code": "eddt_r",
+      "model_archive_resource_ids": [
+        "d63a3c99-7633-47ed-b897-75df156e5719"
+      ],
+      "model_archive_count": 1,
+      "disposition": "hold",
+      "reason": "Executable archive exists; exact engine evidence is incomplete or the MINT contract is not yet approved."
+    },
+    {
+      "package_id": "6d11c310-e1c9-40d0-88f6-613d6d893e1a",
+      "package_name": "gulf-coast-central-southern-gam",
+      "title": "Gulf Coast Aquifer System (central and southern portions) GAM",
+      "package_url": "https://ckan.tacc.utexas.edu/dataset/gulf-coast-central-southern-gam",
+      "model_code": "glfc_c_s",
+      "model_archive_resource_ids": [
+        "e318e313-12e1-4e92-a811-bf0fb085214e"
+      ],
+      "model_archive_count": 1,
+      "disposition": "hold",
+      "reason": "Executable archive exists; exact engine evidence is incomplete or the MINT contract is not yet approved."
+    },
+    {
+      "package_id": "82a7d48a-a9d7-44a0-8061-dbfea7fb0d01",
+      "package_name": "gulf-coast-northern-gam",
+      "title": "Gulf Coast Aquifer System (northern portion) GAM (version 4.1)",
+      "package_url": "https://ckan.tacc.utexas.edu/dataset/gulf-coast-northern-gam",
+      "model_code": "glfc_n",
+      "model_archive_resource_ids": [
+        "d58dd792-ff36-4e50-9936-83dcffaa8295"
+      ],
+      "model_archive_count": 1,
+      "disposition": "register",
+      "reason": "Every executable archive in this package has confirmed evidence and an existing exact-engine archive SVO contract."
+    },
+    {
+      "package_id": "f9b6b956-6b30-4017-aae9-f25b3a137ae6",
+      "package_name": "gulf-coast-southern-superseded-gam",
+      "title": "Gulf Coast Aquifer System GAM — Southern (Superseded)",
+      "package_url": "https://ckan.tacc.utexas.edu/dataset/gulf-coast-southern-superseded-gam",
+      "model_code": null,
+      "model_archive_resource_ids": [],
+      "model_archive_count": 0,
+      "disposition": "historical",
+      "reason": "Superseded landing page only; no model_archive resource."
+    },
+    {
+      "package_id": "1db72fb2-762f-4669-b6e8-b78b3040d979",
+      "package_name": "high-plains-aquifer-system-gam",
+      "title": "High Plains Aquifer System GAM",
+      "package_url": "https://ckan.tacc.utexas.edu/dataset/high-plains-aquifer-system-gam",
+      "model_code": "hpas",
+      "model_archive_resource_ids": [
+        "69f17ab8-462f-4344-8229-a5edb71c5186"
+      ],
+      "model_archive_count": 1,
+      "disposition": "hold",
+      "reason": "Executable archive exists; exact engine evidence is incomplete or the MINT contract is not yet approved."
+    },
+    {
+      "package_id": "beba358a-69e3-404b-8e97-f2056418c0e9",
+      "package_name": "https-txwaterdatahub-org-dataset-capitan-reef-complex-aquifer-gam-files",
+      "title": "Capitan Reef Complex Aquifer GAM",
+      "package_url": "https://ckan.tacc.utexas.edu/dataset/https-txwaterdatahub-org-dataset-capitan-reef-complex-aquifer-gam-files",
+      "model_code": "crcx",
+      "model_archive_resource_ids": [
+        "925114fc-625c-46a0-a366-bcb3224ca54d"
+      ],
+      "model_archive_count": 1,
+      "disposition": "register",
+      "reason": "Every executable archive in this package has confirmed evidence and an existing exact-engine archive SVO contract."
+    },
+    {
+      "package_id": "191f8bb3-1bf5-4326-89df-5aebae0b18b4",
+      "package_name": "lipan-aquifer-gam",
+      "title": "Lipan Aquifer GAM",
+      "package_url": "https://ckan.tacc.utexas.edu/dataset/lipan-aquifer-gam",
+      "model_code": "lipn",
+      "model_archive_resource_ids": [
+        "59abce6e-6aba-4a85-b4b1-ae82a310ef7d"
+      ],
+      "model_archive_count": 1,
+      "disposition": "register",
+      "reason": "Every executable archive in this package has confirmed evidence and an existing exact-engine archive SVO contract."
+    },
+    {
+      "package_id": "aae21134-8c61-4683-abb1-1107c433b175",
+      "package_name": "nacatoch-aquifer-gam",
+      "title": "Nacatoch Aquifer GAM",
+      "package_url": "https://ckan.tacc.utexas.edu/dataset/nacatoch-aquifer-gam",
+      "model_code": "nctc",
+      "model_archive_resource_ids": [
+        "b0b28282-05ee-4413-9bb1-d9ed5b850214"
+      ],
+      "model_archive_count": 1,
+      "disposition": "register",
+      "reason": "Every executable archive in this package has confirmed evidence and an existing exact-engine archive SVO contract."
+    },
+    {
+      "package_id": "f91025a2-0430-4ac3-81ec-327e9b6318de",
+      "package_name": "ntgam-trinity-woodbine-v301",
+      "title": "Northern Trinity & Woodbine GAM v3.01 — Heads, Storage & Geometry",
+      "package_url": "https://ckan.tacc.utexas.edu/dataset/ntgam-trinity-woodbine-v301",
+      "model_code": null,
+      "model_archive_resource_ids": [],
+      "model_archive_count": 0,
+      "disposition": "derived",
+      "reason": "Published outputs, geometry, and lithology; no model_archive resource."
+    },
+    {
+      "package_id": "f0e1bd64-2307-42cd-ace4-4c6f3ec1b33f",
+      "package_name": "ntgam-v301-inputs",
+      "title": "Trinity (northern portion) and Woodbine aquifers GAM (version 3.01)",
+      "package_url": "https://ckan.tacc.utexas.edu/dataset/ntgam-v301-inputs",
+      "model_code": "trnt_n",
+      "model_archive_resource_ids": [
+        "89a8d761-d9ab-4cdb-9370-ea1ca44eb71e"
+      ],
+      "model_archive_count": 1,
+      "disposition": "register",
+      "reason": "Every executable archive in this package has confirmed evidence and an existing exact-engine archive SVO contract."
+    },
+    {
+      "package_id": "dd7ae765-3789-4c3c-8d2c-04df49f34ba5",
+      "package_name": "ntgam-v301-outputs",
+      "title": "Northern Trinity GAM v3.01 — model outputs",
+      "package_url": "https://ckan.tacc.utexas.edu/dataset/ntgam-v301-outputs",
+      "model_code": null,
+      "model_archive_resource_ids": [],
+      "model_archive_count": 0,
+      "disposition": "derived",
+      "reason": "Published hydraulic-head outputs and geometry; no model_archive resource."
+    },
+    {
+      "package_id": "4921c88c-f4fe-4177-91c2-0be294f48175",
+      "package_name": "seymour-and-blaine-gam",
+      "title": "Seymour and Blaine Aquifers GAM (v2.01)",
+      "package_url": "https://ckan.tacc.utexas.edu/dataset/seymour-and-blaine-gam",
+      "model_code": "symr",
+      "model_archive_resource_ids": [
+        "322a568f-b2d0-45be-a8cc-c9033a54f073",
+        "3d3a9061-cb24-4c6d-808c-310bf5f0ed88"
+      ],
+      "model_archive_count": 2,
+      "disposition": "register",
+      "reason": "Every executable archive in this package has confirmed evidence and an existing exact-engine archive SVO contract."
+    },
+    {
+      "package_id": "b5b5ebc8-1c54-448b-a5d1-91278d6ac371",
+      "package_name": "swp22-groundwater-management-area-model-files",
+      "title": "SWP22 Groundwater Management Area Model Files",
+      "package_url": "https://ckan.tacc.utexas.edu/dataset/swp22-groundwater-management-area-model-files",
+      "model_code": null,
+      "model_archive_resource_ids": [],
+      "model_archive_count": 0,
+      "disposition": "not_executable",
+      "reason": "Planning documents and a BIN resource; no model_archive resource."
+    },
+    {
+      "package_id": "111fc6c8-9846-446e-9671-8d42a971e189",
+      "package_name": "trinity-aquifer-hill-country-southern-portion",
+      "title": "Trinity Aquifer (southern portion) GAM (version 3.01)",
+      "package_url": "https://ckan.tacc.utexas.edu/dataset/trinity-aquifer-hill-country-southern-portion",
+      "model_code": "trnt_h",
+      "model_archive_resource_ids": [
+        "6d1b68ac-c3c4-4630-8f30-3715b1759c9f"
+      ],
+      "model_archive_count": 1,
+      "disposition": "register",
+      "reason": "Every executable archive in this package has confirmed evidence and an existing exact-engine archive SVO contract."
+    },
+    {
+      "package_id": "f61332bd-5412-431a-b3b9-adfb4f62fb31",
+      "package_name": "twdb-bsvp-model-archives",
+      "title": "Bone Spring-Victorio Peak Aquifer GAM",
+      "package_url": "https://ckan.tacc.utexas.edu/dataset/twdb-bsvp-model-archives",
+      "model_code": "bsvp",
+      "model_archive_resource_ids": [
+        "c76c6801-dbc0-4567-b285-2dbfa165223d"
+      ],
+      "model_archive_count": 1,
+      "disposition": "register",
+      "reason": "Every executable archive in this package has confirmed evidence and an existing exact-engine archive SVO contract."
+    },
+    {
+      "package_id": "d24acf1a-3b9d-4943-85c5-3f28b7eb5614",
+      "package_name": "twdb-bzrv-model-archives",
+      "title": "Brazos River Alluvium Aquifer GAM",
+      "package_url": "https://ckan.tacc.utexas.edu/dataset/twdb-bzrv-model-archives",
+      "model_code": "bzrv",
+      "model_archive_resource_ids": [
+        "5f5a6b12-be32-44f8-8a83-e651abd90589"
+      ],
+      "model_archive_count": 1,
+      "disposition": "hold",
+      "reason": "Executable archive exists; exact engine evidence is incomplete or the MINT contract is not yet approved."
+    },
+    {
+      "package_id": "623c2905-6713-4b3f-b413-8d23ccd4b8d2",
+      "package_name": "twdb-cstb-model-archives",
+      "title": "Cross Timbers Aquifer GAM",
+      "package_url": "https://ckan.tacc.utexas.edu/dataset/twdb-cstb-model-archives",
+      "model_code": "cstb",
+      "model_archive_resource_ids": [
+        "88c0b495-1b7d-4f99-ba65-8e1165bf649c"
+      ],
+      "model_archive_count": 1,
+      "disposition": "register",
+      "reason": "Every executable archive in this package has confirmed evidence and an existing exact-engine archive SVO contract."
+    },
+    {
+      "package_id": "e81bf0c1-5eb8-4d4f-a594-1922ea4ef7c8",
+      "package_name": "twdb-gma16-model-archives",
+      "title": "GMA 16 groundwater flow model",
+      "package_url": "https://ckan.tacc.utexas.edu/dataset/twdb-gma16-model-archives",
+      "model_code": "gma16",
+      "model_archive_resource_ids": [
+        "908fa07e-5c6f-49bc-af23-d658e3b435d7"
+      ],
+      "model_archive_count": 1,
+      "disposition": "alternative/research",
+      "reason": "TWDB alternative-model collection; archive engine is confirmed MODFLOW-2000."
+    },
+    {
+      "package_id": "50ec4af3-307b-401f-8f9f-4bd1f551d69a",
+      "package_name": "twdb-hmbl-hueco-model-archives",
+      "title": "Hueco Bolsons Aquifer GAM",
+      "package_url": "https://ckan.tacc.utexas.edu/dataset/twdb-hmbl-hueco-model-archives",
+      "model_code": "hmbl-hueco",
+      "model_archive_resource_ids": [
+        "e5ec33c6-f389-4477-9798-ea5843e9d98b"
+      ],
+      "model_archive_count": 1,
+      "disposition": "register",
+      "reason": "Every executable archive in this package has confirmed evidence and an existing exact-engine archive SVO contract."
+    },
+    {
+      "package_id": "34822f18-1376-4663-9f44-f2c84f2797d0",
+      "package_name": "twdb-hmbl-mesilla-model-archives",
+      "title": "Mesilla Bolsons Aquifer GAM",
+      "package_url": "https://ckan.tacc.utexas.edu/dataset/twdb-hmbl-mesilla-model-archives",
+      "model_code": "hmbl-mesilla",
+      "model_archive_resource_ids": [
+        "a4e5fde3-16a9-4dd2-ac41-fa236dcc0b8f"
+      ],
+      "model_archive_count": 1,
+      "disposition": "register",
+      "reason": "Every executable archive in this package has confirmed evidence and an existing exact-engine archive SVO contract."
+    },
+    {
+      "package_id": "da6229f3-e859-46c8-844e-de00e4d095b5",
+      "package_name": "twdb-igbl-model-archives",
+      "title": "Igneous and West Texas Bolsons (Wild Horse Flat, Michigan Flat, Ryan Flat, and Lobo Flat) aquifers GAM",
+      "package_url": "https://ckan.tacc.utexas.edu/dataset/twdb-igbl-model-archives",
+      "model_code": "igbl",
+      "model_archive_resource_ids": [
+        "08d07247-380d-4f54-b545-5b69f091b2a6"
+      ],
+      "model_archive_count": 1,
+      "disposition": "register",
+      "reason": "Every executable archive in this package has confirmed evidence and an existing exact-engine archive SVO contract."
+    },
+    {
+      "package_id": "c734c1d7-ef2d-41cc-8445-ca543c8ec5d3",
+      "package_name": "twdb-knny-model-archives",
+      "title": "Kinney County model",
+      "package_url": "https://ckan.tacc.utexas.edu/dataset/twdb-knny-model-archives",
+      "model_code": "knny",
+      "model_archive_resource_ids": [
+        "fc6f3783-aaed-437a-a5ea-746cf22ac97a"
+      ],
+      "model_archive_count": 1,
+      "disposition": "alternative/research",
+      "reason": "TWDB alternative-model collection; exact executable engine still needs confirmation."
+    },
+    {
+      "package_id": "4a3b946d-ef0f-4a66-bae9-67f4fe2e653b",
+      "package_name": "twdb-llano-model-archives",
+      "title": "Llano Uplift Aquifer System GAM",
+      "package_url": "https://ckan.tacc.utexas.edu/dataset/twdb-llano-model-archives",
+      "model_code": "llano",
+      "model_archive_resource_ids": [
+        "4363e24a-50b3-4adb-8133-3d0c505092d6"
+      ],
+      "model_archive_count": 1,
+      "disposition": "hold",
+      "reason": "Executable archive exists; exact engine evidence is incomplete or the MINT contract is not yet approved."
+    },
+    {
+      "package_id": "2d4f2330-5d67-4e6d-8d28-fd456014e752",
+      "package_name": "twdb-lrgv-model-archives",
+      "title": "Lower Rio Grande Valley transport model",
+      "package_url": "https://ckan.tacc.utexas.edu/dataset/twdb-lrgv-model-archives",
+      "model_code": "lrgv",
+      "model_archive_resource_ids": [
+        "405aa21a-8b1f-4a61-80da-e4ef04753c67"
+      ],
+      "model_archive_count": 1,
+      "disposition": "alternative/research",
+      "reason": "TWDB research transport model; exact executable engine and MINT contract still need confirmation."
+    },
+    {
+      "package_id": "812a8438-543f-4caf-a5e3-51e318b295da",
+      "package_name": "twdb-prbl-model-archives",
+      "title": "West Texas Bolsons (Presidio and Redford Bolsons) Aquifer GAM",
+      "package_url": "https://ckan.tacc.utexas.edu/dataset/twdb-prbl-model-archives",
+      "model_code": "prbl",
+      "model_archive_resource_ids": [
+        "a4d6ef2e-7c95-4883-8578-392bcc183171"
+      ],
+      "model_archive_count": 1,
+      "disposition": "register",
+      "reason": "Every executable archive in this package has confirmed evidence and an existing exact-engine archive SVO contract."
+    },
+    {
+      "package_id": "f4596bbf-8a55-47b7-b484-6a8b20393b04",
+      "package_name": "twdb-rslr-model-archives",
+      "title": "Rustler Aquifer GAM",
+      "package_url": "https://ckan.tacc.utexas.edu/dataset/twdb-rslr-model-archives",
+      "model_code": "rslr",
+      "model_archive_resource_ids": [
+        "156c24a2-c87e-4d6f-915b-4df40e7d5673"
+      ],
+      "model_archive_count": 1,
+      "disposition": "hold",
+      "reason": "Executable archive exists; exact engine evidence is incomplete or the MINT contract is not yet approved."
+    },
+    {
+      "package_id": "e7cffb70-c63c-45ff-bb29-4c9315fe2d7a",
+      "package_name": "twdb-symr-hkb-model-archives",
+      "title": "Seymour Aquifer in Haskell, Knox, and Baylor counties GAM",
+      "package_url": "https://ckan.tacc.utexas.edu/dataset/twdb-symr-hkb-model-archives",
+      "model_code": "symr_hkb",
+      "model_archive_resource_ids": [
+        "2265a241-d194-432c-afa7-131937e31439"
+      ],
+      "model_archive_count": 1,
+      "disposition": "register",
+      "reason": "Every executable archive in this package has confirmed evidence and an existing exact-engine archive SVO contract."
+    },
+    {
+      "package_id": "3045e2f3-8398-44ae-9ed7-1646bb1c403b",
+      "package_name": "twdb-wtbl-model-archives",
+      "title": "West Texas Bolsons (Red Light, Green River, and Eagle Flat) Aquifer GAM",
+      "package_url": "https://ckan.tacc.utexas.edu/dataset/twdb-wtbl-model-archives",
+      "model_code": "wtbl",
+      "model_archive_resource_ids": [
+        "06ef0c24-3714-47ad-b246-ebf4a5cc8a97"
+      ],
+      "model_archive_count": 1,
+      "disposition": "register",
+      "reason": "Every executable archive in this package has confirmed evidence and an existing exact-engine archive SVO contract."
+    },
+    {
+      "package_id": "940ed496-36de-475d-b31e-b34cde68870f",
+      "package_name": "yegua-jackson-aquifer-groundwater-availability-model-files",
+      "title": "Yegua-Jackson Aquifer GAM",
+      "package_url": "https://ckan.tacc.utexas.edu/dataset/yegua-jackson-aquifer-groundwater-availability-model-files",
+      "model_code": "ygjk",
+      "model_archive_resource_ids": [
+        "0c31d94f-e626-4719-95c9-101b80b44f2d"
+      ],
+      "model_archive_count": 1,
+      "disposition": "register",
+      "reason": "Every executable archive in this package has confirmed evidence and an existing exact-engine archive SVO contract."
+    }
+  ],
+  "resources": [
+    {
+      "package_id": "18896c0d-2182-40b4-ad78-5a8ab6683030",
+      "package_name": "blossom-aquifer-model-files",
+      "resource_id": "0885d036-b73b-4373-aa4c-16ca96d61ef1",
+      "resource_name": "Blossom Aquifer GAM — Model",
+      "resource_url": "https://gw-models.s3.amazonaws.com/Download_GAMs/blsm/blsm_model_v1.01.7z",
+      "engine": "MODFLOW-NWT",
+      "engine_status": "confirmed",
+      "confidence": "high",
+      "registration": "hold_missing_mint_contract",
+      "target_archive_svo": null,
+      "evidence_level": "official_report",
+      "evidence_url": "https://www.twdb.texas.gov/groundwater/models/gam/blsm/BlossomModelReport_Final_012422.pdf",
+      "evidence_basis": "Blossom model report identifies MODFLOW-NWT; this is not interchangeable with MODFLOW-2005."
+    },
+    {
+      "package_id": "f46529ac-18d3-4d19-9fab-23eafc3f3cbb",
+      "package_name": "carrizo-wilcox-aquifer-northern-portion",
+      "resource_id": "7b5e6cee-b68f-40e1-9105-1700bf54b1ed",
+      "resource_name": "Carrizo-Wilcox Aquifer (northern portion) GAM (version 3.01) — Model",
+      "resource_url": "https://gw-models.s3.amazonaws.com/Download_GAMs/czwx_n/czwx_n_qcsp_v3.01.7z",
+      "engine": "MODFLOW-6",
+      "engine_status": "confirmed",
+      "confidence": "high",
+      "registration": "register",
+      "target_archive_svo": "groundwater_model_modflow6_simulation_archive",
+      "evidence_level": "tapis_remote_tree",
+      "evidence_url": "https://portals.tapis.io/v3/files/ops/cloud.data.exec/corral-repl/tacc/aci/PT2050/projects/PTDATAX-272/Carrizo-Wilcox_Aquifer_northern_portion_GAM_version_3.01/Model_File/czwx_n_qcsp_v3.01/0_readme_to_run_model.txt",
+      "evidence_basis": "Tapis cloud.data.exec tree contains the model run README specifying MODFLOW 6 version 6.0.5 (mf6.exe) for the northern Carrizo-Wilcox model."
+    },
+    {
+      "package_id": "ca7524c2-5bd7-42ad-80a5-881fe09708f5",
+      "package_name": "carrizo-wilcox-aquifer-southern-portion",
+      "resource_id": "48fbf141-fbfa-4c88-9e8a-96b1e4f5aa31",
+      "resource_name": "Carrizo-Wilcox Aquifer (southern portion) GAM (version 3.1) — Model",
+      "resource_url": "https://gw-models.s3.amazonaws.com/Download_GAMs/czwx_s/czwx_s_qcsp_v3.1/czwx_s_qcsp_v3.1_calibrated_model_files.7z",
+      "engine": "MODFLOW-6",
+      "engine_status": "candidate",
+      "confidence": "medium",
+      "registration": "hold_evidence",
+      "target_archive_svo": null,
+      "evidence_level": "curator_reviewed_ckan",
+      "evidence_url": "https://ckan.tacc.utexas.edu/dataset/carrizo-wilcox-aquifer-southern-portion",
+      "evidence_basis": "Live CKAN landing metadata says the southern Carrizo-Wilcox model was developed using MODFLOW 6; archive/release confirmation remains required."
+    },
+    {
+      "package_id": "3442ea46-8508-4403-8a58-a07ce8c4d216",
+      "package_name": "carrizo-wilcox-gam-central-portion",
+      "resource_id": "91900e12-978a-4896-93c5-12a8fe851d02",
+      "resource_name": "Carrizo-Wilcox Aquifer (central portion) GAM (version 3.02) — Model",
+      "resource_url": "https://gw-models.s3.amazonaws.com/Download_GAMs/czwx_c/czwx_c_qcsp_v3.02_model_files.zip",
+      "engine": "MODFLOW-USG",
+      "engine_status": "confirmed",
+      "confidence": "high",
+      "registration": "hold_missing_mint_contract",
+      "target_archive_svo": null,
+      "evidence_level": "curator_reviewed_ckan",
+      "evidence_url": "https://ckan.tacc.utexas.edu/dataset/carrizo-wilcox-gam-central-portion",
+      "evidence_basis": "Explicit CKAN modflow_variant=modflow-usg extra on the live package; requires a distinct MINT contract."
+    },
+    {
+      "package_id": "3c0c4d61-90f1-489a-baa5-3c6357a01a84",
+      "package_name": "edwards-bfz-barton-springs-segment-gam",
+      "resource_id": "3a9a635f-6330-46a3-84bc-579cd557ae5c",
+      "resource_name": "Edwards (BFZ) Aquifer (Barton Springs Segment) GAM — Model and source data",
+      "resource_url": "https://gw-models.s3.amazonaws.com/Download_GAMs/ebfz_b/Edwards_BFZ_Barton_Springs.zip",
+      "engine": "MODFLOW-2000",
+      "engine_status": "confirmed",
+      "confidence": "medium",
+      "registration": "register",
+      "target_archive_svo": "groundwater_model_modflow2000_simulation_archive",
+      "evidence_level": "curator_reviewed_ckan",
+      "evidence_url": "https://ckan.tacc.utexas.edu/dataset/edwards-bfz-barton-springs-segment-gam",
+      "evidence_basis": "Live CKAN resource abstract identifies MODFLOW-2000 for Barton Springs."
+    },
+    {
+      "package_id": "11dfa0b6-3d39-455b-824f-0ed6a4cdfd1f",
+      "package_name": "edwards-bfz-northern-segment-gam",
+      "resource_id": "12a42603-f17b-4d35-9c5e-a7a7e2ee7307",
+      "resource_name": "Edwards (BFZ) Aquifer (Northern Segment) GAM — Model",
+      "resource_url": "https://gw-models.s3.amazonaws.com/Download_GAMs/ebfz_n/ebfz_n_v2.1/ebfz_n_v2.1_ModelFiles.7z",
+      "engine": "MODFLOW-USG",
+      "engine_status": "confirmed",
+      "confidence": "medium",
+      "registration": "hold_missing_mint_contract",
+      "target_archive_svo": null,
+      "evidence_level": "curator_reviewed_ckan",
+      "evidence_url": "https://ckan.tacc.utexas.edu/dataset/edwards-bfz-northern-segment-gam",
+      "evidence_basis": "Live CKAN resource abstract identifies MODFLOW-USG beta; requires a distinct MINT contract."
+    },
+    {
+      "package_id": "3d5b4b97-cc54-49ef-9d34-6a94a872d36b",
+      "package_name": "edwards-bfz-san-antonio-segment-gam",
+      "resource_id": "5097bb8b-0624-48e6-a3d8-6e1b70bec545",
+      "resource_name": "Edwards (BFZ) Aquifer (San Antonio Segment) GAM — Model",
+      "resource_url": "https://gw-models.s3.amazonaws.com/Download_GAMs/ebfz_s/Edwards_BFZ_San_Antonio_GWSIM.zip",
+      "engine": "GWSIM",
+      "engine_status": "confirmed",
+      "confidence": "high",
+      "registration": "hold_missing_mint_contract",
+      "target_archive_svo": null,
+      "evidence_level": "curator_reviewed_ckan",
+      "evidence_url": "https://ckan.tacc.utexas.edu/dataset/edwards-bfz-san-antonio-segment-gam",
+      "evidence_basis": "Live CKAN package identifies GWSIM as the TWDB-maintained alternative; do not map it to MODFLOW."
+    },
+    {
+      "package_id": "f1c47627-b313-4b02-922d-80bec8b0d849",
+      "package_name": "edwards-trinity-plateau-pecos-valley-gam",
+      "resource_id": "d63a3c99-7633-47ed-b897-75df156e5719",
+      "resource_name": "Edwards-Trinity (Plateau) and Pecos Valley aquifers GAM — Model",
+      "resource_url": "https://gw-models.s3.amazonaws.com/Download_GAMs/eddt_r/Edwards_Trinity_Plateau_Model_Only.zip",
+      "engine": "MODFLOW-2000",
+      "engine_status": "candidate",
+      "confidence": "medium",
+      "registration": "hold_evidence",
+      "target_archive_svo": null,
+      "evidence_level": "official_page",
+      "evidence_url": "https://www.twdb.texas.gov/groundwater/models/alt/eddt_p_2011/alt1_eddt_p.asp",
+      "evidence_basis": "Official Edwards-Trinity alternative page distinguishes an updated MODFLOW-2000 model from the original MODFLOW-96; release-to-archive correspondence still needs confirmation."
+    },
+    {
+      "package_id": "6d11c310-e1c9-40d0-88f6-613d6d893e1a",
+      "package_name": "gulf-coast-central-southern-gam",
+      "resource_id": "e318e313-12e1-4e92-a811-bf0fb085214e",
+      "resource_name": "Gulf Coast Aquifer System (central and southern portions) GAM — Model",
+      "resource_url": "https://gw-models.s3.amazonaws.com/Download_GAMs/glfc_c_s/July19_glfc_c_s_ModelFiles.7z",
+      "engine": "MODFLOW-USG",
+      "engine_status": "confirmed",
+      "confidence": "medium",
+      "registration": "hold_missing_mint_contract",
+      "target_archive_svo": null,
+      "evidence_level": "curator_reviewed_ckan",
+      "evidence_url": "https://ckan.tacc.utexas.edu/dataset/gulf-coast-central-southern-gam",
+      "evidence_basis": "Live CKAN resource abstract identifies MODFLOW-USG; requires a distinct MINT contract."
+    },
+    {
+      "package_id": "82a7d48a-a9d7-44a0-8061-dbfea7fb0d01",
+      "package_name": "gulf-coast-northern-gam",
+      "resource_id": "d58dd792-ff36-4e50-9936-83dcffaa8295",
+      "resource_name": "Gulf Coast Aquifer System (northern portion) GAM (version 4.1) — Model",
+      "resource_url": "https://gw-models.s3.amazonaws.com/Download_GAMs/glfc_n/glfc_n_v4.1/glfc_n_v4.1_model_files.zip",
+      "engine": "MODFLOW-6",
+      "engine_status": "confirmed",
+      "confidence": "medium",
+      "registration": "register",
+      "target_archive_svo": "groundwater_model_modflow6_simulation_archive",
+      "evidence_level": "curator_reviewed_ckan",
+      "evidence_url": "https://ckan.tacc.utexas.edu/dataset/gulf-coast-northern-gam",
+      "evidence_basis": "Live CKAN resource abstract identifies MODFLOW 6 for the northern Gulf Coast archive."
+    },
+    {
+      "package_id": "1db72fb2-762f-4669-b6e8-b78b3040d979",
+      "package_name": "high-plains-aquifer-system-gam",
+      "resource_id": "69f17ab8-462f-4344-8229-a5edb71c5186",
+      "resource_name": "High Plains Aquifer System GAM — Model",
+      "resource_url": "https://gw-models.s3.amazonaws.com/Download_GAMs/hpas/hpas_ext_model_05_2025.zip",
+      "engine": "MODFLOW-NWT",
+      "engine_status": "confirmed",
+      "confidence": "high",
+      "registration": "hold_missing_mint_contract",
+      "target_archive_svo": null,
+      "evidence_level": "official_report",
+      "evidence_url": "https://www.twdb.texas.gov/groundwater/models/gam/hpas/HPAS_GAM_Numerical_Report.pdf",
+      "evidence_basis": "High Plains numerical report identifies MODFLOW-NWT; this is not interchangeable with MODFLOW-2005."
+    },
+    {
+      "package_id": "beba358a-69e3-404b-8e97-f2056418c0e9",
+      "package_name": "https-txwaterdatahub-org-dataset-capitan-reef-complex-aquifer-gam-files",
+      "resource_id": "925114fc-625c-46a0-a366-bcb3224ca54d",
+      "resource_name": "Capitan Reef Complex Aquifer GAM — Model",
+      "resource_url": "https://gw-models.s3.amazonaws.com/Download_GAMs/crcx/Capitan_Reef_Complex_Aquifer_GAM_Model_Report.zipx",
+      "engine": "MODFLOW-2005",
+      "engine_status": "confirmed",
+      "confidence": "high",
+      "registration": "register",
+      "target_archive_svo": "groundwater_model_modflow2005_simulation_archive",
+      "evidence_level": "archive_member",
+      "evidence_url": "https://ckan.tacc.utexas.edu/dataset/https-txwaterdatahub-org-dataset-capitan-reef-complex-aquifer-gam-files",
+      "evidence_basis": "The live CKAN package exposes mf2005.nam and mf2005.in alongside the Capitan archive, directly identifying the executable family."
+    },
+    {
+      "package_id": "191f8bb3-1bf5-4326-89df-5aebae0b18b4",
+      "package_name": "lipan-aquifer-gam",
+      "resource_id": "59abce6e-6aba-4a85-b4b1-ae82a310ef7d",
+      "resource_name": "Lipan Aquifer GAM — Model",
+      "resource_url": "https://gw-models.s3.amazonaws.com/Download_GAMs/lipn/Lipan_Model_Only.zip",
+      "engine": "MODFLOW-96",
+      "engine_status": "confirmed",
+      "confidence": "high",
+      "registration": "register",
+      "target_archive_svo": "groundwater_model_modflow96_simulation_archive",
+      "evidence_level": "official_report",
+      "evidence_url": "https://www.twdb.texas.gov/groundwater/docs/GAMruns/GR23-023.pdf",
+      "evidence_basis": "TWDB GAM run report identifies the Lipan model as MODFLOW-96."
+    },
+    {
+      "package_id": "aae21134-8c61-4683-abb1-1107c433b175",
+      "package_name": "nacatoch-aquifer-gam",
+      "resource_id": "b0b28282-05ee-4413-9bb1-d9ed5b850214",
+      "resource_name": "Nacatoch Aquifer GAM — Model",
+      "resource_url": "https://gw-models.s3.amazonaws.com/Download_GAMs/nctc/Nacatoch_Model_Only.zip",
+      "engine": "MODFLOW-2000",
+      "engine_status": "confirmed",
+      "confidence": "high",
+      "registration": "register",
+      "target_archive_svo": "groundwater_model_modflow2000_simulation_archive",
+      "evidence_level": "official_report",
+      "evidence_url": "https://www.twdb.texas.gov/groundwater/models/gam/nctc/NCTC_Model_Report.pdf",
+      "evidence_basis": "Nacatoch numerical model report identifies MODFLOW-2000."
+    },
+    {
+      "package_id": "f0e1bd64-2307-42cd-ace4-4c6f3ec1b33f",
+      "package_name": "ntgam-v301-inputs",
+      "resource_id": "89a8d761-d9ab-4cdb-9370-ea1ca44eb71e",
+      "resource_name": "Trinity (northern portion) and Woodbine aquifers GAM (version 3.01) — Model",
+      "resource_url": "https://gw-models.s3.amazonaws.com/Download_GAMs/trnt_n/trnt_n_v301/NTGAM_Final_model_2025.7z",
+      "engine": "MODFLOW-6",
+      "engine_status": "confirmed",
+      "confidence": "high",
+      "registration": "register",
+      "target_archive_svo": "groundwater_model_modflow6_simulation_archive",
+      "evidence_level": "curator_reviewed_ckan",
+      "evidence_url": "https://ckan.tacc.utexas.edu/dataset/ntgam-v301-inputs",
+      "evidence_basis": "Explicit CKAN modflow_variant=modflow6 extra on the live package."
+    },
+    {
+      "package_id": "4921c88c-f4fe-4177-91c2-0be294f48175",
+      "package_name": "seymour-and-blaine-gam",
+      "resource_id": "322a568f-b2d0-45be-a8cc-c9033a54f073",
+      "resource_name": "Seymour and Blaine GAM — Model Files archive",
+      "resource_url": "https://gw-models.s3.amazonaws.com/Download_GAMs/symr/Seymour_Model_Only.zip",
+      "engine": "MODFLOW-2000",
+      "engine_status": "confirmed",
+      "confidence": "high",
+      "registration": "register",
+      "target_archive_svo": "groundwater_model_modflow2000_simulation_archive",
+      "evidence_level": "curator_reviewed_ckan",
+      "evidence_url": "https://ckan.tacc.utexas.edu/dataset/seymour-and-blaine-gam",
+      "evidence_basis": "Live CKAN resource abstract identifies this unversioned Seymour archive as native MODFLOW-2000."
+    },
+    {
+      "package_id": "4921c88c-f4fe-4177-91c2-0be294f48175",
+      "package_name": "seymour-and-blaine-gam",
+      "resource_id": "3d3a9061-cb24-4c6d-808c-310bf5f0ed88",
+      "resource_name": "Seymour and Blaine Aquifers GAM (v2.01) — Model",
+      "resource_url": "https://gw-models.s3.amazonaws.com/Download_GAMs/symr/symr_v2.01/Final/symr_v2.01_model_files.7z",
+      "engine": "MODFLOW-6",
+      "engine_status": "confirmed",
+      "confidence": "high",
+      "registration": "register",
+      "target_archive_svo": "groundwater_model_modflow6_simulation_archive",
+      "evidence_level": "official_page",
+      "evidence_url": "https://www.twdb.texas.gov/groundwater/models/gam/symr/symr.asp",
+      "evidence_basis": "Official TWDB Seymour/Blaine page identifies v2.01 as coded using MODFLOW 6."
+    },
+    {
+      "package_id": "111fc6c8-9846-446e-9671-8d42a971e189",
+      "package_name": "trinity-aquifer-hill-country-southern-portion",
+      "resource_id": "6d1b68ac-c3c4-4630-8f30-3715b1759c9f",
+      "resource_name": "Trinity Aquifer (southern portion) GAM (version 3.01) — Model",
+      "resource_url": "https://gw-models.s3.amazonaws.com/Download_GAMs/trnt_h/trnt_h_v3.01/Final/trnt_h_v3.01_Model_Files.7z",
+      "engine": "MODFLOW-96",
+      "engine_status": "confirmed",
+      "confidence": "high",
+      "registration": "register",
+      "target_archive_svo": "groundwater_model_modflow96_simulation_archive",
+      "evidence_level": "curator_reviewed_ckan",
+      "evidence_url": "https://ckan.tacc.utexas.edu/dataset/trinity-aquifer-hill-country-southern-portion",
+      "evidence_basis": "Explicit CKAN modflow_variant=modflow-96 extra on the live package; official TWDB model page identifies the release."
+    },
+    {
+      "package_id": "f61332bd-5412-431a-b3b9-adfb4f62fb31",
+      "package_name": "twdb-bsvp-model-archives",
+      "resource_id": "c76c6801-dbc0-4567-b285-2dbfa165223d",
+      "resource_name": "Bone Spring-Victorio Peak Aquifer GAM — Model",
+      "resource_url": "https://gw-models.s3.amazonaws.com/Download_GAMs/bsvp/bsvp_model_report.zip",
+      "engine": "MODFLOW-2000",
+      "engine_status": "confirmed",
+      "confidence": "high",
+      "registration": "register",
+      "target_archive_svo": "groundwater_model_modflow2000_simulation_archive",
+      "evidence_level": "official_report",
+      "evidence_url": "https://www.twdb.texas.gov/groundwater/models/gam/bsvp/bsvp_report.pdf",
+      "evidence_basis": "Bone Spring-Victorio Peak report identifies MODFLOW-2000."
+    },
+    {
+      "package_id": "d24acf1a-3b9d-4943-85c5-3f28b7eb5614",
+      "package_name": "twdb-bzrv-model-archives",
+      "resource_id": "5f5a6b12-be32-44f8-8a83-e651abd90589",
+      "resource_name": "Brazos River Alluvium Aquifer GAM — Model",
+      "resource_url": "https://gw-models.s3.amazonaws.com/Download_GAMs/bzrv/BRAA101_01_Model_Report.zipx",
+      "engine": "MODFLOW-USG",
+      "engine_status": "confirmed",
+      "confidence": "high",
+      "registration": "hold_missing_mint_contract",
+      "target_archive_svo": null,
+      "evidence_level": "archive_member",
+      "evidence_url": "https://gw-models.s3.amazonaws.com/Download_GAMs/bzrv/BRAA101_01_Model_Report.zipx",
+      "evidence_basis": "The remote BRAA101_01_Model_Report.zipx member directory contains Model_and_Utilities/bin/mfusg-beta.exe and a README referring to importing USG into GWV."
+    },
+    {
+      "package_id": "623c2905-6713-4b3f-b413-8d23ccd4b8d2",
+      "package_name": "twdb-cstb-model-archives",
+      "resource_id": "88c0b495-1b7d-4f99-ba65-8e1165bf649c",
+      "resource_name": "Cross Timbers Aquifer GAM — Model",
+      "resource_url": "https://gw-models.s3.amazonaws.com/Download_GAMs/cstb/cstb_v1.01/cstb_v1.01_model_files.7z",
+      "engine": "MODFLOW-6",
+      "engine_status": "confirmed",
+      "confidence": "high",
+      "registration": "register",
+      "target_archive_svo": "groundwater_model_modflow6_simulation_archive",
+      "evidence_level": "official_report",
+      "evidence_url": "https://www.twdb.texas.gov/groundwater/models/gam/cstb/CrossTimbersGAM_SAF2_Summary_FinalMemo.pdf",
+      "evidence_basis": "Cross Timbers SAF summary identifies MODFLOW-6."
+    },
+    {
+      "package_id": "e81bf0c1-5eb8-4d4f-a594-1922ea4ef7c8",
+      "package_name": "twdb-gma16-model-archives",
+      "resource_id": "908fa07e-5c6f-49bc-af23-d658e3b435d7",
+      "resource_name": "GMA 16 groundwater flow model — Model",
+      "resource_url": "https://gw-models.s3.amazonaws.com/Alternative_Models/gma16/GMA16_Draft_Model.zip",
+      "engine": "MODFLOW-2000",
+      "engine_status": "confirmed",
+      "confidence": "high",
+      "registration": "register",
+      "target_archive_svo": "groundwater_model_modflow2000_simulation_archive",
+      "evidence_level": "official_report",
+      "evidence_url": "https://www.twdb.texas.gov/groundwater/models/alt/gma16/GMA16_Model_Report_DRAFT.pdf",
+      "evidence_basis": "GMA16 model report identifies MODFLOW-2000."
+    },
+    {
+      "package_id": "50ec4af3-307b-401f-8f9f-4bd1f551d69a",
+      "package_name": "twdb-hmbl-hueco-model-archives",
+      "resource_id": "e5ec33c6-f389-4477-9798-ea5843e9d98b",
+      "resource_name": "Hueco Bolsons Aquifer GAM — Model",
+      "resource_url": "https://gw-models.s3.amazonaws.com/Download_GAMs/hmbl/Hueco_Bolson_Model_Only.zip",
+      "engine": "MODFLOW-96",
+      "engine_status": "confirmed",
+      "confidence": "high",
+      "registration": "register",
+      "target_archive_svo": "groundwater_model_modflow96_simulation_archive",
+      "evidence_level": "tapis_remote_tree",
+      "evidence_url": "https://portals.tapis.io/v3/files/ops/cloud.data.exec/corral-repl/tacc/aci/PT2050/projects/PTDATAX-272/Hueco_Bolsons_Aquifer_GAM/Model_File/Hueco_Bolson_Model_Only/SourceCode/mf96hueco.exe",
+      "evidence_basis": "Tapis cloud.data.exec tree contains mf96hueco.exe beside the Hueco steady-state and transient namefiles."
+    },
+    {
+      "package_id": "34822f18-1376-4663-9f44-f2c84f2797d0",
+      "package_name": "twdb-hmbl-mesilla-model-archives",
+      "resource_id": "a4e5fde3-16a9-4dd2-ac41-fa236dcc0b8f",
+      "resource_name": "Mesilla Bolsons Aquifer GAM — Model",
+      "resource_url": "https://gw-models.s3.amazonaws.com/Download_GAMs/hmbl/Mesilla_Bolson_Model_Only.zip",
+      "engine": "MODFLOW-96",
+      "engine_status": "confirmed",
+      "confidence": "high",
+      "registration": "register",
+      "target_archive_svo": "groundwater_model_modflow96_simulation_archive",
+      "evidence_level": "tapis_remote_tree",
+      "evidence_url": "https://portals.tapis.io/v3/files/ops/cloud.data.exec/corral-repl/tacc/aci/PT2050/projects/PTDATAX-272/Mesilla_Bolsons_Aquifer_GAM/Model_File/Mesilla_Bolson_Model_Only/modflow/input/mf96canu.exe",
+      "evidence_basis": "Tapis cloud.data.exec tree contains mf96canu.exe beside the Mesilla MODFLOW namefiles."
+    },
+    {
+      "package_id": "da6229f3-e859-46c8-844e-de00e4d095b5",
+      "package_name": "twdb-igbl-model-archives",
+      "resource_id": "08d07247-380d-4f54-b545-5b69f091b2a6",
+      "resource_name": "Igneous and West Texas Bolsons (Wild Horse Flat, Michigan Flat, Ryan Flat, and Lobo Flat) aquifers GAM — Model",
+      "resource_url": "https://gw-models.s3.amazonaws.com/Download_GAMs/igbl/Igneous_WTBL_Model_Only.zip",
+      "engine": "MODFLOW-96",
+      "engine_status": "confirmed",
+      "confidence": "high",
+      "registration": "register",
+      "target_archive_svo": "groundwater_model_modflow96_simulation_archive",
+      "evidence_level": "tapis_remote_tree",
+      "evidence_url": "https://portals.tapis.io/v3/files/ops/cloud.data.exec/corral-repl/tacc/aci/PT2050/projects/PTDATAX-272/Igneous_and_West_Texas_Bolsons_Wild_Horse_Flat_Michigan_Flat_Ryan_Flat_and_Lobo_Flat_aquifers_GAM/Geodatabase/Igneous_WTBL/CD-2_model/modflow/trans/readme.txt",
+      "evidence_basis": "Tapis cloud.data.exec tree contains Modflw96v.exe and the directory README explicitly identifies MODFLOW-96 ASCII array format and the USGS MODFLOW-96 executable."
+    },
+    {
+      "package_id": "c734c1d7-ef2d-41cc-8445-ca543c8ec5d3",
+      "package_name": "twdb-knny-model-archives",
+      "resource_id": "fc6f3783-aaed-437a-a5ea-746cf22ac97a",
+      "resource_name": "Kinney County model — Model",
+      "resource_url": "https://gw-models.s3.amazonaws.com/Alternative_Models/knny/Kinney_County_Model.zip",
+      "engine": "MODFLOW-2000",
+      "engine_status": "confirmed",
+      "confidence": "high",
+      "registration": "register",
+      "target_archive_svo": "groundwater_model_modflow2000_simulation_archive",
+      "evidence_level": "official_report",
+      "evidence_url": "https://www.twdb.texas.gov/groundwater/models/alt/knny/Kinney_County_Model_Report.pdf",
+      "evidence_basis": "The official Kinney County Groundwater Flow Model report identifies the new model as USGS MODFLOW-2000 Version 1.19.01, released in 2010."
+    },
+    {
+      "package_id": "4a3b946d-ef0f-4a66-bae9-67f4fe2e653b",
+      "package_name": "twdb-llano-model-archives",
+      "resource_id": "4363e24a-50b3-4adb-8133-3d0c505092d6",
+      "resource_name": "Llano Uplift Aquifer System GAM — Model",
+      "resource_url": "https://gw-models.s3.amazonaws.com/Download_GAMs/llano/Llano_v1.01_model_reports.zip",
+      "engine": "MODFLOW-USG",
+      "engine_status": "confirmed",
+      "confidence": "high",
+      "registration": "hold_missing_mint_contract",
+      "target_archive_svo": null,
+      "evidence_level": "tapis_remote_tree",
+      "evidence_url": "https://portals.tapis.io/v3/files/ops/cloud.data.exec/corral-repl/tacc/aci/PT2050/projects/PTDATAX-272/Llano_Uplift_Aquifer_System_GAM/Model_File/Llano_v1.01_model_reports/Model/Model/MFUSGs.exe",
+      "evidence_basis": "Tapis cloud.data.exec tree contains MFUSGs.exe and the Llano input directory is explicitly named modflow-usg."
+    },
+    {
+      "package_id": "2d4f2330-5d67-4e6d-8d28-fd456014e752",
+      "package_name": "twdb-lrgv-model-archives",
+      "resource_id": "405aa21a-8b1f-4a61-80da-e4ef04753c67",
+      "resource_name": "Lower Rio Grande Valley transport model — Model",
+      "resource_url": "https://gw-models.s3.amazonaws.com/Download_GAMs/lrgv/lrgv1.01_model_files.zipx",
+      "engine": "MODFLOW-USG",
+      "engine_status": "confirmed",
+      "confidence": "high",
+      "registration": "hold_missing_mint_contract",
+      "target_archive_svo": null,
+      "evidence_level": "archive_member",
+      "evidence_url": "https://gw-models.s3.amazonaws.com/Download_GAMs/lrgv/lrgv1.01_model_files.zipx",
+      "evidence_basis": "The remote lrgv1.01_model_files.zipx member directory contains USGs_lrgv.exe in the calibrated flow and density-dependent model directories."
+    },
+    {
+      "package_id": "812a8438-543f-4caf-a5e3-51e318b295da",
+      "package_name": "twdb-prbl-model-archives",
+      "resource_id": "a4d6ef2e-7c95-4883-8578-392bcc183171",
+      "resource_name": "West Texas Bolsons (Presidio and Redford Bolsons) Aquifer GAM — Model",
+      "resource_url": "https://gw-models.s3.amazonaws.com/Download_GAMs/prbl/West_Texas_Bolsons_Presidio_Redford_Model_only.zip",
+      "engine": "MODFLOW-2000",
+      "engine_status": "confirmed",
+      "confidence": "high",
+      "registration": "register",
+      "target_archive_svo": "groundwater_model_modflow2000_simulation_archive",
+      "evidence_level": "tapis_remote_tree",
+      "evidence_url": "https://portals.tapis.io/v3/files/ops/cloud.data.exec/corral-repl/tacc/aci/PT2050/projects/PTDATAX-272/West_Texas_Bolsons_Presidio_and_Redford_Bolsons_Aquifer_GAM/Model_File/West_Texas_Bolsons_Presidio_Redford_Model_only/CD1-Report_Model/00_Readme.txt",
+      "evidence_basis": "Tapis cloud.data.exec tree contains the Presidio/Redford README, which instructs users to run the model with the USGS mf2k executable."
+    },
+    {
+      "package_id": "f4596bbf-8a55-47b7-b484-6a8b20393b04",
+      "package_name": "twdb-rslr-model-archives",
+      "resource_id": "156c24a2-c87e-4d6f-915b-4df40e7d5673",
+      "resource_name": "Rustler Aquifer GAM — Model",
+      "resource_url": "https://gw-models.s3.amazonaws.com/Download_GAMs/rslr/rslr_model.zip",
+      "engine": "MODFLOW-NWT",
+      "engine_status": "confirmed",
+      "confidence": "high",
+      "registration": "hold_missing_mint_contract",
+      "target_archive_svo": null,
+      "evidence_level": "tapis_remote_tree",
+      "evidence_url": "https://portals.tapis.io/v3/files/ops/cloud.data.exec/corral-repl/tacc/aci/PT2050/projects/PTDATAX-272/Rustler_Aquifer_GAM/Model_File/rslr_model/model/00_readme.txt",
+      "evidence_basis": "Tapis cloud.data.exec tree contains the Rustler README, which identifies MODFLOW-NWT executables in the calibrated, official 200 AFY, and low-Kv model directories."
+    },
+    {
+      "package_id": "e7cffb70-c63c-45ff-bb29-4c9315fe2d7a",
+      "package_name": "twdb-symr-hkb-model-archives",
+      "resource_id": "2265a241-d194-432c-afa7-131937e31439",
+      "resource_name": "Seymour Aquifer in Haskell, Knox, and Baylor counties GAM — Model",
+      "resource_url": "https://gw-models.s3.amazonaws.com/Download_GAMs/symr_hkb/symr_hkb.zip",
+      "engine": "MODFLOW-2000",
+      "engine_status": "confirmed",
+      "confidence": "high",
+      "registration": "register",
+      "target_archive_svo": "groundwater_model_modflow2000_simulation_archive",
+      "evidence_level": "official_report",
+      "evidence_url": "https://www.twdb.texas.gov/groundwater/models/gam/symr_hkb/Seymour_HKB_GAM_Report_Sealed_021414.pdf",
+      "evidence_basis": "The official Seymour Haskell/Knox/Baylor GAM report identifies the flow model as USGS MODFLOW-2000."
+    },
+    {
+      "package_id": "3045e2f3-8398-44ae-9ed7-1646bb1c403b",
+      "package_name": "twdb-wtbl-model-archives",
+      "resource_id": "06ef0c24-3714-47ad-b246-ebf4a5cc8a97",
+      "resource_name": "West Texas Bolsons (Red Light, Green River, and Eagle Flat) Aquifer GAM — Model",
+      "resource_url": "https://gw-models.s3.amazonaws.com/Download_GAMs/wtbl/West_Texas_Bolsons_Model_Only.zip",
+      "engine": "MODFLOW-2000",
+      "engine_status": "confirmed",
+      "confidence": "high",
+      "registration": "register",
+      "target_archive_svo": "groundwater_model_modflow2000_simulation_archive",
+      "evidence_level": "tapis_remote_tree",
+      "evidence_url": "https://portals.tapis.io/v3/files/ops/cloud.data.exec/corral-repl/tacc/aci/PT2050/projects/PTDATAX-272/West_Texas_Bolsons_Red_Light_Green_River_and_Eagle_Flat_Aquifer_GAM/Model_File/West_Texas_Bolsons_Model_Only/CD-2_wtbl_model/Modflow/Transient/mf2k.exe",
+      "evidence_basis": "Tapis cloud.data.exec tree contains mf2k.exe beside the West Texas Bolsons Red Light/Green River/Eagle Flat steady-state and transient namefiles."
+    },
+    {
+      "package_id": "940ed496-36de-475d-b31e-b34cde68870f",
+      "package_name": "yegua-jackson-aquifer-groundwater-availability-model-files",
+      "resource_id": "0c31d94f-e626-4719-95c9-101b80b44f2d",
+      "resource_name": "Yegua-Jackson Aquifer GAM — Model",
+      "resource_url": "https://gw-models.s3.amazonaws.com/Download_GAMs/ygjk/Yegua_Jackson_Model_Only.zip",
+      "engine": "MODFLOW-2000",
+      "engine_status": "confirmed",
+      "confidence": "high",
+      "registration": "register",
+      "target_archive_svo": "groundwater_model_modflow2000_simulation_archive",
+      "evidence_level": "curator_reviewed_ckan",
+      "evidence_url": "https://ckan.tacc.utexas.edu/dataset/yegua-jackson-aquifer-groundwater-availability-model-files",
+      "evidence_basis": "Explicit CKAN modflow_variant=modflow-2000 extra on the live package."
+    }
+  ]
+}

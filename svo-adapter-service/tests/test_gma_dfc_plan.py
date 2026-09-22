@@ -79,6 +79,29 @@ def test_modeled_outputs_plan_to_dfc_metrics():
         assert [step["name"] for step in path] == expected_names
 
 
+def test_versioned_modflow_cbc_formats_reach_spring_flow():
+    data = _load()
+    registry = data["transform_specs"]
+    target = _target(data["target_model_input_spring_cfs"])
+
+    expected_extractors = {
+        "cbc-mf6": "modflow6-drain-gma-extract",
+        "cbc-mfusg": "modflow-usg-drain-gma-extract",
+        "cbc-mf2000": "modflow-2000-drain-gma-extract",
+        "cbc-mf96": "modflow-96-drain-gma-extract",
+        "cbc-mf2005": "modflow-2005-drain-gma-extract",
+    }
+
+    for fmt, extractor in expected_extractors.items():
+        source = DataObjectContract(
+            format=fmt,
+            resource_uri=f"tapis://demo/{fmt}/output.cbc",
+        )
+        path = find_path(source, target, registry)
+        assert path is not None, f"no spring-flow path for {fmt}"
+        assert [step["name"] for step in path] == [extractor, "flow-m3s-to-cfs"]
+
+
 def test_dfc_geo_actor_specs_use_actor_id_param():
     data = _load()
     actor_types = {

@@ -69,6 +69,8 @@ export interface StandardVariableComboboxProps {
   scopeLabel?: string;
   /** Selected outcome used to infer upstream driver variables. */
   driverOutcomeId?: string | null;
+  /** Display label for the selected outcome, used to bridge catalog/adapter SVO IDs. */
+  driverOutcomeLabel?: string | null;
   /** Selected model configurations used to keep inference task-specific. */
   driverConfigurationIds?: ReadonlyArray<string>;
 }
@@ -83,6 +85,7 @@ export function StandardVariableCombobox({
   scope = 'all',
   scopeLabel = 'used by a model',
   driverOutcomeId,
+  driverOutcomeLabel,
   driverConfigurationIds = [],
 }: StandardVariableComboboxProps) {
   const [open, setOpen] = React.useState(false);
@@ -96,6 +99,7 @@ export function StandardVariableCombobox({
     scope,
     showAll,
     driverOutcomeId,
+    driverOutcomeLabel,
     driverConfigurationIds,
   );
 

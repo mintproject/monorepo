@@ -4735,6 +4735,13 @@
       check: {}
       columns: [etl_process_id, role, position, standard_variable_uri, unit, format, dimensionality, spatial_type, crs_requirement, temporal_resolution, schema_requirement_json]
   select_permissions:
+  - role: anonymous
+    permission:
+      columns: [role, position, standard_variable_uri, unit, format]
+      filter:
+        etl_process:
+          visibility:
+            _eq: public
   - role: user
     permission:
       columns: [etl_process_id, role, position, standard_variable_uri, unit, format, dimensionality, spatial_type, crs_requirement, temporal_resolution, schema_requirement_json]
@@ -4797,6 +4804,10 @@
           name: transform_contract
           schema: adapter
   select_permissions:
+  - role: anonymous
+    permission:
+      columns: [id]
+      filter: {}
   - role: user
     permission:
       columns: [id]
@@ -4823,9 +4834,13 @@
           name: transform_edge
           schema: adapter
   select_permissions:
+  - role: anonymous
+    permission:
+      columns: [transform_spec_id, role, standard_variable_uri, format]
+      filter: {}
   - role: user
     permission:
-      columns: [id, transform_spec_id, role, standard_variable_uri]
+      columns: [id, transform_spec_id, role, standard_variable_uri, format]
       filter: {}
 - table:
     name: transform_edge

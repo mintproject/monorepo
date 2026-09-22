@@ -7,7 +7,7 @@ import {
   SetThreadModelsDocument,
   type Thread,
 } from '@/graphql/generated/modeling';
-import { ModelsStep } from '../ModelsStep';
+import { ModelOutcomeAdapterInferenceDocument, ModelsStep } from '../ModelsStep';
 
 const toastSpy = vi.fn();
 vi.mock('@/components/ui/use-toast', () => ({
@@ -34,19 +34,24 @@ function makeThread(overrides: Partial<Thread> = {}): Thread {
   };
 }
 
-function cfg(id: string, label: string, outVarId: string, outVarLabel: string) {
+function cfg(id: string, label: string, outVarId: string, outVarLabel: string, format?: string) {
   return {
     id,
     label,
     regions: [],
     inputs: [
       {
+        configuration_id: id,
+        input_id: `${id}-in`,
         is_optional: false,
         input: {
           id: `${id}-in`,
           label: 'precipitation',
+          has_format: null,
           presentations: [
             {
+              dataset_specification_id: `${id}-in`,
+              presentation_id: `${id}-vp`,
               presentation: {
                 id: `${id}-vp`,
                 standard_variable: { id: 'sv-precip', label: 'precipitation' },
@@ -58,17 +63,24 @@ function cfg(id: string, label: string, outVarId: string, outVarLabel: string) {
     ],
     outputs: [
       {
+        configuration_id: id,
+        output_id: `${id}-out`,
         output: {
           id: `${id}-out`,
           label: outVarLabel,
-          presentations: [
-            {
-              presentation: {
-                id: `${id}-ovp`,
-                standard_variable: { id: outVarId, label: outVarLabel },
-              },
-            },
-          ],
+          has_format: format ?? null,
+          presentations: outVarId
+            ? [
+                {
+                  dataset_specification_id: `${id}-out`,
+                  presentation_id: `${id}-ovp`,
+                  presentation: {
+                    id: `${id}-ovp`,
+                    standard_variable: { id: outVarId, label: outVarLabel },
+                  },
+                },
+              ]
+            : [],
         },
       },
     ],
@@ -100,6 +112,81 @@ const treeMock: MockedResponse = {
   },
 };
 
+const dfcTreeMock: MockedResponse = {
+  request: { query: GetModelTreeWithRegionsDocument },
+  result: {
+    data: {
+      modelcatalog_software: [
+        {
+          id: 'sw1',
+          label: 'MODFLOW',
+          versions: [
+            {
+              id: 'v1',
+              label: '6',
+              configurations: [
+                cfg(
+                  'modflow-cbc',
+                  'Modflow6 Changes to Well Files',
+                  '',
+                  'MODFLOW 6 cell-by-cell budget',
+                  'cbc-mf6',
+                ),
+                cfg('unrelated-format', 'Unrelated model', '', 'NetCDF output', 'netcdf'),
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  },
+};
+
+const dfcAdapterMock: MockedResponse = {
+  request: { query: ModelOutcomeAdapterInferenceDocument },
+  result: {
+    data: {
+      adapterTransforms: [
+        {
+          contracts: [
+            {
+              role: 'input',
+              standard_variable_uri: 'https://w3id.org/okn/i/mint/spring__volume_flow_rate',
+              format: 'm3s',
+            },
+            {
+              role: 'output',
+              standard_variable_uri: 'https://w3id.org/okn/i/mint/spring__volume_flow_rate',
+              format: 'cfs',
+            },
+          ],
+        },
+        {
+          contracts: [
+            {
+              role: 'input',
+              standard_variable_uri: null,
+              format: 'cbc-mf6',
+            },
+            {
+              role: 'output',
+              standard_variable_uri: 'https://w3id.org/okn/i/mint/spring__volume_flow_rate',
+              format: 'm3s',
+            },
+          ],
+        },
+      ],
+    },
+  },
+};
+
+const emptyAdapterMock: MockedResponse = {
+  request: { query: ModelOutcomeAdapterInferenceDocument },
+  result: { data: { adapterTransforms: [] } },
+};
+
+const treeMocks = [treeMock, emptyAdapterMock];
+
 describe('ModelsStep', () => {
   it('shows "all models" banner and produces chip when no indicator is set', async () => {
     renderWithProviders(
@@ -109,7 +196,7 @@ describe('ModelsStep', () => {
         onContinue={vi.fn()}
         onBack={vi.fn()}
       />,
-      { apolloMocks: [treeMock] },
+      { apolloMocks: treeMocks },
     );
     expect(await screen.findByText('PIHM Flood A')).toBeInTheDocument();
     expect(screen.getByText('Produces: flood extent')).toBeInTheDocument();
@@ -124,10 +211,32 @@ describe('ModelsStep', () => {
         onContinue={vi.fn()}
         onBack={vi.fn()}
       />,
-      { apolloMocks: [treeMock] },
+      { apolloMocks: treeMocks },
     );
     expect(await screen.findByText('PIHM Flood A')).toBeInTheDocument();
     expect(screen.queryByText('Crop Model B')).not.toBeInTheDocument();
+    expect(screen.getByTestId('filtered-by-banner')).toHaveTextContent(/1 of 2/i);
+  });
+
+  it('includes a MODFLOW model whose format-only output reaches the selected spring outcome', async () => {
+    renderWithProviders(
+      <ModelsStep
+        thread={makeThread({
+          response_variable_id: 'https://w3id.org/okn/i/mint/spring__volume_flow_rate',
+          response_variable: {
+            __typename: 'modelcatalog_standard_variable',
+            id: 'https://w3id.org/okn/i/mint/spring__volume_flow_rate',
+            label: 'spring__volume_flow_rate',
+          },
+        })}
+        onUpdated={vi.fn()}
+        onContinue={vi.fn()}
+        onBack={vi.fn()}
+      />,
+      { apolloMocks: [dfcTreeMock, dfcAdapterMock] },
+    );
+    expect(await screen.findByText('Modflow6 Changes to Well Files')).toBeInTheDocument();
+    expect(screen.queryByText('Unrelated model')).not.toBeInTheDocument();
     expect(screen.getByTestId('filtered-by-banner')).toHaveTextContent(/1 of 2/i);
   });
 
@@ -154,7 +263,7 @@ describe('ModelsStep', () => {
         onContinue={vi.fn()}
         onBack={vi.fn()}
       />,
-      { apolloMocks: [treeMock] },
+      { apolloMocks: treeMocks },
     );
     expect(await screen.findByRole('alert')).toHaveTextContent(/does not produce flood extent/i);
     expect(screen.getByRole('button', { name: /remove crop model b/i })).toBeInTheDocument();
@@ -182,7 +291,7 @@ describe('ModelsStep', () => {
         onContinue={vi.fn()}
         onBack={vi.fn()}
       />,
-      { apolloMocks: [treeMock] },
+      { apolloMocks: treeMocks },
     );
     expect(await screen.findByText(/no model produces/i)).toHaveTextContent('100hr_dead_moisture');
     expect(screen.queryByText('No models found.')).not.toBeInTheDocument();
@@ -203,7 +312,7 @@ describe('ModelsStep', () => {
         onContinue={vi.fn()}
         onBack={vi.fn()}
       />,
-      { apolloMocks: [treeMock] },
+      { apolloMocks: treeMocks },
     );
     await screen.findByText(/no model produces/i);
     expect(screen.queryByText(/w3id\.org/)).not.toBeInTheDocument();
@@ -219,7 +328,7 @@ describe('ModelsStep', () => {
         onBack={vi.fn()}
         onEditIndicator={onEditIndicator}
       />,
-      { apolloMocks: [treeMock] },
+      { apolloMocks: treeMocks },
     );
     await userEvent.click(
       await screen.findByRole('button', { name: /choose a different indicator/i }),
@@ -236,7 +345,7 @@ describe('ModelsStep', () => {
         onContinue={vi.fn()}
         onBack={vi.fn()}
       />,
-      { apolloMocks: [treeMock] },
+      { apolloMocks: treeMocks },
     );
     await screen.findByText('PIHM Flood A');
     await userEvent.type(screen.getByPlaceholderText(/filter models/i), 'zzzz');
@@ -251,7 +360,7 @@ describe('ModelsStep', () => {
         onContinue={vi.fn()}
         onBack={vi.fn()}
       />,
-      { apolloMocks: [treeMock] },
+      { apolloMocks: treeMocks },
     );
     await screen.findByText('PIHM Flood A');
     expect(screen.getByTestId('step-continue')).toBeDisabled();

@@ -56,7 +56,6 @@ import { FramingStep } from './thread/wizard/FramingStep';
 import { VariablesStep } from './thread/wizard/VariablesStep';
 import { ModelsStep } from './thread/wizard/ModelsStep';
 import { DatasetsStep } from './thread/wizard/DatasetsStep';
-import type { StandardVariableOption } from '@/components/autocomplete/StandardVariableCombobox';
 
 // ─── Step order (module scope so nav helpers have a stable reference) ───────────
 
@@ -303,24 +302,6 @@ export function MintThread({
     await refetchExecution();
   }, [refetchExecution]);
 
-  const modelDriverOptions = useMemo<StandardVariableOption[]>(() => {
-    const byId = new Map<string, StandardVariableOption>();
-    for (const model of Object.values(threadExecutionData?.models ?? {})) {
-      for (const input of model.input_files) {
-        (input.variableIds ?? []).forEach((id, index) => {
-          if (!byId.has(id)) {
-            byId.set(id, {
-              id,
-              label: input.variables?.[index] ?? id,
-              description: null,
-            });
-          }
-        });
-      }
-    }
-    return [...byId.values()].sort((a, b) => a.label.localeCompare(b.label));
-  }, [threadExecutionData?.models]);
-
   // ── render ─────────────────────────────────────────────────────────────────
 
   if (loading && !data) {
@@ -379,7 +360,6 @@ export function MintThread({
         return (
           <VariablesStep
             thread={thread!}
-            modelDriverOptions={modelDriverOptions}
             onUpdated={() => void handleThreadUpdated()}
             onContinue={goNext}
             onBack={goBack}

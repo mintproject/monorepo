@@ -221,17 +221,35 @@ jobs:
               --update-images-only
           fi
 
+      - name: Apply Hasura migrations and verify catalog
+        if: needs.plan.outputs.schema_changed == 'true'
+        env:
+          TAPIS_USERNAME: ${{ secrets.TAPIS_USERNAME }}
+          TAPIS_ID: ${{ secrets.TAPIS_ID }}
+          TAPIS_PASSWORD: ${{ secrets.TAPIS_PASSWORD }}
+          IMAGE_MAP_JSON: ${{ needs.plan.outputs.images_json }}
+        run: |
+          set -euo pipefail
+          python deploy/tapis/register_mint_stack.py \
+            --migrate-hasura \
+            --pods graphql \
+            --image-map "$IMAGE_MAP_JSON"
+
       - name: Restart affected application pods
         env:
           TAPIS_USERNAME: ${{ secrets.TAPIS_USERNAME }}
           TAPIS_ID: ${{ secrets.TAPIS_ID }}
           TAPIS_PASSWORD: ${{ secrets.TAPIS_PASSWORD }}
           RESTART_SERVICES: ${{ needs.plan.outputs.restart_services }}
+          SCHEMA_CHANGED: ${{ needs.plan.outputs.schema_changed }}
         run: |
           set -euo pipefail
-          APPLICATION_SERVICES="$(python - "$RESTART_SERVICES" <<'PY'
+          APPLICATION_SERVICES="$(python - "$RESTART_SERVICES" "$SCHEMA_CHANGED" <<'PY'
           import sys
-          print(",".join(service for service in sys.argv[1].split(",") if service and service not in {"postgres", "redis"}))
+          excluded = {"postgres", "redis"}
+          if sys.argv[2] == "true":
+              excluded.add("graphql")
+          print(",".join(service for service in sys.argv[1].split(",") if service and service not in excluded))
           PY
           )"
           if [[ -n "$APPLICATION_SERVICES" ]]; then

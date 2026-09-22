@@ -30,7 +30,9 @@ import {
   dateCoverage,
   matchesSelectedDatasetContext,
   matchesSpatialBox,
+  sortModelInputs,
   splitByRegion,
+  timelineTicks,
 } from '../DatasetsStep';
 
 beforeEach(() => {
@@ -124,6 +126,35 @@ describe('dateCoverage', () => {
   });
 });
 
+describe('timelineTicks', () => {
+  const years = (domain: { start: number; end: number }) =>
+    timelineTicks(domain).map((tick) => new Date(tick).getUTCFullYear());
+
+  it('keeps long timelines readable while retaining the domain endpoints', () => {
+    expect(years({ start: Date.UTC(1931, 0, 1), end: Date.UTC(2060, 0, 1) })).toEqual([
+      1931, 1940, 1950, 1960, 1970, 1980, 1990, 2000, 2010, 2020, 2030, 2040, 2050, 2060,
+    ]);
+  });
+
+  it('uses yearly ticks for short timelines', () => {
+    expect(years({ start: Date.UTC(2000, 0, 1), end: Date.UTC(2005, 0, 1) })).toEqual([
+      2000, 2001, 2002, 2003, 2004, 2005,
+    ]);
+  });
+
+  it('aligns intermediate ticks for unaligned domains', () => {
+    expect(years({ start: Date.UTC(2001, 0, 1), end: Date.UTC(2022, 0, 1) })).toEqual([
+      2001, 2002, 2004, 2006, 2008, 2010, 2012, 2014, 2016, 2018, 2020, 2022,
+    ]);
+  });
+
+  it('raises the interval when unaligned endpoints would exceed the label cap', () => {
+    expect(years({ start: Date.UTC(2001, 0, 1), end: Date.UTC(2031, 0, 1) })).toEqual([
+      2001, 2005, 2010, 2015, 2020, 2025, 2030, 2031,
+    ]);
+  });
+});
+
 describe('assignmentsFromBindings', () => {
   it('reads the dataset behind each bound dataslice', () => {
     const out = assignmentsFromBindings(
@@ -151,6 +182,35 @@ describe('assignmentsFromBindings', () => {
       {},
     );
     expect(out['cfgA']).toBeUndefined();
+  });
+});
+
+describe('sortModelInputs', () => {
+  it('puts required inputs first and sorts each group alphabetically', () => {
+    const inputs: ThreadModel['input_files'] = [
+      { id: 'optional-z', name: 'Zeta', isOptional: true },
+      { id: 'required-z', name: 'zeta', isOptional: false },
+      { id: 'optional-a', name: 'alpha', isOptional: true },
+      { id: 'required-a', name: 'Alpha', isOptional: false },
+    ];
+
+    expect(sortModelInputs(inputs).map((input) => input.id)).toEqual([
+      'required-a',
+      'required-z',
+      'optional-a',
+      'optional-z',
+    ]);
+  });
+
+  it('does not mutate the model input array', () => {
+    const inputs: ThreadModel['input_files'] = [
+      { id: 'optional', name: 'Optional', isOptional: true },
+      { id: 'required', name: 'Required', isOptional: false },
+    ];
+
+    sortModelInputs(inputs);
+
+    expect(inputs.map((input) => input.id)).toEqual(['optional', 'required']);
   });
 });
 
@@ -575,6 +635,40 @@ describe('DatasetsStep', () => {
     );
     expect(await screen.findByText('PIHM Flood A')).toBeInTheDocument();
     expect(screen.getByText(/0 \/ 1 inputs/i)).toBeInTheDocument();
+  });
+
+  it('can minimize and expand an input card without removing its content', async () => {
+    renderWithProviders(
+      <DatasetsStep
+        thread={makeThread()}
+        models={models}
+        ensembles={ensembles}
+        persistedData={{}}
+        onUpdated={vi.fn()}
+        onContinue={vi.fn()}
+        onBack={vi.fn()}
+      />,
+    );
+
+    const toggle = await screen.findByRole('button', {
+      name: 'Minimize dataset card for precipitation',
+    });
+    expect(toggle).toHaveAttribute('aria-expanded', 'true');
+
+    const panelId = toggle.getAttribute('aria-controls');
+    expect(panelId).toBeTruthy();
+    const panel = document.getElementById(panelId!);
+    expect(panel).not.toBeNull();
+    expect(panel).not.toHaveAttribute('hidden');
+
+    await userEvent.click(toggle);
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    expect(panel).toHaveAttribute('hidden');
+
+    const expand = screen.getByRole('button', { name: 'Expand dataset card for precipitation' });
+    await userEvent.click(expand);
+    expect(expand).toHaveAttribute('aria-expanded', 'true');
+    expect(panel).not.toHaveAttribute('hidden');
   });
 
   it('disables Continue until every input is assigned', async () => {

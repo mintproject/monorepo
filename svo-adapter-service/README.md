@@ -24,6 +24,18 @@ for the full architecture.
 
 ## MINT catalog sync
 
+The bundled GMA DFC registry uses version-specific cell-by-cell budget contracts
+(`cbc-mf6`, `cbc-mfusg`, `cbc-mf2000`, `cbc-mf96`, and `cbc-mf2005`). The
+model-catalog output specification must carry the matching `has_format` value
+for the planner to connect a MODFLOW output to the corresponding drain/spring
+extraction transform. A generic display label such as `cbb` is not sufficient.
+
+After deploying a changed fixture, refresh the registry with:
+
+```bash
+curl -X POST http://localhost:8090/admin/seed-gma-dfc
+```
+
 The adapter can pull ModelConfigurations directly from the MINT catalog (same
 Hasura/Postgres) and register them as `adapter.transform_spec` rows.
 
@@ -181,3 +193,36 @@ python3 scripts/register_existing_etl_pieces.py \
 The loader registers one row per stable ETL ID, collapses identical shared
 definitions, and fails on conflicting definitions instead of silently letting
 one pipeline overwrite another.
+
+## TWDB GAM archive catalog
+
+Use `scripts/reconcile_twdb_gams.py` to audit the complete TWDB groundwater-model
+download table against the live `twdb-gams` CKAN organization. It is dry-run by
+default and requires `--apply --yes` plus CKAN/Tapis credentials for approved
+writes. See [the reconciliation runbook](docs/twdb-gam-ckan-reconciliation.md)
+for the evidence files, recovery log, and archive-versus-SVO metadata policy.
+
+Use `scripts/reconcile_ckan_svos.py` for the reviewed TWDB SVO/spatial correction
+set. It is also dry-run by default, pins every live package/resource identity and
+expected prior value, and requires `--apply --yes` for writes:
+
+```bash
+python3 scripts/reconcile_ckan_svos.py --output /tmp/ckan-svo-audit
+python3 scripts/reconcile_ckan_svos.py \
+  --output /tmp/ckan-svo-apply \
+  --credentials-file ../.env \
+  --apply --yes
+```
+
+CKAN spatial coverage belongs on the dataset. SVO annotations belong on the
+resource that provides them, including reviewed complete model archives. The
+adapter keeps MODFLOW ZIP/ZIPX/7Z bundles as `zip`; only explicitly identified
+shapefile bundles become `shapefile-zip`.
+
+MODFLOW complete simulation archives should also carry the exact version label
+for the model contract they support: `groundwater_model_modflow6_simulation_archive`,
+`groundwater_model_modflow2000_simulation_archive`,
+`groundwater_model_modflow2005_simulation_archive`, or
+`groundwater_model_modflow96_simulation_archive`. A multi-version archive may
+carry more than one label; retain the archive's reviewed contained-variable
+annotations as well.
