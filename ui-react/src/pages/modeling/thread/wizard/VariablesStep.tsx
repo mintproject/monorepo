@@ -16,8 +16,6 @@ import { StepShell } from './StepShell';
 
 interface VariablesStepProps {
   thread: Thread;
-  /** Input variables from the models currently selected for this thread. */
-  modelDriverOptions?: StandardVariableOption[];
   onUpdated: () => void;
   onContinue: () => void;
   onBack?: () => void;
@@ -38,7 +36,6 @@ function optionFromId(id?: string | null, label?: string | null): StandardVariab
 
 export function VariablesStep({
   thread,
-  modelDriverOptions = [],
   onUpdated,
   onContinue,
   onBack,
@@ -57,14 +54,6 @@ export function VariablesStep({
 
   const [updateThread] = useUpdateThreadMutation();
   const [insertProvenance] = useInsertThreadProvenanceMutation();
-
-  const uniqueModelDriverOptions = useMemo(() => {
-    const byId = new Map<string, StandardVariableOption>();
-    for (const option of modelDriverOptions) {
-      if (!byId.has(option.id)) byId.set(option.id, option);
-    }
-    return [...byId.values()];
-  }, [modelDriverOptions]);
 
   const selectedModelConfigurationIds = useMemo(
     () =>
@@ -163,32 +152,6 @@ export function VariablesStep({
             driverOutcomeLabel={indicator?.label}
             driverConfigurationIds={selectedModelConfigurationIds}
           />
-          {uniqueModelDriverOptions.length > 0 && (
-            <div className="space-y-1.5 rounded border border-blue-100 bg-blue-50/40 p-2">
-              <p className="text-xs font-medium text-blue-900">Inputs from selected models</p>
-              <div className="flex flex-wrap gap-1.5">
-                {uniqueModelDriverOptions.map((option) => (
-                  <button
-                    key={option.id}
-                    type="button"
-                    className={`rounded-full border px-2 py-1 text-xs transition-colors ${
-                      adjustable?.id === option.id
-                        ? 'border-blue-500 bg-blue-100 text-blue-900'
-                        : 'border-blue-200 bg-white text-blue-800 hover:bg-blue-100'
-                    }`}
-                    onClick={() => setAdjustable(adjustable?.id === option.id ? null : option)}
-                    disabled={readOnly}
-                    aria-pressed={adjustable?.id === option.id}
-                  >
-                    {option.label}
-                  </button>
-                ))}
-              </div>
-              <p className="text-[11px] text-blue-800">
-                These are the most direct driver candidates for the selected models.
-              </p>
-            </div>
-          )}
           <p className="text-xs text-gray-500">
             This does not narrow the model list by itself; it marks an input for later scenario or
             parameter exploration.

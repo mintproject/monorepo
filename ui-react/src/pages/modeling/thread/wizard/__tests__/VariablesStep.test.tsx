@@ -153,25 +153,4 @@ describe('VariablesStep', () => {
     ).toBeInTheDocument();
   });
 
-  it('surfaces inputs from selected models as driver shortcuts', () => {
-    renderWithProviders(
-      <VariablesStep
-        thread={makeThread()}
-        modelDriverOptions={[
-          { id: 'sv-precip', label: 'precipitation', description: null },
-          { id: 'sv-soil', label: 'soil moisture', description: null },
-          { id: 'sv-precip', label: 'precipitation duplicate', description: null },
-        ]}
-        onUpdated={vi.fn()}
-        onContinue={vi.fn()}
-        onBack={vi.fn()}
-      />,
-    );
-    expect(screen.getByText('Inputs from selected models')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'precipitation' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'soil moisture' })).toBeInTheDocument();
-    expect(
-      screen.queryByRole('button', { name: 'precipitation duplicate' }),
-    ).not.toBeInTheDocument();
-  });
 });
