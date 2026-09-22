@@ -7,6 +7,7 @@
  * "No models found." one step later.
  */
 import { MockedProvider } from '@apollo/client/testing';
+import { GraphQLError } from 'graphql';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
@@ -17,7 +18,11 @@ import {
   GetIndicatorVariableOptionsDocument,
   PrefetchReferenceDataDocument,
 } from '@/graphql/generated/graphql';
-import { OutcomeDriverInferenceDocument } from '@/components/autocomplete/useScopedStandardVariables';
+import {
+  IndicatorAdapterInferenceDocument,
+  OutcomeDriverAdapterInferenceDocument,
+  OutcomeDriverModelInferenceDocument,
+} from '@/components/autocomplete/useScopedStandardVariables';
 
 const sv = (id: string, label: string, description: string | null = null) => ({
   __typename: 'modelcatalog_standard_variable',
@@ -63,11 +68,38 @@ const indicatorMock = {
   },
 };
 
+const indicatorAdapterMock = {
+  request: { query: IndicatorAdapterInferenceDocument },
+  result: { data: { adapterTransforms: [] } },
+};
+
+const springIndicatorAdapterMock = {
+  request: { query: IndicatorAdapterInferenceDocument },
+  result: {
+    data: {
+      adapterTransforms: [
+        {
+          contracts: [
+            {
+              role: 'output',
+              standard_variable_uri: 'https://w3id.org/okn/i/mint/spring__volume_flow_rate',
+              format: 'cfs',
+            },
+          ],
+        },
+      ],
+    },
+  },
+};
+
 const driverMock = {
   request: { query: GetDriverVariableOptionsDocument },
   result: {
     data: {
-      inputs: [presentationRow('p-poro', 'sv-poro', 'soil__porosity')],
+      inputs: [
+        presentationRow('p-poro', 'sv-poro', 'soil__porosity'),
+        presentationRow('p-air', 'sv-air', 'air__temperature'),
+      ],
       adjusted: [
         {
           __typename: 'modelcatalog_parameter_adjusts_variable',
@@ -84,8 +116,8 @@ const driverMock = {
   },
 };
 
-const outcomeInferenceMock = {
-  request: { query: OutcomeDriverInferenceDocument },
+const outcomeModelInferenceMock = {
+  request: { query: OutcomeDriverModelInferenceDocument },
   result: {
     data: {
       modelConfigurations: [
@@ -97,6 +129,7 @@ const outcomeInferenceMock = {
               input_id: 'ds-middle',
               input: {
                 id: 'ds-middle',
+                has_format: null,
                 presentations: [
                   {
                     dataset_specification_id: 'ds-middle',
@@ -116,6 +149,7 @@ const outcomeInferenceMock = {
               output_id: 'ds-draw',
               output: {
                 id: 'ds-draw',
+                has_format: null,
                 presentations: [
                   {
                     dataset_specification_id: 'ds-draw',
@@ -139,6 +173,7 @@ const outcomeInferenceMock = {
               input_id: 'ds-air',
               input: {
                 id: 'ds-air',
+                has_format: null,
                 presentations: [
                   {
                     dataset_specification_id: 'ds-air',
@@ -158,6 +193,7 @@ const outcomeInferenceMock = {
               output_id: 'ds-draw',
               output: {
                 id: 'ds-draw',
+                has_format: null,
                 presentations: [
                   {
                     dataset_specification_id: 'ds-draw',
@@ -173,20 +209,56 @@ const outcomeInferenceMock = {
           ],
           parameters: [],
         },
+        {
+          id: 'cfg-incompatible',
+          inputs: [
+            {
+              configuration_id: 'cfg-incompatible',
+              input_id: 'sv-only-incompatible',
+              input: {
+                id: 'sv-only-incompatible',
+                has_format: null,
+                presentations: [
+                  {
+                    dataset_specification_id: 'ds-only-incompatible',
+                    presentation_id: 'pres-only-incompatible',
+                    presentation: {
+                      id: 'pres-only-incompatible',
+                      standard_variable: sv('sv-only-incompatible', 'only_incompatible'),
+                    },
+                  },
+                ],
+              },
+            },
+          ],
+          outputs: [
+            {
+              configuration_id: 'cfg-incompatible',
+              output_id: 'sv-other',
+              output: {
+                id: 'sv-other',
+                has_format: null,
+                presentations: [
+                  {
+                    dataset_specification_id: 'ds-other',
+                    presentation_id: 'pres-other',
+                    presentation: {
+                      id: 'pres-other',
+                      standard_variable: sv('sv-other', 'other_outcome'),
+                    },
+                  },
+                ],
+              },
+            },
+          ],
+          parameters: [],
+        },
       ],
       etlProcesses: [
         {
           contracts: [
-            { role: 'input', standard_variable_uri: 'sv-forcing' },
-            { role: 'output', standard_variable_uri: 'sv-rain' },
-          ],
-        },
-      ],
-      adapterTransforms: [
-        {
-          contracts: [
-            { role: 'input', standard_variable_uri: 'sv-rain' },
-            { role: 'output', standard_variable_uri: 'sv-middle' },
+            { role: 'input', standard_variable_uri: 'sv-forcing', format: null },
+            { role: 'output', standard_variable_uri: 'sv-rain', format: null },
           ],
         },
       ],
@@ -194,7 +266,30 @@ const outcomeInferenceMock = {
   },
 };
 
-const mocks = [prefetchMock, indicatorMock, driverMock, outcomeInferenceMock];
+const outcomeAdapterInferenceMock = {
+  request: { query: OutcomeDriverAdapterInferenceDocument },
+  result: {
+    data: {
+      adapterTransforms: [
+        {
+          contracts: [
+            { role: 'input', standard_variable_uri: 'sv-rain', format: null },
+            { role: 'output', standard_variable_uri: 'sv-middle', format: null },
+          ],
+        },
+      ],
+    },
+  },
+};
+
+const mocks = [
+  prefetchMock,
+  indicatorMock,
+  indicatorAdapterMock,
+  driverMock,
+  outcomeModelInferenceMock,
+  outcomeAdapterInferenceMock,
+];
 
 function renderCombobox(props: Partial<React.ComponentProps<typeof StandardVariableCombobox>>) {
   return render(
@@ -230,6 +325,16 @@ describe('StandardVariableCombobox scope', () => {
     expect(screen.queryByText('soil__porosity')).not.toBeInTheDocument();
   });
 
+  it('offers SVOs produced by registered adapter transforms as outcomes', async () => {
+    render(
+      <MockedProvider mocks={[indicatorMock, springIndicatorAdapterMock]}>
+        <StandardVariableCombobox value={null} onChange={vi.fn()} scope="indicator" />
+      </MockedProvider>,
+    );
+    await openList();
+    await waitFor(() => expect(screen.getByText('spring__volume_flow_rate')).toBeInTheDocument());
+  });
+
   it('unions inputs and parameter-adjusted variables under scope="driver"', async () => {
     renderCombobox({ scope: 'driver' });
     await openList();
@@ -257,6 +362,49 @@ describe('StandardVariableCombobox scope', () => {
     await openList();
     await waitFor(() => expect(screen.getByText('middle')).toBeInTheDocument());
     expect(screen.queryByText('air__temperature')).not.toBeInTheDocument();
+  });
+
+  it('falls back to outcome-producing models when a retained model is incompatible', async () => {
+    renderCombobox({
+      scope: 'driver',
+      driverOutcomeId: 'sv-draw',
+      driverConfigurationIds: ['cfg-incompatible'],
+    });
+    await openList();
+    await waitFor(() => expect(screen.getByText('middle')).toBeInTheDocument());
+    expect(screen.getByText('air__temperature')).toBeInTheDocument();
+    expect(screen.queryByText('only_incompatible')).not.toBeInTheDocument();
+  });
+
+  it('keeps model inference when the optional adapter registry is unavailable', async () => {
+    render(
+      <MockedProvider
+        mocks={[
+          driverMock,
+          outcomeModelInferenceMock,
+          {
+            request: { query: OutcomeDriverAdapterInferenceDocument },
+            result: {
+              errors: [
+                new GraphQLError("field 'adapter_transform_spec' not found in type: 'query_root'"),
+              ],
+            },
+          },
+        ]}
+      >
+        <StandardVariableCombobox
+          value={null}
+          onChange={vi.fn()}
+          scope="driver"
+          driverOutcomeId="sv-draw"
+          driverConfigurationIds={['cfg-outcome']}
+        />
+      </MockedProvider>,
+    );
+    await openList();
+    await waitFor(() => expect(screen.getByText('middle')).toBeInTheDocument());
+    expect(screen.queryByText('air__temperature')).not.toBeInTheDocument();
+    expect(screen.queryByText('soil__porosity')).not.toBeInTheDocument();
   });
 
   it('widens to the whole catalog when the escape link is clicked', async () => {

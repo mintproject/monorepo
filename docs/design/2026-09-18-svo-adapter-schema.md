@@ -104,8 +104,9 @@ SVO Adapter HasuraClient
 - Adapter IDs remain text to preserve fixture IDs and URI-capable identifiers;
   generated IDs use UUID text defaults for rows created by Hasura.
 - Hasura permissions remain intentionally minimal because the adapter service
-  uses its configured admin secret for adapter reads/system writes. Direct
-  user-facing Hasura access is not introduced by this change.
+  uses its configured admin secret for adapter reads/system writes. The UI's
+  inference query has read-only access to transform specs and contracts for
+  the authenticated `user` role; other adapter tables remain service-only.
 - Rollback drops only the adapter schema and is therefore destructive to any
   adapter rows; it must not be used after live data is registered without an
   explicit recovery decision.
@@ -131,7 +132,8 @@ SVO Adapter HasuraClient
 - Compile the adapter Python modules.
 - When an authorized dev deployment is available, run:
   `hasura migrate apply`, `hasura metadata apply`, `hasura metadata reload`,
-  then a read-only GraphQL smoke query for both registry fields.
+  then read-only GraphQL smoke queries for both registry fields as admin and
+  as the authenticated `user` role used by the modeling UI.
 - Verify `/health`, `/transform-specs`, and `/data-objects` after deployment.
 
 ## Documentation plan
@@ -187,6 +189,19 @@ the previous application image alone is safer.
   applied on 2026-09-18; Hasura reported consistent metadata and the SVO
   endpoints recovered. Repository changes remain available for the durable,
   reviewable fix.
+
+### 2026-09-21 - Isolate optional adapter inference from model inference
+
+- **Decision:** Query model configurations and ETL processes separately from
+  the adapter registry, and never fall back to the global driver catalog once
+  an outcome is selected.
+- **Reason:** A deployed Hasura instance can have the adapter tables tracked
+  while its runtime metadata still lacks the authenticated user's select
+  permissions. Combining the fields makes the entire inference query fail and
+  exposes unrelated global drivers.
+- **Impact on implementation:** Model/ETL inference remains available during
+  metadata drift; adapter transforms are added automatically once the
+  authenticated role can read their registry.
 
 ## User feedback / decisions
 

@@ -210,7 +210,10 @@ curl -sS "$HASURA_GRAPHQL_ENDPOINT/v1/graphql" \
 
 The expected response contains `data.adapter_transform_spec` and
 `data.adapter_data_object`, even when both arrays are empty. Only then should
-the SVO adapter pod be restarted and its `/health` endpoint checked.
+the SVO adapter pod be restarted and its `/health` endpoint checked. Because
+the modeling UI reads transform specs and contracts for driver inference,
+repeat the transform-spec query with an authenticated modeling-user token as
+well; an admin-only success does not prove that the UI role can see the fields.
 
 ## Persistent PostgreSQL storage
 

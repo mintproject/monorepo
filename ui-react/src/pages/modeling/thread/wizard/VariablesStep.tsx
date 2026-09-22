@@ -133,7 +133,8 @@ export function VariablesStep({
           />
           {indicator ? (
             <p className="text-xs text-green-700" role="status">
-              Models will be filtered to those that produce <strong>{indicator.label}</strong>.
+              Models will be filtered to those that produce or can be transformed into{' '}
+              <strong>{indicator.label}</strong>.
             </p>
           ) : (
             <p className="text-xs text-gray-500" role="status">
@@ -159,6 +160,7 @@ export function VariablesStep({
             scope="driver"
             scopeLabel={indicator ? 'possible upstream drivers' : 'a model uses or adjusts'}
             driverOutcomeId={indicator?.id}
+            driverOutcomeLabel={indicator?.label}
             driverConfigurationIds={selectedModelConfigurationIds}
           />
           {uniqueModelDriverOptions.length > 0 && (

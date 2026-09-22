@@ -89,3 +89,25 @@ def test_dfc_spring_flow_path_uses_budget_extract():
     names = [s["name"] for s in path]
     assert any("extract" in n for n in names), f"expected budget extract in chain: {names}"
     assert any("flow" in n or "cfs" in n for n in names), f"expected flow conversion in chain: {names}"
+
+
+def test_dfc_spring_flow_supports_all_registered_modflow_cbc_versions():
+    data = _load()
+    registry = data["transform_specs"]
+    spring_target = _target(data["target_model_input_spring_cfs"])
+    expected = {
+        "cbc-mf6": "modflow6-drain-gma-extract",
+        "cbc-mfusg": "modflow-usg-drain-gma-extract",
+        "cbc-mf2000": "modflow-2000-drain-gma-extract",
+        "cbc-mf96": "modflow-96-drain-gma-extract",
+        "cbc-mf2005": "modflow-2005-drain-gma-extract",
+    }
+
+    for fmt, extractor in expected.items():
+        path = find_path(
+            DataObjectContract(format=fmt, resource_uri=f"tapis://demo/{fmt}/output.cbc"),
+            spring_target,
+            registry,
+        )
+        assert path is not None, f"no spring-flow path for {fmt}"
+        assert path[0]["name"] == extractor

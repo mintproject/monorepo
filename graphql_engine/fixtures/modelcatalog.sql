@@ -3432,7 +3432,7 @@ INSERT INTO public.modelcatalog_dataset_specification (id, label, description, h
 INSERT INTO public.modelcatalog_dataset_specification (id, label, description, has_format, has_dimensionality, "position") VALUES ('https://w3id.org/okn/i/mint/42f8878f-4085-41f3-a2fe-da5b37f2a8b1', 'drn', 'Drain package file', NULL, NULL, '6') ON CONFLICT DO NOTHING;
 INSERT INTO public.modelcatalog_dataset_specification (id, label, description, has_format, has_dimensionality, "position") VALUES ('https://w3id.org/okn/i/mint/43a65f74-3ca6-419d-8f1d-21c64f18735b', 'ovn_table_lum', NULL, 'lum', NULL, '36') ON CONFLICT DO NOTHING;
 INSERT INTO public.modelcatalog_dataset_specification (id, label, description, has_format, has_dimensionality, "position") VALUES ('https://w3id.org/okn/i/mint/44b21347-8b6e-4dc7-8708-dd5f9c960dfd', 'aquifer_file_case1', 'File for case1', 'none', NULL, '3') ON CONFLICT DO NOTHING;
-INSERT INTO public.modelcatalog_dataset_specification (id, label, description, has_format, has_dimensionality, "position") VALUES ('https://w3id.org/okn/i/mint/477f958f-428a-489c-8c7a-8ac7ab8d5124', 'Cell-by-cell water budget', 'Simulated volumetric inflow and outflow terms for groundwater budget accounting.', NULL, NULL, NULL) ON CONFLICT DO NOTHING;
+INSERT INTO public.modelcatalog_dataset_specification (id, label, description, has_format, has_dimensionality, "position") VALUES ('https://w3id.org/okn/i/mint/477f958f-428a-489c-8c7a-8ac7ab8d5124', 'Cell-by-cell water budget', 'Simulated volumetric inflow and outflow terms for groundwater budget accounting.', 'cbc-mf96', NULL, NULL) ON CONFLICT DO NOTHING;
 INSERT INTO public.modelcatalog_dataset_specification (id, label, description, has_format, has_dimensionality, "position") VALUES ('https://w3id.org/okn/i/mint/47aca9bf-a683-413c-bfd5-06547e7c84c2', 'hru_data_hru', NULL, 'hru', NULL, '22') ON CONFLICT DO NOTHING;
 INSERT INTO public.modelcatalog_dataset_specification (id, label, description, has_format, has_dimensionality, "position") VALUES ('https://w3id.org/okn/i/mint/492c8110-9047-4f0e-a57b-d6e9970cec27', 'test1_0d-q_1_txt', 'Topoflow aggregated outputs', 'zip', NULL, '1') ON CONFLICT DO NOTHING;
 INSERT INTO public.modelcatalog_dataset_specification (id, label, description, has_format, has_dimensionality, "position") VALUES ('https://w3id.org/okn/i/mint/493f44ac-8d70-4c41-bfbc-4b6207d72674', 'cycles_crops', 'The crop description file defines physiological and management parameters that control the growth and harvest of crops used in the simulation. Each crop used in the simulation must have an entry in the crop description file. Each crop entry begins with the keyword tag NAME.', 'crop', NULL, '2') ON CONFLICT DO NOTHING;
@@ -3449,7 +3449,7 @@ INSERT INTO public.modelcatalog_dataset_specification (id, label, description, h
 INSERT INTO public.modelcatalog_dataset_specification (id, label, description, has_format, has_dimensionality, "position") VALUES ('https://w3id.org/okn/i/mint/537c2703-d30f-4195-b4b8-eae8ce5f8ef1', 'interview_sentiment', 'spreadsheet of results', 'csv', NULL, '5') ON CONFLICT DO NOTHING;
 INSERT INTO public.modelcatalog_dataset_specification (id, label, description, has_format, has_dimensionality, "position") VALUES ('https://w3id.org/okn/i/mint/55b81fec-8c00-4820-ab58-eb905105cf5f', 'hfb6', 'Horizontal flow barrier file', 'hub', NULL, '7') ON CONFLICT DO NOTHING;
 INSERT INTO public.modelcatalog_dataset_specification (id, label, description, has_format, has_dimensionality, "position") VALUES ('https://w3id.org/okn/i/mint/55cfde21-1cff-4d3d-aec9-8c0a1ea6bc09', 'hfb6', 'Horizontal flow barrier file', NULL, NULL, '7') ON CONFLICT DO NOTHING;
-INSERT INTO public.modelcatalog_dataset_specification (id, label, description, has_format, has_dimensionality, "position") VALUES ('https://w3id.org/okn/i/mint/56acb8fe-9b53-4124-83c0-2b0025bf9361', 'Cell-by-cell water budget', 'Simulated volumetric inflow and outflow terms for groundwater budget accounting.', NULL, NULL, NULL) ON CONFLICT DO NOTHING;
+INSERT INTO public.modelcatalog_dataset_specification (id, label, description, has_format, has_dimensionality, "position") VALUES ('https://w3id.org/okn/i/mint/56acb8fe-9b53-4124-83c0-2b0025bf9361', 'Cell-by-cell water budget', 'Simulated volumetric inflow and outflow terms for groundwater budget accounting.', 'cbc-mf96', NULL, NULL) ON CONFLICT DO NOTHING;
 INSERT INTO public.modelcatalog_dataset_specification (id, label, description, has_format, has_dimensionality, "position") VALUES ('https://w3id.org/okn/i/mint/577fa3fa-6ce2-4b3e-ad07-9773daa49d4c', 'MODFLOW package inputs', NULL, NULL, NULL, NULL) ON CONFLICT DO NOTHING;
 INSERT INTO public.modelcatalog_dataset_specification (id, label, description, has_format, has_dimensionality, "position") VALUES ('https://w3id.org/okn/i/mint/597c5ac6-78ae-4c77-8da7-ab03f09f167d', 'input-dem', 'Input digital elevation model for the target basin to run the model', 'tif', NULL, '1') ON CONFLICT DO NOTHING;
 INSERT INTO public.modelcatalog_dataset_specification (id, label, description, has_format, has_dimensionality, "position") VALUES ('https://w3id.org/okn/i/mint/59e4d2f2-f3cc-4912-8f6f-5b37fa6dad9e', 'dis', 'Discretization file', 'dis', NULL, '2') ON CONFLICT DO NOTHING;
@@ -3477,9 +3477,9 @@ INSERT INTO public.modelcatalog_dataset_specification (id, label, description, h
 INSERT INTO public.modelcatalog_dataset_specification (id, label, description, has_format, has_dimensionality, "position") VALUES ('https://w3id.org/okn/i/mint/68e74d6e-67c3-4f29-bbb6-6c8803d0110c', 'Weather File', 'Weather CSV file. ', 'csv', NULL, '1') ON CONFLICT DO NOTHING;
 INSERT INTO public.modelcatalog_dataset_specification (id, label, description, has_format, has_dimensionality, "position") VALUES ('https://w3id.org/okn/i/mint/69800e0a-8538-4aea-b974-9bc754074180', 'Hydraulic head output', NULL, NULL, NULL, NULL) ON CONFLICT DO NOTHING;
 INSERT INTO public.modelcatalog_dataset_specification (id, label, description, has_format, has_dimensionality, "position") VALUES ('https://w3id.org/okn/i/mint/69ab030c-4d60-411d-b903-c577e9b46812', 'input_file', NULL, 'unknown', NULL, '1') ON CONFLICT DO NOTHING;
-INSERT INTO public.modelcatalog_dataset_specification (id, label, description, has_format, has_dimensionality, "position") VALUES ('https://w3id.org/okn/i/mint/6b16c7bc-25ef-4afb-bc4b-35b10cc409c9', 'Cell budget output', NULL, NULL, NULL, NULL) ON CONFLICT DO NOTHING;
+INSERT INTO public.modelcatalog_dataset_specification (id, label, description, has_format, has_dimensionality, "position") VALUES ('https://w3id.org/okn/i/mint/6b16c7bc-25ef-4afb-bc4b-35b10cc409c9', 'Cell budget output', NULL, 'cbc-mf2000', NULL, NULL) ON CONFLICT DO NOTHING;
 INSERT INTO public.modelcatalog_dataset_specification (id, label, description, has_format, has_dimensionality, "position") VALUES ('https://w3id.org/okn/i/mint/6bd50c68-04e4-4e9d-8d32-22632db2b3dc', 'input_file', NULL, 'unknown', NULL, '1') ON CONFLICT DO NOTHING;
-INSERT INTO public.modelcatalog_dataset_specification (id, label, description, has_format, has_dimensionality, "position") VALUES ('https://w3id.org/okn/i/mint/6c886b55-6965-41e5-96f1-9e6ae963bcd7', 'Cell budget output', NULL, NULL, NULL, NULL) ON CONFLICT DO NOTHING;
+INSERT INTO public.modelcatalog_dataset_specification (id, label, description, has_format, has_dimensionality, "position") VALUES ('https://w3id.org/okn/i/mint/6c886b55-6965-41e5-96f1-9e6ae963bcd7', 'Cell budget output', NULL, 'cbc-mf2000', NULL, NULL) ON CONFLICT DO NOTHING;
 INSERT INTO public.modelcatalog_dataset_specification (id, label, description, has_format, has_dimensionality, "position") VALUES ('https://w3id.org/okn/i/mint/6dd986a4-0195-4e8b-95e5-0d0da15bd528', 'rch', 'Recharge file', NULL, NULL, '8') ON CONFLICT DO NOTHING;
 INSERT INTO public.modelcatalog_dataset_specification (id, label, description, has_format, has_dimensionality, "position") VALUES ('https://w3id.org/okn/i/mint/6e7da36b-8a29-4268-b015-04cc560273a7', 'drn', 'Drain package file', 'drn', NULL, '6') ON CONFLICT DO NOTHING;
 INSERT INTO public.modelcatalog_dataset_specification (id, label, description, has_format, has_dimensionality, "position") VALUES ('https://w3id.org/okn/i/mint/6e82e19d-21f6-42e0-9c89-70ae6667338a', 'hydrology_cha', NULL, 'cha', NULL, '39') ON CONFLICT DO NOTHING;
@@ -3514,7 +3514,7 @@ INSERT INTO public.modelcatalog_dataset_specification (id, label, description, h
 INSERT INTO public.modelcatalog_dataset_specification (id, label, description, has_format, has_dimensionality, "position") VALUES ('https://w3id.org/okn/i/mint/829372df-3aba-4621-bf0f-625724f84ba2', 'results_mp4', 'Video of the drought index prediction', 'mp4', NULL, '2') ON CONFLICT DO NOTHING;
 INSERT INTO public.modelcatalog_dataset_specification (id, label, description, has_format, has_dimensionality, "position") VALUES ('https://w3id.org/okn/i/mint/83473795-f4c9-4962-8159-9f22e6af607f', 'cycles_crop', 'Cycles crop output file', 'dat', NULL, '3') ON CONFLICT DO NOTHING;
 INSERT INTO public.modelcatalog_dataset_specification (id, label, description, has_format, has_dimensionality, "position") VALUES ('https://w3id.org/okn/i/mint/83da5de0-1aa4-4e48-b08d-4b77439a3ba9', 'initial_cha', NULL, 'cha', NULL, '28') ON CONFLICT DO NOTHING;
-INSERT INTO public.modelcatalog_dataset_specification (id, label, description, has_format, has_dimensionality, "position") VALUES ('https://w3id.org/okn/i/mint/852c7bb1-3949-49ef-8f71-b7ec539e68e2', 'Cell budget output', NULL, NULL, NULL, NULL) ON CONFLICT DO NOTHING;
+INSERT INTO public.modelcatalog_dataset_specification (id, label, description, has_format, has_dimensionality, "position") VALUES ('https://w3id.org/okn/i/mint/852c7bb1-3949-49ef-8f71-b7ec539e68e2', 'Cell budget output', NULL, 'cbc-mf2000', NULL, NULL) ON CONFLICT DO NOTHING;
 INSERT INTO public.modelcatalog_dataset_specification (id, label, description, has_format, has_dimensionality, "position") VALUES ('https://w3id.org/okn/i/mint/8661ecfd-ca28-41ba-8c56-2228d5bd6517', 'res_rel_dtl', NULL, 'dtl', NULL, '37') ON CONFLICT DO NOTHING;
 INSERT INTO public.modelcatalog_dataset_specification (id, label, description, has_format, has_dimensionality, "position") VALUES ('https://w3id.org/okn/i/mint/87362a8c-b0b6-4a44-b88e-b6d9d19e1828', 'snow_sno', NULL, 'sno', NULL, '32') ON CONFLICT DO NOTHING;
 INSERT INTO public.modelcatalog_dataset_specification (id, label, description, has_format, has_dimensionality, "position") VALUES ('https://w3id.org/okn/i/mint/87594b88-1ddd-4c97-a722-3112f8cd0834', 'bcf6', 'Block centered flow package file', 'bc6', NULL, '3') ON CONFLICT DO NOTHING;
@@ -4061,7 +4061,7 @@ INSERT INTO public.modelcatalog_dataset_specification (id, label, description, h
 INSERT INTO public.modelcatalog_dataset_specification (id, label, description, has_format, has_dimensionality, "position") VALUES ('https://w3id.org/okn/i/mint/hand_v2_travis_shape', 'shape', 'Shape file corresponding to the distance down flooding map', 'shp', NULL, '2') ON CONFLICT DO NOTHING;
 INSERT INTO public.modelcatalog_dataset_specification (id, label, description, has_format, has_dimensionality, "position") VALUES ('https://w3id.org/okn/i/mint/modflow_2005_BartonSprings_advanced_Bas', 'bas6', 'Basic Package Input for the Groundwater Flow Process Basic file', 'ba6', NULL, '1') ON CONFLICT DO NOTHING;
 INSERT INTO public.modelcatalog_dataset_specification (id, label, description, has_format, has_dimensionality, "position") VALUES ('https://w3id.org/okn/i/mint/modflow_2005_BartonSprings_advanced_Bcf', 'bcf6', 'Block centered flow package file', 'bc6', NULL, '3') ON CONFLICT DO NOTHING;
-INSERT INTO public.modelcatalog_dataset_specification (id, label, description, has_format, has_dimensionality, "position") VALUES ('https://w3id.org/okn/i/mint/modflow_2005_BartonSprings_advanced_cbb', 'cbb', 'Total budget file', 'cbb', NULL, '2') ON CONFLICT DO NOTHING;
+INSERT INTO public.modelcatalog_dataset_specification (id, label, description, has_format, has_dimensionality, "position") VALUES ('https://w3id.org/okn/i/mint/modflow_2005_BartonSprings_advanced_cbb', 'cbb', 'Total budget file', 'cbc-mf2005', NULL, '2') ON CONFLICT DO NOTHING;
 INSERT INTO public.modelcatalog_dataset_specification (id, label, description, has_format, has_dimensionality, "position") VALUES ('https://w3id.org/okn/i/mint/modflow_2005_BartonSprings_advanced_ddown', 'ddn', 'Drawdown', 'ddn', NULL, '4') ON CONFLICT DO NOTHING;
 INSERT INTO public.modelcatalog_dataset_specification (id, label, description, has_format, has_dimensionality, "position") VALUES ('https://w3id.org/okn/i/mint/modflow_2005_BartonSprings_advanced_Dis', 'dis', 'Discretization file', 'dis', NULL, '2') ON CONFLICT DO NOTHING;
 INSERT INTO public.modelcatalog_dataset_specification (id, label, description, has_format, has_dimensionality, "position") VALUES ('https://w3id.org/okn/i/mint/modflow_2005_BartonSprings_advanced_Drn', 'drn', 'Drain package file', 'dat', NULL, '6') ON CONFLICT DO NOTHING;
@@ -4074,7 +4074,7 @@ INSERT INTO public.modelcatalog_dataset_specification (id, label, description, h
 INSERT INTO public.modelcatalog_dataset_specification (id, label, description, has_format, has_dimensionality, "position") VALUES ('https://w3id.org/okn/i/mint/modflow_2005_BartonSprings_advanced_Well', 'wel', 'Well file', 'dat', NULL, '5') ON CONFLICT DO NOTHING;
 INSERT INTO public.modelcatalog_dataset_specification (id, label, description, has_format, has_dimensionality, "position") VALUES ('https://w3id.org/okn/i/mint/modflow_2005_BartonSprings_avg_Bas', 'bas6', 'Basic Package Input for the Groundwater Flow Process Basic file', 'ba6', NULL, '1') ON CONFLICT DO NOTHING;
 INSERT INTO public.modelcatalog_dataset_specification (id, label, description, has_format, has_dimensionality, "position") VALUES ('https://w3id.org/okn/i/mint/modflow_2005_BartonSprings_avg_Bcf', 'bcf6', 'Block centered flow package file', 'bc6', NULL, '3') ON CONFLICT DO NOTHING;
-INSERT INTO public.modelcatalog_dataset_specification (id, label, description, has_format, has_dimensionality, "position") VALUES ('https://w3id.org/okn/i/mint/modflow_2005_BartonSprings_avg_cbb', 'cbb', 'Total budget file', 'cbb', NULL, '2') ON CONFLICT DO NOTHING;
+INSERT INTO public.modelcatalog_dataset_specification (id, label, description, has_format, has_dimensionality, "position") VALUES ('https://w3id.org/okn/i/mint/modflow_2005_BartonSprings_avg_cbb', 'cbb', 'Total budget file', 'cbc-mf2005', NULL, '2') ON CONFLICT DO NOTHING;
 INSERT INTO public.modelcatalog_dataset_specification (id, label, description, has_format, has_dimensionality, "position") VALUES ('https://w3id.org/okn/i/mint/modflow_2005_BartonSprings_avg_ddown', 'ddn', 'Drawdown', 'ddn', NULL, '4') ON CONFLICT DO NOTHING;
 INSERT INTO public.modelcatalog_dataset_specification (id, label, description, has_format, has_dimensionality, "position") VALUES ('https://w3id.org/okn/i/mint/modflow_2005_BartonSprings_avg_Dis', 'dis', 'Discretization file', 'dis', NULL, '2') ON CONFLICT DO NOTHING;
 INSERT INTO public.modelcatalog_dataset_specification (id, label, description, has_format, has_dimensionality, "position") VALUES ('https://w3id.org/okn/i/mint/modflow_2005_BartonSprings_avg_Drn', 'drn', 'Drain package file', 'dat', NULL, '6') ON CONFLICT DO NOTHING;
@@ -4087,7 +4087,7 @@ INSERT INTO public.modelcatalog_dataset_specification (id, label, description, h
 INSERT INTO public.modelcatalog_dataset_specification (id, label, description, has_format, has_dimensionality, "position") VALUES ('https://w3id.org/okn/i/mint/modflow_2005_BartonSprings_avg_Well', 'wel', 'Well file', 'dat', NULL, '5') ON CONFLICT DO NOTHING;
 INSERT INTO public.modelcatalog_dataset_specification (id, label, description, has_format, has_dimensionality, "position") VALUES ('https://w3id.org/okn/i/mint/modflow_2005_BartonSprings_drought_Bas', 'bas6', 'Basic Package Input for the Groundwater Flow Process Basic file', 'ba6', NULL, '1') ON CONFLICT DO NOTHING;
 INSERT INTO public.modelcatalog_dataset_specification (id, label, description, has_format, has_dimensionality, "position") VALUES ('https://w3id.org/okn/i/mint/modflow_2005_BartonSprings_drought_Bcf', 'bcf6', 'Block centered flow package file', 'bc6', NULL, '3') ON CONFLICT DO NOTHING;
-INSERT INTO public.modelcatalog_dataset_specification (id, label, description, has_format, has_dimensionality, "position") VALUES ('https://w3id.org/okn/i/mint/modflow_2005_BartonSprings_drought_cbb', 'cbb', 'Total budget file', 'cbb', NULL, '2') ON CONFLICT DO NOTHING;
+INSERT INTO public.modelcatalog_dataset_specification (id, label, description, has_format, has_dimensionality, "position") VALUES ('https://w3id.org/okn/i/mint/modflow_2005_BartonSprings_drought_cbb', 'cbb', 'Total budget file', 'cbc-mf2005', NULL, '2') ON CONFLICT DO NOTHING;
 INSERT INTO public.modelcatalog_dataset_specification (id, label, description, has_format, has_dimensionality, "position") VALUES ('https://w3id.org/okn/i/mint/modflow_2005_BartonSprings_drought_ddown', 'ddn', 'Drawdown', 'ddn', NULL, '4') ON CONFLICT DO NOTHING;
 INSERT INTO public.modelcatalog_dataset_specification (id, label, description, has_format, has_dimensionality, "position") VALUES ('https://w3id.org/okn/i/mint/modflow_2005_BartonSprings_drought_Dis', 'dis', 'Discretization file', 'dis', NULL, '2') ON CONFLICT DO NOTHING;
 INSERT INTO public.modelcatalog_dataset_specification (id, label, description, has_format, has_dimensionality, "position") VALUES ('https://w3id.org/okn/i/mint/modflow_2005_BartonSprings_drought_Drn', 'drn', 'Drain package file', 'dat', NULL, '6') ON CONFLICT DO NOTHING;
@@ -4100,7 +4100,7 @@ INSERT INTO public.modelcatalog_dataset_specification (id, label, description, h
 INSERT INTO public.modelcatalog_dataset_specification (id, label, description, has_format, has_dimensionality, "position") VALUES ('https://w3id.org/okn/i/mint/modflow_2005_BartonSprings_drought_Well', 'wel', 'Well file', 'dat', NULL, '5') ON CONFLICT DO NOTHING;
 INSERT INTO public.modelcatalog_dataset_specification (id, label, description, has_format, has_dimensionality, "position") VALUES ('https://w3id.org/okn/i/mint/modflow_2005_Bas', 'bas6', 'Basic Package Input for the Groundwater Flow Process Basic file', 'ba6', NULL, '1') ON CONFLICT DO NOTHING;
 INSERT INTO public.modelcatalog_dataset_specification (id, label, description, has_format, has_dimensionality, "position") VALUES ('https://w3id.org/okn/i/mint/modflow_2005_Bcf', 'bcf6', 'Block centered flow package file', 'bc6', NULL, '3') ON CONFLICT DO NOTHING;
-INSERT INTO public.modelcatalog_dataset_specification (id, label, description, has_format, has_dimensionality, "position") VALUES ('https://w3id.org/okn/i/mint/modflow_2005_cbb', 'cbb', 'Total cell by cell budget file', 'cbb', NULL, '2') ON CONFLICT DO NOTHING;
+INSERT INTO public.modelcatalog_dataset_specification (id, label, description, has_format, has_dimensionality, "position") VALUES ('https://w3id.org/okn/i/mint/modflow_2005_cbb', 'cbb', 'Total cell by cell budget file', 'cbc-mf2005', NULL, '2') ON CONFLICT DO NOTHING;
 INSERT INTO public.modelcatalog_dataset_specification (id, label, description, has_format, has_dimensionality, "position") VALUES ('https://w3id.org/okn/i/mint/modflow_2005_ddown', 'ddn', 'Cell by cell drawdown file', 'ddn', NULL, '4') ON CONFLICT DO NOTHING;
 INSERT INTO public.modelcatalog_dataset_specification (id, label, description, has_format, has_dimensionality, "position") VALUES ('https://w3id.org/okn/i/mint/modflow_2005_Dis', 'dis', 'Discretization file', 'dis', NULL, '2') ON CONFLICT DO NOTHING;
 INSERT INTO public.modelcatalog_dataset_specification (id, label, description, has_format, has_dimensionality, "position") VALUES ('https://w3id.org/okn/i/mint/modflow_2005_Drn', 'drn', 'Drain package file', 'dat', NULL, '6') ON CONFLICT DO NOTHING;
@@ -15879,6 +15879,338 @@ WHERE id IN (
 );
 
 -- modelcatalog_version_author (0 rows)
+
+-- Model-driven DFC inference demo contract. The CBC file is format-only; the
+-- SVO adapter registry supplies the spring flow meaning downstream.
+INSERT INTO public.modelcatalog_standard_variable (id, label, description, same_as)
+VALUES (
+  'https://w3id.org/okn/i/mint/spring__volume_flow_rate',
+  'spring__volume_flow_rate',
+  'Volume flow rate from a modeled spring.',
+  NULL
+)
+ON CONFLICT DO NOTHING;
+
+INSERT INTO public.modelcatalog_dataset_specification
+  (id, label, description, has_format, has_dimensionality, "position")
+VALUES (
+  'https://w3id.org/okn/i/mint/modflow6_cbc_output',
+  'MODFLOW 6 cell-by-cell budget',
+  'MODFLOW 6 cell-by-cell budget output consumed by the SVO adapter chain.',
+  'cbc-mf6',
+  NULL,
+  NULL
+)
+ON CONFLICT DO NOTHING;
+
+INSERT INTO public.modelcatalog_configuration_output (configuration_id, output_id)
+VALUES (
+  'https://w3id.org/okn/i/mint/ce445698-1d76-4833-95e8-a12eb3da2488',
+  'https://w3id.org/okn/i/mint/modflow6_cbc_output'
+)
+ON CONFLICT DO NOTHING;
+
+DELETE FROM public.modelcatalog_configuration
+WHERE id = 'https://w3id.org/okn/i/mint/8cac141d-96f4-439b-8a15-247344cb2c32';
+
+DELETE FROM public.modelcatalog_configuration
+WHERE id IN (
+  'https://w3id.org/okn/i/mint/37d17ee0-0ce6-4095-9f32-90c1b33859f2',
+  'https://w3id.org/okn/i/mint/e6becd2c-29d1-482e-b94b-388cdc584e3a'
+);
+
+DELETE FROM public.modelcatalog_software
+WHERE id IN (
+  'https://w3id.org/okn/i/mint/ac0a108b-eca1-4f20-af3e-d6d87f29e03f',
+  'https://w3id.org/okn/i/mint/5178a907-4464-45b4-bc12-404e7c7eeab2'
+);
+
+-- Keep one canonical configuration per supported MODFLOW family. These rows
+-- are duplicate runtime registrations and are not referenced by executions or
+-- threads in the local catalog.
+UPDATE public.modelcatalog_configuration
+SET model_configuration_id = 'https://w3id.org/okn/i/mint/modflow_2005_cfg'
+WHERE model_configuration_id =
+  'https://w3id.org/okn/i/mint/a57dafde-d855-4ed8-9eca-f8f50fa95635';
+
+DELETE FROM public.modelcatalog_configuration
+WHERE id IN (
+  'https://w3id.org/okn/i/mint/a57dafde-d855-4ed8-9eca-f8f50fa95635',
+  'https://w3id.org/okn/i/mint/b8fa91f0-c000-4d5c-ade9-fa6eb8f0147b',
+  'https://w3id.org/okn/i/mint/1a0d307c-539b-45b2-aff6-a97fb22a0739',
+  'https://w3id.org/okn/i/mint/dcd878ae-5e7d-44c4-805b-7bd3f3fc1637'
+);
+
+-- Normalize the family labels shown by the /models catalog browser.
+UPDATE public.modelcatalog_software
+SET label = 'MODFLOW 2005'
+WHERE id = 'https://w3id.org/okn/i/mint/MODFLOW';
+
+UPDATE public.modelcatalog_software
+SET label = 'MODFLOW 2000'
+WHERE id IN (
+  'https://w3id.org/okn/i/mint/044308bf-48f1-414e-b0ce-d3fb4b2408b7',
+  'https://w3id.org/okn/i/mint/69864dbb-68e5-4481-8d65-b8a2b861f956',
+  'https://w3id.org/okn/i/mint/bc90aeb9-a5e6-4def-a574-9e45337849e4'
+);
+
+UPDATE public.modelcatalog_software
+SET label = 'MODFLOW 6'
+WHERE id = 'https://w3id.org/okn/i/mint/b051a492-ad3f-494b-8ae4-53c8a83d3881';
+
+-- The MF6 runtime consumes a complete simulation archive plus explicit WEL
+-- and RCH overrides. Replace the name-file-only input with the archive input.
+INSERT INTO public.modelcatalog_dataset_specification
+  (id, label, description, has_format, has_dimensionality, "position")
+VALUES (
+  'https://w3id.org/okn/i/mint/wmobley-modflow-6-simulation-archive',
+  'MODFLOW 6 simulation archive',
+  'ZIP archive containing a full MODFLOW 6 simulation and support files.',
+  'zip',
+  NULL,
+  '1'
+)
+ON CONFLICT DO NOTHING;
+
+UPDATE public.modelcatalog_variable_presentation
+SET has_standard_variable =
+  'https://w3id.org/okn/i/mint/wmobley-standard-variable-groundwater-model-simulation-archive'
+WHERE id =
+  'https://w3id.org/okn/i/mint/wmobley-modflow-6-simulation-archive';
+
+INSERT INTO public.modelcatalog_dataset_specification_presentation
+  (dataset_specification_id, presentation_id)
+VALUES (
+  'https://w3id.org/okn/i/mint/wmobley-modflow-6-simulation-archive',
+  'https://w3id.org/okn/i/mint/wmobley-modflow-6-simulation-archive'
+)
+ON CONFLICT DO NOTHING;
+
+DELETE FROM public.modelcatalog_configuration_input
+WHERE configuration_id =
+  'https://w3id.org/okn/i/mint/ce445698-1d76-4833-95e8-a12eb3da2488'
+  AND input_id = 'https://w3id.org/okn/i/mint/89dc3d46-625b-4929-9732-c91bd0bdd28d';
+
+INSERT INTO public.modelcatalog_configuration_input
+  (configuration_id, input_id, is_optional)
+VALUES (
+  'https://w3id.org/okn/i/mint/ce445698-1d76-4833-95e8-a12eb3da2488',
+  'https://w3id.org/okn/i/mint/wmobley-modflow-6-simulation-archive',
+  FALSE
+)
+ON CONFLICT DO NOTHING;
+
+-- Normalize the input contract for every supported MODFLOW family. Archives
+-- contain the complete simulation; WEL and RCH remain explicit semantic
+-- override candidates for the problem-formulation wizard.
+INSERT INTO public.modelcatalog_standard_variable (id, label, description, same_as)
+VALUES
+  ('https://w3id.org/okn/i/mint/wmobley-standard-variable-groundwater-model-simulation-archive', 'groundwater_model__simulation_archive', 'Optional ZIP archive containing a complete groundwater model simulation and support files.', NULL),
+  ('https://w3id.org/okn/i/mint/61e86974-f1bb-406c-ae52-f6c6eccb6c59', 'groundwater_well__volume_flow_rate', NULL, NULL),
+  ('https://w3id.org/okn/i/mint/GROUNDWATER__RECHARGE_VOLUME_FLUX', 'groundwater__recharge_volume_flux', NULL, NULL)
+ON CONFLICT DO NOTHING;
+
+UPDATE public.modelcatalog_variable_presentation
+SET has_standard_variable = 'https://w3id.org/okn/i/mint/wmobley-standard-variable-groundwater-model-simulation-archive'
+WHERE id IN (
+  'https://w3id.org/okn/i/mint/wmobley-modflow-2000-simulation-archive',
+  'https://w3id.org/okn/i/mint/wmobley-modflow-6-simulation-archive',
+  'https://w3id.org/okn/i/mint/wmobley-modflow-96-simulation-archive',
+  'https://w3id.org/okn/i/mint/b08fd7d3-24c2-48cc-83be-a52b73fdf212'
+);
+
+INSERT INTO public.modelcatalog_variable_presentation
+  (id, label, description, has_long_name, has_short_name, has_standard_variable, uses_unit)
+VALUES
+  ('https://w3id.org/okn/i/mint/wmobley-modflow-2000-wel-override', 'MODFLOW 2000 well override', 'Optional replacement MODFLOW 2000 WEL package input.', 'MODFLOW 2000 well override', 'wel_override', 'https://w3id.org/okn/i/mint/61e86974-f1bb-406c-ae52-f6c6eccb6c59', NULL),
+  ('https://w3id.org/okn/i/mint/wmobley-modflow-2000-rch-override', 'MODFLOW 2000 recharge override', 'Optional replacement MODFLOW 2000 recharge package input.', 'MODFLOW 2000 recharge override', 'rch_override', 'https://w3id.org/okn/i/mint/GROUNDWATER__RECHARGE_VOLUME_FLUX', NULL),
+  ('https://w3id.org/okn/i/mint/wmobley-modflow-96-wel-override', 'MODFLOW 96 well override', 'Optional replacement MODFLOW 96 WEL package input.', 'MODFLOW 96 well override', 'wel_override', 'https://w3id.org/okn/i/mint/61e86974-f1bb-406c-ae52-f6c6eccb6c59', NULL),
+  ('https://w3id.org/okn/i/mint/wmobley-modflow-96-rch-override', 'MODFLOW 96 recharge override', 'Optional replacement MODFLOW 96 recharge package input.', 'MODFLOW 96 recharge override', 'rch_override', 'https://w3id.org/okn/i/mint/GROUNDWATER__RECHARGE_VOLUME_FLUX', NULL),
+  ('https://w3id.org/okn/i/mint/wmobley-modflow-2005-simulation-archive', 'MODFLOW 2005 simulation archive', 'ZIP archive containing a complete MODFLOW 2005 simulation and support files.', 'MODFLOW 2005 simulation archive', 'simulation_archive', 'https://w3id.org/okn/i/mint/wmobley-standard-variable-groundwater-model-simulation-archive', NULL)
+ON CONFLICT (id) DO UPDATE
+SET has_standard_variable = EXCLUDED.has_standard_variable;
+
+INSERT INTO public.modelcatalog_dataset_specification
+  (id, label, description, has_format, has_dimensionality, "position")
+VALUES
+  ('https://w3id.org/okn/i/mint/wmobley-modflow-2000-simulation-archive', 'MODFLOW 2000 simulation archive', 'ZIP archive containing a complete MODFLOW 2000 simulation and support files.', 'zip', NULL, '1'),
+  ('https://w3id.org/okn/i/mint/wmobley-modflow-2000-wel-override', 'MODFLOW 2000 well override', 'Optional replacement MODFLOW 2000 WEL package input.', NULL, NULL, '3'),
+  ('https://w3id.org/okn/i/mint/wmobley-modflow-2000-rch-override', 'MODFLOW 2000 recharge override', 'Optional replacement MODFLOW 2000 recharge package input.', NULL, NULL, '2'),
+  ('https://w3id.org/okn/i/mint/wmobley-modflow-96-wel-override', 'MODFLOW 96 well override', 'Optional replacement MODFLOW 96 WEL package input.', NULL, NULL, '3'),
+  ('https://w3id.org/okn/i/mint/wmobley-modflow-96-rch-override', 'MODFLOW 96 recharge override', 'Optional replacement MODFLOW 96 recharge package input.', NULL, NULL, '2'),
+  ('https://w3id.org/okn/i/mint/wmobley-modflow-2005-simulation-archive', 'MODFLOW 2005 simulation archive', 'ZIP archive containing a complete MODFLOW 2005 simulation and support files.', 'zip', NULL, '1')
+ON CONFLICT (id) DO UPDATE
+SET label = EXCLUDED.label,
+    description = EXCLUDED.description,
+    has_format = EXCLUDED.has_format,
+    "position" = EXCLUDED."position";
+
+UPDATE public.modelcatalog_dataset_specification
+SET has_format = 'zip', "position" = '1'
+WHERE id = 'https://w3id.org/okn/i/mint/4cd57da2-9be9-440d-b6b4-5a4ca6edd370';
+
+INSERT INTO public.modelcatalog_dataset_specification_presentation
+  (dataset_specification_id, presentation_id)
+VALUES
+  ('https://w3id.org/okn/i/mint/wmobley-modflow-2000-simulation-archive', 'https://w3id.org/okn/i/mint/wmobley-modflow-2000-simulation-archive'),
+  ('https://w3id.org/okn/i/mint/wmobley-modflow-2000-wel-override', 'https://w3id.org/okn/i/mint/wmobley-modflow-2000-wel-override'),
+  ('https://w3id.org/okn/i/mint/wmobley-modflow-2000-rch-override', 'https://w3id.org/okn/i/mint/wmobley-modflow-2000-rch-override'),
+  ('https://w3id.org/okn/i/mint/wmobley-modflow-96-wel-override', 'https://w3id.org/okn/i/mint/wmobley-modflow-96-wel-override'),
+  ('https://w3id.org/okn/i/mint/wmobley-modflow-96-rch-override', 'https://w3id.org/okn/i/mint/wmobley-modflow-96-rch-override'),
+  ('https://w3id.org/okn/i/mint/wmobley-modflow-2005-simulation-archive', 'https://w3id.org/okn/i/mint/wmobley-modflow-2005-simulation-archive')
+ON CONFLICT DO NOTHING;
+
+DELETE FROM public.modelcatalog_configuration_input
+WHERE configuration_id = 'https://w3id.org/okn/i/mint/90a6c0c2-a43b-4717-adb0-3a5a02737dc9'
+  AND input_id IN (
+    'https://w3id.org/okn/i/mint/afd525ba-a1a1-42f7-a743-2aeaf2891f42',
+    'https://w3id.org/okn/i/mint/577fa3fa-6ce2-4b3e-ad07-9773daa49d4c'
+  );
+
+DELETE FROM public.modelcatalog_configuration_input
+WHERE configuration_id = 'https://w3id.org/okn/i/mint/54a07d2a-c407-4f41-9c51-3245eabd2e61'
+  AND input_id IN (
+    'https://w3id.org/okn/i/mint/98325827-1b40-4a79-8fc1-599140badb9d',
+    'https://w3id.org/okn/i/mint/626ff050-d44f-4d2f-b219-21130c69f517'
+  );
+
+INSERT INTO public.modelcatalog_configuration_input
+  (configuration_id, input_id, is_optional)
+VALUES
+  ('https://w3id.org/okn/i/mint/90a6c0c2-a43b-4717-adb0-3a5a02737dc9', 'https://w3id.org/okn/i/mint/wmobley-modflow-2000-simulation-archive', FALSE),
+  ('https://w3id.org/okn/i/mint/90a6c0c2-a43b-4717-adb0-3a5a02737dc9', 'https://w3id.org/okn/i/mint/wmobley-modflow-2000-rch-override', FALSE),
+  ('https://w3id.org/okn/i/mint/90a6c0c2-a43b-4717-adb0-3a5a02737dc9', 'https://w3id.org/okn/i/mint/wmobley-modflow-2000-wel-override', FALSE),
+  ('https://w3id.org/okn/i/mint/54a07d2a-c407-4f41-9c51-3245eabd2e61', 'https://w3id.org/okn/i/mint/4cd57da2-9be9-440d-b6b4-5a4ca6edd370', FALSE),
+  ('https://w3id.org/okn/i/mint/54a07d2a-c407-4f41-9c51-3245eabd2e61', 'https://w3id.org/okn/i/mint/wmobley-modflow-96-rch-override', FALSE),
+  ('https://w3id.org/okn/i/mint/54a07d2a-c407-4f41-9c51-3245eabd2e61', 'https://w3id.org/okn/i/mint/wmobley-modflow-96-wel-override', FALSE),
+  ('https://w3id.org/okn/i/mint/modflow_2005_cfg', 'https://w3id.org/okn/i/mint/wmobley-modflow-2005-simulation-archive', FALSE)
+ON CONFLICT DO NOTHING;
+
+UPDATE public.modelcatalog_variable_presentation
+SET has_standard_variable = 'https://w3id.org/okn/i/mint/61e86974-f1bb-406c-ae52-f6c6eccb6c59'
+WHERE id = 'https://w3id.org/okn/i/mint/modflow2005_q';
+
+-- Keep one visible MODFLOW 2005 configuration, matching the one-per-family
+-- catalog policy. These setup registrations are not referenced by executions
+-- or threads and their catalog metadata is removed by the FK cascade.
+DELETE FROM public.modelcatalog_configuration
+WHERE id IN (
+  'https://w3id.org/okn/i/mint/399d051b-6562-4ce2-83eb-71bb38b83c8d',
+  'https://w3id.org/okn/i/mint/modflow_2005_BartonSprings_avg',
+  'https://w3id.org/okn/i/mint/modflow_2005_BartonSprings_drought',
+  'https://w3id.org/okn/i/mint/modflow_2005_BartonSprings_advanced',
+  'https://w3id.org/okn/i/mint/d2792424-fb9d-461c-9470-4bc87ca2f05f',
+  'https://w3id.org/okn/i/mint/c07a6f98-6339-4033-84b0-6cd7daca6284'
+);
+
+-- Normalize the canonical MODFLOW I/O metadata. The WEL/RCH package rows are
+-- retained for runtime compatibility but are presented as semantic overrides.
+INSERT INTO public.modelcatalog_standard_variable (id, label, description, same_as)
+VALUES
+  ('https://w3id.org/okn/i/mint/wmobley-standard-variable-aquifer-system-volumetric-budget', 'aquifer_system__volumetric_budget', 'Simulated volumetric inflow and outflow terms for groundwater budget accounting.', NULL),
+  ('https://w3id.org/okn/i/mint/wmobley-standard-variable-groundwater-drawdown', 'groundwater__drawdown', 'Reduction in groundwater hydraulic head relative to a reference condition.', NULL),
+  ('https://w3id.org/okn/i/mint/wmobley-standard-variable-groundwater-hydraulic-head', 'groundwater__hydraulic_head', 'Groundwater hydraulic head produced by a groundwater model.', NULL)
+ON CONFLICT DO NOTHING;
+
+UPDATE public.modelcatalog_dataset_specification
+SET label = 'MODFLOW 2005 well override', description = 'Required MODFLOW 2005 WEL input; the problem formulation may replace it with a compatible well-flow dataset.'
+WHERE id = 'https://w3id.org/okn/i/mint/modflow_2005_Well';
+
+UPDATE public.modelcatalog_dataset_specification
+SET label = 'MODFLOW 2005 recharge override', description = 'Required MODFLOW 2005 RCH input; the problem formulation may replace it with a compatible recharge-flux dataset.'
+WHERE id = 'https://w3id.org/okn/i/mint/modflow_2005_Rech';
+
+UPDATE public.modelcatalog_variable_presentation
+SET label = 'MODFLOW 2005 well override', description = 'MODFLOW 2005 well-flow input.', has_long_name = 'MODFLOW 2005 well override', has_short_name = 'wel_override', has_standard_variable = 'https://w3id.org/okn/i/mint/61e86974-f1bb-406c-ae52-f6c6eccb6c59'
+WHERE id = 'https://w3id.org/okn/i/mint/modflow2005_q';
+
+UPDATE public.modelcatalog_variable_presentation
+SET label = 'MODFLOW 2005 recharge override', description = 'MODFLOW 2005 recharge-flux input.', has_long_name = 'MODFLOW 2005 recharge override', has_short_name = 'rch_override', has_standard_variable = 'https://w3id.org/okn/i/mint/GROUNDWATER__RECHARGE_VOLUME_FLUX'
+WHERE id = 'https://w3id.org/okn/i/mint/modflow2005_rech';
+
+UPDATE public.modelcatalog_dataset_specification
+SET label = 'MODFLOW 2000 cell-by-cell budget', description = 'MODFLOW 2000 cell-by-cell groundwater budget output.', has_format = 'cbc-mf2000'
+WHERE id = 'https://w3id.org/okn/i/mint/6b16c7bc-25ef-4afb-bc4b-35b10cc409c9';
+UPDATE public.modelcatalog_dataset_specification
+SET label = 'MODFLOW 2000 drawdown', description = 'MODFLOW 2000 groundwater drawdown output.', has_format = 'ddn'
+WHERE id = 'https://w3id.org/okn/i/mint/9aadd1a3-cd8c-4f52-8eda-4b897e1d786f';
+UPDATE public.modelcatalog_dataset_specification
+SET label = 'MODFLOW 2000 hydraulic head', description = 'MODFLOW 2000 groundwater hydraulic-head output.', has_format = 'hds'
+WHERE id = 'https://w3id.org/okn/i/mint/d9caf5a9-335e-4883-a50b-699f387cf34a';
+UPDATE public.modelcatalog_dataset_specification
+SET label = 'MODFLOW 96 cell-by-cell budget', description = 'MODFLOW 96 cell-by-cell groundwater budget output.', has_format = 'cbc-mf96'
+WHERE id = 'https://w3id.org/okn/i/mint/56acb8fe-9b53-4124-83c0-2b0025bf9361';
+UPDATE public.modelcatalog_dataset_specification
+SET label = 'MODFLOW 96 drawdown', description = 'MODFLOW 96 groundwater drawdown output.', has_format = 'ddn'
+WHERE id = 'https://w3id.org/okn/i/mint/dce0bbf7-c09e-4588-9ec2-cb4fd932a191';
+UPDATE public.modelcatalog_dataset_specification
+SET label = 'MODFLOW 96 hydraulic head', description = 'MODFLOW 96 groundwater hydraulic-head output.', has_format = 'hds'
+WHERE id = 'https://w3id.org/okn/i/mint/9381a5d1-41d4-4380-a43d-078586efeffc';
+UPDATE public.modelcatalog_dataset_specification
+SET label = 'MODFLOW 2005 cell-by-cell budget', description = 'MODFLOW 2005 cell-by-cell groundwater budget output.', has_format = 'cbc-mf2005'
+WHERE id = 'https://w3id.org/okn/i/mint/modflow_2005_cbb';
+UPDATE public.modelcatalog_dataset_specification
+SET label = 'MODFLOW 2005 drawdown', description = 'MODFLOW 2005 groundwater drawdown output.', has_format = 'ddn'
+WHERE id = 'https://w3id.org/okn/i/mint/modflow_2005_ddown';
+UPDATE public.modelcatalog_dataset_specification
+SET label = 'MODFLOW 2005 hydraulic head', description = 'MODFLOW 2005 groundwater hydraulic-head output.', has_format = 'hds'
+WHERE id = 'https://w3id.org/okn/i/mint/modflow_2005_heads';
+UPDATE public.modelcatalog_dataset_specification
+SET label = 'MODFLOW 2005 listing', description = 'MODFLOW 2005 listing output containing model budget summaries.', has_format = 'lst'
+WHERE id = 'https://w3id.org/okn/i/mint/modflow_2005_list';
+UPDATE public.modelcatalog_dataset_specification
+SET label = 'MODFLOW 6 cell-by-cell budget', description = 'MODFLOW 6 cell-by-cell groundwater budget output consumed by the SVO adapter chain.', has_format = 'cbc-mf6'
+WHERE id = 'https://w3id.org/okn/i/mint/modflow6_cbc_output';
+
+UPDATE public.modelcatalog_variable_presentation
+SET has_standard_variable = 'https://w3id.org/okn/i/mint/wmobley-standard-variable-aquifer-system-volumetric-budget'
+WHERE id IN (
+  'https://w3id.org/okn/i/mint/7e82b186-11ae-49ae-a2e0-fdd872d39cc4',
+  'https://w3id.org/okn/i/mint/1d998c24-ea65-47b4-8526-e579898a6ed8',
+  'https://w3id.org/okn/i/mint/wmobley-modflow-6-cell-budget'
+);
+
+UPDATE public.modelcatalog_variable_presentation
+SET has_standard_variable = 'https://w3id.org/okn/i/mint/wmobley-standard-variable-groundwater-drawdown'
+WHERE id IN (
+  'https://w3id.org/okn/i/mint/2bddcbf0-6235-4dbd-b94a-6c3284d72897',
+  'https://w3id.org/okn/i/mint/de1bc743-cbc0-4940-9933-124fb5f895ad'
+);
+
+UPDATE public.modelcatalog_variable_presentation
+SET has_standard_variable = 'https://w3id.org/okn/i/mint/wmobley-standard-variable-groundwater-hydraulic-head'
+WHERE id IN (
+  'https://w3id.org/okn/i/mint/fedd3f44-4045-42fd-bbd0-a8c67ae2e1af',
+  'https://w3id.org/okn/i/mint/43ae2275-6ba6-408c-a737-7b48f29827e8'
+);
+
+INSERT INTO public.modelcatalog_variable_presentation
+  (id, label, description, has_long_name, has_short_name, has_standard_variable, uses_unit)
+VALUES
+  ('https://w3id.org/okn/i/mint/wmobley-modflow-2005-cell-budget', 'MODFLOW 2005 cell-by-cell budget', 'MODFLOW 2005 cell-by-cell groundwater budget output.', 'MODFLOW 2005 cell-by-cell budget', 'cell_budget', 'https://w3id.org/okn/i/mint/wmobley-standard-variable-aquifer-system-volumetric-budget', NULL),
+  ('https://w3id.org/okn/i/mint/wmobley-modflow-2005-drawdown', 'MODFLOW 2005 drawdown', 'MODFLOW 2005 groundwater drawdown output.', 'MODFLOW 2005 drawdown', 'drawdown', 'https://w3id.org/okn/i/mint/wmobley-standard-variable-groundwater-drawdown', NULL)
+ON CONFLICT (id) DO UPDATE SET has_standard_variable = EXCLUDED.has_standard_variable;
+
+INSERT INTO public.modelcatalog_dataset_specification_presentation (dataset_specification_id, presentation_id)
+VALUES
+  ('https://w3id.org/okn/i/mint/modflow_2005_cbb', 'https://w3id.org/okn/i/mint/wmobley-modflow-2005-cell-budget'),
+  ('https://w3id.org/okn/i/mint/modflow_2005_ddown', 'https://w3id.org/okn/i/mint/wmobley-modflow-2005-drawdown'),
+  ('https://w3id.org/okn/i/mint/modflow6_cbc_output', 'https://w3id.org/okn/i/mint/wmobley-modflow-6-cell-budget')
+ON CONFLICT DO NOTHING;
+
+-- The MODFLOW 2005 archive replaces the individual package-file inputs on
+-- the canonical configuration. Keep only archive, recharge, and well links.
+DELETE FROM public.modelcatalog_configuration_input
+WHERE configuration_id = 'https://w3id.org/okn/i/mint/modflow_2005_cfg'
+  AND input_id IN (
+    'https://w3id.org/okn/i/mint/modflow_2005_Bas',
+    'https://w3id.org/okn/i/mint/modflow_2005_Bcf',
+    'https://w3id.org/okn/i/mint/modflow_2005_Dis',
+    'https://w3id.org/okn/i/mint/modflow_2005_Drn',
+    'https://w3id.org/okn/i/mint/modflow_2005_Hfb',
+    'https://w3id.org/okn/i/mint/modflow_2005_Oc',
+    'https://w3id.org/okn/i/mint/modflow_2005_Sip'
+  );
 
 SET session_replication_role = DEFAULT;
 

@@ -1377,6 +1377,7 @@ export type VariablePresentationRef = {
 export type DatasetSpecRef = {
   id: string;
   label?: string | null;
+  has_format?: string | null;
   presentations: VariablePresentationRef[];
 };
 
@@ -1448,6 +1449,7 @@ export type ModelInputVar = {
   name: string;
   variableIds: string[];
   variableLabels: string[];
+  format?: string | null;
   optional: boolean;
 };
 
@@ -1469,6 +1471,7 @@ function specToVar(spec: DatasetSpecRef, optional: boolean): ModelInputVar {
     name: spec.label ?? spec.id,
     variableIds: svs.map((sv) => sv.id),
     variableLabels: svs.map((sv) => sv.label ?? sv.id),
+    format: spec.has_format ?? null,
     optional,
   };
 }
@@ -1506,6 +1509,7 @@ export const GetModelTreeWithRegionsDocument = gql`
             input {
               id
               label
+              has_format
               presentations {
                 dataset_specification_id
                 presentation_id
@@ -1519,6 +1523,7 @@ export const GetModelTreeWithRegionsDocument = gql`
             output {
               id
               label
+              has_format
               presentations {
                 dataset_specification_id
                 presentation_id
@@ -1538,6 +1543,7 @@ export const GetModelTreeWithRegionsDocument = gql`
               input {
                 id
                 label
+                has_format
                 presentations {
                   dataset_specification_id
                   presentation_id
@@ -1551,6 +1557,7 @@ export const GetModelTreeWithRegionsDocument = gql`
               output {
                 id
                 label
+                has_format
                 presentations {
                   dataset_specification_id
                   presentation_id

@@ -83,6 +83,15 @@ class InMemoryHasura:
     def _op_ListDataObjects(self, v):
         return {"adapter_data_object": list(STORE.data_object.values())}
 
+    def _op_ExistingCkanDataObjects(self, v):
+        return {
+            "adapter_data_object": [
+                {"id": object_id}
+                for object_id in v.get("ids", [])
+                if object_id in STORE.data_object
+            ]
+        }
+
     def _op_ModelInputRequirement(self, v):
         row = STORE.dataset_specification.get(v["ds_id"])
         return {"modelcatalog_dataset_specification": [row] if row else []}
@@ -125,6 +134,19 @@ class InMemoryHasura:
     def _op_InsertDataObject(self, v):
         row = _insert(STORE.data_object, v["obj"], nested_key="variables")
         return {"insert_adapter_data_object_one": row}
+
+    def _op_ReconcileCkanDataObject(self, v):
+        existing = STORE.data_object.get(v["id"])
+        deleted_count = len(existing.get("variables", [])) if existing else 0
+        row = _insert(STORE.data_object, v["obj"], nested_key="variables")
+        return {
+            "delete_adapter_data_object_variable": {"affected_rows": deleted_count},
+            "insert_adapter_data_object_one": row,
+        }
+
+    def _op_DeleteCkanDataObject(self, v):
+        row = STORE.data_object.pop(v["id"], None)
+        return {"delete_adapter_data_object_by_pk": row}
 
     def _op_InsertTransformSpec(self, v):
         row = _insert(STORE.transform_spec, v["obj"], nested_key="contracts")

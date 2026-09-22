@@ -18,7 +18,8 @@
     "modflow6":    "cbc-mf6",
     "modflow_usg": "cbc-mfusg",
     "modflow_2000":"cbc-mf2000",
-    "modflow_96":  "cbc-mf96"
+    "modflow_96":  "cbc-mf96",
+    "modflow_2005":"cbc-mf2005"
   },
 
   "_hds_formats": {
@@ -656,7 +657,7 @@
     {
       "_comment": "── MODFLOW CBC budget extract specs (drain/spring, river/stream, sat thickness) ──────────────",
       "_comment2": "Each spec is version-specific so BFS can trace the chain back to the originating Tapis app.",
-      "_comment3": "format: cbc-mf6 = MODFLOW 6 CBC; cbc-mfusg = MODFLOW-USG; cbc-mf2000 = MODFLOW-2000; cbc-mf96 = MODFLOW-96."
+      "_comment3": "format: cbc-mf6 = MODFLOW 6 CBC; cbc-mfusg = MODFLOW-USG; cbc-mf2000 = MODFLOW-2000; cbc-mf96 = MODFLOW-96; cbc-mf2005 = MODFLOW-2005."
     },
 
     {
@@ -748,6 +749,29 @@
       "contracts": [
         {"id": "c-m96-drn-in",  "role": "input",  "format": "cbc-mf96"},
         {"id": "c-m96-drn-out", "role": "output", "standard_variable_uri": "https://w3id.org/okn/i/mint/spring__volume_flow_rate", "format": "gma-scalar", "unit": "m3s"}
+      ]
+    },
+
+    {
+      "id": "ts-modflow-2005-drain-gma-extract",
+      "name": "modflow-2005-drain-gma-extract",
+      "version": "1.0.0",
+      "description": "Extract drain-package discharge from a MODFLOW-2005 cell-by-cell budget, clip to GMA, sum to scalar m3s.",
+      "transform_type": "budget_extract_drain",
+      "is_lossy": false,
+      "method": "tapis_function",
+      "tapis_app_id": null,
+      "stage": "budget-extract",
+      "env_from_args": {
+        "SOURCE_URI":       "source_uri",
+        "GMA_ID":           "gma_id",
+        "GMA_BOUNDARY_URI": "gma_boundary_uri",
+        "GEO_ACTOR_ID":    "geo_actor_id",
+        "TAPIS_TOKEN":      "tapis_token"
+      },
+      "contracts": [
+        {"id": "c-m2005-drn-in",  "role": "input",  "format": "cbc-mf2005"},
+        {"id": "c-m2005-drn-out", "role": "output", "standard_variable_uri": "https://w3id.org/okn/i/mint/spring__volume_flow_rate", "format": "gma-scalar", "unit": "m3s"}
       ]
     },
 

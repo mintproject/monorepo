@@ -1,0 +1,3 @@
+-- The deleted duplicate configurations are restored by reverting the fixture
+-- to the prior revision and reloading it. Their full metadata is intentionally
+-- not duplicated in a rollback migration.
