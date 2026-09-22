@@ -31,6 +31,7 @@ import {
   matchesSelectedDatasetContext,
   matchesSpatialBox,
   splitByRegion,
+  timelineTicks,
 } from '../DatasetsStep';
 
 beforeEach(() => {
@@ -121,6 +122,35 @@ describe('dateCoverage', () => {
     expect(dateCoverage(req, { start: new Date('2000-01-01'), end: new Date('2026-01-01') })).toBe(
       'full',
     );
+  });
+});
+
+describe('timelineTicks', () => {
+  const years = (domain: { start: number; end: number }) =>
+    timelineTicks(domain).map((tick) => new Date(tick).getUTCFullYear());
+
+  it('keeps long timelines readable while retaining the domain endpoints', () => {
+    expect(years({ start: Date.UTC(1931, 0, 1), end: Date.UTC(2060, 0, 1) })).toEqual([
+      1931, 1940, 1950, 1960, 1970, 1980, 1990, 2000, 2010, 2020, 2030, 2040, 2050, 2060,
+    ]);
+  });
+
+  it('uses yearly ticks for short timelines', () => {
+    expect(years({ start: Date.UTC(2000, 0, 1), end: Date.UTC(2005, 0, 1) })).toEqual([
+      2000, 2001, 2002, 2003, 2004, 2005,
+    ]);
+  });
+
+  it('aligns intermediate ticks for unaligned domains', () => {
+    expect(years({ start: Date.UTC(2001, 0, 1), end: Date.UTC(2022, 0, 1) })).toEqual([
+      2001, 2002, 2004, 2006, 2008, 2010, 2012, 2014, 2016, 2018, 2020, 2022,
+    ]);
+  });
+
+  it('raises the interval when unaligned endpoints would exceed the label cap', () => {
+    expect(years({ start: Date.UTC(2001, 0, 1), end: Date.UTC(2031, 0, 1) })).toEqual([
+      2001, 2005, 2010, 2015, 2020, 2025, 2030, 2031,
+    ]);
   });
 });
 

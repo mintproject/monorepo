@@ -168,16 +168,44 @@ function timelinePercent(value: number, domain: { start: number; end: number }):
   return Math.max(0, Math.min(100, ((value - domain.start) / (domain.end - domain.start)) * 100));
 }
 
-function timelineTicks(domain: { start: number; end: number }): number[] {
+const MAX_TIMELINE_TICKS = 16;
+
+function timelineTickStep(span: number): number {
+  const rawStep = Math.max(1, span / (MAX_TIMELINE_TICKS - 1));
+  const magnitude = 10 ** Math.floor(Math.log10(rawStep));
+  const normalized = rawStep / magnitude;
+  const niceNormalized = normalized <= 1 ? 1 : normalized <= 2 ? 2 : normalized <= 5 ? 5 : 10;
+  return Math.max(1, niceNormalized * magnitude);
+}
+
+function nextTimelineTickStep(step: number): number {
+  const magnitude = 10 ** Math.floor(Math.log10(step));
+  const normalized = step / magnitude;
+  const nextNormalized = normalized <= 1 ? 2 : normalized <= 2 ? 5 : 10;
+  return nextNormalized * magnitude;
+}
+
+function timelineTickYears(startYear: number, endYear: number, step: number): number[] {
+  const years = new Set<number>([startYear]);
+  const firstAlignedYear = Math.ceil(startYear / step) * step;
+  for (let year = firstAlignedYear; year <= endYear; year += step) {
+    years.add(year);
+  }
+  years.add(endYear);
+  return [...years].sort((a, b) => a - b);
+}
+
+export function timelineTicks(domain: { start: number; end: number }): number[] {
   const startYear = new Date(domain.start).getUTCFullYear();
   const endYear = new Date(domain.end).getUTCFullYear();
   const span = Math.max(1, endYear - startYear);
-  const step = span > 20 ? 5 : span > 10 ? 2 : 1;
-  const ticks: number[] = [];
-  for (let year = startYear; year <= endYear; year += step) {
-    ticks.push(Date.UTC(year, 0, 1));
+  let step = timelineTickStep(span);
+  let years = timelineTickYears(startYear, endYear, step);
+  while (years.length > MAX_TIMELINE_TICKS) {
+    step = nextTimelineTickStep(step);
+    years = timelineTickYears(startYear, endYear, step);
   }
-  return ticks;
+  return years.map((year) => Date.UTC(year, 0, 1));
 }
 
 /**
@@ -388,10 +416,17 @@ function DatasetCoverageTimeline({
               aria-hidden
             />
           )}
-          {ticks.map((tick) => (
+          {ticks.map((tick, index) => (
             <span
               key={tick}
-              className="absolute bottom-1 -translate-x-1/2"
+              className={cn(
+                'absolute bottom-1 whitespace-nowrap',
+                index === 0
+                  ? 'translate-x-0'
+                  : index === ticks.length - 1
+                    ? '-translate-x-full'
+                    : '-translate-x-1/2',
+              )}
               style={{ left: `${timelinePercent(tick, domain)}%` }}
             >
               {new Date(tick).getUTCFullYear()}
