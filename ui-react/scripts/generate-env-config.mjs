@@ -93,6 +93,12 @@ export function buildEnvConfig(env = process.env) {
   const ensembleManager = pick(env, 'ENSEMBLE_MANAGER_API', 'VITE_ENSEMBLE_MANAGER_API');
   if (ensembleManager) config.ENSEMBLE_MANAGER_API = ensembleManager;
 
+  // Adapter plan discovery is opt-in until the adapter output handoff is
+  // enabled for the deployment. Keep the key absent by default so legacy
+  // thread behavior remains unchanged.
+  const svoAdapterEnabled = pick(env, 'SVO_ADAPTER_ENABLED', 'VITE_SVO_ADAPTER_ENABLED');
+  if (svoAdapterEnabled) config.SVO_ADAPTER_ENABLED = svoAdapterEnabled;
+
   const callbackOrigin = pick(env, 'AUTH_CALLBACK_ORIGIN', 'VITE_AUTH_CALLBACK_ORIGIN');
   if (callbackOrigin) config.AUTH_CALLBACK_ORIGIN = callbackOrigin;
 

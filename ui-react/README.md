@@ -60,6 +60,13 @@ the container and Vercel.
   than calling a wrong host. `EXECUTION_ENGINE` must agree with whatever it
   points at: run submission posts to a different route per backend, so a wrong
   value reaches the wrong handler or none.
+- **Adapter plan discovery.** Set `SVO_ADAPTER_ENABLED=true` only for a stack
+  whose CKAN resources have been synchronized into the SVO Adapter. The
+  Parameters step then discovers adapter plans and renders their required
+  values. Runs submit adapter-backed models through Ensemble Manager's durable
+  parent execution; model dispatch waits for verified adapter outputs. Keep the
+  flag disabled until the local Hasura migration and adapter output path have
+  been verified.
 
 ## Testing
 
@@ -115,6 +122,7 @@ is treated as unset):
 | `DATA_CATALOG_BROWSE_URL` | `https://ckan.tacc.utexas.edu` (legacy human-browsable catalog URL) |
 | `SEMANTIC_SEARCH_API` | `http://localhost:8091` (standalone semantic-search service base; the UI appends `/search`) |
 | `ENSEMBLE_MANAGER_API` | omitted when unset |
+| `SVO_ADAPTER_ENABLED` | omitted when unset; set to `true` to discover adapter plans |
 | `MODEL_CATALOG_API` | `http://api.models.mint.local/v2.0.0` (version prefix included; serves the Tapis application proxy) |
 | `EXECUTION_ENGINE` | `localex` (`tapis` / `localex` / `wings` — the backend that Ensemble Manager runs) |
 | `BRANDING` | `none` (`tacc` shows the TACC + UT Austin strip; the preset lives in `src/lib/branding.ts`) |

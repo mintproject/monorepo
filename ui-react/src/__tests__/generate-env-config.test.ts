@@ -38,6 +38,7 @@ describe('buildEnvConfig', () => {
     expect('AUTH_PREVIEW_ORIGIN_ALLOWLIST' in c).toBe(false);
     expect('WELCOME_MESSAGE' in c).toBe(false);
     expect('ENSEMBLE_MANAGER_API' in c).toBe(false);
+    expect('SVO_ADAPTER_ENABLED' in c).toBe(false);
   });
 
   it('emits the service endpoint keys the application reads', () => {
@@ -116,6 +117,11 @@ describe('buildEnvConfig', () => {
     });
     expect(c.AUTH_PREVIEW_ORIGIN_ALLOWLIST).toBe('^https://x$');
     expect(c.WELCOME_MESSAGE).toBe('hi');
+  });
+
+  it('exposes adapter plan discovery only when explicitly enabled', () => {
+    expect(buildEnvConfig({ SVO_ADAPTER_ENABLED: 'true' }).SVO_ADAPTER_ENABLED).toBe('true');
+    expect(buildEnvConfig({ VITE_SVO_ADAPTER_ENABLED: '1' }).SVO_ADAPTER_ENABLED).toBe('1');
   });
 });
 

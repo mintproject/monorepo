@@ -19,10 +19,6 @@ function tableSuffix(table: string): string {
 function buildInsertObject(node: WriteNode): Record<string, unknown> {
   const obj: Record<string, unknown> = { id: node.id, ...node.columns };
 
-  for (const objectFk of node.objectFks ?? []) {
-    obj[objectFk.objectFkColumn] = objectFk.targetId;
-  }
-
   for (const j of node.junctions) {
     obj[j.hasuraRelName] = buildJunctionInsert(j);
   }
@@ -37,8 +33,7 @@ function isLinkOnly(child: WriteNode): boolean {
   return (
     Object.keys(child.columns).length === 0 &&
     child.junctions.length === 0 &&
-    child.childFks.length === 0 &&
-    (child.objectFks ?? []).length === 0
+    child.childFks.length === 0
   );
 }
 
@@ -156,13 +151,7 @@ function appendLinkOps(
 
 export function compilePut(tree: WriteNode): CompiledMutation {
   const suffix = tableSuffix(tree.table);
-  const objectFkSet = Object.fromEntries(
-    (tree.objectFks ?? []).map((objectFk) => [objectFk.objectFkColumn, objectFk.targetId]),
-  );
-  const variables: Record<string, unknown> = {
-    id: tree.id,
-    set: { ...tree.columns, ...objectFkSet },
-  };
+  const variables: Record<string, unknown> = { id: tree.id, set: tree.columns };
   const parts: string[] = [
     `update_modelcatalog_${suffix}_by_pk(pk_columns: { id: $id }, _set: $set) { id }`,
   ];

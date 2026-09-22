@@ -2,6 +2,15 @@ import { Apps, Jobs } from "@tapis/tapis-typescript";
 import { DataResource, Model } from "@/classes/mint/mint-types";
 import { TapisComponentSeed } from "@/classes/tapis/typing";
 
+export class TapisComponentContractError extends Error {
+    readonly code = "COMPONENT_CONTRACT_MISMATCH";
+
+    constructor(message: string) {
+        super(message);
+        this.name = "TapisComponentContractError";
+    }
+}
+
 export class TapisJobService {
     private static readonly ALLOCATION = "PT2050-DataX";
     private static readonly SYSTEM_LOGICAL_QUEUE = "development";
@@ -34,14 +43,7 @@ export class TapisJobService {
         const jobParameterSet: Jobs.JobParameterSet = {
             appArgs: this.getAppArgs(seed, app, model),
             containerArgs: [],
-            schedulerOptions: [
-                {
-                    name: "TACC Allocation",
-                    description: "The TACC allocation associated with this job execution",
-                    include: true,
-                    arg: `-A ${TapisJobService.ALLOCATION}`
-                }
-            ],
+            schedulerOptions: this.getSchedulerOptions(app),
             envVariables: []
         };
 
@@ -67,6 +69,32 @@ export class TapisJobService {
         return request;
     };
 
+    private getSchedulerOptions(app: Apps.TapisApp): Jobs.JobArgSpec[] {
+        const appSchedulerOptions = app.jobAttributes?.parameterSet?.schedulerOptions || [];
+        const fixedOptionNames = new Set(
+            appSchedulerOptions
+                .filter((option) => option.inputMode === Apps.ArgInputModeEnum.Fixed)
+                .map((option) => option.name)
+        );
+
+        if (fixedOptionNames.has("TACC Allocation")) {
+            // The application definition owns this value. Sending an option
+            // with the same name in the job request is an override and Tapis
+            // rejects the entire job definition.
+            console.info("Skipping fixed scheduler option TACC Allocation");
+            return [];
+        }
+
+        return [
+            {
+                name: "TACC Allocation",
+                description: "The TACC allocation associated with this job execution",
+                include: true,
+                arg: `-A ${TapisJobService.ALLOCATION}`
+            }
+        ];
+    }
+
     public createJobParameterSetFromSeed(
         seed: TapisComponentSeed,
         app: Apps.TapisApp,
@@ -84,6 +112,14 @@ export class TapisJobService {
     ): Jobs.JobArgSpec[] {
         const jobArgs = app.jobAttributes;
         return jobArgs.parameterSet.appArgs.flatMap((parameterSet) => {
+            if (parameterSet.inputMode === Apps.ArgInputModeEnum.Fixed) {
+                // FIXED app arguments are owned by the Tapis application
+                // definition. Sending them in a job request is interpreted as
+                // an attempted override and rejected by Tapis.
+                console.info(`Skipping fixed app argument ${parameterSet.name}`);
+                return [];
+            }
+
             const modelParameter = model.input_parameters.find(
                 (parameter) => parameter.name === parameterSet.name
             );
@@ -97,6 +133,53 @@ export class TapisJobService {
                 name: parameterSet.name,
                 arg: arg
             } as Jobs.JobArgSpec;
+        });
+    }
+
+    private findModelInput(fileInputName: string, model: Model) {
+        const exactInput = model.input_files.find((input) => input.name === fileInputName);
+        if (exactInput || !fileInputName.startsWith("mf6-")) {
+            return exactInput;
+        }
+
+        const appInputName = fileInputName.toLowerCase();
+        return model.input_files.find((input) => {
+            const inputName = input.name.toLowerCase();
+            const inputId = input.id.toLowerCase();
+            const inputFormat = input.format?.toLowerCase();
+            const packageName = (value: string) =>
+                new RegExp(`(^|[^a-z])${value}([^a-z]|$)`).test(inputName);
+
+            if (appInputName === "mf6-simulation-archive") {
+                return (
+                    inputFormat === "zip" ||
+                    inputName.includes("simulation archive") ||
+                    inputName.includes("simulation_archive") ||
+                    inputId.includes("simulation-archive")
+                );
+            }
+
+            if (appInputName === "mf6-wel") {
+                return (
+                    inputFormat === "wel" ||
+                    packageName("wel") ||
+                    inputName.includes("well override") ||
+                    inputId.endsWith("/modflow6_input_wel")
+                );
+            }
+
+            if (appInputName === "mf6-rch") {
+                return (
+                    (inputFormat === "rch" &&
+                        !inputName.includes("rcha") &&
+                        !inputName.includes("rchb")) ||
+                    packageName("rch") ||
+                    inputName.includes("recharge override") ||
+                    inputId.endsWith("/modflow6_input_rch")
+                );
+            }
+
+            return false;
         });
     }
 
@@ -114,10 +197,23 @@ export class TapisJobService {
                     return [];
                 }
 
-                const modelInput = model.input_files.find((input) => input.name === fileInput.name);
+                const modelInput = this.findModelInput(fileInput.name, model);
 
                 if (!modelInput) {
-                    throw new Error(`Component input not found for ${fileInput.name}`);
+                    if (fileInput.inputMode === Apps.FileInputModeEnum.Optional) {
+                        console.info(
+                            `Skipping optional app input ${fileInput.name} — no model input is registered`
+                        );
+                        return [];
+                    }
+
+                    const modelInputs = model.input_files.map((input) => input.name).join(", ");
+                    throw new TapisComponentContractError(
+                        `Component input not found for ${fileInput.name}. ` +
+                            `Tapis app ${app.id}/${app.version} declares this file input, ` +
+                            `but model ${model.id} declares: ${modelInputs || "none"}. ` +
+                            "The Tapis app and model input contract must agree before submission."
+                    );
                 }
 
                 const datasets = seed.datasets[modelInput.id] || [];
@@ -133,7 +229,7 @@ export class TapisJobService {
                 return datasets.map(
                     (dataset: DataResource) =>
                         ({
-                            name: modelInput.name,
+                            name: fileInput.name,
                             sourceUrl: dataset.url
                         }) as Jobs.JobFileInput
                 );

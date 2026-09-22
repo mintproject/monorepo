@@ -102,6 +102,9 @@ class InMemoryHasura:
     def _op_GetRun(self, v):
         return {"adapter_workflow_run_by_pk": STORE.run.get(v["id"])}
 
+    def _op_GetDataObject(self, v):
+        return {"adapter_data_object_by_pk": STORE.data_object.get(v["id"])}
+
     def _op_ListRuns(self, v):
         limit = v.get("limit", 50)
         offset = v.get("offset", 0)

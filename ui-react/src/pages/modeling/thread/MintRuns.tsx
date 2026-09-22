@@ -17,6 +17,7 @@ import {
   ThreadExecutionData,
 } from '@/graphql/generated/execution';
 import { fetchExecutionLog } from '@/lib/ensemble-manager';
+import { adapterParametersComplete } from '@/lib/adapter-execution';
 import { ExecutionFilesDialog } from './ExecutionFilesDialog';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -140,6 +141,9 @@ interface MintRunsProps {
   onPublishExecution?: (executionId: string) => Promise<void>;
   /** Called after the user promotes a file, so the caller re-reads the thread. */
   onOutputsChanged?: () => void | Promise<void>;
+  /** Adapter plan discovery must finish before a run can be submitted. */
+  adapterPlansLoading?: boolean;
+  adapterPlanError?: string | null;
 }
 
 // ─── Component ───────────────────────────────────────────────────────────────
@@ -157,11 +161,15 @@ export function MintRuns({
   onSubmitRuns,
   onPublishExecution,
   onOutputsChanged,
+  adapterPlansLoading = false,
+  adapterPlanError,
 }: MintRunsProps) {
   const modelIds = Object.keys(threadData.execution_summary ?? {});
 
   // Determine if params are done: every model has at least one ensemble binding
   const paramsDone =
+    !adapterPlansLoading &&
+    !adapterPlanError &&
     modelIds.length > 0 &&
     modelIds.every((mid) => {
       const model = threadData.models[mid];
@@ -170,7 +178,8 @@ export function MintRuns({
       return model.input_parameters
         .filter((p) => !p.value)
         .every((p) => (bindings[p.id ?? ''] ?? []).length > 0);
-    });
+    }) &&
+    modelIds.every((mid) => adapterParametersComplete(threadData.adapter_plans?.[mid] ?? []));
 
   // Are all runs finished?
   const allDone =
@@ -318,7 +327,15 @@ export function MintRuns({
                     resources × {nParameters} parameters).{' '}
                     {model.output_files.length * summary.total_runs} output files will be generated.
                   </p>
-                  {canExecute && canWrite ? (
+                  {!paramsDone ? (
+                    <p className="text-xs text-orange-600">
+                      {adapterPlanError
+                        ? 'SVO adapter plan discovery failed; return to Parameters and retry.'
+                        : adapterPlansLoading
+                          ? 'Waiting for SVO adapter plan discovery to finish.'
+                          : 'Complete the required model and SVO adapter parameters before sending runs.'}
+                    </p>
+                  ) : canExecute && canWrite ? (
                     <button
                       type="button"
                       data-testid={`submit-runs-${mid}`}

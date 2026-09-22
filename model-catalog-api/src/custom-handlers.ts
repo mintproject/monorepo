@@ -60,7 +60,8 @@ const SOFTWARE_FIELDS = `
 
 const SETUP_FIELDS = `
   id label description
-  has_component_location has_implementation_script_location has_software_image has_region
+  has_component_location has_implementation_script_location has_software_image
+  tapis_app_id tapis_app_version has_region
   author_id calibration_interval calibration_method parameter_assignment_method valid_until
   model_configuration_id
   author { id label }
@@ -98,7 +99,8 @@ const SETUP_FIELDS = `
 
 const CONFIGURATION_FIELDS = `
   id label description keywords usage_notes
-  has_component_location has_implementation_script_location has_software_image has_model_result_table
+  has_component_location has_implementation_script_location has_software_image
+  tapis_app_id tapis_app_version has_model_result_table
   software_version_id author_id
   author { id label }
   authors {

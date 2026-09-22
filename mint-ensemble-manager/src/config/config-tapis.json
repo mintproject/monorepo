@@ -1,6 +1,7 @@
 {
     "data_catalog_api": "http://datacatalog.mint.local",
     "ensemble_manager_api": "http://localhost:3000/v1",
+    "svo_adapter_api": "http://localhost:8090",
     "graphql": {
         "endpoint": "graphql.mint.local/v1/graphql",
         "enable_ssl": false,

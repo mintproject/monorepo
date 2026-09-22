@@ -34,8 +34,11 @@ import apiDocComponents from "@/api/api-doc";
 import tapisRouter from "@/api/api-v1/paths/tapis";
 import executionEnginesRouter from "@/api/api-v1/paths/executionEngines/tapis";
 import problemStatementsRouter from "@/api/api-v1/paths/problemStatements";
+import unifiedExecutionRouter from "@/api/api-v1/paths/unifiedExecution";
+import executionsTapisService from "@/api/api-v1/services/executionsTapisService";
 import { getConfiguration } from "./classes/mint/mint-functions";
 import { modelBindingsRouter } from "./api/api-v1/paths/modelBindings";
+import { createUnifiedExecutionService } from "@/api/api-v1/services/unifiedExecutionService";
 import * as OpenApiValidator from "express-openapi-validator";
 import fs from "fs";
 
@@ -97,6 +100,16 @@ app.use(`/${version}/threads`, threadsRoutes(v1ThreadsService));
 app.use(`/${version}/executionEngines`, executionEnginesRouter());
 app.use(`/${version}/modelBindings`, modelBindingsRouter());
 app.use(`/${version}/tapis`, tapisRouter());
+app.use(
+    `/${version}/plans`,
+    unifiedExecutionRouter(
+        createUnifiedExecutionService({
+            local: v1ExecutionsLocalService,
+            wings: v1ExecutionsService,
+            tapis: executionsTapisService
+        })
+    )
+);
 
 // Setup Error Handler
 // eslint-disable-next-line @typescript-eslint/no-unused-vars

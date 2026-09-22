@@ -181,3 +181,12 @@ backup and approval.
 - Deviation from the original design: Tapis Pods use fixed pod execution
   instead of a separate migration Job; the command uses the pod's existing
   admin-secret environment variable and does not log it.
+- The first persistent-dev application exposed an older catalog snapshot that
+  lacked the canonical MODFLOW 2000/96 configuration and output metadata. The
+  0009 migration now restores those rows idempotently before applying the
+  normalized input contracts. A one-time equivalent repair was applied to the
+  existing dev database, and all migrations, metadata checks, and catalog
+  smoke checks subsequently passed.
+- The GraphQL smoke query's shell quoting was corrected after the first
+  successful migration run; the deployment verifier now completes with exit
+  code zero.

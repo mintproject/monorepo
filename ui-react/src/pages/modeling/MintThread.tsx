@@ -12,7 +12,7 @@
  * only ever as complete as what the database actually holds.
  */
 import { Maximize2, Minimize2 } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useApolloClient } from '@apollo/client';
 import { useParams } from 'react-router-dom';
 
@@ -41,7 +41,19 @@ import {
   runsComplete,
   threadExecutionFromGQL,
 } from '@/lib/thread-execution';
-import { publishExecution, publishResults, submitRuns } from '@/lib/ensemble-manager';
+import {
+  createExecutionPlan,
+  fetchUnifiedRun,
+  publishExecution,
+  publishResults,
+  submitExecutionPlan,
+} from '@/lib/ensemble-manager';
+import {
+  adapterPlansByModel,
+  fetchThreadAdapterPlans,
+  replaceThreadAdapterPlans,
+  type ThreadAdapterPlan,
+} from '@/lib/adapter-execution';
 import { useAuth } from '@/lib/auth/useAuth';
 import { cn } from '@/lib/utils';
 
@@ -98,6 +110,14 @@ export function MintThread({
   }, []);
 
   const [modelExecutions, setModelExecutions] = useState<ModelExecutionsMap>({});
+  const [adapterPlanRows, setAdapterPlanRows] = useState<ThreadAdapterPlan[]>([]);
+  const [adapterPlanError, setAdapterPlanError] = useState<string | null>(null);
+  const [adapterPlansLoading, setAdapterPlansLoading] = useState(false);
+  const discoveredAdapterSources = useRef<string | null>(null);
+
+  const adapterPlanningEnabled =
+    window.__MINT_CONFIG__?.SVO_ADAPTER_ENABLED === 'true' ||
+    window.__MINT_CONFIG__?.SVO_ADAPTER_ENABLED === '1';
 
   const { data, loading, error, refetch } = useGetThreadQuery({
     variables: { id: threadId! },
@@ -118,10 +138,40 @@ export function MintThread({
     fetchPolicy: 'cache-and-network',
   });
 
-  const threadExecutionData = useMemo(
+  const baseThreadExecutionData = useMemo(
     () => threadExecutionFromGQL(execRaw?.thread_by_pk),
     [execRaw],
   );
+
+  const threadExecutionData = useMemo(() => {
+    if (!baseThreadExecutionData) return null;
+    const plansByThreadModelId = adapterPlansByModel(adapterPlanRows);
+    return {
+      ...baseThreadExecutionData,
+      adapter_plans: Object.fromEntries(
+        Object.entries(baseThreadExecutionData.model_ensembles).map(([modelId, ensemble]) => [
+          modelId,
+          plansByThreadModelId[ensemble.id] ?? [],
+        ]),
+      ),
+    };
+  }, [adapterPlanRows, baseThreadExecutionData]);
+
+  const loadAdapterPlans = useCallback(async () => {
+    if (!threadId || !adapterPlanningEnabled) return;
+    const rows = await fetchThreadAdapterPlans(apollo, threadId);
+    setAdapterPlanRows(rows);
+  }, [adapterPlanningEnabled, apollo, threadId]);
+
+  useEffect(() => {
+    if (!adapterPlanningEnabled || !threadId) {
+      setAdapterPlanRows([]);
+      return;
+    }
+    void loadAdapterPlans().catch((err: unknown) => {
+      setAdapterPlanError(err instanceof Error ? err.message : String(err));
+    });
+  }, [adapterPlanningEnabled, loadAdapterPlans, threadId]);
 
   // The geometries the Datasets step narrows on. A thread with no region hands
   // down undefined, which means "no region filter" rather than an empty extent.
@@ -140,15 +190,20 @@ export function MintThread({
   }, [runsInFlight, startPolling, stopPolling]);
 
   const handleThreadUpdated = useCallback(async () => {
-    await Promise.all([refetch(), refetchExecution()]);
-  }, [refetch, refetchExecution]);
+    await Promise.all([refetch(), refetchExecution(), loadAdapterPlans()]);
+  }, [loadAdapterPlans, refetch, refetchExecution]);
 
   const [updateThreadParameters] = useUpdateThreadParametersMutation();
 
   // ── Execution handlers ──────────────────────────────────────────────────
 
   const handleSaveParameters = useCallback(
-    async (ensembles: ModelEnsembleMap, summary: ExecutionSummaryMap, notes: string) => {
+    async (
+      ensembles: ModelEnsembleMap,
+      summary: ExecutionSummaryMap,
+      notes: string,
+      adapterPlans: ThreadAdapterPlan[],
+    ) => {
       if (!threadId || !threadExecutionData) return;
       const modelParams: ThreadModelParameterInsert[] = [];
       const summaries: ThreadModelSummaryInsert[] = [];
@@ -190,10 +245,134 @@ export function MintThread({
           modelParams,
         },
       });
+      if (adapterPlanningEnabled) {
+        const savedPlans = await replaceThreadAdapterPlans(apollo, threadId, adapterPlans);
+        setAdapterPlanRows(savedPlans);
+      }
       await handleThreadUpdated();
     },
-    [threadId, threadExecutionData, updateThreadParameters, user, handleThreadUpdated],
+    [
+      adapterPlanningEnabled,
+      apollo,
+      handleThreadUpdated,
+      threadExecutionData,
+      threadId,
+      updateThreadParameters,
+      user,
+    ],
   );
+
+  const adapterSourceFingerprint = useMemo(() => {
+    if (!baseThreadExecutionData) return '';
+    const sources = Object.entries(baseThreadExecutionData.models).flatMap(([modelId, model]) =>
+      model.input_files.flatMap((input) => {
+        const slices = baseThreadExecutionData.model_ensembles[modelId]?.bindings[input.id] ?? [];
+        return slices.flatMap((sliceId) => {
+          const resources = baseThreadExecutionData.data[sliceId]?.resources as
+            | Array<{ id: string; selected?: boolean }>
+            | undefined;
+          return (resources ?? [])
+            .filter((resource) => resource.selected !== false)
+            .map((resource) => {
+              const threadModelId = baseThreadExecutionData.model_ensembles[modelId]?.id ?? modelId;
+              return `${threadModelId}:${input.id}:${resource.id}`;
+            });
+        });
+      }),
+    );
+    return sources.sort().join('|');
+  }, [baseThreadExecutionData]);
+
+  useEffect(() => {
+    if (!adapterSourceFingerprint || !adapterPlanRows.length) return;
+    const persistedFingerprint = adapterPlanRows
+      .map((plan) => `${plan.thread_model_id}:${plan.model_io_id}:${plan.source_resource_id}`)
+      .sort()
+      .join('|');
+    if (persistedFingerprint === adapterSourceFingerprint) {
+      discoveredAdapterSources.current = adapterSourceFingerprint;
+    }
+  }, [adapterPlanRows, adapterSourceFingerprint]);
+
+  const discoverAdapterPlans = useCallback(async () => {
+    if (!threadId || !baseThreadExecutionData || !adapterSourceFingerprint) return;
+    setAdapterPlansLoading(true);
+    try {
+      const ensembleManagerApi = window.__MINT_CONFIG__?.ENSEMBLE_MANAGER_API ?? '';
+      const discovered: ThreadAdapterPlan[] = [];
+      const seen = new Set<string>();
+
+      for (const [modelId, model] of Object.entries(baseThreadExecutionData.models)) {
+        const threadModelId = baseThreadExecutionData.model_ensembles[modelId]?.id;
+        if (!threadModelId) continue;
+        for (const input of model.input_files) {
+          const slices = baseThreadExecutionData.model_ensembles[modelId]?.bindings[input.id] ?? [];
+          for (const sliceId of slices) {
+            const resources = baseThreadExecutionData.data[sliceId]?.resources as
+              | Array<{ id: string; selected?: boolean }>
+              | undefined;
+            for (const resource of (resources ?? []).filter((item) => item.selected !== false)) {
+              const key = `${threadModelId}:${input.id}:${resource.id}`;
+              if (seen.has(key)) continue;
+              seen.add(key);
+              const plan = await createExecutionPlan(ensembleManagerApi, {
+                executor: 'svo_adapter',
+                thread_id: threadId,
+                model_id: modelId,
+                adapter_request: {
+                  data_object_id: resource.id.startsWith('ckan-')
+                    ? resource.id
+                    : `ckan-${resource.id}`,
+                  target_dataset_specification_id: input.id,
+                },
+              });
+              discovered.push({
+                thread_model_id: threadModelId,
+                model_io_id: input.id,
+                source_resource_id: resource.id,
+                executor: 'svo_adapter',
+                adapter_plan_id: plan.plan_id?.replace(/^svo_/, '') ?? null,
+                status: plan.plan_id ? 'transform_required' : plan.status || 'ready',
+                plan_json: plan,
+                parameter_values: {},
+              });
+            }
+          }
+        }
+      }
+
+      const savedPlans = await replaceThreadAdapterPlans(apollo, threadId, discovered);
+      setAdapterPlanRows(savedPlans);
+      setAdapterPlanError(null);
+      discoveredAdapterSources.current = adapterSourceFingerprint;
+    } finally {
+      setAdapterPlansLoading(false);
+    }
+  }, [adapterSourceFingerprint, apollo, baseThreadExecutionData, threadId]);
+
+  useEffect(() => {
+    if (
+      currentSection !== 'parameters' ||
+      !adapterPlanningEnabled ||
+      !baseThreadExecutionData ||
+      !datasetsComplete(baseThreadExecutionData) ||
+      !adapterSourceFingerprint ||
+      discoveredAdapterSources.current === adapterSourceFingerprint
+    ) {
+      return;
+    }
+    discoveredAdapterSources.current = adapterSourceFingerprint;
+    void discoverAdapterPlans().catch((err: unknown) => {
+      discoveredAdapterSources.current = null;
+      setAdapterPlanError(err instanceof Error ? err.message : String(err));
+    });
+  }, [
+    adapterPlanningEnabled,
+    adapterSourceFingerprint,
+    baseThreadExecutionData,
+    currentSection,
+    discoverAdapterPlans,
+  ]);
 
   const handleFetchRuns = useCallback(
     (modelId: string, page: number, pageSize: number) => {
@@ -230,6 +409,10 @@ export function MintThread({
 
   const handleSubmitRuns = useCallback(
     async (modelId: string) => {
+      if (adapterPlansLoading || adapterPlanError) {
+        throw new Error('SVO adapter plan discovery must complete before workflow submission.');
+      }
+      const adapterPlans = threadExecutionData?.adapter_plans?.[modelId] ?? [];
       // POST to the ensemble manager REST API
       const ensembleManagerApi = window.__MINT_CONFIG__?.ENSEMBLE_MANAGER_API ?? '';
       // Which backend this deployment's Ensemble Manager runs. Read at call
@@ -237,15 +420,54 @@ export function MintThread({
       // scripts/generate-env-config.mjs, and only fires against an env-config.js
       // generated before this key existed.
       const executionEngine = window.__MINT_CONFIG__?.EXECUTION_ENGINE ?? 'localex';
-      await submitRuns(ensembleManagerApi, executionEngine, {
+      const adapterSteps = adapterPlans
+        .filter((plan) => plan.adapter_plan_id && plan.status === 'transform_required')
+        .map((plan) => ({
+          adapter_plan_id: plan.adapter_plan_id!,
+          model_io_id: plan.model_io_id,
+          source_resource_id: plan.source_resource_id,
+        }));
+      const plan = await createExecutionPlan(ensembleManagerApi, {
+        executor: 'ensemble_manager',
+        execution_engine: executionEngine,
         thread_id: threadId,
         model_id: modelId,
+        adapter_steps: adapterSteps,
       });
+      if (!plan.plan_id) throw new Error('Ensemble Manager did not return an execution plan.');
+      const adapterParameterValues = Object.fromEntries(
+        adapterPlans
+          .filter((item) => item.adapter_plan_id && item.status === 'transform_required')
+          .map((item) => [item.adapter_plan_id!, item.parameter_values ?? {}]),
+      );
+      const submitted = await submitExecutionPlan(ensembleManagerApi, {
+        plan_id: plan.plan_id,
+        adapter_parameter_values: adapterParameterValues,
+      });
+      const parentRunId = typeof submitted.run_id === 'string' ? submitted.run_id : null;
+      if (parentRunId?.startsWith('ue_')) {
+        // Reconciliation is server-owned, but it needs a status read to drive
+        // the child -> output -> model state machine when no worker is enabled.
+        void (async () => {
+          for (let attempt = 0; attempt < 120; attempt += 1) {
+            await new Promise((resolve) => window.setTimeout(resolve, 5000));
+            const state = await fetchUnifiedRun(ensembleManagerApi, parentRunId);
+            if (
+              ['model_submitted', 'failed', 'adapter_unknown', 'model_unknown'].includes(
+                String(state.status),
+              )
+            ) {
+              await refetchExecution();
+              return;
+            }
+          }
+        })().catch(() => undefined);
+      }
       // The engine writes the counters itself; read them back rather than
       // guessing at them locally.
       await refetchExecution();
     },
-    [threadId, refetchExecution],
+    [adapterPlanError, adapterPlansLoading, refetchExecution, threadExecutionData, threadId],
   );
 
   /**
@@ -338,11 +560,13 @@ export function MintThread({
     execution_summary: {},
     data: {},
     response_variables: thread.response_variable_id ? [thread.response_variable_id] : [],
+    adapter_plans: {},
   };
 
   const stepStates = deriveStepStates(thread, {
     datasetsComplete: datasetsComplete(threadExecutionData),
-    parametersComplete: parametersComplete(threadExecutionData),
+    parametersComplete:
+      !adapterPlansLoading && !adapterPlanError && parametersComplete(threadExecutionData),
     runsComplete: runsComplete(threadExecutionData),
   });
 
@@ -397,6 +621,8 @@ export function MintThread({
             canExecute={perm.write}
             onSave={handleSaveParameters}
             onContinue={goNext}
+            adapterPlanError={adapterPlanError}
+            adapterPlanLoading={adapterPlansLoading}
           />
         );
       case 'runs':
@@ -412,6 +638,8 @@ export function MintThread({
             onSubmitRuns={handleSubmitRuns}
             onPublishExecution={handlePublishExecution}
             onOutputsChanged={handleOutputsChanged}
+            adapterPlansLoading={adapterPlansLoading}
+            adapterPlanError={adapterPlanError}
           />
         );
       case 'results':

@@ -24,6 +24,7 @@ import type {
   ThreadExecutionRow,
   ThreadModelRow,
 } from '@/graphql/generated/thread-execution';
+import { adapterParametersComplete } from './adapter-execution';
 
 /** A model-catalog parameter row as the adjustable/fixed parameter the UI edits. */
 export function parameterFromGQL(p: ParameterRow): ModelParameter {
@@ -268,8 +269,10 @@ export function parametersComplete(threadData: ThreadExecutionData | null): bool
   return modelIds.every((mid) => {
     if (!threadData.execution_summary[mid]) return false;
     const bindings = threadData.model_ensembles[mid]?.bindings ?? {};
-    return threadData.models[mid]!.input_parameters.filter((p) => !p.value).every(
-      (p) => (bindings[p.id ?? ''] ?? []).length > 0,
+    return (
+      threadData.models[mid]!.input_parameters.filter((p) => !p.value).every(
+        (p) => (bindings[p.id ?? ''] ?? []).length > 0,
+      ) && adapterParametersComplete(threadData.adapter_plans?.[mid] ?? [])
     );
   });
 }

@@ -31,6 +31,7 @@ def test_end_to_end_demo():
     seed = client.post("/admin/seed-subside-werc").json()
     assert len(seed["transform_specs"]) == 4  # run-werc + format-convert + publish + stac-publish
     do_id = seed["data_object"]["id"]
+    assert client.get(f"/data-objects/{do_id}").json()["id"] == do_id
     target = seed["target_contract"]
     target_cataloged = seed["target_contract_cataloged"]
     target_netcdf = seed["targets"]["netcdf"]
@@ -82,8 +83,9 @@ def test_end_to_end_demo():
         "plan_id": plan_id, "dry_run": True,
         "args": {"start_date": "2024-01-01", "end_date": "2025-01-01",
                  "allocation": "PT2050-DataX", "aoi_geojson_uri": "tapis://ls6/demo/aoi.geojson"},
-    }).json()
+    }, headers={"Authorization": "Bearer test-tapis-token"}).json()
     assert sub["status"] == "generated"
+    assert "tapis_token" not in sub["args"]
     run_id = sub["run_id"]
 
     # the run is persisted + fetchable (what the UI polls).

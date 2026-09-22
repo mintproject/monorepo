@@ -16,6 +16,8 @@ interface MintConfig {
   SEMANTIC_SEARCH_API?: string;
   /** Ensemble Manager REST API base URL. */
   ENSEMBLE_MANAGER_API?: string;
+  /** Enable discovery of adapter plans for selected model inputs. */
+  SVO_ADAPTER_ENABLED?: string;
   /**
    * Model catalog REST API base URL, version prefix included
    * (e.g. https://api.models.mint.local/v2.0.0). The app reads the catalog

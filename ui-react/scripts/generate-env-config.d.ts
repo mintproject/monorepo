@@ -12,6 +12,7 @@ export interface MintConfig {
   EXECUTION_ENGINE: string;
   BRANDING: string;
   ENSEMBLE_MANAGER_API?: string;
+  SVO_ADAPTER_ENABLED?: string;
   AUTH_CALLBACK_ORIGIN?: string;
   AUTH_PREVIEW_ORIGIN_ALLOWLIST?: string;
   WELCOME_MESSAGE?: string;

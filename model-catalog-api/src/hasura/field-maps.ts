@@ -159,7 +159,8 @@ authors {
   // modelcatalog_configuration (unified table for ModelConfiguration and ModelConfigurationSetup)
   // Columns from config: id, software_version_id, label, description, keywords,
   //          usage_notes, has_component_location, has_implementation_script_location,
-  //          has_software_image, has_model_result_table, author_id
+  //          has_software_image, tapis_app_id, tapis_app_version,
+  //          has_model_result_table, author_id
   // Columns from setup: model_configuration_id, has_region, calibration_interval,
   //          calibration_method, parameter_assignment_method, valid_until
   // Object relationships: software_version -> modelcatalog_software_version
@@ -189,6 +190,8 @@ usage_notes
 has_component_location
 has_implementation_script_location
 has_software_image
+tapis_app_id
+tapis_app_version
 has_model_result_table
 has_region
 author_id
@@ -588,6 +591,8 @@ usage_notes
 has_component_location
 has_implementation_script_location
 has_software_image
+tapis_app_id
+tapis_app_version
 has_model_result_table
 has_region
 author_id

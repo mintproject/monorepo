@@ -446,7 +446,7 @@ MINT model-catalog-api
 ## Implementation Notes (post-merge deviations)
 
 - `MintCatalogClient` queries Hasura directly (same instance) instead of the model-catalog-api REST layer. The REST endpoint path and pagination format were not stable; Hasura direct is simpler and removes the REST dependency.
-- `SVO_ADAPTER_HASURA_ADMIN_SECRET` must be set in the service `.env`; the anonymous Hasura role does not have column-level access to the new `tapis_app_id`/`tapis_app_version` fields on `modelcatalog_configuration`.
+- `SVO_ADAPTER_HASURA_ADMIN_SECRET` must be set in the service `.env`; synchronization is a system reconciliation operation and uses the admin client rather than depending on caller-specific catalog permissions.
 - After adding new columns via migration, Hasura requires a metadata reload via `POST /v1/metadata {type: reload_metadata, reload_sources: true}` — the CLI `hasura metadata reload` alone did not expose the new fields.
 - `POST /admin/sync-from-mint` now fires a background `recompute-edges` task when any rows are created, updated, or deleted, so multi-hop BFS planning is consistent after every sync.
 - `unresolved_count` in `/admin/sync-status` reflects specs with no `tapis_app_id` (they use OWE function tasks until an admin registers the app).

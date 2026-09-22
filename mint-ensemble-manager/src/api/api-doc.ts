@@ -2432,6 +2432,22 @@ const apiDocComponents = {
             ...ProblemStatementSchema,
             ...TapisSchema,
             ...ExecutionSchema,
+            UnifiedExecutionError: {
+                type: "object",
+                description: "Error returned by the unified execution boundary",
+                properties: {
+                    message: { type: "string" },
+                    code: { type: "string", nullable: true },
+                    details: {
+                        oneOf: [
+                            { type: "object", additionalProperties: true },
+                            { type: "array" },
+                            { type: "string" }
+                        ]
+                    }
+                },
+                required: ["message"]
+            },
             ModelThread: {
                 description: "",
                 required: ["thread_id"],

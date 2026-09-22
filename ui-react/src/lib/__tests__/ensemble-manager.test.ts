@@ -14,12 +14,14 @@ import {
   EnsembleManagerError,
   NO_OUTPUTS_DECLARED,
   ensembleManagerHeaders,
+  createExecutionPlan,
   executionEnginePath,
   fetchExecutionFiles,
   fetchExecutionLog,
   publishExecution,
   publishResults,
   submitRuns,
+  submitExecutionPlan,
 } from '@/lib/ensemble-manager';
 
 function lastRequest(): [string, RequestInit] {
@@ -121,6 +123,78 @@ describe('ensemble-manager', () => {
       await expect(
         submitRuns('http://ensemble', 'tapis', { thread_id: 't', model_id: 'm' }),
       ).rejects.toThrow('Ensemble manager returned 401');
+    });
+  });
+
+  describe('unified execution plans', () => {
+    it('creates an Ensemble Manager plan through the public plan boundary', async () => {
+      (globalThis.fetch as unknown as Mock).mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: () =>
+          Promise.resolve({
+            plan_id: 'em_plan',
+            executor: 'ensemble_manager',
+            version: 1,
+            status: 'ready',
+            parameters: [],
+            parameter_values: {},
+          }),
+      });
+
+      const plan = await createExecutionPlan('http://ensemble/v1', {
+        executor: 'ensemble_manager',
+        thread_id: 'thread-1',
+        model_id: 'model-1',
+        execution_engine: 'tapis',
+      });
+
+      expect(plan.plan_id).toBe('em_plan');
+      expect(lastRequest()[0]).toBe('http://ensemble/v1/plans');
+      expect(JSON.parse(lastRequest()[1].body as string)).toMatchObject({
+        executor: 'ensemble_manager',
+        thread_id: 'thread-1',
+      });
+    });
+
+    it('submits adapter parameter values through the same public boundary', async () => {
+      (globalThis.fetch as unknown as Mock).mockResolvedValue({
+        ok: true,
+        status: 202,
+        json: () => Promise.resolve({ child_execution_id: 'run-1' }),
+      });
+
+      await submitExecutionPlan('http://ensemble/v1', {
+        plan_id: 'svo_plan',
+        parameter_values: { start_date: '2024-01-01' },
+      });
+
+      expect(lastRequest()[0]).toBe('http://ensemble/v1/plans/submit');
+      expect(JSON.parse(lastRequest()[1].body as string)).toEqual({
+        plan_id: 'svo_plan',
+        parameter_values: { start_date: '2024-01-01' },
+      });
+    });
+
+    it('serializes structured server errors instead of displaying [object Object]', async () => {
+      (globalThis.fetch as unknown as Mock).mockResolvedValue({
+        ok: false,
+        status: 422,
+        json: () =>
+          Promise.resolve({
+            code: 'COMPONENT_CONTRACT_MISMATCH',
+            message: { app_input: 'mf6-nam', model_inputs: ['simulation archive'] },
+          }),
+      });
+
+      await expect(
+        submitExecutionPlan('http://ensemble/v1', { plan_id: 'em_plan' }),
+      ).rejects.toMatchObject({
+        status: 422,
+        code: 'COMPONENT_CONTRACT_MISMATCH',
+        message:
+          'Ensemble manager returned 422: {"app_input":"mf6-nam","model_inputs":["simulation archive"]}',
+      });
     });
   });
 

@@ -284,6 +284,33 @@ def etl_process_to_spec_row(
         "runtime_kind": process.get("runtime_kind"),
         "runtime": runtime,
     }
+    # MINT's ETL contract includes catalog ordering (`position`), while the
+    # adapter contract table stores only execution-relevant fields. Normalize
+    # at this boundary so a live sync never forwards an unknown GraphQL input
+    # field. Preserve the ordering as metadata for diagnostics.
+    contract_fields = (
+        "role",
+        "standard_variable_uri",
+        "unit",
+        "format",
+        "dimensionality",
+        "spatial_type",
+        "crs_requirement",
+        "temporal_resolution",
+        "schema_requirement_json",
+    )
+    normalized_contracts = []
+    for contract in contracts:
+        normalized = {
+            key: contract[key]
+            for key in contract_fields
+            if key in contract
+        }
+        if contract.get("position") is not None:
+            normalized["metadata_json"] = {
+                "mint_position": contract["position"],
+            }
+        normalized_contracts.append(normalized)
     return {
         "id": process_id,
         "name": process.get("label") or process_id,
@@ -294,7 +321,7 @@ def etl_process_to_spec_row(
         "tapis_app_id": app_id,
         "app_version": app_version,
         "parameters_schema_json": {"metadata": metadata},
-        "contracts": {"data": contracts},
+        "contracts": {"data": normalized_contracts},
     }
 
 

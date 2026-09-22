@@ -78,6 +78,10 @@ export interface MintPreferences {
     };
 
     ensemble_manager_api: string;
+    /** Internal SVO adapter URL used by the unified plan/submit boundary. */
+    svo_adapter_api?: string;
+    /** HMAC secret used to sign opaque legacy unified-plan identifiers. */
+    unified_plan_secret?: string;
     /**
      * Optional override for the base URL Tapis uses to deliver job notification webhooks.
      * When unset, falls back to `${ensemble_manager_api}/tapis`. Use this in dev clusters

@@ -15,8 +15,8 @@ def test_etl_process_maps_inline_python_and_contracts():
                 "source": "def main(inputs): return inputs",
             },
             "contracts": [
-                {"role": "input", "standard_variable_uri": "https://example.org/raw", "format": "csv"},
-                {"role": "output", "standard_variable_uri": "https://example.org/normalized", "format": "csv"},
+                {"role": "input", "position": 0, "standard_variable_uri": "https://example.org/raw", "format": "csv"},
+                {"role": "output", "position": 1, "standard_variable_uri": "https://example.org/normalized", "format": "csv"},
             ],
         },
         warnings,
@@ -28,6 +28,8 @@ def test_etl_process_maps_inline_python_and_contracts():
     assert row["transform_type"] == "etl_process"
     assert row["parameters_schema_json"]["metadata"]["runtime"]["source"].startswith("def main")
     assert len(row["contracts"]["data"]) == 2
+    assert all("position" not in contract for contract in row["contracts"]["data"])
+    assert row["contracts"]["data"][0]["metadata_json"] == {"mint_position": 0}
 
 
 def test_etl_process_requires_both_contract_directions():

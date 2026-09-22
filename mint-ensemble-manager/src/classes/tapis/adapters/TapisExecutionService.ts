@@ -5,7 +5,10 @@ import { IExecutionService, ExecutionJob, SubmissionResult } from "@/interfaces/
 import apiGenerator from "@/classes/tapis/utils/apiGenerator";
 import { getInputsParameters } from "@/classes/tapis/helpers";
 import { getInputDatasets } from "@/classes/tapis/helpers";
-import { TapisJobService } from "@/classes/tapis/adapters/TapisJobService";
+import {
+    TapisComponentContractError,
+    TapisJobService
+} from "@/classes/tapis/adapters/TapisJobService";
 import errorDecoder from "@/classes/tapis/utils/errorDecoder";
 import { TapisJobSubscriptionService } from "@/classes/tapis/adapters/TapisJobSubscriptionService";
 import { BadRequestError, NoOutputsDeclaredError, NotFoundError } from "@/classes/common/errors";
@@ -14,6 +17,7 @@ interface SerializableError {
     message: string;
     stack?: string;
     name: string;
+    code?: string;
     cause?: unknown;
 }
 import {
@@ -132,6 +136,7 @@ export class TapisExecutionService implements IExecutionService {
                     message: error instanceof Error ? error.message : String(error),
                     stack: error instanceof Error ? error.stack : undefined,
                     name: error instanceof Error ? error.name : "Error",
+                    code: (error as Error & { code?: string })?.code,
                     ...(error instanceof Error &&
                         (error as any).cause && { cause: (error as any).cause })
                 };
@@ -198,7 +203,7 @@ export class TapisExecutionService implements IExecutionService {
     }
 
     private handleSubmissionResults(
-        failedExecutions: { execution: Execution; error: Error }[]
+        failedExecutions: { execution: Execution; error: SerializableError }[]
     ): void {
         if (failedExecutions.length > 0) {
             if (failedExecutions.length === this.seeds.length) {
@@ -209,6 +214,14 @@ export class TapisExecutionService implements IExecutionService {
                     console.error("Full error details for execution", fe.execution.id, ":", fe.error);
                     errorMessages.push(fe.error.message);
                 });
+                const contractFailure = failedExecutions.find(
+                    (failed) =>
+                        failed.error instanceof TapisComponentContractError ||
+                        failed.error.code === "COMPONENT_CONTRACT_MISMATCH"
+                );
+                if (contractFailure) {
+                    throw contractFailure.error;
+                }
                 throw new Error("All jobs failed to submit - " + errorMessages.join("; "));
             } else {
                 console.warn("Some jobs failed to submit:");

@@ -7,6 +7,11 @@ import { NotFoundError } from "@/classes/common/errors";
 import { threadFromGQL } from "@/classes/graphql/graphql_adapter";
 import { getThread } from "@/classes/graphql/graphql_functions_v2";
 import { SubmissionResult } from "@/interfaces/IExecutionService";
+import { applyExecutionInputOverrides } from "@/classes/common/execution-input-overrides";
+
+type AdapterAwareModelThread = ModelThread & {
+    adapter_resource_overrides?: Parameters<typeof applyExecutionInputOverrides>[2];
+};
 
 export interface ExecutionsTapisService {
     submitExecution(threadmodel: ModelThread, token: string): Promise<SubmissionResult>;
@@ -14,7 +19,7 @@ export interface ExecutionsTapisService {
 
 const executionsTapisService = {
     async submitExecution(
-        threadmodel: ModelThread,
+        threadmodel: AdapterAwareModelThread,
         authorization: string
     ): Promise<SubmissionResult> {
         const token = getTokenFromAuthorizationHeader(authorization);
@@ -26,6 +31,11 @@ const executionsTapisService = {
         const threadResponse = await getThread(threadmodel.thread_id);
         const thread = threadFromGQL(threadResponse);
         if (thread) {
+            applyExecutionInputOverrides(
+                thread,
+                threadmodel.model_id,
+                threadmodel.adapter_resource_overrides || []
+            );
             const executionCreation = new ExecutionCreation(
                 thread,
                 threadmodel.model_id,

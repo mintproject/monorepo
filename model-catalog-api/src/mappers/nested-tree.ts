@@ -17,9 +17,7 @@ export type ValidationCode =
   | 'CYCLE'
   | 'STRING_ID_DEPRECATED'
   | 'UNKNOWN_FIELD'
-  | 'TARGET_NOT_IMPLEMENTED'
-  | 'OBJECT_RELATIONSHIP_INVALID'
-  | 'OBJECT_RELATIONSHIP_NESTED_WRITE_UNSUPPORTED';
+  | 'TARGET_NOT_IMPLEMENTED';
 
 export class ValidationError extends Error {
   constructor(
@@ -39,14 +37,7 @@ export interface WriteNode {
   columns: Record<string, unknown>;
   junctions: JunctionEdge[];
   childFks: ChildFkEdge[];
-  objectFks?: ObjectFkEdge[];
   apiType?: string;
-}
-
-export interface ObjectFkEdge {
-  apiFieldName: string;
-  objectFkColumn: string;
-  targetId: string | null;
 }
 
 export interface JunctionEdge {
@@ -242,58 +233,6 @@ function buildChildFkEdge(
   };
 }
 
-function buildObjectFkEdge(
-  apiFieldName: string,
-  rel: RelationshipConfig,
-  rawValue: unknown,
-  ctx: BuildContext,
-): ObjectFkEdge {
-  const path = `${ctx.path}/${apiFieldName}`;
-  if (rawValue === null || (Array.isArray(rawValue) && rawValue.length === 0)) {
-    return { apiFieldName, objectFkColumn: rel.objectFkColumn!, targetId: null };
-  }
-  if (!Array.isArray(rawValue) || rawValue.length > 1) {
-    throw new ValidationError(
-      'OBJECT_RELATIONSHIP_INVALID',
-      path,
-      `${apiFieldName} must contain zero or one object with an id`,
-      400,
-    );
-  }
-
-  const item = rawValue[0];
-  if (item === null || typeof item !== 'object' || Array.isArray(item)) {
-    throw new ValidationError(
-      'OBJECT_RELATIONSHIP_INVALID',
-      `${path}/0`,
-      `${apiFieldName} must contain an object with an id`,
-      400,
-    );
-  }
-
-  const rawId = (item as Record<string, unknown>).id;
-  if (typeof rawId !== 'string' || rawId.length === 0) {
-    throw new ValidationError(
-      'OBJECT_RELATIONSHIP_INVALID',
-      `${path}/0/id`,
-      `${apiFieldName} object relationships require an id`,
-      400,
-    );
-  }
-
-  const extraKeys = Object.keys(item as Record<string, unknown>).filter((key) => key !== 'id');
-  if (extraKeys.length > 0) {
-    throw new ValidationError(
-      'OBJECT_RELATIONSHIP_NESTED_WRITE_UNSUPPORTED',
-      `${path}/0`,
-      `${apiFieldName} supports link-only objects with an id; nested object writes are not supported`,
-      400,
-    );
-  }
-
-  return { apiFieldName, objectFkColumn: rel.objectFkColumn!, targetId: resolveId(rawId) };
-}
-
 function buildNode(
   body: Record<string, unknown>,
   cfg: ResourceConfig,
@@ -324,7 +263,6 @@ function buildNode(
   const columns: Record<string, unknown> = {};
   const junctions: JunctionEdge[] = [];
   const childFks: ChildFkEdge[] = [];
-  const objectFks: ObjectFkEdge[] = [];
 
   for (const [key, value] of Object.entries(body)) {
     if (key === 'id' || key === 'type') continue;
@@ -346,8 +284,6 @@ function buildNode(
       } else if (rel.childFkColumn) {
         const edge = buildChildFkEdge(key, rel, value, ctx);
         if (edge) childFks.push(edge);
-      } else if (rel.type === 'object' && rel.objectFkColumn) {
-        objectFks.push(buildObjectFkEdge(key, rel, value, ctx));
       }
       continue;
     }
@@ -365,7 +301,6 @@ function buildNode(
     columns,
     junctions,
     childFks,
-    objectFks,
     apiType: cfg.typeName,
   };
 }

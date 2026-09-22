@@ -169,7 +169,7 @@ The model uses the last three months available in the ECMWF ERA5 reanalysis data
 Visualization of the accuracy can be found here: https://github.com/mintproject/DroughtPredictViz. Use the LaunchBinder badge.', 'https://raw.githubusercontent.com/khider/droughtpredict_eea/master/mint_component.zip', NULL, 'https://w3id.org/okn/i/mint/f39ba110-84d0-4908-861d-b6ca1ffcccec', NULL, NULL, NULL, NULL, NULL, NULL, 'https://w3id.org/okn/i/mint/khider_deborah') ON CONFLICT DO NOTHING;
 INSERT INTO public.modelcatalog_configuration (id, software_version_id, model_configuration_id, label, description, keywords, usage_notes, has_component_location, has_implementation_script_location, has_software_image, has_model_result_table, has_region, calibration_interval, calibration_method, parameter_assignment_method, valid_until, author_id) VALUES ('https://w3id.org/okn/i/mint/c9c993a5-a063-4502-9389-4b52509cc65a', NULL, 'https://w3id.org/okn/i/mint/a4914e5f-b716-4d93-9015-8da23db28076', 'Solar Park Fire - West Texas', 'Weather Conditions and ignition location for the solar park fire. ', NULL, NULL, 'https://tapis.tapis.io/v3/apps/ElmFire/0.1.0sha-4048e73', NULL, NULL, NULL, 'https://w3id.org/okn/i/mint/California', NULL, NULL, 'Calibration', NULL, NULL) ON CONFLICT DO NOTHING;
 INSERT INTO public.modelcatalog_configuration (id, software_version_id, model_configuration_id, label, description, keywords, usage_notes, has_component_location, has_implementation_script_location, has_software_image, has_model_result_table, has_region, calibration_interval, calibration_method, parameter_assignment_method, valid_until, author_id) VALUES ('https://w3id.org/okn/i/mint/cc2806c3-e541-4b1c-b827-6399cf5510fc', NULL, 'https://w3id.org/okn/i/mint/hand_v2_raster', 'HAND v2 generating raster for ATX-Downtown-120902050306', 'ATX-Downtown-120902050306 region', NULL, NULL, 'https://github.com/mintproject/HAND-TauDEM/raw/v2.1.4/hand_v2_mint_component.zip', 'https://github.com/mintproject/HAND-TauDEM/raw/v2.1.4/hand_v2_mint_component/src/run', 'https://w3id.org/okn/i/mint/MINTPROJECT-HAND%253AV2.1.0', NULL, 'https://w3id.org/okn/i/mint/Texas', NULL, NULL, 'Expert-configured', NULL, NULL) ON CONFLICT DO NOTHING;
-INSERT INTO public.modelcatalog_configuration (id, software_version_id, model_configuration_id, label, description, keywords, usage_notes, has_component_location, has_implementation_script_location, has_software_image, has_model_result_table, has_region, calibration_interval, calibration_method, parameter_assignment_method, valid_until, author_id) VALUES ('https://w3id.org/okn/i/mint/ce445698-1d76-4833-95e8-a12eb3da2488', 'https://w3id.org/okn/i/mint/46073c82-1169-4854-94d2-a53d24732921', NULL, 'Modflow6 Changes to Well Files', 'Modflow 6 Configuration. ', NULL, NULL, 'https://portals.tapis.io/v3/apps/modflow6-simulation/0.0.fb606ee', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL) ON CONFLICT DO NOTHING;
+INSERT INTO public.modelcatalog_configuration (id, software_version_id, model_configuration_id, label, description, keywords, usage_notes, has_component_location, has_implementation_script_location, has_software_image, has_model_result_table, has_region, calibration_interval, calibration_method, parameter_assignment_method, valid_until, author_id) VALUES ('https://w3id.org/okn/i/mint/ce445698-1d76-4833-95e8-a12eb3da2488', 'https://w3id.org/okn/i/mint/46073c82-1169-4854-94d2-a53d24732921', NULL, 'Modflow6 Changes to Well Files', 'Modflow 6 Configuration. ', NULL, NULL, 'https://portals.tapis.io/v3/apps/modflow6-simulation/0.0.febed09', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL) ON CONFLICT DO NOTHING;
 INSERT INTO public.modelcatalog_configuration (id, software_version_id, model_configuration_id, label, description, keywords, usage_notes, has_component_location, has_implementation_script_location, has_software_image, has_model_result_table, has_region, calibration_interval, calibration_method, parameter_assignment_method, valid_until, author_id) VALUES ('https://w3id.org/okn/i/mint/clim_comp_P', 'https://w3id.org/okn/i/mint/ClimComp_0.0.2', NULL, 'ClimComp configuration for precipitation', 'This configuration accepts the precipitation input from FLDAS dataset', NULL, NULL, 'https://github.com/KnowledgeCaptureAndDiscovery/MINT-WorkflowDomain/raw/master/WINGSWorkflowComponents/clim_comp/clim_comp.zip', 'https://raw.githubusercontent.com/KnowledgeCaptureAndDiscovery/MINT-WorkflowDomain/master/WINGSWorkflowComponents/clim_comp/run', 'https://w3id.org/okn/i/mint/MINTPROJECT-BASE-UBUNTU18%253ALATEST', NULL, NULL, NULL, NULL, NULL, NULL, NULL) ON CONFLICT DO NOTHING;
 INSERT INTO public.modelcatalog_configuration (id, software_version_id, model_configuration_id, label, description, keywords, usage_notes, has_component_location, has_implementation_script_location, has_software_image, has_model_result_table, has_region, calibration_interval, calibration_method, parameter_assignment_method, valid_until, author_id) VALUES ('https://w3id.org/okn/i/mint/clim_comp_T', 'https://w3id.org/okn/i/mint/ClimComp_0.0.2', NULL, 'ClimComp configuration for temperature', 'This configuration accepts the temperature input from FLDAS data', NULL, NULL, 'https://github.com/KnowledgeCaptureAndDiscovery/MINT-WorkflowDomain/raw/master/WINGSWorkflowComponents/clim_comp/clim_comp.zip', 'https://raw.githubusercontent.com/KnowledgeCaptureAndDiscovery/MINT-WorkflowDomain/master/WINGSWorkflowComponents/clim_comp/run', 'https://w3id.org/okn/i/mint/MINTPROJECT-BASE-UBUNTU18%253ALATEST', NULL, NULL, NULL, NULL, NULL, NULL, NULL) ON CONFLICT DO NOTHING;
 INSERT INTO public.modelcatalog_configuration (id, software_version_id, model_configuration_id, label, description, keywords, usage_notes, has_component_location, has_implementation_script_location, has_software_image, has_model_result_table, has_region, calibration_interval, calibration_method, parameter_assignment_method, valid_until, author_id) VALUES ('https://w3id.org/okn/i/mint/cycles', 'https://w3id.org/okn/i/mint/cycles_v0.9.3_alpha', NULL, 'Cycles configuration (v0.9.3)', 'Cycles (version 0.9.3) simple configuration', 'agriculture; cycles; crop growth; weather;soil;crop management', NULL, 'https://github.com/KnowledgeCaptureAndDiscovery/MINT-WorkflowDomain/raw/master/WINGSWorkflowComponents/cycles/cycles.zip', 'https://raw.githubusercontent.com/KnowledgeCaptureAndDiscovery/MINT-WorkflowDomain/master/WINGSWorkflowComponents/cycles/cycles/run', 'https://w3id.org/okn/i/mint/MINTPROJECT-CYCLES%253A0.9.3-ALPHA', NULL, NULL, NULL, NULL, NULL, NULL, 'https://w3id.org/okn/i/mint/mayani_rajiv') ON CONFLICT DO NOTHING;
@@ -288,7 +288,7 @@ INSERT INTO public.modelcatalog_configuration (id, software_version_id, model_co
 INSERT INTO public.modelcatalog_configuration (id, software_version_id, model_configuration_id, label, description, keywords, usage_notes, has_component_location, has_implementation_script_location, has_software_image, has_model_result_table, has_region, calibration_interval, calibration_method, parameter_assignment_method, valid_until, author_id) VALUES ('https://w3id.org/okn/i/mint/modflow_2005_BartonSprings_advanced', NULL, 'https://w3id.org/okn/i/mint/modflow_2005_cfg', 'MODFLOW 2005 model setup calibrated for the Barton Springs region. Recharge can be customized (the rest of inputs are average conditions, pre-selected)', 'Configuration of MODFLOW 2005 for the Barton Springs region allowing selection of the recharge file', NULL, NULL, 'https://tapis.tapis.io/v3/apps/modflow-2005/0.0.6', 'https://github.com/mintproject/MINT-WorkflowDomain/raw/master/WINGSWorkflowComponents/MODFLOW2005/src/run', 'https://w3id.org/okn/i/mint/MINTPROJECT-MODFLOW-2005%253ALATEST', NULL, 'https://w3id.org/okn/i/mint/Barton_Springs', NULL, NULL, 'Calibration', NULL, NULL) ON CONFLICT DO NOTHING;
 INSERT INTO public.modelcatalog_configuration (id, software_version_id, model_configuration_id, label, description, keywords, usage_notes, has_component_location, has_implementation_script_location, has_software_image, has_model_result_table, has_region, calibration_interval, calibration_method, parameter_assignment_method, valid_until, author_id) VALUES ('https://w3id.org/okn/i/mint/modflow_2005_BartonSprings_avg', NULL, 'https://w3id.org/okn/i/mint/modflow_2005_cfg', 'MODFLOW 2005 model setup calibrated for the Barton Springs region. Files for average conditions have been pre-selected', 'The Barton Springs groundwater model completed in 2001 by Scanlon with others was constructed to match water levels and spring flow from a period of wetter than normal rainfall conditions. An assessment of the model post completion revealed that it overestimates spring flow and underpredicts water-level elevations generally, but it does capture general aquifer behaviors and response.', NULL, NULL, 'https://tapis.tapis.io/v3/apps/modflow-2005/0.0.6', 'https://github.com/mintproject/MINT-WorkflowDomain/raw/master/WINGSWorkflowComponents/MODFLOW2005/src/run', 'https://w3id.org/okn/i/mint/MINTPROJECT-MODFLOW-2005%253ALATEST', NULL, 'https://w3id.org/okn/i/mint/Barton_Springs', NULL, NULL, 'Calibration', NULL, NULL) ON CONFLICT DO NOTHING;
 INSERT INTO public.modelcatalog_configuration (id, software_version_id, model_configuration_id, label, description, keywords, usage_notes, has_component_location, has_implementation_script_location, has_software_image, has_model_result_table, has_region, calibration_interval, calibration_method, parameter_assignment_method, valid_until, author_id) VALUES ('https://w3id.org/okn/i/mint/modflow_2005_BartonSprings_drought', NULL, 'https://w3id.org/okn/i/mint/modflow_2005_cfg', 'MODFLOW 2005 model setup calibrated for the Barton Springs region on a drought season (files pre-selected)', 'In 2011 the Texas Water Development Board (TWDB) completed the recalibration of The Barton Springs segment of the Edwards (Balcones Fault Zone) Aquifer Groundwater Availability Model; following a request by Groundwater Management Area 10 to evaluate pumping that would result in specified spring flows. Measurements were taken at Barton Springs of 11, 9, 7, 5, 3 cubic-feet per second under drought-of-record conditions.', NULL, NULL, 'https://tapis.tapis.io/v3/apps/modflow-2005/0.0.6', 'https://github.com/mintproject/MINT-WorkflowDomain/raw/master/WINGSWorkflowComponents/MODFLOW2005/src/run', 'https://w3id.org/okn/i/mint/MINTPROJECT-MODFLOW-2005%253ALATEST', NULL, 'https://w3id.org/okn/i/mint/Barton_Springs', NULL, NULL, 'Calibration', NULL, NULL) ON CONFLICT DO NOTHING;
-INSERT INTO public.modelcatalog_configuration (id, software_version_id, model_configuration_id, label, description, keywords, usage_notes, has_component_location, has_implementation_script_location, has_software_image, has_model_result_table, has_region, calibration_interval, calibration_method, parameter_assignment_method, valid_until, author_id) VALUES ('https://w3id.org/okn/i/mint/modflow_2005_cfg', 'https://w3id.org/okn/i/mint/modflow_2005', NULL, 'MODFLOW 2005 configuration', 'MODFLOW 2005 configuration using variable recharge files', 'groundwater modeling; steady and nonsteady flow; areal recharge; evapotranspiration; flow to drains; flow through river beds', NULL, 'https://github.com/mintproject/MINT-WorkflowDomain/raw/master/WINGSWorkflowComponents/MODFLOW2005/MODFLOW2005.zip', 'https://github.com/mintproject/MINT-WorkflowDomain/raw/master/WINGSWorkflowComponents/MODFLOW2005/src/run', 'https://w3id.org/okn/i/mint/MINTPROJECT-MODFLOW2005%253ALATEST', NULL, NULL, NULL, NULL, NULL, NULL, NULL) ON CONFLICT DO NOTHING;
+INSERT INTO public.modelcatalog_configuration (id, software_version_id, model_configuration_id, label, description, keywords, usage_notes, has_component_location, has_implementation_script_location, has_software_image, has_model_result_table, has_region, calibration_interval, calibration_method, parameter_assignment_method, valid_until, author_id) VALUES ('https://w3id.org/okn/i/mint/modflow_2005_cfg', 'https://w3id.org/okn/i/mint/modflow_2005', NULL, 'MODFLOW 2005 configuration', 'MODFLOW 2005 configuration using variable recharge files', 'groundwater modeling; steady and nonsteady flow; areal recharge; evapotranspiration; flow to drains; flow through river beds', NULL, 'https://tapis.tapis.io/v3/apps/modflow-2005/0.0.6', 'https://github.com/mintproject/MINT-WorkflowDomain/raw/master/WINGSWorkflowComponents/MODFLOW2005/src/run', 'https://w3id.org/okn/i/mint/MINTPROJECT-MODFLOW2005%253ALATEST', NULL, NULL, NULL, NULL, NULL, NULL, NULL) ON CONFLICT DO NOTHING;
 INSERT INTO public.modelcatalog_configuration (id, software_version_id, model_configuration_id, label, description, keywords, usage_notes, has_component_location, has_implementation_script_location, has_software_image, has_model_result_table, has_region, calibration_interval, calibration_method, parameter_assignment_method, valid_until, author_id) VALUES ('https://w3id.org/okn/i/mint/pihm-v2', 'https://w3id.org/okn/i/mint/pihm_2.2', NULL, 'PIHM configuration', 'PIHM configuration for the region of South Sudan', 'channel routing; surface overland flow; subsurface flow; interception; snow melt; evapotranspiration; semi-discrete approach', NULL, 'https://github.com/KnowledgeCaptureAndDiscovery/MINT-WorkflowDomain/raw/master/WINGSWorkflowComponents/pihm/pihm.zip', 'https://github.com/mintproject/MINT-WorkflowDomain/raw/master/WINGSWorkflowComponents/pihm-v2/run', 'https://w3id.org/okn/i/mint/MINTPROJECT-PIHM%253AV2', NULL, NULL, NULL, NULL, NULL, NULL, 'https://w3id.org/okn/i/mint/mayani_rajiv') ON CONFLICT DO NOTHING;
 INSERT INTO public.modelcatalog_configuration (id, software_version_id, model_configuration_id, label, description, keywords, usage_notes, has_component_location, has_implementation_script_location, has_software_image, has_model_result_table, has_region, calibration_interval, calibration_method, parameter_assignment_method, valid_until, author_id) VALUES ('https://w3id.org/okn/i/mint/pihm-v4', 'https://w3id.org/okn/i/mint/pihm_v4', NULL, 'PIHM++ configuration for version v4 with aggregated outputs', 'PIHM++ configuration for version v4 aggregating all outputs in a single zip file', 'channel routing; surface overland flow; subsurface flow; interception; snow melt; evapotranspiration; semi-discrete approach', NULL, NULL, NULL, 'https://w3id.org/okn/i/mint/MINTPROJECT-PIHM%253AV4', NULL, NULL, NULL, NULL, NULL, NULL, 'https://w3id.org/okn/i/mint/mayani_rajiv') ON CONFLICT DO NOTHING;
 INSERT INTO public.modelcatalog_configuration (id, software_version_id, model_configuration_id, label, description, keywords, usage_notes, has_component_location, has_implementation_script_location, has_software_image, has_model_result_table, has_region, calibration_interval, calibration_method, parameter_assignment_method, valid_until, author_id) VALUES ('https://w3id.org/okn/i/mint/pihm-v4.1.0', 'https://w3id.org/okn/i/mint/pihm_v4', NULL, 'PIHM++ configuration for version v4 with aggregated inputs and outputs and exposing all calibration parameters', 'PIHM++ configuration for version v4 aggregating all inputs and outputs in a single zip file. Different parameters are exposed to calibrate and setup the model', 'channel routing; surface overland flow; subsurface flow; interception; snow melt; evapotranspiration; semi-discrete approach', 'There are 2 kinds of expert perturbation for parameters. The first is multiplicative to the parameter field as a fraction, for variables like precipitation (e.g., .9 <1< 1.1).  The second is additive to the field -2<0<+2. The additive case is for variables like temperature (e.g., 2 degrees greater or 2 degrees less).', 'https://github.com/mintproject/MINT-WorkflowDomain/raw/master/WINGSWorkflowComponents/pihm-4.1.0/pihm-4.1.0.zip', 'https://github.com/mintproject/MINT-WorkflowDomain/raw/master/WINGSWorkflowComponents/pihm-4.1.0/src/run', 'https://w3id.org/okn/i/mint/MINTPROJECT-PIHM%253AV4', NULL, NULL, NULL, NULL, NULL, NULL, 'https://w3id.org/okn/i/mint/mayani_rajiv') ON CONFLICT DO NOTHING;
@@ -15899,7 +15899,7 @@ VALUES (
   'MODFLOW 6 cell-by-cell budget output consumed by the SVO adapter chain.',
   'cbc-mf6',
   NULL,
-  NULL
+  1
 )
 ON CONFLICT DO NOTHING;
 
@@ -16244,6 +16244,66 @@ WHERE configuration_id = 'https://w3id.org/okn/i/mint/modflow_2005_cfg'
     'https://w3id.org/okn/i/mint/modflow_2005_Oc',
     'https://w3id.org/okn/i/mint/modflow_2005_Sip'
   );
+
+-- Keep the MF6 fixture aligned with the archive-capable Tapis app and the
+-- three-input catalog contract. This runs after all base rows are inserted so
+-- a cold-start fixture load reaches the same state as the forward migrations.
+INSERT INTO public.modelcatalog_dataset_specification
+  (id, label, description, has_format, has_dimensionality, "position")
+VALUES
+  (
+    'https://w3id.org/okn/i/mint/modflow6_input_wel',
+    'MODFLOW 6 well override',
+    'Optional MODFLOW 6 well package override for a complete simulation archive.',
+    'wel',
+    NULL,
+    2
+  ),
+  (
+    'https://w3id.org/okn/i/mint/modflow6_input_rch',
+    'MODFLOW 6 recharge override',
+    'Optional MODFLOW 6 recharge package override for a complete simulation archive.',
+    'rch',
+    NULL,
+    3
+  )
+ON CONFLICT (id) DO UPDATE
+SET label = EXCLUDED.label,
+    description = EXCLUDED.description,
+    has_format = EXCLUDED.has_format,
+    "position" = EXCLUDED."position";
+
+DELETE FROM public.modelcatalog_configuration_input
+WHERE configuration_id = 'https://w3id.org/okn/i/mint/ce445698-1d76-4833-95e8-a12eb3da2488'
+  AND input_id IN (
+    'https://w3id.org/okn/i/mint/modflow6_input_simulation-archive',
+    'https://w3id.org/okn/i/mint/03621b4b-0888-4b64-b963-17fa310130d8',
+    'https://w3id.org/okn/i/mint/bf0761eb-2187-42df-a457-174a4af418a5',
+    'https://w3id.org/okn/i/mint/modflow6_input_rcha',
+    'https://w3id.org/okn/i/mint/modflow6_input_rcha-02',
+    'https://w3id.org/okn/i/mint/modflow6_input_rcha-03'
+  );
+
+INSERT INTO public.modelcatalog_configuration_input
+  (configuration_id, input_id, is_optional)
+VALUES
+  (
+    'https://w3id.org/okn/i/mint/ce445698-1d76-4833-95e8-a12eb3da2488',
+    'https://w3id.org/okn/i/mint/wmobley-modflow-6-simulation-archive',
+    FALSE
+  ),
+  (
+    'https://w3id.org/okn/i/mint/ce445698-1d76-4833-95e8-a12eb3da2488',
+    'https://w3id.org/okn/i/mint/modflow6_input_wel',
+    TRUE
+  ),
+  (
+    'https://w3id.org/okn/i/mint/ce445698-1d76-4833-95e8-a12eb3da2488',
+    'https://w3id.org/okn/i/mint/modflow6_input_rch',
+    TRUE
+  )
+ON CONFLICT (configuration_id, input_id) DO UPDATE
+SET is_optional = EXCLUDED.is_optional;
 
 SET session_replication_role = DEFAULT;
 

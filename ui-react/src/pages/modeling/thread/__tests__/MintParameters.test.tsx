@@ -6,6 +6,7 @@ import { screen, fireEvent } from '@testing-library/react';
 import { renderWithProviders } from '@/test/utils/render';
 import { MintParameters } from '../MintParameters';
 import type { ThreadExecutionData } from '@/graphql/generated/execution';
+import type { ThreadAdapterPlan } from '@/lib/adapter-execution';
 
 // ─── Mock data ────────────────────────────────────────────────────────────────
 
@@ -214,5 +215,58 @@ describe('MintParameters', () => {
       />,
     );
     expect(screen.getByText(/no adjustments possible/i)).toBeInTheDocument();
+  });
+
+  it('renders adapter-inferred parameters separately and saves their values with the plan', () => {
+    const onSave = vi.fn().mockResolvedValue(undefined);
+    const adapterPlan: ThreadAdapterPlan = {
+      thread_model_id: 'ensemble-1',
+      model_io_id: 'input-1',
+      source_resource_id: 'resource-1',
+      executor: 'svo_adapter',
+      adapter_plan_id: 'adapter-plan-1',
+      status: 'transform_required',
+      plan_json: {
+        plan_id: 'svo_adapter-plan-1',
+        executor: 'svo_adapter',
+        version: 1,
+        status: 'transform_required',
+        parameters: [
+          {
+            name: 'springflow_layer',
+            type: 'integer',
+            required: true,
+            minimum: 0,
+            description: 'Layer containing springflow',
+          },
+        ],
+        parameter_values: {},
+      },
+      parameter_values: {},
+    };
+    const data: ThreadExecutionData = {
+      ...mockThreadDataWithModel,
+      models: {
+        ...mockThreadDataWithModel.models,
+        'model-1': {
+          ...mockThreadDataWithModel.models['model-1']!,
+          input_files: [{ id: 'input-1', name: 'springflow', variables: ['springflow'] }],
+        },
+      },
+      adapter_plans: { 'model-1': [adapterPlan] },
+    };
+
+    renderWithProviders(
+      <MintParameters threadData={data} canWrite canExecute onSave={onSave} onContinue={vi.fn()} />,
+    );
+
+    expect(screen.getByText('SVO adapter parameters')).toBeInTheDocument();
+    const input = screen.getByTestId('adapter-param-input-springflow_layer');
+    fireEvent.change(input, { target: { value: '3' } });
+    fireEvent.click(screen.getByTestId('parameters-save-btn'));
+
+    expect(onSave).toHaveBeenCalledWith(expect.anything(), expect.anything(), expect.any(String), [
+      expect.objectContaining({ parameter_values: { springflow_layer: 3 } }),
+    ]);
   });
 });
