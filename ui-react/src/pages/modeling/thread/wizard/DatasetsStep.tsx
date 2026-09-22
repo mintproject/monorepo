@@ -357,6 +357,30 @@ function coverageBarClass(coverage: DateCoverage, selected: boolean): string {
   }
 }
 
+/** Required inputs come first, then optional inputs, alphabetically by name. */
+export function sortModelInputs(inputs: ThreadModel['input_files']): ThreadModel['input_files'] {
+  return [...inputs].sort((a, b) => {
+    const optionalOrder = Number(Boolean(a.isOptional)) - Number(Boolean(b.isOptional));
+    if (optionalOrder !== 0) return optionalOrder;
+
+    const aName = a.name?.trim() || a.id;
+    const bName = b.name?.trim() || b.id;
+    const nameOrder = aName.localeCompare(bName, undefined, { sensitivity: 'base' });
+    if (nameOrder !== 0) return nameOrder;
+
+    const exactNameOrder = aName.localeCompare(bName);
+    return exactNameOrder !== 0 ? exactNameOrder : a.id.localeCompare(b.id);
+  });
+}
+
+function inputCardKey(modelId: string, inputId: string): string {
+  return `${modelId}:${inputId}`;
+}
+
+function inputCardPanelId(modelId: string, inputId: string): string {
+  return `dataset-input-panel-${encodeURIComponent(inputCardKey(modelId, inputId))}`;
+}
+
 function DatasetCoverageTimeline({
   datasets,
   allCandidates,
@@ -718,6 +742,7 @@ export function DatasetsStep({
   const perm = getUserPermission(thread.permissions, thread.events, user?.username ?? null);
   const [saving, setSaving] = useState(false);
   const [spatialBox, setSpatialBox] = useState<BoundingBox | null>(null);
+  const [collapsedInputs, setCollapsedInputs] = useState<Record<string, boolean>>({});
 
   // What the database already holds. Recomputed whenever the thread execution
   // query refetches, so a save is reflected without remounting the step.
@@ -956,6 +981,7 @@ export function DatasetsStep({
       <div className="space-y-4">
         {modelIds.map((modelId) => {
           const model = models[modelId]!;
+          const sortedInputs = sortModelInputs(model.input_files);
           const reqInputs = model.input_files.filter((i) => !i.isOptional);
           const doneForModel = reqInputs.filter((i) => assignmentFor(modelId, i.id)).length;
           return (
@@ -970,9 +996,12 @@ export function DatasetsStep({
                 </span>
               </div>
               <ul className="space-y-2">
-                {model.input_files.map((input) => {
+                {sortedInputs.map((input) => {
                   const current = assignmentFor(modelId, input.id);
                   const cov = dateCoverage(requested, toPeriod(current?.timePeriod));
+                  const key = inputCardKey(modelId, input.id);
+                  const collapsed = collapsedInputs[key] ?? false;
+                  const panelId = inputCardPanelId(modelId, input.id);
                   return (
                     <li key={input.id} className="rounded border bg-white p-3">
                       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -1002,20 +1031,37 @@ export function DatasetsStep({
                               🗓 {coverageLabel(cov)}
                             </span>
                           )}
+                          <button
+                            type="button"
+                            className="rounded px-1.5 py-0.5 text-blue-600 hover:bg-blue-50 hover:underline"
+                            aria-expanded={!collapsed}
+                            aria-controls={panelId}
+                            aria-label={`${collapsed ? 'Expand' : 'Minimize'} dataset card for ${input.name}`}
+                            onClick={() =>
+                              setCollapsedInputs((previous) => ({
+                                ...previous,
+                                [key]: !collapsed,
+                              }))
+                            }
+                          >
+                            {collapsed ? 'Expand' : 'Minimize'}
+                          </button>
                         </span>
                       </div>
-                      <InputPicker
-                        thread={thread}
-                        variables={input.variables ?? []}
-                        regionGeometry={regionGeometry}
-                        spatialBox={spatialBox}
-                        requested={requested}
-                        assignedId={current?.datasetId ?? null}
-                        suggestedDatasetIds={initialDatasetIds}
-                        selectedDatasets={selectedDatasetContextsByModel[modelId]}
-                        onDatasetMetadata={reportKnownDatasetMetadata}
-                        onAssign={(dsId, ds) => assign(modelId, input.id, dsId, ds)}
-                      />
+                      <div id={panelId} hidden={collapsed}>
+                        <InputPicker
+                          thread={thread}
+                          variables={input.variables ?? []}
+                          regionGeometry={regionGeometry}
+                          spatialBox={spatialBox}
+                          requested={requested}
+                          assignedId={current?.datasetId ?? null}
+                          suggestedDatasetIds={initialDatasetIds}
+                          selectedDatasets={selectedDatasetContextsByModel[modelId]}
+                          onDatasetMetadata={reportKnownDatasetMetadata}
+                          onAssign={(dsId, ds) => assign(modelId, input.id, dsId, ds)}
+                        />
+                      </div>
                     </li>
                   );
                 })}

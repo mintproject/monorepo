@@ -30,6 +30,7 @@ import {
   dateCoverage,
   matchesSelectedDatasetContext,
   matchesSpatialBox,
+  sortModelInputs,
   splitByRegion,
   timelineTicks,
 } from '../DatasetsStep';
@@ -181,6 +182,35 @@ describe('assignmentsFromBindings', () => {
       {},
     );
     expect(out['cfgA']).toBeUndefined();
+  });
+});
+
+describe('sortModelInputs', () => {
+  it('puts required inputs first and sorts each group alphabetically', () => {
+    const inputs: ThreadModel['input_files'] = [
+      { id: 'optional-z', name: 'Zeta', isOptional: true },
+      { id: 'required-z', name: 'zeta', isOptional: false },
+      { id: 'optional-a', name: 'alpha', isOptional: true },
+      { id: 'required-a', name: 'Alpha', isOptional: false },
+    ];
+
+    expect(sortModelInputs(inputs).map((input) => input.id)).toEqual([
+      'required-a',
+      'required-z',
+      'optional-a',
+      'optional-z',
+    ]);
+  });
+
+  it('does not mutate the model input array', () => {
+    const inputs: ThreadModel['input_files'] = [
+      { id: 'optional', name: 'Optional', isOptional: true },
+      { id: 'required', name: 'Required', isOptional: false },
+    ];
+
+    sortModelInputs(inputs);
+
+    expect(inputs.map((input) => input.id)).toEqual(['optional', 'required']);
   });
 });
 
@@ -605,6 +635,40 @@ describe('DatasetsStep', () => {
     );
     expect(await screen.findByText('PIHM Flood A')).toBeInTheDocument();
     expect(screen.getByText(/0 \/ 1 inputs/i)).toBeInTheDocument();
+  });
+
+  it('can minimize and expand an input card without removing its content', async () => {
+    renderWithProviders(
+      <DatasetsStep
+        thread={makeThread()}
+        models={models}
+        ensembles={ensembles}
+        persistedData={{}}
+        onUpdated={vi.fn()}
+        onContinue={vi.fn()}
+        onBack={vi.fn()}
+      />,
+    );
+
+    const toggle = await screen.findByRole('button', {
+      name: 'Minimize dataset card for precipitation',
+    });
+    expect(toggle).toHaveAttribute('aria-expanded', 'true');
+
+    const panelId = toggle.getAttribute('aria-controls');
+    expect(panelId).toBeTruthy();
+    const panel = document.getElementById(panelId!);
+    expect(panel).not.toBeNull();
+    expect(panel).not.toHaveAttribute('hidden');
+
+    await userEvent.click(toggle);
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    expect(panel).toHaveAttribute('hidden');
+
+    const expand = screen.getByRole('button', { name: 'Expand dataset card for precipitation' });
+    await userEvent.click(expand);
+    expect(expand).toHaveAttribute('aria-expanded', 'true');
+    expect(panel).not.toHaveAttribute('hidden');
   });
 
   it('disables Continue until every input is assigned', async () => {
