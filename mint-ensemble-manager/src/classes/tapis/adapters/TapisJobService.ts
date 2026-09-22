@@ -43,14 +43,7 @@ export class TapisJobService {
         const jobParameterSet: Jobs.JobParameterSet = {
             appArgs: this.getAppArgs(seed, app, model),
             containerArgs: [],
-            schedulerOptions: [
-                {
-                    name: "TACC Allocation",
-                    description: "The TACC allocation associated with this job execution",
-                    include: true,
-                    arg: `-A ${TapisJobService.ALLOCATION}`
-                }
-            ],
+            schedulerOptions: this.getSchedulerOptions(app),
             envVariables: []
         };
 
@@ -75,6 +68,32 @@ export class TapisJobService {
 
         return request;
     };
+
+    private getSchedulerOptions(app: Apps.TapisApp): Jobs.JobArgSpec[] {
+        const appSchedulerOptions = app.jobAttributes?.parameterSet?.schedulerOptions || [];
+        const fixedOptionNames = new Set(
+            appSchedulerOptions
+                .filter((option) => option.inputMode === Apps.ArgInputModeEnum.Fixed)
+                .map((option) => option.name)
+        );
+
+        if (fixedOptionNames.has("TACC Allocation")) {
+            // The application definition owns this value. Sending an option
+            // with the same name in the job request is an override and Tapis
+            // rejects the entire job definition.
+            console.info("Skipping fixed scheduler option TACC Allocation");
+            return [];
+        }
+
+        return [
+            {
+                name: "TACC Allocation",
+                description: "The TACC allocation associated with this job execution",
+                include: true,
+                arg: `-A ${TapisJobService.ALLOCATION}`
+            }
+        ];
+    }
 
     public createJobParameterSetFromSeed(
         seed: TapisComponentSeed,

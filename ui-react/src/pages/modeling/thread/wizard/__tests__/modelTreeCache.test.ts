@@ -57,6 +57,7 @@ const data: GetModelTreeWithRegionsQuery = {
                     __typename: 'modelcatalog_dataset_specification',
                     id: 'in',
                     label: 'precipitation',
+                    has_format: null,
                     presentations: [
                       {
                         __typename: 'modelcatalog_dataset_specification_presentation',
@@ -85,6 +86,7 @@ const data: GetModelTreeWithRegionsQuery = {
                     __typename: 'modelcatalog_dataset_specification',
                     id: 'out',
                     label: 'flood extent',
+                    has_format: null,
                     presentations: [],
                   },
                 },

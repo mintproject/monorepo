@@ -55,6 +55,43 @@ test("FIXED app arguments are omitted from the Tapis job override set", () => {
     expect(args.find((arg) => arg.name === "mf6DefaultDir")).toBeUndefined();
 });
 
+test("a FIXED TACC Allocation scheduler option is not overridden", () => {
+    const jobService = new TapisJobService(
+        new Jobs.JobsApi(),
+        new Jobs.SubscriptionsApi(),
+        new Jobs.ShareApi()
+    );
+    const appWithFixedAllocation = {
+        ...app,
+        jobAttributes: {
+            ...app.jobAttributes,
+            parameterSet: {
+                ...app.jobAttributes.parameterSet,
+                schedulerOptions: [
+                    ...(app.jobAttributes.parameterSet.schedulerOptions || []),
+                    {
+                        name: "TACC Allocation",
+                        description: "Owned by the application",
+                        inputMode: Apps.ArgInputModeEnum.Fixed,
+                        arg: "-A PT2050-DataX",
+                        notes: {}
+                    }
+                ]
+            }
+        }
+    } as Apps.TapisApp;
+
+    const request = jobService.createJobRequest(
+        appWithFixedAllocation,
+        seeds[0],
+        model,
+        "test-job",
+        "test description"
+    );
+
+    expect(request.parameterSet?.schedulerOptions).toEqual([]);
+});
+
 const seedWithMissingOptionalInput = {
     ...seeds[0],
     datasets: {}

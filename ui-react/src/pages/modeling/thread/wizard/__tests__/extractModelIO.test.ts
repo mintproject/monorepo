@@ -42,7 +42,7 @@ const config: ModelIOConfig = {
 };
 
 describe('extractModelIO', () => {
-  it('flattens inputs to {id, name, variableIds, variableLabels, optional}', () => {
+  it('flattens inputs to {id, name, variableIds, variableLabels, format, optional}', () => {
     const io = extractModelIO(config);
     expect(io.inputs).toEqual([
       {
@@ -50,6 +50,7 @@ describe('extractModelIO', () => {
         name: 'precipitation',
         variableIds: ['sv-precip'],
         variableLabels: ['precipitation flux'],
+        format: null,
         optional: false,
       },
     ]);
