@@ -125,6 +125,12 @@ NEW_ARCHIVE_POLICY = (
     "Complete model archives may carry reviewed mint_standard_variables for variables contained "
     "in the bundle. Reports, landing pages, grids, and geodatabases require their own direct evidence."
 )
+MODEL_ARCHIVE_VERSION_VARIABLES = {
+    "modflow6": "groundwater_model_modflow6_simulation_archive",
+    "modflow-2000": "groundwater_model_modflow2000_simulation_archive",
+    "modflow-2005": "groundwater_model_modflow2005_simulation_archive",
+    "modflow-96": "groundwater_model_modflow96_simulation_archive",
+}
 PACKAGE_EXTRA_CORRECTIONS = {
     package_id: "reviewed model-archive variable bindings retained"
     for package_id in PACKAGE_CORRECTIONS
@@ -408,6 +414,20 @@ def build_plan(packages: list[dict[str, Any]]) -> dict[str, Any]:
             raise ValueError(f"Drifted spatial status extra for {entry['package_name']}")
         if "spatial" in by_key and by_key["spatial"].get("value"):
             _canonical_spatial(by_key["spatial"]["value"])
+        variants = [
+            value.strip().lower()
+            for value in str(by_key.get("modflow_variant", {}).get("value", "")).split(",")
+            if value.strip()
+        ]
+        archive_labels = [
+            MODEL_ARCHIVE_VERSION_VARIABLES[variant]
+            for variant in variants
+            if variant in MODEL_ARCHIVE_VERSION_VARIABLES
+        ]
+        expected_variables = list(entry["variables"])
+        for archive_label in reversed(archive_labels):
+            if archive_label not in expected_variables:
+                expected_variables.insert(0, archive_label)
         spatial = _canonical_spatial(_bbox_polygon(tuple(entry["spatial_bounds"])))
         spatial_in_extra = package.get("type") == "subside_dataset"
         replacements = {
@@ -471,7 +491,10 @@ def build_plan(packages: list[dict[str, Any]]) -> dict[str, Any]:
         current_svo = resource.get("mint_standard_variables", "") or ""
         if isinstance(current_svo, list):
             current_svo = ", ".join(current_svo)
-        if current_svo not in old_svo_values and current_svo != ", ".join(entry["variables"]):
+        if current_svo not in old_svo_values and current_svo not in {
+            ", ".join(entry["variables"]),
+            ", ".join(expected_variables),
+        }:
             raise ValueError(f"Drifted SVO value on model archive {entry['primary_resource_id']}")
         current_type = resource.get("resource_type")
         if current_type not in (None, "", "model_archive"):
@@ -482,7 +505,7 @@ def build_plan(packages: list[dict[str, Any]]) -> dict[str, Any]:
             "spatial": resource.get("spatial", "") or "",
         }
         after = {
-            "mint_standard_variables": ", ".join(entry["variables"]),
+            "mint_standard_variables": ", ".join(expected_variables),
             "resource_type": "model_archive",
             "spatial": "",
         }
@@ -494,7 +517,7 @@ def build_plan(packages: list[dict[str, Any]]) -> dict[str, Any]:
                 "source_page": entry["source_page"],
                 "archive_url": entry["archive_url"],
                 "location": entry["svo_evidence_location"],
-                "variables": entry["variables"],
+                "variables": expected_variables,
             },
         })
 

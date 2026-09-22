@@ -118,6 +118,40 @@ class ReconciliationPlanTests(unittest.TestCase):
         self.assertEqual(second["summary"]["needs_apply"], 0)
         self.assertEqual(second["summary"]["drift"], 0)
 
+    def test_model_variant_adds_version_specific_archive_label(self):
+        target = next(
+            item for item in self.packages
+            if item["name"] == "yegua-jackson-aquifer-groundwater-availability-model-files"
+        )
+        target["extras"] = [{"key": "modflow_variant", "value": "modflow-2000"}]
+
+        plan = reconcile.build_plan(self.packages)
+        action = next(
+            item for item in plan["actions"]
+            if item["id"] == target["resources"][0]["id"]
+        )
+        assert action["after"]["mint_standard_variables"].startswith(
+            "groundwater_model_modflow2000_simulation_archive, "
+        )
+        assert action["evidence"]["variables"][1:] == reconcile.TWDB_GAM_BY_PACKAGE[target["id"]]["variables"]
+
+    def test_model_variant_can_add_multiple_archive_labels(self):
+        target = next(
+            item for item in self.packages
+            if item["name"] == "yegua-jackson-aquifer-groundwater-availability-model-files"
+        )
+        target["extras"] = [{"key": "modflow_variant", "value": "modflow-2000,modflow-96"}]
+
+        plan = reconcile.build_plan(self.packages)
+        action = next(
+            item for item in plan["actions"]
+            if item["id"] == target["resources"][0]["id"]
+        )
+        assert action["after"]["mint_standard_variables"].startswith(
+            "groundwater_model_modflow2000_simulation_archive, "
+            "groundwater_model_modflow96_simulation_archive, "
+        )
+
     def test_unexpected_archive_svo_is_hard_failure(self):
         target = next(item for item in self.packages if item["id"] == reconcile.TWDB_GAM_MANIFEST["archives"][0]["package_id"])
         target["resources"][0]["mint_standard_variables"] = "unexpected_variable"

@@ -218,3 +218,11 @@ CKAN spatial coverage belongs on the dataset. SVO annotations belong on the
 resource that provides them, including reviewed complete model archives. The
 adapter keeps MODFLOW ZIP/ZIPX/7Z bundles as `zip`; only explicitly identified
 shapefile bundles become `shapefile-zip`.
+
+MODFLOW complete simulation archives should also carry the exact version label
+for the model contract they support: `groundwater_model_modflow6_simulation_archive`,
+`groundwater_model_modflow2000_simulation_archive`,
+`groundwater_model_modflow2005_simulation_archive`, or
+`groundwater_model_modflow96_simulation_archive`. A multi-version archive may
+carry more than one label; retain the archive's reviewed contained-variable
+annotations as well.

@@ -84,7 +84,7 @@ def test_ckan_sync_maps_boundary_aliases_and_shapefile_zip_format():
     }
 
 
-@pytest.mark.parametrize("fmt", ["ZIP", "ZIPX", "7Z"])
+@pytest.mark.parametrize("fmt", ["ZIP", "ZIPX", "7Z", "SIMULATION-ARCHIVE"])
 def test_ckan_sync_keeps_model_archives_distinct_from_shapefile_zips(fmt):
     warnings: list[str] = []
     obj = _resource_to_data_object(
@@ -103,6 +103,39 @@ def test_ckan_sync_keeps_model_archives_distinct_from_shapefile_zips(fmt):
     assert warnings == []
     assert obj is not None
     assert obj["format"] == "zip"
+
+
+@pytest.mark.parametrize(
+    "stdvar",
+    [
+        "groundwater_model_modflow6_simulation_archive",
+        "groundwater_model_modflow2000_simulation_archive",
+        "groundwater_model_modflow2005_simulation_archive",
+        "groundwater_model_modflow96_simulation_archive",
+    ],
+)
+def test_ckan_sync_maps_version_specific_model_archive_variables(stdvar):
+    warnings: list[str] = []
+    obj = _resource_to_data_object(
+        {
+            "id": "versioned-model-archive",
+            "name": "Versioned MODFLOW model archive",
+            "url": "https://example.test/model.zip",
+            "format": "SIMULATION-ARCHIVE",
+            "resource_type": "model_archive",
+            "mint_standard_variables": stdvar,
+        },
+        warnings,
+        pkg_name="groundwater-model",
+    )
+
+    assert warnings == []
+    assert obj is not None
+    assert obj["format"] == "zip"
+    assert obj["variables"]["data"][0]["local_name"] == stdvar
+    assert obj["variables"]["data"][0]["standard_variable_uri"].endswith(
+        stdvar.replace("groundwater_model_", "groundwater-model-").replace("_", "-")
+    )
 
 
 @pytest.mark.parametrize(

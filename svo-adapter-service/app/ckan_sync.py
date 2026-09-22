@@ -38,6 +38,14 @@ STDVAR_TO_SVO: dict[str, str] = {
     "groundwater__vertical_hydraulic_conductivity":   f"{SVO_NS}GROUNDWATER__VERTICAL_HYDRAULIC_CONDUCTIVITY",
     "groundwater_drain__volume_flow_rate":    f"{SVO_NS}groundwater_drain__volume_flow_rate",
     "groundwater__volume_flow_rate":          f"{SVO_NS}groundwater__volume_flow_rate",
+    # Complete model-input bundles. Keep the generic alias for historical CKAN
+    # rows while allowing each MODFLOW family to advertise compatibility with
+    # its own archive contract.
+    "groundwater_model__simulation_archive": f"{SVO_NS}wmobley-standard-variable-groundwater-model-simulation-archive",
+    "groundwater_model_modflow6_simulation_archive": f"{SVO_NS}wmobley-standard-variable-groundwater-model-modflow6-simulation-archive",
+    "groundwater_model_modflow2000_simulation_archive": f"{SVO_NS}wmobley-standard-variable-groundwater-model-modflow2000-simulation-archive",
+    "groundwater_model_modflow2005_simulation_archive": f"{SVO_NS}wmobley-standard-variable-groundwater-model-modflow2005-simulation-archive",
+    "groundwater_model_modflow96_simulation_archive": f"{SVO_NS}wmobley-standard-variable-groundwater-model-modflow96-simulation-archive",
     # Surface water
     "river_water__volume_flow_rate":          f"{SVO_NS}river_water__volume_flow_rate",
     "spring__volume_flow_rate":               f"{SVO_NS}spring__volume_flow_rate",
@@ -101,6 +109,7 @@ CKAN_FORMAT_TO_ADAPTER: dict[str, str] = {
     "ZIP":      "zip",
     "ZIPX":     "zip",
     "7Z":       "zip",
+    "SIMULATION-ARCHIVE": "zip",
     "RCH":      "modflow-rch",
     "WEL":      "modflow-wel",
     "ESRI REST":"arcgis-layer",

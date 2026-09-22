@@ -48,6 +48,24 @@ The synchronizer replaces existing variable children and inserts the current set
 in one Hasura mutation. This avoids duplicate child rows without requiring a
 database uniqueness migration.
 
+### Version-specific MODFLOW archives
+
+Complete simulation archives use a version-specific archive label in addition
+to any scientific variables verified inside the bundle:
+
+| MODFLOW version | Archive label |
+|---|---|
+| 6 | `groundwater_model_modflow6_simulation_archive` |
+| 2000 | `groundwater_model_modflow2000_simulation_archive` |
+| 2005 | `groundwater_model_modflow2005_simulation_archive` |
+| 96 | `groundwater_model_modflow96_simulation_archive` |
+
+An archive compatible with more than one version may carry more than one of
+these labels. Do not replace contained-variable annotations when adding the
+archive label. The adapter maps `SIMULATION-ARCHIVE`, `ZIP`, `ZIPX`, and `7Z`
+to its model-archive `zip` format; shapefile evidence is still required for
+`shapefile-zip`.
+
 ## Naming conventions (Scientific Variables Ontology)
 
 `STDVAR_TO_SVO` short names aren't arbitrary strings — they follow the CSDMS
