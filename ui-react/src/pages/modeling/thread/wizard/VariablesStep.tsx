@@ -34,12 +34,7 @@ function optionFromId(id?: string | null, label?: string | null): StandardVariab
   return { id, label: label || id, description: null };
 }
 
-export function VariablesStep({
-  thread,
-  onUpdated,
-  onContinue,
-  onBack,
-}: VariablesStepProps) {
+export function VariablesStep({ thread, onUpdated, onContinue, onBack }: VariablesStepProps) {
   const { user } = useAuth();
   const { toast } = useToast();
   const perm = getUserPermission(thread.permissions, thread.events, user?.username ?? null);

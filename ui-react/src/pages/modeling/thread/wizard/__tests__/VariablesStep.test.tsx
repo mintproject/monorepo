@@ -152,5 +152,4 @@ describe('VariablesStep', () => {
       await screen.findByRole('button', { name: /a model uses or adjusts/i }),
     ).toBeInTheDocument();
   });
-
 });
