@@ -616,10 +616,12 @@ class LifecycleTests(unittest.TestCase):
     def test_update_pod_images_changes_only_image_field(self):
         t = Mock()
         images = {"api": "ghcr.io/mintproject/model-catalog-api:sha-new"}
-        deploy.update_pod_images(t, ["api"], images)
+        with patch.object(deploy, "wait_for_pod_image") as wait_for_image:
+            deploy.update_pod_images(t, ["api"], images)
         t.pods.update_pod.assert_called_once_with(
             pod_id=deploy.PODS["api"], image=images["api"]
         )
+        wait_for_image.assert_called_once_with(t, deploy.PODS["api"], images["api"])
         t.pods.restart_pod.assert_not_called()
         t.pods.create_pod.assert_not_called()
 
@@ -630,11 +632,14 @@ class LifecycleTests(unittest.TestCase):
         t.pods.update_pod.side_effect = [error, None]
         images = {"api": "ghcr.io/mintproject/model-catalog-api:sha-new"}
 
-        with patch.object(deploy.time, "sleep") as sleep:
+        with patch.object(deploy.time, "sleep") as sleep, patch.object(
+            deploy, "wait_for_pod_image"
+        ) as wait_for_image:
             deploy.update_pod_images(t, ["api"], images)
 
         self.assertEqual(t.pods.update_pod.call_count, 2)
         sleep.assert_called_once_with(deploy.POD_UPDATE_BACKOFF)
+        wait_for_image.assert_called_once_with(t, deploy.PODS["api"], images["api"])
 
     def test_update_pod_images_reports_pod_and_image_on_nontransient_error(self):
         t = Mock()
@@ -653,6 +658,42 @@ class LifecycleTests(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             deploy.update_pod_images(t, ["api", "ui"], {"api": "ghcr.io/mintproject/model-catalog-api:sha-new"})
         t.pods.update_pod.assert_not_called()
+
+    def test_update_pod_images_fails_before_restart_when_image_does_not_converge(self):
+        t = Mock()
+        image = "ghcr.io/mintproject/graphql-engine:sha-new"
+        with patch.object(
+            deploy,
+            "wait_for_pod_image",
+            side_effect=deploy.PodImageMismatchError("stale image"),
+        ):
+            with self.assertRaisesRegex(deploy.PodImageMismatchError, "stale image"):
+                deploy.update_pod_images(t, ["graphql"], {"graphql": image})
+        t.pods.update_pod.assert_called_once_with(pod_id=deploy.PODS["graphql"], image=image)
+        t.pods.restart_pod.assert_not_called()
+
+    def test_wait_for_pod_restart_reports_last_observed_state(self):
+        t = Mock()
+        t.pods.get_pod.return_value = {
+            "status": "STARTING",
+            "image": "ghcr.io/mintproject/graphql-engine:sha-old",
+            "status_container": {"start_time": "old-start"},
+        }
+        with patch.object(deploy.time, "monotonic", side_effect=[0, 0, 0, 11]), patch.object(
+            deploy.time, "sleep"
+        ):
+            with self.assertRaisesRegex(
+                RuntimeError,
+                r"last status='STARTING'.*image='ghcr.io/mintproject/graphql-engine:sha-old'.*"
+                r"start_time='old-start'.*previous_start='old-start'",
+            ):
+                deploy.wait_for_pod_restart(
+                    t,
+                    deploy.PODS["graphql"],
+                    "ghcr.io/mintproject/graphql-engine:sha-new",
+                    previous_start="old-start",
+                    timeout=10,
+                )
 
     def test_restart_dispatches_all_requests_without_polling(self):
         t = Mock()
