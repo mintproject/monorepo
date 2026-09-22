@@ -31,8 +31,10 @@ ghcr.io/mintproject/ui:<tag>
 ```
 
 For a source commit, `<tag>` is `sha-<7-character-commit>`. Pushes also publish
-a branch tag, and the default branch publishes `latest`. Manual deployment uses
-the moving `:develop` tags.
+a branch tag, and the default branch publishes `latest`. Automatic and manual
+dev deployments use the moving `:develop` tags at runtime. The exact SHA image
+references remain in the build manifest for provenance and fail-closed
+validation.
 
 ## GitHub Actions
 
@@ -40,8 +42,9 @@ the moving `:develop` tags.
   and uploads an exact change manifest. Documentation-only changes produce a
   no-op manifest.
 - `Deploy MINT Dev Pods` consumes that exact manifest after a successful image
-  workflow on `develop`, plus manual dispatch. It updates only the exact SHA
-  image references for changed application services, then sends restart
+  workflow on `develop`, plus manual dispatch. It validates the exact SHA
+  image references recorded by the build, then updates only the changed
+  application services to their `:develop` runtime images and sends restart
   requests for the affected application pods.
 - Every deploy run first ensures `wmobley` has Tapis `APPROVEDADMIN` permission on all
   MINT dev pods, including PostgreSQL and Redis. The run fails if any pod is
@@ -64,9 +67,10 @@ plumbing changes are intentionally no-op. A dependency-only restart never
 changes that service's image.
 
 Normal application rollouts leave PostgreSQL and Redis alone. The deployment
-updates only the image field on changed application pods with the manifest's
-exact SHA image references, then sends restart requests for the affected
-application set—API, Ensemble Manager, SVO, semantic search, and UI. On a
+updates only the image field on changed application pods with the `:develop`
+runtime image, then sends restart requests for the affected application
+set—API, Ensemble Manager, SVO, semantic search, and UI. The manifest's exact
+SHA image references are validated before the runtime map is generated. On a
 schema-changing rollout, GraphQL is restarted and verified by the gated
 migration stage before those dependent application pods are restarted.
 Dependency-only pods retain their current image. The deploy job does not
@@ -74,10 +78,11 @@ change networking or CORS, apply schema changes outside that migration stage,
 or run seeds/resets. Its separate admin-permission step is the only other
 non-lifecycle mutation.
 
-The automated deploy validates only the manifest identity and exact SHA image
-references before making any image or restart request. A missing, malformed, or
-mismatched manifest fails closed. A no-op manifest skips image updates and
-restarts, but still runs the strict `wmobley` admin-permission step.
+The automated deploy validates the manifest identity and exact SHA provenance
+references before making any image or restart request. It then constructs a
+separate `:develop` runtime image map. A missing, malformed, or mismatched
+manifest fails closed. A no-op manifest skips image updates and restarts, but
+still runs the strict `wmobley` admin-permission step.
 
 The image-update request sends only `pod_id` and `image`; it does not resubmit
 environment variables, resources, networking, CORS, or auth settings. The
