@@ -707,6 +707,7 @@ export function MintProblemStatement() {
               <MintThread
                 key={selectedThreadId}
                 threadId={selectedThreadId}
+                taskName={selectedTask?.name}
                 initialDatasetIds={initialDatasetIds}
               />
             </div>

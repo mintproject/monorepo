@@ -88,12 +88,15 @@ interface MintThreadProps {
    * route. Falls back to the `:id` route param when omitted.
    */
   threadId?: string;
+  /** Parent task name, available when the wizard is embedded in a problem statement. */
+  taskName?: string | null;
   /** Dataset suggestions confirmed by guided setup and carried into the picker. */
   initialDatasetIds?: string[];
 }
 
 export function MintThread({
   threadId: threadIdProp,
+  taskName,
   initialDatasetIds = [],
 }: MintThreadProps = {}) {
   const { id: routeThreadId } = useParams<{ id: string }>();
@@ -687,6 +690,7 @@ export function MintThread({
         return (
           <VariablesStep
             thread={thread!}
+            taskName={taskName}
             onUpdated={() => void handleThreadUpdated()}
             onContinue={goNext}
             onBack={goBack}

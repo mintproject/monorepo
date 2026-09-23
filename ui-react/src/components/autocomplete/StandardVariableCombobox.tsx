@@ -73,6 +73,8 @@ export interface StandardVariableComboboxProps {
   driverOutcomeLabel?: string | null;
   /** Selected model configurations used to keep inference task-specific. */
   driverConfigurationIds?: ReadonlyArray<string>;
+  /** IDs to place first before the alphabetical catalog order. */
+  preferredIds?: ReadonlyArray<string>;
 }
 
 export function StandardVariableCombobox({
@@ -87,6 +89,7 @@ export function StandardVariableCombobox({
   driverOutcomeId,
   driverOutcomeLabel,
   driverConfigurationIds = [],
+  preferredIds = [],
 }: StandardVariableComboboxProps) {
   const [open, setOpen] = React.useState(false);
   const [search, setSearch] = React.useState('');
@@ -139,9 +142,22 @@ export function StandardVariableCombobox({
    */
   const visibleOptions = React.useMemo(() => {
     const base = rankedOptions ?? options;
-    if (!value || base.some((o) => o.id === value.id)) return base;
-    return [value, ...base];
-  }, [rankedOptions, options, value]);
+    // Semantic search results already have a query-specific ranking. Apply the
+    // task/goal ranking only to the unfiltered catalog list.
+    const ordered =
+      rankedOptions === null && preferredIds.length > 0
+        ? (() => {
+            const preferredOrder = new Map(preferredIds.map((id, index) => [id, index]));
+            return [...base].sort(
+              (a, b) =>
+                (preferredOrder.get(a.id) ?? preferredIds.length) -
+                (preferredOrder.get(b.id) ?? preferredIds.length),
+            );
+          })()
+        : base;
+    if (!value || ordered.some((o) => o.id === value.id)) return ordered;
+    return [value, ...ordered];
+  }, [rankedOptions, options, preferredIds, value]);
 
   const handleSelect = React.useCallback(
     (selectedId: string) => {
