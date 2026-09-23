@@ -7,6 +7,7 @@ import { renderWithProviders } from '@/test/utils/render';
 import { storeTokens } from '@/lib/auth/token-store';
 import { MintRuns } from '../MintRuns';
 import type { ThreadExecutionData, ModelExecutionsMap } from '@/graphql/generated/execution';
+import type { UnifiedRunSnapshot } from '@/lib/ensemble-manager';
 
 // ─── Mock data ────────────────────────────────────────────────────────────────
 
@@ -189,6 +190,44 @@ describe('MintRuns', () => {
     // The runs table area should show a loading spinner (animated element)
     const spinners = document.querySelectorAll('.animate-spin');
     expect(spinners.length).toBeGreaterThan(0);
+  });
+
+  it('shows the unified pipeline stages and external workflow identifiers', () => {
+    const unifiedRun: UnifiedRunSnapshot = {
+      run_id: 'ue-parent-1',
+      execution_mode: 'workflow_pipeline',
+      status: 'adapter_running',
+      model_job_id: 'model-job-1',
+      adapter_runs: [
+        {
+          execution_kind: 'workflow',
+          run_id: 'adapter-run-1',
+          status: 'running',
+          tapis_workflow_id: 'workflow-1',
+          tapis_run_id: 'tapis-run-1',
+        },
+      ],
+    };
+
+    renderWithProviders(
+      <MintRuns
+        threadData={mockThreadDataSubmitted}
+        executions={emptyExecutions}
+        unifiedRuns={{ 'model-1': unifiedRun }}
+        canWrite
+        canExecute
+        ensembleManagerApi="http://ensemble"
+        onContinue={vi.fn()}
+        onFetchRuns={vi.fn()}
+        onSubmitRuns={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByTestId('unified-execution-panel')).toBeInTheDocument();
+    expect(screen.getByText('Workflow pipeline')).toBeInTheDocument();
+    expect(screen.getByText('model-job-1')).toBeInTheDocument();
+    expect(screen.getByText('workflow-1')).toBeInTheDocument();
+    expect(screen.getByText(/tapis-run-1/)).toBeInTheDocument();
   });
 
   it('shows Continue button when all runs are done', () => {

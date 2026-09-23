@@ -6,6 +6,7 @@ import { getTokenFromAuthorizationHeader } from "@/utils/authUtils";
 import { NotFoundError } from "@/classes/common/errors";
 import { threadFromGQL } from "@/classes/graphql/graphql_adapter";
 import { getThread } from "@/classes/graphql/graphql_functions_v2";
+import { getExecution as getExecutionById } from "@/classes/graphql/graphql_functions";
 import { SubmissionResult } from "@/interfaces/IExecutionService";
 import { applyExecutionInputOverrides } from "@/classes/common/execution-input-overrides";
 
@@ -15,9 +16,15 @@ type AdapterAwareModelThread = ModelThread & {
 
 export interface ExecutionsTapisService {
     submitExecution(threadmodel: ModelThread, token: string): Promise<SubmissionResult>;
+    getExecution(executionId: string, token: string): Promise<any>;
 }
 
 const executionsTapisService = {
+    async getExecution(executionId: string, _authorization: string): Promise<any> {
+        const execution = await getExecutionById(executionId);
+        if (!execution) throw new NotFoundError("Execution not found");
+        return execution;
+    },
     async submitExecution(
         threadmodel: AdapterAwareModelThread,
         authorization: string

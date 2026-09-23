@@ -63,6 +63,10 @@ window.__MINT_CONFIG__ = {
   // that deployment reaches the wrong handler or none. 'tapis' matches
   // compose/ensemble-manager.json, which sets execution_engine to tapis.
   EXECUTION_ENGINE: "tapis",
+  // Discover registered SVO adapter stages while creating the execution plan.
+  // Without this flag the UI falls back to the legacy model-job submission
+  // path, even when the selected outcome requires a post-model transform.
+  SVO_ADAPTER_ENABLED: "true",
   // Shows the TACC + UT Austin strip and footer locally, so the branded chrome
   // is visible while developing it. This file never reaches a deployment (see
   // the header), so it does not weaken the 'none' default in

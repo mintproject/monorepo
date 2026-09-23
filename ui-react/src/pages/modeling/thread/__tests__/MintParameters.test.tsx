@@ -239,6 +239,13 @@ describe('MintParameters', () => {
             minimum: 0,
             description: 'Layer containing springflow',
           },
+          {
+            name: 'allocation',
+            type: 'string',
+            required: false,
+            default: 'PT2050-DataX',
+            managed: true,
+          },
         ],
         parameter_values: {},
       },
@@ -262,6 +269,7 @@ describe('MintParameters', () => {
 
     expect(screen.getByText('SVO adapter parameters')).toBeInTheDocument();
     const input = screen.getByTestId('adapter-param-input-springflow_layer');
+    expect(screen.queryByTestId('adapter-param-input-allocation')).not.toBeInTheDocument();
     fireEvent.change(input, { target: { value: '3' } });
     fireEvent.click(screen.getByTestId('parameters-save-btn'));
 

@@ -189,6 +189,7 @@ export function MintParameters({
       for (const plan of adapterPlans) {
         if (!adapterPlanIsTransformRequired(plan)) continue;
         for (const parameter of adapterPlanParameters(plan)) {
+          if (parameter.managed) continue;
           if (!adapterParameters.has(parameter.name))
             adapterParameters.set(parameter.name, parameter);
         }
@@ -374,6 +375,7 @@ export function MintParameters({
             for (const plan of adapterPlans) {
               if (!adapterPlanIsTransformRequired(plan)) continue;
               for (const parameter of adapterPlanParameters(plan)) {
+                if (parameter.managed) continue;
                 if (!adapterParams.has(parameter.name))
                   adapterParams.set(parameter.name, parameter);
               }

@@ -19,6 +19,8 @@ export interface UnifiedParameterDefinition {
     maximum?: number;
     source_transform?: string;
     transform_spec_id?: string;
+    managed?: boolean;
+    managed_source?: string;
 }
 
 export class UnifiedExecutionError extends Error {
@@ -39,6 +41,7 @@ interface LegacyPlan {
     model_id: string;
     execution_engine: string;
     adapter_steps?: AdapterStep[];
+    post_model_adapter?: PostModelAdapter;
 }
 
 interface AdapterStep {
@@ -47,25 +50,52 @@ interface AdapterStep {
     source_resource_id: string;
 }
 
+interface PostModelAdapter {
+    adapter_plan_id: string;
+    model_io_id: string;
+    model_output_key: string;
+    source_contract: Record<string, unknown>;
+    target_contract: Record<string, unknown>;
+    plan_hash: string;
+    parameters: UnifiedParameterDefinition[];
+}
+
 interface AdapterChildRun {
     adapter_plan_id: string;
     model_io_id: string;
-    source_resource_id: string;
+    source_resource_id?: string;
     run_id: string;
     status?: string;
     output_data_object_id?: string | null;
+    execution_kind?: "workflow";
+    tapis_workflow_id?: string | null;
+    tapis_run_id?: string | null;
 }
 
 interface AdapterPlanResponse {
     status?: string;
     plan_id?: string;
     plan_json?: { parameters?: UnifiedParameterDefinition[]; [key: string]: unknown };
+    plan_hash?: string;
     message?: string;
 }
 
 function adapterBaseUrl(): string {
     const prefs = getConfiguration() as { svo_adapter_api?: string };
     return (prefs.svo_adapter_api || process.env.SVO_ADAPTER_API || "").replace(/\/$/, "");
+}
+
+function adapterInternalSecret(): string {
+    const prefs = getConfiguration() as {
+        svo_adapter_internal_secret?: string;
+        graphql?: { secret?: string };
+    };
+    return (
+        process.env.SVO_ADAPTER_INTERNAL_SERVICE_SECRET ||
+        prefs.svo_adapter_internal_secret ||
+        prefs.graphql?.secret ||
+        ""
+    );
 }
 
 function unifiedPlanSecret(): string {
@@ -130,7 +160,7 @@ function decodePlan(planId: string): LegacyPlan {
 
 async function adapterRequest(
     path: string,
-    init: { method?: string; body?: unknown },
+    init: { method?: string; body?: unknown; idempotencyKey?: string },
     authorization?: string
 ): Promise<any> {
     const base = adapterBaseUrl();
@@ -141,10 +171,13 @@ async function adapterRequest(
             "SVO_ADAPTER_UNAVAILABLE"
         );
     }
+    const internalSecret = adapterInternalSecret();
     const response = await fetch(`${base}${path}`, {
         method: init.method || "GET",
         headers: {
             "Content-Type": "application/json",
+            ...(init.idempotencyKey ? { "Idempotency-Key": init.idempotencyKey } : {}),
+            ...(internalSecret ? { "X-Ensemble-Manager-Secret": internalSecret } : {}),
             ...(authorization ? { Authorization: authorization } : {})
         },
         ...(init.body === undefined ? {} : { body: JSON.stringify(init.body) })
@@ -170,27 +203,88 @@ function planHash(plan: LegacyPlan): string {
     return crypto.createHash("sha256").update(JSON.stringify(plan)).digest("hex");
 }
 
+function parameterValuesHash(values: Record<string, unknown>): string {
+    return crypto.createHash("sha256").update(JSON.stringify(values, Object.keys(values).sort())).digest("hex");
+}
+
+function adapterParameterValues(
+    plan: LegacyPlan,
+    body: any
+): { values: Record<string, unknown>; hash: string } {
+    const adapter = plan.post_model_adapter;
+    const values = adapter
+        ? body.adapter_parameter_values?.[adapter.adapter_plan_id] || body.parameter_values || {}
+        : {};
+    const missing = (adapter?.parameters || [])
+        .filter((parameter) => parameter.required && !parameter.managed && parameter.default === undefined)
+        .filter((parameter) => values[parameter.name] === undefined || values[parameter.name] === "")
+        .map((parameter) => ({
+            step: adapter?.adapter_plan_id,
+            name: parameter.name,
+            reason: "required"
+        }));
+    if (missing.length) {
+        throw new UnifiedExecutionError(
+            422,
+            "required adapter parameters are missing",
+            "PARAMETER_VALIDATION_FAILED",
+            { fields: missing }
+        );
+    }
+    const withDefaults = { ...values };
+    for (const parameter of adapter?.parameters || []) {
+        if (withDefaults[parameter.name] === undefined && parameter.default !== undefined) {
+            withDefaults[parameter.name] = parameter.default;
+        }
+    }
+    return { values: withDefaults, hash: parameterValuesHash(withDefaults) };
+}
+
 function parentRunId(id: string): string {
     return `ue_${id}`;
 }
 
 function parentResponse(record: UnifiedExecutionRecord) {
+    const plan = decodePlan(record.plan_id);
+    const hasWorkflowStage = Boolean(plan.post_model_adapter || record.adapter_steps?.length);
     return {
         run_id: parentRunId(record.id),
         parent_execution_id: parentRunId(record.id),
         executor: "ensemble_manager",
+        execution_mode: hasWorkflowStage ? "workflow_pipeline" : "job",
         status: record.status,
         plan_id: record.plan_id,
         adapter_runs: record.adapter_run_ids,
+        model_child_id: record.model_child_id || null,
+        model_job_id: record.model_child_id || null,
+        model_output_id: record.model_output_id || null,
+        output_handoff: record.output_handoff || null,
+        failure_code: record.failure_code || null,
         model_result: record.model_result || null,
         error_message: record.error_message || null
     };
 }
 
+function legacyModelJobId(result: any): string | null {
+    const submitted = Array.isArray(result?.submittedExecutions) ? result.submittedExecutions : [];
+    const first = submitted[0];
+    if (typeof first === "string") return first;
+    if (!first || typeof first !== "object") return null;
+    const execution = first.execution;
+    if (typeof execution?.id === "string") return execution.id;
+    for (const key of ["id", "executionId", "jobId", "job_id"]) {
+        if (typeof first[key] === "string") return first[key];
+    }
+    return null;
+}
+
 export function createUnifiedExecutionService(legacyServices: {
     local: { submitExecution(body: any): Promise<any> };
     wings: { submitExecution(body: any): Promise<any> };
-    tapis: { submitExecution(body: any, authorization: string): Promise<any> };
+    tapis: {
+        submitExecution(body: any, authorization: string): Promise<any>;
+        getExecution?: (executionId: string, authorization: string) => Promise<any>;
+    };
 }, dependencies: { store?: UnifiedExecutionStore } = {}) {
     const store = dependencies.store || createHasuraUnifiedExecutionStore();
 
@@ -234,6 +328,214 @@ export function createUnifiedExecutionService(legacyServices: {
             return legacyServices.wings.submitExecution(request);
         }
         return legacyServices.local.submitExecution(request);
+    };
+
+    const reconcilePostModel = async (
+        record: UnifiedExecutionRecord,
+        authorization?: string
+    ): Promise<Record<string, unknown>> => {
+        if (["completed", "failed", "cancelled", "unknown"].includes(record.status)) {
+            return parentResponse(record);
+        }
+        const adapter = decodePlan(record.plan_id).post_model_adapter;
+        if (!adapter) return parentResponse(record);
+        const adapterChildren = (record.adapter_run_ids || []) as Array<Record<string, any>>;
+        if (adapterChildren.length) {
+            const child = adapterChildren[0];
+            try {
+                await adapterRequest(
+                    `/runs/${encodeURIComponent(child.run_id)}/poll`,
+                    { method: "POST" },
+                    authorization
+                );
+                const run = await adapterRequest(
+                    `/runs/${encodeURIComponent(child.run_id)}`,
+                    {},
+                    authorization
+                );
+                child.status = run.status;
+                child.output_data_object_id = run.output_data_object_id || null;
+                child.tapis_workflow_id = run.tapis_workflow_id || child.tapis_workflow_id || null;
+                child.tapis_run_id = run.tapis_run_id || child.tapis_run_id || null;
+                const nextStatus = run.status === "completed" ? "completed" :
+                    run.status === "failed" ? "failed" : "adapter_running";
+                const updated = await store.update(record.id, {
+                    status: nextStatus,
+                    adapter_run_ids: adapterChildren,
+                    error_message: run.error_message || null,
+                    failure_code: run.status === "failed" ? "ADAPTER_FAILED" : null
+                });
+                return parentResponse(updated || { ...record, status: nextStatus });
+            } catch (error) {
+                const updated = await store.update(record.id, {
+                    status: "unknown",
+                    failure_code: "ADAPTER_STATUS_UNKNOWN",
+                    error_message: error instanceof Error ? error.message : String(error)
+                });
+                return parentResponse(updated || { ...record, status: "unknown" });
+            }
+        }
+        const getExecution = legacyServices.tapis.getExecution;
+        if (!getExecution || !record.model_child_id) {
+            const updated = await store.update(record.id, {
+                status: "unknown",
+                failure_code: "MODEL_STATUS_UNAVAILABLE",
+                error_message: "model execution status is unavailable for post-model orchestration"
+            });
+            return parentResponse(updated || { ...record, status: "unknown" });
+        }
+
+        let model: any;
+        try {
+            model = await getExecution(record.model_child_id, authorization || "");
+        } catch (error) {
+            const updated = await store.update(record.id, {
+                status: "unknown",
+                failure_code: "MODEL_STATUS_UNKNOWN",
+                error_message: error instanceof Error ? error.message : String(error)
+            });
+            return parentResponse(updated || { ...record, status: "unknown" });
+        }
+        const modelStatus = String(model?.status || "").toUpperCase();
+        if (["WAITING", "RUNNING", "SUBMITTED"].includes(modelStatus)) {
+            const updated = await store.update(record.id, { status: "model_running" });
+            return parentResponse(updated || { ...record, status: "model_running" });
+        }
+        if (modelStatus !== "SUCCESS") {
+            const updated = await store.update(record.id, {
+                status: "failed",
+                failure_code: "MODEL_FAILED",
+                error_message: model?.error || `model execution ended with status ${modelStatus || "unknown"}`
+            });
+            return parentResponse(updated || { ...record, status: "failed" });
+        }
+
+        await store.update(record.id, {
+            status: "model_succeeded",
+            model_result: model,
+            error_message: null,
+            failure_code: null
+        });
+
+        const result = (model.results || []).find((candidate: any) =>
+            candidate?.model_io?.id === adapter.model_io_id ||
+            candidate?.model_io_id === adapter.model_io_id
+        );
+        const resource = result?.resource;
+        if (!resource?.url) {
+            const updated = await store.update(record.id, {
+                status: "output_registering",
+                failure_code: "MODEL_OUTPUT_NOT_FOUND",
+                error_message: `model output ${adapter.model_io_id} was not registered`
+            });
+            return parentResponse(updated || { ...record, status: "output_registering" });
+        }
+
+        let handoff = (record.output_handoff || {}) as Record<string, any>;
+        if (!handoff.data_object_id) {
+            await store.update(record.id, { status: "output_registering", model_result: model });
+            try {
+                const output = await adapterRequest(
+                    "/data-objects",
+                    {
+                        method: "POST",
+                        body: {
+                            id: `em-output-${record.id}`,
+                            label: resource.name || `${adapter.model_io_id} output`,
+                            resource_uri: resource.url,
+                            format: adapter.source_contract.format,
+                            extension: adapter.source_contract.extension,
+                            source_catalog: "ensemble-manager",
+                            owner_execution_id: parentRunId(record.id),
+                            owner_model_child_id: record.model_child_id,
+                            variables: [{
+                                standard_variable_uri: adapter.source_contract.standard_variable_uri,
+                                unit: adapter.source_contract.unit
+                            }]
+                        }
+                    },
+                    authorization
+                );
+                handoff = { data_object_id: output.id, resource_uri: output.resource_uri };
+                await store.update(record.id, {
+                    status: "output_verified",
+                    model_output_id: output.id,
+                    output_handoff: handoff,
+                    model_result: model,
+                    error_message: null,
+                    failure_code: null
+                });
+            } catch (error) {
+                const updated = await store.update(record.id, {
+                    status: "failed",
+                    failure_code: "OUTPUT_REGISTRATION_FAILED",
+                    error_message: error instanceof Error ? error.message : String(error)
+                });
+                return parentResponse(updated || { ...record, status: "failed" });
+            }
+        }
+
+        const values = {
+            ...(record.parameter_values || {}),
+            // The model output URI is created by this coordinator after the
+            // model succeeds. It is not a user-editable adapter parameter.
+            ...(handoff.resource_uri ? { source_uri: handoff.resource_uri } : {})
+        };
+        try {
+            await store.update(record.id, { status: "adapter_dispatching" });
+            const binding = await adapterRequest(
+                `/plans/deferred/${encodeURIComponent(adapter.adapter_plan_id)}/bind`,
+                {
+                    method: "POST",
+                    body: {
+                        data_object_id: handoff.data_object_id,
+                        plan_hash: adapter.plan_hash,
+                        parent_execution_id: parentRunId(record.id),
+                        model_child_id: record.model_child_id,
+                        parameter_values_hash: record.parameter_values_hash
+                    }
+                },
+                authorization
+            );
+            const submitted = await adapterRequest(
+                "/workflows/submit",
+                {
+                    method: "POST",
+                    body: {
+                        plan_id: binding.bound_plan_id,
+                        args: values,
+                        execution_id: parentRunId(record.id),
+                        idempotency_key: `${parentRunId(record.id)}:${adapter.adapter_plan_id}:${record.parameter_values_hash}`
+                    },
+                    idempotencyKey: `${parentRunId(record.id)}:${adapter.adapter_plan_id}:${record.parameter_values_hash}`
+                },
+                authorization
+            );
+            const child = {
+                adapter_plan_id: adapter.adapter_plan_id,
+                model_io_id: adapter.model_io_id,
+                stage: "post_model",
+                run_id: submitted.run_id,
+                status: submitted.status || "running",
+                execution_kind: "workflow",
+                tapis_workflow_id: submitted.tapis_workflow_id || null,
+                tapis_run_id: submitted.tapis_run_id || null
+            };
+            const updated = await store.update(record.id, {
+                status: "adapter_running",
+                adapter_run_ids: [child],
+                output_handoff: { ...handoff, bound_plan_id: binding.bound_plan_id },
+                error_message: null
+            });
+            return parentResponse(updated || { ...record, status: "adapter_running" });
+        } catch (error) {
+            const updated = await store.update(record.id, {
+                status: error instanceof UnifiedExecutionError && error.statusCode < 500 ? "failed" : "unknown",
+                failure_code: "ADAPTER_SUBMISSION_FAILED",
+                error_message: error instanceof Error ? error.message : String(error)
+            });
+            return parentResponse(updated || { ...record, status: "unknown" });
+        }
     };
 
     const reconcileParent = async (
@@ -358,11 +660,42 @@ export function createUnifiedExecutionService(legacyServices: {
                         "ADAPTER_REQUEST_REQUIRED"
                     );
                 }
+                const { data_object: dataObject, ...planRequest } = adapterBody as {
+                    data_object?: Record<string, unknown>;
+                    [key: string]: unknown;
+                };
+                if (dataObject !== undefined) {
+                    if (
+                        typeof dataObject !== "object" ||
+                        dataObject === null ||
+                        typeof dataObject.label !== "string" ||
+                        typeof dataObject.resource_uri !== "string"
+                    ) {
+                        throw new UnifiedExecutionError(
+                            400,
+                            "adapter data_object requires label and resource_uri",
+                            "ADAPTER_DATA_OBJECT_INVALID"
+                        );
+                    }
+                    const registered = await adapterRequest(
+                        "/data-objects",
+                        { method: "POST", body: dataObject },
+                        authorization
+                    );
+                    if (typeof registered?.id !== "string") {
+                        throw new UnifiedExecutionError(
+                            502,
+                            "SVO adapter returned an incomplete data object",
+                            "ADAPTER_DATA_OBJECT_INVALID"
+                        );
+                    }
+                    planRequest.data_object_id = registered.id;
+                }
                 const result = (await adapterRequest(
                     "/plans",
                     {
                         method: "POST",
-                        body: adapterBody
+                        body: planRequest
                     },
                     authorization
                 )) as AdapterPlanResponse;
@@ -397,6 +730,64 @@ export function createUnifiedExecutionService(legacyServices: {
                 execution_engine:
                     body.execution_engine || getConfiguration().execution_engine || "localex"
             };
+            if (body.post_model_adapter !== undefined) {
+                if (plan.execution_engine !== "tapis") {
+                    throw new UnifiedExecutionError(
+                        422,
+                        "post-model adapter orchestration currently requires the Tapis engine",
+                        "POST_MODEL_ENGINE_UNSUPPORTED"
+                    );
+                }
+                if (body.adapter_steps?.length) {
+                    throw new UnifiedExecutionError(
+                        422,
+                        "mixed pre-model and post-model adapter plans are not supported",
+                        "MIXED_ADAPTER_STAGES_UNSUPPORTED"
+                    );
+                }
+                const adapter = body.post_model_adapter;
+                if (
+                    typeof adapter?.model_io_id !== "string" ||
+                    typeof adapter?.model_output_key !== "string" ||
+                    !adapter.source_contract ||
+                    !adapter.target_contract
+                ) {
+                    throw new UnifiedExecutionError(
+                        400,
+                        "post_model_adapter requires model_io_id, model_output_key, source_contract, and target_contract",
+                        "POST_MODEL_ADAPTER_INVALID"
+                    );
+                }
+                const result = (await adapterRequest(
+                    "/plans/deferred",
+                    {
+                        method: "POST",
+                        body: {
+                            source_contract: adapter.source_contract,
+                            target_contract: adapter.target_contract,
+                            target_dataset_specification_id: adapter.target_dataset_specification_id,
+                            model_output_key: adapter.model_output_key
+                        }
+                    },
+                    authorization
+                )) as AdapterPlanResponse;
+                if (!result.plan_id || !result.plan_hash) {
+                    throw new UnifiedExecutionError(
+                        502,
+                        "SVO adapter returned an incomplete deferred plan",
+                        "DEFERRED_PLAN_INVALID"
+                    );
+                }
+                plan.post_model_adapter = {
+                    adapter_plan_id: result.plan_id,
+                    model_io_id: adapter.model_io_id,
+                    model_output_key: adapter.model_output_key,
+                    source_contract: adapter.source_contract,
+                    target_contract: adapter.target_contract,
+                    plan_hash: result.plan_hash,
+                    parameters: result.plan_json?.parameters || []
+                };
+            }
             if (body.adapter_steps !== undefined) {
                 if (!Array.isArray(body.adapter_steps)) {
                     throw new UnifiedExecutionError(400, "adapter_steps must be an array");
@@ -424,10 +815,12 @@ export function createUnifiedExecutionService(legacyServices: {
                 executor,
                 version: 1,
                 plan_id: encodePlan(plan),
-                parameters: [],
+                parameters: plan.post_model_adapter?.parameters || [],
                 parameter_values: {},
-                status: plan.adapter_steps?.length ? "adapter_ready" : "ready",
-                adapter_steps: plan.adapter_steps || []
+                status: plan.post_model_adapter ? "post_model_ready" :
+                    plan.adapter_steps?.length ? "adapter_ready" : "ready",
+                adapter_steps: plan.adapter_steps || [],
+                post_model_adapter: plan.post_model_adapter || null
             };
         },
 
@@ -451,8 +844,9 @@ export function createUnifiedExecutionService(legacyServices: {
                 ...plan,
                 version: 1,
                 plan_id: planId,
-                parameters: [],
-                status: plan.adapter_steps?.length ? "adapter_ready" : "ready"
+                parameters: plan.post_model_adapter?.parameters || [],
+                status: plan.post_model_adapter ? "post_model_ready" :
+                    plan.adapter_steps?.length ? "adapter_ready" : "ready"
             };
         },
 
@@ -462,7 +856,10 @@ export function createUnifiedExecutionService(legacyServices: {
                 if (!record) {
                     throw new UnifiedExecutionError(404, "execution run not found", "RUN_NOT_FOUND");
                 }
-                return reconcileParent(record, authorization);
+                const decoded = decodePlan(record.plan_id);
+                return decoded.post_model_adapter
+                    ? reconcilePostModel(record, authorization)
+                    : reconcileParent(record, authorization);
             }
             const result = await adapterRequest(
                 `/runs/${encodeURIComponent(runId)}`,
@@ -491,20 +888,91 @@ export function createUnifiedExecutionService(legacyServices: {
                             run_name: body.run_name,
                             recreate: body.recreate,
                             dry_run: body.dry_run,
-                            execution_id: body.execution_id
-                        }
+                            execution_id: body.execution_id,
+                            idempotency_key: body.idempotency_key
+                        },
+                        idempotencyKey: body.idempotency_key
                     },
                     authorization
                 );
                 return {
                     ...result,
                     executor: "svo_adapter",
+                    execution_mode: "workflow",
                     parent_execution_id: body.execution_id || null,
                     child_execution_id: result.run_id || null
                 };
             }
 
             const plan = decodePlan(body.plan_id);
+            if (plan.post_model_adapter) {
+                const existing = await store.getByPlanId(body.plan_id);
+                if (existing) return parentResponse(existing);
+                const adapterValues = adapterParameterValues(plan, body);
+                const parent = await store.insert({
+                    plan_id: body.plan_id,
+                    thread_id: plan.thread_id,
+                    model_id: plan.model_id,
+                    execution_engine: plan.execution_engine,
+                    status: "model_dispatching",
+                    idempotency_key: body.idempotency_key || body.plan_id,
+                    plan_hash: planHash(plan),
+                    adapter_steps: [],
+                    adapter_run_ids: [],
+                    parameter_values: adapterValues.values,
+                    parameter_values_hash: adapterValues.hash,
+                    schema_version: 1,
+                    state_revision: 0,
+                    model_child_id: null,
+                    model_output_id: null,
+                    output_handoff: null,
+                    failure_code: null
+                });
+                const dispatchClaim = await store.compareAndSet(parent.id, 0, {
+                    status: "model_dispatching"
+                });
+                if (!dispatchClaim) {
+                    return parentResponse((await store.getById(parent.id)) || parent);
+                }
+                try {
+                    const result = await submitLegacy(plan, authorization);
+                    const submitted = result?.submittedExecutions || [];
+                    const first = submitted[0];
+                    const modelChildId = first?.execution?.id || first?.id || first?.executionId ||
+                        (typeof first === "string" ? first : null);
+                    if (submitted.length !== 1 || !modelChildId) {
+                        throw new UnifiedExecutionError(
+                            422,
+                            "post-model orchestration requires exactly one submitted model execution",
+                            "MODEL_FANOUT_UNSUPPORTED"
+                        );
+                    }
+                    const updated = await store.update(parent.id, {
+                        status: "model_running",
+                        model_child_id: modelChildId,
+                        model_result: result,
+                        parameter_values: adapterValues.values,
+                        parameter_values_hash: adapterValues.hash,
+                        error_message: null,
+                        failure_code: null
+                    });
+                    return parentResponse(updated || {
+                        ...parent,
+                        status: "model_running",
+                        model_child_id: modelChildId
+                    });
+                } catch (error) {
+                    const isClientError = error instanceof UnifiedExecutionError &&
+                        error.statusCode >= 400 && error.statusCode < 500;
+                    const updated = await store.update(parent.id, {
+                        status: isClientError ? "failed" : "unknown",
+                        failure_code: isClientError ? error.code || "MODEL_SUBMISSION_FAILED" : "MODEL_SUBMISSION_UNKNOWN",
+                        error_message: error instanceof Error ? error.message : String(error)
+                    });
+                    if (isClientError) throw error;
+                    return parentResponse(updated || { ...parent, status: "unknown" });
+                }
+            }
             if (plan.adapter_steps?.length) {
                 const existing = await store.getByPlanId(body.plan_id);
                 if (existing) return parentResponse(existing);
@@ -534,15 +1002,20 @@ export function createUnifiedExecutionService(legacyServices: {
                                 body: {
                                     plan_id: step.adapter_plan_id,
                                     args: values,
-                                    execution_id: parentRunId(parent.id)
-                                }
+                                    execution_id: parentRunId(parent.id),
+                                    idempotency_key: `${parentRunId(parent.id)}:${step.adapter_plan_id}`
+                                },
+                                idempotencyKey: `${parentRunId(parent.id)}:${step.adapter_plan_id}`
                             },
                             authorization
                         );
                         children.push({
                             ...step,
                             run_id: result.run_id,
-                            status: result.status || "running"
+                            status: result.status || "running",
+                            execution_kind: "workflow",
+                            tapis_workflow_id: result.tapis_workflow_id || null,
+                            tapis_run_id: result.tapis_run_id || null
                         });
                         await store.update(parent.id, { adapter_run_ids: children });
                     } catch (error) {
@@ -578,7 +1051,16 @@ export function createUnifiedExecutionService(legacyServices: {
                 return parentResponse(updated || { ...parent, status: "adapter_running", adapter_run_ids: children });
             }
             const result = await submitLegacy(plan, authorization);
-            return { ...result, executor: "ensemble_manager", parent_execution_id: plan.thread_id };
+            const modelJobId = legacyModelJobId(result);
+            return {
+                ...result,
+                executor: "ensemble_manager",
+                execution_mode: "job",
+                parent_execution_id: plan.thread_id,
+                model_child_id: modelJobId,
+                model_job_id: modelJobId,
+                adapter_runs: []
+            };
         }
     };
 }

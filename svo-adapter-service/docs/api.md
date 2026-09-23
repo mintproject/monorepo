@@ -10,6 +10,12 @@ token is forwarded to Hasura/Tapis where the operation needs caller authorizatio
 Use the generated OpenAPI document for the exact Pydantic request and response
 schemas.
 
+Ensemble Manager-owned model-output handoffs additionally require the server-only
+`X-Ensemble-Manager-Secret` header. Configure the same value as
+`SVO_ADAPTER_INTERNAL_SERVICE_SECRET` on the adapter and
+`SVO_ADAPTER_INTERNAL_SERVICE_SECRET` (or `svo_adapter_internal_secret`) on
+Ensemble Manager. Do not expose this value to the browser.
+
 ## Core API — reusable across SVO Adapter deployments
 
 Swagger UI splits the Core API into five task-oriented groups: Registry, Planning,
@@ -40,6 +46,8 @@ plans through the existing adapter workflow tables.
 |---|---|---|
 | POST | `/readiness/check` | Check a source data object against a model-input requirement. |
 | POST | `/plans` | Find and persist an ETL plan that closes compatibility gaps. |
+| POST | `/plans/deferred` | Create a server-owned adapter plan whose source contract will be supplied by a later model output. |
+| POST | `/plans/deferred/{plan_id}/bind` | Bind one Ensemble Manager-owned model-output data object to a deferred plan and return an opaque bound plan token. |
 | GET | `/plans/{plan_id}` | Retrieve a stored plan. |
 | POST | `/plans/discover` | Discover reachable target variables from a source. |
 | POST | `/plans/discover-sources` | Discover sources that can reach a target. |
@@ -50,7 +58,7 @@ plans through the existing adapter workflow tables.
 | Method | Path | Purpose |
 |---|---|---|
 | POST | `/workflows/generate` | Generate and persist a Tapis Workflows definition for a plan. |
-| POST | `/workflows/submit` | Register/run a generated workflow, or return a dry-run. |
+| POST | `/workflows/submit` | Register/run a generated workflow, or return a dry-run. Accepts `Idempotency-Key` (or the equivalent `idempotency_key` body field) for replay-safe submissions. |
 | GET | `/runs` | List recent adapter workflow runs. |
 | GET | `/runs/{run_id}` | Retrieve one run. |
 | POST | `/runs/{run_id}/poll` | Poll Tapis and persist the run status transition. |
@@ -117,3 +125,14 @@ forecast execution are bespoke to NTGAM.
 - MINT/CKAN synchronization: `app/mint_sync.py`, `app/ckan_sync.py`
 - NTGAM profile: `app/ntgam.py`
 - DFC/GAM and QA/QC profile: `app/qaqc.py` and the DFC sections in `app/main.py`
+
+### Deferred model-output handoff
+
+The deferred endpoints are intended for Ensemble Manager’s post-model
+orchestration. A caller first creates a plan from a source contract and target
+contract, then Ensemble Manager registers the completed model output as an
+owned data object and binds it with the parent execution ID and plan hash. The
+adapter verifies the contract and ownership before returning the bound token.
+The adapter poller skips its normal automatic output binding for plans marked
+`orchestration_mode: "em_deferred_post_model"`; Ensemble Manager owns that
+handoff and submits the bound token to `/workflows/submit`.

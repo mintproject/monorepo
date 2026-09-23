@@ -1,6 +1,6 @@
 # Deferred model-output SVO adapter pipeline
 
-Status: Draft
+Status: Implemented
 
 ## Objective
 
@@ -293,6 +293,9 @@ structured 422 response identifying the missing parameter.
 
 Runs poll only the parent `ue_` execution. The UI should not treat the initial
 model submission response as completion when a post-model adapter stage exists.
+The Runs step also shows the parent ID, labels each child as a model job or SVO
+workflow, and displays the Tapis workflow and run IDs as they become available;
+the existing model log remains available for the model-job child.
 
 ## Files likely affected
 
@@ -336,6 +339,12 @@ The unified adapter step gains a stage and a source binding shape similar to:
 `source_resource_id` is required for input-side steps and absent for deferred
 post-model steps. The exact field names should follow the existing GraphQL and
 TypeScript naming conventions after review.
+
+For input-side discovery, the unified `/v1/plans` boundary may also receive a
+`data_object` registration snapshot beside `data_object_id`. Ensemble Manager
+upserts that selected CKAN resource in the SVO registry before calling the
+adapter planner, so a local deployment does not depend on a separate CKAN
+startup-sync job.
 
 The deferred adapter plan response must include the same typed parameter
 definitions used by materialized plans. Submission must reject missing,
@@ -588,13 +597,45 @@ terminated; they must not be rewritten as completed model-only runs.
   post-model adapter; mixed pre/post plans and fan-out are rejected.
 - Output resources and execution IDs are server-derived and cannot be supplied
   by the browser.
-- The current checkpoint is commit `5945183`; the tracked worktree was clean,
-  so no additional commit was created.
+- Server-owned model-output registration and deferred binding require the
+  server-only `X-Ensemble-Manager-Secret` shared by Ensemble Manager and the
+  adapter; ordinary catalog data-object registration remains unchanged.
+- Adapter workflow runs persist an idempotency key, and unified model dispatch
+  uses a state-revision compare-and-set claim before submitting the model.
 - Adapter parameters remain plan-scoped and are not added to dataset metadata
   or `thread_model_parameter`.
+- Adapter parameters supplied by the coordinator are marked `managed` in the
+  plan contract and are hidden from the Parameters step: `tapis_token` comes
+  from the caller's bearer token, `source_uri` comes from the registered input
+  or model-output handoff, and `geo_actor_id` comes from adapter service
+  configuration. `allocation` uses the same `PT2050-DataX` default as Ensemble
+  Manager's Tapis app runs and is managed by the adapter service; deployments
+  can override it with `SVO_ADAPTER_TAPIS_ALLOCATION`. `gma_boundary_uri` and
+  `gma_id` remain user/context inputs because they cannot be safely inferred
+  from the selected variable alone.
+- MODFLOW 6 uses the required `simulation.zip` as its model baseline and no
+  longer exposes or applies the host-specific `mf6DefaultDir` fallback; the
+  catalog and registration payload must not surface that parameter.
 - The UI submits one parent plan and polls one parent execution.
 - Direct model runs and existing adapter-first plans remain unchanged unless a
   plan explicitly contains a `post_model` step.
+- The normalized `unified_execution_step` table and parent state columns are
+  migrated now; this first slice uses the parent record for orchestration state
+  and retains the step table for the next general-DAG increment.
+- Deferred planning treats the future model output as reachable while finding
+  a transform path; the later server-owned bind still verifies the materialized
+  output URI, ownership, and contract.
+- Input-side planning registers the selected resource and its model-input
+  contract through Ensemble Manager before asking the adapter for a plan;
+  registration is idempotent and avoids treating an un-synced local adapter
+  registry as a missing dataset.
+- Unified run telemetry is additive: API responses expose execution mode and
+  child identifiers, while the UI renders them in a separate orchestration
+  panel so legacy execution rows and logs remain intact.
+- The local compose and host UI configurations enable `SVO_ADAPTER_ENABLED`
+  alongside the Tapis execution engine; this is required for discovery to
+  create the post-model Spring adapter plan instead of taking the legacy job
+  path.
 
 ## User feedback / decisions
 
@@ -604,6 +645,17 @@ terminated; they must not be rewritten as completed model-only runs.
   combine the Ensemble Manager and SVO Adapter APIs.
 - User reported that the current submission created a model job but not the
   expected pipeline; this spec addresses that observed failure mode.
-- **Pending user approval:** Confirm the narrowed first-release scope and the
-  explicit Ensemble Manager/SVO Adapter ownership and endpoint decisions before
-  implementation begins.
+- User approved the narrowed first-release scope and the explicit Ensemble
+  Manager/SVO Adapter ownership and endpoint decisions on 2026-09-22.
+- Implementation completed on 2026-09-22. Ensemble Manager full Jest tests
+  passed (149 tests), the deferred orchestration tests passed (9 tests), UI
+  typechecking passed, and the relevant UI execution/parameter tests passed
+  (29 tests). Python AST validation passed; the checked-in Intel-only Python
+  virtualenv could not run pytest on the local Apple Silicon host.
+- The external DSO Architecture service page was not updated because it lives
+  outside the writable repository workspace; the local adapter API reference
+  and README were updated instead.
+- Local migrations `1771300000023` through `1771300000026` were applied and
+  verified through Hasura; the local stack was rebuilt and health-checked.
+- The Runs UI now distinguishes workflow pipelines from model jobs and renders
+  parent, child, Tapis workflow, and Tapis run identifiers during polling.

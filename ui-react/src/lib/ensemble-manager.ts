@@ -137,6 +137,9 @@ export interface UnifiedParameterDefinition {
   maximum?: number;
   source_transform?: string;
   transform_spec_id?: string;
+  /** Supplied by the adapter/coordinator, not entered in the Parameters step. */
+  managed?: boolean;
+  managed_source?: string;
 }
 
 export interface UnifiedExecutionPlan {
@@ -146,6 +149,32 @@ export interface UnifiedExecutionPlan {
   status: string;
   parameters: UnifiedParameterDefinition[];
   parameter_values: Record<string, unknown>;
+  [key: string]: unknown;
+}
+
+export interface UnifiedAdapterRun {
+  adapter_plan_id?: string;
+  model_io_id?: string;
+  stage?: string;
+  run_id?: string;
+  status?: string;
+  execution_kind?: 'workflow';
+  tapis_workflow_id?: string | null;
+  tapis_run_id?: string | null;
+}
+
+export interface UnifiedRunSnapshot {
+  run_id?: string;
+  parent_execution_id?: string | null;
+  executor?: string;
+  execution_mode?: 'job' | 'workflow' | 'workflow_pipeline' | string;
+  status?: string;
+  plan_id?: string;
+  model_child_id?: string | null;
+  model_job_id?: string | null;
+  adapter_runs?: UnifiedAdapterRun[];
+  failure_code?: string | null;
+  error_message?: string | null;
   [key: string]: unknown;
 }
 
@@ -174,12 +203,23 @@ export function createExecutionPlan(
     thread_id?: string;
     model_id?: string;
     execution_engine?: string;
-    adapter_request?: Record<string, unknown>;
+    adapter_request?: Record<string, unknown> & {
+      data_object?: Record<string, unknown>;
+    };
     adapter_steps?: Array<{
       adapter_plan_id: string;
       model_io_id: string;
-      source_resource_id: string;
+      source_resource_id?: string;
+      stage?: 'pre_model' | 'post_model';
+      source?: Record<string, unknown>;
     }>;
+    post_model_adapter?: {
+      model_io_id: string;
+      model_output_key: string;
+      source_contract: Record<string, unknown>;
+      target_contract: Record<string, unknown>;
+      target_dataset_specification_id?: string;
+    };
   },
 ): Promise<UnifiedExecutionPlan> {
   return unifiedRequest<UnifiedExecutionPlan>(ensembleManagerApi, '/plans', 'POST', body);
@@ -198,8 +238,8 @@ export function submitExecutionPlan(
     idempotency_key?: string;
     adapter_parameter_values?: Record<string, Record<string, unknown>>;
   },
-): Promise<Record<string, unknown>> {
-  return unifiedRequest<Record<string, unknown>>(ensembleManagerApi, '/plans/submit', 'POST', body);
+): Promise<UnifiedRunSnapshot> {
+  return unifiedRequest<UnifiedRunSnapshot>(ensembleManagerApi, '/plans/submit', 'POST', body);
 }
 
 /** Retrieve the immutable plan snapshot and its adapter parameter definitions. */
@@ -222,8 +262,8 @@ export function fetchUnifiedRun(
   ensembleManagerApi: string,
   runId: string,
   signal?: AbortSignal,
-): Promise<Record<string, unknown>> {
-  return unifiedRequest<Record<string, unknown>>(
+): Promise<UnifiedRunSnapshot> {
+  return unifiedRequest<UnifiedRunSnapshot>(
     ensembleManagerApi,
     `/plans/runs/${encodeURIComponent(runId)}`,
     'GET',

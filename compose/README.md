@@ -71,7 +71,13 @@ cd ui-react && npm run config:local && npm run dev
 ```
 
 `compose/ui-react.env` is tracked. It is the single source of the host
-configuration.
+configuration. It enables `SVO_ADAPTER_ENABLED=true`, so outcomes inferred
+through an SVO adapter are planned and submitted as workflows rather than
+silently falling back to the legacy model-job path.
+
+Adapter workflows use `PT2050-DataX` by default for the Tapis allocation, the
+same allocation used by Ensemble Manager app runs. Override it with
+`SVO_ADAPTER_TAPIS_ALLOCATION` when starting Compose.
 
 **In a container, behind the `ui` profile.** This builds the production bundle
 and serves it with nginx. Use it to check the real image.

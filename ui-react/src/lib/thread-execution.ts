@@ -97,12 +97,14 @@ export function threadModelFromGQL(tm: ThreadModelRow): ThreadModel | null {
       name: i.name,
       variables: i.variableLabels,
       variableIds: i.variableIds,
+      format: i.format,
       isOptional: i.optional,
     })),
     output_files: io.outputs.map((o) => ({
       id: o.id,
       name: o.name,
       variables: o.variableIds,
+      format: o.format,
     })),
     input_parameters: (cfg.parameters ?? [])
       .map((cp) => parameterFromGQL(cp.parameter))

@@ -1965,6 +1965,12 @@
       - thread_model_id
       - model_io_id
       - source_resource_id
+      - stage
+      - source_kind
+      - source_contract
+      - source_contract_hash
+      - parameter_schema_hash
+      - plan_revision
       - executor
       - adapter_plan_id
       - status
@@ -1978,6 +1984,12 @@
       - thread_model_id
       - model_io_id
       - source_resource_id
+      - stage
+      - source_kind
+      - source_contract
+      - source_contract_hash
+      - parameter_schema_hash
+      - plan_revision
       - executor
       - adapter_plan_id
       - status
@@ -1993,6 +2005,12 @@
       - thread_model_id
       - model_io_id
       - source_resource_id
+      - stage
+      - source_kind
+      - source_contract
+      - source_contract_hash
+      - parameter_schema_hash
+      - plan_revision
       - executor
       - adapter_plan_id
       - status
@@ -2070,6 +2088,9 @@
                     _eq: X-Hasura-User-Id
 - table:
     name: unified_execution
+    schema: public
+- table:
+    name: unified_execution_step
     schema: public
 - table:
     name: thread_model_execution_summary

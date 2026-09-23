@@ -369,6 +369,7 @@ services:
       AUTH_PROVIDER: ${AUTH_PROVIDER:-tapis}
       ENSEMBLE_MANAGER_API: ${ENSEMBLE_MANAGER_API:-http://localhost:3001/v1}
       EXECUTION_ENGINE: ${EXECUTION_ENGINE:-tapis}
+      SVO_ADAPTER_ENABLED: ${SVO_ADAPTER_ENABLED:-true}
       DATA_CATALOG_API: ${DATA_CATALOG_API:-https://ckan.tacc.utexas.edu}
       DATA_CATALOG_BROWSE_URL: ${DATA_CATALOG_BROWSE_URL:-https://ckan.tacc.utexas.edu}
       # The generator defaults this to 'none', which is right for a deployment
@@ -402,6 +403,8 @@ services:
     environment:
       SVO_ADAPTER_HASURA_GRAPHQL_URL: http://hasura:8080/v1/graphql
       SVO_ADAPTER_HASURA_ADMIN_SECRET: ${HASURA_GRAPHQL_ADMIN_SECRET:-mint}
+      SVO_ADAPTER_GEO_ACTOR_ID: ${SVO_ADAPTER_GEO_ACTOR_ID:-}
+      SVO_ADAPTER_TAPIS_ALLOCATION: ${SVO_ADAPTER_TAPIS_ALLOCATION:-PT2050-DataX}
     # The image runs `uvicorn --port 8090`, so the container port is 8090, not
     # 8000. A mapping to 8000 publishes a closed port and the healthcheck never
     # passes.

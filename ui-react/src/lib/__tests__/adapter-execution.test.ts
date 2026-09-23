@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   adapterParameterKey,
+  adapterParameterValuesForSubmission,
   adapterParametersComplete,
   type ThreadAdapterPlan,
 } from '@/lib/adapter-execution';
@@ -51,5 +52,30 @@ describe('adapter-execution', () => {
       { name: 'springflow_layer', type: 'integer', required: true, default: 1 },
     ];
     expect(adapterParametersComplete([withDefault])).toBe(true);
+  });
+
+  it('does not require server-managed parameters from the user', () => {
+    const withManagedParameter = plan({});
+    withManagedParameter.plan_json.parameters = [
+      { name: 'source_uri', type: 'string', required: true, managed: true },
+    ];
+    expect(adapterParametersComplete([withManagedParameter])).toBe(true);
+  });
+
+  it('keys post-model values by the newly-created server plan ID', () => {
+    const postModel = plan({ gma_id: 'GMA 7', gma_boundary_uri: 'https://example.test/gma' });
+    postModel.stage = 'post_model';
+    postModel.adapter_plan_id = 'old-deferred-plan-id';
+
+    expect(
+      adapterParameterValuesForSubmission([postModel], {
+        post_model_adapter: { adapter_plan_id: 'new-deferred-plan-id' },
+      }),
+    ).toEqual({
+      'new-deferred-plan-id': {
+        gma_id: 'GMA 7',
+        gma_boundary_uri: 'https://example.test/gma',
+      },
+    });
   });
 });

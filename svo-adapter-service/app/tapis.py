@@ -40,6 +40,7 @@ except ImportError:  # pydantic-settings absent (e.g. offline generation tests)
         tapis_workflow_group = "adapter-ops"
         tapis_workflow_owner = "${apiUserId}"
         tapis_exec_system = "ls6"
+        tapis_allocation = "PT2050-DataX"
         request_timeout_seconds = 30.0
     settings = _Defaults()
 
@@ -51,7 +52,11 @@ STANDARD_PARAMS: dict[str, dict[str, Any]] = {
     "end_date": {"type": "string", "required": True},
     "aoi_geojson_uri": {"type": "string", "required": True},
     "earthdata_netrc_uri": {"type": "string", "default": "", "required": False},
-    "allocation": {"type": "string", "required": True},
+    "allocation": {
+        "type": "string",
+        "default": settings.tapis_allocation,
+        "required": False,
+    },
     "tapis_base_url": {"type": "string", "default": "https://portals.tapis.io"},
     "tapis_token": {"type": "string", "required": True,
                     "description": "User Tapis bearer token for the job submissions"},

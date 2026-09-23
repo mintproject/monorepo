@@ -56,7 +56,7 @@ mutation Provenance($obj: adapter_provenance_event_insert_input!) {
 _GET_PLAN = """
 query GetPlan($id: String!) {
   adapter_workflow_plan_by_pk(id: $id) {
-    id target_dataset_specification_id
+    id target_dataset_specification_id plan_json
   }
 }
 """
@@ -159,6 +159,9 @@ async def _auto_bind_completed_run(
     except Exception as exc:  # noqa: BLE001
         log.warning("auto-bind: could not fetch plan %s: %s", plan_id, exc)
         return {"error": f"plan fetch failed: {exc}"}
+
+    if (plan_row or {}).get("plan_json", {}).get("orchestration_mode") == "em_deferred_post_model":
+        return {"skipped": "ensemble_manager owns deferred post-model handoff"}
 
     ds_id = (plan_row or {}).get("target_dataset_specification_id")
     if not ds_id:

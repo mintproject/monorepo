@@ -29,6 +29,9 @@ class Settings(BaseSettings):
     # Admin secret is used ONLY for reads / system writes. User-initiated writes
     # forward the caller's JWT instead (see hasura.HasuraClient).
     hasura_admin_secret: str | None = None
+    # Shared server-to-server secret for Ensemble Manager-owned model-output
+    # registration and deferred-plan binding. Never expose this to the UI.
+    internal_service_secret: str | None = None
 
     # Tapis Workflows. Submission emulates SUBSIDE's manager so adapter-generated
     # pipelines are interchangeable with SUBSIDE's: same pipeline shape, registered
@@ -45,6 +48,9 @@ class Settings(BaseSettings):
     tapis_workflow_owner: str = "${apiUserId}"
     # Default Tapis execution system for tapis_job tasks (override per registry).
     tapis_exec_system: str = "ls6"
+    # Keep adapter workflows aligned with Ensemble Manager's Tapis job runs.
+    # Deployments may override this without changing the plan contract.
+    tapis_allocation: str = "PT2050-DataX"
 
     request_timeout_seconds: float = 30.0
 

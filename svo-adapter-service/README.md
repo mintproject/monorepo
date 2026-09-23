@@ -139,6 +139,25 @@ uvicorn app.main:app --reload --port 8090
 
 Apply the schema first (from `graphql_engine/`): `hasura migrate apply && hasura metadata apply`.
 
+### Ensemble Manager post-model adapters
+
+For a model output that needs an SVO transform before it satisfies the selected
+response variable, Ensemble Manager creates a deferred adapter plan through
+`POST /plans/deferred`. After the model succeeds, Ensemble Manager registers
+the output data object, calls `POST /plans/deferred/{plan_id}/bind`, and submits
+the returned bound token to `POST /workflows/submit`. The browser never supplies
+the output URI or data-object ID. Apply the migrations before testing this
+path, including the adapter workflow-run idempotency migration.
+
+For a non-demo deployment, set `SVO_ADAPTER_INTERNAL_SERVICE_SECRET` on both
+services. Ensemble Manager sends it only on its server-to-server adapter calls;
+the adapter rejects client attempts to claim an owned model-output object.
+
+Adapter workflows default their Tapis allocation to `PT2050-DataX`, matching
+the allocation used by Ensemble Manager's Tapis app runs. Override it with
+`SVO_ADAPTER_TAPIS_ALLOCATION` when deploying to a different allocation. The
+value is service-managed and is not a user-entered dataset parameter.
+
 ## Demo UI (zero infra)
 
 A bundled standalone single-page UI (`static/index.html`) walks the whole flow —

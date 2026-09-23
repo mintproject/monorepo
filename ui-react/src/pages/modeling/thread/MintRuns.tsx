@@ -16,7 +16,7 @@ import {
   ModelExecutionsMap,
   ThreadExecutionData,
 } from '@/graphql/generated/execution';
-import { fetchExecutionLog } from '@/lib/ensemble-manager';
+import { fetchExecutionLog, type UnifiedRunSnapshot } from '@/lib/ensemble-manager';
 import { adapterParametersComplete } from '@/lib/adapter-execution';
 import { ExecutionFilesDialog } from './ExecutionFilesDialog';
 
@@ -122,6 +122,64 @@ function LogDialog({ open, log, onClose }: LogDialogProps) {
   );
 }
 
+function displayStatus(status?: string | null): string {
+  if (!status) return 'pending';
+  return status.replace(/_/g, ' ');
+}
+
+function UnifiedExecutionPanel({ run }: { run: UnifiedRunSnapshot }) {
+  const adapterRuns = run.adapter_runs ?? [];
+  const isPipeline = run.execution_mode === 'workflow_pipeline' || adapterRuns.length > 0;
+  const modelJobId = run.model_job_id ?? run.model_child_id;
+
+  return (
+    <div
+      className="space-y-2 rounded border border-blue-200 bg-blue-50 px-3 py-2 text-xs"
+      data-testid="unified-execution-panel"
+    >
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+        <span className="font-semibold text-blue-900">Execution path:</span>
+        <span className="font-medium text-blue-900">
+          {isPipeline
+            ? 'Workflow pipeline'
+            : run.execution_mode === 'workflow'
+              ? 'SVO workflow'
+              : 'Model job'}
+        </span>
+        {run.run_id && (
+          <span className="text-blue-800">
+            Parent run: <code>{run.run_id}</code>
+          </span>
+        )}
+      </div>
+      <div className="space-y-1 text-blue-900">
+        {modelJobId && (
+          <div>
+            <span className="font-medium">Model job:</span> <code>{modelJobId}</code>{' '}
+            <span className="text-blue-700">({displayStatus(run.status)})</span>
+          </div>
+        )}
+        {adapterRuns.map((child, index) => (
+          <div key={child.run_id ?? `${child.adapter_plan_id ?? 'workflow'}-${index}`}>
+            <span className="font-medium">SVO workflow:</span>{' '}
+            <code>{child.tapis_workflow_id ?? 'not registered yet'}</code>{' '}
+            <span className="text-blue-700">
+              run {child.tapis_run_id ?? child.run_id ?? 'not started'} ·{' '}
+              {displayStatus(child.status)}
+            </span>
+          </div>
+        ))}
+        {!modelJobId && adapterRuns.length === 0 && (
+          <div className="text-blue-700">
+            The execution has been accepted; child IDs are pending.
+          </div>
+        )}
+      </div>
+      {run.error_message && <div className="text-red-700">{run.error_message}</div>}
+    </div>
+  );
+}
+
 // ─── Props ────────────────────────────────────────────────────────────────────
 
 interface MintRunsProps {
@@ -130,6 +188,7 @@ interface MintRunsProps {
   canWrite: boolean;
   canExecute: boolean;
   ensembleManagerApi: string;
+  unifiedRuns?: Record<string, UnifiedRunSnapshot>;
   onContinue: () => void;
   onFetchRuns: (modelId: string, page: number, pageSize: number) => void;
   onSubmitRuns: (modelId: string) => Promise<void>;
@@ -156,6 +215,7 @@ export function MintRuns({
   canWrite,
   canExecute,
   ensembleManagerApi,
+  unifiedRuns,
   onContinue,
   onFetchRuns,
   onSubmitRuns,
@@ -375,6 +435,7 @@ export function MintRuns({
                     {runningRuns > 0 && pendingRuns > 0 && ', '}
                     {pendingRuns > 0 && `${pendingRuns} waiting`}
                   </p>
+                  {unifiedRuns?.[mid] && <UnifiedExecutionPanel run={unifiedRuns[mid]!} />}
 
                   {/* Pagination + Reload bar */}
                   <div className="flex items-center gap-2 border border-gray-200 px-2 py-1 text-xs">

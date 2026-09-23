@@ -43,12 +43,15 @@ import {
 } from '@/lib/thread-execution';
 import {
   createExecutionPlan,
+  EnsembleManagerError,
   fetchUnifiedRun,
   publishExecution,
   publishResults,
   submitExecutionPlan,
+  type UnifiedRunSnapshot,
 } from '@/lib/ensemble-manager';
 import {
+  adapterParameterValuesForSubmission,
   adapterPlansByModel,
   fetchThreadAdapterPlans,
   replaceThreadAdapterPlans,
@@ -110,6 +113,7 @@ export function MintThread({
   }, []);
 
   const [modelExecutions, setModelExecutions] = useState<ModelExecutionsMap>({});
+  const [unifiedRuns, setUnifiedRuns] = useState<Record<string, UnifiedRunSnapshot>>({});
   const [adapterPlanRows, setAdapterPlanRows] = useState<ThreadAdapterPlan[]>([]);
   const [adapterPlanError, setAdapterPlanError] = useState<string | null>(null);
   const [adapterPlansLoading, setAdapterPlansLoading] = useState(false);
@@ -264,35 +268,40 @@ export function MintThread({
 
   const adapterSourceFingerprint = useMemo(() => {
     if (!baseThreadExecutionData) return '';
-    const sources = Object.entries(baseThreadExecutionData.models).flatMap(([modelId, model]) =>
-      model.input_files.flatMap((input) => {
-        const slices = baseThreadExecutionData.model_ensembles[modelId]?.bindings[input.id] ?? [];
-        return slices.flatMap((sliceId) => {
-          const resources = baseThreadExecutionData.data[sliceId]?.resources as
-            | Array<{ id: string; selected?: boolean }>
-            | undefined;
-          return (resources ?? [])
-            .filter((resource) => resource.selected !== false)
-            .map((resource) => {
-              const threadModelId = baseThreadExecutionData.model_ensembles[modelId]?.id ?? modelId;
-              return `${threadModelId}:${input.id}:${resource.id}`;
-            });
-        });
-      }),
+    const inputSources = Object.entries(baseThreadExecutionData.models).flatMap(
+      ([modelId, model]) =>
+        model.input_files.flatMap((input) => {
+          const slices = baseThreadExecutionData.model_ensembles[modelId]?.bindings[input.id] ?? [];
+          return slices.flatMap((sliceId) => {
+            const resources = baseThreadExecutionData.data[sliceId]?.resources as
+              | Array<{ id: string; selected?: boolean }>
+              | undefined;
+            return (resources ?? [])
+              .filter((resource) => resource.selected !== false)
+              .map((resource) => {
+                const threadModelId =
+                  baseThreadExecutionData.model_ensembles[modelId]?.id ?? modelId;
+                return `${threadModelId}:${input.id}:${resource.id}`;
+              });
+          });
+        }),
     );
-    return sources.sort().join('|');
+    const target = baseThreadExecutionData.response_variables?.[0] ?? '';
+    const outputSources = Object.entries(baseThreadExecutionData.models).flatMap(
+      ([modelId, model]) => {
+        const threadModelId = baseThreadExecutionData.model_ensembles[modelId]?.id ?? modelId;
+        return model.output_files
+          .filter((output) => !output.variables?.length || !output.variables.includes(target))
+          .map(
+            (output) =>
+              `${threadModelId}:post_model:${output.id}:${output.format ?? ''}:${
+                output.variables?.join(',') ?? ''
+              }:${target}`,
+          );
+      },
+    );
+    return [...inputSources, ...outputSources].sort().join('|');
   }, [baseThreadExecutionData]);
-
-  useEffect(() => {
-    if (!adapterSourceFingerprint || !adapterPlanRows.length) return;
-    const persistedFingerprint = adapterPlanRows
-      .map((plan) => `${plan.thread_model_id}:${plan.model_io_id}:${plan.source_resource_id}`)
-      .sort()
-      .join('|');
-    if (persistedFingerprint === adapterSourceFingerprint) {
-      discoveredAdapterSources.current = adapterSourceFingerprint;
-    }
-  }, [adapterPlanRows, adapterSourceFingerprint]);
 
   const discoverAdapterPlans = useCallback(async () => {
     if (!threadId || !baseThreadExecutionData || !adapterSourceFingerprint) return;
@@ -309,7 +318,7 @@ export function MintThread({
           const slices = baseThreadExecutionData.model_ensembles[modelId]?.bindings[input.id] ?? [];
           for (const sliceId of slices) {
             const resources = baseThreadExecutionData.data[sliceId]?.resources as
-              | Array<{ id: string; selected?: boolean }>
+              | Array<{ id: string; name?: string; url?: string; selected?: boolean }>
               | undefined;
             for (const resource of (resources ?? []).filter((item) => item.selected !== false)) {
               const key = `${threadModelId}:${input.id}:${resource.id}`;
@@ -323,6 +332,15 @@ export function MintThread({
                   data_object_id: resource.id.startsWith('ckan-')
                     ? resource.id
                     : `ckan-${resource.id}`,
+                  data_object: {
+                    id: resource.id.startsWith('ckan-') ? resource.id : `ckan-${resource.id}`,
+                    label: resource.name || resource.id,
+                    resource_uri: resource.url,
+                    format: input.format ?? undefined,
+                    variables: (input.variableIds ?? []).map((standardVariableUri) => ({
+                      standard_variable_uri: standardVariableUri,
+                    })),
+                  },
                   target_dataset_specification_id: input.id,
                 },
               });
@@ -338,6 +356,71 @@ export function MintThread({
               });
             }
           }
+        }
+
+        const targetVariable = baseThreadExecutionData.response_variables?.[0];
+        const postModelCandidates: Array<{
+          output: (typeof model.output_files)[number];
+          plan: Awaited<ReturnType<typeof createExecutionPlan>>;
+        }> = [];
+        if (targetVariable) {
+          for (const output of model.output_files) {
+            if (output.variables?.includes(targetVariable)) continue;
+            const key = `${threadModelId}:post_model:${output.id}:${targetVariable}`;
+            if (seen.has(key)) continue;
+            seen.add(key);
+            try {
+              const plan = await createExecutionPlan(ensembleManagerApi, {
+                executor: 'ensemble_manager',
+                thread_id: threadId,
+                model_id: modelId,
+                execution_engine: window.__MINT_CONFIG__?.EXECUTION_ENGINE ?? 'localex',
+                post_model_adapter: {
+                  model_io_id: output.id,
+                  model_output_key: output.id,
+                  source_contract: {
+                    standard_variable_uri: output.variables?.[0] ?? output.id,
+                    format: output.format ?? undefined,
+                  },
+                  target_contract: { standard_variable_uri: targetVariable },
+                },
+              });
+              postModelCandidates.push({ output, plan });
+            } catch (error) {
+              // A model can declare several outputs. Only the output that has
+              // a valid path to the selected response variable belongs in the
+              // deferred plan; unrelated outputs are not discovery failures.
+              if (
+                error instanceof EnsembleManagerError &&
+                error.code === 'NO_DEFERRED_TRANSFORM_PATH'
+              ) {
+                continue;
+              }
+              throw error;
+            }
+          }
+        }
+        if (postModelCandidates.length > 1) {
+          throw new Error(
+            `Multiple model outputs can produce ${targetVariable}; select a model with one unambiguous output path.`,
+          );
+        }
+        for (const { output, plan } of postModelCandidates) {
+          const postModel = plan.post_model_adapter as
+            | { adapter_plan_id?: string; plan_hash?: string }
+            | undefined;
+          discovered.push({
+            thread_model_id: threadModelId,
+            model_io_id: output.id,
+            source_resource_id: null,
+            stage: 'post_model',
+            source_kind: 'model_output',
+            executor: 'svo_adapter',
+            adapter_plan_id: postModel?.adapter_plan_id ?? null,
+            status: postModel?.adapter_plan_id ? 'transform_required' : plan.status || 'ready',
+            plan_json: plan,
+            parameter_values: {},
+          });
         }
       }
 
@@ -421,29 +504,48 @@ export function MintThread({
       // generated before this key existed.
       const executionEngine = window.__MINT_CONFIG__?.EXECUTION_ENGINE ?? 'localex';
       const adapterSteps = adapterPlans
-        .filter((plan) => plan.adapter_plan_id && plan.status === 'transform_required')
+        .filter(
+          (plan) =>
+            plan.stage !== 'post_model' &&
+            plan.adapter_plan_id &&
+            plan.status === 'transform_required',
+        )
         .map((plan) => ({
           adapter_plan_id: plan.adapter_plan_id!,
           model_io_id: plan.model_io_id,
-          source_resource_id: plan.source_resource_id,
+          source_resource_id: plan.source_resource_id!,
         }));
+      const postModelPlan = adapterPlans.find((item) => item.stage === 'post_model');
+      const postModelSpec = postModelPlan?.plan_json?.post_model_adapter as
+        | {
+            model_io_id: string;
+            model_output_key: string;
+            source_contract: Record<string, unknown>;
+            target_contract: Record<string, unknown>;
+            target_dataset_specification_id?: string;
+          }
+        | undefined;
+      if (postModelPlan && !postModelSpec) {
+        throw new Error('Deferred SVO adapter plan is missing its source contract.');
+      }
+      if (postModelPlan && adapterSteps.length) {
+        throw new Error('A model cannot submit both pre-model and post-model adapters yet.');
+      }
       const plan = await createExecutionPlan(ensembleManagerApi, {
         executor: 'ensemble_manager',
         execution_engine: executionEngine,
         thread_id: threadId,
         model_id: modelId,
         adapter_steps: adapterSteps,
+        ...(postModelSpec ? { post_model_adapter: postModelSpec } : {}),
       });
       if (!plan.plan_id) throw new Error('Ensemble Manager did not return an execution plan.');
-      const adapterParameterValues = Object.fromEntries(
-        adapterPlans
-          .filter((item) => item.adapter_plan_id && item.status === 'transform_required')
-          .map((item) => [item.adapter_plan_id!, item.parameter_values ?? {}]),
-      );
+      const adapterParameterValues = adapterParameterValuesForSubmission(adapterPlans, plan);
       const submitted = await submitExecutionPlan(ensembleManagerApi, {
         plan_id: plan.plan_id,
         adapter_parameter_values: adapterParameterValues,
       });
+      setUnifiedRuns((current) => ({ ...current, [modelId]: submitted }));
       const parentRunId = typeof submitted.run_id === 'string' ? submitted.run_id : null;
       if (parentRunId?.startsWith('ue_')) {
         // Reconciliation is server-owned, but it needs a status read to drive
@@ -452,8 +554,9 @@ export function MintThread({
           for (let attempt = 0; attempt < 120; attempt += 1) {
             await new Promise((resolve) => window.setTimeout(resolve, 5000));
             const state = await fetchUnifiedRun(ensembleManagerApi, parentRunId);
+            setUnifiedRuns((current) => ({ ...current, [modelId]: state }));
             if (
-              ['model_submitted', 'failed', 'adapter_unknown', 'model_unknown'].includes(
+              ['completed', 'failed', 'unknown', 'cancelled', 'model_submitted'].includes(
                 String(state.status),
               )
             ) {
@@ -633,6 +736,7 @@ export function MintThread({
             canWrite={perm.write}
             canExecute={perm.write}
             ensembleManagerApi={window.__MINT_CONFIG__?.ENSEMBLE_MANAGER_API ?? ''}
+            unifiedRuns={unifiedRuns}
             onContinue={goNext}
             onFetchRuns={handleFetchRuns}
             onSubmitRuns={handleSubmitRuns}
