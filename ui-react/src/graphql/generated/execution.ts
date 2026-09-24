@@ -117,6 +117,8 @@ export interface ExecutionResult {
 export interface Execution {
   id: string;
   modelid: string;
+  /** Durable Ensemble Manager parent run id, when this is a workflow run. */
+  run_id?: string | null;
   /** 'SUCCESS' | 'FAILURE' | 'RUNNING' | 'WAITING' */
   status: string;
   run_progress?: number | null;
