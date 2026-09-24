@@ -1,5 +1,9 @@
 import { createUnifiedExecutionService } from "./unifiedExecutionService";
-import { UnifiedExecutionRecord, UnifiedExecutionStore } from "./unifiedExecutionStore";
+import {
+    UnifiedExecutionRecord,
+    UnifiedExecutionStep,
+    UnifiedExecutionStore
+} from "./unifiedExecutionStore";
 
 jest.mock("@/classes/mint/mint-functions", () => ({
     getConfiguration: jest.fn().mockReturnValue({
@@ -13,7 +17,10 @@ describe("unifiedExecutionService", () => {
     const legacy = {
         local: { submitExecution: jest.fn() },
         wings: { submitExecution: jest.fn() },
-        tapis: { submitExecution: jest.fn() }
+        tapis: {
+            submitExecution: jest.fn(),
+            getJobStatus: jest.fn()
+        }
     };
 
     beforeEach(() => {
@@ -23,12 +30,24 @@ describe("unifiedExecutionService", () => {
 
     function fakeStore(): UnifiedExecutionStore {
         const records = new Map<string, UnifiedExecutionRecord>();
+        const steps = new Map<string, UnifiedExecutionStep>();
         return {
             async getByPlanId(planId) {
                 return [...records.values()].find((record) => record.plan_id === planId) || null;
             },
             async getById(id) {
                 return records.get(id) || null;
+            },
+            async listSteps(executionId) {
+                return [...steps.values()].filter((step) => step.execution_id === executionId);
+            },
+            async upsertStep(input) {
+                const step = {
+                    id: `step-${input.step_key}`,
+                    ...input
+                } as UnifiedExecutionStep;
+                steps.set(step.step_key, step);
+                return step;
             },
             async insert(input) {
                 const record = { id: "parent-1", ...input } as UnifiedExecutionRecord;
@@ -163,7 +182,8 @@ describe("unifiedExecutionService", () => {
 
         await expect(service.submit({ plan_id: plan.plan_id }, "Bearer user-token")).resolves.toMatchObject({
             execution_mode: "job",
-            model_job_id: "model-child-1"
+            model_child_id: "model-child-1",
+            model_job_id: "job-1"
         });
     });
 
@@ -295,7 +315,8 @@ describe("unifiedExecutionService", () => {
                 })
             });
 
-        const service = createUnifiedExecutionService(legacy, { store: fakeStore() });
+        const store = fakeStore();
+        const service = createUnifiedExecutionService(legacy, { store });
         const plan = await service.createPlan({
             executor: "ensemble_manager",
             thread_id: "thread-1",
@@ -321,6 +342,12 @@ describe("unifiedExecutionService", () => {
             status: "adapter_running",
             run_id: "ue_parent-1",
             execution_mode: "workflow_pipeline",
+            tapis_workflow: {
+                provider: "tapis-workflows",
+                workflow_id: "workflow-1",
+                run_id: "tapis-run-1",
+                stage_count: 1
+            },
             adapter_runs: [{
                 run_id: "adapter-run-1",
                 execution_kind: "workflow",
@@ -330,7 +357,18 @@ describe("unifiedExecutionService", () => {
         });
 
         const reconciled = await service.getRun("ue_parent-1", "Bearer user-token");
-        expect(reconciled).toMatchObject({ status: "model_submitted" });
+        expect(reconciled).toMatchObject({
+            status: "model_submitted",
+            model_child_id: "model-run-1",
+            workflow_stages: expect.arrayContaining([
+                expect.objectContaining({
+                    stage_id: "model",
+                    type: "model",
+                    status: "running",
+                    provider_ids: { model_child_id: "model-run-1" }
+                })
+            ])
+        });
         expect(legacy.tapis.submitExecution).toHaveBeenCalledWith(
             {
                 thread_id: "thread-1",
@@ -359,7 +397,8 @@ describe("unifiedExecutionService", () => {
                 }
             })
         });
-        const service = createUnifiedExecutionService(legacy, { store: fakeStore() });
+        const store = fakeStore();
+        const service = createUnifiedExecutionService(legacy, { store });
         const plan = await service.createPlan({
             executor: "ensemble_manager",
             thread_id: "thread-1",
@@ -422,16 +461,18 @@ describe("unifiedExecutionService", () => {
                 json: async () => ({ status: "completed", output_data_object_id: "springflow-1" })
             });
         legacy.tapis.submitExecution.mockResolvedValue({
-            submittedExecutions: [{ execution: { id: "model-child-1" } }]
+            submittedExecutions: [{ execution: { id: "model-child-1" }, jobId: "tapis-job-1" }]
         });
+        legacy.tapis.getJobStatus.mockResolvedValue({ status: "SUCCESS" });
         (legacy.tapis as any).getExecution = jest.fn().mockResolvedValue({
-            status: "SUCCESS",
+            status: "WAITING",
             results: [{
                 model_io: { id: "cbc-output" },
                 resource: { name: "cbc", url: "https://example.test/cbc" }
             }]
         });
-        const service = createUnifiedExecutionService(legacy, { store: fakeStore() });
+        const store = fakeStore();
+        const service = createUnifiedExecutionService(legacy, { store });
 
         const plan = await service.createPlan({
             executor: "ensemble_manager",
@@ -457,13 +498,49 @@ describe("unifiedExecutionService", () => {
             plan_id: plan.plan_id,
             adapter_parameter_values: { "deferred-plan-1": { threshold: 0.5 } }
         }, "Bearer user-token");
-        expect(submitted).toMatchObject({ status: "model_running", run_id: "ue_parent-1" });
+        expect(submitted).toMatchObject({
+            status: "model_running",
+            run_id: "ue_parent-1",
+            adapter_stage: "post_model",
+            workflow_stages: expect.arrayContaining([
+                expect.objectContaining({
+                    stage_id: "model",
+                    type: "model",
+                    status: "running",
+                    provider_ids: {
+                        model_child_id: "model-child-1",
+                        tapis_job_id: "tapis-job-1"
+                    }
+                }),
+                expect.objectContaining({
+                    stage_id: "output-handoff",
+                    type: "output_handoff",
+                    status: "planned"
+                })
+            ])
+        });
+        await expect(store.listSteps?.("parent-1")).resolves.toEqual(
+            expect.arrayContaining([
+                expect.objectContaining({ step_key: "model", stage: "model", status: "running" }),
+                expect.objectContaining({
+                    step_key: "output-handoff",
+                    stage: "output_handoff",
+                    status: "planned"
+                })
+            ])
+        );
 
         const adapterStarted = await service.getRun("ue_parent-1", "Bearer user-token");
         expect(adapterStarted).toMatchObject({
             status: "adapter_running",
             execution_mode: "workflow_pipeline",
-            model_job_id: "model-child-1",
+            model_job_id: "tapis-job-1",
+            tapis_workflow: {
+                provider: "tapis-workflows",
+                workflow_id: "workflow-post-model-1",
+                run_id: "tapis-post-model-1",
+                stage_count: 1
+            },
             adapter_runs: [{
                 run_id: "adapter-run-1",
                 execution_kind: "workflow",
@@ -486,5 +563,6 @@ describe("unifiedExecutionService", () => {
         const completed = await service.getRun("ue_parent-1", "Bearer user-token");
         expect(completed).toMatchObject({ status: "completed" });
         expect(legacy.tapis.submitExecution).toHaveBeenCalledTimes(1);
+        expect(legacy.tapis.getJobStatus).toHaveBeenCalledWith("tapis-job-1", "Bearer user-token");
     });
 });

@@ -17,6 +17,7 @@ type AdapterAwareModelThread = ModelThread & {
 export interface ExecutionsTapisService {
     submitExecution(threadmodel: ModelThread, token: string): Promise<SubmissionResult>;
     getExecution(executionId: string, token: string): Promise<any>;
+    getJobStatus(jobId: string, token: string): Promise<any>;
 }
 
 const executionsTapisService = {
@@ -24,6 +25,13 @@ const executionsTapisService = {
         const execution = await getExecutionById(executionId);
         if (!execution) throw new NotFoundError("Execution not found");
         return execution;
+    },
+    async getJobStatus(jobId: string, authorization: string): Promise<any> {
+        const token = getTokenFromAuthorizationHeader(authorization);
+        if (!token) throw new Error("Unauthorized");
+        const prefs = getConfiguration();
+        const tapisExecution = new TapisExecutionService(token, prefs.tapis.basePath);
+        return tapisExecution.getJobStatus(jobId);
     },
     async submitExecution(
         threadmodel: AdapterAwareModelThread,

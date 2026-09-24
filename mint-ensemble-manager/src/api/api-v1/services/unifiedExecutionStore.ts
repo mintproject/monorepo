@@ -21,11 +21,33 @@ export interface UnifiedExecutionRecord {
     failure_code?: string | null;
     model_result?: unknown;
     error_message?: string | null;
+    created_at?: string;
+    updated_at?: string;
+}
+
+export interface UnifiedExecutionStep {
+    id: string;
+    execution_id: string;
+    step_key: string;
+    stage: string;
+    external_id?: string | null;
+    idempotency_key: string;
+    plan_hash: string;
+    parameter_values_hash?: string | null;
+    status: string;
+    attempt: number;
+    output_reference?: unknown;
+    error_message?: string | null;
+    created_at?: string;
+    updated_at?: string;
 }
 
 export interface UnifiedExecutionStore {
     getByPlanId(planId: string): Promise<UnifiedExecutionRecord | null>;
     getById(id: string): Promise<UnifiedExecutionRecord | null>;
+    listByThread?(threadId: string, modelId?: string): Promise<UnifiedExecutionRecord[]>;
+    listSteps?(executionId: string): Promise<UnifiedExecutionStep[]>;
+    upsertStep?(input: Omit<UnifiedExecutionStep, "id">): Promise<UnifiedExecutionStep>;
     insert(input: Omit<UnifiedExecutionRecord, "id">): Promise<UnifiedExecutionRecord>;
     update(id: string, set: Record<string, unknown>): Promise<UnifiedExecutionRecord | null>;
     compareAndSet(
@@ -41,7 +63,7 @@ query GetUnifiedExecutionByPlan($planId: String!) {
     id plan_id thread_id model_id execution_engine status idempotency_key plan_hash
     adapter_steps adapter_run_ids parameter_values parameter_values_hash
     schema_version state_revision model_child_id model_output_id output_handoff
-    failure_code model_result error_message
+    failure_code model_result error_message created_at updated_at
   }
 }`;
 
@@ -51,7 +73,33 @@ query GetUnifiedExecutionById($id: uuid!) {
     id plan_id thread_id model_id execution_engine status idempotency_key plan_hash
     adapter_steps adapter_run_ids parameter_values parameter_values_hash
     schema_version state_revision model_child_id model_output_id output_handoff
-    failure_code model_result error_message
+    failure_code model_result error_message created_at updated_at
+  }
+}`;
+
+const LIST_BY_THREAD = `
+query ListUnifiedExecutionsByThread($threadId: String!) {
+  unified_execution(
+    where: {thread_id: {_eq: $threadId}}
+    order_by: [{created_at: desc}, {id: desc}]
+  ) {
+    id plan_id thread_id model_id execution_engine status idempotency_key plan_hash
+    adapter_steps adapter_run_ids parameter_values parameter_values_hash
+    schema_version state_revision model_child_id model_output_id output_handoff
+    failure_code model_result error_message created_at updated_at
+  }
+}`;
+
+const LIST_BY_THREAD_MODEL = `
+query ListUnifiedExecutionsByThreadModel($threadId: String!, $modelId: String!) {
+  unified_execution(
+    where: {thread_id: {_eq: $threadId}, model_id: {_eq: $modelId}}
+    order_by: [{created_at: desc}, {id: desc}]
+  ) {
+    id plan_id thread_id model_id execution_engine status idempotency_key plan_hash
+    adapter_steps adapter_run_ids parameter_values parameter_values_hash
+    schema_version state_revision model_child_id model_output_id output_handoff
+    failure_code model_result error_message created_at updated_at
   }
 }`;
 
@@ -64,7 +112,7 @@ mutation InsertUnifiedExecution($object: unified_execution_insert_input!) {
     id plan_id thread_id model_id execution_engine status idempotency_key plan_hash
     adapter_steps adapter_run_ids parameter_values parameter_values_hash
     schema_version state_revision model_child_id model_output_id output_handoff
-    failure_code model_result error_message
+    failure_code model_result error_message created_at updated_at
   }
 }`;
 
@@ -74,7 +122,7 @@ mutation UpdateUnifiedExecution($id: uuid!, $set: unified_execution_set_input!) 
     id plan_id thread_id model_id execution_engine status idempotency_key plan_hash
     adapter_steps adapter_run_ids parameter_values parameter_values_hash
     schema_version state_revision model_child_id model_output_id output_handoff
-    failure_code model_result error_message
+    failure_code model_result error_message created_at updated_at
   }
 }`;
 
@@ -93,8 +141,35 @@ mutation CompareAndSetUnifiedExecution(
       id plan_id thread_id model_id execution_engine status idempotency_key plan_hash
       adapter_steps adapter_run_ids parameter_values parameter_values_hash
       schema_version state_revision model_child_id model_output_id output_handoff
-      failure_code model_result error_message
+      failure_code model_result error_message created_at updated_at
     }
+  }
+}`;
+
+const LIST_STEPS = `
+query ListUnifiedExecutionSteps($executionId: uuid!) {
+  unified_execution_step(
+    where: {execution_id: {_eq: $executionId}}
+    order_by: [{created_at: asc}, {step_key: asc}]
+  ) {
+    id execution_id step_key stage external_id idempotency_key plan_hash
+    parameter_values_hash status attempt output_reference error_message
+    created_at updated_at
+  }
+}`;
+
+const UPSERT_STEP = `
+mutation UpsertUnifiedExecutionStep($object: unified_execution_step_insert_input!) {
+  insert_unified_execution_step_one(
+    object: $object
+    on_conflict: {
+      constraint: unified_execution_step_key
+      update_columns: [stage, external_id, parameter_values_hash, status, attempt, output_reference, error_message, updated_at]
+    }
+  ) {
+    id execution_id step_key stage external_id idempotency_key plan_hash
+    parameter_values_hash status attempt output_reference error_message
+    created_at updated_at
   }
 }`;
 
@@ -135,33 +210,47 @@ export function createHasuraUnifiedExecutionStore(): UnifiedExecutionStore {
             return data.unified_execution[0] || null;
         },
         async getById(id) {
-            const data = await hasuraRequest<{ unified_execution_by_pk: UnifiedExecutionRecord | null }>(
-                GET_BY_ID,
-                { id }
-            );
+            const data = await hasuraRequest<{
+                unified_execution_by_pk: UnifiedExecutionRecord | null;
+            }>(GET_BY_ID, { id });
             return data.unified_execution_by_pk;
         },
-        async insert(input) {
-            const data = await hasuraRequest<{ insert_unified_execution_one: UnifiedExecutionRecord }>(
-                INSERT,
-                { object: input }
+        async listByThread(threadId, modelId) {
+            const data = await hasuraRequest<{ unified_execution: UnifiedExecutionRecord[] }>(
+                modelId ? LIST_BY_THREAD_MODEL : LIST_BY_THREAD,
+                modelId ? { threadId, modelId } : { threadId }
             );
+            return data.unified_execution || [];
+        },
+        async listSteps(executionId) {
+            const data = await hasuraRequest<{ unified_execution_step: UnifiedExecutionStep[] }>(
+                LIST_STEPS,
+                { executionId }
+            );
+            return data.unified_execution_step || [];
+        },
+        async upsertStep(input) {
+            const data = await hasuraRequest<{
+                insert_unified_execution_step_one: UnifiedExecutionStep;
+            }>(UPSERT_STEP, { object: input });
+            return data.insert_unified_execution_step_one;
+        },
+        async insert(input) {
+            const data = await hasuraRequest<{
+                insert_unified_execution_one: UnifiedExecutionRecord;
+            }>(INSERT, { object: input });
             return data.insert_unified_execution_one;
         },
         async update(id, set) {
-            const data = await hasuraRequest<{ update_unified_execution_by_pk: UnifiedExecutionRecord | null }>(
-                UPDATE,
-                { id, set }
-            );
+            const data = await hasuraRequest<{
+                update_unified_execution_by_pk: UnifiedExecutionRecord | null;
+            }>(UPDATE, { id, set });
             return data.update_unified_execution_by_pk;
         },
         async compareAndSet(id, expectedRevision, set) {
             const data = await hasuraRequest<{
                 update_unified_execution: { returning: UnifiedExecutionRecord[] };
-            }>(
-                COMPARE_AND_SET,
-                { id, expectedRevision, set }
-            );
+            }>(COMPARE_AND_SET, { id, expectedRevision, set });
             return data.update_unified_execution.returning[0] || null;
         }
     };

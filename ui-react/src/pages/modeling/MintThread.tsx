@@ -51,6 +51,11 @@ import {
   type UnifiedRunSnapshot,
 } from '@/lib/ensemble-manager';
 import {
+  clearUnifiedRunSnapshots,
+  loadUnifiedRunSnapshot,
+  saveUnifiedRunSnapshot,
+} from '@/lib/unified-run-storage';
+import {
   adapterParameterValuesForSubmission,
   adapterPlansByModel,
   fetchThreadAdapterPlans,
@@ -117,10 +122,19 @@ export function MintThread({
 
   const [modelExecutions, setModelExecutions] = useState<ModelExecutionsMap>({});
   const [unifiedRuns, setUnifiedRuns] = useState<Record<string, UnifiedRunSnapshot>>({});
+  const [unifiedRunErrors, setUnifiedRunErrors] = useState<Record<string, string>>({});
+  const [unifiedRunRefreshing, setUnifiedRunRefreshing] = useState<Record<string, boolean>>({});
   const [adapterPlanRows, setAdapterPlanRows] = useState<ThreadAdapterPlan[]>([]);
   const [adapterPlanError, setAdapterPlanError] = useState<string | null>(null);
   const [adapterPlansLoading, setAdapterPlansLoading] = useState(false);
   const discoveredAdapterSources = useRef<string | null>(null);
+  const hydratedWorkflowIdentity = useRef<string | null>(null);
+
+  // Workflow metadata is not an application log and is safe to cache as a
+  // small, user-scoped browser snapshot. The server remains authoritative for
+  // refreshes; this cache only lets the details survive a page remount.
+  const workflowUserKey = user?.sub || user?.username || 'anonymous';
+  const workflowIdentity = threadId ? `${workflowUserKey}:${threadId}` : null;
 
   const adapterPlanningEnabled =
     window.__MINT_CONFIG__?.SVO_ADAPTER_ENABLED === 'true' ||
@@ -145,10 +159,100 @@ export function MintThread({
     fetchPolicy: 'cache-and-network',
   });
 
+  const rememberUnifiedRun = useCallback(
+    (modelId: string, snapshot: UnifiedRunSnapshot) => {
+      setUnifiedRuns((current) => ({ ...current, [modelId]: snapshot }));
+      if (threadId) saveUnifiedRunSnapshot(workflowUserKey, threadId, modelId, snapshot);
+      setUnifiedRunErrors((current) => {
+        if (!current[modelId]) return current;
+        const next = { ...current };
+        delete next[modelId];
+        return next;
+      });
+    },
+    [threadId, workflowUserKey],
+  );
+
+  const refreshUnifiedRun = useCallback(
+    async (modelId: string, cachedSnapshot: UnifiedRunSnapshot) => {
+      const runId = cachedSnapshot.run_id;
+      const ensembleManagerApi = window.__MINT_CONFIG__?.ENSEMBLE_MANAGER_API ?? '';
+      if (!threadId || !runId?.startsWith('ue_') || !ensembleManagerApi) return;
+
+      setUnifiedRunRefreshing((current) => ({ ...current, [modelId]: true }));
+      try {
+        const refreshed = await fetchUnifiedRun(ensembleManagerApi, runId);
+        rememberUnifiedRun(modelId, refreshed);
+      } catch (error) {
+        // Keep the cached workflow visible when the service is temporarily
+        // unavailable; the error tells the user the displayed state is stale.
+        setUnifiedRunErrors((current) => ({
+          ...current,
+          [modelId]: error instanceof Error ? error.message : 'Could not refresh workflow status',
+        }));
+        throw error;
+      } finally {
+        setUnifiedRunRefreshing((current) => ({ ...current, [modelId]: false }));
+      }
+    },
+    [rememberUnifiedRun, threadId],
+  );
+
   const baseThreadExecutionData = useMemo(
     () => threadExecutionFromGQL(execRaw?.thread_by_pk),
     [execRaw],
   );
+
+  // Restore the latest pipeline snapshot for this sub-task/model after a
+  // problem-statement navigation remount, then reconcile it with the server.
+  useEffect(() => {
+    if (
+      !workflowIdentity ||
+      !threadId ||
+      !baseThreadExecutionData ||
+      baseThreadExecutionData.id !== threadId ||
+      hydratedWorkflowIdentity.current === workflowIdentity
+    ) {
+      return;
+    }
+    hydratedWorkflowIdentity.current = workflowIdentity;
+
+    const restored = Object.fromEntries(
+      Object.keys(baseThreadExecutionData.models)
+        .map((modelId) => [modelId, loadUnifiedRunSnapshot(workflowUserKey, threadId, modelId)])
+        .filter((entry): entry is [string, UnifiedRunSnapshot] => entry[1] !== null),
+    );
+    setUnifiedRuns(restored);
+    setUnifiedRunErrors({});
+    for (const [modelId, snapshot] of Object.entries(restored)) {
+      void refreshUnifiedRun(modelId, snapshot).catch(() => undefined);
+    }
+  }, [baseThreadExecutionData, refreshUnifiedRun, threadId, workflowIdentity, workflowUserKey]);
+
+  // Existing executions already retain the Ensemble Manager parent id in
+  // Hasura. Recover the workflow snapshot from that durable id when the Runs
+  // table is loaded, even if the browser cache was cleared or the page was
+  // opened on a different route first.
+  useEffect(() => {
+    const ensembleManagerApi = window.__MINT_CONFIG__?.ENSEMBLE_MANAGER_API ?? '';
+    if (!ensembleManagerApi) return;
+
+    for (const [modelId, group] of Object.entries(modelExecutions)) {
+      const runId = group.executions.find((execution) =>
+        execution.run_id?.startsWith('ue_'),
+      )?.run_id;
+      if (!runId || unifiedRuns[modelId]?.run_id === runId) continue;
+
+      void fetchUnifiedRun(ensembleManagerApi, runId)
+        .then((snapshot) => rememberUnifiedRun(modelId, snapshot))
+        .catch((error) => {
+          setUnifiedRunErrors((current) => ({
+            ...current,
+            [modelId]: error instanceof Error ? error.message : 'Could not load workflow status',
+          }));
+        });
+    }
+  }, [modelExecutions, rememberUnifiedRun, unifiedRuns]);
 
   const threadExecutionData = useMemo(() => {
     if (!baseThreadExecutionData) return null;
@@ -548,7 +652,18 @@ export function MintThread({
         plan_id: plan.plan_id,
         adapter_parameter_values: adapterParameterValues,
       });
-      setUnifiedRuns((current) => ({ ...current, [modelId]: submitted }));
+      if (submitted.run_id?.startsWith('ue_')) {
+        rememberUnifiedRun(modelId, submitted);
+      } else {
+        // A normal model job has no workflow parent. Do not leave an older
+        // pipeline snapshot attached to this new submission.
+        setUnifiedRuns((current) => {
+          const next = { ...current };
+          delete next[modelId];
+          return next;
+        });
+        if (threadId) clearUnifiedRunSnapshots(workflowUserKey, threadId, modelId);
+      }
       const parentRunId = typeof submitted.run_id === 'string' ? submitted.run_id : null;
       if (parentRunId?.startsWith('ue_')) {
         // Reconciliation is server-owned, but it needs a status read to drive
@@ -557,7 +672,7 @@ export function MintThread({
           for (let attempt = 0; attempt < 120; attempt += 1) {
             await new Promise((resolve) => window.setTimeout(resolve, 5000));
             const state = await fetchUnifiedRun(ensembleManagerApi, parentRunId);
-            setUnifiedRuns((current) => ({ ...current, [modelId]: state }));
+            rememberUnifiedRun(modelId, state);
             if (
               ['completed', 'failed', 'unknown', 'cancelled', 'model_submitted'].includes(
                 String(state.status),
@@ -573,7 +688,31 @@ export function MintThread({
       // guessing at them locally.
       await refetchExecution();
     },
-    [adapterPlanError, adapterPlansLoading, refetchExecution, threadExecutionData, threadId],
+    [
+      adapterPlanError,
+      adapterPlansLoading,
+      refetchExecution,
+      rememberUnifiedRun,
+      threadExecutionData,
+      threadId,
+      workflowUserKey,
+    ],
+  );
+
+  const handleRefreshWorkflow = useCallback(
+    async (modelId: string) => {
+      const persistedRunId = modelExecutions[modelId]?.executions
+        .map((execution) => execution.run_id)
+        .find((runId): runId is string => typeof runId === 'string' && runId.startsWith('ue_'));
+      const snapshot =
+        unifiedRuns[modelId] ??
+        (persistedRunId
+          ? { run_id: persistedRunId, execution_mode: 'workflow_pipeline' as const }
+          : undefined);
+      if (!snapshot) return;
+      await refreshUnifiedRun(modelId, snapshot);
+    },
+    [modelExecutions, refreshUnifiedRun, unifiedRuns],
   );
 
   /**
@@ -735,6 +874,7 @@ export function MintThread({
       case 'runs':
         return (
           <MintRuns
+            threadId={threadId}
             threadData={execData}
             executions={modelExecutions}
             canWrite={perm.write}
@@ -744,6 +884,9 @@ export function MintThread({
             onContinue={goNext}
             onFetchRuns={handleFetchRuns}
             onSubmitRuns={handleSubmitRuns}
+            onRefreshWorkflow={handleRefreshWorkflow}
+            workflowRefreshErrors={unifiedRunErrors}
+            workflowRefreshing={unifiedRunRefreshing}
             onPublishExecution={handlePublishExecution}
             onOutputsChanged={handleOutputsChanged}
             adapterPlansLoading={adapterPlansLoading}

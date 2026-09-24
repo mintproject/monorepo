@@ -7,6 +7,7 @@ import { Problem_Statement, Task, Thread } from "./types";
 import { KeycloakAdapter } from "@/config/keycloak-adapter";
 import listTasksByProblemStatementGQL from "./queries/task/listTasksByProblemStatement.graphql";
 import getThreadGQL from "./queries/thread/get.graphql";
+import listExecutionHistoryGQL from "./queries/execution/list-history.graphql";
 import checkVariableByIdGQL from "./queries/variable/check-by-id.graphql";
 import checkRegionByIdGQL from "./queries/region/check-by-id.graphql";
 
@@ -86,6 +87,31 @@ export const getThread = async (thread_id: string, access_token?: string): Promi
         throw new InternalServerError("Error getting thread " + result.errors[0].message);
     }
     return result.data.thread_by_pk;
+};
+
+/**
+ * Read the durable execution rows for one thread model through the caller's
+ * Hasura token. The history API uses this instead of the admin client so the
+ * thread's existing row-level authorization is applied before provenance is
+ * assembled.
+ */
+export const getExecutionHistory = async (
+    threadModelId: string,
+    access_token: string,
+    limit: number
+): Promise<any> => {
+    const APOLLO_CLIENT = GraphQL.instanceUsingAccessToken(access_token);
+    const result: ApolloQueryResult<any> = await APOLLO_CLIENT.query({
+        query: listExecutionHistoryGQL,
+        variables: { threadModelId, limit },
+        fetchPolicy: "no-cache"
+    });
+    if (!result || (result.errors && result.errors.length > 0)) {
+        throw new InternalServerError(
+            "Error getting execution history " + (result?.errors?.[0]?.message || "unknown error")
+        );
+    }
+    return result.data?.thread_model_by_pk || null;
 };
 
 export const checkVariableExistsById = async (

@@ -194,6 +194,7 @@ export function executionFromGQL(ex: ExecutionRow): Execution {
   return {
     id: ex.id,
     modelid: ex.modelcatalog_configuration_id ?? '',
+    run_id: ex.run_id ?? null,
     status: ex.status ?? 'WAITING',
     run_progress: ex.run_progress,
     start_time: ex.start_time ?? null,

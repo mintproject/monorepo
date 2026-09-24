@@ -39,6 +39,7 @@ import executionsTapisService from "@/api/api-v1/services/executionsTapisService
 import { getConfiguration } from "./classes/mint/mint-functions";
 import { modelBindingsRouter } from "./api/api-v1/paths/modelBindings";
 import { createUnifiedExecutionService } from "@/api/api-v1/services/unifiedExecutionService";
+import runHistoryService from "@/api/api-v1/services/runHistoryService";
 import * as OpenApiValidator from "express-openapi-validator";
 import fs from "fs";
 
@@ -96,7 +97,7 @@ app.use(`/${version}/logs`, logsRoutes(v1LogsService));
 app.use(`/${version}/modelCache`, modelCacheRoutes(v1ModelCacheService));
 app.use(`/${version}/monitors`, monitorsRoutes(v1MonitorsService));
 app.use(`/${version}/registration`, registrationRoutes(v1RegistrationService));
-app.use(`/${version}/threads`, threadsRoutes(v1ThreadsService));
+app.use(`/${version}/threads`, threadsRoutes(v1ThreadsService, runHistoryService));
 app.use(`/${version}/executionEngines`, executionEnginesRouter());
 app.use(`/${version}/modelBindings`, modelBindingsRouter());
 app.use(`/${version}/tapis`, tapisRouter());

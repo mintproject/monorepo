@@ -168,6 +168,24 @@ export interface UnifiedRunSnapshot {
   parent_execution_id?: string | null;
   executor?: string;
   execution_mode?: 'job' | 'workflow' | 'workflow_pipeline' | string;
+  tapis_workflow?: {
+    provider: 'tapis-workflows' | string;
+    workflow_id: string | null;
+    run_id: string | null;
+    stage_count: number;
+  };
+  /** Whether the adapter runs before the model or are deferred until its output. */
+  adapter_stage?: 'none' | 'pre_model' | 'post_model' | string;
+  workflow_stages?: Array<{
+    stage_id: string;
+    type: 'adapter_input' | 'model' | 'output_handoff' | 'adapter_output' | string;
+    depends_on: string[];
+    status: string;
+    provider: string;
+    provider_ids: Record<string, string>;
+    output_reference?: unknown;
+    error_message?: string | null;
+  }>;
   status?: string;
   plan_id?: string;
   model_child_id?: string | null;
@@ -176,6 +194,86 @@ export interface UnifiedRunSnapshot {
   failure_code?: string | null;
   error_message?: string | null;
   [key: string]: unknown;
+}
+
+export interface RunHistorySummary {
+  run_key: string;
+  source: 'workflow' | 'legacy_execution';
+  run_kind: 'workflow_pipeline' | 'legacy_model_job';
+  status: string;
+  effective_started_at: string | null;
+  started_at: string | null;
+  ended_at: string | null;
+  thread_id: string;
+  model_id: string;
+  model_name: string | null;
+  execution_id: string | null;
+  model_child_id: string | null;
+  parent_execution_id: string | null;
+  tapis_workflow?: {
+    provider: 'tapis-workflows' | string;
+    workflow_id: string | null;
+    run_id: string | null;
+    stage_count: number;
+  } | null;
+  plan_id: string | null;
+  provenance_completeness: 'complete' | 'partial' | 'unavailable' | 'unknown';
+  warnings: string[];
+}
+
+export interface RunHistoryDetail extends RunHistorySummary {
+  schema_version: number;
+  identity: {
+    execution_engine: string | null;
+    source_id: string;
+    plan_hash: string | null;
+    parameter_values_hash: string | null;
+  };
+  model: { id: string; name: string | null; configuration_id: string | null };
+  inputs: Array<{ model_io_id: string; resource_id: string | null; name: string | null }>;
+  parameters: Array<{
+    parameter_id: string;
+    requested_value: string | null;
+    executed_value: unknown;
+  }>;
+  outputs: Array<{ model_io_id: string; resource_id: string | null; name: string | null }>;
+  workflow: {
+    adapter_steps: unknown[];
+    adapter_runs: unknown[];
+    tapis_workflow?: RunHistorySummary['tapis_workflow'];
+    stages: Array<{
+      id: string;
+      execution_id: string;
+      step_key: string;
+      stage: string;
+      external_id?: string | null;
+      idempotency_key: string;
+      plan_hash: string;
+      parameter_values_hash?: string | null;
+      status: string;
+      attempt: number;
+      output_reference?: unknown;
+      error_message?: string | null;
+    }>;
+    output_handoff: unknown;
+    failure_code: string | null;
+    events: Array<{ type: string; availability: string; captured_at: string | null }>;
+  } | null;
+  artifacts: Array<{
+    kind: string;
+    provider: string;
+    source_id: string;
+    endpoint: string | null;
+    availability: string;
+  }>;
+  errors: Array<{ code: string | null; message: string; source: string }>;
+  status_history: Array<{ status: string; observed_at: string | null; source: string }>;
+}
+
+export interface RunHistoryResponse {
+  schema_version: number;
+  runs: RunHistorySummary[];
+  next_cursor: string | null;
 }
 
 async function unifiedRequest<T>(
@@ -266,6 +364,43 @@ export function fetchUnifiedRun(
   return unifiedRequest<UnifiedRunSnapshot>(
     ensembleManagerApi,
     `/plans/runs/${encodeURIComponent(runId)}`,
+    'GET',
+    undefined,
+    signal,
+  );
+}
+
+/** Read the server-owned run history for one problem-formulation subtask. */
+export function fetchRunHistory(
+  ensembleManagerApi: string,
+  threadId: string,
+  options: { modelId?: string; limit?: number; cursor?: string } = {},
+  signal?: AbortSignal,
+): Promise<RunHistoryResponse> {
+  const params = new URLSearchParams();
+  if (options.modelId) params.set('model_id', options.modelId);
+  if (options.limit) params.set('limit', String(options.limit));
+  if (options.cursor) params.set('cursor', options.cursor);
+  const query = params.toString();
+  return unifiedRequest<RunHistoryResponse>(
+    ensembleManagerApi,
+    `/threads/${encodeURIComponent(threadId)}/runs${query ? `?${query}` : ''}`,
+    'GET',
+    undefined,
+    signal,
+  );
+}
+
+/** Read one normalized provenance packet from the server-owned run history. */
+export function fetchRunHistoryDetail(
+  ensembleManagerApi: string,
+  threadId: string,
+  runKey: string,
+  signal?: AbortSignal,
+): Promise<RunHistoryDetail> {
+  return unifiedRequest<RunHistoryDetail>(
+    ensembleManagerApi,
+    `/threads/${encodeURIComponent(threadId)}/runs/${encodeURIComponent(runKey)}`,
     'GET',
     undefined,
     signal,

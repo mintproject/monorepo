@@ -198,6 +198,12 @@ describe('MintRuns', () => {
       execution_mode: 'workflow_pipeline',
       status: 'adapter_running',
       model_job_id: 'model-job-1',
+      tapis_workflow: {
+        provider: 'tapis-workflows',
+        workflow_id: 'workflow-1',
+        run_id: 'tapis-run-1',
+        stage_count: 1,
+      },
       adapter_runs: [
         {
           execution_kind: 'workflow',
@@ -225,9 +231,104 @@ describe('MintRuns', () => {
 
     expect(screen.getByTestId('unified-execution-panel')).toBeInTheDocument();
     expect(screen.getByText('Workflow pipeline')).toBeInTheDocument();
+    expect(screen.getByText(/Tapis workflow run ID:/)).toBeInTheDocument();
+    expect(screen.queryByText(/Ensemble Manager parent/)).not.toBeInTheDocument();
     expect(screen.getByText('model-job-1')).toBeInTheDocument();
-    expect(screen.getByText('workflow-1')).toBeInTheDocument();
-    expect(screen.getByText(/tapis-run-1/)).toBeInTheDocument();
+    expect(screen.getAllByText('workflow-1').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText(/tapis-run-1/).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText(/Tapis Workflows tracking:/)).toBeInTheDocument();
+  });
+
+  it('explains that a post-model adapter is waiting instead of showing no adapter', () => {
+    const unifiedRun: UnifiedRunSnapshot = {
+      run_id: 'ue-post-model',
+      execution_mode: 'workflow_pipeline',
+      adapter_stage: 'post_model',
+      status: 'model_running',
+      model_job_id: '66f980bc-58eb-4f42-be9a-1ac41d2f28ce',
+      adapter_runs: [],
+    };
+
+    renderWithProviders(
+      <MintRuns
+        threadData={mockThreadDataSubmitted}
+        executions={emptyExecutions}
+        unifiedRuns={{ 'model-1': unifiedRun }}
+        canWrite
+        canExecute
+        ensembleManagerApi="http://ensemble"
+        onContinue={vi.fn()}
+        onFetchRuns={vi.fn()}
+        onSubmitRuns={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('Deferred until model output')).toBeInTheDocument();
+    expect(screen.getByText('Waiting for model output')).toBeInTheDocument();
+    expect(
+      screen.getByText(/the post-model pipeline is created after model output is available/),
+    ).toBeInTheDocument();
+    expect(screen.queryByText('No adapter step')).not.toBeInTheDocument();
+  });
+
+  it('shows a workflow panel from the durable execution run id before refresh completes', () => {
+    renderWithProviders(
+      <MintRuns
+        threadData={mockThreadDataSubmitted}
+        executions={{
+          'model-1': {
+            loading: false,
+            executions: [
+              {
+                ...executionsWithOneRun['model-1']!.executions[0]!,
+                run_id: 'ue_parent-2',
+                status: 'WAITING',
+              },
+            ],
+          },
+        }}
+        canWrite
+        canExecute
+        ensembleManagerApi="http://ensemble"
+        onContinue={vi.fn()}
+        onFetchRuns={vi.fn()}
+        onSubmitRuns={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByTestId('unified-execution-panel')).toBeInTheDocument();
+    expect(screen.queryByText('ue_parent-2')).not.toBeInTheDocument();
+    expect(screen.getByText(/Tapis workflow run ID:/)).toBeInTheDocument();
+    expect(screen.getByText('Workflow pipeline')).toBeInTheDocument();
+  });
+
+  it('refreshes workflow details independently from the application log', () => {
+    const onRefreshWorkflow = vi.fn().mockResolvedValue(undefined);
+    const unifiedRun: UnifiedRunSnapshot = {
+      run_id: 'ue-parent-1',
+      execution_mode: 'workflow_pipeline',
+      status: 'adapter_running',
+      adapter_runs: [{ run_id: 'adapter-run-1', status: 'running' }],
+    };
+
+    renderWithProviders(
+      <MintRuns
+        threadData={mockThreadDataSubmitted}
+        executions={emptyExecutions}
+        unifiedRuns={{ 'model-1': unifiedRun }}
+        onRefreshWorkflow={onRefreshWorkflow}
+        canWrite
+        canExecute
+        ensembleManagerApi="http://ensemble"
+        onContinue={vi.fn()}
+        onFetchRuns={vi.fn()}
+        onSubmitRuns={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByTestId('workflow-stages')).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId('refresh-workflow'));
+    expect(onRefreshWorkflow).toHaveBeenCalledWith('model-1');
   });
 
   it('shows Continue button when all runs are done', () => {
