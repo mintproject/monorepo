@@ -38,7 +38,7 @@ describe('AppShell', () => {
         </AppShell>
       </MemoryRouter>,
     );
-    expect(screen.getByText('MINT Model Catalog')).toBeInTheDocument();
+    expect(screen.getByText('DYNAMO Model Catalog')).toBeInTheDocument();
     expect(screen.getByRole('navigation')).toBeInTheDocument();
   });
 

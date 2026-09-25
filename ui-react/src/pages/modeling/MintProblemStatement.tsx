@@ -657,7 +657,7 @@ export function MintProblemStatement() {
                         })}
 
                         {selectedThreadId && (
-                          <li className="px-2 pb-2">
+                          <li className="pb-2">
                             <div ref={setStepNavigationTarget} />
                           </li>
                         )}

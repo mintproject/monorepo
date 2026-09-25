@@ -2,7 +2,6 @@ import { useState } from 'react';
 
 import { cn } from '@/lib/utils';
 
-import { BrandingStrip } from './BrandingStrip';
 import { Footer } from './Footer';
 import { Header } from './Header';
 import { Sidebar } from './Sidebar';
@@ -20,7 +19,6 @@ export function AppShell({ children }: AppShellProps) {
   // position: fixed.
   return (
     <div className="flex h-screen flex-col">
-      <BrandingStrip />
       <Header
         sidebarCollapsed={sidebarCollapsed}
         onToggleSidebar={() => setSidebarCollapsed((c) => !c)}

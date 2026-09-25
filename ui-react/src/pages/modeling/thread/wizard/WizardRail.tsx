@@ -17,17 +17,17 @@ const GLYPH: Record<StepStatus | 'active', string> = {
 
 export function WizardRail({ states, currentStep, onSelect }: WizardRailProps) {
   return (
-    <details open className="mt-4 rounded-lg border border-gray-200 bg-gray-50">
+    <details open className="mt-2">
       <summary
         data-testid="subtask-steps-toggle"
-        className="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-2 text-sm font-medium text-gray-700 [&::-webkit-details-marker]:hidden"
+        className="flex cursor-pointer list-none items-center justify-between gap-3 border-y border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 [&::-webkit-details-marker]:hidden"
       >
         <span>Sub-task steps</span>
         <span className="truncate text-xs font-normal text-gray-500">
           Current: {WIZARD_STEPS.find((step) => step.id === currentStep)?.label ?? currentStep}
         </span>
       </summary>
-      <nav aria-label="Sub-task steps" className="grid gap-1 border-t border-gray-200 p-2">
+      <nav aria-label="Sub-task steps" className="grid gap-1 py-2">
         {WIZARD_STEPS.map((step) => {
           const st = states[step.id];
           const isActive = step.id === currentStep;
@@ -42,10 +42,10 @@ export function WizardRail({ states, currentStep, onSelect }: WizardRailProps) {
               disabled={st.locked}
               onClick={() => !st.locked && onSelect(step.id)}
               className={cn(
-                'flex min-w-0 items-start gap-2 rounded px-2.5 py-2 text-left transition-colors',
-                isActive && 'bg-blue-600 text-white',
-                !isActive && st.status === 'done' && 'text-gray-800 hover:bg-white',
-                !isActive && st.status === 'upcoming' && 'text-gray-700 hover:bg-white',
+                'flex min-w-0 items-start gap-2 px-3 py-2 text-left transition-colors',
+                isActive && 'bg-accent/60 font-medium text-accent-foreground',
+                !isActive && st.status === 'done' && 'text-gray-800 hover:bg-muted/40',
+                !isActive && st.status === 'upcoming' && 'text-gray-700 hover:bg-muted/40',
                 !isActive && st.locked && 'cursor-not-allowed text-gray-300',
               )}
             >
@@ -63,7 +63,7 @@ export function WizardRail({ states, currentStep, onSelect }: WizardRailProps) {
                 <span
                   className={cn(
                     'block truncate text-xs',
-                    isActive ? 'text-blue-100' : 'text-gray-400',
+                    isActive ? 'text-accent-foreground/70' : 'text-gray-400',
                   )}
                 >
                   {st.summary}

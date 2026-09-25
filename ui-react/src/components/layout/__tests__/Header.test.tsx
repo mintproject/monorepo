@@ -30,7 +30,7 @@ function renderHeader(props: { sidebarCollapsed?: boolean; onToggleSidebar?: () 
 describe('Header', () => {
   it('renders the app title', () => {
     renderHeader();
-    expect(screen.getByText('MINT Model Catalog')).toBeInTheDocument();
+    expect(screen.getByText('DYNAMO Model Catalog')).toBeInTheDocument();
   });
 
   it('shows Sign In button when not authenticated', () => {
