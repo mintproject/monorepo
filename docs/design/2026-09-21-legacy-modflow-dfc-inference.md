@@ -295,9 +295,11 @@ None for this change. Additional MODFLOW releases should receive their own forma
   `1771300000022_normalize_modflow6_tapis_component` moves the canonical MF6
   configuration from `0.0.fb606ee` to the archive-capable `0.0.febed09`
   manifest.
-- **Prerequisite:** The `modflow6-simulation/0.0.febed09` Tapis app must be
-  registered in the target Tapis tenant before the catalog migration is
-  applied there.
+- **Prerequisite:** The `modflow6-simulation/0.0.ad59a69` Tapis app must be
+  registered in the target Tapis tenant before the current catalog migrations
+  are applied there. That app registration now uses the corrected image
+  `ghcr.io/wmobley/modflow6:sha-f8480a8`; the Tapis app version remains
+  `0.0.ad59a69`.
 
 ## User feedback / decisions
 

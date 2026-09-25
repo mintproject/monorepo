@@ -35,6 +35,7 @@ export interface ModelInputFile {
   name: string;
   description?: string | null;
   position?: number | null;
+  format?: string | null;
   /** Pre-assigned fixed value */
   value?: {
     resources?: Array<{ id: string; name: string; url?: string | null; selected?: boolean | null }>;
@@ -52,6 +53,7 @@ export interface ModelOutputFile {
   name: string;
   description?: string | null;
   variables?: string[];
+  format?: string | null;
 }
 
 /** Thread model descriptor (simplified) */
@@ -115,6 +117,8 @@ export interface ExecutionResult {
 export interface Execution {
   id: string;
   modelid: string;
+  /** Durable Ensemble Manager parent run id, when this is a workflow run. */
+  run_id?: string | null;
   /** 'SUCCESS' | 'FAILURE' | 'RUNNING' | 'WAITING' */
   status: string;
   run_progress?: number | null;

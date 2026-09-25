@@ -880,6 +880,9 @@
     name: profile
     schema: public
 - table:
+    name: region_curator
+    schema: public
+- table:
     name: region
     schema: public
   object_relationships:
@@ -932,16 +935,6 @@
         table:
           name: thread
           schema: public
-  insert_permissions:
-  - role: user
-    permission:
-      check: {}
-      columns:
-      - id
-      - name
-      - parent_region_id
-      - category_id
-      - model_catalog_uri
   select_permissions:
   - role: anonymous
     permission:
@@ -988,14 +981,6 @@
         table:
           name: region_category_tree
           schema: public
-  insert_permissions:
-  - role: user
-    permission:
-      check: {}
-      columns:
-      - id
-      - name
-      - citation
   select_permissions:
   - role: anonymous
     permission:
@@ -1021,13 +1006,6 @@
   - name: region_category
     using:
       foreign_key_constraint_on: region_category_id
-  insert_permissions:
-  - role: user
-    permission:
-      check: {}
-      columns:
-      - region_category_id
-      - region_category_parent_id
   select_permissions:
   - role: anonymous
     permission:
@@ -1048,14 +1026,6 @@
   - name: region
     using:
       foreign_key_constraint_on: region_id
-  insert_permissions:
-  - role: user
-    permission:
-      check: {}
-      columns:
-      - id
-      - region_id
-      - geometry
   select_permissions:
   - role: anonymous
     permission:
@@ -1965,6 +1935,12 @@
       - thread_model_id
       - model_io_id
       - source_resource_id
+      - stage
+      - source_kind
+      - source_contract
+      - source_contract_hash
+      - parameter_schema_hash
+      - plan_revision
       - executor
       - adapter_plan_id
       - status
@@ -1978,6 +1954,12 @@
       - thread_model_id
       - model_io_id
       - source_resource_id
+      - stage
+      - source_kind
+      - source_contract
+      - source_contract_hash
+      - parameter_schema_hash
+      - plan_revision
       - executor
       - adapter_plan_id
       - status
@@ -1993,6 +1975,12 @@
       - thread_model_id
       - model_io_id
       - source_resource_id
+      - stage
+      - source_kind
+      - source_contract
+      - source_contract_hash
+      - parameter_schema_hash
+      - plan_revision
       - executor
       - adapter_plan_id
       - status
@@ -2070,6 +2058,9 @@
                     _eq: X-Hasura-User-Id
 - table:
     name: unified_execution
+    schema: public
+- table:
+    name: unified_execution_step
     schema: public
 - table:
     name: thread_model_execution_summary
@@ -4955,11 +4946,11 @@
   select_permissions:
   - role: anonymous
     permission:
-      columns: [id]
+      columns: [id, name, description]
       filter: {}
   - role: user
     permission:
-      columns: [id]
+      columns: [id, name, description]
       filter: {}
 - table:
     name: transform_contract
@@ -4985,11 +4976,11 @@
   select_permissions:
   - role: anonymous
     permission:
-      columns: [transform_spec_id, role, standard_variable_uri, format]
+      columns: [id, transform_spec_id, role, standard_variable_uri, format, unit]
       filter: {}
   - role: user
     permission:
-      columns: [id, transform_spec_id, role, standard_variable_uri, format]
+      columns: [id, transform_spec_id, role, standard_variable_uri, format, unit]
       filter: {}
 - table:
     name: transform_edge

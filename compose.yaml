@@ -87,11 +87,31 @@ services:
     expose:
       - "3000"
 
+  # Hasura POST auth hooks receive the full GraphQL request body. Keep that
+  # body away from the auth image because large geometry registrations exceed
+  # its 100 KB Express JSON-parser limit; the proxy forwards a small header
+  # envelope that the webhook expects.
+  auth-hook-proxy:
+    image: nginx:1.27-alpine
+    depends_on:
+      auth-webhook:
+        condition: service_healthy
+    volumes:
+      - ./compose/auth-hook-proxy.conf:/etc/nginx/nginx.conf:ro
+    expose:
+      - "3000"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3000/healthz >/dev/null || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 5s
+
   # ---------------------------------------------------------------------------
   # Hasura. Built from `graphql_engine/`, never pulled from ghcr.io.
   #
-  # AUTH_HOOK_MODE must be POST. The webhook has no GET route, and Hasura
-  # defaults to GET.
+  # Hasura's GET auth-hook mode forwards the original client headers. The
+  # local proxy converts that request into the POST envelope the webhook uses.
   #
   # CORS lists every browser origin in this stack. `ui-react` on 3000 is the one
   # that matters today.
@@ -103,13 +123,16 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      auth-webhook:
+      auth-hook-proxy:
         condition: service_healthy
     environment:
       HASURA_GRAPHQL_DATABASE_URL: postgres://${POSTGRES_USER:-mint}:${POSTGRES_PASSWORD:-mint}@postgres:5432/${POSTGRES_DB:-mint}
       HASURA_GRAPHQL_ADMIN_SECRET: ${HASURA_GRAPHQL_ADMIN_SECRET:-mint}
-      HASURA_GRAPHQL_AUTH_HOOK: http://auth-webhook:3000/auth-webhook
-      HASURA_GRAPHQL_AUTH_HOOK_MODE: POST
+      HASURA_GRAPHQL_AUTH_HOOK: http://auth-hook-proxy:3000/auth-webhook
+      # GET makes Hasura forward the original client headers directly. The
+      # proxy converts that request to the POST envelope required by the Tapis
+      # webhook, without forwarding large GraphQL request bodies.
+      HASURA_GRAPHQL_AUTH_HOOK_MODE: GET
       HASURA_GRAPHQL_ENABLE_CONSOLE: "true"
       HASURA_GRAPHQL_DEV_MODE: "true"
       SVO_SEMANTIC_SEARCH_WEBHOOK_URL: http://semantic-search:8091/events/catalog
@@ -236,8 +259,8 @@ services:
   # PORT must be set. The Dockerfile bakes `ENV PORT=3000` and the code falls
   # back to 3000 as well. Decision 9 of the map gives this service 3002.
   #
-  # It reads Hasura with the admin secret. It forwards a user bearer token on a
-  # write. See `model-catalog-api/src/hasura/client.ts`.
+  # It reads and writes Hasura with the admin secret. Region imports verify the
+  # user bearer token and check the operator-managed curator table first.
   # ---------------------------------------------------------------------------
   model-catalog-api:
     build:
@@ -252,6 +275,12 @@ services:
     environment:
       HASURA_GRAPHQL_URL: http://hasura:8080/v1/graphql
       HASURA_ADMIN_SECRET: ${HASURA_GRAPHQL_ADMIN_SECRET:-mint}
+      TAPIS_JWKS_URI: ${TAPIS_JWKS_URI:-https://portals.tapis.io/v3/tenants/portals}
+      TAPIS_TOKEN_ISSUER: ${TAPIS_TOKEN_ISSUER:-https://portals.tapis.io/v3/tokens}
+      REGION_IMPORT_BODY_LIMIT: ${REGION_IMPORT_BODY_LIMIT:-10485760}
+      REGION_IMPORT_MAX_REGIONS: ${REGION_IMPORT_MAX_REGIONS:-500}
+      REGION_IMPORT_MAX_GEOMETRIES: ${REGION_IMPORT_MAX_GEOMETRIES:-10}
+      REGION_IMPORT_MAX_REGION_BYTES: ${REGION_IMPORT_MAX_REGION_BYTES:-2097152}
       PORT: "3002"
       LOG_LEVEL: ${LOG_LEVEL:-info}
     command: ["npm", "run", "dev"]
@@ -368,7 +397,10 @@ services:
       AUTH_CALLBACK_ORIGIN: ${AUTH_CALLBACK_ORIGIN:-http://localhost:3000}
       AUTH_PROVIDER: ${AUTH_PROVIDER:-tapis}
       ENSEMBLE_MANAGER_API: ${ENSEMBLE_MANAGER_API:-http://localhost:3001/v1}
+      MODEL_CATALOG_API: ${MODEL_CATALOG_API:-http://localhost:3002/v2.0.0}
+      SVO_ADAPTER_API: ${SVO_ADAPTER_API:-http://localhost:8090}
       EXECUTION_ENGINE: ${EXECUTION_ENGINE:-tapis}
+      SVO_ADAPTER_ENABLED: ${SVO_ADAPTER_ENABLED:-true}
       DATA_CATALOG_API: ${DATA_CATALOG_API:-https://ckan.tacc.utexas.edu}
       DATA_CATALOG_BROWSE_URL: ${DATA_CATALOG_BROWSE_URL:-https://ckan.tacc.utexas.edu}
       # The generator defaults this to 'none', which is right for a deployment
@@ -402,6 +434,8 @@ services:
     environment:
       SVO_ADAPTER_HASURA_GRAPHQL_URL: http://hasura:8080/v1/graphql
       SVO_ADAPTER_HASURA_ADMIN_SECRET: ${HASURA_GRAPHQL_ADMIN_SECRET:-mint}
+      SVO_ADAPTER_GEO_ACTOR_ID: ${SVO_ADAPTER_GEO_ACTOR_ID:-}
+      SVO_ADAPTER_TAPIS_ALLOCATION: ${SVO_ADAPTER_TAPIS_ALLOCATION:-PT2050-DataX}
     # The image runs `uvicorn --port 8090`, so the container port is 8090, not
     # 8000. A mapping to 8000 publishes a closed port and the healthcheck never
     # passes.

@@ -35,6 +35,8 @@ def test_openapi_restored_paths_and_tags():
     } <= tags
     for path in (
         "/runtime-defaults",
+        "/spatial/layers",
+        "/etl/common-variables",
         "/dfc-targets",
         "/objectives",
         "/objectives/{objective_id}",
@@ -51,6 +53,21 @@ def test_fixture_backed_catalog_routes():
     runtime = client.get("/runtime-defaults")
     assert runtime.status_code == 200
     assert "tapis_token" not in runtime.json()
+    assert runtime.json().get("geometry_source_uri")
+    assert runtime.json().get("spatial_layers")
+    layers = client.get("/spatial/layers")
+    assert layers.status_code == 200
+    assert {"id", "label", "uri", "source_type", "geometry_type", "default_filter_field", "crs", "format", "tags"} <= set(layers.json()["layers"][0])
+
+    common = client.get("/etl/common-variables")
+    assert common.status_code == 200
+    keys = {entry.get("key") for entry in common.json().get("canonical", [])}
+    assert {"geometry_source_uri", "geometry_filter_value", "spatial_scope_id", "model_layer"} <= keys
+    assert "tapis_token" not in keys
+    runtime_common = client.get("/etl/common-variables", params={"include_runtime": "true"})
+    tapis = next(item for item in runtime_common.json()["variables"] if item["key"] == "tapis_token")
+    assert tapis["secret"] is True
+    assert "value" not in tapis
 
     targets = client.get("/dfc-targets", params={"gma_id": "GMA 12", "limit": 3})
     assert targets.status_code == 200

@@ -1,4 +1,29 @@
-from app.mint_sync import etl_process_to_spec_row
+from app.mint_sync import _build_env_from_args, etl_process_to_spec_row
+
+
+def test_spatial_mint_labels_use_canonical_args_and_preserve_two_uri_etls():
+    warnings = []
+    env = _build_env_from_args([
+        {"parameter": {"label": "gma boundary uri"}},
+        {"parameter": {"label": "dfc area boundary uri"}},
+        {"parameter": {"label": "gma_id"}},
+        {"parameter": {"label": "model_layer"}},
+    ], "config-1", warnings)
+
+    assert env["GEOMETRY_SOURCE_URI"] == "geometry_source_uri"
+    assert env["DFC_AREA_BOUNDARY_URI"] == "dfc_area_boundary_uri"
+    assert env["SPATIAL_SCOPE_ID"] == "spatial_scope_id"
+    assert env["MODEL_LAYER"] == "model_layer"
+    assert not warnings
+
+    warnings = []
+    reversed_env = _build_env_from_args([
+        {"parameter": {"label": "dfc area boundary uri"}},
+        {"parameter": {"label": "gma boundary uri"}},
+    ], "config-1", warnings)
+    assert reversed_env["GEOMETRY_SOURCE_URI"] == "geometry_source_uri"
+    assert reversed_env["DFC_AREA_BOUNDARY_URI"] == "dfc_area_boundary_uri"
+    assert not warnings
 
 
 def test_etl_process_maps_inline_python_and_contracts():

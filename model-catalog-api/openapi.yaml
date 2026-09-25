@@ -7885,6 +7885,131 @@ paths:
       summary: Update an existing Process
       tags:
         - Process
+  /regions/import/access:
+    get:
+      operationId: custom_regions_import_access_get
+      description: Check whether the authenticated user may import shared regions.
+      responses:
+        "200":
+          description: Import access is granted.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [allowed]
+                properties:
+                  allowed:
+                    type: boolean
+        "401":
+          description: Missing or invalid bearer token.
+        "403":
+          description: Authenticated user is not a region curator.
+        "503":
+          description: Authentication service unavailable.
+      security:
+        - BearerAuth: []
+      summary: Check shared region import access
+      tags:
+        - Region
+  /regions/import:
+    post:
+      operationId: custom_regions_import_post
+      description: Atomically import shared regions and their GeoJSON geometries.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [parent_region_id, category_id, regions]
+              properties:
+                parent_region_id:
+                  type: string
+                category_id:
+                  type: string
+                regions:
+                  type: array
+                  minItems: 1
+                  maxItems: 500
+                  items:
+                    type: object
+                    required: [id, name, geometries]
+                    properties:
+                      id:
+                        type: string
+                      name:
+                        type: string
+                      geometries:
+                        type: array
+                        minItems: 1
+                        maxItems: 10
+                        items:
+                          oneOf:
+                            - type: object
+                            - type: string
+      responses:
+        "201":
+          description: Regions imported atomically.
+        "400":
+          description: Invalid import payload.
+        "401":
+          description: Missing or invalid bearer token.
+        "403":
+          description: Authenticated user is not a region curator.
+        "409":
+          description: One or more region IDs already exist.
+        "413":
+          description: Import exceeds configured limits.
+        "502":
+          description: Hasura write failed.
+        "503":
+          description: Authentication service unavailable.
+      security:
+        - BearerAuth: []
+      summary: Import shared regions
+      tags:
+        - Region
+  /regions/categories:
+    post:
+      operationId: custom_regions_categories_post
+      description: Create a child category for shared region boundaries.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [parent_category_id, name]
+              properties:
+                parent_category_id:
+                  type: string
+                name:
+                  type: string
+                  minLength: 1
+                  maxLength: 120
+                citation:
+                  type: string
+                  maxLength: 2000
+      responses:
+        "201":
+          description: Child category created.
+        "400":
+          description: Invalid payload or parent category.
+        "401":
+          description: Missing or invalid bearer token.
+        "403":
+          description: Authenticated user is not a region curator.
+        "409":
+          description: A category with that name already exists.
+        "502":
+          description: Hasura write failed.
+        "503":
+          description: Authentication service unavailable.
+      security:
+        - BearerAuth: []
+      summary: Create a shared region subcategory
+      tags:
+        - Region
   /regions:
     get:
       operationId: regions_get
@@ -7940,36 +8065,6 @@ paths:
             Successful response - returns an array with the instances of
             Region.
       summary: List all instances of Region
-      tags:
-        - Region
-    post:
-      operationId: regions_post
-      description: Create a new instance of Region (more information in https://w3id.org/okn/o/sdm#Region)
-      parameters:
-        - description: Username
-          explode: true
-          in: query
-          name: user
-          required: false
-          schema:
-            type: string
-          style: form
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/Region"
-        description: Information about the Regionto be created
-      responses:
-        "201":
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Region"
-          description: Created
-      security:
-        - BearerAuth: []
-      summary: Create one Region
       tags:
         - Region
   /regions/{id}:

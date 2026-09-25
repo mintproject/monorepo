@@ -43,6 +43,14 @@ def _input(name, default=""):
     if value in (None, ""):
         value = os.environ.get(name, default)
     return default if value in (None, "") else value
+
+def _input_alias(canonical, *legacy, default=""):
+    # Read canonical task input first, then historical environment names.
+    for name in (canonical, *legacy):
+        value = _input(name, "")
+        if value not in (None, ""):
+            return value
+    return default
 """
 
 _ACTOR_HELPER = """\
@@ -182,7 +190,7 @@ def _arcgis_where(field, value):
     return f"{field}='{escaped}'"
 
 def _run(field, value, boundary_type):
-    source_uri = _input("SOURCE_URI", "").rstrip("/")
+    source_uri = _input_alias("GEOMETRY_SOURCE_URI", "SOURCE_URI").rstrip("/")
     if not source_uri:
         raise RuntimeError("SOURCE_URI is required for ArcGIS boundary query")
     params = _up.urlencode({
@@ -208,19 +216,22 @@ def _run(field, value, boundary_type):
 """
 
 _GMA_BOUNDARY_QUERY_SNIPPET = _BOUNDARY_QUERY_HELPER + """\
-_run("GMAnum", _input("GMA_ID") or _input("BOUNDARY_QUERY_VALUE"), "gma")
+_run(_input_alias("GEOMETRY_FILTER_FIELD", "BOUNDARY_QUERY_FIELD", default="GMAnum"),
+     _input_alias("GEOMETRY_FILTER_VALUE", "SPATIAL_SCOPE_ID", "GMA_ID", "BOUNDARY_QUERY_VALUE"), "gma")
 """
 
 _GCD_BOUNDARY_QUERY_SNIPPET = _BOUNDARY_QUERY_HELPER + """\
-_run("DistrictName", _input("GCD_NAME") or _input("BOUNDARY_QUERY_VALUE"), "gcd")
+_run(_input_alias("GEOMETRY_FILTER_FIELD", "BOUNDARY_QUERY_FIELD", default="DistrictName"),
+     _input_alias("GEOMETRY_FILTER_VALUE", "SPATIAL_SCOPE_NAME", "GCD_NAME", "BOUNDARY_QUERY_VALUE"), "gcd")
 """
 
 _COUNTY_BOUNDARY_QUERY_SNIPPET = _BOUNDARY_QUERY_HELPER + """\
-_run("Name", _input("COUNTY_NAME") or _input("BOUNDARY_QUERY_VALUE"), "county")
+_run(_input_alias("GEOMETRY_FILTER_FIELD", "BOUNDARY_QUERY_FIELD", default="Name"),
+     _input_alias("GEOMETRY_FILTER_VALUE", "SPATIAL_SCOPE_NAME", "COUNTY_NAME", "BOUNDARY_QUERY_VALUE"), "county")
 """
 
 _BOUNDARY_NORMALIZE_SNIPPET = _ACTOR_HELPER + """\
-_source_uri = _input("SOURCE_URI", "")
+_source_uri = _input_alias("GEOMETRY_SOURCE_URI", "SOURCE_URI")
 _token = _input("TAPIS_TOKEN", "")
 result = _actor_run({
     "operation": "boundary_to_geojson",
@@ -237,10 +248,10 @@ result = _actor_run({
     "operation": "intersect_boundaries",
     "read_token": _token,
     "params": {
-        "gma_boundary_uri": _input("GMA_BOUNDARY_URI", ""),
-        "county_name": _input("COUNTY_NAME", ""),
-        "gcd_name": _input("GCD_NAME", ""),
-        "aquifer": _input("AQUIFER", ""),
+        "gma_boundary_uri": _input_alias("GEOMETRY_SOURCE_URI", "GMA_BOUNDARY_URI"),
+        "county_name": _input_alias("SPATIAL_SCOPE_NAME", "COUNTY_NAME"),
+        "gcd_name": _input_alias("SPATIAL_SCOPE_NAME", "GCD_NAME"),
+        "aquifer": _input("AQUIFER", "") or _input_alias("SPATIAL_SCOPE_NAME"),
     },
 })
 print(json.dumps(result))
@@ -255,9 +266,9 @@ print(json.dumps(result))
 
 _GEO_AGGREGATE_SNIPPET = _ACTOR_HELPER + """\
 _source_uri   = _input("SOURCE_URI", "")
-_gma_id       = _input("GMA_ID", "")
-_boundary_uri = _input("DFC_AREA_BOUNDARY_URI", "") or _input("GMA_BOUNDARY_URI", "")
-_area         = _input("AREA", "")
+_gma_id       = _input_alias("SPATIAL_SCOPE_ID", "GMA_ID")
+_boundary_uri = _input("DFC_AREA_BOUNDARY_URI", "") or _input_alias("GEOMETRY_SOURCE_URI", "GMA_BOUNDARY_URI")
+_area         = _input_alias("SPATIAL_SCOPE_NAME", "AREA")
 _token        = _input("TAPIS_TOKEN", "")
 result = _actor_run({
     "operation": "aggregate_gma",
@@ -278,9 +289,9 @@ _source_uri = _input("SOURCE_URI", "")
 _modeled_json = _input("MODELED_SCALAR_JSON", "")
 _targets_json = _input("DFC_TARGETS_JSON", "")
 _targets_uri = _input("DFC_TARGETS_URI", "")
-_gma_id = _input("GMA_ID", "")
-_aquifer = _input("AQUIFER", "")
-_area = _input("AREA", "")
+_gma_id = _input_alias("SPATIAL_SCOPE_ID", "GMA_ID")
+_aquifer = _input("AQUIFER", "") or _input_alias("SPATIAL_SCOPE_NAME")
+_area = _input_alias("SPATIAL_SCOPE_NAME", "AREA")
 _baseline_year = _input("BASELINE_YEAR", "")
 _target_year = _input("TARGET_YEAR", "")
 
@@ -436,9 +447,9 @@ print(json.dumps({
 # Submits extract_budget_gma to the dso-geo Tapis actor with package=DRN.
 _BUDGET_EXTRACT_DRAIN_SNIPPET = _ACTOR_HELPER + """\
 _source_uri   = _input("SOURCE_URI", "")
-_gma_id       = _input("GMA_ID", "")
-_area         = _input("AREA", "")
-_boundary_uri = _input("DFC_AREA_BOUNDARY_URI", "") or _input("GMA_BOUNDARY_URI", "")
+_gma_id       = _input_alias("SPATIAL_SCOPE_ID", "GMA_ID")
+_area         = _input_alias("SPATIAL_SCOPE_NAME", "AREA")
+_boundary_uri = _input("DFC_AREA_BOUNDARY_URI", "") or _input_alias("GEOMETRY_SOURCE_URI", "GMA_BOUNDARY_URI")
 _token        = _input("TAPIS_TOKEN", "")
 result = _actor_run({
     "operation": "extract_budget_gma",
@@ -452,9 +463,9 @@ print(json.dumps(result))
 # Same as drain but package=RIV for river-leakage / stream-baseflow.
 _BUDGET_EXTRACT_RIVER_SNIPPET = _ACTOR_HELPER + """\
 _source_uri   = _input("SOURCE_URI", "")
-_gma_id       = _input("GMA_ID", "")
-_area         = _input("AREA", "")
-_boundary_uri = _input("DFC_AREA_BOUNDARY_URI", "") or _input("GMA_BOUNDARY_URI", "")
+_gma_id       = _input_alias("SPATIAL_SCOPE_ID", "GMA_ID")
+_area         = _input_alias("SPATIAL_SCOPE_NAME", "AREA")
+_boundary_uri = _input("DFC_AREA_BOUNDARY_URI", "") or _input_alias("GEOMETRY_SOURCE_URI", "GMA_BOUNDARY_URI")
 _token        = _input("TAPIS_TOKEN", "")
 result = _actor_run({
     "operation": "extract_budget_gma",
@@ -469,10 +480,10 @@ print(json.dumps(result))
 # full sat-thickness requires DIS geometry — see actor note in response).
 _SAT_THICKNESS_SNIPPET = _ACTOR_HELPER + """\
 _source_uri = _input("SOURCE_URI", "")
-_gma_id     = _input("GMA_ID", "")
-_area       = _input("AREA", "")
-_boundary_uri = _input("DFC_AREA_BOUNDARY_URI", "") or _input("GMA_BOUNDARY_URI", "")
-_layer      = int(_input("LAYER", "1"))
+_gma_id     = _input_alias("SPATIAL_SCOPE_ID", "GMA_ID")
+_area       = _input_alias("SPATIAL_SCOPE_NAME", "AREA")
+_boundary_uri = _input("DFC_AREA_BOUNDARY_URI", "") or _input_alias("GEOMETRY_SOURCE_URI", "GMA_BOUNDARY_URI")
+_layer      = int(_input_alias("MODEL_LAYER", "LAYER", default="1"))
 _token      = _input("TAPIS_TOKEN", "")
 result = _actor_run({
     "operation": "extract_satthk_gma",
@@ -487,7 +498,7 @@ print(json.dumps(result))
 # format_convert specs; the version distinction lives in the input contract's format tag.
 _FORMAT_CONVERT_SNIPPET = _ACTOR_HELPER + """\
 _source_uri = _input("SOURCE_URI", "")
-_layer      = int(_input("LAYER", "1"))
+_layer      = int(_input_alias("MODEL_LAYER", "LAYER", default="1"))
 _sp         = int(_input("STRESS_PERIOD", "1"))
 _ts         = int(_input("TIMESTEP", "1"))
 _token      = _input("TAPIS_TOKEN", "")
@@ -547,9 +558,9 @@ import base64 as _b64, os, json
 
 _STEPS = json.loads(_b64.b64decode(_DFC_STEPS_B64))
 _source_uri = _input("SOURCE_URI", "")
-_gma_id = _input("GMA_ID", "")
-_boundary_uri = _input("DFC_AREA_BOUNDARY_URI", "") or _input("GMA_BOUNDARY_URI", "")
-_area = _input("AREA", "")
+_gma_id = _input_alias("SPATIAL_SCOPE_ID", "GMA_ID")
+_boundary_uri = _input("DFC_AREA_BOUNDARY_URI", "") or _input_alias("GEOMETRY_SOURCE_URI", "GMA_BOUNDARY_URI")
+_area = _input_alias("SPATIAL_SCOPE_NAME", "AREA")
 _token = _input("TAPIS_TOKEN", "")
 _grid_uri = _input("GRID_URI", "")
 _current_source = _source_uri
@@ -621,7 +632,7 @@ def _scale_payload(payload, factor, unit):
 for _step in _STEPS:
     _kind = (_step.get("transform_type") or "").lower()
     if _kind == "format_convert":
-        _layer = int(_input("LAYER", "1"))
+        _layer = int(_input_alias("MODEL_LAYER", "LAYER", default="1"))
         _sp = int(_input("STRESS_PERIOD", "1"))
         _ts = int(_input("TIMESTEP", "1"))
         _hds_convert = {"layer": _layer, "stress_period": _sp, "timestep": _ts}
@@ -685,7 +696,7 @@ for _step in _STEPS:
         _last_kind = _kind
         _outputs.append({"step": _step.get("step"), "name": _step.get("name"), "status": "ok", "result": _last_result})
     elif _kind == "sat_thickness_extract":
-        _layer = int(_input("LAYER", "1"))
+        _layer = int(_input_alias("MODEL_LAYER", "LAYER", default="1"))
         _last_result = _checked_actor_run({
             "operation": "extract_satthk_gma",
             "input_url": _current_source,

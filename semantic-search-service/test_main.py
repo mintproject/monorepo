@@ -150,6 +150,28 @@ class SemanticSearchContractTests(unittest.TestCase):
         self.assertEqual(response["results"], {"svo": [], "model_configuration": []})
         self.assertFalse(connection.queries)
 
+    def test_problem_statement_preserves_optional_spatial_conditions_map(self):
+        request = main.ProblemStatementRequest(
+            title="Groundwater availability",
+            spatial_conditions={
+                "spatial_scope_type": "custom",
+                "spatial_scope_id": "texas",
+                "spatial_resolution": "region",
+            },
+        )
+        connection = FakeConnection()
+        with patch.object(main, "search_target", return_value=[]):
+            response = main.recommendation_response(connection, request)
+
+        self.assertEqual(
+            response["spatial_conditions"],
+            {
+                "spatial_scope_type": "custom",
+                "spatial_scope_id": "texas",
+                "spatial_resolution": "region",
+            },
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

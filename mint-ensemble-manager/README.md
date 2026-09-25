@@ -97,9 +97,11 @@ POST /plans/submit
 GET /plans/runs/{run_id}
 ```
 
-Submission accepts the plan ID and optional `parameter_values`. Adapter plans
-are validated against their immutable parameter definitions; missing, unknown,
-or invalid required values return `422` and no workflow is started. Ordinary
+Submission accepts the plan ID, optional `parameter_values`, and optional
+`max_minutes` for the model batch-job wall time. `max_minutes` must be a
+positive integer and defaults to 60 minutes when omitted. Adapter plans are
+validated against their immutable parameter definitions; missing, unknown, or
+invalid required values return `422` and no workflow is started. Ordinary
 model plans continue through the existing execution engine path.
 
 Deployments using ordinary plans must configure `unified_plan_secret` in the
@@ -1318,6 +1320,36 @@ npm start
 ```
 
 - Go to http://localhost:3000/v1/ui
+
+## Run history API
+
+The authenticated read-only endpoints below provide a normalized history for a
+problem-formulation subtask. Ensemble Manager authorizes the subtask before
+assembling legacy execution rows and unified workflow parent records:
+
+```text
+GET /v1/threads/{threadId}/runs?model_id=<optional>&limit=<optional>&cursor=<optional>
+GET /v1/threads/{threadId}/runs/{runKey}
+```
+
+The response includes execution-time inputs and parameters, model/output
+identifiers, workflow/provider references, artifact availability, and errors.
+Legacy jobs remain standalone when no exact persisted workflow-child
+relationship exists; the API never infers a relationship from timestamps or
+names. Raw logs and large files remain provider-hosted and are accessed through
+authorized references.
+
+Unified adapter-backed runs expose a parent workflow identity with explicit
+adapter, model, and output-handoff stages. The model provider execution is
+stored as the model stage's child reference, so it remains correlated with the
+same workflow for reconciliation and provenance; legacy model jobs remain
+available through the legacy execution paths. When one adapter workflow has
+been submitted, the run response also exposes `tapis_workflow.workflow_id`
+(the Tapis pipeline definition) and `tapis_workflow.run_id` (the provider run
+UUID). The local `ue_...` parent ID is only an Ensemble Manager correlation ID.
+Refresh/reconciliation polls the Tapis Job UUID when available, so the unified
+run does not depend exclusively on a provider webhook reaching the local
+development server.
 
 ## License
 

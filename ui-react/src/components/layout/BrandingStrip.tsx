@@ -1,6 +1,7 @@
 import { Fragment } from 'react';
 
 import { getBrandingPreset } from '@/lib/branding';
+import { cn } from '@/lib/utils';
 
 /**
  * The co-branding strip above the header: host-institution logos on the dark
@@ -13,14 +14,19 @@ import { getBrandingPreset } from '@/lib/branding';
  * 24px renders a 21.7px shield against a 25px minimum. The separator clears
  * each logo by the shield width, 17px.
  */
-export function BrandingStrip() {
+export function BrandingStrip({ inline = false }: { inline?: boolean }) {
   const preset = getBrandingPreset();
   if (!preset) return null;
 
   return (
     <div
       data-testid="branding-strip"
-      className="mint-chrome flex h-[50px] shrink-0 items-center justify-center border-b border-white bg-[color:var(--mint-chrome-bg)]"
+      className={cn(
+        'mint-chrome flex items-center justify-center',
+        inline
+          ? 'absolute left-1/2 h-[36px] -translate-x-1/2'
+          : 'h-[50px] shrink-0 border-b border-white bg-[color:var(--mint-chrome-bg)]',
+      )}
     >
       {preset.logos.map((logo, i) => (
         <Fragment key={logo.href}>

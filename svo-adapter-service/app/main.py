@@ -22,6 +22,8 @@ demo mode (SVO_ADAPTER_DEMO_MODE=1) backs it with an in-memory store (see store.
 from __future__ import annotations
 
 import asyncio
+import hmac
+import hashlib
 import json
 import logging
 import re
@@ -50,8 +52,10 @@ from .hasura import (
     get_client,
 )
 from .models import (
+    BindDeferredPlanIn,
     DataObjectContract,
     DataObjectIn,
+    DeferredPlanIn,
     GenerateWorkflowIn,
     ModelRunIn,
     PlanIn,
@@ -71,6 +75,13 @@ from .planner import (
     plan_model_run,
     reachable_variables,
 )
+from .etl_contract import (
+    accepted_aliases,
+    canonical_key,
+    normalize_args,
+    normalize_env_from_args,
+    public_definitions,
+)
 
 
 def _plan_with_parameters(plan_json: dict[str, Any]) -> dict[str, Any]:
@@ -78,6 +89,25 @@ def _plan_with_parameters(plan_json: dict[str, Any]) -> dict[str, Any]:
     plan_json["parameters"] = parameter_definitions(
         plan_json.get("steps") or [], tapis.STANDARD_PARAMS
     )
+    # Use the backend-owned catalog as the final geometry default. Explicit
+    # caller values and workflow-specific recommendations still take priority.
+    transform_names = " ".join(
+        str(step.get("name") or step.get("transform_type") or "").lower()
+        for step in plan_json.get("steps") or []
+    )
+    if not any(
+        parameter.get("default")
+        for parameter in plan_json["parameters"]
+        if parameter.get("name") == "geometry_source_uri"
+    ):
+        default_uri = settings.gma_boundary_layer_uri
+        if "county" in transform_names:
+            default_uri = settings.county_boundary_layer_uri
+        elif "gcd" in transform_names or "district" in transform_names:
+            default_uri = settings.gcd_boundary_layer_uri
+        for parameter in plan_json["parameters"]:
+            if parameter.get("name") == "geometry_source_uri":
+                parameter["default"] = default_uri
     return plan_json
 
 class TestTransformIn(BaseModel):
@@ -241,6 +271,11 @@ def _bearer(authorization: str | None) -> str | None:
     return None
 
 
+def _internal_service_authorized(secret: str | None) -> bool:
+    expected = settings.internal_service_secret or settings.hasura_admin_secret
+    return bool(expected and secret and hmac.compare_digest(secret, expected))
+
+
 def humanize_svo(uri: str | None) -> str:
     """SVO machine name -> readable label using the object__quantity grammar:
     'groundwater__hydraulic_head' -> 'Groundwater — hydraulic head'."""
@@ -260,7 +295,7 @@ mutation InsertDataObject($obj: adapter_data_object_insert_input!) {
     object: $obj
     on_conflict: {
       constraint: data_object_pkey
-      update_columns: [label description resource_uri format extension mime_type source_catalog]
+      update_columns: [label description resource_uri format extension mime_type source_catalog owner_execution_id owner_model_child_id owner_tenant]
     }
   ) { id label resource_uri }
 }
@@ -290,7 +325,16 @@ mutation InsertReadiness($obj: adapter_readiness_assessment_insert_input!) {
 
 INSERT_PLAN = """
 mutation InsertPlan($obj: adapter_workflow_plan_insert_input!) {
-  insert_adapter_workflow_plan_one(object: $obj) { id status }
+  insert_adapter_workflow_plan_one(object: $obj) { id status source_data_object_id plan_json }
+}
+"""
+
+UPDATE_DEFERRED_PLAN_BINDING = """
+mutation BindDeferredPlan($id: String!, $source_id: String!, $plan_json: jsonb!) {
+  update_adapter_workflow_plan_by_pk(
+    pk_columns: {id: $id}
+    _set: {source_data_object_id: $source_id, plan_json: $plan_json, status: "ready"}
+  ) { id status source_data_object_id plan_json }
 }
 """
 
@@ -305,7 +349,7 @@ mutation SetWorkflowDef($id: String!, $def: jsonb!) {
 GET_PLAN = """
 query GetPlan($id: String!) {
   adapter_workflow_plan_by_pk(id: $id) {
-    id status plan_json target_dataset_specification_id target_model_configuration_id
+    id status source_data_object_id plan_json target_dataset_specification_id target_model_configuration_id
   }
 }
 """
@@ -314,7 +358,15 @@ GET_RUN = """
 query GetRun($id: String!) {
   adapter_workflow_run_by_pk(id: $id) {
     id status tapis_workflow_id tapis_run_id started_at completed_at
-    output_data_object_id logs_uri error_message workflow_plan_id execution_id
+    output_data_object_id logs_uri error_message workflow_plan_id execution_id idempotency_key
+  }
+}
+"""
+
+GET_RUN_BY_IDEMPOTENCY = """
+query GetRunByIdempotency($key: String!) {
+  adapter_workflow_run(where: {idempotency_key: {_eq: $key}}, limit: 1) {
+    id status tapis_workflow_id tapis_run_id workflow_plan_id execution_id idempotency_key
   }
 }
 """
@@ -323,6 +375,7 @@ GET_DATA_OBJECT = """
 query GetDataObject($id: String!) {
   adapter_data_object_by_pk(id: $id) {
     id label resource_uri format extension mime_type source_catalog
+    owner_execution_id owner_model_child_id owner_tenant
   }
 }
 """
@@ -355,8 +408,11 @@ query GetProvenance($run_id: String!, $limit: Int!) {
 
 INSERT_RUN = """
 mutation InsertRun($obj: adapter_workflow_run_insert_input!) {
-  insert_adapter_workflow_run_one(object: $obj) {
-    id status tapis_workflow_id tapis_run_id workflow_plan_id
+  insert_adapter_workflow_run_one(
+    object: $obj
+    on_conflict: {constraint: workflow_run_idempotency_key_key, update_columns: []}
+  ) {
+    id status tapis_workflow_id tapis_run_id workflow_plan_id idempotency_key
   }
 }
 """
@@ -484,7 +540,21 @@ async def health() -> dict[str, Any]:
 
 
 @app.post("/data-objects", tags=["Core: Registry"])
-async def register_data_object(body: DataObjectIn, authorization: str | None = Header(None)):
+async def register_data_object(
+    body: DataObjectIn,
+    authorization: str | None = Header(None),
+    internal_secret: str | None = Header(None, alias="X-Ensemble-Manager-Secret"),
+):
+    if (
+        body.owner_execution_id or body.owner_model_child_id or body.owner_tenant
+    ) and not _internal_service_authorized(internal_secret):
+        raise HTTPException(
+            403,
+            detail={
+                "code": "INTERNAL_SERVICE_AUTH_REQUIRED",
+                "message": "owned model-output data objects require Ensemble Manager authentication",
+            },
+        )
     h = get_client(_bearer(authorization))
     obj = body.model_dump(exclude_none=True)
     variables = obj.pop("variables", [])
@@ -521,6 +591,46 @@ _SPEC_TAPIS_HINTS = (
     "env_from_args", "file_inputs",
 )
 
+def _default_spatial_layers() -> list[dict[str, Any]]:
+    return [
+        {
+            "id": "twdb_gma_boundaries",
+            "label": "TWDB Statewide GMA Boundaries",
+            "uri": settings.gma_boundary_layer_uri,
+            "source_type": "feature-service",
+            "geometry_type": "polygon",
+            "default_filter_field": "GMAnum",
+            "crs": "EPSG:4326",
+            "format": "geojson",
+            "tags": ["twdb", "gma", "boundary"],
+            "registered_category_id": "hydrology",
+        },
+        {
+            "id": "twdb_gcd_boundaries",
+            "label": "TWDB Groundwater Conservation District Boundaries",
+            "uri": settings.gcd_boundary_layer_uri,
+            "source_type": "feature-service",
+            "geometry_type": "polygon",
+            "default_filter_field": "DistrictName",
+            "crs": "EPSG:4326",
+            "format": "geojson",
+            "tags": ["twdb", "gcd", "boundary"],
+            "registered_category_id": "hydrology",
+        },
+        {
+            "id": "twdb_county_boundaries",
+            "label": "TWDB Texas Counties FIPS Boundaries",
+            "uri": settings.county_boundary_layer_uri,
+            "source_type": "feature-service",
+            "geometry_type": "polygon",
+            "default_filter_field": "Name",
+            "crs": "EPSG:4326",
+            "format": "geojson",
+            "tags": ["twdb", "county", "boundary"],
+            "registered_category_id": "administrative",
+        },
+    ]
+
 
 def _spec_insert_obj(spec: dict[str, Any]) -> dict[str, Any]:
     """Build a Hasura nested-insert object for a transform spec from registry-shaped
@@ -528,6 +638,8 @@ def _spec_insert_obj(spec: dict[str, Any]) -> dict[str, Any]:
     spec = {k: v for k, v in spec.items() if not k.startswith("_")}
     contracts = spec.pop("contracts", []) or []
     hints = {k: spec.pop(k) for k in _SPEC_TAPIS_HINTS if spec.get(k) is not None}
+    if "env_from_args" in hints:
+        hints["env_from_args"] = normalize_env_from_args(hints.get("env_from_args"))
     if "tapis_app_version" in hints and "app_version" not in hints:
         hints["app_version"] = hints["tapis_app_version"]
     if hints:
@@ -956,10 +1068,34 @@ async def get_objective(objective_id: str):
 @app.get("/runtime-defaults", tags=["Core: Catalog/objectives"])
 async def runtime_defaults():
     """Return non-secret runtime settings used to prefill the standalone UI."""
+    spatial_layers = _default_spatial_layers()
+    default_boundary_uri = settings.gma_boundary_layer_uri or (spatial_layers[0]["uri"] if spatial_layers else "")
     return {
         "geo_actor_id": settings.geo_actor_id or "",
         "tapis_exec_system": settings.tapis_exec_system,
         "tapis_workflow_group": settings.tapis_workflow_group,
+        "geometry_source_uri": default_boundary_uri,
+        "spatial_layers": spatial_layers,
+    }
+
+
+@app.get("/spatial/layers", tags=["Core: Registry"])
+async def list_spatial_layers():
+    """Known backend spatial sources for ETL/UI selection."""
+    return {"layers": _default_spatial_layers()}
+
+
+@app.get("/etl/common-variables", tags=["Core: Registry"])
+async def list_common_etl_variables(include_runtime: bool = Query(False)):
+    """Canonical ETL/UI variables and accepted legacy aliases."""
+    variables = [
+        item for item in public_definitions()
+        if include_runtime or not item.get("runtime_only")
+    ]
+    return {
+        "variables": variables,
+        "canonical": variables,
+        "spatial_layers": _default_spatial_layers(),
     }
 
 
@@ -1120,6 +1256,160 @@ async def create_dfc_fanout_plan(
         "payload_json": {"plan_id": created["id"], "areas": len(target_records), "steps": len(steps)},
     }})
     return {"status": "transform_required", "plan_id": created["id"], "plan_json": plan_json}
+
+
+def _stable_hash(value: Any) -> str:
+    return hashlib.sha256(
+        json.dumps(value, sort_keys=True, separators=(",", ":"), default=str).encode("utf-8")
+    ).hexdigest()
+
+
+def _contract_payload(contract: DataObjectContract) -> dict[str, Any]:
+    return contract.model_dump(exclude_none=True)
+
+
+@app.post("/plans/deferred", tags=["Core: Planning"])
+async def create_deferred_plan(
+    body: DeferredPlanIn,
+    authorization: str | None = Header(None),
+):
+    """Plan an adapter chain whose source will be created by a model run."""
+    h = get_client(_bearer(authorization))
+    target = await _resolve_target(
+        h, body.target_dataset_specification_id, body.target_contract
+    )
+    registry = (await h.execute(TRANSFORM_REGISTRY_QUERY))["adapter_transform_spec"]
+    edge_map = await _load_edge_map(registry)
+    # A deferred source is a model output that does not exist as a registered
+    # data object yet.  Treat it as reachable while planning; the later bind
+    # step verifies the materialized output's ownership and contract.
+    planning_source = body.source_contract
+    if not planning_source.resource_uri:
+        planning_source = planning_source.model_copy(
+            update={"resource_uri": "deferred-model-output"}
+        )
+    path = find_path(planning_source, target, registry, edge_map=edge_map)
+    if path is None:
+        raise HTTPException(422, detail={
+            "code": "NO_DEFERRED_TRANSFORM_PATH",
+            "message": "no transform path found from model output to target contract",
+        })
+
+    plan_json = _plan_with_parameters(build_plan_json(path))
+    plan_json.update({
+        "deferred": True,
+        "orchestration_mode": "em_deferred_post_model",
+        "model_output_key": body.model_output_key,
+        "deferred_source_contract": _contract_payload(body.source_contract),
+        "target_contract": _contract_payload(target),
+    })
+    plan_hash = _stable_hash({
+        "steps": plan_json.get("steps", []),
+        "parameters": plan_json.get("parameters", []),
+        "source_contract": plan_json["deferred_source_contract"],
+        "target_contract": plan_json["target_contract"],
+        "model_output_key": body.model_output_key,
+    })
+    plan_json["plan_hash"] = plan_hash
+    created = (await h.execute(INSERT_PLAN, {"obj": {
+        "source_data_object_id": None,
+        "target_dataset_specification_id": body.target_dataset_specification_id,
+        "status": "deferred",
+        "plan_json": plan_json,
+    }}))["insert_adapter_workflow_plan_one"]
+    return {
+        "status": "deferred",
+        "plan_id": created["id"],
+        "plan_hash": plan_hash,
+        "source_contract": plan_json["deferred_source_contract"],
+        "target_contract": plan_json["target_contract"],
+        "plan_json": plan_json,
+    }
+
+
+@app.post("/plans/deferred/{plan_id}/bind", tags=["Core: Planning"])
+async def bind_deferred_plan(
+    plan_id: str,
+    body: BindDeferredPlanIn,
+    authorization: str | None = Header(None),
+    internal_secret: str | None = Header(None, alias="X-Ensemble-Manager-Secret"),
+):
+    """Bind one server-owned model output to a deferred adapter plan."""
+    if not _internal_service_authorized(internal_secret):
+        raise HTTPException(403, detail={
+            "code": "INTERNAL_SERVICE_AUTH_REQUIRED",
+            "message": "deferred-plan binding is an internal Ensemble Manager operation",
+        })
+    if not body.parent_execution_id.startswith("ue_"):
+        raise HTTPException(422, detail={
+            "code": "INVALID_PARENT_EXECUTION_ID",
+            "message": "parent_execution_id must be a unified Ensemble Manager execution ID",
+        })
+    h = get_client(_bearer(authorization))
+    plan = (await h.execute(GET_PLAN, {"id": plan_id}))["adapter_workflow_plan_by_pk"]
+    if not plan:
+        raise HTTPException(404, "plan not found")
+    plan_json = dict(plan.get("plan_json") or {})
+    if not plan_json.get("deferred"):
+        raise HTTPException(409, detail={"code": "PLAN_NOT_DEFERRED"})
+    if body.plan_hash != plan_json.get("plan_hash"):
+        raise HTTPException(409, detail={"code": "PLAN_HASH_MISMATCH"})
+
+    object_rows = (await h.execute(
+        DATA_OBJECT_CONTRACT_QUERY, {"id": body.data_object_id}
+    )).get("adapter_data_object") or []
+    object_row = object_rows[0] if object_rows else None
+    if not object_row:
+        raise HTTPException(404, "data object not found")
+    metadata = (await h.execute(GET_DATA_OBJECT, {"id": body.data_object_id}))["adapter_data_object_by_pk"]
+    if metadata and metadata.get("owner_execution_id") != body.parent_execution_id:
+        raise HTTPException(403, detail={"code": "OUTPUT_OWNERSHIP_MISMATCH"})
+
+    expected = plan_json.get("deferred_source_contract") or {}
+    actual = _data_object_to_contract(object_row).model_dump(exclude_none=True)
+    for key in ("standard_variable_uri", "format", "extension"):
+        if expected.get(key) and expected.get(key) != actual.get(key):
+            raise HTTPException(422, detail={
+                "code": "OUTPUT_CONTRACT_MISMATCH",
+                "field": key,
+                "expected": expected.get(key),
+                "actual": actual.get(key),
+            })
+
+    binding_key = _stable_hash({
+        "parent_execution_id": body.parent_execution_id,
+        "model_child_id": body.model_child_id,
+        "data_object_id": body.data_object_id,
+        "plan_hash": body.plan_hash,
+        "parameter_values_hash": body.parameter_values_hash,
+    })
+    existing = plan_json.get("bound")
+    if existing:
+        if existing.get("binding_key") != binding_key:
+            raise HTTPException(409, detail={"code": "PLAN_ALREADY_BOUND"})
+        return {"status": "bound", **existing}
+
+    bound_plan_id = f"bound:{plan_id}:{binding_key[:16]}"
+    plan_json["bound"] = {
+        "bound_plan_id": bound_plan_id,
+        "binding_key": binding_key,
+        "data_object_id": body.data_object_id,
+        "parent_execution_id": body.parent_execution_id,
+        "model_child_id": body.model_child_id,
+        "parameter_values_hash": body.parameter_values_hash,
+    }
+    await h.execute(UPDATE_DEFERRED_PLAN_BINDING, {
+        "id": plan_id,
+        "source_id": body.data_object_id,
+        "plan_json": plan_json,
+    })
+    return {
+        "status": "bound",
+        "bound_plan_id": bound_plan_id,
+        "plan_id": plan_id,
+        "plan_hash": body.plan_hash,
+        "data_object_id": body.data_object_id,
+    }
 
 
 @app.post("/readiness/check", response_model=ReadinessResult, tags=["Core: Planning"])
@@ -1670,6 +1960,31 @@ def _public_workflow_args(args: dict[str, dict[str, Any]]) -> dict[str, dict[str
     return {key: value for key, value in args.items() if key != "tapis_token"}
 
 
+def _composite_task_contains_secret(value: Any) -> bool:
+    """Reject credentials in coordinator-owned composite task descriptors."""
+    if isinstance(value, dict):
+        for key, item in value.items():
+            if str(key).lower() in {"tapis_token", "authorization", "x-tapis-token"}:
+                if item not in (None, "", {}, []):
+                    return True
+            if _composite_task_contains_secret(item):
+                return True
+        return False
+    if isinstance(value, list):
+        return any(_composite_task_contains_secret(item) for item in value)
+    return isinstance(value, str) and bool(re.search(r"\bbearer\s+", value, flags=re.IGNORECASE))
+
+
+def _resolve_bound_plan_id(plan_id: str) -> tuple[str, str | None]:
+    """Resolve the opaque deferred binding token to its stored plan id."""
+    if not plan_id.startswith("bound:"):
+        return plan_id, None
+    parts = plan_id.split(":")
+    if len(parts) != 3 or not parts[1] or not parts[2]:
+        raise HTTPException(404, "bound plan not found")
+    return parts[1], plan_id
+
+
 def _validate_plan_args(
     plan_json: dict[str, Any],
     args: dict[str, Any],
@@ -1683,10 +1998,14 @@ def _validate_plan_args(
     caller token is an execution credential, not a user-entered plan
     parameter, so it is injected after the user argument allowlist is checked.
     """
-    normalized = _wrap_args(args)
+    normalized = normalize_args(_wrap_args(args))
     definitions = plan_json.get("parameters") or []
-    allowed = {str(d.get("name")) for d in definitions if d.get("name")}
+    allowed = accepted_aliases(str(d.get("name")) for d in definitions if d.get("name"))
     allowed.add("tapis_token")
+    if plan_json.get("model_task"):
+        # These are coordinator-owned values for a composite model stage, not
+        # user-entered adapter parameters.
+        allowed.update({"execution_id", "source_uri"})
     unknown = sorted(set(normalized) - allowed)
     if unknown:
         raise HTTPException(
@@ -1699,7 +2018,12 @@ def _validate_plan_args(
         name = str(definition.get("name"))
         if not name:
             continue
-        value = normalized.get(name, {}).get("value")
+        canonical_name = canonical_key(name) or name
+        if name == "dfc_area_boundary_uri":
+            # DFC ETLs may require a second, semantically distinct boundary.
+            # Do not let the primary canonical geometry URI satisfy it.
+            canonical_name = name
+        value = normalized.get(canonical_name, {}).get("value")
         if value is None or value == "":
             if definition.get("default") is not None:
                 normalized[name] = {"value": definition["default"]}
@@ -1739,29 +2063,118 @@ def _validate_plan_args(
 
 
 @app.post("/workflows/submit", tags=["Core: Workflows"])
-async def submit_workflow(body: SubmitWorkflowIn, authorization: str | None = Header(None)):
+async def submit_workflow(
+    body: SubmitWorkflowIn,
+    authorization: str | None = Header(None),
+    idempotency_header: str | None = Header(None, alias="Idempotency-Key"),
+    internal_secret: str | None = Header(None, alias="X-Ensemble-Manager-Secret"),
+):
     """Register the generated pipeline into its Workflows group and run it,
     emulating SUBSIDE (workflows.runPipeline). The caller's bearer token is
     forwarded as the Tapis token used for registration + the run."""
     token = _bearer(authorization)
     h = get_client(token)
-    plan = (await h.execute(GET_PLAN, {"id": body.plan_id}))["adapter_workflow_plan_by_pk"]
+    if body.idempotency_key and idempotency_header and body.idempotency_key != idempotency_header:
+        raise HTTPException(
+            400,
+            detail={
+                "code": "IDEMPOTENCY_KEY_MISMATCH",
+                "message": "body and Idempotency-Key header values must match",
+            },
+        )
+    idempotency_key = body.idempotency_key or idempotency_header
+    stored_plan_id, bound_plan_id = _resolve_bound_plan_id(body.plan_id)
+    if bound_plan_id and not _internal_service_authorized(internal_secret):
+        raise HTTPException(403, detail={
+            "code": "INTERNAL_SERVICE_AUTH_REQUIRED",
+            "message": "bound deferred plans require Ensemble Manager authentication",
+        })
+    plan = (await h.execute(GET_PLAN, {"id": stored_plan_id}))["adapter_workflow_plan_by_pk"]
     if not plan:
         raise HTTPException(404, "plan not found")
+    if bound_plan_id:
+        bound = (plan.get("plan_json") or {}).get("bound") or {}
+        if bound.get("bound_plan_id") != bound_plan_id:
+            raise HTTPException(409, detail={"code": "BOUND_PLAN_INVALID"})
 
-    pipeline = tapis.generate_tapis_workflow(plan)
+    if idempotency_key:
+        existing_rows = (await h.execute(
+            GET_RUN_BY_IDEMPOTENCY,
+            {"key": idempotency_key},
+        )).get("adapter_workflow_run", [])
+        if existing_rows:
+            existing = existing_rows[0]
+            if existing.get("workflow_plan_id") != stored_plan_id:
+                raise HTTPException(
+                    409,
+                    detail={
+                        "code": "IDEMPOTENCY_KEY_REUSED",
+                        "message": "idempotency key is already associated with another workflow plan",
+                    },
+                )
+            return {
+                "run_id": existing["id"],
+                "status": existing.get("status"),
+                "tapis_workflow_id": existing.get("tapis_workflow_id"),
+                "tapis_run_id": existing.get("tapis_run_id"),
+                "idempotent_replay": True,
+            }
+
+    service_args = dict(body.args or {})
+    source_id = plan.get("source_data_object_id")
+    if source_id and "source_uri" not in service_args:
+        source = (await h.execute(GET_DATA_OBJECT, {"id": source_id})).get(
+            "adapter_data_object_by_pk"
+        )
+        if source and source.get("resource_uri"):
+            service_args["source_uri"] = source["resource_uri"]
+    if settings.geo_actor_id and "geo_actor_id" not in service_args:
+        service_args["geo_actor_id"] = settings.geo_actor_id
+
+    workflow_plan = plan
+    if body.model_task is not None:
+        # Composite descriptors are generated by Ensemble Manager from the
+        # selected model's catalog/component contract. Reject credentials if a
+        # malformed caller ever tries to smuggle one into the persisted
+        # workflow definition.
+        if _composite_task_contains_secret(body.model_task):
+            raise HTTPException(422, detail={
+                "code": "COMPOSITE_TASK_SECRET_FORBIDDEN",
+                "message": "composite model tasks may not contain credentials",
+            })
+        if not body.execution_id:
+            raise HTTPException(422, detail={
+                "code": "COMPOSITE_EXECUTION_ID_REQUIRED",
+                "message": "composite workflow submission requires execution_id",
+            })
+        output_uri = body.model_task.get("output_uri")
+        if not isinstance(output_uri, str) or not output_uri:
+            raise HTTPException(422, detail={
+                "code": "COMPOSITE_OUTPUT_URI_REQUIRED",
+                "message": "composite model task requires a server-owned output_uri",
+            })
+        workflow_plan = {**plan, "plan_json": {
+            **(plan.get("plan_json") or {}),
+            "model_task": body.model_task,
+        }}
+        service_args.setdefault("execution_id", body.execution_id)
+        service_args.setdefault("source_uri", output_uri)
+
+    pipeline = tapis.generate_tapis_workflow(workflow_plan)
     args = _validate_plan_args(
-        plan.get("plan_json") or {}, body.args, token, require_required=not body.dry_run
+        workflow_plan.get("plan_json") or {}, service_args, token, require_required=not body.dry_run
     )
 
     # Record the run before triggering, so a failed submit still leaves a trail.
     run_obj: dict[str, Any] = {
-        "workflow_plan_id": body.plan_id,
+        "workflow_plan_id": stored_plan_id,
         "tapis_workflow_id": pipeline["id"],
         "status": "submitting",
     }
     if body.execution_id:
         run_obj["execution_id"] = body.execution_id
+    if idempotency_key:
+        run_obj["idempotency_key"] = idempotency_key
     run = (await h.execute(INSERT_RUN, {"obj": run_obj}))["insert_adapter_workflow_run_one"]
     await h.execute(INSERT_PROVENANCE, {"obj": {
         "workflow_run_id": run["id"], "event_type": "workflow_submit_requested",
@@ -1776,7 +2189,8 @@ async def submit_workflow(body: SubmitWorkflowIn, authorization: str | None = He
     try:
         result = await run_in_threadpool(
             tapis.submit_tapis_workflow, pipeline, args,
-            token=token, run_name=body.run_name, recreate=body.recreate,
+            token=token, run_name=body.run_name,
+            recreate=body.recreate or body.model_task is not None,
         )
     except Exception as exc:  # surface the Tapis error, mark the run failed
         await h.execute(UPDATE_RUN, {"id": run["id"], "set": {

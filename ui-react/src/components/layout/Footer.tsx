@@ -1,9 +1,9 @@
 /**
- * The chrome footer: "Powered by MINT", right aligned on the dark bar, 50px
+ * The chrome footer: "Powered by DYNAMO", right aligned on the dark bar, 50px
  * tall. Pinned to the bottom of the viewport by {@link AppShell}, as a sibling
  * of the content row, so the scroll container is unchanged.
  *
- * Unbranded, unlike {@link BrandingStrip} — this is MINT's own credit, and it
+ * Unbranded, unlike {@link BrandingStrip} — this is DYNAMO's own credit, and it
  * shows for every deployment.
  */
 export function Footer() {
@@ -16,7 +16,7 @@ export function Footer() {
         rel="noreferrer"
         className="ml-[.2rem] hover:underline"
       >
-        MINT
+        DYNAMO
       </a>
     </footer>
   );

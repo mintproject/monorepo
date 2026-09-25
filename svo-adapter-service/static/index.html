@@ -129,11 +129,16 @@
       <details class="advanced-dfc">
         <summary>Live workflow args</summary>
         <div class="dfc-grid" style="margin-top:12px">
+          <label>Known spatial layer
+            <select id="dfcSpatialLayerSelect">
+              <option value="">Custom URI</option>
+            </select>
+          </label>
           <label>GMA boundary URI
-            <input type="text" id="dfcBoundaryUri" value="https://services1.arcgis.com/7DRakJXKPEhwv0fM/arcgis/rest/services/Z_Statewide_gdb/FeatureServer/4">
+            <input type="text" id="dfcBoundaryUri" list="spatialLayerOptions" value="https://services1.arcgis.com/7DRakJXKPEhwv0fM/arcgis/rest/services/Z_Statewide_gdb/FeatureServer/4">
           </label>
           <label>DFC area boundary URI
-            <input type="text" id="dfcAreaBoundaryUri" value="https://services1.arcgis.com/7DRakJXKPEhwv0fM/arcgis/rest/services/Z_Statewide_gdb/FeatureServer/4">
+            <input type="text" id="dfcAreaBoundaryUri" list="spatialLayerOptions" value="https://services1.arcgis.com/7DRakJXKPEhwv0fM/arcgis/rest/services/Z_Statewide_gdb/FeatureServer/4">
           </label>
           <label>Geo actor ID
             <input type="text" id="dfcGeoActorId" placeholder="configured geo_actor id">
@@ -151,6 +156,7 @@
             <input type="number" id="dfcBaselineYear" step="1" value="2011">
           </label>
         </div>
+        <datalist id="spatialLayerOptions"></datalist>
       </details>
       <div class="dfc-actions">
         <button id="generateWorkflowBtn" class="ghost">Generate workflow</button>

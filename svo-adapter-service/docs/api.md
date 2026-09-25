@@ -10,6 +10,12 @@ token is forwarded to Hasura/Tapis where the operation needs caller authorizatio
 Use the generated OpenAPI document for the exact Pydantic request and response
 schemas.
 
+Ensemble Manager-owned model-output handoffs additionally require the server-only
+`X-Ensemble-Manager-Secret` header. Configure the same value as
+`SVO_ADAPTER_INTERNAL_SERVICE_SECRET` on the adapter and
+`SVO_ADAPTER_INTERNAL_SERVICE_SECRET` (or `svo_adapter_internal_secret`) on
+Ensemble Manager. Do not expose this value to the browser.
+
 ## Core API — reusable across SVO Adapter deployments
 
 Swagger UI splits the Core API into five task-oriented groups: Registry, Planning,
@@ -40,6 +46,8 @@ plans through the existing adapter workflow tables.
 |---|---|---|
 | POST | `/readiness/check` | Check a source data object against a model-input requirement. |
 | POST | `/plans` | Find and persist an ETL plan that closes compatibility gaps. |
+| POST | `/plans/deferred` | Create a server-owned adapter plan whose source contract will be supplied by a later model output. |
+| POST | `/plans/deferred/{plan_id}/bind` | Bind one Ensemble Manager-owned model-output data object to a deferred plan and return an opaque bound plan token. |
 | GET | `/plans/{plan_id}` | Retrieve a stored plan. |
 | POST | `/plans/discover` | Discover reachable target variables from a source. |
 | POST | `/plans/discover-sources` | Discover sources that can reach a target. |
@@ -50,7 +58,7 @@ plans through the existing adapter workflow tables.
 | Method | Path | Purpose |
 |---|---|---|
 | POST | `/workflows/generate` | Generate and persist a Tapis Workflows definition for a plan. |
-| POST | `/workflows/submit` | Register/run a generated workflow, or return a dry-run. |
+| POST | `/workflows/submit` | Register/run a generated workflow, or return a dry-run. With the server-generated `model_task` payload it submits one composite model-plus-adapter workflow. Accepts `Idempotency-Key` (or the equivalent `idempotency_key` body field) for replay-safe submissions. |
 | GET | `/runs` | List recent adapter workflow runs. |
 | GET | `/runs/{run_id}` | Retrieve one run. |
 | POST | `/runs/{run_id}/poll` | Poll Tapis and persist the run status transition. |
@@ -64,6 +72,8 @@ plans through the existing adapter workflow tables.
 | GET | `/objectives` | List bundled objective definitions. |
 | GET | `/objectives/{objective_id}` | Retrieve one objective definition. |
 | GET | `/runtime-defaults` | Return runtime defaults used by the service. |
+| GET | `/spatial/layers` | List backend-owned reusable spatial source layers, including the MINT region category used when a source is registered. |
+| GET | `/etl/common-variables` | Canonical ETL/UI variable contract + legacy aliases. |
 | POST | `/objectives/{objective_id}/evaluate-plan` | Evaluate an objective plan. |
 | POST | `/datasets/find` | Find catalog datasets for a request. |
 | POST | `/datasets/dataset_resources` | List resources for a catalog dataset. |
@@ -117,3 +127,14 @@ forecast execution are bespoke to NTGAM.
 - MINT/CKAN synchronization: `app/mint_sync.py`, `app/ckan_sync.py`
 - NTGAM profile: `app/ntgam.py`
 - DFC/GAM and QA/QC profile: `app/qaqc.py` and the DFC sections in `app/main.py`
+
+### Deferred model-output handoff
+
+The deferred endpoints are retained for legacy and recovery orchestration. A
+new post-model run instead sends a server-generated `model_task` descriptor to
+`/workflows/submit`; the adapter adds that model task and an output-handoff task
+to the same Tapis workflow before the SVO transforms. The model task descriptor
+contains a job definition and output URI, but no Tapis credential. The adapter
+poller skips its normal automatic output binding for plans marked
+`orchestration_mode: "em_deferred_post_model"`; the composite workflow owns
+the model-to-adapter handoff.

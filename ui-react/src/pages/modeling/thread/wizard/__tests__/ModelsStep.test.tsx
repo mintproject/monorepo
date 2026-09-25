@@ -1,7 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { http, HttpResponse } from 'msw';
 import type { MockedResponse } from '@apollo/client/testing';
 import userEvent from '@testing-library/user-event';
 import { renderWithProviders, screen, waitFor } from '@/test/utils/render';
+import { server } from '@/test/msw/server';
 import {
   GetModelTreeWithRegionsDocument,
   SetThreadModelsDocument,
@@ -34,7 +36,15 @@ function makeThread(overrides: Partial<Thread> = {}): Thread {
   };
 }
 
-function cfg(id: string, label: string, outVarId: string, outVarLabel: string, format?: string) {
+function cfg(
+  id: string,
+  label: string,
+  outVarId: string,
+  outVarLabel: string,
+  format?: string,
+  inputVarId = 'sv-precip',
+  inputVarLabel = inputVarId,
+) {
   return {
     id,
     label,
@@ -54,7 +64,7 @@ function cfg(id: string, label: string, outVarId: string, outVarLabel: string, f
               presentation_id: `${id}-vp`,
               presentation: {
                 id: `${id}-vp`,
-                standard_variable: { id: 'sv-precip', label: 'precipitation' },
+                standard_variable: { id: inputVarId, label: inputVarLabel },
               },
             },
           ],
@@ -148,30 +158,44 @@ const dfcAdapterMock: MockedResponse = {
     data: {
       adapterTransforms: [
         {
+          id: 'ts-flow-m3s-to-cfs',
+          name: 'ts-flow-m3s-to-cfs',
+          description: 'Convert spring flow units',
           contracts: [
             {
+              id: 'c-flow-in',
               role: 'input',
               standard_variable_uri: 'https://w3id.org/okn/i/mint/spring__volume_flow_rate',
               format: 'm3s',
+              unit: 'm3s',
             },
             {
+              id: 'c-flow-out',
               role: 'output',
               standard_variable_uri: 'https://w3id.org/okn/i/mint/spring__volume_flow_rate',
               format: 'cfs',
+              unit: 'cfs',
             },
           ],
         },
         {
+          id: 'ts-modflow6-drain-gma-extract',
+          name: 'modflow6-drain-gma-extract',
+          description: 'Extract spring flow from MODFLOW CBC',
           contracts: [
             {
+              id: 'c-mf6-in',
               role: 'input',
               standard_variable_uri: null,
               format: 'cbc-mf6',
+              unit: null,
             },
             {
+              id: 'c-mf6-out',
               role: 'output',
               standard_variable_uri: 'https://w3id.org/okn/i/mint/spring__volume_flow_rate',
               format: 'm3s',
+              unit: 'm3s',
             },
           ],
         },
@@ -201,6 +225,110 @@ describe('ModelsStep', () => {
     expect(await screen.findByText('PIHM Flood A')).toBeInTheDocument();
     expect(screen.getByText('Produces: flood extent')).toBeInTheDocument();
     expect(screen.getByTestId('filtered-by-banner')).toHaveTextContent(/all/i);
+  });
+
+  it('filters model candidates by spatially available input data with an all-models fallback', async () => {
+    server.use(
+      http.get('*/api/3/action/package_search', () =>
+        HttpResponse.json({
+          success: true,
+          result: {
+            count: 1,
+            results: [
+              {
+                name: 'precipitation-data',
+                spatial: JSON.stringify({
+                  type: 'Polygon',
+                  coordinates: [
+                    [
+                      [-100, 30],
+                      [-99, 30],
+                      [-99, 31],
+                      [-100, 31],
+                      [-100, 30],
+                    ],
+                  ],
+                }),
+                temporal_coverage_start: '1900-01-01',
+                temporal_coverage_end: '1901-01-01',
+                resources: [{ id: 'precip-resource', mint_standard_variables: 'sv-precip' }],
+              },
+            ],
+          },
+        }),
+      ),
+    );
+    const availabilityTreeMock: MockedResponse = {
+      request: { query: GetModelTreeWithRegionsDocument },
+      result: {
+        data: {
+          modelcatalog_software: [
+            {
+              id: 'sw1',
+              label: 'PIHM',
+              versions: [
+                {
+                  id: 'v1',
+                  label: 'v4',
+                  configurations: [
+                    cfg(
+                      'cfgA',
+                      'PIHM Flood A',
+                      'sv-flood',
+                      'flood extent',
+                      undefined,
+                      'https://w3id.org/okn/i/mint/wmobley-standard-variable-precipitation',
+                      'sv-precip',
+                    ),
+                    cfg(
+                      'cfgB',
+                      'PIHM Flood B',
+                      'sv-flood',
+                      'flood extent',
+                      undefined,
+                      'sv-temperature',
+                    ),
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      },
+    };
+
+    renderWithProviders(
+      <ModelsStep
+        thread={makeThread({ response_variable_id: 'sv-flood' })}
+        regionGeometry={[
+          {
+            type: 'Polygon',
+            coordinates: [
+              [
+                [-100, 30],
+                [-99, 30],
+                [-99, 31],
+                [-100, 31],
+                [-100, 30],
+              ],
+            ],
+          },
+        ]}
+        onUpdated={vi.fn()}
+        onContinue={vi.fn()}
+        onBack={vi.fn()}
+      />,
+      { apolloMocks: [availabilityTreeMock, emptyAdapterMock] },
+    );
+
+    expect(await screen.findByText('PIHM Flood A')).toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByText('PIHM Flood B')).not.toBeInTheDocument());
+    expect(screen.getByText(/usable input data for this spatial scope/i)).toBeInTheDocument();
+    expect(screen.queryByText(/spatial and time scope/i)).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Show all model candidates' })).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Show all model candidates' }));
+    expect(await screen.findByText('PIHM Flood B')).toBeInTheDocument();
   });
 
   it('filters to models producing the indicator and shows the count', async () => {
@@ -238,6 +366,81 @@ describe('ModelsStep', () => {
     expect(await screen.findByText('Modflow6 Changes to Well Files')).toBeInTheDocument();
     expect(screen.queryByText('Unrelated model')).not.toBeInTheDocument();
     expect(screen.getByTestId('filtered-by-banner')).toHaveTextContent(/1 of 2/i);
+  });
+
+  it('opens model and adapter details from the compact model map', async () => {
+    renderWithProviders(
+      <ModelsStep
+        thread={makeThread({
+          response_variable_id: 'https://w3id.org/okn/i/mint/spring__volume_flow_rate',
+          response_variable: {
+            __typename: 'modelcatalog_standard_variable',
+            id: 'https://w3id.org/okn/i/mint/spring__volume_flow_rate',
+            label: 'spring__volume_flow_rate',
+          },
+          thread_models: [
+            {
+              __typename: 'thread_model',
+              id: 'tm-cbc',
+              thread_id: 't1',
+              modelcatalog_configuration_id: 'modflow-cbc',
+            },
+          ],
+        })}
+        onUpdated={vi.fn()}
+        onContinue={vi.fn()}
+        onBack={vi.fn()}
+      />,
+      { apolloMocks: [dfcTreeMock, dfcAdapterMock] },
+    );
+
+    expect(await screen.findByTestId('model-map')).toBeInTheDocument();
+    expect(await screen.findByTestId('model-map-node-modflow-cbc-etl-0')).toHaveTextContent(
+      'modflow6-drain-gma-extract',
+    );
+    expect(screen.queryByTestId('model-map-node-modflow-cbc-input-0')).not.toBeInTheDocument();
+    expect(screen.getAllByLabelText(/sv-precip/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText('MODFLOW 6 CBC output · cbc-mf6').length).toBeGreaterThan(0);
+    expect(screen.getAllByLabelText(/spring__volume_flow_rate/).length).toBeGreaterThan(0);
+
+    await userEvent.click(screen.getByTestId('model-map-node-modflow-cbc-model'));
+    expect(screen.getByTestId('model-map-details')).toHaveTextContent('Model ports');
+    expect(screen.getByTestId('model-map-details')).toHaveTextContent('MODFLOW 6 CBC output');
+
+    await userEvent.click(screen.getByTestId('model-map-node-modflow-cbc-etl-0'));
+    expect(screen.getByTestId('model-map-details')).toHaveTextContent('ETL contracts');
+    expect(screen.getByTestId('model-map-details')).toHaveTextContent('spring__volume_flow_rate');
+  });
+
+  it('renders selected models in one combined map', async () => {
+    renderWithProviders(
+      <ModelsStep
+        thread={makeThread({
+          thread_models: [
+            {
+              __typename: 'thread_model',
+              id: 'tm-a',
+              thread_id: 't1',
+              modelcatalog_configuration_id: 'cfgA',
+            },
+            {
+              __typename: 'thread_model',
+              id: 'tm-b',
+              thread_id: 't1',
+              modelcatalog_configuration_id: 'cfgB',
+            },
+          ],
+        })}
+        onUpdated={vi.fn()}
+        onContinue={vi.fn()}
+        onBack={vi.fn()}
+      />,
+      { apolloMocks: [treeMock, emptyAdapterMock] },
+    );
+
+    expect(await screen.findByTestId('model-map-canvas')).toBeInTheDocument();
+    expect(screen.getAllByTestId(/model-map-node-.*-model/)).toHaveLength(2);
+    expect(screen.getAllByTestId(/model-map-canvas/)).toHaveLength(1);
   });
 
   it('warns when a selected model no longer produces the desired outcome', async () => {

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import {
   Thread,
@@ -12,10 +12,12 @@ import {
 } from '@/components/autocomplete/StandardVariableCombobox';
 import { useAuth } from '@/lib/auth/useAuth';
 import { useToast } from '@/components/ui/use-toast';
+import { recommendProblemStatement } from '@/lib/modeling/problemStatementRecommendations';
 import { StepShell } from './StepShell';
 
 interface VariablesStepProps {
   thread: Thread;
+  taskName?: string | null;
   onUpdated: () => void;
   onContinue: () => void;
   onBack?: () => void;
@@ -34,7 +36,13 @@ function optionFromId(id?: string | null, label?: string | null): StandardVariab
   return { id, label: label || id, description: null };
 }
 
-export function VariablesStep({ thread, onUpdated, onContinue, onBack }: VariablesStepProps) {
+export function VariablesStep({
+  thread,
+  taskName,
+  onUpdated,
+  onContinue,
+  onBack,
+}: VariablesStepProps) {
   const { user } = useAuth();
   const { toast } = useToast();
   const perm = getUserPermission(thread.permissions, thread.events, user?.username ?? null);
@@ -46,9 +54,69 @@ export function VariablesStep({ thread, onUpdated, onContinue, onBack }: Variabl
     optionFromId(thread.driving_variable_id, thread.driving_variable?.label),
   );
   const [saving, setSaving] = useState(false);
+  const [recommendedResponseVariableIds, setRecommendedResponseVariableIds] = useState<string[]>(
+    [],
+  );
 
   const [updateThread] = useUpdateThreadMutation();
   const [insertProvenance] = useInsertThreadProvenanceMutation();
+
+  const taskContext = taskName?.trim() || '';
+  const goalContext = thread.name?.trim() || '';
+  const recommendationTitle = taskContext || goalContext;
+
+  useEffect(() => {
+    if (!recommendationTitle) {
+      setRecommendedResponseVariableIds([]);
+      return;
+    }
+
+    const controller = new AbortController();
+    let active = true;
+    void recommendProblemStatement(
+      {
+        title: recommendationTitle,
+        description: goalContext || taskContext,
+        goals: goalContext ? [goalContext] : [],
+        // Do not hard-filter outcome ranking by region. Adapter-produced
+        // outcomes such as spring flow may not have a direct region link even
+        // though they are valid outputs for models available in that region.
+        region_id: null,
+        start_date: thread.start_date,
+        end_date: thread.end_date,
+        ...(thread.region_id
+          ? {
+              spatial_conditions: {
+                spatial_scope_type: 'custom',
+                spatial_scope_id: thread.region_id,
+                spatial_resolution: 'region',
+              },
+            }
+          : {}),
+        limit: 10,
+      },
+      { signal: controller.signal },
+    )
+      .then((response) => {
+        if (active) setRecommendedResponseVariableIds(response.results.svo.map((item) => item.id));
+      })
+      .catch(() => {
+        // Recommendation is an ordering hint. The scoped catalog remains fully usable.
+        if (active) setRecommendedResponseVariableIds([]);
+      });
+
+    return () => {
+      active = false;
+      controller.abort();
+    };
+  }, [
+    goalContext,
+    recommendationTitle,
+    taskContext,
+    thread.end_date,
+    thread.region_id,
+    thread.start_date,
+  ]);
 
   const selectedModelConfigurationIds = useMemo(
     () =>
@@ -114,6 +182,7 @@ export function VariablesStep({ thread, onUpdated, onContinue, onBack }: Variabl
             placeholder="Choose the model outcome…"
             scope="indicator"
             scopeLabel="a model produces"
+            preferredIds={recommendedResponseVariableIds}
           />
           {indicator ? (
             <p className="text-xs text-green-700" role="status">

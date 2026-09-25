@@ -50,6 +50,9 @@ window.__MINT_CONFIG__ = {
   DATA_CATALOG_BROWSE_URL: "https://ckan.tacc.utexas.edu",
   // Standalone semantic search in the compose stack.
   SEMANTIC_SEARCH_API: "http://localhost:8091",
+  // Browser-facing SVO adapter API. This is the source of truth for spatial
+  // layers such as the TWDB GMA boundaries.
+  SVO_ADAPTER_API: "http://localhost:8090",
   // Ensemble Manager in the compose stack. It listens on 3000 in its container;
   // compose publishes it on 3001. This is a HOST url — the browser resolves it,
   // so a compose service name would not work.
@@ -63,6 +66,10 @@ window.__MINT_CONFIG__ = {
   // that deployment reaches the wrong handler or none. 'tapis' matches
   // compose/ensemble-manager.json, which sets execution_engine to tapis.
   EXECUTION_ENGINE: "tapis",
+  // Discover registered SVO adapter stages while creating the execution plan.
+  // Without this flag the UI falls back to the legacy model-job submission
+  // path, even when the selected outcome requires a post-model transform.
+  SVO_ADAPTER_ENABLED: "true",
   // Shows the TACC + UT Austin strip and footer locally, so the branded chrome
   // is visible while developing it. This file never reaches a deployment (see
   // the header), so it does not weaken the 'none' default in

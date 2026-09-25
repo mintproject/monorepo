@@ -136,6 +136,10 @@ import { UnifiedExecutionError } from "@/api/api-v1/services/unifiedExecutionSer
  *               parameter_values:
  *                 type: object
  *                 additionalProperties: true
+ *               max_minutes:
+ *                 type: integer
+ *                 minimum: 1
+ *                 description: Maximum model batch-job wall time in minutes. Defaults to 60.
  *               adapter_parameter_values:
  *                 type: object
  *                 additionalProperties: true

@@ -12,6 +12,10 @@ import {
 import errorDecoder from "@/classes/tapis/utils/errorDecoder";
 import { TapisJobSubscriptionService } from "@/classes/tapis/adapters/TapisJobSubscriptionService";
 import { BadRequestError, NoOutputsDeclaredError, NotFoundError } from "@/classes/common/errors";
+import { ExecutionCreation } from "@/classes/common/ExecutionCreation";
+import { applyExecutionInputOverrides } from "@/classes/common/execution-input-overrides";
+import { threadFromGQL } from "@/classes/graphql/graphql_adapter";
+import { getThread } from "@/classes/graphql/graphql_functions_v2";
 
 interface SerializableError {
     message: string;
@@ -86,7 +90,8 @@ export class TapisExecutionService implements IExecutionService {
         region: Region,
         component: TapisComponent,
         threadId: string,
-        threadModelId: string
+        threadModelId: string,
+        maxMinutes = 60
     ): Promise<SubmissionResult> {
         this.seeds = [];
         try {
@@ -99,7 +104,8 @@ export class TapisExecutionService implements IExecutionService {
                 app,
                 model,
                 threadId,
-                threadModelId
+                threadModelId,
+                maxMinutes
             );
 
             this.handleSubmissionResults(failedExecutions);
@@ -110,11 +116,104 @@ export class TapisExecutionService implements IExecutionService {
         }
     }
 
+    /**
+     * Build the model task consumed by the composite Tapis Workflows path.
+     *
+     * This reuses the same catalog/component/input binding code as the legacy
+     * submitter, but stops before submitting a standalone job. The resulting
+     * job definition contains no bearer token; the workflow service receives
+     * the caller token only at the provider submission boundary.
+     */
+    async buildCompositeWorkflowModelTask(
+        threadmodel: {
+            thread_id: string;
+            model_id?: string;
+            adapter_resource_overrides?: Parameters<typeof applyExecutionInputOverrides>[2];
+        },
+        workflowPath: string,
+        maxMinutes = 60
+    ): Promise<{
+        execution_id: string;
+        output_uri: string;
+        output_name: string;
+        job_definition: Jobs.ReqSubmitJob;
+    }> {
+        if (!threadmodel.model_id) throw new NotFoundError("Model configuration not found");
+        const threadResponse = await getThread(threadmodel.thread_id);
+        const thread = threadFromGQL(threadResponse);
+        if (!thread) throw new NotFoundError("Thread not found");
+        applyExecutionInputOverrides(
+            thread,
+            threadmodel.model_id,
+            threadmodel.adapter_resource_overrides || []
+        );
+
+        const executionCreation = new ExecutionCreation(
+            thread,
+            threadmodel.model_id,
+            this,
+            this.token
+        );
+        await executionCreation.prepareExecutions();
+        if (executionCreation.executionToBeRun.length !== 1) {
+            const error = new Error(
+                "Composite workflow execution requires exactly one model execution"
+            ) as Error & { code?: string };
+            error.code = "MODEL_FANOUT_UNSUPPORTED";
+            throw error;
+        }
+        if (!executionCreation.model.output_files?.length) {
+            const error = new Error("Composite workflow model declares no outputs") as Error & {
+                code?: string;
+            };
+            error.code = "NO_OUTPUTS_DECLARED";
+            throw error;
+        }
+
+        const app = await this.loadTapisApp(executionCreation.component);
+        const seed = this.seedExecutions(
+            executionCreation.executionToBeRun,
+            executionCreation.model,
+            executionCreation.threadRegion,
+            executionCreation.component
+        )[0];
+        const execution = executionCreation.executionToBeRun[0];
+        const jobDefinition = this.jobService.createJobRequest(
+            app,
+            seed,
+            executionCreation.model,
+            `mint-workflow-model-${execution.id}`,
+            `Composite workflow model execution ${execution.id}`,
+            maxMinutes
+        );
+
+        // A deterministic, run-owned archive path gives downstream workflow
+        // tasks a durable handoff URI without exposing the provider job UUID.
+        // Tapis Jobs accepts these fields when omitted, but Tapis Workflows
+        // validates the embedded job definition strictly and rejects null
+        // execution directories.
+        jobDefinition.execSystemInputDir =
+            jobDefinition.execSystemInputDir || "${JobWorkingDir}";
+        jobDefinition.execSystemOutputDir =
+            jobDefinition.execSystemOutputDir || "${JobWorkingDir}/output";
+        const archivePath = `mint-workflow-output/${workflowPath}/model`;
+        jobDefinition.archiveSystemDir = `HOST_EVAL($WORK)/${archivePath}`;
+        const output = executionCreation.model.output_files[0];
+        const outputName = output.name || output.id;
+        return {
+            execution_id: execution.id,
+            output_name: outputName,
+            output_uri: `tapis://${jobDefinition.archiveSystemId}/${archivePath}/${outputName}`,
+            job_definition: jobDefinition
+        };
+    }
+
     private async processExecutionSeeds(
         app: Apps.TapisApp,
         model: Model,
         threadId: string,
-        threadModelId: string
+        threadModelId: string,
+        maxMinutes: number
     ): Promise<{
         submittedExecutions: { execution: Execution; jobId: string }[];
         failedExecutions: { execution: Execution; error: Error }[];
@@ -125,7 +224,7 @@ export class TapisExecutionService implements IExecutionService {
         for (const seed of this.seeds) {
             console.log("Processing seed", JSON.stringify(seed));
             try {
-                const jobId = await this.submitSingleExecution(app, seed, model, threadId);
+                const jobId = await this.submitSingleExecution(app, seed, model, threadId, maxMinutes);
                 submittedExecutions.push({ execution: seed.execution, jobId });
             } catch (error) {
                 console.error("Error submitting single execution:", error instanceof Error ? error.message : String(error));
@@ -152,11 +251,19 @@ export class TapisExecutionService implements IExecutionService {
         app: Apps.TapisApp,
         seed: TapisComponentSeed,
         model: Model,
-        threadId: string
+        threadId: string,
+        maxMinutes: number
     ): Promise<string> {
         const name = this.generateValidJobName(app, seed.execution.id);
         const description = "Job for " + model.name + " execution " + seed.execution.id;
-        const jobRequest = this.jobService.createJobRequest(app, seed, model, name, description);
+        const jobRequest = this.jobService.createJobRequest(
+            app,
+            seed,
+            model,
+            name,
+            description,
+            maxMinutes
+        );
 
         console.log("Job request", JSON.stringify(jobRequest));
         const jobId = await this.submitJob(jobRequest);

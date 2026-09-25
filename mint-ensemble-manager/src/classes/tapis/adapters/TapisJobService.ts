@@ -37,7 +37,8 @@ export class TapisJobService {
         seed: TapisComponentSeed,
         model: Model,
         name: string,
-        description: string
+        description: string,
+        maxMinutes = 60
     ): Jobs.ReqSubmitJob => {
         const jobFileInputs = this.createJobFileInputsFromSeed(seed, app, model);
         const jobParameterSet: Jobs.JobParameterSet = {
@@ -55,7 +56,7 @@ export class TapisJobService {
             fileInputs: jobFileInputs,
             nodeCount: app.jobAttributes?.nodeCount || 1,
             coresPerNode: app.jobAttributes?.coresPerNode || 1,
-            maxMinutes: 60,
+            maxMinutes,
             archiveSystemId: "ls6",
             archiveSystemDir:
                 "HOST_EVAL($WORK)/tapis-jobs-archive/${JobCreateDate}/${JobName}-${JobUUID}",

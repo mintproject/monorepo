@@ -118,7 +118,7 @@ interface ProblemStatementsListProps {
  */
 export function ProblemStatementsList({ regionId }: ProblemStatementsListProps) {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const { toast } = useToast();
 
   // ── regions ─────────────────────────────────────────────────────────────────
@@ -144,6 +144,9 @@ export function ProblemStatementsList({ regionId }: ProblemStatementsListProps) 
     variables: {
       where: selectedRegionId ? { region_id: { _eq: selectedRegionId } } : {},
     },
+    // The query includes the private permissions relationship. Do not let it
+    // run as anonymous while AuthProvider is restoring the bearer token.
+    skip: authLoading || !isAuthenticated,
     fetchPolicy: 'cache-and-network',
   });
 
@@ -424,7 +427,7 @@ export function ProblemStatementsList({ regionId }: ProblemStatementsListProps) 
       )}
 
       {/* ── Error ────────────────────────────────────────────────────────── */}
-      {error && (
+      {error && !data && !authLoading && isAuthenticated && (
         <p className="text-sm text-destructive" role="alert">
           Failed to load problem statements: {error.message}
         </p>

@@ -167,6 +167,19 @@ describe('token-store', () => {
       expect(isTokenValid()).toBe(true);
     });
 
+    it('uses the JWT exp claim when no separate expiry is stored', () => {
+      const token = makeJwt({ exp: Math.floor(Date.now() / 1000) - 1 });
+      storeTokens({ accessToken: token });
+      expect(isTokenValid()).toBe(false);
+      expect(getAccessToken()).toBeNull();
+    });
+
+    it('accepts an unexpired JWT when no separate expiry is stored', () => {
+      const token = makeJwt({ exp: Math.floor(Date.now() / 1000) + 3600 });
+      storeTokens({ accessToken: token });
+      expect(isTokenValid()).toBe(true);
+    });
+
     it('returns true when token has not expired', () => {
       storeTokens({ accessToken: 'tok', accessExpiresIn: 3600 });
       expect(isTokenValid()).toBe(true);

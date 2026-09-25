@@ -14,6 +14,8 @@ interface MintConfig {
   DATA_CATALOG_BROWSE_URL?: string;
   /** Standalone semantic-search service base URL. */
   SEMANTIC_SEARCH_API?: string;
+  /** SVO adapter API base URL used for the canonical spatial-layer catalog. */
+  SVO_ADAPTER_API?: string;
   /** Ensemble Manager REST API base URL. */
   ENSEMBLE_MANAGER_API?: string;
   /** Enable discovery of adapter plans for selected model inputs. */

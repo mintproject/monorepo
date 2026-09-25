@@ -321,6 +321,7 @@ describe('executionFromGQL', () => {
     start_time: '2026-08-09T10:00:00',
     end_time: '2026-08-09T10:05:00',
     execution_engine: 'tapis',
+    run_id: 'ue-parent-1',
     modelcatalog_configuration_id: 'cfgA',
     parameter_bindings: [{ model_parameter_id: 'pAdj', parameter_value: '0.7' }],
     data_bindings: [
@@ -334,6 +335,7 @@ describe('executionFromGQL', () => {
   it('flattens bindings and results into the maps the run table renders', () => {
     const ex = executionFromGQL(row);
     expect(ex.modelid).toBe('cfgA');
+    expect(ex.run_id).toBe('ue-parent-1');
     expect(ex.bindings['pAdj']).toBe('0.7');
     expect((ex.bindings['inA'] as { name: string }).name).toBe('dem.tif');
     expect(ex.results['outA']?.url).toBe('http://x/d.tif');

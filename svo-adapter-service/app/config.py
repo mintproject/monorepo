@@ -29,6 +29,9 @@ class Settings(BaseSettings):
     # Admin secret is used ONLY for reads / system writes. User-initiated writes
     # forward the caller's JWT instead (see hasura.HasuraClient).
     hasura_admin_secret: str | None = None
+    # Shared server-to-server secret for Ensemble Manager-owned model-output
+    # registration and deferred-plan binding. Never expose this to the UI.
+    internal_service_secret: str | None = None
 
     # Tapis Workflows. Submission emulates SUBSIDE's manager so adapter-generated
     # pipelines are interchangeable with SUBSIDE's: same pipeline shape, registered
@@ -45,6 +48,9 @@ class Settings(BaseSettings):
     tapis_workflow_owner: str = "${apiUserId}"
     # Default Tapis execution system for tapis_job tasks (override per registry).
     tapis_exec_system: str = "ls6"
+    # Keep adapter workflows aligned with Ensemble Manager's Tapis job runs.
+    # Deployments may override this without changing the plan contract.
+    tapis_allocation: str = "PT2050-DataX"
 
     request_timeout_seconds: float = 30.0
 
@@ -75,6 +81,21 @@ class Settings(BaseSettings):
     # Tapis Abaco actor ID for the dso-geo GDAL/MODFLOW actor (mcp-suite/servers/geo).
     # Register with mcp-suite/servers/geo/register-actor.sh; set via SVO_ADAPTER_GEO_ACTOR_ID.
     geo_actor_id: str = ""
+
+    # Default spatial layers surfaced to the local ETL UI so users can pick from
+    # known monorepo-backed references without pasting raw URLs.
+    gma_boundary_layer_uri: str = (
+        "https://services1.arcgis.com/7DRakJXKPEhwv0fM/arcgis/rest/services/"
+        "Z_Statewide_gdb/FeatureServer/4"
+    )
+    gcd_boundary_layer_uri: str = (
+        "https://services.twdb.texas.gov/arcgis/rest/services/Base/"
+        "GroundWaterConservationDistricts/MapServer/0"
+    )
+    county_boundary_layer_uri: str = (
+        "https://services.twdb.texas.gov/arcgis/rest/services/PWS/"
+        "Texas_Counties_FIPS/FeatureServer/0"
+    )
 
     # --- NTGAM location->forecast tab (Phase 2/3) ----------------------------
     # Local CKAN holding the registered NTGAM resources (heads sampled for water

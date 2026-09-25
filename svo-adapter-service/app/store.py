@@ -102,6 +102,13 @@ class InMemoryHasura:
     def _op_GetRun(self, v):
         return {"adapter_workflow_run_by_pk": STORE.run.get(v["id"])}
 
+    def _op_GetRunByIdempotency(self, v):
+        rows = [
+            row for row in STORE.run.values()
+            if row.get("idempotency_key") == v.get("key")
+        ]
+        return {"adapter_workflow_run": rows[:1]}
+
     def _op_GetDataObject(self, v):
         return {"adapter_data_object_by_pk": STORE.data_object.get(v["id"])}
 
@@ -171,6 +178,11 @@ class InMemoryHasura:
         return {"update_adapter_workflow_plan_by_pk": row}
 
     def _op_InsertRun(self, v):
+        idempotency_key = v["obj"].get("idempotency_key")
+        if idempotency_key:
+            for row in STORE.run.values():
+                if row.get("idempotency_key") == idempotency_key:
+                    return {"insert_adapter_workflow_run_one": row}
         row = _insert(STORE.run, v["obj"])
         return {"insert_adapter_workflow_run_one": row}
 

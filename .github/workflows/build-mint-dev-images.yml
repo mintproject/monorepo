@@ -39,6 +39,10 @@ jobs:
             if [[ -z "$BASE_SHA" || "$BASE_SHA" =~ ^0+$ ]]; then
               BASE_SHA="$(git rev-list --max-parents=0 HEAD | sed -n '1p')"
             fi
+            if ! git cat-file -e "${BASE_SHA}^{commit}" 2>/dev/null; then
+              echo "Push base $BASE_SHA is unavailable; comparing against origin/develop instead."
+              BASE_SHA="$(git merge-base origin/develop "$GITHUB_SHA")"
+            fi
           fi
           git diff --name-only "$BASE_SHA" "$GITHUB_SHA" > changed_paths.txt
           PLAN="$(python deploy/mint_change_plan.py --source-sha "$GITHUB_SHA" < changed_paths.txt)"

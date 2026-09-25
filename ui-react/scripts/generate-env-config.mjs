@@ -58,6 +58,10 @@ export function buildEnvConfig(env = process.env) {
     // appends `/search`; local compose publishes it on port 8091.
     SEMANTIC_SEARCH_API:
       pick(env, 'SEMANTIC_SEARCH_API', 'VITE_SEMANTIC_SEARCH_API') ?? 'http://localhost:8091',
+    // Browser-facing SVO adapter API. The local compose stack publishes it on
+    // port 8090; deployments can omit it when stored region geometry is the
+    // only spatial source available.
+    SVO_ADAPTER_API: pick(env, 'SVO_ADAPTER_API', 'VITE_SVO_ADAPTER_API') ?? '',
     // The v2.0.0 model catalog REST API, version prefix included. The app reads
     // the catalog through Hasura; this base is for the routes Hasura cannot
     // serve — today the Tapis application proxy, which forwards the user's

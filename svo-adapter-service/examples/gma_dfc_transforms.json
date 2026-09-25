@@ -236,7 +236,7 @@
       "stage": "hds-convert",
       "env_from_args": {
         "SOURCE_URI":    "source_uri",
-        "LAYER":         "layer",
+        "LAYER":         "model_layer",
         "STRESS_PERIOD": "stress_period",
         "TIMESTEP":      "timestep",
         "GRID_URI":      "grid_uri",
@@ -261,7 +261,7 @@
       "stage": "hds-convert",
       "env_from_args": {
         "SOURCE_URI":    "source_uri",
-        "LAYER":         "layer",
+        "LAYER":         "model_layer",
         "STRESS_PERIOD": "stress_period",
         "TIMESTEP":      "timestep",
         "GEO_ACTOR_ID": "geo_actor_id",
@@ -285,7 +285,7 @@
       "stage": "hds-convert",
       "env_from_args": {
         "SOURCE_URI":    "source_uri",
-        "LAYER":         "layer",
+        "LAYER":         "model_layer",
         "STRESS_PERIOD": "stress_period",
         "TIMESTEP":      "timestep",
         "GEO_ACTOR_ID": "geo_actor_id",
@@ -309,7 +309,7 @@
       "stage": "hds-convert",
       "env_from_args": {
         "SOURCE_URI":    "source_uri",
-        "LAYER":         "layer",
+        "LAYER":         "model_layer",
         "STRESS_PERIOD": "stress_period",
         "TIMESTEP":      "timestep",
         "GEO_ACTOR_ID": "geo_actor_id",
@@ -356,10 +356,10 @@
       "stage": "gma-average",
       "env_from_args": {
         "SOURCE_URI":       "source_uri",
-        "GMA_ID":           "gma_id",
-        "GMA_BOUNDARY_URI": "gma_boundary_uri",
+        "GMA_ID":           "spatial_scope_id",
+        "GMA_BOUNDARY_URI": "geometry_source_uri",
         "DFC_AREA_BOUNDARY_URI": "dfc_area_boundary_uri",
-        "AREA":            "area",
+        "AREA":            "spatial_scope_name",
         "GEO_ACTOR_ID":    "geo_actor_id",
         "TAPIS_TOKEN":     "tapis_token"
       },
@@ -380,8 +380,8 @@
       "tapis_app_id": null,
       "stage": "boundary-query",
       "env_from_args": {
-        "SOURCE_URI": "source_uri",
-        "GMA_ID": "gma_id"
+        "GEOMETRY_SOURCE_URI": "geometry_source_uri",
+        "SPATIAL_SCOPE_ID": "spatial_scope_id"
       },
       "contracts": [
         {"id": "c-gma-bq-in",  "role": "input",  "standard_variable_uri": "https://w3id.org/okn/i/mint/groundwater_management_area__boundary", "format": "arcgis-layer", "spatial_type": "polygon"},
@@ -400,8 +400,8 @@
       "tapis_app_id": null,
       "stage": "boundary-query",
       "env_from_args": {
-        "SOURCE_URI": "source_uri",
-        "GCD_NAME": "gcd_name"
+        "GEOMETRY_SOURCE_URI": "geometry_source_uri",
+        "SPATIAL_SCOPE_NAME": "spatial_scope_name"
       },
       "contracts": [
         {"id": "c-gcd-bq-in",  "role": "input",  "standard_variable_uri": "https://w3id.org/okn/i/mint/groundwater_conservation_district__boundary", "format": "arcgis-layer", "spatial_type": "polygon"},
@@ -420,8 +420,8 @@
       "tapis_app_id": null,
       "stage": "boundary-query",
       "env_from_args": {
-        "SOURCE_URI": "source_uri",
-        "COUNTY_NAME": "county_name"
+        "GEOMETRY_SOURCE_URI": "geometry_source_uri",
+        "SPATIAL_SCOPE_NAME": "spatial_scope_name"
       },
       "contracts": [
         {"id": "c-county-bq-in",  "role": "input",  "standard_variable_uri": "https://w3id.org/okn/i/mint/county__boundary", "format": "arcgis-layer", "spatial_type": "polygon"},
@@ -503,8 +503,8 @@
       "tapis_app_id": null,
       "stage": "boundary-intersect",
       "env_from_args": {
-        "GMA_BOUNDARY_URI": "gma_boundary_uri",
-        "COUNTY_NAME": "county_name",
+        "GMA_BOUNDARY_URI": "geometry_source_uri",
+        "SPATIAL_SCOPE_NAME": "spatial_scope_name",
         "AQUIFER": "aquifer",
         "GEO_ACTOR_ID": "geo_actor_id",
         "TAPIS_TOKEN": "tapis_token"
@@ -527,8 +527,8 @@
       "tapis_app_id": null,
       "stage": "boundary-intersect",
       "env_from_args": {
-        "GMA_BOUNDARY_URI": "gma_boundary_uri",
-        "GCD_NAME": "gcd_name",
+        "GMA_BOUNDARY_URI": "geometry_source_uri",
+        "SPATIAL_SCOPE_NAME": "spatial_scope_name",
         "AQUIFER": "aquifer",
         "GEO_ACTOR_ID": "geo_actor_id",
         "TAPIS_TOKEN": "tapis_token"
@@ -555,9 +555,9 @@
         "MODELED_SCALAR_JSON": "modeled_scalar_json",
         "DFC_TARGETS_JSON": "dfc_targets_json",
         "DFC_TARGETS_URI": "dfc_targets_uri",
-        "GMA_ID":        "gma_id",
-        "AREA":          "area",
-        "AREA_TYPE":     "area_type",
+        "GMA_ID":        "spatial_scope_id",
+        "AREA":          "spatial_scope_name",
+        "AREA_TYPE":     "spatial_scope_type",
         "AQUIFER":       "aquifer",
         "BASELINE_YEAR": "baseline_year",
         "TARGET_YEAR":   "target_year"
@@ -585,9 +585,9 @@
         "MODELED_SCALAR_JSON": "modeled_scalar_json",
         "DFC_TARGETS_JSON": "dfc_targets_json",
         "DFC_TARGETS_URI": "dfc_targets_uri",
-        "GMA_ID":    "gma_id",
-        "AREA":      "area",
-        "AREA_TYPE": "area_type",
+        "GMA_ID":    "spatial_scope_id",
+        "AREA":      "spatial_scope_name",
+        "AREA_TYPE": "spatial_scope_type",
         "AQUIFER":   "aquifer",
         "TARGET_YEAR": "target_year"
       },
@@ -613,9 +613,9 @@
         "MODELED_SCALAR_JSON": "modeled_scalar_json",
         "DFC_TARGETS_JSON": "dfc_targets_json",
         "DFC_TARGETS_URI": "dfc_targets_uri",
-        "GMA_ID":      "gma_id",
-        "AREA":        "area",
-        "AREA_TYPE":   "area_type",
+        "GMA_ID":      "spatial_scope_id",
+        "AREA":        "spatial_scope_name",
+        "AREA_TYPE":   "spatial_scope_type",
         "AQUIFER":     "aquifer",
         "TARGET_YEAR": "target_year"
       },
@@ -641,9 +641,9 @@
         "MODELED_SCALAR_JSON": "modeled_scalar_json",
         "DFC_TARGETS_JSON": "dfc_targets_json",
         "DFC_TARGETS_URI": "dfc_targets_uri",
-        "GMA_ID":      "gma_id",
-        "AREA":        "area",
-        "AREA_TYPE":   "area_type",
+        "GMA_ID":      "spatial_scope_id",
+        "AREA":        "spatial_scope_name",
+        "AREA_TYPE":   "spatial_scope_type",
         "AQUIFER":     "aquifer",
         "TARGET_YEAR": "target_year"
       },
@@ -672,8 +672,8 @@
       "stage": "budget-extract",
       "env_from_args": {
         "SOURCE_URI":       "source_uri",
-        "GMA_ID":           "gma_id",
-        "GMA_BOUNDARY_URI": "gma_boundary_uri",
+        "GMA_ID":           "spatial_scope_id",
+        "GMA_BOUNDARY_URI": "geometry_source_uri",
         "GEO_ACTOR_ID":    "geo_actor_id",
         "TAPIS_TOKEN":      "tapis_token"
       },
@@ -695,8 +695,8 @@
       "stage": "budget-extract",
       "env_from_args": {
         "SOURCE_URI":       "source_uri",
-        "GMA_ID":           "gma_id",
-        "GMA_BOUNDARY_URI": "gma_boundary_uri",
+        "GMA_ID":           "spatial_scope_id",
+        "GMA_BOUNDARY_URI": "geometry_source_uri",
         "GEO_ACTOR_ID":    "geo_actor_id",
         "TAPIS_TOKEN":      "tapis_token"
       },
@@ -718,8 +718,8 @@
       "stage": "budget-extract",
       "env_from_args": {
         "SOURCE_URI":       "source_uri",
-        "GMA_ID":           "gma_id",
-        "GMA_BOUNDARY_URI": "gma_boundary_uri",
+        "GMA_ID":           "spatial_scope_id",
+        "GMA_BOUNDARY_URI": "geometry_source_uri",
         "GEO_ACTOR_ID":    "geo_actor_id",
         "TAPIS_TOKEN":      "tapis_token"
       },
@@ -741,8 +741,8 @@
       "stage": "budget-extract",
       "env_from_args": {
         "SOURCE_URI":       "source_uri",
-        "GMA_ID":           "gma_id",
-        "GMA_BOUNDARY_URI": "gma_boundary_uri",
+        "GMA_ID":           "spatial_scope_id",
+        "GMA_BOUNDARY_URI": "geometry_source_uri",
         "GEO_ACTOR_ID":    "geo_actor_id",
         "TAPIS_TOKEN":      "tapis_token"
       },
@@ -764,8 +764,8 @@
       "stage": "budget-extract",
       "env_from_args": {
         "SOURCE_URI":       "source_uri",
-        "GMA_ID":           "gma_id",
-        "GMA_BOUNDARY_URI": "gma_boundary_uri",
+        "GMA_ID":           "spatial_scope_id",
+        "GMA_BOUNDARY_URI": "geometry_source_uri",
         "GEO_ACTOR_ID":    "geo_actor_id",
         "TAPIS_TOKEN":      "tapis_token"
       },
@@ -787,8 +787,8 @@
       "stage": "budget-extract",
       "env_from_args": {
         "SOURCE_URI":       "source_uri",
-        "GMA_ID":           "gma_id",
-        "GMA_BOUNDARY_URI": "gma_boundary_uri",
+        "GMA_ID":           "spatial_scope_id",
+        "GMA_BOUNDARY_URI": "geometry_source_uri",
         "GEO_ACTOR_ID":    "geo_actor_id",
         "TAPIS_TOKEN":      "tapis_token"
       },
@@ -810,8 +810,8 @@
       "stage": "budget-extract",
       "env_from_args": {
         "SOURCE_URI":       "source_uri",
-        "GMA_ID":           "gma_id",
-        "GMA_BOUNDARY_URI": "gma_boundary_uri",
+        "GMA_ID":           "spatial_scope_id",
+        "GMA_BOUNDARY_URI": "geometry_source_uri",
         "GEO_ACTOR_ID":    "geo_actor_id",
         "TAPIS_TOKEN":      "tapis_token"
       },
@@ -833,8 +833,8 @@
       "stage": "budget-extract",
       "env_from_args": {
         "SOURCE_URI":       "source_uri",
-        "GMA_ID":           "gma_id",
-        "GMA_BOUNDARY_URI": "gma_boundary_uri",
+        "GMA_ID":           "spatial_scope_id",
+        "GMA_BOUNDARY_URI": "geometry_source_uri",
         "GEO_ACTOR_ID":    "geo_actor_id",
         "TAPIS_TOKEN":      "tapis_token"
       },
@@ -856,8 +856,8 @@
       "stage": "budget-extract",
       "env_from_args": {
         "SOURCE_URI":       "source_uri",
-        "GMA_ID":           "gma_id",
-        "GMA_BOUNDARY_URI": "gma_boundary_uri",
+        "GMA_ID":           "spatial_scope_id",
+        "GMA_BOUNDARY_URI": "geometry_source_uri",
         "GEO_ACTOR_ID":    "geo_actor_id",
         "TAPIS_TOKEN":      "tapis_token"
       },
@@ -879,9 +879,9 @@
       "stage": "satthk-extract",
       "env_from_args": {
         "SOURCE_URI":       "source_uri",
-        "GMA_ID":           "gma_id",
-        "GMA_BOUNDARY_URI": "gma_boundary_uri",
-        "LAYER":            "layer",
+        "GMA_ID":           "spatial_scope_id",
+        "GMA_BOUNDARY_URI": "geometry_source_uri",
+        "LAYER":            "model_layer",
         "GEO_ACTOR_ID":    "geo_actor_id",
         "TAPIS_TOKEN":      "tapis_token"
       },
@@ -903,9 +903,9 @@
       "stage": "satthk-extract",
       "env_from_args": {
         "SOURCE_URI":       "source_uri",
-        "GMA_ID":           "gma_id",
-        "GMA_BOUNDARY_URI": "gma_boundary_uri",
-        "LAYER":            "layer",
+        "GMA_ID":           "spatial_scope_id",
+        "GMA_BOUNDARY_URI": "geometry_source_uri",
+        "LAYER":            "model_layer",
         "GEO_ACTOR_ID":    "geo_actor_id",
         "TAPIS_TOKEN":      "tapis_token"
       },
@@ -927,9 +927,9 @@
       "stage": "satthk-extract",
       "env_from_args": {
         "SOURCE_URI":       "source_uri",
-        "GMA_ID":           "gma_id",
-        "GMA_BOUNDARY_URI": "gma_boundary_uri",
-        "LAYER":            "layer",
+        "GMA_ID":           "spatial_scope_id",
+        "GMA_BOUNDARY_URI": "geometry_source_uri",
+        "LAYER":            "model_layer",
         "GEO_ACTOR_ID":    "geo_actor_id",
         "TAPIS_TOKEN":      "tapis_token"
       },
@@ -951,9 +951,9 @@
       "stage": "satthk-extract",
       "env_from_args": {
         "SOURCE_URI":       "source_uri",
-        "GMA_ID":           "gma_id",
-        "GMA_BOUNDARY_URI": "gma_boundary_uri",
-        "LAYER":            "layer",
+        "GMA_ID":           "spatial_scope_id",
+        "GMA_BOUNDARY_URI": "geometry_source_uri",
+        "LAYER":            "model_layer",
         "GEO_ACTOR_ID":    "geo_actor_id",
         "TAPIS_TOKEN":      "tapis_token"
       },

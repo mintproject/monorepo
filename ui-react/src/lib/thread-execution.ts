@@ -97,12 +97,14 @@ export function threadModelFromGQL(tm: ThreadModelRow): ThreadModel | null {
       name: i.name,
       variables: i.variableLabels,
       variableIds: i.variableIds,
+      format: i.format,
       isOptional: i.optional,
     })),
     output_files: io.outputs.map((o) => ({
       id: o.id,
       name: o.name,
       variables: o.variableIds,
+      format: o.format,
     })),
     input_parameters: (cfg.parameters ?? [])
       .map((cp) => parameterFromGQL(cp.parameter))
@@ -192,6 +194,7 @@ export function executionFromGQL(ex: ExecutionRow): Execution {
   return {
     id: ex.id,
     modelid: ex.modelcatalog_configuration_id ?? '',
+    run_id: ex.run_id ?? null,
     status: ex.status ?? 'WAITING',
     run_progress: ex.run_progress,
     start_time: ex.start_time ?? null,

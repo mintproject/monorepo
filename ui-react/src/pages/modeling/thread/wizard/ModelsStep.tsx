@@ -4,6 +4,13 @@ import { useCallback, useMemo, useState } from 'react';
 
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import {
+  WORKFLOW_CANVAS_WIDTH,
+  WORKFLOW_NODE_WIDTH,
+  WorkflowCanvas,
+  type WorkflowCanvasEdge,
+  type WorkflowCanvasPosition,
+} from '@/components/modeling/WorkflowCanvas';
+import {
   ModelConfigInfo,
   ModelSetupInfo,
   Thread,
@@ -17,6 +24,7 @@ import { useAuth } from '@/lib/auth/useAuth';
 import { diffThreadModels } from '@/lib/thread-models';
 import { slugFromUri } from '@/lib/uri';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
+import { useDataCatalogVariableAvailability } from '@/hooks/useDataCatalog';
 import { useSemanticSearch } from '@/hooks/useSemanticSearch';
 import { useToast } from '@/components/ui/use-toast';
 import { cn } from '@/lib/utils';
@@ -36,17 +44,22 @@ interface ModelRow {
   region: string;
   producesIds: string[];
   producesLabels: string[];
-  outputContracts: { id: string; format?: string | null }[];
-  needs: { name: string; varIds: string[]; varLabels: string[] }[];
+  outputContracts: { id: string; label?: string | null; format?: string | null }[];
+  needs: { name: string; varIds: string[]; varLabels: string[]; optional: boolean }[];
 }
 
 export const ModelOutcomeAdapterInferenceDocument = gql`
   query GetModelOutcomeAdapterInference {
     adapterTransforms: adapter_transform_spec {
+      id
+      name
+      description
       contracts {
+        id
         role
         standard_variable_uri
         format
+        unit
       }
     }
   }
@@ -54,10 +67,15 @@ export const ModelOutcomeAdapterInferenceDocument = gql`
 
 interface ModelOutcomeAdapterInferenceData {
   adapterTransforms: Array<{
+    id?: string | null;
+    name?: string | null;
+    description?: string | null;
     contracts: Array<{
+      id?: string | null;
       role: string;
       standard_variable_uri?: string | null;
       format?: string | null;
+      unit?: string | null;
     }>;
   }>;
 }
@@ -69,6 +87,8 @@ interface ModelsStepProps {
   onBack?: () => void;
   /** Optional: jump back to the Variables step (banner edit link). */
   onEditIndicator?: () => void;
+  /** Geometry selected in Problem Framing, used for data-feasibility filtering. */
+  regionGeometry?: unknown;
 }
 
 function rowFromConfig(cfg: ModelConfigInfo | ModelSetupInfo, parent?: ModelConfigInfo): ModelRow {
@@ -84,12 +104,17 @@ function rowFromConfig(cfg: ModelConfigInfo | ModelSetupInfo, parent?: ModelConf
     producesLabels: io.outputs.flatMap((o) => o.variableLabels),
     outputContracts: io.outputs.flatMap((output) => {
       const ids = output.variableIds.length > 0 ? output.variableIds : [''];
-      return ids.map((id) => ({ id, format: output.format }));
+      return ids.map((id, index) => ({
+        id,
+        label: output.variableLabels[index] ?? output.variableLabels[0] ?? output.name,
+        format: output.format,
+      }));
     }),
     needs: io.inputs.map((i) => ({
       name: i.name,
       varIds: i.variableIds,
       varLabels: i.variableLabels,
+      optional: i.optional,
     })),
   };
 }
@@ -173,12 +198,391 @@ function ModelCard({
   );
 }
 
+type ModelMapNodeKind = 'model' | 'etl';
+
+interface ModelMapNode {
+  id: string;
+  kind: ModelMapNodeKind;
+  label: string;
+  subtitle: string;
+  description?: string | null;
+  standardVariableUri?: string | null;
+  format?: string | null;
+  unit?: string | null;
+  model?: ModelRow;
+  transform?: ModelOutcomeAdapterInferenceData['adapterTransforms'][number];
+}
+
+function contractUri(contract: { standard_variable_uri?: string | null }): string {
+  return contract.standard_variable_uri?.trim().toLowerCase() ?? '';
+}
+
+function contractMatches(
+  current: { standard_variable_uri?: string | null; format?: string | null },
+  required: { standard_variable_uri?: string | null; format?: string | null },
+): boolean {
+  const currentUri = contractUri(current);
+  const requiredUri = contractUri(required);
+  if (currentUri && requiredUri) return currentUri === requiredUri;
+  return Boolean(current.format && required.format && current.format === required.format);
+}
+
+function displayVariable(
+  uri?: string | null,
+  label?: string | null,
+  format?: string | null,
+): string {
+  if (format === 'cbc-mf6' && !uri) return 'MODFLOW 6 CBC output';
+  if (label) return label;
+  if (uri) return slugFromUri(uri);
+  if (format) return format;
+  return 'Unlabeled SVO';
+}
+
+function findAdapterPath(
+  row: ModelRow,
+  transforms: ModelOutcomeAdapterInferenceData['adapterTransforms'],
+  outcome?: string | null,
+): Array<ModelOutcomeAdapterInferenceData['adapterTransforms'][number]> {
+  if (!outcome) return [];
+  const outputs = row.outputContracts.map((output) => ({
+    standard_variable_uri: output.id,
+    format: output.format,
+  }));
+  const queue: Array<{
+    contract: { standard_variable_uri?: string | null; format?: string | null };
+    path: Array<ModelOutcomeAdapterInferenceData['adapterTransforms'][number]>;
+  }> = outputs.map((contract) => ({ contract, path: [] }));
+  const visited = new Set<string>();
+  const target = { standard_variable_uri: outcome };
+
+  while (queue.length > 0) {
+    const current = queue.shift()!;
+    if (contractMatches(current.contract, target)) return current.path;
+    const signature = `${current.contract.standard_variable_uri ?? ''}|${current.contract.format ?? ''}`;
+    if (visited.has(signature) || current.path.length >= 6) continue;
+    visited.add(signature);
+
+    for (const transform of transforms) {
+      if (current.path.some((step) => step.id === transform.id)) continue;
+      const inputs = transform.contracts.filter((contract) => contract.role === 'input');
+      const outputs = transform.contracts.filter((contract) => contract.role === 'output');
+      if (!inputs.some((input) => contractMatches(current.contract, input))) continue;
+      for (const output of outputs) {
+        queue.push({
+          contract: output,
+          path: [...current.path, transform],
+        });
+      }
+    }
+  }
+  return [];
+}
+
+function mapNodesForModel(
+  row: ModelRow,
+  transforms: ModelOutcomeAdapterInferenceData['adapterTransforms'],
+  outcome: string | null,
+): ModelMapNode[] {
+  const nodes: ModelMapNode[] = [
+    {
+      id: `${row.id}-model`,
+      kind: 'model',
+      label: 'Model',
+      subtitle: `${row.name} · Model application`,
+      description: row.description,
+      model: row,
+    },
+  ];
+  const path = findAdapterPath(row, transforms, outcome);
+  path.forEach((transform, index) => {
+    const output = transform.contracts.find((contract) => contract.role === 'output');
+    nodes.push({
+      id: `${row.id}-etl-${index}`,
+      kind: 'etl',
+      label: transform.name ?? transform.id ?? `SVO ETL ${index + 1}`,
+      subtitle: 'Adapter transform',
+      description: transform.description,
+      standardVariableUri: output?.standard_variable_uri,
+      format: output?.format,
+      unit: output?.unit,
+      transform,
+      model: row,
+    });
+  });
+  return nodes;
+}
+
+function ModelMapNodeButton({
+  node,
+  selected,
+  onSelect,
+}: {
+  node: ModelMapNode;
+  selected: boolean;
+  onSelect: () => void;
+}) {
+  const kindLabel = node.kind === 'model' ? 'Model' : 'SVO ETL';
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      aria-pressed={selected}
+      className={cn(
+        'h-[104px] w-full min-w-0 overflow-hidden rounded border px-3 py-2 text-left text-xs transition-colors 2xl:flex-1',
+        selected
+          ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200'
+          : 'border-gray-200 bg-white hover:border-blue-300 hover:bg-blue-50/40',
+      )}
+      data-testid={`model-map-node-${node.id}`}
+    >
+      <div className="flex items-center justify-between gap-2 text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+        <span>{kindLabel}</span>
+        {node.format && <span>{node.format}</span>}
+      </div>
+      <div className="mt-1 break-words font-medium text-gray-900">{node.label}</div>
+      <div className="mt-1 break-words text-[11px] text-gray-500">{node.subtitle}</div>
+      {node.unit && <div className="mt-1 text-[11px] text-gray-500">Unit: {node.unit}</div>}
+    </button>
+  );
+}
+
+function ModelMapDetails({ node }: { node: ModelMapNode }) {
+  const model = node.model;
+  return (
+    <aside
+      className="rounded border border-blue-200 bg-blue-50/50 p-3 text-xs"
+      data-testid="model-map-details"
+    >
+      <div className="font-semibold text-blue-950">{node.label}</div>
+      <div className="mt-1 text-blue-800">{node.subtitle}</div>
+      <details className="mt-3" open>
+        <summary className="cursor-pointer font-medium text-blue-900">Details</summary>
+        <div className="mt-2 space-y-2 text-gray-700">
+          {node.description && <p>{node.description}</p>}
+          {node.standardVariableUri && (
+            <div>
+              <div className="font-medium">Standard variable</div>
+              <code className="break-all text-[11px]">{node.standardVariableUri}</code>
+            </div>
+          )}
+          {node.format && (
+            <div>
+              <span className="font-medium">Format:</span> {node.format}
+            </div>
+          )}
+          {node.unit && (
+            <div>
+              <span className="font-medium">Unit:</span> {node.unit}
+            </div>
+          )}
+        </div>
+      </details>
+      {node.kind === 'model' && model && (
+        <details className="mt-3" open>
+          <summary className="cursor-pointer font-medium text-blue-900">Model ports</summary>
+          <div className="mt-2 space-y-2">
+            <div>
+              <div className="font-medium">Inputs</div>
+              <div className="mt-1 space-y-1">
+                {model.needs.map((input) => (
+                  <div key={input.name}>{input.varLabels[0] ?? input.name}</div>
+                ))}
+              </div>
+            </div>
+            <div>
+              <div className="font-medium">Outputs</div>
+              <div className="mt-1 space-y-1">
+                {model.outputContracts.map((output, index) => (
+                  <div key={`${output.id}-${index}`}>
+                    {displayVariable(output.id, output.label, output.format)}
+                    {output.format && <span className="text-gray-500"> · {output.format}</span>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </details>
+      )}
+      {node.kind === 'etl' && node.transform && (
+        <details className="mt-3" open>
+          <summary className="cursor-pointer font-medium text-blue-900">ETL contracts</summary>
+          <div className="mt-2 space-y-1">
+            {node.transform.contracts.map((contract, index) => (
+              <div key={`${contract.role}-${contract.id ?? index}`}>
+                <span className="font-medium">{contract.role}:</span>{' '}
+                {displayVariable(contract.standard_variable_uri, null, contract.format)}
+                {contract.format && <span className="text-gray-500"> · {contract.format}</span>}
+                {contract.unit && <span className="text-gray-500"> · {contract.unit}</span>}
+              </div>
+            ))}
+          </div>
+        </details>
+      )}
+    </aside>
+  );
+}
+
+function modelMapCanvasLayout(
+  rowNodes: ModelMapNode[],
+  outcome: string | null,
+  outcomeLabel?: string | null,
+): {
+  positions: WorkflowCanvasPosition<ModelMapNode>[];
+  edges: WorkflowCanvasEdge[];
+  height: number;
+} {
+  const models = rowNodes.filter((node) => node.kind === 'model');
+  const branches = models.map((model) => [
+    model,
+    ...rowNodes.filter((node) => node.kind === 'etl' && node.model?.id === model.model?.id),
+  ]);
+  const branchPositions = branches.map((branch, branchIndex) =>
+    branch.map((node, nodeIndex) => ({
+      node,
+      x: 190 + nodeIndex * 230,
+      y: 56 + branchIndex * 176,
+      hasInputPort: nodeIndex > 0 || Boolean(node.model?.needs.length),
+      hasOutputPort: true,
+      inputPortSide: 'left' as const,
+      outputPortSide: 'right' as const,
+    })),
+  );
+  const positions = branchPositions.flat();
+  const positionById = new Map(positions.map((position) => [position.node.id, position]));
+  const edges: WorkflowCanvasEdge[] = branches.flatMap((branch) => {
+    const model = branch[0];
+    if (!model) return [];
+    const modelPosition = positionById.get(model.id);
+    if (!modelPosition) return [];
+    const inputLabels = model.model?.needs.map((input) => input.varLabels[0] ?? input.name) ?? [];
+    const inputStartY = Math.max(
+      28,
+      modelPosition.y + 52 - Math.max(0, inputLabels.length - 1) * 38,
+    );
+    const modelOutput = model.model?.outputContracts[0];
+    const modelOutputLabel = modelOutput
+      ? `${displayVariable(modelOutput.id, modelOutput.label, modelOutput.format)}${
+          modelOutput.format ? ` · ${modelOutput.format}` : ''
+        }`
+      : null;
+    const inputEdges = inputLabels.map((label, index) => ({
+      id: `input-${model.id}-${index + 1}`,
+      source: `input-${model.id}-${index + 1}`,
+      target: model.id,
+      from: { x: 8, y: inputStartY + index * 76 },
+      to: { x: modelPosition.x, y: modelPosition.y + 52 },
+      label,
+    }));
+    const flowEdges = branch.slice(0, -1).flatMap((node, index) => {
+      const next = branch[index + 1];
+      const position = positionById.get(node.id);
+      const nextPosition = next ? positionById.get(next.id) : undefined;
+      if (!next || !position || !nextPosition) return [];
+      const output = node.transform?.contracts.find((contract) => contract.role === 'output');
+      return {
+        id: `${node.id}-to-${next.id}`,
+        source: node.id,
+        target: next.id,
+        from: { x: position.x + WORKFLOW_NODE_WIDTH, y: position.y + 52 },
+        to: { x: nextPosition.x, y: nextPosition.y + 52 },
+        label:
+          index === 0
+            ? modelOutputLabel
+            : output
+              ? `${displayVariable(output.standard_variable_uri, null, output.format)}${
+                  output.format ? ` · ${output.format}` : ''
+                }`
+              : null,
+      };
+    });
+    const last = branch.at(-1);
+    const lastPosition = last ? positionById.get(last.id) : undefined;
+    if (!last || !lastPosition) return [...inputEdges, ...flowEdges];
+    const output = last.transform?.contracts.find((contract) => contract.role === 'output');
+    const finalLabel = output
+      ? `${displayVariable(output.standard_variable_uri, null, output.format)}${
+          output.format ? ` · ${output.format}` : ''
+        }`
+      : (modelOutputLabel ?? outcomeLabel ?? outcome);
+    return [
+      ...inputEdges,
+      ...flowEdges,
+      {
+        id: `${last.id}-to-${model.id}-outcome`,
+        source: last.id,
+        target: `outcome-${model.id}`,
+        from: { x: lastPosition.x + WORKFLOW_NODE_WIDTH, y: lastPosition.y + 52 },
+        to: { x: WORKFLOW_CANVAS_WIDTH - 16, y: lastPosition.y + 52 },
+        label: finalLabel,
+      },
+    ];
+  });
+  const height = Math.max(380, ...positions.map((position) => position.y + 150));
+  return { positions, edges, height };
+}
+
+function ModelMap({
+  rows,
+  transforms,
+  outcome,
+  outcomeLabel,
+}: {
+  rows: ModelRow[];
+  transforms: ModelOutcomeAdapterInferenceData['adapterTransforms'];
+  outcome: string | null;
+  outcomeLabel?: string | null;
+}) {
+  const mapRows = rows.filter(
+    (row) => row.producesIds.length > 0 || row.outputContracts.length > 0,
+  );
+  const mapNodes = useMemo(
+    () => mapRows.flatMap((row) => mapNodesForModel(row, transforms, outcome)),
+    [mapRows, outcome, transforms],
+  );
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const selectedNode = mapNodes.find((node) => node.id === selectedNodeId) ?? mapNodes[0];
+
+  if (mapRows.length === 0) return null;
+  const layout = modelMapCanvasLayout(mapNodes, outcome, outcomeLabel);
+
+  return (
+    <section className="mb-4 rounded border border-gray-200 bg-gray-50 p-3" data-testid="model-map">
+      <div className="mb-3">
+        <h3 className="text-sm font-semibold text-gray-900">Model map</h3>
+        <p className="text-xs text-gray-600">
+          Select a model or adapter stage to inspect its contract. SVOs are shown on the arrows.
+        </p>
+      </div>
+      <div className="space-y-3 rounded border border-gray-200 bg-white p-2">
+        <WorkflowCanvas
+          positions={layout.positions}
+          edges={layout.edges}
+          selectedId={selectedNode?.id}
+          renderNode={(node, selected) => (
+            <ModelMapNodeButton
+              node={node}
+              selected={selected}
+              onSelect={() => setSelectedNodeId(node.id)}
+            />
+          )}
+          height={layout.height}
+          markerId="model-map-arrow-combined"
+          testId="model-map-canvas"
+        />
+        {selectedNode && <ModelMapDetails node={selectedNode} />}
+      </div>
+    </section>
+  );
+}
+
 export function ModelsStep({
   thread,
   onUpdated,
   onContinue,
   onBack,
   onEditIndicator,
+  regionGeometry,
 }: ModelsStepProps) {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -186,6 +590,7 @@ export function ModelsStep({
 
   const [searchText, setSearchText] = useState('');
   const [showAllRegions, setShowAllRegions] = useState(false);
+  const [showAllDataModels, setShowAllDataModels] = useState(false);
   const [saving, setSaving] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(() => {
     const ids = new Set<string>();
@@ -205,6 +610,28 @@ export function ModelsStep({
 
   const allRows = useMemo(() => flattenToRows(data), [data]);
   const totalCount = allRows.length;
+  const candidateVariableNames = useMemo(
+    () => [
+      ...new Set(
+        allRows.flatMap((row) => row.needs.flatMap((need) => [...need.varIds, ...need.varLabels])),
+      ),
+    ],
+    [allRows],
+  );
+  const hasRegionGeometry = Array.isArray(regionGeometry)
+    ? regionGeometry.length > 0
+    : Boolean(regionGeometry);
+  const {
+    availableVariables,
+    loading: availabilityLoading,
+    error: availabilityError,
+  } = useDataCatalogVariableAvailability({
+    variableNames: candidateVariableNames,
+    regionGeometry,
+    skip:
+      allRows.length === 0 ||
+      (Array.isArray(regionGeometry) ? regionGeometry.length === 0 : !regionGeometry),
+  });
 
   // The stored id is a standard-variable URI (#106), which is unreadable, so
   // prefer the label the relationship carries. A thread whose relationship did
@@ -220,6 +647,7 @@ export function ModelsStep({
     limit: 100,
     filters: semanticFilters,
   });
+  const adapterTransformDetails = adapterInferenceQ.data?.adapterTransforms ?? [];
   const adapterTransforms = useMemo<ContractTransform[]>(
     () =>
       (adapterInferenceQ.data?.adapterTransforms ?? []).map((process) => ({
@@ -257,22 +685,51 @@ export function ModelsStep({
         : allRows,
     [allRows, indicator, inferredModelIds],
   );
+  const dataFeasibleRows = useMemo(() => {
+    if (!hasRegionGeometry || availabilityLoading || availabilityError) return indicatorRows;
+    return indicatorRows.filter((row) =>
+      row.needs
+        .filter((need) => !need.optional)
+        .every(
+          (need) =>
+            (need.varIds.length === 0 && need.varLabels.length === 0) ||
+            [...need.varIds, ...need.varLabels].some((name) => availableVariables.has(name)),
+        ),
+    );
+  }, [
+    availabilityError,
+    availabilityLoading,
+    availableVariables,
+    hasRegionGeometry,
+    indicatorRows,
+  ]);
+  const unavailableModelCount = Math.max(indicatorRows.length - dataFeasibleRows.length, 0);
+  const dataFilteredRows = useMemo(() => {
+    if (showAllDataModels) return indicatorRows;
+    const visible = new Map(dataFeasibleRows.map((row) => [row.id, row]));
+    // Keep an already-selected model visible so a scope change never hides the
+    // user's selection or makes it impossible to remove before continuing.
+    for (const row of indicatorRows) {
+      if (selectedIds.has(row.id)) visible.set(row.id, row);
+    }
+    return [...visible.values()];
+  }, [dataFeasibleRows, indicatorRows, selectedIds, showAllDataModels]);
 
   const localSearchedRows = useMemo(() => {
-    if (!searchText.trim()) return indicatorRows;
+    if (!searchText.trim()) return dataFilteredRows;
     const q = searchText.toLowerCase();
-    return indicatorRows.filter(
+    return dataFilteredRows.filter(
       (r) =>
         r.name.toLowerCase().includes(q) ||
         (r.description ?? '').toLowerCase().includes(q) ||
         r.region.toLowerCase().includes(q),
     );
-  }, [indicatorRows, searchText]);
+  }, [dataFilteredRows, searchText]);
 
   const searchedRows = useMemo(() => {
     if (!debouncedSearchText.trim() || !semanticSearch.results) return localSearchedRows;
     const rankById = new Map(semanticSearch.results.map((result, index) => [result.id, index]));
-    return indicatorRows
+    return dataFilteredRows
       .map((row) => ({
         row,
         rank: Math.min(
@@ -284,7 +741,7 @@ export function ModelsStep({
       .filter((item) => Number.isFinite(item.rank))
       .sort((a, b) => a.rank - b.rank)
       .map((item) => item.row);
-  }, [debouncedSearchText, indicatorRows, localSearchedRows, semanticSearch.results]);
+  }, [dataFilteredRows, debouncedSearchText, localSearchedRows, semanticSearch.results]);
 
   const threadRegionId = thread.region_id ?? null;
   const { regionRows, otherRows } = useMemo(() => {
@@ -357,8 +814,13 @@ export function ModelsStep({
           {
             icon: '🎯',
             label: 'Desired outcome',
-            value: `${indicatorRows.length} of ${totalCount} models`,
-            source: indicatorLabel ? `produces or transforms to ${indicatorLabel}` : undefined,
+            value:
+              dataFilteredRows.length === totalCount
+                ? `all ${totalCount} models`
+                : `${dataFilteredRows.length} of ${totalCount} models`,
+            source: indicatorLabel
+              ? `produces or transforms to ${indicatorLabel}`
+              : 'compatible with available data',
           },
         ],
       }
@@ -367,7 +829,11 @@ export function ModelsStep({
           {
             icon: '🎯',
             label: 'Desired outcome',
-            value: `all ${totalCount} models`,
+            value:
+              dataFilteredRows.length === totalCount
+                ? `all ${totalCount} models`
+                : `${dataFilteredRows.length} of ${totalCount} models`,
+            source: 'compatible with available data',
           },
         ],
       };
@@ -396,6 +862,37 @@ export function ModelsStep({
         onEdit={indicator ? onEditIndicator : undefined}
         editLabel="edit outcome"
       />
+
+      <ModelMap
+        rows={allRows.filter((row) => selectedIds.has(row.id))}
+        transforms={adapterTransformDetails}
+        outcome={indicator}
+        outcomeLabel={indicatorLabel}
+      />
+
+      {!availabilityLoading && !availabilityError && unavailableModelCount > 0 && (
+        <div className="mb-3 rounded border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-900">
+          {unavailableModelCount} model candidate{unavailableModelCount === 1 ? '' : 's'} have no
+          usable input data for this spatial scope.
+          <button
+            type="button"
+            onClick={() => setShowAllDataModels((value) => !value)}
+            className="ml-1 underline"
+          >
+            {showAllDataModels ? 'Show feasible models only' : 'Show all model candidates'}
+          </button>
+        </div>
+      )}
+      {availabilityLoading && (
+        <p className="mb-3 text-xs text-gray-500">
+          Checking data availability for this spatial scope…
+        </p>
+      )}
+      {availabilityError && (
+        <p className="mb-3 text-xs text-amber-700">
+          Data availability could not be checked; showing all compatible models.
+        </p>
+      )}
 
       {indicator && !loading && !error && incompatibleSelectedRows.length > 0 && (
         <div

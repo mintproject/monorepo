@@ -8,10 +8,10 @@ afterEach(() => {
 });
 
 describe('Footer', () => {
-  it('credits MINT and links to the project site', () => {
+  it('credits DYNAMO and links to the project site', () => {
     render(<Footer />);
     expect(screen.getByText(/Powered by/)).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'MINT' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'DYNAMO' })).toHaveAttribute(
       'href',
       'http://mint-project.info/index.html',
     );

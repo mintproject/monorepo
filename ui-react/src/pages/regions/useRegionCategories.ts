@@ -13,7 +13,7 @@ interface CategoryItem {
  *  - subcategoriesFor(categoryId): subcategories of the given category
  */
 export function useListRegionCategoriesWithHierarchy() {
-  const { data, loading, error } = useListRegionCategoriesQuery();
+  const { data, loading, error, refetch } = useListRegionCategoriesQuery();
 
   const { categories, subCategoryMap } = useMemo(() => {
     if (!data?.region_category) {
@@ -64,5 +64,5 @@ export function useListRegionCategoriesWithHierarchy() {
     });
   };
 
-  return { categories, subcategoriesFor, categoryById, loading, error };
+  return { categories, subcategoriesFor, categoryById, loading, error, refetch };
 }

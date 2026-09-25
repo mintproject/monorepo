@@ -315,6 +315,16 @@ describe('StandardVariableCombobox scope', () => {
     expect(screen.getByText('soil__porosity')).toBeInTheDocument();
   });
 
+  it('places preferred variables before the alphabetical catalog order', async () => {
+    renderCombobox({ preferredIds: ['sv-poro', 'sv-draw'] });
+    await openList();
+    await waitFor(() => expect(screen.getByText('soil__porosity')).toBeInTheDocument());
+
+    const labels = screen.getAllByRole('option').map((option) => option.textContent);
+    expect(labels[0]).toContain('soil__porosity');
+    expect(labels[1]).toContain('drawdown');
+  });
+
   it('offers only producible variables under scope="indicator"', async () => {
     renderCombobox({ scope: 'indicator' });
     await openList();

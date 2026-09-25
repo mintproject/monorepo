@@ -18,6 +18,8 @@ import {
   executionEnginePath,
   fetchExecutionFiles,
   fetchExecutionLog,
+  fetchRunHistory,
+  fetchRunHistoryDetail,
   publishExecution,
   publishResults,
   submitRuns,
@@ -123,6 +125,40 @@ describe('ensemble-manager', () => {
       await expect(
         submitRuns('http://ensemble', 'tapis', { thread_id: 't', model_id: 'm' }),
       ).rejects.toThrow('Ensemble manager returned 401');
+    });
+  });
+
+  describe('run history', () => {
+    it('reads a bounded history page with encoded filters and auth', async () => {
+      storeTokens({ accessToken: 'history-token' });
+      (globalThis.fetch as unknown as Mock).mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve({ schema_version: 1, runs: [], next_cursor: null }),
+      });
+
+      await fetchRunHistory('http://ensemble/v1', 'thread/1', {
+        modelId: 'model/1',
+        limit: 10,
+        cursor: 'cursor/1',
+      });
+
+      const [url, init] = lastRequest();
+      expect(url).toBe(
+        'http://ensemble/v1/threads/thread%2F1/runs?model_id=model%2F1&limit=10&cursor=cursor%2F1',
+      );
+      expect(init.headers).toMatchObject({ Authorization: 'Bearer history-token' });
+    });
+
+    it('reads a detail packet without treating the run key as a path', async () => {
+      (globalThis.fetch as unknown as Mock).mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve({ schema_version: 1, run_key: 'opaque' }),
+      });
+
+      await fetchRunHistoryDetail('http://ensemble/v1', 'thread/1', 'run/key');
+      expect(lastRequest()[0]).toBe('http://ensemble/v1/threads/thread%2F1/runs/run%2Fkey');
     });
   });
 

@@ -32,7 +32,7 @@ describe('AppHome', () => {
     setMintConfig();
 
     renderAnonymous();
-    expect(screen.getByText('Welcome to MINT Model Catalog')).toBeInTheDocument();
+    expect(screen.getByText('Welcome to DYNAMO Model Catalog')).toBeInTheDocument();
   });
 
   // ─── Lane A: Explore ───────────────────────────────────────────────────────
@@ -57,7 +57,7 @@ describe('AppHome', () => {
 
   it('labels the two lanes so the sidebar grouping is visible on arrival', () => {
     renderAnonymous();
-    expect(screen.getByRole('heading', { name: /explore what is in mint/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /explore what is in dynamo/i })).toBeInTheDocument();
     expect(
       screen.getByRole('heading', { name: /answer a question with models/i }),
     ).toBeInTheDocument();
@@ -73,7 +73,7 @@ describe('AppHome', () => {
 
   it('frames the tool with the questions it is built for', () => {
     renderAnonymous();
-    expect(screen.getByText('Questions MINT is built for:')).toBeInTheDocument();
+    expect(screen.getByText('Questions DYNAMO is built for:')).toBeInTheDocument();
     expect(screen.getByText(/will the harvest fall if the rains are late/i)).toBeInTheDocument();
   });
 

@@ -5,6 +5,8 @@ import { useAuth } from '@/lib/auth/useAuth';
 
 import { cn } from '@/lib/utils';
 
+import { BrandingStrip } from './BrandingStrip';
+
 interface HeaderProps {
   sidebarCollapsed: boolean;
   onToggleSidebar: () => void;
@@ -24,7 +26,7 @@ export function Header({ sidebarCollapsed, onToggleSidebar }: HeaderProps) {
   return (
     <header
       className={cn(
-        'mint-chrome flex h-[50px] shrink-0 items-center justify-between px-4',
+        'mint-chrome relative flex h-[50px] shrink-0 items-center justify-between px-4',
         'border-b border-[color:var(--mint-chrome-rule)] bg-[color:var(--mint-chrome-bg)]',
         'font-[family-name:var(--mint-chrome-font)] text-[13px] text-[color:var(--mint-chrome-fg)]',
       )}
@@ -39,8 +41,10 @@ export function Header({ sidebarCollapsed, onToggleSidebar }: HeaderProps) {
         >
           <Menu className="h-5 w-5" />
         </Button>
-        <span className="text-base font-medium leading-none">MINT Model Catalog</span>
+        <span className="text-base font-medium leading-none">DYNAMO Model Catalog</span>
       </div>
+
+      <BrandingStrip inline />
 
       <div className="flex items-center gap-3">
         {isAuthenticated ? (

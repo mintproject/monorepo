@@ -1,12 +1,20 @@
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import userEvent from '@testing-library/user-event';
-import { renderWithProviders, screen } from '@/test/utils/render';
+import { renderWithProviders, screen, waitFor } from '@/test/utils/render';
 import type { Thread } from '@/graphql/generated/modeling';
 import {
   GetDriverVariableOptionsDocument,
   GetIndicatorVariableOptionsDocument,
 } from '@/graphql/generated/graphql';
 import { VariablesStep } from '../VariablesStep';
+
+const { recommendProblemStatement } = vi.hoisted(() => ({
+  recommendProblemStatement: vi.fn(),
+}));
+
+vi.mock('@/lib/modeling/problemStatementRecommendations', () => ({
+  recommendProblemStatement,
+}));
 
 /** Each picker asks a different query; the footer names which list it got. */
 const scopeMocks = [
@@ -19,6 +27,14 @@ const scopeMocks = [
     result: { data: { inputs: [], adjusted: [] } },
   },
 ];
+
+beforeEach(() => {
+  recommendProblemStatement.mockReset();
+  recommendProblemStatement.mockResolvedValue({
+    status: 'empty',
+    results: { svo: [], model_configuration: [] },
+  });
+});
 
 function makeThread(overrides: Partial<Thread> = {}): Thread {
   return {
@@ -112,6 +128,46 @@ describe('VariablesStep', () => {
     );
     expect(screen.getByText('Desired outcome (response variable)')).toBeInTheDocument();
     expect(screen.getByText('Potential driver')).toBeInTheDocument();
+  });
+
+  it('uses the task name and framing goal to rank response variables', async () => {
+    recommendProblemStatement.mockResolvedValue({
+      status: 'ok',
+      results: {
+        svo: [
+          {
+            id: 'sv-head',
+            label: 'Groundwater hydraulic head',
+            description: 'Water level',
+          },
+        ],
+        model_configuration: [],
+      },
+    });
+    renderWithProviders(
+      <VariablesStep
+        thread={makeThread({ name: 'Understand groundwater availability' })}
+        taskName="Groundwater availability study"
+        onUpdated={vi.fn()}
+        onContinue={vi.fn()}
+        onBack={vi.fn()}
+      />,
+    );
+
+    await waitFor(() => expect(recommendProblemStatement).toHaveBeenCalledTimes(1));
+    expect(recommendProblemStatement).toHaveBeenCalledWith(
+      {
+        title: 'Groundwater availability study',
+        description: 'Understand groundwater availability',
+        goals: ['Understand groundwater availability'],
+        region_id: null,
+        start_date: '2000-01-01',
+        end_date: '2026-01-01',
+        limit: 10,
+      },
+      { signal: expect.any(AbortSignal) },
+    );
+    expect(screen.queryByRole('button', { name: /find suggestions/i })).not.toBeInTheDocument();
   });
 
   // ── Scoping the two pickers (monorepo#103) ────────────────────────────────

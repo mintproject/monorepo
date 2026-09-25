@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useQuery } from '@apollo/client';
 
 import {
   Thread,
@@ -7,21 +6,23 @@ import {
   useUpdateThreadMutation,
   useInsertThreadProvenanceMutation,
 } from '@/graphql/generated/modeling';
-import { LIST_TOP_REGIONS } from '@/graphql/queries/regions';
 import { useAuth } from '@/lib/auth/useAuth';
 import { useToast } from '@/components/ui/use-toast';
 import { StepShell } from './StepShell';
+import {
+  SpatialScopeMap,
+  type SpatialFeatureSelection,
+  type SpatialLayerSelection,
+  type SpatialSelection,
+} from '../SpatialScopeMap';
 
 interface FramingStepProps {
   thread: Thread;
   onUpdated: () => void;
   onContinue: () => void;
   onBack?: () => void;
-}
-
-interface RegionOption {
-  id: string;
-  name: string;
+  spatialSelection?: SpatialSelection | null;
+  onSpatialSelectionChange?: (selection: SpatialSelection | null) => void;
 }
 
 function fmtDate(iso?: string | null): string {
@@ -29,7 +30,14 @@ function fmtDate(iso?: string | null): string {
   return iso.split('T')[0] ?? iso;
 }
 
-export function FramingStep({ thread, onUpdated, onContinue, onBack }: FramingStepProps) {
+export function FramingStep({
+  thread,
+  onUpdated,
+  onContinue,
+  onBack,
+  spatialSelection,
+  onSpatialSelectionChange,
+}: FramingStepProps) {
   const { user } = useAuth();
   const { toast } = useToast();
   const perm = getUserPermission(thread.permissions, thread.events, user?.username ?? null);
@@ -49,9 +57,6 @@ export function FramingStep({ thread, onUpdated, onContinue, onBack }: FramingSt
     setStartDate(fmtDate(thread.start_date));
     setEndDate(fmtDate(thread.end_date));
   }, [thread]);
-
-  const { data: regionsData } = useQuery<{ region: RegionOption[] }>(LIST_TOP_REGIONS);
-  const regions = regionsData?.region ?? [];
 
   const [updateThread] = useUpdateThreadMutation();
   const [insertProvenance] = useInsertThreadProvenanceMutation();
@@ -127,7 +132,7 @@ export function FramingStep({ thread, onUpdated, onContinue, onBack }: FramingSt
             Narrow the data — optional
           </legend>
 
-          {/* Region toggle */}
+          {/* Spatial boundary toggle */}
           <div className="space-y-2">
             <label className="flex items-center gap-2 font-medium">
               <input
@@ -135,35 +140,42 @@ export function FramingStep({ thread, onUpdated, onContinue, onBack }: FramingSt
                 data-testid="toggle-region"
                 checked={regionOn}
                 disabled={readOnly}
-                onChange={(e) => setRegionOn(e.target.checked)}
+                onChange={(e) => {
+                  setRegionOn(e.target.checked);
+                  if (!e.target.checked) onSpatialSelectionChange?.(null);
+                }}
               />
-              Region{' '}
+              Spatial boundary{' '}
               {!regionOn && (
-                <span className="text-xs font-normal text-gray-400">off · any region</span>
+                <span className="text-xs font-normal text-gray-400">off · any boundary</span>
               )}
             </label>
-            {regionOn && (
-              <div className="space-y-1 pl-6">
-                <select
-                  aria-label="Select a region"
-                  value={regionId}
-                  disabled={readOnly}
-                  onChange={(e) => setRegionId(e.target.value)}
-                  className="w-full rounded border border-gray-300 px-2 py-1.5"
-                >
-                  <option value="">Any region</option>
-                  {regions.map((r) => (
-                    <option key={r.id} value={r.id}>
-                      {r.name}
-                    </option>
-                  ))}
-                </select>
-                {/* TODO(map-preview): render selected region extent on a small map (deferred). */}
-                <p className="text-xs text-blue-600">
-                  ⌖ Datasets will be filtered to those covering this region
-                </p>
-              </div>
-            )}
+            <div className="space-y-1 pl-6">
+              <SpatialScopeMap
+                geometries={(thread.region?.geometries ?? [])
+                  .map((geometry) => geometry.geometry)
+                  .filter(Boolean)}
+                label={spatialSelection?.feature?.label ?? thread.region?.name ?? regionId}
+                scopeId={spatialSelection?.feature?.filterValue ?? regionId}
+                sourceUri={spatialSelection?.layer?.source_uri ?? spatialSelection?.layer?.uri}
+                filterField={spatialSelection?.feature?.filterField}
+                filterValue={spatialSelection?.feature?.filterValue}
+                disabled={readOnly}
+                onLayerSelect={(layer: SpatialLayerSelection) => {
+                  if (regionOn) onSpatialSelectionChange?.({ layer });
+                }}
+                onFeatureSelect={(feature: SpatialFeatureSelection) => {
+                  setRegionOn(true);
+                  onSpatialSelectionChange?.({
+                    layer: feature.layer ?? spatialSelection?.layer,
+                    feature,
+                  });
+                }}
+              />
+              <p className="text-xs text-blue-600">
+                ⌖ Datasets and adapter transforms will use the selected spatial boundary
+              </p>
+            </div>
           </div>
 
           {/* Dates toggle */}

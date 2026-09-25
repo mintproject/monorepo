@@ -21,7 +21,9 @@ export function getRuntimeConfig() {
       DATA_CATALOG_API: import.meta.env.VITE_DATA_CATALOG_API ?? 'https://ckan.tacc.utexas.edu',
       DATA_CATALOG_BROWSE_URL:
         import.meta.env.VITE_DATA_CATALOG_BROWSE_URL ?? 'https://ckan.tacc.utexas.edu',
+      MODEL_CATALOG_API: import.meta.env.VITE_MODEL_CATALOG_API ?? 'http://localhost:3002/v2.0.0',
       SEMANTIC_SEARCH_API: import.meta.env.VITE_SEMANTIC_SEARCH_API ?? 'http://localhost:8091',
+      SVO_ADAPTER_API: import.meta.env.VITE_SVO_ADAPTER_API ?? '',
     }
   );
 }
@@ -57,6 +59,12 @@ export function getModelCatalogApiUrl(): string {
  */
 export function getSemanticSearchApiUrl(): string {
   const url = getRuntimeConfig().SEMANTIC_SEARCH_API ?? 'http://localhost:8091';
+  return url.replace(/\/$/, '');
+}
+
+/** Returns the SVO adapter API base URL used by the spatial-layer catalog. */
+export function getSvoAdapterApiUrl(): string {
+  const url = getRuntimeConfig().SVO_ADAPTER_API ?? '';
   return url.replace(/\/$/, '');
 }
 

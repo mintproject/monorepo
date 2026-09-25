@@ -10,6 +10,7 @@ import { CatalogService } from './service.js'
 import { SecurityHandler } from './security.js'
 import { fileURLToPath } from 'url'
 import path from 'path'
+import { regionImportBodyLimit } from './region-import.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const OPENAPI_SPEC_PATH = path.join(__dirname, '..', 'openapi.yaml')
@@ -69,6 +70,7 @@ function loadSpecWithoutResponseSchemas(): Record<string, unknown> {
 
 export async function buildApp() {
   const app = Fastify({
+    bodyLimit: regionImportBodyLimit(),
     logger: {
       level: process.env.LOG_LEVEL || 'info',
     },

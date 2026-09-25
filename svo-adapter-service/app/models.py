@@ -67,6 +67,7 @@ class DataObjectVariableIn(BaseModel):
 
 
 class DataObjectIn(BaseModel):
+    id: str | None = None
     label: str
     description: str | None = None
     resource_uri: str
@@ -76,6 +77,11 @@ class DataObjectIn(BaseModel):
     mime_type: str | None = None
     checksum: str | None = None
     source_catalog: str | None = None
+    # Set only by the server-owned model-output handoff. Catalog objects leave
+    # these fields empty and remain globally discoverable.
+    owner_execution_id: str | None = None
+    owner_model_child_id: str | None = None
+    owner_tenant: str | None = None
     variables: list[DataObjectVariableIn] = Field(default_factory=list)
 
 
@@ -93,6 +99,23 @@ class PlanIn(BaseModel):
     target_model_configuration_id: str | None = None
     target_dataset_specification_id: str | None = None
     target_contract: DataObjectContract | None = None
+
+
+class DeferredPlanIn(BaseModel):
+    """Plan an adapter chain before its model-output source exists."""
+
+    source_contract: DataObjectContract
+    target_dataset_specification_id: str | None = None
+    target_contract: DataObjectContract | None = None
+    model_output_key: str
+
+
+class BindDeferredPlanIn(BaseModel):
+    data_object_id: str
+    plan_hash: str
+    parent_execution_id: str
+    model_child_id: str
+    parameter_values_hash: str
 
 
 class TransformContractIn(BaseModel):
@@ -155,9 +178,14 @@ class SubmitWorkflowIn(BaseModel):
     run_name: str | None = None
     recreate: bool = False  # delete + recreate the pipeline so task changes re-sync
     dry_run: bool = False   # register/generate only; do not trigger a run
+    # Server-generated model task for a composite MINT run. This is deliberately
+    # an opaque provider job definition: the Ensemble Manager builds it from the
+    # catalog and strips credentials before handing it to the adapter.
+    model_task: dict[str, Any] | None = None
     # When set, the poller will auto-bind the run's output to this EM execution
     # on completion (upserts resource + execution_data_binding rows).
     execution_id: str | None = None
+    idempotency_key: str | None = None
 
 
 class RegisterOutputIn(BaseModel):

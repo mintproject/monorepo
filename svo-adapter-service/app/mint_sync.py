@@ -23,6 +23,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from .config import settings
+from .etl_contract import mint_label_mapping
 
 log = logging.getLogger(__name__)
 
@@ -39,31 +40,6 @@ _PARAM_CONVENTION: dict[str, tuple[str, str]] = {
     "source_unit":     ("SOURCE_UNIT",     "source_unit"),
     "target_unit":     ("TARGET_UNIT",     "target_unit"),
     "variable_name":   ("VARIABLE_NAME",   "variable_name"),
-    "model_layer":     ("LAYER",           "model_layer"),
-    "tapis_token":     ("TAPIS_TOKEN",     "tapis_token"),
-    "geo_actor_id":    ("GEO_ACTOR_ID",    "geo_actor_id"),
-    "gma_id":          ("GMA_ID",           "gma_id"),
-    "gma boundary uri":("GMA_BOUNDARY_URI", "gma_boundary_uri"),
-    "gma_boundary_uri":("GMA_BOUNDARY_URI", "gma_boundary_uri"),
-    "county_name":     ("COUNTY_NAME",      "county_name"),
-    "county name":     ("COUNTY_NAME",      "county_name"),
-    "gcd_name":        ("GCD_NAME",         "gcd_name"),
-    "gcd name":        ("GCD_NAME",         "gcd_name"),
-    "boundary_query_value": ("BOUNDARY_QUERY_VALUE", "boundary_query_value"),
-    "boundary query value": ("BOUNDARY_QUERY_VALUE", "boundary_query_value"),
-    "aquifer":         ("AQUIFER",          "aquifer"),
-    "baseline_year":   ("BASELINE_YEAR",    "baseline_year"),
-    "baseline year":   ("BASELINE_YEAR",    "baseline_year"),
-    "target_year":     ("TARGET_YEAR",      "target_year"),
-    "target year":     ("TARGET_YEAR",      "target_year"),
-    "stress_period":   ("STRESS_PERIOD",    "stress_period"),
-    "stress period":   ("STRESS_PERIOD",    "stress_period"),
-    "timestep":        ("TIMESTEP",         "timestep"),
-    # ── Temporal range ───────────────────────────────────────────────────────
-    "start year":      ("START_YEAR",      "start_year"),
-    "end year":        ("END_YEAR",        "end_year"),
-    "start_year":      ("START_YEAR",      "start_year"),
-    "end_year":        ("END_YEAR",        "end_year"),
     # ── MODFLOW run control ──────────────────────────────────────────────────
     "baseline data directory": ("BASELINE_DATA_DIR", "baseline_data_dir"),
     # ── Subside-forecast physical parameters (subside-forecast-cfg) ──────────
@@ -156,6 +132,16 @@ def _build_env_from_args(
 ) -> dict[str, str]:
     """Map MINT parameter labels to env_from_args via the convention table."""
     result: dict[str, str] = {}
+    labels = {
+        str((wrapper.get("parameter") or wrapper).get("label") or "").strip().lower()
+        for wrapper in parameters
+    }
+    has_primary_geometry_uri = bool(
+        labels & {
+            "gma boundary uri", "gma_boundary_uri", "geometry source uri",
+            "geometry_source_uri", "location file uri", "location_file_uri",
+        }
+    )
     for param_wrapper in parameters:
         p = param_wrapper.get("parameter") or param_wrapper
         label = (p.get("label") or "").strip().lower()
@@ -163,7 +149,7 @@ def _build_env_from_args(
             continue
         if p.get("has_fixed_value"):
             continue
-        convention = _PARAM_CONVENTION.get(label)
+        convention = mint_label_mapping(label) or _PARAM_CONVENTION.get(label)
         if convention is None:
             warnings.append(
                 f"{config_id}: parameter {label!r} has no convention mapping — "
@@ -172,6 +158,15 @@ def _build_env_from_args(
             )
             continue
         env_var, arg_name = convention
+        # A DFC ETL may declare two spatial URIs (primary GMA + area overlay).
+        # Keep the second one distinct instead of overwriting the canonical
+        # primary source mapping.
+        if (
+            arg_name == "geometry_source_uri"
+            and has_primary_geometry_uri
+            and label in {"dfc area boundary uri", "dfc_area_boundary_uri"}
+        ):
+            env_var, arg_name = "DFC_AREA_BOUNDARY_URI", "dfc_area_boundary_uri"
         result[env_var] = arg_name
     return result
 

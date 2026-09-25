@@ -14,6 +14,8 @@ export const STATE = {
 
   // Runtime
   RUNTIME_DEFAULTS: {},
+  SPATIAL_LAYER_OPTIONS: [],
+  ETL_COMMON_VARIABLES: [],
   IS_DEMO: false,
   CASE_KEY: 'dfc',
 

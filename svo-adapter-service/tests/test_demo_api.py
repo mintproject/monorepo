@@ -81,12 +81,22 @@ def test_end_to_end_demo():
     # 5) submit dry-run: registers + returns the definition, no Tapis trigger.
     sub = client.post("/workflows/submit", json={
         "plan_id": plan_id, "dry_run": True,
+        "idempotency_key": "demo-idempotency-key",
         "args": {"start_date": "2024-01-01", "end_date": "2025-01-01",
                  "allocation": "PT2050-DataX", "aoi_geojson_uri": "tapis://ls6/demo/aoi.geojson"},
     }, headers={"Authorization": "Bearer test-tapis-token"}).json()
     assert sub["status"] == "generated"
     assert "tapis_token" not in sub["args"]
     run_id = sub["run_id"]
+
+    replay = client.post(
+        "/workflows/submit",
+        json={"plan_id": plan_id, "dry_run": True, "idempotency_key": "demo-idempotency-key"},
+        headers={"Idempotency-Key": "demo-idempotency-key"},
+    )
+    assert replay.status_code == 200
+    assert replay.json()["run_id"] == run_id
+    assert replay.json()["idempotent_replay"] is True
 
     # the run is persisted + fetchable (what the UI polls).
     run = client.get(f"/runs/{run_id}").json()

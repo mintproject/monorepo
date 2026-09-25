@@ -7,7 +7,7 @@ import { useCatalogCounts } from '@/hooks/useCatalogCounts';
 import { useAuth } from '@/lib/auth/useAuth';
 
 /**
- * Questions MINT exists to answer, in the words an analyst would use. They set
+ * Questions DYNAMO exists to answer, in the words an analyst would use. They set
  * the scope of the tool faster than a paragraph about it can.
  */
 const STARTER_QUESTIONS = [
@@ -20,7 +20,7 @@ function getWelcomeMessage(): string {
   return (
     window.__MINT_CONFIG__?.WELCOME_MESSAGE ??
     import.meta.env.VITE_WELCOME_MESSAGE ??
-    'Welcome to MINT Model Catalog'
+    'Welcome to DYNAMO Model Catalog'
   );
 }
 
@@ -50,7 +50,7 @@ export function AppHome() {
             : 'What do you want to do?'}
         </h1>
         <p className="max-w-[62ch] text-sm text-muted-foreground">
-          MINT connects simulation models to data so you can test what happens under different
+          DYNAMO connects simulation models to data so you can test what happens under different
           weather and climate conditions — crop yields under low rainfall, flood extent after a
           storm, water available downstream.{' '}
           <Link to="/about" className="font-medium text-foreground underline">
@@ -63,7 +63,7 @@ export function AppHome() {
         <div className="flex items-baseline gap-3 border-b pb-2">
           <span className="text-xs font-semibold text-muted-foreground">A</span>
           <h2 id="explore-heading" className="text-sm font-bold">
-            Explore what is in MINT
+            Explore what is in DYNAMO
           </h2>
           <span className="ml-auto text-xs text-muted-foreground">
             Open to everyone, no sign-in
@@ -84,7 +84,7 @@ export function AppHome() {
       <DecidePanel />
 
       <div className="flex flex-wrap items-center gap-2">
-        <span className="text-xs text-muted-foreground">Questions MINT is built for:</span>
+        <span className="text-xs text-muted-foreground">Questions DYNAMO is built for:</span>
         {STARTER_QUESTIONS.map((question) => (
           <span
             key={question}

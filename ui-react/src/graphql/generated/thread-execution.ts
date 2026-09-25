@@ -45,6 +45,7 @@ export type StandardVariableRow = { id: string; label?: string | null };
 export type DatasetSpecRow = {
   id: string;
   label?: string | null;
+  has_format?: string | null;
   presentations: Array<{
     dataset_specification_id?: string;
     presentation_id?: string;
@@ -144,6 +145,7 @@ const DATASET_SPEC_IO = gql`
   fragment thread_dataset_spec on modelcatalog_dataset_specification {
     id
     label
+    has_format
     presentations {
       dataset_specification_id
       presentation_id

@@ -8,7 +8,8 @@
  * Legacy: ui/src/screens/modeling/thread/mint-runs.ts
  */
 import { ExternalLink, FolderOpen, RefreshCw, X } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 
 import {
   Execution,
@@ -16,8 +17,14 @@ import {
   ModelExecutionsMap,
   ThreadExecutionData,
 } from '@/graphql/generated/execution';
-import { fetchExecutionLog } from '@/lib/ensemble-manager';
-import { adapterParametersComplete } from '@/lib/adapter-execution';
+import {
+  WORKFLOW_NODE_WIDTH,
+  WorkflowCanvas,
+  type WorkflowCanvasEdge,
+  type WorkflowCanvasPosition,
+} from '@/components/modeling/WorkflowCanvas';
+import { fetchExecutionLog, type UnifiedRunSnapshot } from '@/lib/ensemble-manager';
+import { adapterParametersComplete, type ThreadAdapterPlan } from '@/lib/adapter-execution';
 import { ExecutionFilesDialog } from './ExecutionFilesDialog';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -122,17 +129,616 @@ function LogDialog({ open, log, onClose }: LogDialogProps) {
   );
 }
 
+function displayStatus(status?: string | null): string {
+  if (!status) return 'pending';
+  return status.replace(/_/g, ' ');
+}
+
+type WorkflowStageState = 'success' | 'failure' | 'running' | 'pending' | 'not-required';
+
+function workflowStageClass(state: WorkflowStageState): string {
+  if (state === 'success') return 'border-green-200 bg-green-50 text-green-800';
+  if (state === 'failure') return 'border-red-200 bg-red-50 text-red-800';
+  if (state === 'running') return 'border-blue-200 bg-blue-50 text-blue-800';
+  if (state === 'not-required') return 'border-gray-200 bg-gray-50 text-gray-500';
+  return 'border-gray-200 bg-white text-gray-600';
+}
+
+function workflowStageLabel(state: WorkflowStageState): string {
+  if (state === 'success') return 'Completed';
+  if (state === 'failure') return 'Failed';
+  if (state === 'running') return 'Running';
+  if (state === 'not-required') return 'Not required';
+  return 'Waiting';
+}
+
+function isWorkflowFailure(status?: string | null): boolean {
+  const normalized = String(status ?? '').toLowerCase();
+  return (
+    normalized.includes('fail') ||
+    normalized.includes('unknown') ||
+    normalized.includes('cancel') ||
+    normalized === 'error'
+  );
+}
+
+function isWorkflowSuccess(status?: string | null): boolean {
+  return ['completed', 'success', 'model_succeeded'].includes(String(status ?? '').toLowerCase());
+}
+
+function workflowStageState(status?: string | null): WorkflowStageState {
+  const normalized = String(status ?? '').toLowerCase();
+  if (isWorkflowFailure(normalized)) return 'failure';
+  if (['succeeded', 'completed', 'success', 'model_succeeded'].includes(normalized))
+    return 'success';
+  if (['running', 'submitting'].includes(normalized)) return 'running';
+  return 'pending';
+}
+
+function contractValue(contract: unknown, ...keys: string[]): string | null {
+  if (!contract || typeof contract !== 'object') return null;
+  const record = contract as Record<string, unknown>;
+  for (const key of keys) {
+    if (typeof record[key] === 'string' && record[key]) return record[key] as string;
+  }
+  return null;
+}
+
+function shortContractValue(value: string | null): string {
+  if (!value) return 'SVO contract';
+  const parts = value.split(/[/:#]/).filter(Boolean);
+  return parts.at(-1) ?? value;
+}
+
+function adapterPlanTargetContract(plan: ThreadAdapterPlan): unknown {
+  const planJson = plan.plan_json as Record<string, unknown> | undefined;
+  const deferred = planJson?.post_model_adapter;
+  if (deferred && typeof deferred === 'object') {
+    return (deferred as Record<string, unknown>).target_contract;
+  }
+  return planJson?.target_contract;
+}
+
+function adapterPlanSourceContract(plan: ThreadAdapterPlan): unknown {
+  if (plan.source_contract) return plan.source_contract;
+  const planJson = plan.plan_json as Record<string, unknown> | undefined;
+  const deferred = planJson?.post_model_adapter;
+  if (deferred && typeof deferred === 'object') {
+    return (deferred as Record<string, unknown>).source_contract;
+  }
+  return planJson?.source_contract;
+}
+
+interface WorkflowGraphNode {
+  id: string;
+  label: string;
+  detail: string;
+  state: WorkflowStageState;
+  kind: 'etl' | 'model' | 'handoff';
+  contract?: string | null;
+}
+
+function WorkflowGraphNodeView({
+  node,
+  selected,
+  onSelect,
+}: {
+  node: WorkflowGraphNode;
+  selected: boolean;
+  onSelect: () => void;
+}) {
+  const kindLabel = node.kind === 'etl' ? 'SVO ETL' : node.kind === 'handoff' ? 'Handoff' : 'Model';
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      aria-pressed={selected}
+      className={`h-[128px] w-full min-w-0 overflow-hidden rounded-lg border px-3 py-2 text-left shadow-sm ${workflowStageClass(node.state)} ${
+        selected ? 'ring-2 ring-blue-300 ring-offset-1' : ''
+      } ${node.state === 'running' ? 'ring-2 ring-blue-300 ring-offset-1' : ''}`}
+      data-testid={`workflow-node-${node.id}`}
+      aria-current={node.state === 'running' ? 'step' : undefined}
+      aria-label={`${kindLabel}: ${node.label}`}
+    >
+      <div className="mb-1 flex flex-wrap items-center justify-between gap-x-2 gap-y-1 text-[10px] font-semibold uppercase tracking-wide opacity-70">
+        <span>{kindLabel}</span>
+        <span>{workflowStageLabel(node.state)}</span>
+      </div>
+      <div className="break-words font-semibold">{node.label}</div>
+      <div className="mt-1 break-words text-[11px] opacity-80">{node.detail}</div>
+    </button>
+  );
+}
+
+function WorkflowGraphDetails({ node }: { node: WorkflowGraphNode }) {
+  const kindLabel = node.kind === 'etl' ? 'SVO ETL' : node.kind === 'handoff' ? 'Handoff' : 'Model';
+  return (
+    <aside
+      className="min-w-0 rounded border border-blue-200 bg-blue-50/50 p-3 text-xs text-blue-950"
+      data-testid="workflow-graph-details"
+    >
+      <div className="break-words font-semibold">{node.label}</div>
+      <div className="mt-1 text-blue-800">
+        {kindLabel} · {workflowStageLabel(node.state)}
+      </div>
+      <details className="mt-3" open>
+        <summary className="cursor-pointer font-medium text-blue-900">Stage details</summary>
+        <div className="mt-2 space-y-2 text-gray-700">
+          <p>{node.detail}</p>
+          {node.contract && (
+            <div>
+              <div className="font-medium">SVO contract</div>
+              <code className="break-all text-[11px]">{node.contract}</code>
+            </div>
+          )}
+        </div>
+      </details>
+    </aside>
+  );
+}
+
+function WorkflowGraph({
+  run,
+  modelName,
+  adapterPlans,
+}: {
+  run: UnifiedRunSnapshot;
+  modelName?: string | null;
+  adapterPlans: ThreadAdapterPlan[];
+}) {
+  const stages = run.workflow_stages ?? [];
+  const stageFor = (id: string, fallback?: string): WorkflowStageState =>
+    workflowStageState(stages.find((stage) => stage.stage_id === id)?.status ?? fallback);
+  const prePlans = adapterPlans.filter(
+    (plan) =>
+      plan.stage !== 'post_model' &&
+      Boolean(plan.adapter_plan_id) &&
+      plan.status === 'transform_required',
+  );
+  const postPlans = adapterPlans.filter((plan) => plan.stage === 'post_model');
+  const modelStage = stageFor('model', run.status);
+  const handoffStage = stageFor('output-handoff');
+
+  const preNodes: WorkflowGraphNode[] = prePlans.map((plan, index) => {
+    const source = contractValue(
+      adapterPlanSourceContract(plan),
+      'standard_variable_uri',
+      'variable_uri',
+      'name',
+    );
+    return {
+      id: `adapter-input-${index + 1}`,
+      label: `Input ETL ${index + 1}`,
+      detail: plan.adapter_plan_id ? 'Adapter plan selected' : 'Source already compatible',
+      state: stageFor(`adapter-input-${index + 1}`, plan.status),
+      kind: 'etl',
+      contract: source,
+    };
+  });
+
+  const postNodes: WorkflowGraphNode[] = postPlans.map((plan, index) => {
+    const target = contractValue(
+      adapterPlanTargetContract(plan),
+      'standard_variable_uri',
+      'variable_uri',
+      'name',
+    );
+    return {
+      id: `adapter-output-${index + 1}`,
+      label: `Output ETL ${index + 1}`,
+      detail: plan.adapter_plan_id ? 'SVO transformation' : 'Output mapping',
+      state:
+        modelStage === 'failure'
+          ? 'failure'
+          : modelStage !== 'success'
+            ? 'pending'
+            : stageFor(`adapter-output-${index + 1}`, run.status),
+      kind: 'etl',
+      contract: target,
+    };
+  });
+
+  const modelNode: WorkflowGraphNode = {
+    id: 'model',
+    label: modelName || 'Model application',
+    detail: 'Provider job inside this workflow',
+    state: modelStage,
+    kind: 'model',
+  };
+  const handoffNode: WorkflowGraphNode = {
+    id: 'output-handoff',
+    label: 'Output handoff',
+    detail: 'Register model output for the next stage',
+    state: handoffStage,
+    kind: 'handoff',
+  };
+  const showHandoff =
+    postNodes.length > 0 || stages.some((stage) => stage.type === 'output_handoff');
+  const currentNode = [
+    ...preNodes,
+    modelNode,
+    ...(showHandoff ? [handoffNode] : []),
+    ...postNodes,
+  ].find((node) => node.state === 'running');
+  const sourceContract = postPlans[0]
+    ? contractValue(
+        adapterPlanSourceContract(postPlans[0]),
+        'standard_variable_uri',
+        'variable_uri',
+        'name',
+      )
+    : null;
+  const targetContract = postPlans[0]
+    ? contractValue(
+        adapterPlanTargetContract(postPlans[0]),
+        'standard_variable_uri',
+        'variable_uri',
+        'name',
+      )
+    : null;
+
+  const graphNodes = [...preNodes, modelNode, ...(showHandoff ? [handoffNode] : []), ...postNodes];
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const selectedNode =
+    graphNodes.find((node) => node.id === selectedNodeId) ?? currentNode ?? modelNode;
+  const workflowLayoutOptions = useMemo(() => ({ nodeHeight: 128 }), []);
+  const flowX = preNodes.length > 0 ? 260 : 24;
+  const flowStartY = Math.max(24, 24 + Math.max(0, preNodes.length - 1) * 48);
+  const flowNodes = [modelNode, ...(showHandoff ? [handoffNode] : []), ...postNodes];
+  const prePositions: WorkflowCanvasPosition<WorkflowGraphNode>[] = preNodes.map((node, index) => ({
+    node,
+    x: 24,
+    y: 24 + index * 96,
+    hasInputPort: false,
+    hasOutputPort: true,
+    outputPortSide: 'right',
+  }));
+  const flowPositions: WorkflowCanvasPosition<WorkflowGraphNode>[] = flowNodes.map(
+    (node, index) => ({
+      node,
+      x: flowX,
+      y: flowStartY + index * 148,
+      hasInputPort: index > 0 || preNodes.length > 0,
+      hasOutputPort: index < flowNodes.length - 1,
+      inputPortSide: index === 0 ? 'left' : 'top',
+      outputPortSide: index < flowNodes.length - 1 ? 'bottom' : 'right',
+    }),
+  );
+  const canvasPositions = [...prePositions, ...flowPositions];
+  const canvasEdges: WorkflowCanvasEdge[] = [
+    ...prePositions.map((position) => ({
+      id: `${position.node.id}-to-model`,
+      source: position.node.id,
+      target: modelNode.id,
+      from: { x: position.x + WORKFLOW_NODE_WIDTH, y: position.y + 56 },
+      to: { x: flowX, y: flowStartY + 64 },
+      label: position.node.contract,
+    })),
+    ...flowPositions.slice(0, -1).flatMap((position, index) => {
+      const next = flowPositions[index + 1];
+      if (!next) return [];
+      return {
+        id: `${position.node.id}-to-${next.node.id}`,
+        source: position.node.id,
+        target: next.node.id,
+        from: { x: position.x + WORKFLOW_NODE_WIDTH / 2, y: position.y + 128 },
+        to: { x: next.x + WORKFLOW_NODE_WIDTH / 2, y: next.y },
+        label:
+          position.node.kind === 'model'
+            ? sourceContract
+            : (position.node.contract ?? next.node.contract),
+      };
+    }),
+  ];
+  const canvasHeight = Math.max(380, ...canvasPositions.map((position) => position.y + 150));
+
+  return (
+    <div className="rounded border border-blue-200 bg-white px-3 py-3" data-testid="workflow-graph">
+      <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
+        <div>
+          <div className="font-semibold text-blue-950">Execution graph</div>
+          <div className="text-[11px] text-blue-700">
+            SVO contracts label the arrows between the model, handoff, and ETL stages.
+          </div>
+        </div>
+        <div className="text-[11px] text-blue-800">
+          Current step:{' '}
+          <span className="font-semibold">
+            {currentNode
+              ? `${currentNode.label} · ${workflowStageLabel(currentNode.state)}`
+              : 'Waiting'}
+          </span>
+        </div>
+      </div>
+      <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_280px]">
+        <WorkflowCanvas
+          positions={canvasPositions}
+          edges={canvasEdges}
+          selectedId={selectedNode?.id}
+          renderNode={(node, selected) => (
+            <WorkflowGraphNodeView
+              node={node}
+              selected={selected}
+              onSelect={() => setSelectedNodeId(node.id)}
+            />
+          )}
+          height={canvasHeight}
+          layoutOptions={workflowLayoutOptions}
+          markerId={`workflow-graph-arrow-${run.run_id ?? 'current'}`}
+          testId="workflow-graph-canvas"
+        />
+        {selectedNode && <WorkflowGraphDetails node={selectedNode} />}
+      </div>
+      {sourceContract || targetContract ? (
+        <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-dashed border-blue-200 pt-2 text-[11px] text-blue-800">
+          <span className="font-semibold">SVO contract path</span>
+          {sourceContract && (
+            <code className="rounded bg-blue-50 px-1.5 py-1">
+              {shortContractValue(sourceContract)}
+            </code>
+          )}
+          {sourceContract && targetContract && <span aria-hidden="true">→</span>}
+          {targetContract && (
+            <code className="rounded bg-blue-50 px-1.5 py-1">
+              {shortContractValue(targetContract)}
+            </code>
+          )}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+interface UnifiedExecutionPanelProps {
+  run: UnifiedRunSnapshot;
+  modelName?: string | null;
+  adapterPlans?: ThreadAdapterPlan[];
+  onRefresh?: () => Promise<void>;
+  refreshing?: boolean;
+  refreshError?: string;
+}
+
+function UnifiedExecutionPanel({
+  run,
+  modelName,
+  adapterPlans = [],
+  onRefresh,
+  refreshing = false,
+  refreshError,
+}: UnifiedExecutionPanelProps) {
+  const adapterRuns = run.adapter_runs ?? [];
+  const isPostModelAdapter = run.adapter_stage === 'post_model';
+  const isPipeline =
+    run.execution_mode === 'workflow_pipeline' || isPostModelAdapter || adapterRuns.length > 0;
+  const tapisWorkflow = run.tapis_workflow;
+  const modelProviderJobId = run.model_job_id;
+  const modelExecutionId = isPostModelAdapter ? run.model_child_id : null;
+  const modelJobId = modelProviderJobId ?? (!isPostModelAdapter ? run.model_child_id : null);
+  const status = String(run.status ?? '');
+  const persistedModelStage = run.workflow_stages?.find((stage) => stage.type === 'model');
+  const adapterStage: WorkflowStageState = !isPipeline
+    ? 'not-required'
+    : adapterRuns.some((child) => isWorkflowFailure(child.status))
+      ? 'failure'
+      : adapterRuns.length > 0 && adapterRuns.every((child) => isWorkflowSuccess(child.status))
+        ? 'success'
+        : isPostModelAdapter &&
+            ['model_dispatching', 'model_submitted', 'model_running', 'model_succeeded'].includes(
+              status,
+            )
+          ? 'pending'
+          : 'running';
+  const handoffStage: WorkflowStageState = !isPipeline
+    ? 'not-required'
+    : isWorkflowFailure(run.status) || run.error_message
+      ? 'failure'
+      : isPostModelAdapter
+        ? ['adapter_running', 'completed'].includes(status)
+          ? 'success'
+          : ['output_registering', 'output_verifying', 'adapter_dispatching'].includes(status)
+            ? 'running'
+            : 'pending'
+        : ['model_dispatching', 'model_submitted', 'model_running', 'model_succeeded'].includes(
+              status,
+            )
+          ? 'success'
+          : 'pending';
+  const modelStage: WorkflowStageState = persistedModelStage
+    ? workflowStageState(persistedModelStage.status)
+    : !modelJobId
+      ? isPipeline
+        ? 'pending'
+        : 'not-required'
+      : isWorkflowFailure(run.status)
+        ? 'failure'
+        : run.status === 'model_running'
+          ? 'running'
+          : isWorkflowSuccess(run.status)
+            ? 'success'
+            : 'pending';
+
+  const stageRows: Array<{ label: string; state: WorkflowStageState; detail: string }> = [
+    {
+      label: 'SVO adapter workflow',
+      state: adapterStage,
+      detail:
+        adapterRuns.length > 0
+          ? `${adapterRuns.length} workflow${adapterRuns.length === 1 ? '' : 's'}`
+          : isPostModelAdapter
+            ? 'Legacy/recovery run — composite workflow unavailable'
+            : 'No adapter step',
+    },
+    {
+      label: 'Output handoff',
+      state: handoffStage,
+      detail: isPostModelAdapter
+        ? handoffStage === 'success'
+          ? 'Output handed to adapter'
+          : handoffStage === 'running'
+            ? 'Registering model output'
+            : 'Waiting for model stage'
+        : isPipeline
+          ? displayStatus(run.status)
+          : 'No adapter output handoff',
+    },
+    {
+      label: 'Model application',
+      state: modelStage,
+      detail: modelJobId
+        ? displayStatus(run.status)
+        : isPipeline
+          ? 'Waiting for adapter output'
+          : 'Not submitted yet',
+    },
+  ];
+
+  return (
+    <div
+      className="space-y-3 rounded border border-blue-200 bg-blue-50 px-3 py-3 text-xs"
+      data-testid="unified-execution-panel"
+    >
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+          <span className="font-semibold text-blue-900">Workflow pipeline details</span>
+          <span className="font-medium text-blue-900">
+            {isPipeline
+              ? 'Workflow pipeline'
+              : run.execution_mode === 'workflow'
+                ? 'SVO workflow'
+                : 'Model job'}
+          </span>
+          <span className="text-blue-700">Overall: {displayStatus(run.status)}</span>
+        </div>
+        {onRefresh && (
+          <button
+            type="button"
+            onClick={() => void onRefresh()}
+            disabled={refreshing}
+            className="flex items-center gap-1 rounded border border-blue-300 bg-white px-2 py-1 text-blue-800 hover:bg-blue-100 disabled:opacity-50"
+            data-testid="refresh-workflow"
+          >
+            <RefreshCw className={`h-3 w-3 ${refreshing ? 'animate-spin' : ''}`} />
+            {refreshing ? 'Refreshing…' : 'Refresh workflow'}
+          </button>
+        )}
+      </div>
+      {isPipeline ? (
+        <div className="space-y-1 text-blue-800">
+          <div>
+            Tapis workflow run ID: <code>{tapisWorkflow?.run_id ?? 'not submitted yet'}</code>
+          </div>
+          {tapisWorkflow?.workflow_id && (
+            <div>
+              Tapis pipeline ID: <code>{tapisWorkflow.workflow_id}</code>
+            </div>
+          )}
+        </div>
+      ) : (
+        run.run_id && (
+          <div className="text-blue-800">
+            Execution ID: <code>{run.run_id}</code>
+          </div>
+        )
+      )}
+      {isPipeline && (
+        <div className="rounded border border-blue-200 bg-white px-2 py-2 text-blue-800">
+          <span className="font-medium">Tapis Workflows tracking:</span>{' '}
+          {tapisWorkflow?.workflow_id ? (
+            <>
+              pipeline <code>{tapisWorkflow.workflow_id}</code> · run{' '}
+              <code>{tapisWorkflow.run_id ?? 'not started'}</code>
+            </>
+          ) : isPostModelAdapter ? (
+            'provider workflow reference unavailable — this legacy/recovery run was not upgraded'
+          ) : (
+            'not registered yet'
+          )}
+        </div>
+      )}
+      {isPipeline && (
+        <p className="rounded border border-blue-200 bg-white px-2 py-2 text-blue-800">
+          The model application is a stage in this parent workflow. Its provider ID is shown for
+          troubleshooting and is not a separate pipeline.
+        </p>
+      )}
+      {!isPipeline && (
+        <p className="rounded border border-gray-200 bg-white px-2 py-2 text-blue-800">
+          This run was submitted as a model job, so no SVO workflow stages were recorded. New
+          workflow submissions will show the adapter, output handoff, and model application stages
+          here.
+        </p>
+      )}
+      <WorkflowGraph run={run} modelName={modelName} adapterPlans={adapterPlans} />
+      <div className="grid gap-2 sm:grid-cols-3" data-testid="workflow-stages">
+        {stageRows.map((stage) => (
+          <div
+            key={stage.label}
+            className={`rounded border px-2 py-2 ${workflowStageClass(stage.state)}`}
+          >
+            <div className="flex items-center justify-between gap-2 font-medium">
+              <span>{stage.label}</span>
+              <span>{workflowStageLabel(stage.state)}</span>
+            </div>
+            <div className="mt-1 text-[11px] opacity-80">{stage.detail}</div>
+          </div>
+        ))}
+      </div>
+      <div className="space-y-1 text-blue-900">
+        {modelJobId && (
+          <div>
+            <span className="font-medium">Tapis model job ID:</span> <code>{modelJobId}</code>
+          </div>
+        )}
+        {modelExecutionId && !modelProviderJobId && (
+          <div>
+            <span className="font-medium">Model execution ID:</span> <code>{modelExecutionId}</code>
+          </div>
+        )}
+        {adapterRuns.map((child, index) => (
+          <div key={child.run_id ?? `${child.adapter_plan_id ?? 'workflow'}-${index}`}>
+            <span className="font-medium">SVO workflow:</span>{' '}
+            <code>{child.tapis_workflow_id ?? 'not registered yet'}</code>{' '}
+            <span className="text-blue-700">
+              run {child.tapis_run_id ?? 'not submitted'} · {displayStatus(child.status)}
+            </span>
+          </div>
+        ))}
+      </div>
+      {(run.failure_code || run.error_message) && (
+        <div className="rounded border border-red-200 bg-red-50 px-2 py-2 text-red-800">
+          {run.failure_code && <div className="font-medium">Failure: {run.failure_code}</div>}
+          {run.error_message && <div>{run.error_message}</div>}
+        </div>
+      )}
+      {refreshError && (
+        <div className="rounded border border-amber-200 bg-amber-50 px-2 py-2 text-amber-800">
+          Showing the last saved workflow state. Refresh failed: {refreshError}
+        </div>
+      )}
+      <p className="text-[11px] text-blue-700">
+        Application output logs are separate; use <span className="font-medium">View Log</span> in
+        the run table for the model job log.
+      </p>
+    </div>
+  );
+}
+
 // ─── Props ────────────────────────────────────────────────────────────────────
 
 interface MintRunsProps {
+  threadId?: string;
   threadData: ThreadExecutionData;
   executions: ModelExecutionsMap;
   canWrite: boolean;
   canExecute: boolean;
   ensembleManagerApi: string;
+  unifiedRuns?: Record<string, UnifiedRunSnapshot>;
+  onRefreshWorkflow?: (modelId: string) => Promise<void>;
+  workflowRefreshErrors?: Record<string, string>;
+  workflowRefreshing?: Record<string, boolean>;
   onContinue: () => void;
   onFetchRuns: (modelId: string, page: number, pageSize: number) => void;
-  onSubmitRuns: (modelId: string) => Promise<void>;
+  onSubmitRuns: (modelId: string, maxMinutes: number) => Promise<void>;
   onExecutionSummaryChanged?: (summary: ExecutionSummaryMap) => void;
   /**
    * Publish one execution. Absent means publishing is not available, and the
@@ -151,11 +757,16 @@ interface MintRunsProps {
 const PAGE_SIZE = 100;
 
 export function MintRuns({
+  threadId,
   threadData,
   executions,
   canWrite,
   canExecute,
   ensembleManagerApi,
+  unifiedRuns,
+  onRefreshWorkflow,
+  workflowRefreshErrors,
+  workflowRefreshing,
   onContinue,
   onFetchRuns,
   onSubmitRuns,
@@ -192,6 +803,8 @@ export function MintRuns({
 
   const [pages, setPages] = useState<Record<string, number>>({});
   const [waiting, setWaiting] = useState<Record<string, boolean>>({});
+  const [maxMinutes, setMaxMinutes] = useState<Record<string, string>>({});
+  const [runtimeErrors, setRuntimeErrors] = useState<Record<string, string>>({});
   const [logDialogOpen, setLogDialogOpen] = useState(false);
   const [logContent, setLogContent] = useState<string | null>(null);
   const logAbortRef = useRef<AbortController | null>(null);
@@ -210,14 +823,27 @@ export function MintRuns({
 
   const handleSubmit = useCallback(
     async (mid: string) => {
+      const minutes = Number(maxMinutes[mid] ?? '60');
+      if (!Number.isInteger(minutes) || minutes < 1) {
+        setRuntimeErrors((errors) => ({
+          ...errors,
+          [mid]: 'Enter a positive whole number of minutes.',
+        }));
+        return;
+      }
+      setRuntimeErrors((errors) => {
+        const next = { ...errors };
+        delete next[mid];
+        return next;
+      });
       setWaiting((w) => ({ ...w, [mid]: true }));
       try {
-        await onSubmitRuns(mid);
+        await onSubmitRuns(mid, minutes);
       } finally {
         setWaiting((w) => ({ ...w, [mid]: false }));
       }
     },
-    [onSubmitRuns],
+    [maxMinutes, onSubmitRuns],
   );
 
   const handleNextPage = useCallback(
@@ -272,7 +898,17 @@ export function MintRuns({
 
   return (
     <div data-testid="mint-runs">
-      <p className="mb-4 text-sm text-gray-600">This step is for monitoring model runs.</p>
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <p className="text-sm text-gray-600">This step is for monitoring model runs.</p>
+        {threadId && (
+          <Link
+            to={`/modeling/thread/${encodeURIComponent(threadId)}/runs`}
+            className="rounded border border-blue-200 px-3 py-1.5 text-sm text-blue-700 hover:bg-blue-50"
+          >
+            Previous runs &amp; provenance
+          </Link>
+        )}
+      </div>
       <h3 className="mb-3 text-sm font-semibold">Runs</h3>
 
       <ul className="space-y-4">
@@ -313,15 +949,15 @@ export function MintRuns({
           const adjustableParams = model.input_parameters.filter((p) => !p.value);
 
           return (
-            <li key={mid} className="overflow-hidden rounded-md border">
-              <div className="border-b bg-gray-50 px-4 py-2 text-sm font-medium">{model.name}</div>
+            <li key={mid}>
+              <div className="mb-2 text-sm font-medium">{model.name}</div>
 
               {!summary.total_runs ? (
-                <div className="px-4 py-3 text-sm text-orange-600">
+                <div className="text-sm text-orange-600">
                   🚨 No runs configured. Please go back to the Data and Parameters steps.
                 </div>
               ) : !submitted ? (
-                <div className="space-y-2 px-4 py-3">
+                <div className="space-y-2">
                   <p className="text-sm text-gray-600">
                     The parameter settings require {summary.total_runs} runs ({nInputs} input
                     resources × {nParameters} parameters).{' '}
@@ -336,22 +972,44 @@ export function MintRuns({
                           : 'Complete the required model and SVO adapter parameters before sending runs.'}
                     </p>
                   ) : canExecute && canWrite ? (
-                    <button
-                      type="button"
-                      data-testid={`submit-runs-${mid}`}
-                      onClick={() => void handleSubmit(mid)}
-                      disabled={waiting[mid]}
-                      className="rounded bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700 disabled:opacity-50"
-                    >
-                      {waiting[mid] ? (
-                        <>
-                          Submitting…{' '}
-                          <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                        </>
-                      ) : (
-                        'Send Runs'
+                    <div className="space-y-2">
+                      <div className="flex flex-wrap items-end gap-3">
+                        <label className="flex flex-col gap-1 text-xs text-gray-700">
+                          <span>Maximum run time (minutes)</span>
+                          <input
+                            aria-label={`Maximum run time for ${model.name}`}
+                            data-testid={`max-runtime-${mid}`}
+                            type="number"
+                            min="1"
+                            step="1"
+                            value={maxMinutes[mid] ?? '60'}
+                            onChange={(event) =>
+                              setMaxMinutes((values) => ({ ...values, [mid]: event.target.value }))
+                            }
+                            className="w-32 rounded border border-gray-300 px-2 py-1.5 text-sm"
+                          />
+                        </label>
+                        <button
+                          type="button"
+                          data-testid={`submit-runs-${mid}`}
+                          onClick={() => void handleSubmit(mid)}
+                          disabled={waiting[mid]}
+                          className="rounded bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700 disabled:opacity-50"
+                        >
+                          {waiting[mid] ? (
+                            <>
+                              Submitting…{' '}
+                              <span className="inline-block h-3 w-3 animate-spin rounded border-2 border-white border-t-transparent" />
+                            </>
+                          ) : (
+                            'Send Runs'
+                          )}
+                        </button>
+                      </div>
+                      {runtimeErrors[mid] && (
+                        <p className="text-xs text-red-600">{runtimeErrors[mid]}</p>
                       )}
-                    </button>
+                    </div>
                   ) : (
                     <p className="text-xs text-gray-500">
                       You don&apos;t have permission to send runs on this sub-task.
@@ -359,7 +1017,7 @@ export function MintRuns({
                   )}
                 </div>
               ) : (
-                <div className="space-y-2 px-4 py-3">
+                <div className="space-y-2">
                   <p className="text-sm text-gray-600">
                     Below is the status of all runs. A green bar means completed; grey/partial means
                     in progress; red means failed.
@@ -375,6 +1033,37 @@ export function MintRuns({
                     {runningRuns > 0 && pendingRuns > 0 && ', '}
                     {pendingRuns > 0 && `${pendingRuns} waiting`}
                   </p>
+                  {(() => {
+                    const latestExecution = executions[mid]?.executions[0];
+                    const persistedRunId = latestExecution?.run_id ?? undefined;
+                    const workflowRun =
+                      unifiedRuns?.[mid] ??
+                      (latestExecution
+                        ? {
+                            run_id: persistedRunId,
+                            execution_mode: persistedRunId?.startsWith('ue_')
+                              ? 'workflow_pipeline'
+                              : 'job',
+                            status: latestExecution.status.toLowerCase(),
+                          }
+                        : undefined);
+
+                    return workflowRun ? (
+                      <UnifiedExecutionPanel
+                        run={workflowRun}
+                        modelName={model.name}
+                        adapterPlans={threadData.adapter_plans?.[mid] ?? []}
+                        onRefresh={
+                          onRefreshWorkflow &&
+                          (Boolean(unifiedRuns?.[mid]) || workflowRun.run_id?.startsWith('ue_'))
+                            ? () => onRefreshWorkflow(mid)
+                            : undefined
+                        }
+                        refreshing={workflowRefreshing?.[mid]}
+                        refreshError={workflowRefreshErrors?.[mid]}
+                      />
+                    ) : null;
+                  })()}
 
                   {/* Pagination + Reload bar */}
                   <div className="flex items-center gap-2 border border-gray-200 px-2 py-1 text-xs">

@@ -11,7 +11,7 @@ function renderApp(initialEntries: string[] = ['/']) {
 describe('App', () => {
   it('renders the header with app title', () => {
     renderApp();
-    expect(screen.getByText('MINT Model Catalog')).toBeInTheDocument();
+    expect(screen.getByText('DYNAMO Model Catalog')).toBeInTheDocument();
   });
 
   it('renders the sidebar navigation with all platform sections', () => {
@@ -29,7 +29,7 @@ describe('App', () => {
 
   it('renders AppHome at / with welcome text', () => {
     renderApp(['/']);
-    expect(screen.getByText(/welcome to mint model catalog/i)).toBeInTheDocument();
+    expect(screen.getByText(/welcome to dynamo model catalog/i)).toBeInTheDocument();
   });
 
   it('renders the models browse page at /models', () => {

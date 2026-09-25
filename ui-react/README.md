@@ -67,6 +67,39 @@ the container and Vercel.
   parent execution; model dispatch waits for verified adapter outputs. Keep the
   flag disabled until the local Hasura migration and adapter output path have
   been verified.
+- **Workflow troubleshooting.** In the Runs step, `View Log` opens the model
+  application log for one execution. Adapter-backed runs also show a separate
+  Workflow pipeline details panel with the adapter, output-handoff, and model
+  application stages, external workflow IDs, failure codes, and errors. When
+  available, the panel also shows the Tapis Workflows pipeline definition ID
+  and run UUID; the `ue_...` parent ID is kept as an internal Ensemble Manager
+  correlation ID. A
+  model-backed workflow keeps the model application as a first-class stage
+  under the same parent workflow identity; its provider execution ID is shown as a
+  stage reference rather than a separate pipeline. A
+  post-model adapter is shown as `Deferred until model output` while the model
+  is running, and the output handoff remains `Waiting for model output` until
+  the model result is registered. The
+  latest workflow snapshot is retained for the signed-in user and sub-task in
+  the browser so it remains available after navigating away and back; use
+  `Refresh workflow` to reconcile it with Ensemble Manager. If refresh is
+  unavailable, the last cached state remains visible and is marked as stale.
+- **Spatial boundary layers.** The Framing map prefers boundary geometries
+  registered in MINT through `/regions` (the Hydrology category is used for the
+  GMA registration). The adapter's `GET /spatial/layers` catalog supplies the
+  ETL source metadata and remains the fallback for layers that have not yet been
+  registered. Region Editor users can load a remote GeoJSON or ArcGIS
+  FeatureServer/MapServer layer, choose stable name and identifier properties,
+  and save its features as searchable MINT regions. Selecting a registered
+  boundary carries the canonical filter/scope values into the adapter plan.
+  When the selected boundary has geometry, the Models step also checks catalog
+  coverage for required model inputs in the selected spatial scope;
+  incompatible candidates are hidden by default and can be restored with
+  `Show all model candidates`. Datasets without declared spatial coverage remain
+  eligible because their location is unknown rather than known to be outside.
+  For the GMA setup, open `/regions/hydrology`, choose `TWDB Statewide GMA
+  Boundaries`, load the layer, use `GMAName` for names and `GMAnum` for the
+  stable identifier, then add the selected regions.
 
 ## Testing
 
@@ -121,6 +154,7 @@ is treated as unset):
 | `DATA_CATALOG_API` | `https://ckan.tacc.utexas.edu` (CKAN REST API base, no `/api` suffix) |
 | `DATA_CATALOG_BROWSE_URL` | `https://ckan.tacc.utexas.edu` (legacy human-browsable catalog URL) |
 | `SEMANTIC_SEARCH_API` | `http://localhost:8091` (standalone semantic-search service base; the UI appends `/search`) |
+| `SVO_ADAPTER_API` | omitted outside local compose; `http://localhost:8090` in local compose (canonical spatial-layer catalog) |
 | `ENSEMBLE_MANAGER_API` | omitted when unset |
 | `SVO_ADAPTER_ENABLED` | omitted when unset; set to `true` to discover adapter plans |
 | `MODEL_CATALOG_API` | `http://api.models.mint.local/v2.0.0` (version prefix included; serves the Tapis application proxy) |
@@ -139,6 +173,19 @@ indicator selections remain hard filters. If the service is unavailable, the
 dataset browse page falls back to CKAN name search. Dataset results are then
 matched against exact MINT Standard Variable annotations on CKAN resources.
 Unit lookup remains local and exact.
+
+## Previous runs and provenance
+
+From a problem-formulation thread's Runs step, open **Previous runs & provenance**
+to inspect the server-owned history for that subtask. The page includes legacy
+model jobs and unified workflow parents, with execution-time input and
+parameter bindings, model/output identifiers, workflow stages, errors, and
+authenticated log/file references. Application logs are intentionally separate
+from workflow pipeline provenance.
+
+Provider-hosted logs and files are referenced rather than copied into the MINT
+database. If a provider has expired or removed an artifact, the history record
+remains available and reports that artifact's availability state.
 
 Because the entrypoint writes into the nginx document root, the container does
 not support a read-only root filesystem as-is.

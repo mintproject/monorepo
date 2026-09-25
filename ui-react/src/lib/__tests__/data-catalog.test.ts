@@ -14,7 +14,12 @@ import { describe, expect, it, beforeEach, afterEach } from 'vitest';
 import { http, HttpResponse } from 'msw';
 import { server } from '@/test/msw/server';
 
-import { findDatasets, findDatasetsByVariables, loadDatasetResources } from '../data-catalog';
+import {
+  findAvailableDatasetVariables,
+  findDatasets,
+  findDatasetsByVariables,
+  loadDatasetResources,
+} from '../data-catalog';
 import type { CkanPackage } from '../datasets/ckan';
 
 const CKAN_HOST = 'https://ckan.example.org';
@@ -333,6 +338,32 @@ describe('findDatasetsByVariables', () => {
     expect(found.map((d) => d.id)).toEqual([CARRIER.name]);
     expect(searchRequests[0]?.searchParams.has('end_time__lte')).toBe(false);
     expect(searchRequests[0]?.searchParams.has('start_time__gte')).toBe(false);
+  });
+});
+
+describe('findAvailableDatasetVariables', () => {
+  it('counts variables with in-scope data while retaining unknown-location datasets', async () => {
+    stubSearch([
+      {
+        ...IN_TEXAS,
+        resources: [{ id: 'r-precip', mint_standard_variables: 'sv-precip' }],
+      },
+      {
+        ...IN_ALASKA,
+        resources: [{ id: 'r-temp', mint_standard_variables: 'sv-temperature' }],
+      },
+      {
+        ...NO_LOCATION,
+        resources: [{ id: 'r-humidity', mint_standard_variables: 'sv-humidity' }],
+      },
+    ]);
+
+    await expect(
+      findAvailableDatasetVariables({
+        variableNames: ['sv-precip', 'sv-temperature', 'sv-humidity'],
+        regionGeometry: [TEXAS_POLYGON],
+      }),
+    ).resolves.toEqual(['sv-precip', 'sv-humidity']);
   });
 });
 

@@ -13,6 +13,7 @@
  */
 import { Maximize2, Minimize2 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useApolloClient } from '@apollo/client';
 import { useParams } from 'react-router-dom';
 
@@ -43,12 +44,21 @@ import {
 } from '@/lib/thread-execution';
 import {
   createExecutionPlan,
+  EnsembleManagerError,
   fetchUnifiedRun,
   publishExecution,
   publishResults,
   submitExecutionPlan,
+  type UnifiedRunSnapshot,
 } from '@/lib/ensemble-manager';
 import {
+  clearUnifiedRunSnapshots,
+  loadUnifiedRunSnapshot,
+  saveUnifiedRunSnapshot,
+} from '@/lib/unified-run-storage';
+import {
+  adapterParameterDefaults,
+  adapterParameterValuesForSubmission,
   adapterPlansByModel,
   fetchThreadAdapterPlans,
   replaceThreadAdapterPlans,
@@ -59,6 +69,7 @@ import { cn } from '@/lib/utils';
 
 import { MintSummary } from './thread/MintSummary';
 import { MintParameters } from './thread/MintParameters';
+import type { SpatialSelection } from './thread/SpatialScopeMap';
 import { MintRuns } from './thread/MintRuns';
 import { MintResults } from './thread/MintResults';
 import { WizardRail } from './thread/wizard/WizardRail';
@@ -85,13 +96,22 @@ interface MintThreadProps {
    * route. Falls back to the `:id` route param when omitted.
    */
   threadId?: string;
+  /** Parent task name, available when the wizard is embedded in a problem statement. */
+  taskName?: string | null;
   /** Dataset suggestions confirmed by guided setup and carried into the picker. */
   initialDatasetIds?: string[];
+  /** Compatibility fallback for threads created before region propagation was fixed. */
+  fallbackSpatialScopeId?: string | null;
+  /** Parent-panel target for the collapsible step list when embedded. */
+  stepNavigationTarget?: HTMLElement | null;
 }
 
 export function MintThread({
   threadId: threadIdProp,
+  taskName,
   initialDatasetIds = [],
+  fallbackSpatialScopeId,
+  stepNavigationTarget,
 }: MintThreadProps = {}) {
   const { id: routeThreadId } = useParams<{ id: string }>();
   const threadId = threadIdProp ?? routeThreadId;
@@ -110,10 +130,21 @@ export function MintThread({
   }, []);
 
   const [modelExecutions, setModelExecutions] = useState<ModelExecutionsMap>({});
+  const [unifiedRuns, setUnifiedRuns] = useState<Record<string, UnifiedRunSnapshot>>({});
+  const [unifiedRunErrors, setUnifiedRunErrors] = useState<Record<string, string>>({});
+  const [unifiedRunRefreshing, setUnifiedRunRefreshing] = useState<Record<string, boolean>>({});
   const [adapterPlanRows, setAdapterPlanRows] = useState<ThreadAdapterPlan[]>([]);
   const [adapterPlanError, setAdapterPlanError] = useState<string | null>(null);
   const [adapterPlansLoading, setAdapterPlansLoading] = useState(false);
+  const [spatialSelection, setSpatialSelection] = useState<SpatialSelection | null>(null);
   const discoveredAdapterSources = useRef<string | null>(null);
+  const hydratedWorkflowIdentity = useRef<string | null>(null);
+
+  // Workflow metadata is not an application log and is safe to cache as a
+  // small, user-scoped browser snapshot. The server remains authoritative for
+  // refreshes; this cache only lets the details survive a page remount.
+  const workflowUserKey = user?.sub || user?.username || 'anonymous';
+  const workflowIdentity = threadId ? `${workflowUserKey}:${threadId}` : null;
 
   const adapterPlanningEnabled =
     window.__MINT_CONFIG__?.SVO_ADAPTER_ENABLED === 'true' ||
@@ -126,6 +157,33 @@ export function MintThread({
   });
 
   const thread = data?.thread_by_pk ?? null;
+  const spatialScopeId = thread?.region_id ?? fallbackSpatialScopeId ?? null;
+
+  const adapterSpatialContext = useMemo(
+    () => ({
+      geometry_source_uri: spatialSelection?.layer?.source_uri ?? spatialSelection?.layer?.uri,
+      geometry_source_type: spatialSelection?.layer?.geometry_type,
+      geometry_filter_field:
+        spatialSelection?.feature?.filterField ?? spatialSelection?.layer?.default_filter_field,
+      geometry_filter_value: spatialSelection?.feature?.filterValue,
+      geometry_crs: spatialSelection?.layer?.crs,
+      geometry_format: spatialSelection?.layer?.format,
+      spatial_scope_id: spatialSelection?.feature?.filterValue ?? spatialScopeId,
+      spatial_scope_name: spatialSelection?.feature?.label ?? thread?.region?.name,
+      spatial_scope_type: spatialSelection?.layer?.tags?.includes('gma')
+        ? 'gma'
+        : spatialScopeId
+          ? 'custom'
+          : null,
+      spatial_resolution:
+        spatialSelection?.layer?.geometry_type === 'polygon'
+          ? 'polygon'
+          : spatialScopeId
+            ? 'region'
+            : null,
+    }),
+    [spatialScopeId, spatialSelection, thread?.region?.name],
+  );
 
   const {
     data: execRaw,
@@ -138,14 +196,111 @@ export function MintThread({
     fetchPolicy: 'cache-and-network',
   });
 
+  const rememberUnifiedRun = useCallback(
+    (modelId: string, snapshot: UnifiedRunSnapshot) => {
+      setUnifiedRuns((current) => ({ ...current, [modelId]: snapshot }));
+      if (threadId) saveUnifiedRunSnapshot(workflowUserKey, threadId, modelId, snapshot);
+      setUnifiedRunErrors((current) => {
+        if (!current[modelId]) return current;
+        const next = { ...current };
+        delete next[modelId];
+        return next;
+      });
+    },
+    [threadId, workflowUserKey],
+  );
+
+  const refreshUnifiedRun = useCallback(
+    async (modelId: string, cachedSnapshot: UnifiedRunSnapshot) => {
+      const runId = cachedSnapshot.run_id;
+      const ensembleManagerApi = window.__MINT_CONFIG__?.ENSEMBLE_MANAGER_API ?? '';
+      if (!threadId || !runId?.startsWith('ue_') || !ensembleManagerApi) return;
+
+      setUnifiedRunRefreshing((current) => ({ ...current, [modelId]: true }));
+      try {
+        const refreshed = await fetchUnifiedRun(ensembleManagerApi, runId);
+        rememberUnifiedRun(modelId, refreshed);
+      } catch (error) {
+        // Keep the cached workflow visible when the service is temporarily
+        // unavailable; the error tells the user the displayed state is stale.
+        setUnifiedRunErrors((current) => ({
+          ...current,
+          [modelId]: error instanceof Error ? error.message : 'Could not refresh workflow status',
+        }));
+        throw error;
+      } finally {
+        setUnifiedRunRefreshing((current) => ({ ...current, [modelId]: false }));
+      }
+    },
+    [rememberUnifiedRun, threadId],
+  );
+
   const baseThreadExecutionData = useMemo(
     () => threadExecutionFromGQL(execRaw?.thread_by_pk),
     [execRaw],
   );
 
+  // Restore the latest pipeline snapshot for this sub-task/model after a
+  // problem-statement navigation remount, then reconcile it with the server.
+  useEffect(() => {
+    if (
+      !workflowIdentity ||
+      !threadId ||
+      !baseThreadExecutionData ||
+      baseThreadExecutionData.id !== threadId ||
+      hydratedWorkflowIdentity.current === workflowIdentity
+    ) {
+      return;
+    }
+    hydratedWorkflowIdentity.current = workflowIdentity;
+
+    const restored = Object.fromEntries(
+      Object.keys(baseThreadExecutionData.models)
+        .map((modelId) => [modelId, loadUnifiedRunSnapshot(workflowUserKey, threadId, modelId)])
+        .filter((entry): entry is [string, UnifiedRunSnapshot] => entry[1] !== null),
+    );
+    setUnifiedRuns(restored);
+    setUnifiedRunErrors({});
+    for (const [modelId, snapshot] of Object.entries(restored)) {
+      void refreshUnifiedRun(modelId, snapshot).catch(() => undefined);
+    }
+  }, [baseThreadExecutionData, refreshUnifiedRun, threadId, workflowIdentity, workflowUserKey]);
+
+  // Existing executions already retain the Ensemble Manager parent id in
+  // Hasura. Recover the workflow snapshot from that durable id when the Runs
+  // table is loaded, even if the browser cache was cleared or the page was
+  // opened on a different route first.
+  useEffect(() => {
+    const ensembleManagerApi = window.__MINT_CONFIG__?.ENSEMBLE_MANAGER_API ?? '';
+    if (!ensembleManagerApi) return;
+
+    for (const [modelId, group] of Object.entries(modelExecutions)) {
+      const runId = group.executions.find((execution) =>
+        execution.run_id?.startsWith('ue_'),
+      )?.run_id;
+      if (!runId || unifiedRuns[modelId]?.run_id === runId) continue;
+
+      void fetchUnifiedRun(ensembleManagerApi, runId)
+        .then((snapshot) => rememberUnifiedRun(modelId, snapshot))
+        .catch((error) => {
+          setUnifiedRunErrors((current) => ({
+            ...current,
+            [modelId]: error instanceof Error ? error.message : 'Could not load workflow status',
+          }));
+        });
+    }
+  }, [modelExecutions, rememberUnifiedRun, unifiedRuns]);
+
   const threadExecutionData = useMemo(() => {
     if (!baseThreadExecutionData) return null;
-    const plansByThreadModelId = adapterPlansByModel(adapterPlanRows);
+    const contextualPlans = adapterPlanRows.map((plan) => ({
+      ...plan,
+      parameter_values: {
+        ...adapterParameterDefaults(plan.plan_json?.parameters ?? [], adapterSpatialContext),
+        ...plan.parameter_values,
+      },
+    }));
+    const plansByThreadModelId = adapterPlansByModel(contextualPlans);
     return {
       ...baseThreadExecutionData,
       adapter_plans: Object.fromEntries(
@@ -155,7 +310,7 @@ export function MintThread({
         ]),
       ),
     };
-  }, [adapterPlanRows, baseThreadExecutionData]);
+  }, [adapterPlanRows, adapterSpatialContext, baseThreadExecutionData]);
 
   const loadAdapterPlans = useCallback(async () => {
     if (!threadId || !adapterPlanningEnabled) return;
@@ -173,11 +328,14 @@ export function MintThread({
     });
   }, [adapterPlanningEnabled, loadAdapterPlans, threadId]);
 
-  // The geometries the Datasets step narrows on. A thread with no region hands
-  // down undefined, which means "no region filter" rather than an empty extent.
+  // The geometry the Datasets step narrows on. A selected catalog boundary is
+  // the active extent; otherwise retain the thread's stored region geometry.
   const regionGeometry = useMemo(
-    () => (thread?.region?.geometries ?? []).map((g) => g.geometry).filter(Boolean),
-    [thread?.region],
+    () =>
+      spatialSelection?.feature?.geometry
+        ? [spatialSelection.feature.geometry]
+        : (thread?.region?.geometries ?? []).map((g) => g.geometry).filter(Boolean),
+    [spatialSelection, thread?.region],
   );
 
   // The execution engine writes the run counters; nothing pushes them back, so
@@ -264,35 +422,40 @@ export function MintThread({
 
   const adapterSourceFingerprint = useMemo(() => {
     if (!baseThreadExecutionData) return '';
-    const sources = Object.entries(baseThreadExecutionData.models).flatMap(([modelId, model]) =>
-      model.input_files.flatMap((input) => {
-        const slices = baseThreadExecutionData.model_ensembles[modelId]?.bindings[input.id] ?? [];
-        return slices.flatMap((sliceId) => {
-          const resources = baseThreadExecutionData.data[sliceId]?.resources as
-            | Array<{ id: string; selected?: boolean }>
-            | undefined;
-          return (resources ?? [])
-            .filter((resource) => resource.selected !== false)
-            .map((resource) => {
-              const threadModelId = baseThreadExecutionData.model_ensembles[modelId]?.id ?? modelId;
-              return `${threadModelId}:${input.id}:${resource.id}`;
-            });
-        });
-      }),
+    const inputSources = Object.entries(baseThreadExecutionData.models).flatMap(
+      ([modelId, model]) =>
+        model.input_files.flatMap((input) => {
+          const slices = baseThreadExecutionData.model_ensembles[modelId]?.bindings[input.id] ?? [];
+          return slices.flatMap((sliceId) => {
+            const resources = baseThreadExecutionData.data[sliceId]?.resources as
+              | Array<{ id: string; selected?: boolean }>
+              | undefined;
+            return (resources ?? [])
+              .filter((resource) => resource.selected !== false)
+              .map((resource) => {
+                const threadModelId =
+                  baseThreadExecutionData.model_ensembles[modelId]?.id ?? modelId;
+                return `${threadModelId}:${input.id}:${resource.id}`;
+              });
+          });
+        }),
     );
-    return sources.sort().join('|');
+    const target = baseThreadExecutionData.response_variables?.[0] ?? '';
+    const outputSources = Object.entries(baseThreadExecutionData.models).flatMap(
+      ([modelId, model]) => {
+        const threadModelId = baseThreadExecutionData.model_ensembles[modelId]?.id ?? modelId;
+        return model.output_files
+          .filter((output) => !output.variables?.length || !output.variables.includes(target))
+          .map(
+            (output) =>
+              `${threadModelId}:post_model:${output.id}:${output.format ?? ''}:${
+                output.variables?.join(',') ?? ''
+              }:${target}`,
+          );
+      },
+    );
+    return [...inputSources, ...outputSources].sort().join('|');
   }, [baseThreadExecutionData]);
-
-  useEffect(() => {
-    if (!adapterSourceFingerprint || !adapterPlanRows.length) return;
-    const persistedFingerprint = adapterPlanRows
-      .map((plan) => `${plan.thread_model_id}:${plan.model_io_id}:${plan.source_resource_id}`)
-      .sort()
-      .join('|');
-    if (persistedFingerprint === adapterSourceFingerprint) {
-      discoveredAdapterSources.current = adapterSourceFingerprint;
-    }
-  }, [adapterPlanRows, adapterSourceFingerprint]);
 
   const discoverAdapterPlans = useCallback(async () => {
     if (!threadId || !baseThreadExecutionData || !adapterSourceFingerprint) return;
@@ -309,7 +472,7 @@ export function MintThread({
           const slices = baseThreadExecutionData.model_ensembles[modelId]?.bindings[input.id] ?? [];
           for (const sliceId of slices) {
             const resources = baseThreadExecutionData.data[sliceId]?.resources as
-              | Array<{ id: string; selected?: boolean }>
+              | Array<{ id: string; name?: string; url?: string; selected?: boolean }>
               | undefined;
             for (const resource of (resources ?? []).filter((item) => item.selected !== false)) {
               const key = `${threadModelId}:${input.id}:${resource.id}`;
@@ -323,6 +486,15 @@ export function MintThread({
                   data_object_id: resource.id.startsWith('ckan-')
                     ? resource.id
                     : `ckan-${resource.id}`,
+                  data_object: {
+                    id: resource.id.startsWith('ckan-') ? resource.id : `ckan-${resource.id}`,
+                    label: resource.name || resource.id,
+                    resource_uri: resource.url,
+                    format: input.format ?? undefined,
+                    variables: (input.variableIds ?? []).map((standardVariableUri) => ({
+                      standard_variable_uri: standardVariableUri,
+                    })),
+                  },
                   target_dataset_specification_id: input.id,
                 },
               });
@@ -334,10 +506,81 @@ export function MintThread({
                 adapter_plan_id: plan.plan_id?.replace(/^svo_/, '') ?? null,
                 status: plan.plan_id ? 'transform_required' : plan.status || 'ready',
                 plan_json: plan,
-                parameter_values: {},
+                parameter_values: adapterParameterDefaults(
+                  plan.parameters ?? [],
+                  adapterSpatialContext,
+                ),
               });
             }
           }
+        }
+
+        const targetVariable = baseThreadExecutionData.response_variables?.[0];
+        const postModelCandidates: Array<{
+          output: (typeof model.output_files)[number];
+          plan: Awaited<ReturnType<typeof createExecutionPlan>>;
+        }> = [];
+        if (targetVariable) {
+          for (const output of model.output_files) {
+            if (output.variables?.includes(targetVariable)) continue;
+            const key = `${threadModelId}:post_model:${output.id}:${targetVariable}`;
+            if (seen.has(key)) continue;
+            seen.add(key);
+            try {
+              const plan = await createExecutionPlan(ensembleManagerApi, {
+                executor: 'ensemble_manager',
+                thread_id: threadId,
+                model_id: modelId,
+                execution_engine: window.__MINT_CONFIG__?.EXECUTION_ENGINE ?? 'localex',
+                post_model_adapter: {
+                  model_io_id: output.id,
+                  model_output_key: output.id,
+                  source_contract: {
+                    standard_variable_uri: output.variables?.[0] ?? output.id,
+                    format: output.format ?? undefined,
+                  },
+                  target_contract: { standard_variable_uri: targetVariable },
+                },
+              });
+              postModelCandidates.push({ output, plan });
+            } catch (error) {
+              // A model can declare several outputs. Only the output that has
+              // a valid path to the selected response variable belongs in the
+              // deferred plan; unrelated outputs are not discovery failures.
+              if (
+                error instanceof EnsembleManagerError &&
+                error.code === 'NO_DEFERRED_TRANSFORM_PATH'
+              ) {
+                continue;
+              }
+              throw error;
+            }
+          }
+        }
+        if (postModelCandidates.length > 1) {
+          throw new Error(
+            `Multiple model outputs can produce ${targetVariable}; select a model with one unambiguous output path.`,
+          );
+        }
+        for (const { output, plan } of postModelCandidates) {
+          const postModel = plan.post_model_adapter as
+            | { adapter_plan_id?: string; plan_hash?: string }
+            | undefined;
+          discovered.push({
+            thread_model_id: threadModelId,
+            model_io_id: output.id,
+            source_resource_id: null,
+            stage: 'post_model',
+            source_kind: 'model_output',
+            executor: 'svo_adapter',
+            adapter_plan_id: postModel?.adapter_plan_id ?? null,
+            status: postModel?.adapter_plan_id ? 'transform_required' : plan.status || 'ready',
+            plan_json: plan,
+            parameter_values: adapterParameterDefaults(
+              plan.parameters ?? [],
+              adapterSpatialContext,
+            ),
+          });
         }
       }
 
@@ -348,7 +591,7 @@ export function MintThread({
     } finally {
       setAdapterPlansLoading(false);
     }
-  }, [adapterSourceFingerprint, apollo, baseThreadExecutionData, threadId]);
+  }, [adapterSourceFingerprint, adapterSpatialContext, apollo, baseThreadExecutionData, threadId]);
 
   useEffect(() => {
     if (
@@ -408,7 +651,7 @@ export function MintThread({
   );
 
   const handleSubmitRuns = useCallback(
-    async (modelId: string) => {
+    async (modelId: string, maxMinutes: number) => {
       if (adapterPlansLoading || adapterPlanError) {
         throw new Error('SVO adapter plan discovery must complete before workflow submission.');
       }
@@ -421,29 +664,60 @@ export function MintThread({
       // generated before this key existed.
       const executionEngine = window.__MINT_CONFIG__?.EXECUTION_ENGINE ?? 'localex';
       const adapterSteps = adapterPlans
-        .filter((plan) => plan.adapter_plan_id && plan.status === 'transform_required')
+        .filter(
+          (plan) =>
+            plan.stage !== 'post_model' &&
+            plan.adapter_plan_id &&
+            plan.status === 'transform_required',
+        )
         .map((plan) => ({
           adapter_plan_id: plan.adapter_plan_id!,
           model_io_id: plan.model_io_id,
-          source_resource_id: plan.source_resource_id,
+          source_resource_id: plan.source_resource_id!,
         }));
+      const postModelPlan = adapterPlans.find((item) => item.stage === 'post_model');
+      const postModelSpec = postModelPlan?.plan_json?.post_model_adapter as
+        | {
+            model_io_id: string;
+            model_output_key: string;
+            source_contract: Record<string, unknown>;
+            target_contract: Record<string, unknown>;
+            target_dataset_specification_id?: string;
+          }
+        | undefined;
+      if (postModelPlan && !postModelSpec) {
+        throw new Error('Deferred SVO adapter plan is missing its source contract.');
+      }
+      if (postModelPlan && adapterSteps.length) {
+        throw new Error('A model cannot submit both pre-model and post-model adapters yet.');
+      }
       const plan = await createExecutionPlan(ensembleManagerApi, {
         executor: 'ensemble_manager',
         execution_engine: executionEngine,
         thread_id: threadId,
         model_id: modelId,
         adapter_steps: adapterSteps,
+        ...(postModelSpec ? { post_model_adapter: postModelSpec } : {}),
       });
       if (!plan.plan_id) throw new Error('Ensemble Manager did not return an execution plan.');
-      const adapterParameterValues = Object.fromEntries(
-        adapterPlans
-          .filter((item) => item.adapter_plan_id && item.status === 'transform_required')
-          .map((item) => [item.adapter_plan_id!, item.parameter_values ?? {}]),
-      );
+      const adapterParameterValues = adapterParameterValuesForSubmission(adapterPlans, plan);
       const submitted = await submitExecutionPlan(ensembleManagerApi, {
         plan_id: plan.plan_id,
+        max_minutes: maxMinutes,
         adapter_parameter_values: adapterParameterValues,
       });
+      if (submitted.run_id?.startsWith('ue_')) {
+        rememberUnifiedRun(modelId, submitted);
+      } else {
+        // A normal model job has no workflow parent. Do not leave an older
+        // pipeline snapshot attached to this new submission.
+        setUnifiedRuns((current) => {
+          const next = { ...current };
+          delete next[modelId];
+          return next;
+        });
+        if (threadId) clearUnifiedRunSnapshots(workflowUserKey, threadId, modelId);
+      }
       const parentRunId = typeof submitted.run_id === 'string' ? submitted.run_id : null;
       if (parentRunId?.startsWith('ue_')) {
         // Reconciliation is server-owned, but it needs a status read to drive
@@ -452,8 +726,9 @@ export function MintThread({
           for (let attempt = 0; attempt < 120; attempt += 1) {
             await new Promise((resolve) => window.setTimeout(resolve, 5000));
             const state = await fetchUnifiedRun(ensembleManagerApi, parentRunId);
+            rememberUnifiedRun(modelId, state);
             if (
-              ['model_submitted', 'failed', 'adapter_unknown', 'model_unknown'].includes(
+              ['completed', 'failed', 'unknown', 'cancelled', 'model_submitted'].includes(
                 String(state.status),
               )
             ) {
@@ -467,7 +742,31 @@ export function MintThread({
       // guessing at them locally.
       await refetchExecution();
     },
-    [adapterPlanError, adapterPlansLoading, refetchExecution, threadExecutionData, threadId],
+    [
+      adapterPlanError,
+      adapterPlansLoading,
+      refetchExecution,
+      rememberUnifiedRun,
+      threadExecutionData,
+      threadId,
+      workflowUserKey,
+    ],
+  );
+
+  const handleRefreshWorkflow = useCallback(
+    async (modelId: string) => {
+      const persistedRunId = modelExecutions[modelId]?.executions
+        .map((execution) => execution.run_id)
+        .find((runId): runId is string => typeof runId === 'string' && runId.startsWith('ue_'));
+      const snapshot =
+        unifiedRuns[modelId] ??
+        (persistedRunId
+          ? { run_id: persistedRunId, execution_mode: 'workflow_pipeline' as const }
+          : undefined);
+      if (!snapshot) return;
+      await refreshUnifiedRun(modelId, snapshot);
+    },
+    [modelExecutions, refreshUnifiedRun, unifiedRuns],
   );
 
   /**
@@ -578,12 +877,15 @@ export function MintThread({
             thread={thread!}
             onUpdated={() => void handleThreadUpdated()}
             onContinue={goNext}
+            spatialSelection={spatialSelection}
+            onSpatialSelectionChange={setSpatialSelection}
           />
         );
       case 'variables':
         return (
           <VariablesStep
             thread={thread!}
+            taskName={taskName}
             onUpdated={() => void handleThreadUpdated()}
             onContinue={goNext}
             onBack={goBack}
@@ -597,6 +899,7 @@ export function MintThread({
             onContinue={goNext}
             onBack={goBack}
             onEditIndicator={() => setCurrentSection('variables')}
+            regionGeometry={regionGeometry}
           />
         );
       case 'datasets':
@@ -607,6 +910,7 @@ export function MintThread({
             ensembles={execData.model_ensembles}
             persistedData={execData.data}
             regionGeometry={regionGeometry}
+            spatialScopeName={spatialSelection?.feature?.label ?? thread?.region?.name ?? null}
             initialDatasetIds={initialDatasetIds}
             onUpdated={handleThreadUpdated}
             onContinue={goNext}
@@ -623,19 +927,27 @@ export function MintThread({
             onContinue={goNext}
             adapterPlanError={adapterPlanError}
             adapterPlanLoading={adapterPlansLoading}
+            spatialScopeName={thread?.region?.name ?? spatialScopeId}
+            spatialScopeId={spatialScopeId}
+            spatialSelection={spatialSelection}
           />
         );
       case 'runs':
         return (
           <MintRuns
+            threadId={threadId}
             threadData={execData}
             executions={modelExecutions}
             canWrite={perm.write}
             canExecute={perm.write}
             ensembleManagerApi={window.__MINT_CONFIG__?.ENSEMBLE_MANAGER_API ?? ''}
+            unifiedRuns={unifiedRuns}
             onContinue={goNext}
             onFetchRuns={handleFetchRuns}
             onSubmitRuns={handleSubmitRuns}
+            onRefreshWorkflow={handleRefreshWorkflow}
+            workflowRefreshErrors={unifiedRunErrors}
+            workflowRefreshing={unifiedRunRefreshing}
             onPublishExecution={handlePublishExecution}
             onOutputsChanged={handleOutputsChanged}
             adapterPlansLoading={adapterPlansLoading}
@@ -660,6 +972,12 @@ export function MintThread({
     }
   }
 
+  const stepNavigation = (
+    <WizardRail states={stepStates} currentStep={currentSection} onSelect={setCurrentSection} />
+  );
+  const portalStepNavigation =
+    stepNavigationTarget && !maximized ? createPortal(stepNavigation, stepNavigationTarget) : null;
+
   return (
     <div
       data-testid="mint-thread"
@@ -678,10 +996,13 @@ export function MintThread({
           {maximized ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
         </button>
       </div>
-      <div className="flex flex-1 gap-4 overflow-hidden">
-        <WizardRail states={stepStates} currentStep={currentSection} onSelect={setCurrentSection} />
-        <div className="flex-1 overflow-y-auto pr-1">{renderStep()}</div>
+      <div className="flex flex-1 overflow-hidden">
+        <div className="flex-1 overflow-y-auto pr-1">
+          {renderStep()}
+          {(!stepNavigationTarget || maximized) && stepNavigation}
+        </div>
       </div>
+      {portalStepNavigation}
     </div>
   );
 }

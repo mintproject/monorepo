@@ -121,7 +121,7 @@ export function GuidedModelSetup({
 }: GuidedModelSetupProps) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { user } = useAuth();
+  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const modelId = initialModelId ?? searchParams.get('modelId');
   const datasetId = initialDatasetId ?? searchParams.get('datasetId');
   const startingModelIds = useMemo(
@@ -137,6 +137,9 @@ export function GuidedModelSetup({
   const regions = useMemo(() => regionData?.region ?? [], [regionData]);
   const { data: statementsData, loading: statementsLoading } = useListProblemStatementsQuery({
     variables: { where: {} },
+    // This selection includes the private permissions relationship. Wait for
+    // AuthProvider to restore the bearer token instead of querying as guest.
+    skip: authLoading || !isAuthenticated,
     fetchPolicy: 'cache-and-network',
   });
 
@@ -295,6 +298,12 @@ export function GuidedModelSetup({
         selected_model_configuration_ids: startingModelIds,
         start_date: startDate,
         end_date: endDate,
+        spatial_conditions: {
+          spatial_scope_type: 'custom',
+          spatial_scope_id: regionId,
+          ...(selectedRegion?.name ? { spatial_scope_name: selectedRegion.name } : {}),
+          spatial_resolution: 'region',
+        },
         limit: 10,
       });
       setRecommendations({

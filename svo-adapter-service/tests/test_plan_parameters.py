@@ -34,7 +34,60 @@ def test_parameter_definitions_merge_schema_env_and_file_inputs():
     assert by_name["threshold"]["type"] == "number"
     assert by_name["aoi_geojson_uri"]["required"] is True
     assert by_name["allocation"]["required"] is True
+    assert by_name["allocation"]["managed"] is True
     assert "tapis_token" not in by_name
+
+
+def test_server_managed_parameters_are_not_user_inputs():
+    steps = [{
+        "transform_spec_id": "ts-gma-extract",
+        "name": "modflow6-drain-gma-extract",
+        "parameters_schema_json": {
+            "type": "object",
+            "properties": {
+                "source_uri": {"type": "string"},
+                "geo_actor_id": {"type": "string"},
+                "tapis_token": {"type": "string"},
+                "gma_id": {"type": "string"},
+            },
+            "required": ["source_uri", "geo_actor_id", "tapis_token", "gma_id"],
+        },
+    }]
+
+    by_name = {
+        item["name"]: item
+        for item in parameter_definitions(steps)
+    }
+
+    assert "tapis_token" not in by_name
+    assert by_name["source_uri"]["managed"] is True
+    assert by_name["source_uri"]["managed_source"] == "execution_handoff"
+    assert by_name["geo_actor_id"]["managed"] is True
+    assert by_name["geo_actor_id"]["managed_source"] == "adapter_service"
+    assert by_name["spatial_scope_id"]["required"] is True
+
+
+def test_adapter_allocation_defaults_to_ensemble_manager_allocation():
+    from app import tapis
+
+    by_name = {
+        item["name"]: item
+        for item in parameter_definitions(
+            [{"name": "workflow", "env_from_args": {"ALLOCATION": "allocation"}}],
+            tapis.STANDARD_PARAMS,
+        )
+    }
+
+    assert by_name["allocation"] == {
+        "name": "allocation",
+        "type": "string",
+        "required": False,
+        "default": "PT2050-DataX",
+        "source_transform": "workflow",
+        "transform_spec_id": None,
+        "managed": True,
+        "managed_source": "adapter_service",
+    }
 
 
 def test_build_plan_json_carries_parameter_definitions():

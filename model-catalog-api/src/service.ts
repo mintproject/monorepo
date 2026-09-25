@@ -455,7 +455,7 @@ class CatalogServiceImpl {
 
   /**
    * Dispatch custom endpoints to the customHandlers registry.
-   * All 13 /custom/ operationIds and user_login_post are handled here.
+   * Custom operationIds and user_login_post are handled here.
    */
   async handleCustom(operationId: string, req: any, reply: any) {
     const handler = customHandlers[operationId]
