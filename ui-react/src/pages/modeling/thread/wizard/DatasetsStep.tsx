@@ -243,6 +243,7 @@ interface DatasetsStepProps {
   /** Dataslices already persisted for this thread, keyed by dataslice id. */
   persistedData: ThreadExecutionData['data'];
   regionGeometry?: unknown;
+  spatialScopeName?: string | null;
   /** Dataset ids confirmed by guided setup and offered as initial choices. */
   initialDatasetIds?: string[];
   onUpdated: () => void | Promise<void>;
@@ -732,6 +733,7 @@ export function DatasetsStep({
   ensembles,
   persistedData,
   regionGeometry,
+  spatialScopeName,
   initialDatasetIds = [],
   onUpdated,
   onContinue,
@@ -942,12 +944,13 @@ export function DatasetsStep({
     : Boolean(regionGeometry);
   const chips = [
     { icon: '📦', label: 'Input', value: 'per model input' },
-    ...(thread.region_id
+    ...(thread.region_id || spatialScopeName
       ? [
           {
             icon: '⌖',
-            label: 'Region',
-            value: thread.region?.name ?? thread.region_id,
+            label: spatialScopeName ? 'Boundary' : 'Region',
+            value:
+              spatialScopeName ?? thread.region?.name ?? thread.region_id ?? 'Selected boundary',
             source: regionHasExtent ? 'from Framing' : 'from Framing · no extent, not applied',
           },
         ]

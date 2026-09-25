@@ -64,7 +64,7 @@ def test_server_managed_parameters_are_not_user_inputs():
     assert by_name["source_uri"]["managed_source"] == "execution_handoff"
     assert by_name["geo_actor_id"]["managed"] is True
     assert by_name["geo_actor_id"]["managed_source"] == "adapter_service"
-    assert by_name["gma_id"]["required"] is True
+    assert by_name["spatial_scope_id"]["required"] is True
 
 
 def test_adapter_allocation_defaults_to_ensemble_manager_allocation():

@@ -13,6 +13,7 @@
  */
 import { Maximize2, Minimize2 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useApolloClient } from '@apollo/client';
 import { useParams } from 'react-router-dom';
 
@@ -56,6 +57,7 @@ import {
   saveUnifiedRunSnapshot,
 } from '@/lib/unified-run-storage';
 import {
+  adapterParameterDefaults,
   adapterParameterValuesForSubmission,
   adapterPlansByModel,
   fetchThreadAdapterPlans,
@@ -67,6 +69,7 @@ import { cn } from '@/lib/utils';
 
 import { MintSummary } from './thread/MintSummary';
 import { MintParameters } from './thread/MintParameters';
+import type { SpatialSelection } from './thread/SpatialScopeMap';
 import { MintRuns } from './thread/MintRuns';
 import { MintResults } from './thread/MintResults';
 import { WizardRail } from './thread/wizard/WizardRail';
@@ -97,12 +100,18 @@ interface MintThreadProps {
   taskName?: string | null;
   /** Dataset suggestions confirmed by guided setup and carried into the picker. */
   initialDatasetIds?: string[];
+  /** Compatibility fallback for threads created before region propagation was fixed. */
+  fallbackSpatialScopeId?: string | null;
+  /** Parent-panel target for the collapsible step list when embedded. */
+  stepNavigationTarget?: HTMLElement | null;
 }
 
 export function MintThread({
   threadId: threadIdProp,
   taskName,
   initialDatasetIds = [],
+  fallbackSpatialScopeId,
+  stepNavigationTarget,
 }: MintThreadProps = {}) {
   const { id: routeThreadId } = useParams<{ id: string }>();
   const threadId = threadIdProp ?? routeThreadId;
@@ -127,6 +136,7 @@ export function MintThread({
   const [adapterPlanRows, setAdapterPlanRows] = useState<ThreadAdapterPlan[]>([]);
   const [adapterPlanError, setAdapterPlanError] = useState<string | null>(null);
   const [adapterPlansLoading, setAdapterPlansLoading] = useState(false);
+  const [spatialSelection, setSpatialSelection] = useState<SpatialSelection | null>(null);
   const discoveredAdapterSources = useRef<string | null>(null);
   const hydratedWorkflowIdentity = useRef<string | null>(null);
 
@@ -147,6 +157,33 @@ export function MintThread({
   });
 
   const thread = data?.thread_by_pk ?? null;
+  const spatialScopeId = thread?.region_id ?? fallbackSpatialScopeId ?? null;
+
+  const adapterSpatialContext = useMemo(
+    () => ({
+      geometry_source_uri: spatialSelection?.layer?.source_uri ?? spatialSelection?.layer?.uri,
+      geometry_source_type: spatialSelection?.layer?.geometry_type,
+      geometry_filter_field:
+        spatialSelection?.feature?.filterField ?? spatialSelection?.layer?.default_filter_field,
+      geometry_filter_value: spatialSelection?.feature?.filterValue,
+      geometry_crs: spatialSelection?.layer?.crs,
+      geometry_format: spatialSelection?.layer?.format,
+      spatial_scope_id: spatialSelection?.feature?.filterValue ?? spatialScopeId,
+      spatial_scope_name: spatialSelection?.feature?.label ?? thread?.region?.name,
+      spatial_scope_type: spatialSelection?.layer?.tags?.includes('gma')
+        ? 'gma'
+        : spatialScopeId
+          ? 'custom'
+          : null,
+      spatial_resolution:
+        spatialSelection?.layer?.geometry_type === 'polygon'
+          ? 'polygon'
+          : spatialScopeId
+            ? 'region'
+            : null,
+    }),
+    [spatialScopeId, spatialSelection, thread?.region?.name],
+  );
 
   const {
     data: execRaw,
@@ -256,7 +293,14 @@ export function MintThread({
 
   const threadExecutionData = useMemo(() => {
     if (!baseThreadExecutionData) return null;
-    const plansByThreadModelId = adapterPlansByModel(adapterPlanRows);
+    const contextualPlans = adapterPlanRows.map((plan) => ({
+      ...plan,
+      parameter_values: {
+        ...adapterParameterDefaults(plan.plan_json?.parameters ?? [], adapterSpatialContext),
+        ...plan.parameter_values,
+      },
+    }));
+    const plansByThreadModelId = adapterPlansByModel(contextualPlans);
     return {
       ...baseThreadExecutionData,
       adapter_plans: Object.fromEntries(
@@ -266,7 +310,7 @@ export function MintThread({
         ]),
       ),
     };
-  }, [adapterPlanRows, baseThreadExecutionData]);
+  }, [adapterPlanRows, adapterSpatialContext, baseThreadExecutionData]);
 
   const loadAdapterPlans = useCallback(async () => {
     if (!threadId || !adapterPlanningEnabled) return;
@@ -284,11 +328,14 @@ export function MintThread({
     });
   }, [adapterPlanningEnabled, loadAdapterPlans, threadId]);
 
-  // The geometries the Datasets step narrows on. A thread with no region hands
-  // down undefined, which means "no region filter" rather than an empty extent.
+  // The geometry the Datasets step narrows on. A selected catalog boundary is
+  // the active extent; otherwise retain the thread's stored region geometry.
   const regionGeometry = useMemo(
-    () => (thread?.region?.geometries ?? []).map((g) => g.geometry).filter(Boolean),
-    [thread?.region],
+    () =>
+      spatialSelection?.feature?.geometry
+        ? [spatialSelection.feature.geometry]
+        : (thread?.region?.geometries ?? []).map((g) => g.geometry).filter(Boolean),
+    [spatialSelection, thread?.region],
   );
 
   // The execution engine writes the run counters; nothing pushes them back, so
@@ -459,7 +506,10 @@ export function MintThread({
                 adapter_plan_id: plan.plan_id?.replace(/^svo_/, '') ?? null,
                 status: plan.plan_id ? 'transform_required' : plan.status || 'ready',
                 plan_json: plan,
-                parameter_values: {},
+                parameter_values: adapterParameterDefaults(
+                  plan.parameters ?? [],
+                  adapterSpatialContext,
+                ),
               });
             }
           }
@@ -526,7 +576,10 @@ export function MintThread({
             adapter_plan_id: postModel?.adapter_plan_id ?? null,
             status: postModel?.adapter_plan_id ? 'transform_required' : plan.status || 'ready',
             plan_json: plan,
-            parameter_values: {},
+            parameter_values: adapterParameterDefaults(
+              plan.parameters ?? [],
+              adapterSpatialContext,
+            ),
           });
         }
       }
@@ -538,7 +591,7 @@ export function MintThread({
     } finally {
       setAdapterPlansLoading(false);
     }
-  }, [adapterSourceFingerprint, apollo, baseThreadExecutionData, threadId]);
+  }, [adapterSourceFingerprint, adapterSpatialContext, apollo, baseThreadExecutionData, threadId]);
 
   useEffect(() => {
     if (
@@ -598,7 +651,7 @@ export function MintThread({
   );
 
   const handleSubmitRuns = useCallback(
-    async (modelId: string) => {
+    async (modelId: string, maxMinutes: number) => {
       if (adapterPlansLoading || adapterPlanError) {
         throw new Error('SVO adapter plan discovery must complete before workflow submission.');
       }
@@ -650,6 +703,7 @@ export function MintThread({
       const adapterParameterValues = adapterParameterValuesForSubmission(adapterPlans, plan);
       const submitted = await submitExecutionPlan(ensembleManagerApi, {
         plan_id: plan.plan_id,
+        max_minutes: maxMinutes,
         adapter_parameter_values: adapterParameterValues,
       });
       if (submitted.run_id?.startsWith('ue_')) {
@@ -823,6 +877,8 @@ export function MintThread({
             thread={thread!}
             onUpdated={() => void handleThreadUpdated()}
             onContinue={goNext}
+            spatialSelection={spatialSelection}
+            onSpatialSelectionChange={setSpatialSelection}
           />
         );
       case 'variables':
@@ -843,6 +899,7 @@ export function MintThread({
             onContinue={goNext}
             onBack={goBack}
             onEditIndicator={() => setCurrentSection('variables')}
+            regionGeometry={regionGeometry}
           />
         );
       case 'datasets':
@@ -853,6 +910,7 @@ export function MintThread({
             ensembles={execData.model_ensembles}
             persistedData={execData.data}
             regionGeometry={regionGeometry}
+            spatialScopeName={spatialSelection?.feature?.label ?? thread?.region?.name ?? null}
             initialDatasetIds={initialDatasetIds}
             onUpdated={handleThreadUpdated}
             onContinue={goNext}
@@ -869,6 +927,9 @@ export function MintThread({
             onContinue={goNext}
             adapterPlanError={adapterPlanError}
             adapterPlanLoading={adapterPlansLoading}
+            spatialScopeName={thread?.region?.name ?? spatialScopeId}
+            spatialScopeId={spatialScopeId}
+            spatialSelection={spatialSelection}
           />
         );
       case 'runs':
@@ -911,6 +972,12 @@ export function MintThread({
     }
   }
 
+  const stepNavigation = (
+    <WizardRail states={stepStates} currentStep={currentSection} onSelect={setCurrentSection} />
+  );
+  const portalStepNavigation =
+    stepNavigationTarget && !maximized ? createPortal(stepNavigation, stepNavigationTarget) : null;
+
   return (
     <div
       data-testid="mint-thread"
@@ -929,10 +996,13 @@ export function MintThread({
           {maximized ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
         </button>
       </div>
-      <div className="flex flex-1 gap-4 overflow-hidden">
-        <WizardRail states={stepStates} currentStep={currentSection} onSelect={setCurrentSection} />
-        <div className="flex-1 overflow-y-auto pr-1">{renderStep()}</div>
+      <div className="flex flex-1 overflow-hidden">
+        <div className="flex-1 overflow-y-auto pr-1">
+          {renderStep()}
+          {(!stepNavigationTarget || maximized) && stepNavigation}
+        </div>
       </div>
+      {portalStepNavigation}
     </div>
   );
 }

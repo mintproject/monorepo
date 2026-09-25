@@ -12,10 +12,21 @@ import { applyExecutionInputOverrides } from "@/classes/common/execution-input-o
 
 type AdapterAwareModelThread = ModelThread & {
     adapter_resource_overrides?: Parameters<typeof applyExecutionInputOverrides>[2];
+    max_minutes?: number;
 };
 
 export interface ExecutionsTapisService {
-    submitExecution(threadmodel: ModelThread, token: string): Promise<SubmissionResult>;
+    submitExecution(threadmodel: AdapterAwareModelThread, token: string): Promise<SubmissionResult>;
+    buildCompositeWorkflowModelTask(
+        threadmodel: AdapterAwareModelThread,
+        workflowPath: string,
+        authorization: string
+    ): Promise<{
+        execution_id: string;
+        output_uri: string;
+        output_name: string;
+        job_definition: unknown;
+    }>;
     getExecution(executionId: string, token: string): Promise<any>;
     getJobStatus(jobId: string, token: string): Promise<any>;
 }
@@ -73,7 +84,8 @@ const executionsTapisService = {
                     executionCreation.threadRegion,
                     executionCreation.component,
                     thread.id,
-                    threadModelId
+                    threadModelId,
+                    threadmodel.max_minutes
                 );
                 if (submissionResult.failedExecutions.length > 0) {
                     console.warn(
@@ -93,6 +105,23 @@ const executionsTapisService = {
         } else {
             throw new NotFoundError("Thread not found");
         }
+    },
+    async buildCompositeWorkflowModelTask(
+        threadmodel: AdapterAwareModelThread,
+        workflowPath: string,
+        authorization: string
+    ) {
+        const token = getTokenFromAuthorizationHeader(authorization);
+        if (!token) {
+            throw new Error("Unauthorized");
+        }
+        const prefs = getConfiguration();
+        const tapisExecution = new TapisExecutionService(token, prefs.tapis.basePath);
+        return tapisExecution.buildCompositeWorkflowModelTask(
+            threadmodel,
+            workflowPath,
+            threadmodel.max_minutes
+        );
     }
 };
 

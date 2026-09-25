@@ -39,6 +39,7 @@ the tracked file — restore it with
 | `redis` | 6380 | Bull queues for Ensemble Manager |
 | `postgres` | none | PostGIS and pgvector. The one database |
 | `auth-webhook` | none | Validates Tapis tokens for Hasura |
+| `auth-hook-proxy` | none | Removes large GraphQL bodies before auth validation |
 
 `postgres` publishes no host port. The other services reach it on the compose
 network. `redis` uses 6380 on the host, because a Homebrew Redis may already
@@ -117,11 +118,31 @@ beside `compose.yaml`, or in the shell.
 |---|---|
 | `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB` | `mint` |
 | `HASURA_GRAPHQL_ADMIN_SECRET` | `mint` |
+| `MODEL_CATALOG_API` | `http://localhost:3002/v2.0.0` |
 | `TAPIS_JWKS_URI` | `https://portals.tapis.io/v3/tenants/portals` |
 | `TAPIS_TOKEN_ISSUER` | `https://portals.tapis.io/v3/tokens` |
+| `REGION_IMPORT_BODY_LIMIT` | `10485760` (10 MiB) |
+| `REGION_IMPORT_MAX_REGIONS` | `500` |
+| `REGION_IMPORT_MAX_GEOMETRIES` | `10` per region |
+| `REGION_IMPORT_MAX_REGION_BYTES` | `2097152` (2 MiB) |
 | `LOG_LEVEL` | `info` |
 
 The Tapis tenant is `portals`.
+
+Shared region imports are restricted by the operator-managed
+`public.region_curator` table. Add a curator after the Hasura migration has run:
+
+```sql
+INSERT INTO public.region_curator (tenant_id, username)
+VALUES ('portals', 'tapis-username')
+ON CONFLICT (tenant_id, username) DO UPDATE SET active = true;
+```
+
+The UI checks `GET /v2.0.0/regions/import/access` and submits imports to
+`POST /v2.0.0/regions/import`. The generic `POST /regions` write route is not
+published; imports are validated and committed atomically by the API.
+The region-tab plus button uses the same curator check and submits new child
+categories to `POST /v2.0.0/regions/categories` before loading their boundaries.
 
 Ensemble Manager reads one committed file, `compose/ensemble-manager.json`.
 Compose mounts it read-only. Every host name in it is a compose service name.
@@ -220,7 +241,13 @@ say why.
   `platform: linux/amd64` on Apple Silicon.
 - `pg_isready` needs `-h 127.0.0.1`. Over the unix socket it reports ready during
   `initdb`, and Hasura then starts too early and exits.
-- `HASURA_GRAPHQL_AUTH_HOOK_MODE` must be `POST`. The webhook has no GET route.
+- `HASURA_GRAPHQL_AUTH_HOOK_MODE` is `GET` so Hasura forwards the original
+  client headers directly.
+- `auth-hook-proxy` converts that header-forwarding GET auth hook into the
+  tiny POST envelope expected by the Tapis auth webhook. This avoids the
+  webhook image's 100 KB JSON-parser limit for geometry registrations while
+  preserving `headers.Authorization`, which is where this webhook reads the
+  bearer token.
 - `HASURA_GRAPHQL_UNAUTHORIZED_ROLE` does nothing in webhook mode. The webhook
   returns the `anonymous` role itself.
 - `model-catalog-api` builds the `builder` stage. The final stage runs

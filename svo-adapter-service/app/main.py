@@ -75,6 +75,13 @@ from .planner import (
     plan_model_run,
     reachable_variables,
 )
+from .etl_contract import (
+    accepted_aliases,
+    canonical_key,
+    normalize_args,
+    normalize_env_from_args,
+    public_definitions,
+)
 
 
 def _plan_with_parameters(plan_json: dict[str, Any]) -> dict[str, Any]:
@@ -82,6 +89,25 @@ def _plan_with_parameters(plan_json: dict[str, Any]) -> dict[str, Any]:
     plan_json["parameters"] = parameter_definitions(
         plan_json.get("steps") or [], tapis.STANDARD_PARAMS
     )
+    # Use the backend-owned catalog as the final geometry default. Explicit
+    # caller values and workflow-specific recommendations still take priority.
+    transform_names = " ".join(
+        str(step.get("name") or step.get("transform_type") or "").lower()
+        for step in plan_json.get("steps") or []
+    )
+    if not any(
+        parameter.get("default")
+        for parameter in plan_json["parameters"]
+        if parameter.get("name") == "geometry_source_uri"
+    ):
+        default_uri = settings.gma_boundary_layer_uri
+        if "county" in transform_names:
+            default_uri = settings.county_boundary_layer_uri
+        elif "gcd" in transform_names or "district" in transform_names:
+            default_uri = settings.gcd_boundary_layer_uri
+        for parameter in plan_json["parameters"]:
+            if parameter.get("name") == "geometry_source_uri":
+                parameter["default"] = default_uri
     return plan_json
 
 class TestTransformIn(BaseModel):
@@ -565,6 +591,46 @@ _SPEC_TAPIS_HINTS = (
     "env_from_args", "file_inputs",
 )
 
+def _default_spatial_layers() -> list[dict[str, Any]]:
+    return [
+        {
+            "id": "twdb_gma_boundaries",
+            "label": "TWDB Statewide GMA Boundaries",
+            "uri": settings.gma_boundary_layer_uri,
+            "source_type": "feature-service",
+            "geometry_type": "polygon",
+            "default_filter_field": "GMAnum",
+            "crs": "EPSG:4326",
+            "format": "geojson",
+            "tags": ["twdb", "gma", "boundary"],
+            "registered_category_id": "hydrology",
+        },
+        {
+            "id": "twdb_gcd_boundaries",
+            "label": "TWDB Groundwater Conservation District Boundaries",
+            "uri": settings.gcd_boundary_layer_uri,
+            "source_type": "feature-service",
+            "geometry_type": "polygon",
+            "default_filter_field": "DistrictName",
+            "crs": "EPSG:4326",
+            "format": "geojson",
+            "tags": ["twdb", "gcd", "boundary"],
+            "registered_category_id": "hydrology",
+        },
+        {
+            "id": "twdb_county_boundaries",
+            "label": "TWDB Texas Counties FIPS Boundaries",
+            "uri": settings.county_boundary_layer_uri,
+            "source_type": "feature-service",
+            "geometry_type": "polygon",
+            "default_filter_field": "Name",
+            "crs": "EPSG:4326",
+            "format": "geojson",
+            "tags": ["twdb", "county", "boundary"],
+            "registered_category_id": "administrative",
+        },
+    ]
+
 
 def _spec_insert_obj(spec: dict[str, Any]) -> dict[str, Any]:
     """Build a Hasura nested-insert object for a transform spec from registry-shaped
@@ -572,6 +638,8 @@ def _spec_insert_obj(spec: dict[str, Any]) -> dict[str, Any]:
     spec = {k: v for k, v in spec.items() if not k.startswith("_")}
     contracts = spec.pop("contracts", []) or []
     hints = {k: spec.pop(k) for k in _SPEC_TAPIS_HINTS if spec.get(k) is not None}
+    if "env_from_args" in hints:
+        hints["env_from_args"] = normalize_env_from_args(hints.get("env_from_args"))
     if "tapis_app_version" in hints and "app_version" not in hints:
         hints["app_version"] = hints["tapis_app_version"]
     if hints:
@@ -1000,10 +1068,34 @@ async def get_objective(objective_id: str):
 @app.get("/runtime-defaults", tags=["Core: Catalog/objectives"])
 async def runtime_defaults():
     """Return non-secret runtime settings used to prefill the standalone UI."""
+    spatial_layers = _default_spatial_layers()
+    default_boundary_uri = settings.gma_boundary_layer_uri or (spatial_layers[0]["uri"] if spatial_layers else "")
     return {
         "geo_actor_id": settings.geo_actor_id or "",
         "tapis_exec_system": settings.tapis_exec_system,
         "tapis_workflow_group": settings.tapis_workflow_group,
+        "geometry_source_uri": default_boundary_uri,
+        "spatial_layers": spatial_layers,
+    }
+
+
+@app.get("/spatial/layers", tags=["Core: Registry"])
+async def list_spatial_layers():
+    """Known backend spatial sources for ETL/UI selection."""
+    return {"layers": _default_spatial_layers()}
+
+
+@app.get("/etl/common-variables", tags=["Core: Registry"])
+async def list_common_etl_variables(include_runtime: bool = Query(False)):
+    """Canonical ETL/UI variables and accepted legacy aliases."""
+    variables = [
+        item for item in public_definitions()
+        if include_runtime or not item.get("runtime_only")
+    ]
+    return {
+        "variables": variables,
+        "canonical": variables,
+        "spatial_layers": _default_spatial_layers(),
     }
 
 
@@ -1868,6 +1960,21 @@ def _public_workflow_args(args: dict[str, dict[str, Any]]) -> dict[str, dict[str
     return {key: value for key, value in args.items() if key != "tapis_token"}
 
 
+def _composite_task_contains_secret(value: Any) -> bool:
+    """Reject credentials in coordinator-owned composite task descriptors."""
+    if isinstance(value, dict):
+        for key, item in value.items():
+            if str(key).lower() in {"tapis_token", "authorization", "x-tapis-token"}:
+                if item not in (None, "", {}, []):
+                    return True
+            if _composite_task_contains_secret(item):
+                return True
+        return False
+    if isinstance(value, list):
+        return any(_composite_task_contains_secret(item) for item in value)
+    return isinstance(value, str) and bool(re.search(r"\bbearer\s+", value, flags=re.IGNORECASE))
+
+
 def _resolve_bound_plan_id(plan_id: str) -> tuple[str, str | None]:
     """Resolve the opaque deferred binding token to its stored plan id."""
     if not plan_id.startswith("bound:"):
@@ -1891,10 +1998,14 @@ def _validate_plan_args(
     caller token is an execution credential, not a user-entered plan
     parameter, so it is injected after the user argument allowlist is checked.
     """
-    normalized = _wrap_args(args)
+    normalized = normalize_args(_wrap_args(args))
     definitions = plan_json.get("parameters") or []
-    allowed = {str(d.get("name")) for d in definitions if d.get("name")}
+    allowed = accepted_aliases(str(d.get("name")) for d in definitions if d.get("name"))
     allowed.add("tapis_token")
+    if plan_json.get("model_task"):
+        # These are coordinator-owned values for a composite model stage, not
+        # user-entered adapter parameters.
+        allowed.update({"execution_id", "source_uri"})
     unknown = sorted(set(normalized) - allowed)
     if unknown:
         raise HTTPException(
@@ -1907,7 +2018,12 @@ def _validate_plan_args(
         name = str(definition.get("name"))
         if not name:
             continue
-        value = normalized.get(name, {}).get("value")
+        canonical_name = canonical_key(name) or name
+        if name == "dfc_area_boundary_uri":
+            # DFC ETLs may require a second, semantically distinct boundary.
+            # Do not let the primary canonical geometry URI satisfy it.
+            canonical_name = name
+        value = normalized.get(canonical_name, {}).get("value")
         if value is None or value == "":
             if definition.get("default") is not None:
                 normalized[name] = {"value": definition["default"]}
@@ -2015,9 +2131,38 @@ async def submit_workflow(
     if settings.geo_actor_id and "geo_actor_id" not in service_args:
         service_args["geo_actor_id"] = settings.geo_actor_id
 
-    pipeline = tapis.generate_tapis_workflow(plan)
+    workflow_plan = plan
+    if body.model_task is not None:
+        # Composite descriptors are generated by Ensemble Manager from the
+        # selected model's catalog/component contract. Reject credentials if a
+        # malformed caller ever tries to smuggle one into the persisted
+        # workflow definition.
+        if _composite_task_contains_secret(body.model_task):
+            raise HTTPException(422, detail={
+                "code": "COMPOSITE_TASK_SECRET_FORBIDDEN",
+                "message": "composite model tasks may not contain credentials",
+            })
+        if not body.execution_id:
+            raise HTTPException(422, detail={
+                "code": "COMPOSITE_EXECUTION_ID_REQUIRED",
+                "message": "composite workflow submission requires execution_id",
+            })
+        output_uri = body.model_task.get("output_uri")
+        if not isinstance(output_uri, str) or not output_uri:
+            raise HTTPException(422, detail={
+                "code": "COMPOSITE_OUTPUT_URI_REQUIRED",
+                "message": "composite model task requires a server-owned output_uri",
+            })
+        workflow_plan = {**plan, "plan_json": {
+            **(plan.get("plan_json") or {}),
+            "model_task": body.model_task,
+        }}
+        service_args.setdefault("execution_id", body.execution_id)
+        service_args.setdefault("source_uri", output_uri)
+
+    pipeline = tapis.generate_tapis_workflow(workflow_plan)
     args = _validate_plan_args(
-        plan.get("plan_json") or {}, service_args, token, require_required=not body.dry_run
+        workflow_plan.get("plan_json") or {}, service_args, token, require_required=not body.dry_run
     )
 
     # Record the run before triggering, so a failed submit still leaves a trail.
@@ -2044,7 +2189,8 @@ async def submit_workflow(
     try:
         result = await run_in_threadpool(
             tapis.submit_tapis_workflow, pipeline, args,
-            token=token, run_name=body.run_name, recreate=body.recreate,
+            token=token, run_name=body.run_name,
+            recreate=body.recreate or body.model_task is not None,
         )
     except Exception as exc:  # surface the Tapis error, mark the run failed
         await h.execute(UPDATE_RUN, {"id": run["id"], "set": {

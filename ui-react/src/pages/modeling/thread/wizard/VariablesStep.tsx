@@ -84,6 +84,15 @@ export function VariablesStep({
         region_id: null,
         start_date: thread.start_date,
         end_date: thread.end_date,
+        ...(thread.region_id
+          ? {
+              spatial_conditions: {
+                spatial_scope_type: 'custom',
+                spatial_scope_id: thread.region_id,
+                spatial_resolution: 'region',
+              },
+            }
+          : {}),
         limit: 10,
       },
       { signal: controller.signal },

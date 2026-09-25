@@ -30,6 +30,8 @@ import json
 import time
 from typing import Any
 
+from .etl_contract import normalize_env_from_args
+
 try:
     from .config import settings
 except ImportError:  # pydantic-settings absent (e.g. offline generation tests)
@@ -100,10 +102,71 @@ def generate_tapis_workflow(
     group_id = group_id or settings.tapis_workflow_group
     owner = owner or settings.tapis_workflow_owner
     exec_system = exec_system or settings.tapis_exec_system
-    params = dict(params or STANDARD_PARAMS)
+    params = {
+        name: dict(definition)
+        for name, definition in (params or STANDARD_PARAMS).items()
+    }
+
+    # A composite MINT run supplies a server-generated model job definition.
+    # Keep it in the same provider pipeline as the adapter transforms. The
+    # bearer token is intentionally not part of this descriptor; it is injected
+    # by the submission client at the Tapis boundary.
+    # The API stores composite metadata inside the immutable plan snapshot;
+    # keep the top-level form for direct generator callers and older tests.
+    model_task = plan_json.get("model_task") or plan.get("model_task")
+    if model_task:
+        params.setdefault("execution_id", {
+            "type": "string",
+            "required": True,
+            "description": "Ensemble Manager logical workflow execution",
+        })
+        params.setdefault("source_uri", {
+            "type": "string",
+            "required": True,
+            "description": "Server-owned model-output handoff URI",
+        })
 
     tasks: list[dict[str, Any]] = []
     prev_id: str | None = None
+    if model_task:
+        job_definition = dict(model_task.get("job_definition") or {})
+        if not job_definition.get("appId") or not job_definition.get("appVersion"):
+            raise ValueError("composite model task requires appId and appVersion")
+        # The Jobs API tolerates omitted execution directories, while
+        # Workflows validates the embedded job definition and rejects null.
+        job_definition.setdefault("execSystemInputDir", "${JobWorkingDir}")
+        job_definition.setdefault("execSystemOutputDir", "${JobWorkingDir}/output")
+        model_id = str(model_task.get("stage_id") or "model")
+        tasks.append({
+            "id": model_id,
+            "type": "tapis_job",
+            "execution_profile": {"max_retries": 0},
+            "tapis_job_def": job_definition,
+        })
+        handoff_id = "output-handoff"
+        tasks.append({
+            "id": handoff_id,
+            "type": "function",
+            "runtime": "python:3.11",
+            "installer": "pip",
+            "description": "Publish the model output manifest for downstream adapter stages",
+            "code": (
+                "import json\n"
+                "print(json.dumps({'resource_uri': "
+                + repr(model_task.get("output_uri"))
+                + ", 'model_output_key': "
+                + repr(model_task.get("output_name"))
+                + "}))\n"
+            ),
+            "input": {
+                "source_uri": {
+                    "type": "string",
+                    "value_from": {"args": "source_uri"},
+                }
+            },
+            "depends_on": [{"id": model_id}],
+        })
+        prev_id = handoff_id
     for s in steps:
         task_id = f"step-{s['step']}-{(s.get('transform_type') or 'transform')}"
         app_id = s.get("tapis_app_id")
@@ -151,7 +214,7 @@ def generate_tapis_workflow(
                 task["entrypoint"] = s["python_entrypoint"]
             inputs = {
                 key: {"type": "string", "value_from": {"args": arg}}
-                for key, arg in (s.get("env_from_args") or {}).items()
+                for key, arg in (normalize_env_from_args(s.get("env_from_args") or {}) or {}).items()
             }
             if inputs:
                 task["input"] = inputs
@@ -159,6 +222,32 @@ def generate_tapis_workflow(
             task["depends_on"] = [{"id": prev_id}]
         tasks.append(task)
         prev_id = task_id
+
+    if model_task:
+        # Composite MINT runs use the adapter's task-specific arguments. The
+        # SUBSIDE-compatible defaults also declare date/AOI arguments, but
+        # those must not block a run when no task references them.
+        referenced_args: set[str] = set()
+
+        def collect_arg_references(value: Any) -> None:
+            if isinstance(value, dict):
+                arg_name = value.get("args")
+                if isinstance(arg_name, str):
+                    referenced_args.add(arg_name)
+                for child in value.values():
+                    collect_arg_references(child)
+            elif isinstance(value, list):
+                for child in value:
+                    collect_arg_references(child)
+            elif isinstance(value, str):
+                for name in params:
+                    if f"args.{name}" in value:
+                        referenced_args.add(name)
+
+        collect_arg_references(tasks)
+        for name in ("start_date", "end_date", "aoi_geojson_uri"):
+            if name in params and name not in referenced_args:
+                params[name] = {**params[name], "required": False}
 
     return {
         "id": pipeline_id,
@@ -181,7 +270,7 @@ def _env_variables(step: dict[str, Any]) -> list[dict[str, str]]:
     """Per-step Tapis env vars. STAGE selects the app subcommand (SUBSIDE pattern:
     one image, many stages dispatched by STAGE); the rest bind from pipeline args."""
     env = [{"key": "STAGE", "value": step.get("stage") or step.get("name") or "run"}]
-    for key, arg in (step.get("env_from_args") or {}).items():
+    for key, arg in (normalize_env_from_args(step.get("env_from_args") or {}) or {}).items():
         env.append({"key": key, "value": f"${{args.{arg}}}"})
     return env
 

@@ -13,6 +13,7 @@
 
 import {
   cleanString,
+  canonicalStandardVariable,
   overlapsDateRange,
   packageBoundingBox,
   packageRegionMatch,
@@ -20,6 +21,7 @@ import {
   packageTags,
   packageTimePeriod,
   parseDate as parseCkanDate,
+  resourceStandardVariables,
   resourceMatchesVariables,
   searchAllPackages,
   showPackage,
@@ -93,6 +95,44 @@ export interface DatasetQueryParams {
   start_time__gte?: string;
   end_time__lte?: string;
   limit?: number;
+}
+
+/**
+ * Return the requested standard variables that have at least one catalog
+ * resource usable for the requested spatial and temporal scope.
+ *
+ * This is intentionally a variable-availability query rather than a dataset
+ * list. Model selection needs to know whether each required input has a
+ * possible source, while the Datasets step still presents the concrete
+ * datasets and resources to the user.
+ */
+export async function findAvailableDatasetVariables(params: {
+  variableNames: string[];
+  regionGeometry?: unknown;
+  startDate?: Date | null;
+  endDate?: Date | null;
+}): Promise<string[]> {
+  const requested = [...new Set(params.variableNames.map((value) => value.trim()).filter(Boolean))];
+  if (requested.length === 0) return [];
+
+  const wanted = new Map(requested.map((value) => [canonicalStandardVariable(value), value]));
+  const region = toBoundingBox(params.regionGeometry);
+  const packages = await searchAllPackages({});
+  const available = new Set<string>();
+
+  for (const pkg of packages) {
+    if (!overlapsDateRange(pkg, params.startDate, params.endDate)) continue;
+    if (packageRegionMatch(pkg, region) === 'outside') continue;
+
+    for (const resource of pkg.resources ?? []) {
+      for (const variable of resourceStandardVariables(resource)) {
+        const requestedName = wanted.get(canonicalStandardVariable(variable));
+        if (requestedName) available.add(requestedName);
+      }
+    }
+  }
+
+  return requested.filter((variable) => available.has(variable));
 }
 
 // ─── Internal shape helpers ───────────────────────────────────────────────────

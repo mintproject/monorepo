@@ -1,11 +1,47 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  adapterParameterDefaults,
   adapterParameterKey,
   adapterParameterValuesForSubmission,
   adapterParametersComplete,
   type ThreadAdapterPlan,
 } from '@/lib/adapter-execution';
+
+describe('adapter spatial parameter defaults', () => {
+  it('maps problem-framing spatial context onto canonical parameters', () => {
+    expect(
+      adapterParameterDefaults(
+        [
+          { name: 'spatial_scope_id' },
+          { name: 'spatial_scope_name' },
+          { name: 'spatial_scope_type' },
+          { name: 'spatial_resolution' },
+        ],
+        {
+          spatial_scope_id: 'texas',
+          spatial_scope_name: 'Texas',
+          spatial_scope_type: 'custom',
+          spatial_resolution: 'region',
+        },
+      ),
+    ).toEqual({
+      spatial_scope_id: 'texas',
+      spatial_scope_name: 'Texas',
+      spatial_scope_type: 'custom',
+      spatial_resolution: 'region',
+    });
+  });
+
+  it('supports legacy plan parameter aliases', () => {
+    expect(
+      adapterParameterDefaults([{ name: 'gma_id' }, { name: 'area' }], {
+        spatial_scope_id: 'GMA 12',
+        spatial_scope_name: 'GMA 12',
+      }),
+    ).toEqual({ gma_id: 'GMA 12', area: 'GMA 12' });
+  });
+});
 
 function plan(parameterValues: Record<string, unknown>): ThreadAdapterPlan {
   return {

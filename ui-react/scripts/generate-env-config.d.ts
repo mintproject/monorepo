@@ -8,6 +8,7 @@ export interface MintConfig {
   DATA_CATALOG_API: string;
   DATA_CATALOG_BROWSE_URL: string;
   SEMANTIC_SEARCH_API: string;
+  SVO_ADAPTER_API: string;
   MODEL_CATALOG_API: string;
   EXECUTION_ENGINE: string;
   BRANDING: string;

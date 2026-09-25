@@ -24,6 +24,7 @@ from .models import (
     ReadinessResult,
     ReadinessStatus,
 )
+from .etl_contract import canonical_key, normalize_env_from_args
 
 
 def _normalize_unit(u: str | None) -> str | None:
@@ -377,6 +378,8 @@ def build_plan_json(path: list[dict[str, Any]]) -> dict[str, Any]:
             if val is None:
                 val = hints.get(key)
             if val is not None:
+                if key == "env_from_args":
+                    val = normalize_env_from_args(val)
                 step[key] = val
         schema = spec.get("parameters_schema_json") or {}
         if isinstance(schema, dict) and schema.get("properties"):
@@ -440,9 +443,13 @@ def parameter_definitions(
     for step in steps:
         schema = step.get("parameters_schema_json") or {}
         properties = schema.get("properties") if isinstance(schema, dict) else None
-        required = set(schema.get("required") or []) if isinstance(schema, dict) else set()
+        required = {
+            canonical_key(str(name)) or str(name)
+            for name in (schema.get("required") or [])
+        } if isinstance(schema, dict) else set()
         if isinstance(properties, dict):
-            for name, prop in properties.items():
+            for raw_name, prop in properties.items():
+                name = canonical_key(str(raw_name)) or str(raw_name)
                 if not isinstance(prop, dict):
                     prop = {}
                 definition = {
@@ -456,7 +463,8 @@ def parameter_definitions(
                 }
                 add(name, definition, step)
 
-        for arg in (step.get("env_from_args") or {}).values():
+        env_from_args = normalize_env_from_args(step.get("env_from_args") or {}) or {}
+        for arg in env_from_args.values():
             add(str(arg), {}, step)
         for file_input in step.get("file_inputs") or []:
             arg = file_input.get("from_arg")
@@ -500,6 +508,8 @@ def _step_from_spec(idx: int, spec: dict[str, Any], depends_on: list[int]) -> di
     for key in ("app_version", "stage", "env_from_args", "file_inputs"):
         val = spec.get(key) if spec.get(key) is not None else hints.get(key)
         if val is not None:
+            if key == "env_from_args":
+                val = normalize_env_from_args(val)
             step[key] = val
     schema = spec.get("parameters_schema_json") or {}
     if isinstance(schema, dict) and schema.get("properties"):

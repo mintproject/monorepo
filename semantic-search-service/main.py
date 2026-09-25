@@ -3,7 +3,7 @@ import logging
 import os
 from collections import defaultdict
 from functools import lru_cache
-from typing import Literal
+from typing import Any, Literal
 
 import psycopg
 from fastapi import Body, FastAPI, HTTPException, Query
@@ -364,6 +364,9 @@ class ProblemStatementRequest(BaseModel):
     selected_model_configuration_ids: list[str] = Field(default_factory=list)
     start_date: str | None = None
     end_date: str | None = None
+    # Structured spatial context for problem framing. It is optional metadata,
+    # intentionally separate from the free-text embedding query.
+    spatial_conditions: dict[str, Any] | None = None
     limit: int = Field(default=10, ge=1, le=50)
 
 
@@ -791,6 +794,7 @@ def recommendation_response(conn, request: ProblemStatementRequest):
             "status": "abstained",
             "reason": "insufficient_context",
             "context": {"text": "", "sources": []},
+            "spatial_conditions": request.spatial_conditions or {},
             "results": {"svo": [], "model_configuration": []},
         }
 
@@ -806,6 +810,7 @@ def recommendation_response(conn, request: ProblemStatementRequest):
         "capability": "problem_statement_recommendations",
         "status": "ok" if svo_results or model_results else "empty",
         "context": {"text": query, "sources": context_pieces},
+        "spatial_conditions": request.spatial_conditions or {},
         "results": {
             "svo": svo_results,
             "model_configuration": model_results,

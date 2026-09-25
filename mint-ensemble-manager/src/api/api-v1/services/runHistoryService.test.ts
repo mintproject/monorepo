@@ -105,4 +105,64 @@ describe("runHistoryService", () => {
         expect(detail.workflow?.adapter_runs).toEqual([{ run_id: "adapter-1" }]);
         expect(detail.parameters[0]).toMatchObject({ parameter_id: "rate", executed_value: 1 });
     });
+
+    it("matches a workflow parent to its child execution id, not only the provider run id", async () => {
+        (getThread as jest.Mock).mockResolvedValue({
+            id: "thread-1",
+            thread_models: [
+                {
+                    id: "thread-model-1",
+                    modelcatalog_configuration_id: "model-1",
+                    modelcatalog_configuration: { label: "MODFLOW" }
+                }
+            ]
+        });
+        (getExecutionHistory as jest.Mock).mockResolvedValue({
+            executions: [
+                {
+                    execution: {
+                        id: "execution-1",
+                        run_id: "provider-job-1",
+                        status: "WAITING",
+                        start_time: "2026-09-25T11:06:24Z",
+                        modelcatalog_configuration_id: "model-1",
+                        parameter_bindings: [],
+                        data_bindings: [],
+                        results: []
+                    }
+                }
+            ]
+        });
+        (createHasuraUnifiedExecutionStore as jest.Mock).mockReturnValue({
+            listByThread: jest.fn().mockResolvedValue([
+                {
+                    id: "parent-1",
+                    plan_id: "plan-1",
+                    thread_id: "thread-1",
+                    model_id: "model-1",
+                    execution_engine: "ensemble_manager",
+                    status: "model_running",
+                    idempotency_key: "key-1",
+                    plan_hash: "hash-1",
+                    adapter_steps: [],
+                    adapter_run_ids: [],
+                    parameter_values: {},
+                    model_child_id: "execution-1",
+                    created_at: "2026-09-25T11:06:23Z",
+                    updated_at: "2026-09-25T11:06:24Z"
+                }
+            ])
+        });
+
+        const response = await createRunHistoryService().list("thread-1", "Bearer token", {
+            limit: 10
+        });
+
+        expect(response.runs).toHaveLength(1);
+        expect(response.runs[0]).toMatchObject({
+            source: "workflow",
+            execution_id: "execution-1",
+            model_child_id: "execution-1"
+        });
+    });
 });

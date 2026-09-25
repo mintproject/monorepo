@@ -1,6 +1,6 @@
 # Single workflow pipeline for adapter-backed model runs
 
-Status: Implementing
+Status: Implemented
 
 ## Objective
 
@@ -148,6 +148,21 @@ references, and log availability. The Runs panel renders the model as part of
 the pipeline, not as an unrelated standalone job. The previous-runs page
 shows the same composite stage graph and preserves legacy runs as
 `legacy_model_job` records.
+
+The active-run panel presents those records as a model-builder-style execution
+graph: SVO ETL nodes connect to the model and output handoff, persisted source
+and target contracts label the data edges, and the currently running stage is
+visually highlighted. The compact stage summary remains available below the
+graph for quick status scanning and legacy/recovery runs. Selecting a stage
+opens its status and contract details below the graph; the layered layout keeps
+the path readable as the graph grows.
+
+The Models step uses the same model-builder visual for planning: all selected
+models share one compact responsive map, with each model's adapter transforms
+and requested outcome connected as a branch. Input/output SVO contracts are
+labels on the arrows. Selecting a stage opens a full-width accordion below the
+graph with its URI, format/unit, model ports, or ETL contracts, so a dense graph
+remains inspectable without expanding every node.
 
 ## Files likely affected
 
@@ -352,9 +367,21 @@ cancel or adopt them.
 - The first implementation supports one model task per composite workflow and
   stores a durable stage snapshot with transition history while preserving
   legacy execution compatibility.
+- The shared UI graph uses `@xyflow/react` with `elkjs` layered auto-layout;
+  stage cards remain selectable and draggable nodes, SVO contracts remain
+  labeled edges, and deterministic page-owned coordinates remain the fallback
+  while layout is pending or unavailable. The initial viewport fits the full
+  graph, while edge endpoints follow manual node movement.
+- The modeling step navigation is rendered below the active sub-task as a
+  collapsible full-width list, so the graph and run details retain the full
+  horizontal workspace.
 
 ## Implementation notes
 
+- The shared workflow canvas now applies an asynchronous ELK layered layout to
+  both the model-definition map and the execution map. Stable node and edge
+  identifiers prevent stale layout results from replacing a newer graph, while
+  the existing coordinates remain visible during layout and on layout failure.
 - Implemented the first parent-owned stage integration: unified run responses
   now expose adapter/model/handoff stages, stage snapshots persist through
   `unified_execution_step`, pre-model orchestration retains its model child ID,
@@ -369,10 +396,15 @@ cancel or adopt them.
   provider Tapis Job UUID. `GET /plans/runs/{run_id}` polls the provider Job
   when available, so local GraphQL webhook state cannot leave the parent
   indefinitely at `model_running` when the webhook target is unavailable.
-- The current model stage still uses the existing MINT/Tapis job adapter as its
-  provider execution mechanism. A provider-native composite Tapis workflow
-  task descriptor remains an open implementation step; it is not treated as a
-  separate top-level workflow identity.
+- The model stage now uses the existing MINT/Tapis job adapter to build a
+  server-owned Tapis job task inside the same provider workflow as the adapter
+  tasks. The generated workflow includes an explicit output-handoff task and
+  passes the model output URI into the adapter stages; standalone model
+  submission is retained only for plain plans and existing legacy runs.
+- The composite path currently supports one model execution per workflow and
+  does not submit a live provider run as part of local validation. Provider
+  output archive naming and final data-object registration still require
+  validation with a new approved model run.
 
 ## User feedback / decisions
 

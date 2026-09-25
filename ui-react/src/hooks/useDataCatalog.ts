@@ -9,6 +9,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   DataCatalogDataset,
   DataCatalogResource,
+  findAvailableDatasetVariables,
   findDatasetsByVariables,
   loadDatasetResources,
 } from '@/lib/data-catalog';
@@ -87,6 +88,70 @@ export function useDataCatalogDatasets(
   }, [fetch]);
 
   return { datasets, loading, error, reload: fetch };
+}
+
+export interface UseDataCatalogVariableAvailabilityOptions {
+  variableNames: string[];
+  regionGeometry?: unknown;
+  startDate?: Date | null;
+  endDate?: Date | null;
+  skip?: boolean;
+}
+
+export interface UseDataCatalogVariableAvailabilityResult {
+  availableVariables: Set<string>;
+  loading: boolean;
+  error: string | null;
+}
+
+/** Check which standard-variable inputs have usable data for a scope. */
+export function useDataCatalogVariableAvailability(
+  opts: UseDataCatalogVariableAvailabilityOptions,
+): UseDataCatalogVariableAvailabilityResult {
+  const [availableVariables, setAvailableVariables] = useState<Set<string>>(new Set());
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchAvailability = useCallback(async () => {
+    if (opts.skip || opts.variableNames.length === 0) {
+      setAvailableVariables(new Set());
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    try {
+      const available = await findAvailableDatasetVariables({
+        variableNames: opts.variableNames,
+        regionGeometry: opts.regionGeometry,
+        startDate: opts.startDate,
+        endDate: opts.endDate,
+      });
+      setAvailableVariables(new Set(available));
+    } catch (err) {
+      setError(String(err));
+    } finally {
+      setLoading(false);
+    }
+    // The serialized keys intentionally control refetching when callers recreate
+    // equivalent arrays/geometries on render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    JSON.stringify(opts.variableNames),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    JSON.stringify(opts.regionGeometry),
+    opts.startDate?.toISOString(),
+    opts.endDate?.toISOString(),
+    opts.skip,
+  ]);
+
+  useEffect(() => {
+    void fetchAvailability();
+  }, [fetchAvailability]);
+
+  return { availableVariables, loading, error };
 }
 
 // ─── Resource loading hook ────────────────────────────────────────────────────

@@ -176,6 +176,54 @@ export function adapterPlanParameters(plan: ThreadAdapterPlan): UnifiedParameter
   return plan.plan_json?.parameters ?? [];
 }
 
+export interface AdapterSpatialContext {
+  geometry_source_uri?: string | null;
+  geometry_source_type?: string | null;
+  geometry_filter_field?: string | null;
+  geometry_filter_value?: string | null;
+  geometry_crs?: string | null;
+  geometry_format?: string | null;
+  spatial_scope_id?: string | null;
+  spatial_scope_name?: string | null;
+  spatial_scope_type?: string | null;
+  spatial_resolution?: string | null;
+}
+
+/** Map problem-framing spatial context onto the parameters exposed by a plan. */
+export function adapterParameterDefaults(
+  parameters: UnifiedParameterDefinition[],
+  context: AdapterSpatialContext,
+): Record<string, unknown> {
+  const available = new Set(parameters.map((parameter) => parameter.name));
+  const values: Record<string, unknown> = {};
+  const setFirstAvailable = (names: string[], value: unknown) => {
+    if (value === undefined || value === null || String(value).trim() === '') return;
+    const name = names.find((candidate) => available.has(candidate));
+    if (name) values[name] = value;
+  };
+
+  setFirstAvailable(['geometry_source_uri', 'source_uri'], context.geometry_source_uri);
+  setFirstAvailable(['geometry_source_type'], context.geometry_source_type);
+  setFirstAvailable(
+    ['geometry_filter_field', 'boundary_query_field'],
+    context.geometry_filter_field,
+  );
+  setFirstAvailable(
+    ['geometry_filter_value', 'boundary_query_value'],
+    context.geometry_filter_value,
+  );
+  setFirstAvailable(['geometry_crs', 'crs_requirement'], context.geometry_crs);
+  setFirstAvailable(['geometry_format', 'format'], context.geometry_format);
+  setFirstAvailable(['spatial_scope_id', 'gma_id'], context.spatial_scope_id);
+  setFirstAvailable(
+    ['spatial_scope_name', 'area', 'county_name', 'gcd_name'],
+    context.spatial_scope_name,
+  );
+  setFirstAvailable(['spatial_scope_type', 'area_type'], context.spatial_scope_type);
+  setFirstAvailable(['spatial_resolution'], context.spatial_resolution);
+  return values;
+}
+
 /**
  * Build adapter values for a freshly-created Ensemble Manager plan.
  * Post-model planning is repeated at submission time, so it may issue a new

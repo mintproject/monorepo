@@ -165,6 +165,7 @@ export function MintProblemStatement() {
   // ── local state ───────────────────────────────────────────────────────────
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [selectedThreadId, setSelectedThreadId] = useState<string | null>(null);
+  const [stepNavigationTarget, setStepNavigationTarget] = useState<HTMLDivElement | null>(null);
 
   const initialDatasetIds = useMemo(
     () => searchParams.get('datasetIds')?.split(',').filter(Boolean) ?? [],
@@ -655,6 +656,12 @@ export function MintProblemStatement() {
                           );
                         })}
 
+                        {selectedThreadId && (
+                          <li className="px-2 pb-2">
+                            <div ref={setStepNavigationTarget} />
+                          </li>
+                        )}
+
                         {/* Create new sub-task */}
                         {selectedTask &&
                           getUserPermission(
@@ -708,7 +715,9 @@ export function MintProblemStatement() {
                 key={selectedThreadId}
                 threadId={selectedThreadId}
                 taskName={selectedTask?.name}
+                fallbackSpatialScopeId={selectedTask?.region_id ?? ps?.region_id ?? null}
                 initialDatasetIds={initialDatasetIds}
+                stepNavigationTarget={stepNavigationTarget}
               />
             </div>
           ) : (

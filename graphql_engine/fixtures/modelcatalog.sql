@@ -14645,8 +14645,6 @@ INSERT INTO public.modelcatalog_standard_variable (id, label, description, same_
 INSERT INTO public.modelcatalog_standard_variable (id, label, description, same_as) VALUES ('https://w3id.org/okn/i/mint/wmobley/standard-variable/aquifer_system__package_input_set', 'aquifer_system__package_input_set', 'Package files for temporal discretization, grid discretization, flow properties, storage, boundaries, and solver controls for MODFLOW 6.', NULL) ON CONFLICT DO NOTHING;
 INSERT INTO public.modelcatalog_standard_variable (id, label, description, same_as) VALUES ('https://w3id.org/okn/i/mint/wmobley-standard-variable-aquifer-system-recharge-rate', 'aquifer_system__recharge_rate', 'Simulated recharge rate to the aquifer system.', NULL) ON CONFLICT DO NOTHING;
 INSERT INTO public.modelcatalog_standard_variable (id, label, description, same_as) VALUES ('https://w3id.org/okn/i/mint/wmobley-standard-variable-aquifer-system-stress', 'aquifer_system__stress', 'Simulated mechanical stress within the aquifer system.', NULL) ON CONFLICT DO NOTHING;
-INSERT INTO public.modelcatalog_standard_variable (id, label, description, same_as) VALUES ('https://w3id.org/okn/i/mint/wmobley-standard-variable-aquifer-system-volumetric-budget', 'aquifer_system__volumetric_budget', 'Simulated volumetric inflow and outflow terms for groundwater budget accounting.', NULL) ON CONFLICT DO NOTHING;
-INSERT INTO public.modelcatalog_standard_variable (id, label, description, same_as) VALUES ('https://w3id.org/okn/i/mint/wmobley/standard-variable/aquifer_system__volumetric_budget', 'aquifer_system__volumetric_budget', 'Simulated volumetric inflow and outflow terms for groundwater budget accounting.', NULL) ON CONFLICT DO NOTHING;
 INSERT INTO public.modelcatalog_standard_variable (id, label, description, same_as) VALUES ('https://w3id.org/okn/i/mint/wmobley-standard-variable-atmosphere-land-surface-climate-forcing', 'atmosphere_land_surface__climate_forcing', 'Atmospheric forcing fields applied to the land surface and subsurface model.', NULL) ON CONFLICT DO NOTHING;
 INSERT INTO public.modelcatalog_standard_variable (id, label, description, same_as) VALUES ('https://w3id.org/okn/i/mint/wmobley-standard-variable-atmosphere-land-surface-meteorological-forcing', 'atmosphere_land_surface__meteorological_forcing', 'Atmospheric forcing variables such as precipitation and evapotranspiration applied to the land surface.', NULL) ON CONFLICT DO NOTHING;
 INSERT INTO public.modelcatalog_standard_variable (id, label, description, same_as) VALUES ('https://w3id.org/okn/i/mint/wmobley-standard-variable-atmosphere-water-precipitation-rate', 'atmosphere_water__precipitation_rate', 'Precipitation forcing applied to the catchment model.', NULL) ON CONFLICT DO NOTHING;
@@ -16105,7 +16103,6 @@ WHERE id IN (
 -- retained for runtime compatibility but are presented as semantic overrides.
 INSERT INTO public.modelcatalog_standard_variable (id, label, description, same_as)
 VALUES
-  ('https://w3id.org/okn/i/mint/wmobley-standard-variable-aquifer-system-volumetric-budget', 'aquifer_system__volumetric_budget', 'Simulated volumetric inflow and outflow terms for groundwater budget accounting.', NULL),
   ('https://w3id.org/okn/i/mint/wmobley-standard-variable-groundwater-drawdown', 'groundwater__drawdown', 'Reduction in groundwater hydraulic head relative to a reference condition.', NULL),
   ('https://w3id.org/okn/i/mint/wmobley-standard-variable-groundwater-hydraulic-head', 'groundwater__hydraulic_head', 'Groundwater hydraulic head produced by a groundwater model.', NULL)
 ON CONFLICT DO NOTHING;
@@ -16161,7 +16158,7 @@ SET label = 'MODFLOW 6 cell-by-cell budget', description = 'MODFLOW 6 cell-by-ce
 WHERE id = 'https://w3id.org/okn/i/mint/modflow6_cbc_output';
 
 UPDATE public.modelcatalog_variable_presentation
-SET has_standard_variable = 'https://w3id.org/okn/i/mint/wmobley-standard-variable-aquifer-system-volumetric-budget'
+SET has_standard_variable = NULL
 WHERE id IN (
   'https://w3id.org/okn/i/mint/7e82b186-11ae-49ae-a2e0-fdd872d39cc4',
   'https://w3id.org/okn/i/mint/1d998c24-ea65-47b4-8526-e579898a6ed8',
@@ -16185,7 +16182,7 @@ WHERE id IN (
 INSERT INTO public.modelcatalog_variable_presentation
   (id, label, description, has_long_name, has_short_name, has_standard_variable, uses_unit)
 VALUES
-  ('https://w3id.org/okn/i/mint/wmobley-modflow-2005-cell-budget', 'MODFLOW 2005 cell-by-cell budget', 'MODFLOW 2005 cell-by-cell groundwater budget output.', 'MODFLOW 2005 cell-by-cell budget', 'cell_budget', 'https://w3id.org/okn/i/mint/wmobley-standard-variable-aquifer-system-volumetric-budget', NULL),
+  ('https://w3id.org/okn/i/mint/wmobley-modflow-2005-cell-budget', 'MODFLOW 2005 cell-by-cell budget', 'MODFLOW 2005 cell-by-cell groundwater budget output.', 'MODFLOW 2005 cell-by-cell budget', 'cell_budget', NULL, NULL),
   ('https://w3id.org/okn/i/mint/wmobley-modflow-2005-drawdown', 'MODFLOW 2005 drawdown', 'MODFLOW 2005 groundwater drawdown output.', 'MODFLOW 2005 drawdown', 'drawdown', 'https://w3id.org/okn/i/mint/wmobley-standard-variable-groundwater-drawdown', NULL)
 ON CONFLICT (id) DO UPDATE SET has_standard_variable = EXCLUDED.has_standard_variable;
 

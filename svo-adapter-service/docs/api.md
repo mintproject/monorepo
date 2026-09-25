@@ -58,7 +58,7 @@ plans through the existing adapter workflow tables.
 | Method | Path | Purpose |
 |---|---|---|
 | POST | `/workflows/generate` | Generate and persist a Tapis Workflows definition for a plan. |
-| POST | `/workflows/submit` | Register/run a generated workflow, or return a dry-run. Accepts `Idempotency-Key` (or the equivalent `idempotency_key` body field) for replay-safe submissions. |
+| POST | `/workflows/submit` | Register/run a generated workflow, or return a dry-run. With the server-generated `model_task` payload it submits one composite model-plus-adapter workflow. Accepts `Idempotency-Key` (or the equivalent `idempotency_key` body field) for replay-safe submissions. |
 | GET | `/runs` | List recent adapter workflow runs. |
 | GET | `/runs/{run_id}` | Retrieve one run. |
 | POST | `/runs/{run_id}/poll` | Poll Tapis and persist the run status transition. |
@@ -72,6 +72,8 @@ plans through the existing adapter workflow tables.
 | GET | `/objectives` | List bundled objective definitions. |
 | GET | `/objectives/{objective_id}` | Retrieve one objective definition. |
 | GET | `/runtime-defaults` | Return runtime defaults used by the service. |
+| GET | `/spatial/layers` | List backend-owned reusable spatial source layers, including the MINT region category used when a source is registered. |
+| GET | `/etl/common-variables` | Canonical ETL/UI variable contract + legacy aliases. |
 | POST | `/objectives/{objective_id}/evaluate-plan` | Evaluate an objective plan. |
 | POST | `/datasets/find` | Find catalog datasets for a request. |
 | POST | `/datasets/dataset_resources` | List resources for a catalog dataset. |
@@ -128,11 +130,11 @@ forecast execution are bespoke to NTGAM.
 
 ### Deferred model-output handoff
 
-The deferred endpoints are intended for Ensemble Manager’s post-model
-orchestration. A caller first creates a plan from a source contract and target
-contract, then Ensemble Manager registers the completed model output as an
-owned data object and binds it with the parent execution ID and plan hash. The
-adapter verifies the contract and ownership before returning the bound token.
-The adapter poller skips its normal automatic output binding for plans marked
-`orchestration_mode: "em_deferred_post_model"`; Ensemble Manager owns that
-handoff and submits the bound token to `/workflows/submit`.
+The deferred endpoints are retained for legacy and recovery orchestration. A
+new post-model run instead sends a server-generated `model_task` descriptor to
+`/workflows/submit`; the adapter adds that model task and an output-handoff task
+to the same Tapis workflow before the SVO transforms. The model task descriptor
+contains a job definition and output URI, but no Tapis credential. The adapter
+poller skips its normal automatic output binding for plans marked
+`orchestration_mode: "em_deferred_post_model"`; the composite workflow owns
+the model-to-adapter handoff.

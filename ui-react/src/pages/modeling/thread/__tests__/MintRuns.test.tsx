@@ -8,6 +8,7 @@ import { storeTokens } from '@/lib/auth/token-store';
 import { MintRuns } from '../MintRuns';
 import type { ThreadExecutionData, ModelExecutionsMap } from '@/graphql/generated/execution';
 import type { UnifiedRunSnapshot } from '@/lib/ensemble-manager';
+import type { ThreadAdapterPlan } from '@/lib/adapter-execution';
 
 // ─── Mock data ────────────────────────────────────────────────────────────────
 
@@ -156,7 +157,7 @@ describe('MintRuns', () => {
     expect(screen.getByText(/send runs/i)).toBeInTheDocument();
   });
 
-  it('calls onSubmitRuns when Send Runs is clicked', () => {
+  it('calls onSubmitRuns when Send Runs is clicked', async () => {
     const onSubmit = vi.fn().mockResolvedValue(undefined);
     renderWithProviders(
       <MintRuns
@@ -171,7 +172,28 @@ describe('MintRuns', () => {
       />,
     );
     fireEvent.click(screen.getByTestId('submit-runs-model-1'));
-    expect(onSubmit).toHaveBeenCalledWith('model-1');
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledWith('model-1', 60));
+  });
+
+  it('passes a user-selected maximum runtime when sending runs', async () => {
+    const onSubmit = vi.fn().mockResolvedValue(undefined);
+    renderWithProviders(
+      <MintRuns
+        threadData={mockThreadData}
+        executions={emptyExecutions}
+        canWrite
+        canExecute
+        ensembleManagerApi="http://ensemble"
+        onContinue={vi.fn()}
+        onFetchRuns={vi.fn()}
+        onSubmitRuns={onSubmit}
+      />,
+    );
+
+    fireEvent.change(screen.getByTestId('max-runtime-model-1'), { target: { value: '135' } });
+    fireEvent.click(screen.getByTestId('submit-runs-model-1'));
+
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledWith('model-1', 135));
   });
 
   it('shows loading spinner when executions are loading', () => {
@@ -239,6 +261,95 @@ describe('MintRuns', () => {
     expect(screen.getByText(/Tapis Workflows tracking:/)).toBeInTheDocument();
   });
 
+  it('renders the model-builder graph with SVO contracts and the active stage', () => {
+    const postModelPlan: ThreadAdapterPlan = {
+      thread_model_id: 'model-1',
+      model_io_id: 'output-1',
+      stage: 'post_model',
+      source_kind: 'model_output',
+      adapter_plan_id: 'adapter-plan-1',
+      executor: 'svo_adapter',
+      status: 'transform_required',
+      plan_json: {
+        plan_id: 'svo_adapter-plan-1',
+        executor: 'svo_adapter',
+        version: 1,
+        status: 'ready',
+        parameters: [],
+        parameter_values: {},
+        post_model_adapter: {
+          source_contract: { standard_variable_uri: 'mint:cbc' },
+          target_contract: { standard_variable_uri: 'mint:spring__volume_flow_rate' },
+        },
+      },
+      parameter_values: {},
+    };
+    const unifiedRun: UnifiedRunSnapshot = {
+      run_id: 'ue-parent-graph',
+      execution_mode: 'workflow_pipeline',
+      adapter_stage: 'post_model',
+      status: 'model_running',
+      model_job_id: 'model-job-graph',
+      workflow_stages: [
+        {
+          stage_id: 'model',
+          type: 'model',
+          depends_on: [],
+          status: 'running',
+          provider: 'tapis',
+          provider_ids: {},
+        },
+        {
+          stage_id: 'output-handoff',
+          type: 'output_handoff',
+          depends_on: ['model'],
+          status: 'waiting',
+          provider: 'ensemble_manager',
+          provider_ids: {},
+        },
+        {
+          stage_id: 'adapter-output-1',
+          type: 'adapter_output',
+          depends_on: ['output-handoff'],
+          status: 'waiting',
+          provider: 'svo_adapter',
+          provider_ids: {},
+        },
+      ],
+    };
+
+    renderWithProviders(
+      <MintRuns
+        threadData={{
+          ...mockThreadDataSubmitted,
+          adapter_plans: { 'model-1': [postModelPlan] },
+        }}
+        executions={emptyExecutions}
+        unifiedRuns={{ 'model-1': unifiedRun }}
+        canWrite
+        canExecute
+        ensembleManagerApi="http://ensemble"
+        onContinue={vi.fn()}
+        onFetchRuns={vi.fn()}
+        onSubmitRuns={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByTestId('workflow-graph')).toBeInTheDocument();
+    expect(screen.getByTestId('workflow-node-model')).toHaveAttribute('aria-current', 'step');
+    expect(screen.getByTestId('workflow-node-output-handoff')).toBeInTheDocument();
+    expect(screen.getByTestId('workflow-node-adapter-output-1')).toBeInTheDocument();
+    expect(screen.getByText('Current step:')).toBeInTheDocument();
+    expect(screen.getByText('cbc')).toBeInTheDocument();
+    expect(screen.getByText('spring__volume_flow_rate')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('workflow-node-adapter-output-1'));
+    expect(screen.getByTestId('workflow-graph-details')).toHaveTextContent('Stage details');
+    expect(screen.getByTestId('workflow-graph-details')).toHaveTextContent(
+      'spring__volume_flow_rate',
+    );
+  });
+
   it('explains that a post-model adapter is waiting instead of showing no adapter', () => {
     const unifiedRun: UnifiedRunSnapshot = {
       run_id: 'ue-post-model',
@@ -263,11 +374,11 @@ describe('MintRuns', () => {
       />,
     );
 
-    expect(screen.getByText('Deferred until model output')).toBeInTheDocument();
-    expect(screen.getByText('Waiting for model output')).toBeInTheDocument();
     expect(
-      screen.getByText(/the post-model pipeline is created after model output is available/),
+      screen.getByText('Legacy/recovery run — composite workflow unavailable'),
     ).toBeInTheDocument();
+    expect(screen.getByText('Waiting for model stage')).toBeInTheDocument();
+    expect(screen.getByText(/provider workflow reference unavailable/)).toBeInTheDocument();
     expect(screen.queryByText('No adapter step')).not.toBeInTheDocument();
   });
 

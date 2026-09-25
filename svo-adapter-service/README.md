@@ -59,6 +59,9 @@ curl http://localhost:8090/admin/sync-status
   Standard variable URIs and units are carried through to the BFS planner.
 - `env_from_args` is built from MINT parameter labels following the convention
   table in `mint_sync.py`. Non-standard labels are warned and skipped.
+  Spatial labels are normalized onto canonical arg names (`geometry_source_uri`,
+  `geometry_filter_value`, `spatial_scope_id`, `spatial_scope_name`,
+  `model_layer`) while still accepting legacy aliases.
 - If a `ModelConfiguration` has `tapis_app_id` set, the generated Tapis pipeline
   uses a `tapis_job` task (batch HPC job). Without it, a hosted OWE `function`
   task runs using `task_code.get_code(transform_type)`.
@@ -143,11 +146,13 @@ Apply the schema first (from `graphql_engine/`): `hasura migrate apply && hasura
 
 For a model output that needs an SVO transform before it satisfies the selected
 response variable, Ensemble Manager creates a deferred adapter plan through
-`POST /plans/deferred`. After the model succeeds, Ensemble Manager registers
-the output data object, calls `POST /plans/deferred/{plan_id}/bind`, and submits
-the returned bound token to `POST /workflows/submit`. The browser never supplies
-the output URI or data-object ID. Apply the migrations before testing this
-path, including the adapter workflow-run idempotency migration.
+`POST /plans/deferred`. A new post-model run submits one composite Tapis
+workflow: its first task is the model job, followed by a server-owned output
+handoff and the SVO adapter tasks. The browser never supplies the model output
+URI or data-object ID. The deferred bind endpoint remains available for legacy
+or recovery runs that were created before composite submission was enabled.
+Apply the migrations before testing this path, including the adapter
+workflow-run idempotency migration.
 
 For a non-demo deployment, set `SVO_ADAPTER_INTERNAL_SERVICE_SECRET` on both
 services. Ensemble Manager sends it only on its server-to-server adapter calls;
@@ -195,6 +200,46 @@ or a `tapis_app_id`/version for a heavier `tapis_job`. Generated workflows can m
 both task types. The adapter stores the definition and materializes function tasks
 inline when registering each generated pipeline; it never executes submitted Python
 locally.
+
+The service exposes `GET /etl/common-variables` for the canonical ETL/UI runtime
+arg contract and accepted legacy aliases, and `GET /spatial/layers` for the
+backend-owned spatial layer catalog. `GET /runtime-defaults` retains a compact
+compatibility payload for the standalone UI and never returns `tapis_token`.
+The React MINT UI consumes `/spatial/layers` through its `SVO_ADAPTER_API`
+runtime setting. That catalog owns reusable ETL source metadata, including the
+TWDB GMA, GCD, and county ArcGIS layers. The Framing map first uses geometries
+registered in MINT's `/regions` workflow; when a layer has not been registered,
+it falls back to querying the catalogued external GeoJSON/ArcGIS source. The
+Region Editor accepts remote GeoJSON and ArcGIS FeatureServer/MapServer URLs so
+new boundary sources can be registered without adding UI constants.
+
+### Canonical ETL variable contract
+
+New ETLs should declare canonical argument names in `env_from_args` and emit
+canonical workflow arguments. Geometry/file mechanics are separate from semantic
+scope: use `geometry_source_uri`, `geometry_source_type`, `geometry_layer`,
+`geometry_filter_field`, `geometry_filter_value`, `geometry_crs`, and
+`geometry_format` for sources, and `spatial_scope_type`, `spatial_scope_id`,
+`spatial_scope_name`, and `spatial_resolution` for the meaning of the selected
+area. Model inputs use `grid_uri`, `model_layer`, `stress_period`, and `timestep`.
+
+`source_uri` remains the runtime/model input URI; it is not automatically treated
+as a geometry source. Existing aliases such as `gma_boundary_uri`,
+`location_file_uri`, `boundary_query_field`, `boundary_query_value`, `gma_id`,
+`area_type`, `area`, `county_name`, `gcd_name`, `aquifer`, `layer`, and
+`time_step` are normalized at ingress. Canonical values win when both forms are
+present. `tapis_token` is injected at execution time and is runtime-only. The
+default common-variable response omits runtime-only definitions; integrations
+that need their metadata may request `?include_runtime=true`, which still never
+returns a token value.
+
+The DFC pieces that use both a GMA boundary and a second DFC-area boundary retain
+`dfc_area_boundary_uri` as a compatibility-only second input; collapsing those
+two URIs into one value would change the transform semantics.
+
+Problem-framing recommendation calls may include an optional `spatial_conditions`
+map using the same scope/resolution keys. The map is structured context for
+recommendation requests and is kept separate from the free-text problem title.
 
 ### Bulk-register the checked-in ETL catalog
 

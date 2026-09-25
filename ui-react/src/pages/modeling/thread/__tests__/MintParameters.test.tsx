@@ -2,11 +2,34 @@
  * Tests for MintParameters — parameter sweep configuration step.
  */
 import { describe, expect, it, vi } from 'vitest';
-import { screen, fireEvent } from '@testing-library/react';
+import { screen, fireEvent, waitFor } from '@testing-library/react';
+import type { ReactNode } from 'react';
 import { renderWithProviders } from '@/test/utils/render';
+import { LIST_REGISTERED_BOUNDARY_REGIONS } from '@/graphql/queries/regions';
 import { MintParameters } from '../MintParameters';
+import { SpatialScopeMap } from '../SpatialScopeMap';
 import type { ThreadExecutionData } from '@/graphql/generated/execution';
 import type { ThreadAdapterPlan } from '@/lib/adapter-execution';
+
+vi.mock('leaflet', () => ({
+  default: {
+    geoJSON: vi.fn(() => ({
+      getBounds: () => ({ isValid: () => false }),
+    })),
+  },
+  geoJSON: vi.fn(),
+}));
+
+vi.mock('react-leaflet', () => ({
+  MapContainer: ({ children }: { children?: ReactNode }) => (
+    <div data-testid="spatial-scope-map">{children}</div>
+  ),
+  TileLayer: () => <div data-testid="map-tiles" />,
+  GeoJSON: () => <div data-testid="map-boundary" />,
+  useMap: () => ({ fitBounds: vi.fn() }),
+}));
+
+vi.mock('leaflet/dist/leaflet.css', () => ({}));
 
 // ─── Mock data ────────────────────────────────────────────────────────────────
 
@@ -96,6 +119,213 @@ const mockThreadDataUnconfigured: ThreadExecutionData = {
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
 describe('MintParameters', () => {
+  it('loads the backend spatial layer catalog for the cartographic map', async () => {
+    window.__MINT_CONFIG__ = {
+      HASURA_ENDPOINT: 'http://hasura/graphql',
+      AUTH_SERVER: '',
+      AUTH_CLIENT_ID: '',
+      AUTH_REALM: '',
+      AUTH_PROVIDER: 'keycloak',
+      SVO_ADAPTER_API: 'http://adapter',
+    };
+    const fetchMock = vi.fn().mockImplementation((input: string | URL) => {
+      const requestUrl = String(input);
+      return Promise.resolve({
+        ok: true,
+        json: async () =>
+          requestUrl.endsWith('/spatial/layers')
+            ? {
+                layers: [
+                  {
+                    id: 'twdb_gma_boundaries',
+                    label: 'TWDB Statewide GMA Boundaries',
+                    uri: 'https://example.test/FeatureServer/4',
+                    default_filter_field: 'GMAnum',
+                    tags: ['twdb', 'gma', 'boundary'],
+                  },
+                ],
+              }
+            : {
+                type: 'FeatureCollection',
+                features: [
+                  {
+                    type: 'Feature',
+                    properties: { GMAnum: '8', GMAName: 'Gulf Coast' },
+                    geometry: {
+                      type: 'Polygon',
+                      coordinates: [
+                        [
+                          [-96, 28],
+                          [-95, 28],
+                          [-95, 29],
+                          [-96, 29],
+                          [-96, 28],
+                        ],
+                      ],
+                    },
+                  },
+                  {
+                    type: 'Feature',
+                    properties: { GMAnum: '2', GMAName: 'Central High Plains' },
+                    geometry: {
+                      type: 'Polygon',
+                      coordinates: [
+                        [
+                          [-102, 32],
+                          [-101, 32],
+                          [-101, 33],
+                          [-102, 33],
+                          [-102, 32],
+                        ],
+                      ],
+                    },
+                  },
+                ],
+              },
+      });
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    renderWithProviders(<SpatialScopeMap geometries={[]} label="Texas" scopeId="texas" />, {
+      apolloMocks: [
+        {
+          request: {
+            query: LIST_REGISTERED_BOUNDARY_REGIONS,
+            variables: { categoryIds: ['hydrology'] },
+          },
+          result: { data: { region: [] } },
+        },
+      ],
+    });
+
+    await waitFor(() =>
+      expect(screen.getByLabelText('Spatial boundary layer')).toBeInTheDocument(),
+    );
+    expect(
+      screen.getByRole('option', { name: 'TWDB Statewide GMA Boundaries' }),
+    ).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByRole('option', { name: '8 — Gulf Coast' })).toBeInTheDocument();
+      expect(
+        Array.from(
+          screen.getByLabelText('Spatial boundary feature').querySelectorAll('option'),
+        ).map((option) => option.textContent),
+      ).toEqual(['All boundaries', '2 — Central High Plains', '8 — Gulf Coast']);
+    });
+    expect(fetchMock).toHaveBeenCalledWith(
+      'http://adapter/spatial/layers',
+      expect.objectContaining({ signal: expect.any(AbortSignal) }),
+    );
+
+    vi.unstubAllGlobals();
+    Reflect.deleteProperty(window, '__MINT_CONFIG__');
+  });
+
+  it('prefers registered MINT boundary geometries when available', async () => {
+    window.__MINT_CONFIG__ = {
+      HASURA_ENDPOINT: 'http://hasura/graphql',
+      AUTH_SERVER: '',
+      AUTH_CLIENT_ID: '',
+      AUTH_REALM: '',
+      AUTH_PROVIDER: 'keycloak',
+      SVO_ADAPTER_API: 'http://adapter',
+    };
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          layers: [
+            {
+              id: 'twdb_gma_boundaries',
+              label: 'TWDB Statewide GMA Boundaries',
+              uri: 'https://example.test/FeatureServer/4',
+              tags: ['twdb', 'gma', 'boundary'],
+            },
+          ],
+        }),
+      }),
+    );
+
+    renderWithProviders(<SpatialScopeMap />, {
+      apolloMocks: [
+        {
+          request: {
+            query: LIST_REGISTERED_BOUNDARY_REGIONS,
+            variables: { categoryIds: ['hydrology'] },
+          },
+          result: {
+            data: {
+              region: [
+                {
+                  id: 'ethiopia__12',
+                  name: 'GMA 12',
+                  category_id: 'hydrology',
+                  region_category: { id: 'hydrology', name: 'Hydrology' },
+                  geometries: [
+                    {
+                      geometry: {
+                        type: 'Polygon',
+                        coordinates: [
+                          [
+                            [-98, 29],
+                            [-97, 29],
+                            [-97, 30],
+                            [-98, 30],
+                            [-98, 29],
+                          ],
+                        ],
+                      },
+                    },
+                  ],
+                },
+                {
+                  id: 'ethiopia__gams_12',
+                  name: 'GMA 12',
+                  category_id: 'ground_water_availability_models',
+                  region_category: {
+                    id: 'ground_water_availability_models',
+                    name: 'Ground water Availability Models',
+                  },
+                  geometries: [
+                    {
+                      geometry: {
+                        type: 'Polygon',
+                        coordinates: [
+                          [
+                            [-98, 29],
+                            [-97, 29],
+                            [-97, 30],
+                            [-98, 30],
+                            [-98, 29],
+                          ],
+                        ],
+                      },
+                    },
+                  ],
+                },
+              ],
+            },
+          },
+        },
+      ],
+    });
+
+    expect(
+      await screen.findByRole('option', { name: 'MINT registered boundaries' }),
+    ).toBeInTheDocument();
+    expect(
+      await screen.findByRole('option', { name: 'Ground water Availability Models' }),
+    ).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText('Spatial boundary layer'), {
+      target: { value: 'mint_registered_ground_water_availability_models' },
+    });
+    expect(await screen.findByRole('option', { name: 'gams_12 — GMA 12' })).toBeInTheDocument();
+
+    vi.unstubAllGlobals();
+    Reflect.deleteProperty(window, '__MINT_CONFIG__');
+  });
+
   it('renders placeholder when no models are selected', () => {
     renderWithProviders(
       <MintParameters
@@ -264,7 +494,14 @@ describe('MintParameters', () => {
     };
 
     renderWithProviders(
-      <MintParameters threadData={data} canWrite canExecute onSave={onSave} onContinue={vi.fn()} />,
+      <MintParameters
+        threadData={data}
+        canWrite
+        canExecute
+        onSave={onSave}
+        onContinue={vi.fn()}
+        spatialScopeName="Texas"
+      />,
     );
 
     expect(screen.getByText('SVO adapter parameters')).toBeInTheDocument();

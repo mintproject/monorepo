@@ -178,6 +178,10 @@ class SubmitWorkflowIn(BaseModel):
     run_name: str | None = None
     recreate: bool = False  # delete + recreate the pipeline so task changes re-sync
     dry_run: bool = False   # register/generate only; do not trigger a run
+    # Server-generated model task for a composite MINT run. This is deliberately
+    # an opaque provider job definition: the Ensemble Manager builds it from the
+    # catalog and strips credentials before handing it to the adapter.
+    model_task: dict[str, Any] | None = None
     # When set, the poller will auto-bind the run's output to this EM execution
     # on completion (upserts resource + execution_data_binding rows).
     execution_id: str | None = None

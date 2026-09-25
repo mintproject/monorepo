@@ -302,6 +302,10 @@ async function assemble(
     const legacyRuns: CanonicalRun[] = [];
     for (const model of models) {
         for (const execution of model.executions) {
+            // Unified parents link to the durable legacy execution row by its
+            // execution id. The provider run id is a separate identifier and
+            // is only available after the downstream job is submitted.
+            legacyByRunId.set(execution.id, { execution, model });
             if (execution.run_id) legacyByRunId.set(execution.run_id, { execution, model });
             legacyRuns.push({
                 summary: toSummary(threadId, model, undefined, execution),

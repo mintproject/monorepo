@@ -150,6 +150,19 @@ export function decodeUserFromToken(token: string): JwtUser | null {
 // ---------------------------------------------------------------------------
 
 /**
+ * Return the persisted expiry, or fall back to the JWT `exp` claim for tokens
+ * written by older clients before a separate expiry timestamp was stored.
+ * Opaque tokens without either form of expiry remain optimistically valid.
+ */
+function getEffectiveAccessExpiresAt(token: string): Date | null {
+  const persisted = getAccessExpiresAt();
+  if (persisted) return persisted;
+
+  const exp = decodeJwtPayload(token)?.exp;
+  return typeof exp === 'number' ? new Date(exp * 1000) : null;
+}
+
+/**
  * Returns true when the stored access token exists and has not yet expired.
  * If the access token is expired but a valid refresh token exists, also returns true
  * (caller should trigger refresh before making API calls).
@@ -159,7 +172,7 @@ export function isTokenValid(): boolean {
   if (!accessToken) return false;
 
   const now = Date.now();
-  const accessExpires = getAccessExpiresAt();
+  const accessExpires = getEffectiveAccessExpiresAt(accessToken);
 
   if (!accessExpires) {
     // No expiry info stored — optimistically treat as valid
@@ -208,7 +221,8 @@ function cancelRefresh(): void {
 export function scheduleRefresh(): void {
   cancelRefresh();
 
-  const accessExpires = getAccessExpiresAt();
+  const accessToken = getAccessToken();
+  const accessExpires = accessToken ? getEffectiveAccessExpiresAt(accessToken) : null;
   if (!accessExpires) return;
 
   const delay = Math.max(0, accessExpires.getTime() - Date.now() - 60_000);

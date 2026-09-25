@@ -383,22 +383,22 @@ def test_boundary_model_run_workflow_preserves_dag_and_step_sources():
         "step-1-county_boundary_query",
         "step-2-boundary_intersect",
     ]
-    assert tasks[0]["input"]["SOURCE_URI"] == {
+    assert tasks[0]["input"]["GEOMETRY_SOURCE_URI"] == {
         "type": "string",
-        "value_from": {"args": "source_uri"},
+        "value_from": {"args": "geometry_source_uri"},
     }
-    assert tasks[1]["input"]["SOURCE_URI"] == {
+    assert tasks[1]["input"]["GEOMETRY_SOURCE_URI"] == {
         "type": "string",
-        "value_from": {"args": "source_uri"},
+        "value_from": {"args": "geometry_source_uri"},
     }
     # generate_tapis_workflow chains tasks sequentially (prev_id pattern),
     # so step 2 depends on step 1, not on both step 0 and step 1.
     assert tasks[2]["depends_on"] == [
         {"id": "step-1-county_boundary_query"},
     ]
-    # gma_id, county_name, aquifer are task-level inputs (env_from_args),
+    # canonical scope names and aquifer are task-level inputs (env_from_args),
     # not pipeline-level params. Pipeline params are STANDARD_PARAMS.
     assert "tapis_token" in workflow["params"]
     assert "geo_actor_id" in workflow["params"]
     task2_keys = set(tasks[2].get("input", {}).keys())
-    assert {"COUNTY_NAME", "AQUIFER"}.issubset(task2_keys)
+    assert {"SPATIAL_SCOPE_NAME", "AQUIFER"}.issubset(task2_keys)

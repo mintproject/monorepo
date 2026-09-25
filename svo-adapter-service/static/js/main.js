@@ -43,17 +43,63 @@ async function checkMode() {
 // ── Runtime defaults ──────────────────────────────────────────────────────
 async function loadRuntimeDefaults() {
   try { STATE.RUNTIME_DEFAULTS = await api('GET', '/runtime-defaults'); } catch { STATE.RUNTIME_DEFAULTS = {}; }
+  try {
+    const contract = await api('GET', '/etl/common-variables');
+    STATE.ETL_COMMON_VARIABLES = contract.variables || contract.canonical || [];
+  } catch {
+    STATE.ETL_COMMON_VARIABLES = [];
+  }
+  try {
+    const catalog = await api('GET', '/spatial/layers');
+    STATE.SPATIAL_LAYER_OPTIONS = catalog.layers || [];
+  } catch {
+    STATE.SPATIAL_LAYER_OPTIONS = STATE.RUNTIME_DEFAULTS.spatial_layers || [];
+  }
   applyRuntimeDefaults();
   return STATE.RUNTIME_DEFAULTS;
 }
 
+function applySpatialLayerOptions() {
+  const list = $('spatialLayerOptions');
+  if (!list) return;
+  list.innerHTML = '';
+  (STATE.SPATIAL_LAYER_OPTIONS || []).forEach(layer => {
+    if (!layer?.uri) return;
+    const option = document.createElement('option');
+    option.value = layer.uri;
+    option.label = layer.label || layer.id || layer.uri;
+    list.appendChild(option);
+  });
+  const select = $('dfcSpatialLayerSelect');
+  if (!select) return;
+  select.innerHTML = '<option value="">Custom URI</option>';
+  (STATE.SPATIAL_LAYER_OPTIONS || []).forEach(layer => {
+    if (!layer?.uri) return;
+    const option = document.createElement('option');
+    option.value = layer.id || layer.uri;
+    option.textContent = layer.label || layer.id || layer.uri;
+    select.appendChild(option);
+  });
+  select.onchange = () => {
+    const layer = (STATE.SPATIAL_LAYER_OPTIONS || []).find(item => item.id === select.value);
+    if (!layer) return;
+    const input = $('dfcBoundaryUri');
+    if (input) input.value = layer.uri;
+    const field = $('dfcGeometryFilterField');
+    if (field && layer.default_filter_field) field.value = layer.default_filter_field;
+  };
+}
+
 function applyRuntimeDefaults() {
+  applySpatialLayerOptions();
   const actorInput = $('dfcGeoActorId');
   if (actorInput && !actorInput.value.trim() && STATE.RUNTIME_DEFAULTS.geo_actor_id) actorInput.value = STATE.RUNTIME_DEFAULTS.geo_actor_id;
   const boundaryInput = $('dfcBoundaryUri');
-  if (boundaryInput && !boundaryInput.value.trim()) boundaryInput.value = STATE.TWDB_GMA_BOUNDARY_LAYER;
+  const defaultBoundary = STATE.RUNTIME_DEFAULTS.geometry_source_uri || STATE.TWDB_GMA_BOUNDARY_LAYER;
+  if (boundaryInput && !boundaryInput.value.trim()) boundaryInput.value = defaultBoundary;
   const areaBoundaryInput = $('dfcAreaBoundaryUri');
-  if (areaBoundaryInput && !areaBoundaryInput.value.trim()) areaBoundaryInput.value = boundaryInput?.value || STATE.TWDB_GMA_BOUNDARY_LAYER;
+  const defaultAreaBoundary = defaultBoundary;
+  if (areaBoundaryInput && !areaBoundaryInput.value.trim()) areaBoundaryInput.value = defaultAreaBoundary;
 }
 
 // ── Forecast graph ────────────────────────────────────────────────────────
@@ -192,27 +238,57 @@ function sourceForPlan(plan, fallbackTarget = null) {
 function dfcRunArgs() {
   const args = {};
   const add = (key, val) => { if (val === undefined || val === null || String(val).trim() === '') return; args[key] = { value: val }; };
-  const gmaBoundaryUri = $('dfcBoundaryUri')?.value.trim() || STATE.TWDB_GMA_BOUNDARY_LAYER;
+  const addPlanArg = (key, val) => {
+    const params = STATE.PLAN_DFC?.plan_json?.parameters || [];
+    const usedByStep = dfcPlanUsesArg(key);
+    const declared = params.some(item => item?.name === key);
+    if (usedByStep || declared) add(key, val);
+  };
+  const addCanonical = (key, val) => {
+    const known = STATE.ETL_COMMON_VARIABLES || [];
+    if (!known.length || known.some(item => item.key === key)) addPlanArg(key, val);
+  };
+  const gmaBoundaryUri = $('dfcBoundaryUri')?.value.trim() || STATE.RUNTIME_DEFAULTS.geometry_source_uri || STATE.TWDB_GMA_BOUNDARY_LAYER;
   const areaBoundaryUri = $('dfcAreaBoundaryUri')?.value.trim() || gmaBoundaryUri;
   const selectedRecords = STATE.DFC_SELECTED_TARGET ? targetRecordsForMetric(STATE.DFC_TARGET_RECORDS, STATE.DFC_SELECTED_TARGET) : [];
   const selectedRecord = selectedRecords[0] || null;
-  add('gma_id', $('dfcGmaId')?.value.trim());
-  add('aquifer', $('dfcAquifer')?.value.trim());
-  add('layer', Number($('dfcLayer')?.value || 1));
-  add('stress_period', Number($('dfcStressPeriod')?.value || 1));
-  add('timestep', Number($('dfcTimestep')?.value || 1));
-  add('target_year', $('dfcTargetYear')?.value.trim());
-  add('baseline_year', $('dfcBaselineYear')?.value.trim());
-  add('area', selectedRecord?.area || 'GMA-wide');
-  add('area_type', selectedRecord?.area_type || (selectedRecord?.area ? 'dfc-area' : 'gma'));
-  add('gcd_name', selectedRecord?.area_type === 'gcd' ? selectedRecord.area : '');
-  add('county_name', selectedRecord?.area_type === 'county' ? selectedRecord.area : '');
-  add('gma_boundary_uri', gmaBoundaryUri);
-  add('dfc_area_boundary_uri', areaBoundaryUri);
-  add('geo_actor_id', $('dfcGeoActorId')?.value.trim());
-  add('grid_uri', $('dfcGridUri')?.value.trim());
-  add('source_uri', STATE.DFC_SELECTED_SOURCE?.resource_uri || '');
-  add('tapis_base_url', 'https://portals.tapis.io');
+  const gmaScope = $('dfcGmaId')?.value.trim();
+  const areaType = selectedRecord?.area_type || (selectedRecord?.area ? 'dfc-area' : 'gma');
+  const layer = (STATE.SPATIAL_LAYER_OPTIONS || []).find(item => item.uri === gmaBoundaryUri);
+  let geometryFilterField = layer?.default_filter_field || 'GMAnum';
+  let geometryFilterValue = gmaScope;
+  if (selectedRecord?.area_type === 'county') {
+    geometryFilterField = layer?.default_filter_field || 'Name';
+    geometryFilterValue = selectedRecord.area;
+  } else if (selectedRecord?.area_type === 'gcd') {
+    geometryFilterField = layer?.default_filter_field || 'DistrictName';
+    geometryFilterValue = selectedRecord.area;
+  }
+
+  addPlanArg('gma_id', $('dfcGmaId')?.value.trim());
+  if (dfcPlanUsesArg('spatial_scope_id')) addCanonical('spatial_scope_id', gmaScope);
+  if (dfcPlanUsesArg('spatial_scope_type')) addCanonical('spatial_scope_type', areaType === 'dfc-area' ? 'custom' : areaType);
+  if (dfcPlanUsesArg('spatial_scope_name')) addCanonical('spatial_scope_name', selectedRecord?.area || 'GMA-wide');
+  addPlanArg('aquifer', $('dfcAquifer')?.value.trim());
+  addPlanArg('layer', Number($('dfcLayer')?.value || 1));
+  if (dfcPlanUsesArg('model_layer')) addCanonical('model_layer', Number($('dfcLayer')?.value || 1));
+  addPlanArg('stress_period', Number($('dfcStressPeriod')?.value || 1));
+  addPlanArg('timestep', Number($('dfcTimestep')?.value || 1));
+  addPlanArg('target_year', $('dfcTargetYear')?.value.trim());
+  addPlanArg('baseline_year', $('dfcBaselineYear')?.value.trim());
+  addPlanArg('area', selectedRecord?.area || 'GMA-wide');
+  addPlanArg('area_type', areaType);
+  addPlanArg('gcd_name', selectedRecord?.area_type === 'gcd' ? selectedRecord.area : '');
+  addPlanArg('county_name', selectedRecord?.area_type === 'county' ? selectedRecord.area : '');
+  if (dfcPlanUsesArg('geometry_filter_field')) addCanonical('geometry_filter_field', geometryFilterField);
+  if (dfcPlanUsesArg('geometry_filter_value')) addCanonical('geometry_filter_value', geometryFilterValue);
+  addPlanArg('gma_boundary_uri', gmaBoundaryUri);
+  addPlanArg('dfc_area_boundary_uri', areaBoundaryUri);
+  if (dfcPlanUsesArg('geometry_source_uri')) addCanonical('geometry_source_uri', gmaBoundaryUri);
+  addPlanArg('geo_actor_id', $('dfcGeoActorId')?.value.trim());
+  addPlanArg('grid_uri', $('dfcGridUri')?.value.trim());
+  addPlanArg('source_uri', STATE.DFC_SELECTED_SOURCE?.resource_uri || '');
+  addPlanArg('tapis_base_url', 'https://portals.tapis.io');
   return args;
 }
 
@@ -224,26 +300,37 @@ function dfcPlanUsesArg(argName) {
 function validateDfcLiveArgs(args) {
   const missing = [];
   const needs = key => dfcPlanUsesArg(key) && !args[key]?.value;
+  const needsAny = keys => keys.some(dfcPlanUsesArg);
+  const missingAny = keys => keys.every(k => !args[k]?.value);
   if (needs('geo_actor_id') && !STATE.RUNTIME_DEFAULTS.geo_actor_id) missing.push('Geo actor ID');
   if (needs('source_uri')) missing.push('modeled output source URI');
   if (needs('grid_uri')) missing.push('model grid / DIS URI');
-  if (needs('gma_id')) missing.push('GMA');
-  if (needs('gma_boundary_uri')) missing.push('GMA boundary URI');
+  if (needsAny(['gma_id', 'spatial_scope_id']) && missingAny(['gma_id', 'spatial_scope_id'])) missing.push('GMA / scope ID');
+  if (needsAny(['gma_boundary_uri', 'geometry_source_uri']) && missingAny(['gma_boundary_uri', 'geometry_source_uri'])) missing.push('GMA boundary URI');
   if (dfcPlanUsesArg('tapis_token') && !getToken()) missing.push('Tapis login token');
   if (missing.length) throw new Error(`Live DFC run needs ${missing.join(', ')}. Keep dry-run checked to inspect the workflow without these runtime values.`);
 }
 
 function liveDfcMissingArgs(workflow, args) {
   const params = workflow?.tapis_workflow_definition?.params || workflow?.params || {};
-  const mustHave = ['source_uri', 'gma_id', 'gma_boundary_uri', 'dfc_area_boundary_uri', 'geo_actor_id', 'grid_uri', 'tapis_token'];
-  return mustHave.filter(key => {
-    if (!(key in params)) return false;
-    if (args[key]?.value) return false;
+  const requiredGroups = [
+    ['source_uri'],
+    ['gma_id', 'spatial_scope_id'],
+    ['gma_boundary_uri', 'geometry_source_uri'],
+    ['dfc_area_boundary_uri'],
+    ['geo_actor_id'],
+    ['grid_uri'],
+    ['tapis_token'],
+  ];
+  return requiredGroups.map(group => {
+    const active = group.filter(key => key in params);
+    if (!active.length) return null;
+    if (active.some(key => args[key]?.value)) return null;
     // The backend injects the Authorization bearer into tapis_token for live
     // submits, so a logged-in UI should not report tapis_token as missing.
-    if (key === 'tapis_token' && getToken()) return false;
-    return true;
-  });
+    if (active.includes('tapis_token') && getToken()) return null;
+    return active[0];
+  }).filter(Boolean);
 }
 
 function appendLivePrerequisites(workflow, args) {

@@ -9,7 +9,7 @@ query list_execution_history($threadModelId: uuid!, $limit: Int!) {
     }
     executions(
       limit: $limit
-      order_by: [{start_time: desc}, {id: desc}]
+      order_by: [{execution: {start_time: desc}}, {execution: {id: desc}}]
     ) {
       execution {
         id

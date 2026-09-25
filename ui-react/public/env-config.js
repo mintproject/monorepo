@@ -50,6 +50,9 @@ window.__MINT_CONFIG__ = {
   DATA_CATALOG_BROWSE_URL: "https://ckan.tacc.utexas.edu",
   // Standalone semantic search in the compose stack.
   SEMANTIC_SEARCH_API: "http://localhost:8091",
+  // Browser-facing SVO adapter API. This is the source of truth for spatial
+  // layers such as the TWDB GMA boundaries.
+  SVO_ADAPTER_API: "http://localhost:8090",
   // Ensemble Manager in the compose stack. It listens on 3000 in its container;
   // compose publishes it on 3001. This is a HOST url — the browser resolves it,
   // so a compose service name would not work.

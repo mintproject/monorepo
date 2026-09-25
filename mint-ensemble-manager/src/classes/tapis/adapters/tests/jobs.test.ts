@@ -92,6 +92,25 @@ test("a FIXED TACC Allocation scheduler option is not overridden", () => {
     expect(request.parameterSet?.schedulerOptions).toEqual([]);
 });
 
+test("uses the requested maximum runtime for a Tapis batch job", () => {
+    const jobService = new TapisJobService(
+        new Jobs.JobsApi(),
+        new Jobs.SubscriptionsApi(),
+        new Jobs.ShareApi()
+    );
+
+    const request = jobService.createJobRequest(
+        app,
+        seeds[0],
+        model,
+        "test-job",
+        "test description",
+        135
+    );
+
+    expect(request.maxMinutes).toBe(135);
+});
+
 const seedWithMissingOptionalInput = {
     ...seeds[0],
     datasets: {}

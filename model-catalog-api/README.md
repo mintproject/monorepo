@@ -4,12 +4,18 @@ A Fastify-based REST API that translates the MINT Model Catalog OpenAPI spec int
 
 ## Configuration
 
-The API connects to Hasura via two environment variables:
+The API connects to Hasura via the endpoint and admin-secret environment variables:
 
 | Variable | Default | Description |
 |---|---|---|
 | `HASURA_GRAPHQL_URL` | `http://testing-mint-hasura.mint.svc.cluster.local/v1/graphql` | Hasura GraphQL endpoint |
-| `HASURA_ADMIN_SECRET` | `CHANGEME` | Hasura admin secret (used for reads) |
+| `HASURA_ADMIN_SECRET` | `CHANGEME` | Hasura admin secret (reads and authorized region imports) |
+| `TAPIS_JWKS_URI` | `https://portals.tapis.io/v3/tenants/portals` | Tapis tenant key endpoint used to verify import tokens |
+| `TAPIS_TOKEN_ISSUER` | `https://portals.tapis.io/v3/tokens` | Required issuer for import tokens |
+| `REGION_IMPORT_BODY_LIMIT` | `10485760` | Maximum import request body in bytes |
+| `REGION_IMPORT_MAX_REGIONS` | `500` | Maximum regions per import |
+| `REGION_IMPORT_MAX_GEOMETRIES` | `10` | Maximum geometries per region |
+| `REGION_IMPORT_MAX_REGION_BYTES` | `2097152` | Maximum serialized geometry bytes per region |
 | `PORT` | `3000` | Server port |
 | `LOG_LEVEL` | `info` | Pino log level (`trace`, `debug`, `info`, `warn`, `error`) |
 
@@ -23,7 +29,25 @@ export HASURA_ADMIN_SECRET=myadminsecretkey
 ### Auth model
 
 - **Reads** use the admin secret (`X-Hasura-Admin-Secret` header). No JWT required.
-- **Writes** (POST/PUT/DELETE) forward the caller's `Authorization: Bearer <token>` to Hasura. Hasura validates the JWT and enforces row-level permissions. The API itself does not validate tokens.
+- **Generic writes** use the legacy Hasura forwarding path where still exposed.
+- **Shared region imports** use `POST /v2.0.0/regions/import`. The API verifies the
+  Tapis JWT against the configured issuer and tenant key endpoint, checks `(tenant_id, username)`
+  in `public.region_curator`, validates the payload, and performs one admin-secret
+  Hasura mutation. The nested region and geometry insert is atomic.
+- **Shared region subcategories** use `POST /v2.0.0/regions/categories`. The API
+  applies the same curator check, validates the top-level parent and normalized
+  category name, and atomically creates the category plus its hierarchy edge.
+
+To grant import access:
+
+```sql
+INSERT INTO public.region_curator (tenant_id, username)
+VALUES ('portals', 'tapis-username')
+ON CONFLICT (tenant_id, username) DO UPDATE SET active = true;
+```
+
+The generic `POST /regions` route is intentionally not published; clients should
+use the import endpoint for shared regions.
 
 ## Development
 
@@ -104,8 +128,8 @@ docker run -p 3000:3000 \
 ```
 HTTP request
   -> Fastify (fastify-openapi-glue maps operationId -> handler)
-  -> CatalogService Proxy (service.ts)
-  -> CatalogServiceImpl (list / getById / create / update / deleteResource)
+  -> CatalogService Proxy (service.ts), or a dedicated custom handler
+  -> CatalogServiceImpl (generic list / getById / create / update / deleteResource)
   -> Apollo Client (hasura/client.ts)
   -> Hasura GraphQL
 ```
@@ -123,8 +147,10 @@ HTTP request
 - **`src/mappers/response.ts`** / **`src/mappers/request.ts`** — Transform between Hasura row format and the v1.8.0-compatible JSON the API returns.
 
 - **`src/custom-handlers.ts`** — Handlers for the 13 `/custom/` endpoints and `/user/login`. These perform multi-table aggregation queries that cannot be served by the generic Proxy (e.g. fetching a model with all its versions, configurations, and setups in one response).
+- **`src/region-import.ts`** — Dedicated curator-authorized region import/access handlers. These verify Tapis JWTs, query `region_curator`, validate GeoJSON, and issue one nested admin-secret mutation.
+- **`src/region-category.ts`** — Curator-authorized region subcategory creation. It normalizes names into stable IDs and writes the category plus parent edge atomically.
 
-- **`openapi.yaml`** — The canonical OpenAPI 3.0 spec (243 operations). Served unmodified by Swagger UI. On startup, `app.ts` strips response and request body schemas before registering routes to avoid AJV compilation overhead (~30s -> ~2s startup).
+- **`openapi.yaml`** — The canonical OpenAPI 3.0 spec (244 operations). Served unmodified by Swagger UI. On startup, `app.ts` strips response and request body schemas before registering routes to avoid AJV compilation overhead (~30s -> ~2s startup).
 
 ### Software subtypes
 

@@ -16,11 +16,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
+import { useAuth } from '@/lib/auth/useAuth';
 
-import {
-  useListRegionsByCategoryQuery,
-  useInsertRegionsMutation,
-} from '@/graphql/generated/graphql';
+import { useListRegionsByCategoryQuery } from '@/graphql/generated/graphql';
 import { useListRegionCategoriesWithHierarchy } from './useRegionCategories';
 import { RegionDatasets } from './RegionDatasets';
 import { RegionModels } from './RegionModels';
@@ -32,6 +30,85 @@ import {
   generateRegionId,
   type NewRegionFromGeoJSON,
 } from './regionUtils';
+import { getSvoAdapterApiUrl } from '@/lib/config';
+import { getRegionImportAccess, importRegions } from '@/lib/region-import-api';
+import { createRegionSubcategory } from '@/lib/region-category-api';
+
+interface RemoteSpatialLayerOption {
+  id: string;
+  label: string;
+  uri: string;
+}
+
+function spatialSourceQueryUrl(uri: string): string {
+  const url = new URL(uri);
+  if (!/(FeatureServer|MapServer)\/\d+\/?$/i.test(url.pathname)) return url.toString();
+  url.pathname = `${url.pathname.replace(/\/$/, '')}/query`;
+  url.search = new URLSearchParams({
+    where: '1=1',
+    outFields: '*',
+    returnGeometry: 'true',
+    f: 'geojson',
+  }).toString();
+  return url.toString();
+}
+
+function asGeoJsonFeatureCollection(payload: unknown): GeoJSON.FeatureCollection | null {
+  if (!payload || typeof payload !== 'object') return null;
+  const value = payload as Record<string, unknown>;
+  if (value.type === 'FeatureCollection' && Array.isArray(value.features)) {
+    return value as unknown as GeoJSON.FeatureCollection;
+  }
+  if (value.type === 'Feature') {
+    return { type: 'FeatureCollection', features: [value as unknown as GeoJSON.Feature] };
+  }
+  if (!Array.isArray(value.features)) return null;
+  const features: GeoJSON.Feature[] = value.features.flatMap((item): GeoJSON.Feature[] => {
+    if (!item || typeof item !== 'object') return [];
+    const feature = item as Record<string, unknown>;
+    const geometry = feature.geometry as Record<string, unknown> | null | undefined;
+    const attributes = feature.attributes ?? feature.properties ?? {};
+    if (!geometry) return [];
+    if (geometry.type) {
+      return [
+        {
+          type: 'Feature',
+          properties: attributes as Record<string, unknown>,
+          geometry: geometry as unknown as GeoJSON.Geometry,
+        } as GeoJSON.Feature,
+      ];
+    }
+    if (Array.isArray(geometry.rings)) {
+      return [
+        {
+          type: 'Feature',
+          properties: attributes,
+          geometry: { type: 'Polygon', coordinates: geometry.rings },
+        } as GeoJSON.Feature,
+      ];
+    }
+    if (Array.isArray(geometry.paths)) {
+      return [
+        {
+          type: 'Feature',
+          properties: attributes,
+          geometry: { type: 'LineString', coordinates: geometry.paths[0] },
+        } as GeoJSON.Feature,
+      ];
+    }
+    if (typeof geometry.x === 'number' && typeof geometry.y === 'number') {
+      return [
+        {
+          type: 'Feature',
+          properties: attributes,
+          geometry: { type: 'Point', coordinates: [geometry.x, geometry.y] },
+        } as GeoJSON.Feature,
+      ];
+    }
+    return [];
+  });
+  return { type: 'FeatureCollection', features };
+}
 
 interface RegionsEditorProps {
   regionId?: string;
@@ -46,11 +123,19 @@ export function RegionsEditor({
   regionType = 'administrative',
   mapHeight = '320px',
 }: RegionsEditorProps) {
+  const { isAuthenticated } = useAuth();
   const [selectedSubcategory, setSelectedSubcategory] = useState<string>('');
   const [selectedRegion, setSelectedRegion] = useState<RegionData | null>(null);
   const [addRegionsOpen, setAddRegionsOpen] = useState(false);
+  const [addSubcategoryOpen, setAddSubcategoryOpen] = useState(false);
+  const [canImportRegions, setCanImportRegions] = useState(false);
+  const [checkingImportAccess, setCheckingImportAccess] = useState(false);
 
-  const { categories, subcategoriesFor } = useListRegionCategoriesWithHierarchy();
+  const {
+    categories,
+    subcategoriesFor,
+    refetch: refetchCategories,
+  } = useListRegionCategoriesWithHierarchy();
   const subcategories = subcategoriesFor(regionType);
 
   const activeCategoryId = selectedSubcategory || regionType;
@@ -61,6 +146,33 @@ export function RegionsEditor({
   });
 
   const regions = data?.region ?? [];
+
+  useEffect(() => {
+    let active = true;
+    if (!isAuthenticated) {
+      setCanImportRegions(false);
+      setCheckingImportAccess(false);
+      return () => {
+        active = false;
+      };
+    }
+
+    setCheckingImportAccess(true);
+    void getRegionImportAccess()
+      .then((allowed) => {
+        if (active) setCanImportRegions(allowed);
+      })
+      .catch(() => {
+        if (active) setCanImportRegions(false);
+      })
+      .finally(() => {
+        if (active) setCheckingImportAccess(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [isAuthenticated]);
 
   const handleRegionClick = useCallback((region: RegionData) => {
     setSelectedRegion(region);
@@ -106,7 +218,8 @@ export function RegionsEditor({
   return (
     <div className="w-full">
       {/* Subcategory tabs */}
-      {subcategories.length > 0 && (
+      {(subcategories.length > 0 ||
+        (isAuthenticated && canImportRegions && !checkingImportAccess)) && (
         <div className="mb-2 flex items-center gap-1">
           <Tabs value={activeCategoryId} onValueChange={handleSubcategoryChange}>
             <TabsList>
@@ -119,9 +232,12 @@ export function RegionsEditor({
             </TabsList>
           </Tabs>
           <button
-            className="ml-2 text-gray-400 hover:text-primary"
-            title="Add subcategory (disabled)"
-            disabled
+            type="button"
+            className="ml-2 text-gray-400 hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
+            title="Add subcategory"
+            aria-label="Add subcategory"
+            disabled={!isAuthenticated || !canImportRegions || checkingImportAccess}
+            onClick={() => setAddSubcategoryOpen(true)}
           >
             <Plus className="h-5 w-5" />
           </button>
@@ -136,9 +252,11 @@ export function RegionsEditor({
             : `The following map shows the current areas of interest for ${regionType} modeling in this area.`}
           {citation && <div className="mt-1 text-xs italic">{citation}</div>}
         </div>
-        <Button variant="ghost" size="sm" onClick={() => setAddRegionsOpen(true)}>
-          <Plus className="mr-1 h-4 w-4" /> Add regions
-        </Button>
+        {isAuthenticated && canImportRegions && !checkingImportAccess && (
+          <Button variant="ghost" size="sm" onClick={() => setAddRegionsOpen(true)}>
+            <Plus className="mr-1 h-4 w-4" /> Add regions
+          </Button>
+        )}
       </div>
 
       {/* Map */}
@@ -156,12 +274,17 @@ export function RegionsEditor({
         >
           <AlertCircle className="h-8 w-8" />
           <span>This category does not have any region yet.</span>
-          <Button variant="outline" size="sm" onClick={() => setAddRegionsOpen(true)}>
-            <Plus className="mr-1 h-4 w-4" /> Add new regions
-          </Button>
+          {isAuthenticated && canImportRegions && !checkingImportAccess && (
+            <Button variant="outline" size="sm" onClick={() => setAddRegionsOpen(true)}>
+              <Plus className="mr-1 h-4 w-4" /> Add new regions
+            </Button>
+          )}
         </div>
       ) : (
-        <div style={{ height: mapHeight, zIndex: 0 }} className="overflow-hidden rounded border">
+        <div
+          style={{ height: mapHeight, isolation: 'isolate', position: 'relative', zIndex: 0 }}
+          className="overflow-hidden rounded border"
+        >
           <RegionMap
             regions={regions}
             selectedRegion={selectedRegion}
@@ -223,9 +346,22 @@ export function RegionsEditor({
         regionType={regionType}
         subcategories={subcategories}
         activeCategoryId={activeCategoryId}
+        canImportRegions={canImportRegions}
         onSuccess={() => {
           setAddRegionsOpen(false);
           refetch();
+        }}
+      />
+      <AddSubcategoryDialog
+        open={addSubcategoryOpen}
+        onClose={() => setAddSubcategoryOpen(false)}
+        parentCategoryId={regionType}
+        parentCategoryName={categoryName}
+        onSuccess={async (categoryId) => {
+          await refetchCategories();
+          setSelectedSubcategory(categoryId);
+          setSelectedRegion(null);
+          setAddSubcategoryOpen(false);
         }}
       />
     </div>
@@ -321,6 +457,106 @@ function RegionMap({ regions, selectedRegion, onRegionClick }: RegionMapProps) {
   );
 }
 
+// ─── Add subcategory dialog ──────────────────────────────────────────────────
+
+interface AddSubcategoryDialogProps {
+  open: boolean;
+  onClose: () => void;
+  parentCategoryId: string;
+  parentCategoryName: string;
+  onSuccess: (categoryId: string) => Promise<void>;
+}
+
+function AddSubcategoryDialog({
+  open,
+  onClose,
+  parentCategoryId,
+  parentCategoryName,
+  onSuccess,
+}: AddSubcategoryDialogProps) {
+  const [name, setName] = useState('');
+  const [citation, setCitation] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleClose = () => {
+    setName('');
+    setCitation('');
+    setError('');
+    onClose();
+  };
+
+  const handleSubmit = async () => {
+    const trimmedName = name.trim();
+    if (!trimmedName) {
+      setError('Enter a name for the subcategory.');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+    try {
+      const created = await createRegionSubcategory({
+        parent_category_id: parentCategoryId,
+        name: trimmedName,
+        ...(citation.trim() ? { citation: citation.trim() } : {}),
+      });
+      await onSuccess(created.id);
+      setName('');
+      setCitation('');
+    } catch (err) {
+      setError(`Could not create subcategory: ${err instanceof Error ? err.message : String(err)}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && handleClose()}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Add {parentCategoryName} subcategory</DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-4">
+          <div>
+            <Label htmlFor="subcategory-name">Name</Label>
+            <Input
+              id="subcategory-name"
+              value={name}
+              maxLength={120}
+              placeholder="e.g. Aquifer GAMs"
+              onChange={(event) => setName(event.target.value)}
+              disabled={loading}
+            />
+          </div>
+          <div>
+            <Label htmlFor="subcategory-citation">Citation or source (optional)</Label>
+            <Input
+              id="subcategory-citation"
+              value={citation}
+              maxLength={2000}
+              placeholder="Optional source or acknowledgement"
+              onChange={(event) => setCitation(event.target.value)}
+              disabled={loading}
+            />
+          </div>
+          {error && <p className="text-sm text-destructive">{error}</p>}
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={handleClose} disabled={loading}>
+            Cancel
+          </Button>
+          <Button onClick={() => void handleSubmit()} disabled={loading}>
+            {loading ? 'Creating…' : 'Create subcategory'}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 // ─── Add Regions Dialog ───────────────────────────────────────────────────────
 
 interface SubcatItem {
@@ -336,6 +572,7 @@ interface AddRegionsDialogProps {
   regionType: string;
   subcategories: SubcatItem[];
   activeCategoryId: string;
+  canImportRegions: boolean;
   onSuccess: () => void;
 }
 
@@ -346,17 +583,37 @@ function AddRegionsDialog({
   regionType,
   subcategories,
   activeCategoryId,
+  canImportRegions,
   onSuccess,
 }: AddRegionsDialogProps) {
+  const { isAuthenticated } = useAuth();
   const [selectedCategoryId, setSelectedCategoryId] = useState(activeCategoryId);
   const [parsedFeatures, setParsedFeatures] = useState<NewRegionFromGeoJSON[]>([]);
   const [nameProperty, setNameProperty] = useState<string>('');
+  const [idProperty, setIdProperty] = useState<string>('');
   const [names, setNames] = useState<string[]>([]);
+  const [sourceUrl, setSourceUrl] = useState<string>('');
+  const [sourceOptions, setSourceOptions] = useState<RemoteSpatialLayerOption[]>([]);
+  const [sourceLoading, setSourceLoading] = useState(false);
   const [checkedIndices, setCheckedIndices] = useState<Set<number>>(new Set());
   const [error, setError] = useState<string>('');
+  const [loading, setLoading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const [insertRegions, { loading }] = useInsertRegionsMutation();
+  useEffect(() => {
+    const adapterApi = getSvoAdapterApiUrl();
+    if (!open || !adapterApi) return;
+    const controller = new AbortController();
+    void fetch(`${adapterApi}/spatial/layers`, { signal: controller.signal })
+      .then((response) => (response.ok ? response.json() : { layers: [] }))
+      .then((payload: { layers?: RemoteSpatialLayerOption[] }) => {
+        setSourceOptions(payload.layers ?? []);
+      })
+      .catch(() => {
+        // The custom URL field remains usable when the adapter is unavailable.
+      });
+    return () => controller.abort();
+  }, [open]);
 
   const propertyKeys: string[] =
     parsedFeatures.length > 0 && parsedFeatures[0]
@@ -380,11 +637,42 @@ function AddRegionsDialog({
         setCheckedIndices(new Set(features.map((_, i) => i)));
         setError('');
         setNameProperty('');
+        setIdProperty('');
       } catch {
         setError('Invalid JSON file');
       }
     };
     reader.readAsText(file);
+  };
+
+  const handleLoadRemoteSource = async () => {
+    const uri = sourceUrl.trim();
+    if (!uri) {
+      setError('Enter a GeoJSON or ArcGIS FeatureServer/MapServer layer URL.');
+      return;
+    }
+    setSourceLoading(true);
+    setError('');
+    try {
+      const response = await fetch(spatialSourceQueryUrl(uri));
+      if (!response.ok) throw new Error(`Spatial source returned ${response.status}`);
+      const collection = asGeoJsonFeatureCollection(await response.json());
+      if (!collection)
+        throw new Error('The source did not return a GeoJSON or ArcGIS feature collection.');
+      const features = parseGeoJsonFeatures(collection);
+      if (features.length === 0) throw new Error('The source returned no geometries.');
+      setParsedFeatures(features);
+      setNames(features.map(() => ''));
+      setCheckedIndices(new Set(features.map((_, i) => i)));
+      setNameProperty('');
+      setIdProperty('');
+    } catch (err) {
+      setError(
+        `Could not load spatial source: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    } finally {
+      setSourceLoading(false);
+    }
   };
 
   const handleNamePropertyChange = (prop: string) => {
@@ -420,6 +708,7 @@ function AddRegionsDialog({
   };
 
   const handleSubmit = async () => {
+    if (!isAuthenticated || !canImportRegions) return;
     const selected = [...checkedIndices];
     if (selected.length === 0) {
       setError('Please select at least one region to add.');
@@ -433,38 +722,50 @@ function AddRegionsDialog({
       return;
     }
 
-    const objects = selected.map((i) => {
+    const regions = selected.map((i) => {
       const feature = parsedFeatures[i]!;
       const name = names[i] ?? '';
-      const id = generateRegionId(parentRegionId, name);
+      const sourceId = idProperty ? String(feature.featureProperties[idProperty] ?? '').trim() : '';
+      const id = sourceId
+        ? `${parentRegionId}__${sourceId.toLowerCase().replace(/[^a-z0-9_-]/g, '_')}`
+        : generateRegionId(parentRegionId, name);
       return {
         id,
         name: name.trim(),
-        parent_region_id: parentRegionId,
-        category_id: selectedCategoryId,
-        geometries: {
-          data: feature.geometries.map((g) => ({ geometry: g })),
-        },
+        geometries: feature.geometries,
       };
     });
 
+    setLoading(true);
     try {
-      await insertRegions({ variables: { objects } });
-      setParsedFeatures([]);
-      setNames([]);
-      setCheckedIndices(new Set());
-      setError('');
-      if (fileRef.current) fileRef.current.value = '';
-      onSuccess();
+      await importRegions({
+        parent_region_id: parentRegionId,
+        category_id: selectedCategoryId,
+        regions,
+      });
     } catch (err) {
       setError(`Error adding regions: ${err instanceof Error ? err.message : String(err)}`);
+      return;
+    } finally {
+      setLoading(false);
     }
+
+    setParsedFeatures([]);
+    setNames([]);
+    setCheckedIndices(new Set());
+    setIdProperty('');
+    setSourceUrl('');
+    setError('');
+    if (fileRef.current) fileRef.current.value = '';
+    onSuccess();
   };
 
   const handleClose = () => {
     setParsedFeatures([]);
     setNames([]);
     setCheckedIndices(new Set());
+    setIdProperty('');
+    setSourceUrl('');
     setError('');
     if (fileRef.current) fileRef.current.value = '';
     onClose();
@@ -510,23 +811,81 @@ function AddRegionsDialog({
             </div>
           </div>
 
-          {/* Name property selector */}
-          {parsedFeatures.length > 0 && propertyKeys.length > 0 && (
-            <div>
-              <Label htmlFor="name-prop">Auto-fill names from GeoJSON property</Label>
+          {/* Remote GeoJSON / ArcGIS source */}
+          <div className="space-y-1 rounded border bg-muted/30 p-3">
+            <Label htmlFor="spatial-source-url">Register from a remote spatial layer</Label>
+            <p className="text-xs text-muted-foreground">
+              Paste a GeoJSON URL or an ArcGIS FeatureServer/MapServer layer URL. The returned
+              features will be copied into MINT regions so the modeling map does not depend on a
+              live remote service at selection time.
+            </p>
+            <div className="flex gap-2">
               <select
-                id="name-prop"
-                className="mt-1 block w-full rounded border border-input bg-background px-3 py-2 text-sm"
-                value={nameProperty}
-                onChange={(e) => handleNamePropertyChange(e.target.value)}
+                aria-label="Registered spatial source"
+                className="min-w-0 flex-1 rounded border border-input bg-background px-3 py-2 text-sm"
+                value={sourceUrl}
+                onChange={(e) => setSourceUrl(e.target.value)}
               >
-                <option value="">— select property —</option>
-                {propertyKeys.map((k) => (
-                  <option key={k} value={k}>
-                    {k}
+                <option value="">Choose a registered source…</option>
+                {sourceOptions.map((source) => (
+                  <option key={source.id} value={source.uri}>
+                    {source.label}
                   </option>
                 ))}
               </select>
+              <Input
+                id="spatial-source-url"
+                value={sourceUrl}
+                onChange={(e) => setSourceUrl(e.target.value)}
+                placeholder="https://…/FeatureServer/4"
+                className="min-w-0 flex-1"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleLoadRemoteSource}
+                disabled={sourceLoading}
+              >
+                {sourceLoading ? 'Loading…' : 'Load layer'}
+              </Button>
+            </div>
+          </div>
+
+          {/* Name property selector */}
+          {parsedFeatures.length > 0 && propertyKeys.length > 0 && (
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div>
+                <Label htmlFor="name-prop">Auto-fill names from GeoJSON property</Label>
+                <select
+                  id="name-prop"
+                  className="mt-1 block w-full rounded border border-input bg-background px-3 py-2 text-sm"
+                  value={nameProperty}
+                  onChange={(e) => handleNamePropertyChange(e.target.value)}
+                >
+                  <option value="">— select property —</option>
+                  {propertyKeys.map((k) => (
+                    <option key={k} value={k}>
+                      {k}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <Label htmlFor="id-prop">Stable identifier property (optional)</Label>
+                <select
+                  id="id-prop"
+                  className="mt-1 block w-full rounded border border-input bg-background px-3 py-2 text-sm"
+                  value={idProperty}
+                  onChange={(e) => setIdProperty(e.target.value)}
+                >
+                  <option value="">— generate stable ID —</option>
+                  {propertyKeys.map((k) => (
+                    <option key={k} value={k}>
+                      {k}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
           )}
 
@@ -599,7 +958,13 @@ function AddRegionsDialog({
           </Button>
           <Button
             onClick={handleSubmit}
-            disabled={loading || parsedFeatures.length === 0 || checkedIndices.size === 0}
+            disabled={
+              !isAuthenticated ||
+              !canImportRegions ||
+              loading ||
+              parsedFeatures.length === 0 ||
+              checkedIndices.size === 0
+            }
           >
             {loading
               ? 'Adding…'

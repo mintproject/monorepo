@@ -11,6 +11,7 @@ export interface ProblemStatementRecommendationRequest {
   selected_model_configuration_ids?: string[];
   start_date?: string | null;
   end_date?: string | null;
+  spatial_conditions?: Record<string, unknown>;
   limit?: number;
 }
 
@@ -45,6 +46,7 @@ export interface ProblemStatementRecommendationResponse {
   status: 'ok' | 'empty' | 'abstained';
   reason?: string;
   context?: { text?: string; sources?: string[] };
+  spatial_conditions?: Record<string, unknown>;
   results: {
     svo: StandardVariableRecommendation[];
     model_configuration: ModelConfigurationRecommendation[];
@@ -76,6 +78,7 @@ export async function recommendProblemStatement(
     capability: value.capability,
     reason: value.reason,
     context: value.context,
+    spatial_conditions: value.spatial_conditions,
     results: {
       svo: Array.isArray(value.results.svo) ? value.results.svo : [],
       model_configuration: Array.isArray(value.results.model_configuration)

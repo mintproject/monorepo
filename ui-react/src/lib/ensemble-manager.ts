@@ -329,6 +329,7 @@ export function submitExecutionPlan(
   body: {
     plan_id: string;
     parameter_values?: Record<string, unknown>;
+    max_minutes?: number;
     run_name?: string;
     recreate?: boolean;
     dry_run?: boolean;

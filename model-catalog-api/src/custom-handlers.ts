@@ -1,5 +1,5 @@
 /**
- * Custom endpoint handlers for the 13 /custom/ and /user/login endpoints.
+ * Custom endpoint handlers for the /custom/, region-import, and /user/login endpoints.
  *
  * These endpoints perform cross-resource aggregation queries that require
  * nested GraphQL queries traversing multiple Hasura relationships. They
@@ -18,6 +18,11 @@ import { readClient, gql } from './hasura/client.js';
 import { transformRow, transformList } from './mappers/response.js';
 import { getResourceConfig } from './mappers/resource-registry.js';
 import { Apps } from '@tapis/tapis-typescript';
+import {
+  custom_regions_import_access_get,
+  custom_regions_import_post,
+} from './region-import.js';
+import { custom_regions_categories_post } from './region-category.js';
 
 /**
  * Resolve an incoming {id} path/query value to a full resource URI.
@@ -888,5 +893,8 @@ export const customHandlers: Record<
   custom_configuration_id_inputs_get,
   custom_tapis_apps_get,
   custom_tapis_apps_id_get,
+  custom_regions_import_access_get,
+  custom_regions_import_post,
+  custom_regions_categories_post,
   user_login_post,
 };

@@ -82,6 +82,21 @@ class Settings(BaseSettings):
     # Register with mcp-suite/servers/geo/register-actor.sh; set via SVO_ADAPTER_GEO_ACTOR_ID.
     geo_actor_id: str = ""
 
+    # Default spatial layers surfaced to the local ETL UI so users can pick from
+    # known monorepo-backed references without pasting raw URLs.
+    gma_boundary_layer_uri: str = (
+        "https://services1.arcgis.com/7DRakJXKPEhwv0fM/arcgis/rest/services/"
+        "Z_Statewide_gdb/FeatureServer/4"
+    )
+    gcd_boundary_layer_uri: str = (
+        "https://services.twdb.texas.gov/arcgis/rest/services/Base/"
+        "GroundWaterConservationDistricts/MapServer/0"
+    )
+    county_boundary_layer_uri: str = (
+        "https://services.twdb.texas.gov/arcgis/rest/services/PWS/"
+        "Texas_Counties_FIPS/FeatureServer/0"
+    )
+
     # --- NTGAM location->forecast tab (Phase 2/3) ----------------------------
     # Local CKAN holding the registered NTGAM resources (heads sampled for water
     # levels). Token is needed to download private (mint_dataset) resources.
