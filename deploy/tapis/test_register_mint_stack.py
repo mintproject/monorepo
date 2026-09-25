@@ -290,6 +290,8 @@ class StorageTests(unittest.TestCase):
         )
 
         command = t.pods.exec_pod_commands.call_args.kwargs["commands"][0][2]
+        self.assertIn("curl -fsS http://127.0.0.1:8080/v1/version", command)
+        self.assertIn("Hasura did not become ready after the pod reported AVAILABLE.", command)
         self.assertIn("hasura migrate apply --skip-update-check", command)
         self.assertIn("hasura metadata apply --skip-update-check", command)
         self.assertIn("status=\"$(hasura migrate status --skip-update-check --no-color 2>&1)\"", command)

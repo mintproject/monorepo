@@ -608,6 +608,15 @@ def run_hasura_migrations(t: Any, *, expected_image: str | None = None) -> None:
 
     command = r'''set -eu
     cd /hasura
+    ready_attempts=0
+    until curl -fsS http://127.0.0.1:8080/v1/version >/dev/null; do
+      ready_attempts=$((ready_attempts + 1))
+      if [ "$ready_attempts" -ge 60 ]; then
+        printf '%s\n' 'Hasura did not become ready after the pod reported AVAILABLE.' >&2
+        exit 1
+      fi
+      sleep 5
+    done
     hasura migrate apply --skip-update-check
     hasura metadata apply --skip-update-check
     hasura metadata reload --skip-update-check
