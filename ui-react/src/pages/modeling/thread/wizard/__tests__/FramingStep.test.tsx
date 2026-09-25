@@ -4,7 +4,7 @@ import { renderWithProviders, screen, waitFor } from '@/test/utils/render';
 import type { Thread } from '@/graphql/generated/modeling';
 import { FramingStep } from '../FramingStep';
 
-vi.mock('../SpatialScopeMap', () => ({
+vi.mock('../../SpatialScopeMap', () => ({
   SpatialScopeMap: () => <div data-testid="spatial-scope-map" />,
 }));
 
