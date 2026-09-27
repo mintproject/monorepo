@@ -58,6 +58,19 @@ class StorageTests(unittest.TestCase):
             "https://mintdevapi.pods.portals.tapis.io/v2.0.0",
         )
 
+    def test_svo_uses_configured_geo_actor_id(self):
+        with patch.dict(
+            os.environ,
+            {"SVO_ADAPTER_GEO_ACTOR_ID": "zXBG65KNWDylm"},
+            clear=True,
+        ):
+            svo = deploy.build_specs("mintproject", "develop", "https://portals.tapis.io")["svo"]
+
+        self.assertEqual(
+            svo["environment_variables"]["SVO_ADAPTER_GEO_ACTOR_ID"],
+            "zXBG65KNWDylm",
+        )
+
     def test_graphql_tapis_route_does_not_submit_cors_settings(self):
         graphql = deploy.build_specs("mintproject", "develop", "https://portals.tapis.io")["graphql"]
         self.assertEqual(
@@ -1027,6 +1040,60 @@ class UiAuthSyncTests(unittest.TestCase):
         self.assertEqual(rc, 0)
         gate.assert_not_called()
         self.assertEqual(sync.call_args.args[1]["pod_id"], deploy.PODS["ui"])
+
+
+class SvoRuntimeSyncTests(unittest.TestCase):
+    def setUp(self):
+        self.spec = {
+            "pod_id": deploy.PODS["svo"],
+            "environment_variables": {"SVO_ADAPTER_GEO_ACTOR_ID": "z8LGLpm7lVqrK"},
+        }
+
+    def test_sync_preserves_existing_environment_and_updates_actor(self):
+        running = {
+            "image": "ghcr.io/mintproject/svo-adapter:develop",
+            "status_container": {"start_time": "old-start"},
+            "environment_variables": {"KEEP_ME": "yes", "SVO_ADAPTER_GEO_ACTOR_ID": "old"},
+        }
+        applied = {
+            "environment_variables": {"KEEP_ME": "yes", "SVO_ADAPTER_GEO_ACTOR_ID": "z8LGLpm7lVqrK"},
+        }
+        ready = {
+            "image": running["image"],
+            "status": "AVAILABLE",
+            "status_container": {"start_time": "new-start"},
+        }
+        t = Mock()
+        t.pods.get_pod.side_effect = [running, applied, ready]
+        with patch.object(deploy.time, "sleep"):
+            rc = deploy.sync_svo_runtime(t, self.spec)
+        self.assertEqual(rc, 0)
+        t.pods.update_pod.assert_called_once_with(
+            pod_id=deploy.PODS["svo"],
+            image=running["image"],
+            environment_variables={"KEEP_ME": "yes", "SVO_ADAPTER_GEO_ACTOR_ID": "z8LGLpm7lVqrK"},
+        )
+        t.pods.restart_pod.assert_called_once_with(pod_id=deploy.PODS["svo"])
+
+    def test_sync_can_defer_restart(self):
+        running = {
+            "image": "ghcr.io/mintproject/svo-adapter:develop",
+            "status_container": {"start_time": "old-start"},
+            "environment_variables": {},
+        }
+        applied = {"environment_variables": {"SVO_ADAPTER_GEO_ACTOR_ID": "z8LGLpm7lVqrK"}}
+        t = Mock()
+        t.pods.get_pod.side_effect = [running, applied]
+        rc = deploy.sync_svo_runtime(t, self.spec, restart=False)
+        self.assertEqual(rc, 0)
+        t.pods.restart_pod.assert_not_called()
+
+    def test_sync_refuses_to_clear_actor(self):
+        t = Mock()
+        spec = {"pod_id": deploy.PODS["svo"], "environment_variables": {"SVO_ADAPTER_GEO_ACTOR_ID": ""}}
+        with self.assertRaises(RuntimeError):
+            deploy.sync_svo_runtime(t, spec)
+        t.pods.update_pod.assert_not_called()
 
 
 if __name__ == "__main__":

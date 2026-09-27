@@ -211,6 +211,7 @@ jobs:
           TAPIS_USERNAME: ${{ secrets.TAPIS_USERNAME }}
           TAPIS_ID: ${{ secrets.TAPIS_ID }}
           TAPIS_PASSWORD: ${{ secrets.TAPIS_PASSWORD }}
+          SVO_ADAPTER_GEO_ACTOR_ID: ${{ vars.SVO_ADAPTER_GEO_ACTOR_ID }}
           IMAGE_MAP_JSON: ${{ needs.plan.outputs.deploy_images_json }}
           BUILD_SERVICES: ${{ needs.plan.outputs.build_services }}
         run: |
@@ -233,6 +234,7 @@ jobs:
           TAPIS_USERNAME: ${{ secrets.TAPIS_USERNAME }}
           TAPIS_ID: ${{ secrets.TAPIS_ID }}
           TAPIS_PASSWORD: ${{ secrets.TAPIS_PASSWORD }}
+          SVO_ADAPTER_GEO_ACTOR_ID: ${{ vars.SVO_ADAPTER_GEO_ACTOR_ID }}
           IMAGE_MAP_JSON: ${{ needs.plan.outputs.deploy_images_json }}
         run: |
           set -euo pipefail
@@ -241,11 +243,26 @@ jobs:
             --pods graphql \
             --image-map "$IMAGE_MAP_JSON"
 
+      - name: Apply SVO runtime configuration
+        if: vars.SVO_ADAPTER_GEO_ACTOR_ID != '' && contains(needs.plan.outputs.restart_services, 'svo')
+        env:
+          TAPIS_USERNAME: ${{ secrets.TAPIS_USERNAME }}
+          TAPIS_ID: ${{ secrets.TAPIS_ID }}
+          TAPIS_PASSWORD: ${{ secrets.TAPIS_PASSWORD }}
+          SVO_ADAPTER_GEO_ACTOR_ID: ${{ vars.SVO_ADAPTER_GEO_ACTOR_ID }}
+        run: |
+          set -euo pipefail
+          python deploy/tapis/register_mint_stack.py \
+            --sync-svo-runtime \
+            --defer-svo-restart \
+            --pods svo
+
       - name: Restart affected application pods
         env:
           TAPIS_USERNAME: ${{ secrets.TAPIS_USERNAME }}
           TAPIS_ID: ${{ secrets.TAPIS_ID }}
           TAPIS_PASSWORD: ${{ secrets.TAPIS_PASSWORD }}
+          SVO_ADAPTER_GEO_ACTOR_ID: ${{ vars.SVO_ADAPTER_GEO_ACTOR_ID }}
           RESTART_SERVICES: ${{ needs.plan.outputs.restart_services }}
           SCHEMA_CHANGED: ${{ needs.plan.outputs.schema_changed }}
         run: |
