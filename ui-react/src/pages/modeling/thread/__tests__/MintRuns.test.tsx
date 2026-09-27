@@ -261,6 +261,57 @@ describe('MintRuns', () => {
     expect(screen.getByText(/Tapis Workflows tracking:/)).toBeInTheDocument();
   });
 
+  it('keeps the model successful when only the downstream adapter fails', () => {
+    const unifiedRun: UnifiedRunSnapshot = {
+      run_id: 'ue-parent-failed-adapter',
+      execution_mode: 'workflow_pipeline',
+      adapter_stage: 'post_model',
+      status: 'failed',
+      model_job_id: 'model-job-1',
+      model_result: { status: 'SUCCESS' },
+      workflow_stages: [
+        {
+          stage_id: 'model',
+          type: 'model',
+          depends_on: [],
+          status: 'failed',
+          provider: 'tapis',
+          provider_ids: {},
+        },
+        {
+          stage_id: 'output-handoff',
+          type: 'output_handoff',
+          depends_on: ['model'],
+          status: 'succeeded',
+          provider: 'ensemble_manager',
+          provider_ids: {},
+        },
+      ],
+      adapter_runs: [{ run_id: 'adapter-run-1', status: 'failed' }],
+    };
+
+    renderWithProviders(
+      <MintRuns
+        threadData={mockThreadDataSubmitted}
+        executions={emptyExecutions}
+        unifiedRuns={{ 'model-1': unifiedRun }}
+        canWrite
+        canExecute
+        ensembleManagerApi="http://ensemble"
+        onContinue={vi.fn()}
+        onFetchRuns={vi.fn()}
+        onSubmitRuns={vi.fn()}
+      />,
+    );
+
+    const stageCards = screen.getByTestId('workflow-stages').children;
+    const handoffCard = stageCards[1];
+    const modelCard = stageCards[2];
+    expect(modelCard).toHaveTextContent('Completed');
+    expect(handoffCard).toHaveTextContent('Completed');
+    expect(screen.getByText('Workflow pipeline')).toBeInTheDocument();
+  });
+
   it('renders the model-builder graph with SVO contracts and the active stage', () => {
     const postModelPlan: ThreadAdapterPlan = {
       thread_model_id: 'model-1',

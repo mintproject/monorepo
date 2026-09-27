@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import {
+  ensembleManagerHeaders,
   fetchRunHistory,
   fetchRunHistoryDetail,
   type RunHistoryDetail,
@@ -27,6 +28,42 @@ function json(value: unknown): string {
   } catch {
     return String(value);
   }
+}
+
+function ArtifactLink({ api, endpoint, kind }: { api: string; endpoint: string; kind: string }) {
+  const [error, setError] = useState<string | null>(null);
+
+  async function openArtifact(event: React.MouseEvent<HTMLAnchorElement>) {
+    event.preventDefault();
+    setError(null);
+    // Open synchronously so the browser allows the authenticated response to
+    // be shown in a new tab after the fetch completes.
+    const popup = window.open('', '_blank');
+    try {
+      const response = await fetch(api + endpoint, {
+        headers: ensembleManagerHeaders(),
+      });
+      if (!response.ok) {
+        throw new Error(`Ensemble manager returned ${response.status}`);
+      }
+      const objectUrl = URL.createObjectURL(await response.blob());
+      if (popup) popup.location.href = objectUrl;
+      else window.location.href = objectUrl;
+      window.setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000);
+    } catch (reason) {
+      popup?.close();
+      setError(reason instanceof Error ? reason.message : 'Unable to open artifact');
+    }
+  }
+
+  return (
+    <span>
+      <a href={api + endpoint} onClick={openArtifact} className="text-blue-700 underline">
+        {kind}
+      </a>
+      {error && <span className="ml-2 text-xs text-red-700">({error})</span>}
+    </span>
+  );
 }
 
 function Detail({ detail, api }: { detail: RunHistoryDetail; api: string }) {
@@ -123,14 +160,7 @@ function Detail({ detail, api }: { detail: RunHistoryDetail; api: string }) {
             {detail.artifacts.map((artifact) => (
               <li key={artifact.kind + ':' + artifact.source_id}>
                 {artifact.endpoint ? (
-                  <a
-                    href={api + artifact.endpoint}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-blue-700 underline"
-                  >
-                    {artifact.kind}
-                  </a>
+                  <ArtifactLink api={api} endpoint={artifact.endpoint} kind={artifact.kind} />
                 ) : (
                   <span>{artifact.kind}</span>
                 )}{' '}

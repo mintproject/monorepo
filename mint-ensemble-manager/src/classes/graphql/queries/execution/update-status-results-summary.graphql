@@ -1,0 +1,32 @@
+mutation update_execution_status_results_summary(
+    $id: uuid!
+    $end_time: timestamp
+    $status: String!
+    $run_progress: float8!
+    $results: [execution_result_insert_input!]!
+    $threadModelId: uuid!
+    $successfulRuns: Int!
+    $failedRuns: Int!
+) {
+    insert_execution_result(
+        objects: $results
+        on_conflict: {
+            constraint: execution_result_pkey
+            update_columns: [execution_id, resource_id, model_io_id]
+        }
+    ) {
+        affected_rows
+    }
+    update_execution_by_pk(
+        pk_columns: { id: $id }
+        _set: { end_time: $end_time, status: $status, run_progress: $run_progress }
+    ) {
+        id
+    }
+    update_thread_model_execution_summary_by_pk(
+        pk_columns: { thread_model_id: $threadModelId }
+        _inc: { successful_runs: $successfulRuns, failed_runs: $failedRuns }
+    ) {
+        thread_model_id
+    }
+}

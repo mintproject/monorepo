@@ -754,8 +754,8 @@ const getSpatialCoverageGeometry = (coverage) => {
 };
 
 const getDates = (dates) => {
-    const start = dates["start_date"];
-    const end = dates["end_date"];
+    const start = dates?.["start_date"];
+    const end = dates?.["end_date"];
     return {
         start_date: toDateString(start),
         end_date: toDateString(end)

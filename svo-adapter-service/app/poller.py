@@ -24,6 +24,7 @@ from starlette.concurrency import run_in_threadpool
 
 from .config import settings
 from . import tapis as tapis_mod
+from .error_handling import safe_error_message
 
 log = logging.getLogger(__name__)
 
@@ -128,8 +129,20 @@ def _terminal_update_set(
     if adapter_status == "completed":
         stamp = now or datetime.now(tz=timezone.utc)
         update_set["completed_at"] = stamp.isoformat()
-    elif failed_tasks:
-        update_set["error_message"] = "; ".join(failed_tasks)[:2000]
+    else:
+        provider_message = next(
+            (
+                detail.get(key)
+                for key in ("error", "message", "last_message", "status_message", "description")
+                if detail and detail.get(key)
+            ),
+            None,
+        )
+        update_set["error_message"] = safe_error_message(
+            "; ".join(failed_tasks)
+            if failed_tasks
+            else str(provider_message or f"Tapis workflow reported {tapis_status}")
+        )
     return adapter_status, update_set
 
 

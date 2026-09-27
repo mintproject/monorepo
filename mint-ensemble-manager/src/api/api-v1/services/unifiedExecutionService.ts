@@ -70,6 +70,7 @@ interface AdapterChildRun {
     execution_kind?: "workflow";
     tapis_workflow_id?: string | null;
     tapis_run_id?: string | null;
+    error_message?: string | null;
 }
 
 interface UnifiedWorkflowStage {
@@ -222,7 +223,10 @@ function planHash(plan: LegacyPlan): string {
 }
 
 function parameterValuesHash(values: Record<string, unknown>): string {
-    return crypto.createHash("sha256").update(JSON.stringify(values, Object.keys(values).sort())).digest("hex");
+    return crypto
+        .createHash("sha256")
+        .update(JSON.stringify(values, Object.keys(values).sort()))
+        .digest("hex");
 }
 
 function adapterParameterValues(
@@ -234,8 +238,13 @@ function adapterParameterValues(
         ? body.adapter_parameter_values?.[adapter.adapter_plan_id] || body.parameter_values || {}
         : {};
     const missing = (adapter?.parameters || [])
-        .filter((parameter) => parameter.required && !parameter.managed && parameter.default === undefined)
-        .filter((parameter) => values[parameter.name] === undefined || values[parameter.name] === "")
+        .filter(
+            (parameter) =>
+                parameter.required && !parameter.managed && parameter.default === undefined
+        )
+        .filter(
+            (parameter) => values[parameter.name] === undefined || values[parameter.name] === ""
+        )
         .map((parameter) => ({
             step: adapter?.adapter_plan_id,
             name: parameter.name,
@@ -266,10 +275,7 @@ const DEFAULT_MAX_MINUTES = 60;
 
 function parseMaxMinutes(value: unknown): number {
     if (value === undefined || value === null || value === "") return DEFAULT_MAX_MINUTES;
-    if (
-        (typeof value !== "number" && typeof value !== "string") ||
-        !/^\d+$/.test(String(value))
-    ) {
+    if ((typeof value !== "number" && typeof value !== "string") || !/^\d+$/.test(String(value))) {
         throw new UnifiedExecutionError(
             422,
             "max_minutes must be a positive integer",
@@ -358,7 +364,9 @@ function workflowStages(record: UnifiedExecutionRecord, plan: LegacyPlan): Unifi
         stage_id: "model",
         type: "model",
         depends_on: plan.adapter_steps?.length
-            ? stages.filter((stage) => stage.type === "adapter_input").map((stage) => stage.stage_id)
+            ? stages
+                  .filter((stage) => stage.type === "adapter_input")
+                  .map((stage) => stage.stage_id)
             : [],
         status: modelStageStatus(record, plan),
         provider: record.execution_engine,
@@ -382,20 +390,20 @@ function workflowStages(record: UnifiedExecutionRecord, plan: LegacyPlan): Unifi
     if (plan.post_model_adapter) {
         const handoffStatus = record.output_handoff
             ? "succeeded"
-            : ["output_registering", "output_verifying", "adapter_dispatching"].includes(
-                    record.status
-                )
-              ? "running"
-              : "planned";
+            : record.status === "completed"
+              ? "succeeded"
+              : ["output_registering", "output_verifying", "adapter_dispatching"].includes(
+                      record.status
+                  )
+                ? "running"
+                : "planned";
         stages.push({
             stage_id: "output-handoff",
             type: "output_handoff",
             depends_on: ["model"],
             status: handoffStatus,
             provider: "ensemble_manager",
-            provider_ids: record.model_output_id
-                ? { model_output_id: record.model_output_id }
-                : {},
+            provider_ids: record.model_output_id ? { model_output_id: record.model_output_id } : {},
             output_reference: record.output_handoff || undefined
         });
         if (!adapterChildren.length) {
@@ -417,8 +425,7 @@ function tapisWorkflowTracking(record: UnifiedExecutionRecord): TapisWorkflowTra
         .map((child) => ({
             workflow_id:
                 typeof child.tapis_workflow_id === "string" ? child.tapis_workflow_id : null,
-            run_id:
-                typeof child.tapis_run_id === "string" ? child.tapis_run_id : null
+            run_id: typeof child.tapis_run_id === "string" ? child.tapis_run_id : null
         }))
         .filter((workflow) => workflow.workflow_id || workflow.run_id);
 
@@ -489,25 +496,40 @@ function modelProviderJobId(result: any): string | null {
     return null;
 }
 
-export function createUnifiedExecutionService(legacyServices: {
-    local: { submitExecution(body: any): Promise<any> };
-    wings: { submitExecution(body: any): Promise<any> };
-    tapis: {
-        submitExecution(body: any, authorization: string): Promise<any>;
-        buildCompositeWorkflowModelTask?(
-            body: any,
-            workflowPath: string,
-            authorization: string
-        ): Promise<{
-            execution_id: string;
-            output_uri: string;
-            output_name: string;
-            job_definition: unknown;
-        }>;
-        getExecution?: (executionId: string, authorization: string) => Promise<any>;
-        getJobStatus?: (jobId: string, authorization: string) => Promise<any>;
-    };
-}, dependencies: { store?: UnifiedExecutionStore } = {}) {
+export function createUnifiedExecutionService(
+    legacyServices: {
+        local: { submitExecution(body: any): Promise<any> };
+        wings: { submitExecution(body: any): Promise<any> };
+        tapis: {
+            submitExecution(body: any, authorization: string): Promise<any>;
+            buildCompositeWorkflowModelTask?(
+                body: any,
+                workflowPath: string,
+                authorization: string
+            ): Promise<{
+                execution_id: string;
+                output_uri: string;
+                output_name: string;
+                job_definition: unknown;
+            }>;
+            getExecution?: (executionId: string, authorization: string) => Promise<any>;
+            getJobStatus?: (jobId: string, authorization: string) => Promise<any>;
+            updateCompositeWorkflowExecution?: (
+                threadId: string,
+                modelId: string,
+                executionId: string,
+                status: "completed" | "failed",
+                output?: {
+                    model_io_id: string;
+                    resource_id: string;
+                    name: string;
+                    url: string;
+                }
+            ) => Promise<void>;
+        };
+    },
+    dependencies: { store?: UnifiedExecutionStore } = {}
+) {
     const store = dependencies.store || createHasuraUnifiedExecutionStore();
 
     const persistWorkflowStages = async (record: UnifiedExecutionRecord) => {
@@ -583,48 +605,194 @@ export function createUnifiedExecutionService(legacyServices: {
         record: UnifiedExecutionRecord,
         authorization?: string
     ): Promise<Record<string, unknown>> => {
-        if (["completed", "failed", "cancelled", "unknown"].includes(record.status)) {
-            return parentResponse(record);
+        const plan = decodePlan(record.plan_id);
+        const adapter = plan.post_model_adapter;
+        const compositeOutput = (modelResult: Record<string, unknown> | null | undefined) => {
+            const outputUri = modelResult?.output_uri;
+            if (!adapter || typeof outputUri !== "string") return undefined;
+            return {
+                model_io_id: adapter.model_io_id,
+                resource_id: outputUri,
+                name: adapter.model_output_key,
+                url: outputUri
+            };
+        };
+        const retryableCompositeStatus =
+            record.status === "unknown" &&
+            record.failure_code === "COMPOSITE_WORKFLOW_STATUS_UNKNOWN";
+        const modelResult = (record.model_result || {}) as Record<string, any>;
+        const compositeWorkflowRunId =
+            modelResult.composite_workflow_run_id || modelResult.tapis_run_id;
+        const existingHandoff = (record.output_handoff || {}) as Record<string, any>;
+        const finalUriLooksLikeModelUri =
+            typeof existingHandoff.final_resource_uri === "string" &&
+            typeof existingHandoff.resource_uri === "string" &&
+            (existingHandoff.final_resource_uri === existingHandoff.resource_uri ||
+                existingHandoff.resource_uri.startsWith(existingHandoff.final_resource_uri) ||
+                existingHandoff.final_resource_uri.startsWith(existingHandoff.resource_uri));
+        const existingChildren = (record.adapter_run_ids || []) as Array<Record<string, any>>;
+        const stalePostModelChild = existingChildren.find(
+            (child) =>
+                child.execution_kind === "workflow" &&
+                child.stage === "post_model" &&
+                ((compositeWorkflowRunId && child.tapis_run_id === compositeWorkflowRunId) ||
+                    finalUriLooksLikeModelUri ||
+                    (record.status === "failed" && child.status === "failed"))
+        );
+        const retryableAdapterSubmission =
+            record.status === "failed" &&
+            record.failure_code === "ADAPTER_SUBMISSION_FAILED" &&
+            Boolean(record.model_child_id && record.output_handoff);
+        const hasPendingPostModelHandoff = Boolean(
+            adapter &&
+            (record.status === "completed" || record.status === "failed" || stalePostModelChild) &&
+            record.model_child_id &&
+            (retryableAdapterSubmission ||
+                (!record.output_handoff &&
+                    existingChildren.some(
+                        (child) => child.execution_kind === "composite_workflow"
+                    )) ||
+                stalePostModelChild)
+        );
+        if (
+            legacyServices.tapis.updateCompositeWorkflowExecution &&
+            record.model_child_id &&
+            (record.status === "completed" || record.status === "failed")
+        ) {
+            try {
+                await legacyServices.tapis.updateCompositeWorkflowExecution(
+                    plan.thread_id,
+                    plan.model_id,
+                    record.model_child_id,
+                    record.status,
+                    record.status === "completed"
+                        ? compositeOutput(record.model_result as Record<string, unknown> | null)
+                        : undefined
+                );
+            } catch (error) {
+                const updated = await store.update(record.id, {
+                    status: "unknown",
+                    failure_code: "LEGACY_EXECUTION_FINALIZATION_FAILED",
+                    error_message: error instanceof Error ? error.message : String(error)
+                });
+                return parentResponse(updated || { ...record, status: "unknown" });
+            }
         }
-        const adapter = decodePlan(record.plan_id).post_model_adapter;
+        if (
+            ["completed", "failed", "cancelled"].includes(record.status) ||
+            (record.status === "unknown" && !retryableCompositeStatus)
+        ) {
+            if (!hasPendingPostModelHandoff) return parentResponse(record);
+        }
         if (!adapter) return parentResponse(record);
-        const adapterChildren = (record.adapter_run_ids || []) as Array<Record<string, any>>;
+        let adapterChildren = (record.adapter_run_ids || []) as Array<Record<string, any>>;
+        const postModelAttemptSuffix =
+            stalePostModelChild?.status === "failed" ? `:retry-${stalePostModelChild.run_id}` : "";
+        if (stalePostModelChild) {
+            // A prior version reused the composite workflow idempotency key
+            // for the deferred stage. Treat that child as the completed model
+            // stage and submit a fresh output workflow below.
+            adapterChildren = adapterChildren.filter((child) => child !== stalePostModelChild);
+            const previousHandoff = (record.output_handoff || {}) as Record<string, any>;
+            const {
+                final_output_data_object_id: _discardedOutputId,
+                final_resource_uri: _discardedResourceUri,
+                ...modelHandoff
+            } = previousHandoff;
+            const updated = await store.update(record.id, {
+                status: "model_succeeded",
+                adapter_run_ids: adapterChildren,
+                output_handoff: modelHandoff,
+                error_message: null,
+                failure_code: null
+            });
+            record = updated || {
+                ...record,
+                status: "model_succeeded",
+                adapter_run_ids: adapterChildren,
+                output_handoff: modelHandoff,
+                error_message: null,
+                failure_code: null
+            };
+        }
         const compositeChild = adapterChildren.find(
             (child) => child.execution_kind === "composite_workflow"
         );
         if (compositeChild) {
             try {
-                await adapterRequest(
+                const polled = await adapterRequest(
                     `/runs/${encodeURIComponent(compositeChild.run_id)}/poll`,
                     { method: "POST" },
                     authorization
                 );
-                const run = await adapterRequest(
+                const persisted = await adapterRequest(
                     `/runs/${encodeURIComponent(compositeChild.run_id)}`,
                     {},
                     authorization
                 );
+                const run = { ...(polled || {}), ...(persisted || {}) } as Record<string, any>;
+                if (!run.output_uri && polled?.output_uri) run.output_uri = polled.output_uri;
                 compositeChild.status = run.status;
                 compositeChild.tapis_workflow_id =
                     run.tapis_workflow_id || compositeChild.tapis_workflow_id || null;
                 compositeChild.tapis_run_id =
                     run.tapis_run_id || compositeChild.tapis_run_id || null;
-                const nextStatus = run.status === "completed"
-                    ? "completed"
-                    : run.status === "failed"
-                      ? "failed"
-                      : "model_running";
-                const updated = await store.update(record.id, {
-                    status: nextStatus,
-                    adapter_run_ids: adapterChildren,
-                    model_result: {
-                        ...(record.model_result as Record<string, unknown> || {}),
-                        composite_workflow_run: run
-                    },
-                    error_message: run.error_message || null,
-                    failure_code: run.status === "failed" ? "COMPOSITE_WORKFLOW_FAILED" : null
-                });
-                return parentResponse(updated || { ...record, status: nextStatus });
+                if (
+                    legacyServices.tapis.updateCompositeWorkflowExecution &&
+                    record.model_child_id &&
+                    (run.status === "completed" || run.status === "failed")
+                ) {
+                    await legacyServices.tapis.updateCompositeWorkflowExecution(
+                        plan.thread_id,
+                        plan.model_id,
+                        record.model_child_id,
+                        run.status,
+                        run.status === "completed"
+                            ? compositeOutput({
+                                  ...((record.model_result as Record<string, unknown>) || {}),
+                                  output_uri:
+                                      (record.model_result as Record<string, unknown> | null)
+                                          ?.output_uri || run.output_uri
+                              })
+                            : undefined
+                    );
+                }
+                const modelResult = {
+                    ...((record.model_result as Record<string, unknown>) || {}),
+                    ...(run.output_uri ? { output_uri: run.output_uri } : {}),
+                    composite_workflow_run: run
+                };
+                if (run.status === "completed" && adapter) {
+                    // The composite workflow is the model stage. Remove it
+                    // before continuing so the deferred output adapter is
+                    // dispatched in the same reconciliation pass.
+                    adapterChildren = adapterChildren.filter((child) => child !== compositeChild);
+                    const updated = await store.update(record.id, {
+                        status: "model_succeeded",
+                        adapter_run_ids: adapterChildren,
+                        model_result: modelResult,
+                        error_message: null,
+                        failure_code: null
+                    });
+                    record = updated || {
+                        ...record,
+                        status: "model_succeeded",
+                        adapter_run_ids: adapterChildren,
+                        model_result: modelResult,
+                        error_message: null,
+                        failure_code: null
+                    };
+                } else {
+                    const nextStatus = run.status === "failed" ? "failed" : "model_running";
+                    const updated = await store.update(record.id, {
+                        status: nextStatus,
+                        adapter_run_ids: adapterChildren,
+                        model_result: modelResult,
+                        error_message: run.error_message || null,
+                        failure_code: run.status === "failed" ? "COMPOSITE_WORKFLOW_FAILED" : null
+                    });
+                    return parentResponse(updated || { ...record, status: nextStatus });
+                }
             } catch (error) {
                 const updated = await store.update(record.id, {
                     status: "unknown",
@@ -637,25 +805,106 @@ export function createUnifiedExecutionService(legacyServices: {
         if (adapterChildren.length) {
             const child = adapterChildren[0];
             try {
-                await adapterRequest(
+                const polled = await adapterRequest(
                     `/runs/${encodeURIComponent(child.run_id)}/poll`,
                     { method: "POST" },
                     authorization
                 );
-                const run = await adapterRequest(
+                const persisted = await adapterRequest(
                     `/runs/${encodeURIComponent(child.run_id)}`,
                     {},
                     authorization
                 );
+                const run = { ...(polled || {}), ...(persisted || {}) } as Record<string, any>;
+                if (!run.output_uri && polled?.output_uri) run.output_uri = polled.output_uri;
                 child.status = run.status;
                 child.output_data_object_id = run.output_data_object_id || null;
+                child.error_message = run.error_message || null;
                 child.tapis_workflow_id = run.tapis_workflow_id || child.tapis_workflow_id || null;
                 child.tapis_run_id = run.tapis_run_id || child.tapis_run_id || null;
-                const nextStatus = run.status === "completed" ? "completed" :
-                    run.status === "failed" ? "failed" : "adapter_running";
+                if (run.status === "completed" && !child.output_data_object_id) {
+                    if (!run.output_uri) {
+                        const updated = await store.update(record.id, {
+                            status: "output_verifying",
+                            adapter_run_ids: adapterChildren,
+                            error_message: "Adapter completed without a discoverable output URI"
+                        });
+                        return parentResponse(updated || { ...record, status: "output_verifying" });
+                    }
+                    const registered = await adapterRequest(
+                        `/runs/${encodeURIComponent(child.run_id)}/register-output`,
+                        {
+                            method: "POST",
+                            body: {
+                                output_data_object: {
+                                    id: `em-final-output-${record.id}`,
+                                    label:
+                                        adapter.target_contract?.standard_variable_uri ||
+                                        adapter.model_output_key,
+                                    resource_uri: run.output_uri,
+                                    source_catalog: "svo-adapter",
+                                    owner_execution_id: parentRunId(record.id),
+                                    owner_model_child_id: record.model_child_id,
+                                    variables: [
+                                        {
+                                            standard_variable_uri:
+                                                adapter.target_contract?.standard_variable_uri,
+                                            unit: adapter.target_contract?.unit
+                                        }
+                                    ]
+                                },
+                                execution_id: parentRunId(record.id)
+                            }
+                        },
+                        authorization
+                    );
+                    child.output_data_object_id =
+                        registered?.output_data_object?.id || registered?.id || null;
+                    if (!child.output_data_object_id) {
+                        throw new Error("Adapter output registration returned no data object ID");
+                    }
+                    if (
+                        legacyServices.tapis.updateCompositeWorkflowExecution &&
+                        record.model_child_id
+                    ) {
+                        // Keep the legacy Results view useful as well as the
+                        // workflow provenance view: its declared model output
+                        // now points at the transformed artifact.
+                        await legacyServices.tapis.updateCompositeWorkflowExecution(
+                            plan.thread_id,
+                            plan.model_id,
+                            record.model_child_id,
+                            "completed",
+                            {
+                                model_io_id: child.model_io_id,
+                                resource_id: child.output_data_object_id,
+                                name:
+                                    (typeof adapter.target_contract?.standard_variable_uri ===
+                                    "string"
+                                        ? adapter.target_contract.standard_variable_uri
+                                        : undefined) || adapter.model_output_key,
+                                url: String(run.output_uri)
+                            }
+                        );
+                    }
+                }
+                const nextStatus =
+                    run.status === "completed" && child.output_data_object_id
+                        ? "completed"
+                        : run.status === "failed"
+                          ? "failed"
+                          : "adapter_running";
                 const updated = await store.update(record.id, {
                     status: nextStatus,
                     adapter_run_ids: adapterChildren,
+                    output_handoff:
+                        nextStatus === "completed"
+                            ? {
+                                  ...((record.output_handoff as Record<string, unknown>) || {}),
+                                  final_output_data_object_id: child.output_data_object_id,
+                                  final_resource_uri: run.output_uri || null
+                              }
+                            : record.output_handoff,
                     error_message: run.error_message || null,
                     failure_code: run.status === "failed" ? "ADAPTER_FAILED" : null
                 });
@@ -670,7 +919,9 @@ export function createUnifiedExecutionService(legacyServices: {
             }
         }
         const getExecution = legacyServices.tapis.getExecution;
-        if (!getExecution || !record.model_child_id) {
+        const knownCompositeOutput = (record.model_result as Record<string, unknown> | null)
+            ?.output_uri;
+        if ((!getExecution && typeof knownCompositeOutput !== "string") || !record.model_child_id) {
             const updated = await store.update(record.id, {
                 status: "unknown",
                 failure_code: "MODEL_STATUS_UNAVAILABLE",
@@ -680,15 +931,31 @@ export function createUnifiedExecutionService(legacyServices: {
         }
 
         let model: any;
-        try {
-            model = await getExecution(record.model_child_id, authorization || "");
-        } catch (error) {
-            const updated = await store.update(record.id, {
-                status: "unknown",
-                failure_code: "MODEL_STATUS_UNKNOWN",
-                error_message: error instanceof Error ? error.message : String(error)
-            });
-            return parentResponse(updated || { ...record, status: "unknown" });
+        if (!getExecution && typeof knownCompositeOutput === "string") {
+            // Composite model tasks already carry their output URI. Do not
+            // require a legacy execution lookup just to start the deferred
+            // adapter when the provider has no legacy job endpoint.
+            model = {
+                status: "SUCCESS",
+                results: [
+                    {
+                        model_io: { id: adapter.model_io_id },
+                        resource: { url: knownCompositeOutput, name: adapter.model_output_key }
+                    }
+                ],
+                output_uri: knownCompositeOutput
+            };
+        } else {
+            try {
+                model = await getExecution(record.model_child_id, authorization || "");
+            } catch (error) {
+                const updated = await store.update(record.id, {
+                    status: "unknown",
+                    failure_code: "MODEL_STATUS_UNKNOWN",
+                    error_message: error instanceof Error ? error.message : String(error)
+                });
+                return parentResponse(updated || { ...record, status: "unknown" });
+            }
         }
         let modelStatus = String(model?.status || "").toUpperCase();
         const providerJobId = modelProviderJobId(record.model_result) || model?.runid;
@@ -710,8 +977,7 @@ export function createUnifiedExecutionService(legacyServices: {
                 const updated = await store.update(record.id, {
                     status: "unknown",
                     failure_code: "MODEL_STATUS_UNKNOWN",
-                    error_message:
-                        error instanceof Error ? error.message : String(error)
+                    error_message: error instanceof Error ? error.message : String(error)
                 });
                 return parentResponse(updated || { ...record, status: "unknown" });
             }
@@ -727,21 +993,32 @@ export function createUnifiedExecutionService(legacyServices: {
             const updated = await store.update(record.id, {
                 status: "failed",
                 failure_code: "MODEL_FAILED",
-                error_message: model?.error || `model execution ended with status ${modelStatus || "unknown"}`
+                error_message:
+                    model?.error || `model execution ended with status ${modelStatus || "unknown"}`
             });
             return parentResponse(updated || { ...record, status: "failed" });
         }
 
         await store.update(record.id, {
             status: "model_succeeded",
-            model_result: model,
+            model_result: {
+                ...((record.model_result as Record<string, unknown>) || {}),
+                ...model
+            },
             error_message: null,
             failure_code: null
         });
 
-        const result = (model.results || []).find((candidate: any) =>
-            candidate?.model_io?.id === adapter.model_io_id ||
-            candidate?.model_io_id === adapter.model_io_id
+        const modelResults = Array.isArray(model.results)
+            ? model.results
+            : Object.entries(model.results || {}).map(([model_io_id, resource]) => ({
+                  model_io_id,
+                  resource
+              }));
+        const result = modelResults.find(
+            (candidate: any) =>
+                candidate?.model_io?.id === adapter.model_io_id ||
+                candidate?.model_io_id === adapter.model_io_id
         );
         const resource = result?.resource;
         if (!resource?.url) {
@@ -770,10 +1047,13 @@ export function createUnifiedExecutionService(legacyServices: {
                             source_catalog: "ensemble-manager",
                             owner_execution_id: parentRunId(record.id),
                             owner_model_child_id: record.model_child_id,
-                            variables: [{
-                                standard_variable_uri: adapter.source_contract.standard_variable_uri,
-                                unit: adapter.source_contract.unit
-                            }]
+                            variables: [
+                                {
+                                    standard_variable_uri:
+                                        adapter.source_contract.standard_variable_uri,
+                                    unit: adapter.source_contract.unit
+                                }
+                            ]
                         }
                     },
                     authorization
@@ -801,7 +1081,11 @@ export function createUnifiedExecutionService(legacyServices: {
             ...(record.parameter_values || {}),
             // The model output URI is created by this coordinator after the
             // model succeeds. It is not a user-editable adapter parameter.
-            ...(handoff.resource_uri ? { source_uri: handoff.resource_uri } : {})
+            ...(handoff.resource_uri ? { source_uri: handoff.resource_uri } : {}),
+            // Deferred workflow plans use this managed argument in the hosted
+            // task code; request metadata alone is not sufficient for Tapis
+            // Workflows argument validation.
+            execution_id: parentRunId(record.id)
         };
         try {
             await store.update(record.id, { status: "adapter_dispatching" });
@@ -827,9 +1111,9 @@ export function createUnifiedExecutionService(legacyServices: {
                         plan_id: binding.bound_plan_id,
                         args: values,
                         execution_id: parentRunId(record.id),
-                        idempotency_key: `${parentRunId(record.id)}:${adapter.adapter_plan_id}:${record.parameter_values_hash}`
+                        idempotency_key: `${parentRunId(record.id)}:${adapter.adapter_plan_id}:${record.parameter_values_hash}:post-model${postModelAttemptSuffix}`
                     },
-                    idempotencyKey: `${parentRunId(record.id)}:${adapter.adapter_plan_id}:${record.parameter_values_hash}`
+                    idempotencyKey: `${parentRunId(record.id)}:${adapter.adapter_plan_id}:${record.parameter_values_hash}:post-model${postModelAttemptSuffix}`
                 },
                 authorization
             );
@@ -852,7 +1136,10 @@ export function createUnifiedExecutionService(legacyServices: {
             return parentResponse(updated || { ...record, status: "adapter_running" });
         } catch (error) {
             const updated = await store.update(record.id, {
-                status: error instanceof UnifiedExecutionError && error.statusCode < 500 ? "failed" : "unknown",
+                status:
+                    error instanceof UnifiedExecutionError && error.statusCode < 500
+                        ? "failed"
+                        : "unknown",
                 failure_code: "ADAPTER_SUBMISSION_FAILED",
                 error_message: error instanceof Error ? error.message : String(error)
             });
@@ -864,7 +1151,11 @@ export function createUnifiedExecutionService(legacyServices: {
         record: UnifiedExecutionRecord,
         authorization?: string
     ): Promise<Record<string, unknown>> => {
-        if (["model_submitted", "failed", "adapter_unknown", "model_unknown"].includes(record.status)) {
+        if (
+            ["model_submitted", "failed", "adapter_unknown", "model_unknown"].includes(
+                record.status
+            )
+        ) {
             return parentResponse(record);
         }
 
@@ -884,6 +1175,7 @@ export function createUnifiedExecutionService(legacyServices: {
                 );
                 child.status = run.status;
                 child.output_data_object_id = run.output_data_object_id || null;
+                child.error_message = run.error_message || null;
             } catch (error) {
                 const updated = await store.update(record.id, {
                     status: "adapter_unknown",
@@ -896,9 +1188,10 @@ export function createUnifiedExecutionService(legacyServices: {
 
         await store.update(record.id, { adapter_run_ids: children });
         if (children.some((child) => child.status === "failed")) {
+            const childError = children.find((child) => child.status === "failed")?.error_message;
             const updated = await store.update(record.id, {
                 status: "failed",
-                error_message: "One or more SVO adapter child runs failed",
+                error_message: childError || "One or more SVO adapter child runs failed",
                 adapter_run_ids: children
             });
             return parentResponse(updated || { ...record, status: "failed" });
@@ -1110,7 +1403,8 @@ export function createUnifiedExecutionService(legacyServices: {
                         body: {
                             source_contract: adapter.source_contract,
                             target_contract: adapter.target_contract,
-                            target_dataset_specification_id: adapter.target_dataset_specification_id,
+                            target_dataset_specification_id:
+                                adapter.target_dataset_specification_id,
                             model_output_key: adapter.model_output_key
                         }
                     },
@@ -1162,8 +1456,11 @@ export function createUnifiedExecutionService(legacyServices: {
                 plan_id: encodePlan(plan),
                 parameters: plan.post_model_adapter?.parameters || [],
                 parameter_values: {},
-                status: plan.post_model_adapter ? "post_model_ready" :
-                    plan.adapter_steps?.length ? "adapter_ready" : "ready",
+                status: plan.post_model_adapter
+                    ? "post_model_ready"
+                    : plan.adapter_steps?.length
+                      ? "adapter_ready"
+                      : "ready",
                 adapter_steps: plan.adapter_steps || [],
                 post_model_adapter: plan.post_model_adapter || null
             };
@@ -1190,8 +1487,11 @@ export function createUnifiedExecutionService(legacyServices: {
                 version: 1,
                 plan_id: planId,
                 parameters: plan.post_model_adapter?.parameters || [],
-                status: plan.post_model_adapter ? "post_model_ready" :
-                    plan.adapter_steps?.length ? "adapter_ready" : "ready"
+                status: plan.post_model_adapter
+                    ? "post_model_ready"
+                    : plan.adapter_steps?.length
+                      ? "adapter_ready"
+                      : "ready"
             };
         },
 
@@ -1199,7 +1499,11 @@ export function createUnifiedExecutionService(legacyServices: {
             if (runId.startsWith("ue_")) {
                 const record = await store.getById(runId.slice(3));
                 if (!record) {
-                    throw new UnifiedExecutionError(404, "execution run not found", "RUN_NOT_FOUND");
+                    throw new UnifiedExecutionError(
+                        404,
+                        "execution run not found",
+                        "RUN_NOT_FOUND"
+                    );
                 }
                 const decoded = decodePlan(record.plan_id);
                 const response = decoded.post_model_adapter
@@ -1228,7 +1532,9 @@ export function createUnifiedExecutionService(legacyServices: {
             }
             const maxMinutes = parseMaxMinutes(body.max_minutes);
             const requestedMaxMinutes =
-                body.max_minutes === undefined || body.max_minutes === null || body.max_minutes === ""
+                body.max_minutes === undefined ||
+                body.max_minutes === null ||
+                body.max_minutes === ""
                     ? undefined
                     : maxMinutes;
             if (body.plan_id.startsWith("svo_")) {
@@ -1349,16 +1655,18 @@ export function createUnifiedExecutionService(legacyServices: {
                             tapis_workflow_id: submitted.tapis_workflow_id || null,
                             tapis_run_id: submitted.tapis_run_id || null
                         },
-                        adapter_run_ids: [{
-                            adapter_plan_id: adapter.adapter_plan_id,
-                            model_io_id: adapter.model_io_id,
-                            stage: "composite",
-                            run_id: submitted.run_id,
-                            status: "queued",
-                            execution_kind: "composite_workflow",
-                            tapis_workflow_id: submitted.tapis_workflow_id || null,
-                            tapis_run_id: submitted.tapis_run_id || null
-                        }],
+                        adapter_run_ids: [
+                            {
+                                adapter_plan_id: adapter.adapter_plan_id,
+                                model_io_id: adapter.model_io_id,
+                                stage: "composite",
+                                run_id: submitted.run_id,
+                                status: "queued",
+                                execution_kind: "composite_workflow",
+                                tapis_workflow_id: submitted.tapis_workflow_id || null,
+                                tapis_run_id: submitted.tapis_run_id || null
+                            }
+                        ],
                         parameter_values: adapterValues.values,
                         parameter_values_hash: adapterValues.hash,
                         error_message: null,
@@ -1372,11 +1680,15 @@ export function createUnifiedExecutionService(legacyServices: {
                     await persistWorkflowStages(responseRecord);
                     return parentResponse(responseRecord);
                 } catch (error) {
-                    const isClientError = error instanceof UnifiedExecutionError &&
-                        error.statusCode >= 400 && error.statusCode < 500;
+                    const isClientError =
+                        error instanceof UnifiedExecutionError &&
+                        error.statusCode >= 400 &&
+                        error.statusCode < 500;
                     const updated = await store.update(parent.id, {
                         status: isClientError ? "failed" : "unknown",
-                        failure_code: isClientError ? error.code || "MODEL_SUBMISSION_FAILED" : "MODEL_SUBMISSION_UNKNOWN",
+                        failure_code: isClientError
+                            ? error.code || "MODEL_SUBMISSION_FAILED"
+                            : "MODEL_SUBMISSION_UNKNOWN",
                         error_message: error instanceof Error ? error.message : String(error)
                     });
                     if (isClientError) throw error;

@@ -139,8 +139,10 @@ def accepted_aliases(names: Iterable[str]) -> set[str]:
     """Expand a plan's canonical names with legacy names accepted at ingress."""
     result = set(names)
     for name in list(result):
-        item = _BY_KEY.get(canonical_key(name) or name)
+        canonical = canonical_key(name) or name
+        item = _BY_KEY.get(canonical)
         if item:
+            result.add(item["key"])
             result.update(item.get("aliases", ()))
     return result
 

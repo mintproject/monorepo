@@ -1,4 +1,9 @@
-import { executionToGQL, executionFromGQL, modelIOFromCatalogGQL } from "@/classes/graphql/graphql_adapter";
+import {
+    executionToGQL,
+    executionFromGQL,
+    executionResultsToGQL,
+    modelIOFromCatalogGQL
+} from "@/classes/graphql/graphql_adapter";
 import { Execution } from "@/classes/mint/mint-types";
 
 const makeExecution = (overrides: Partial<Execution> = {}): Execution => ({
@@ -85,5 +90,26 @@ describe("executionFromGQL", () => {
         delete gqlEx.modelcatalog_configuration_id;
         const result = executionFromGQL(gqlEx);
         expect(result.modelid).toBeUndefined();
+    });
+});
+
+describe("executionResultsToGQL", () => {
+    it("serializes results whose resource has no time period", () => {
+        expect(executionResultsToGQL({
+            "output-1": {
+                id: "resource-1",
+                name: "model output",
+                url: "tapis://ls6/output-1"
+            }
+        })).toMatchObject([{
+            model_io_id: "output-1",
+            resource: {
+                data: {
+                    dcid: "resource-1",
+                    name: "model output",
+                    url: "tapis://ls6/output-1"
+                }
+            }
+        }]);
     });
 });

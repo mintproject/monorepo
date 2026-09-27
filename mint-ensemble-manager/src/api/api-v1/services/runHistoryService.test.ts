@@ -104,6 +104,29 @@ describe("runHistoryService", () => {
         const detail = await service.detail("thread-1", response.runs[0].run_key, "Bearer token");
         expect(detail.workflow?.adapter_runs).toEqual([{ run_id: "adapter-1" }]);
         expect(detail.parameters[0]).toMatchObject({ parameter_id: "rate", executed_value: 1 });
+        expect(detail.artifacts).toEqual([
+            {
+                kind: "application_log",
+                provider: "ensemble_manager",
+                source_id: "execution-1",
+                endpoint: "/executions/execution-1/logs",
+                availability: "available"
+            },
+            {
+                kind: "archived_files",
+                provider: "ensemble_manager",
+                source_id: "execution-1",
+                endpoint: "/executions/execution-1/files",
+                availability: "available"
+            },
+            {
+                kind: "workflow_logs",
+                provider: "svo_adapter",
+                source_id: "parent-1",
+                endpoint: null,
+                availability: "unknown"
+            }
+        ]);
     });
 
     it("matches a workflow parent to its child execution id, not only the provider run id", async () => {

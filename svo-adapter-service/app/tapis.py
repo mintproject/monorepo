@@ -759,8 +759,25 @@ def get_output_uri(
     found: list[str] = []
     for e in execs:
         for text in (getattr(e, "stdout", None), getattr(e, "last_message", None)):
-            if text:
-                found.extend(URI_RE.findall(str(text)))
+            if not text:
+                continue
+            text_value = str(text)
+            # Hosted function tasks commonly print a JSON result whose URI
+            # contains spaces (for example, a model output label). Parse that
+            # structured value before falling back to the whitespace-delimited
+            # URI scan, which would otherwise truncate the path.
+            try:
+                payload = json.loads(text_value)
+            except (TypeError, ValueError):
+                payload = None
+            if isinstance(payload, dict):
+                for key in ("output_uri", "resource_uri", "url"):
+                    value = payload.get(key)
+                    if isinstance(value, str) and value:
+                        found.append(value.rstrip(".,;"))
+                        break
+                continue
+            found.extend(URI_RE.findall(text_value))
     if found:
         return found[-1]
 

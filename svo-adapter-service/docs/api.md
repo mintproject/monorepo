@@ -58,12 +58,17 @@ plans through the existing adapter workflow tables.
 | Method | Path | Purpose |
 |---|---|---|
 | POST | `/workflows/generate` | Generate and persist a Tapis Workflows definition for a plan. |
-| POST | `/workflows/submit` | Register/run a generated workflow, or return a dry-run. With the server-generated `model_task` payload it submits one composite model-plus-adapter workflow. Accepts `Idempotency-Key` (or the equivalent `idempotency_key` body field) for replay-safe submissions. |
+| POST | `/workflows/submit` | Register/run a generated workflow, or return a dry-run. With the server-generated `model_task` payload it submits one composite model-plus-adapter workflow. Bound deferred plans require the same coordinator-owned `execution_id` in both request metadata and `args`; mismatches return `DEFERRED_EXECUTION_ID_MISMATCH`. Tapis submission failures are persisted and returned with `TAPIS_WORKFLOW_SUBMISSION_FAILED` plus a run ID. Accepts `Idempotency-Key` (or the equivalent `idempotency_key` body field) for replay-safe submissions. |
 | GET | `/runs` | List recent adapter workflow runs. |
 | GET | `/runs/{run_id}` | Retrieve one run. |
 | POST | `/runs/{run_id}/poll` | Poll Tapis and persist the run status transition. |
 | GET | `/runs/{run_id}/provenance` | Retrieve provenance events for a run. |
 | POST | `/runs/{run_id}/register-output` | Register a workflow output as a data object. |
+
+Terminal provider failures always populate `error_message`, including when
+Tapis returns no failed-task details. Provider diagnostics are bounded and
+sanitized before persistence; credentials and signed URL parameters are not
+included.
 
 ### Generic catalog/objective helpers
 

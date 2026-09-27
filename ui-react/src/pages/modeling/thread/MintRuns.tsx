@@ -175,6 +175,18 @@ function workflowStageState(status?: string | null): WorkflowStageState {
   return 'pending';
 }
 
+export function modelProviderState(run: UnifiedRunSnapshot): WorkflowStageState | null {
+  const status = String(run.model_result?.status ?? '').toLowerCase();
+  if (['success', 'succeeded', 'completed'].includes(status)) return 'success';
+  if (['failure', 'failed', 'error', 'cancelled'].includes(status)) return 'failure';
+  return null;
+}
+
+function modelProviderStatus(run: UnifiedRunSnapshot): string | null {
+  const status = run.model_result?.status;
+  return typeof status === 'string' && status ? status : null;
+}
+
 function contractValue(contract: unknown, ...keys: string[]): string | null {
   if (!contract || typeof contract !== 'object') return null;
   const record = contract as Record<string, unknown>;
@@ -287,8 +299,13 @@ function WorkflowGraph({
   adapterPlans: ThreadAdapterPlan[];
 }) {
   const stages = run.workflow_stages ?? [];
-  const stageFor = (id: string, fallback?: string): WorkflowStageState =>
-    workflowStageState(stages.find((stage) => stage.stage_id === id)?.status ?? fallback);
+  const stageFor = (id: string, fallback?: string): WorkflowStageState => {
+    if (id === 'model') {
+      const providerState = modelProviderState(run);
+      if (providerState) return providerState;
+    }
+    return workflowStageState(stages.find((stage) => stage.stage_id === id)?.status ?? fallback);
+  };
   const prePlans = adapterPlans.filter(
     (plan) =>
       plan.stage !== 'post_model' &&
@@ -528,34 +545,42 @@ function UnifiedExecutionPanel({
             )
           ? 'pending'
           : 'running';
+  const persistedHandoffStage = run.workflow_stages?.find(
+    (stage) => stage.type === 'output_handoff',
+  );
   const handoffStage: WorkflowStageState = !isPipeline
     ? 'not-required'
-    : isWorkflowFailure(run.status) || run.error_message
-      ? 'failure'
-      : isPostModelAdapter
-        ? ['adapter_running', 'completed'].includes(status)
-          ? 'success'
-          : ['output_registering', 'output_verifying', 'adapter_dispatching'].includes(status)
-            ? 'running'
-            : 'pending'
-        : ['model_dispatching', 'model_submitted', 'model_running', 'model_succeeded'].includes(
-              status,
-            )
-          ? 'success'
-          : 'pending';
-  const modelStage: WorkflowStageState = persistedModelStage
-    ? workflowStageState(persistedModelStage.status)
-    : !modelJobId
-      ? isPipeline
-        ? 'pending'
-        : 'not-required'
-      : isWorkflowFailure(run.status)
+    : persistedHandoffStage
+      ? workflowStageState(persistedHandoffStage.status)
+      : isWorkflowFailure(run.status) || run.error_message
         ? 'failure'
-        : run.status === 'model_running'
-          ? 'running'
-          : isWorkflowSuccess(run.status)
+        : isPostModelAdapter
+          ? ['adapter_running', 'completed'].includes(status)
+            ? 'success'
+            : ['output_registering', 'output_verifying', 'adapter_dispatching'].includes(status)
+              ? 'running'
+              : 'pending'
+          : ['model_dispatching', 'model_submitted', 'model_running', 'model_succeeded'].includes(
+                status,
+              )
             ? 'success'
             : 'pending';
+  const modelStage: WorkflowStageState =
+    modelProviderState(run) ??
+    (persistedModelStage
+      ? workflowStageState(persistedModelStage.status)
+      : !modelJobId
+        ? isPipeline
+          ? 'pending'
+          : 'not-required'
+        : isWorkflowFailure(run.status)
+          ? 'failure'
+          : run.status === 'model_running'
+            ? 'running'
+            : isWorkflowSuccess(run.status)
+              ? 'success'
+              : 'pending');
+  const modelStatus = modelProviderStatus(run) ?? run.status;
 
   const stageRows: Array<{ label: string; state: WorkflowStageState; detail: string }> = [
     {
@@ -585,7 +610,7 @@ function UnifiedExecutionPanel({
       label: 'Model application',
       state: modelStage,
       detail: modelJobId
-        ? displayStatus(run.status)
+        ? displayStatus(modelStatus)
         : isPipeline
           ? 'Waiting for adapter output'
           : 'Not submitted yet',

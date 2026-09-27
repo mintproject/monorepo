@@ -603,20 +603,12 @@ def run_hasura_migrations(t: Any, *, expected_image: str | None = None) -> None:
             previous_start=previous_start,
             timeout=HASURA_MIGRATION_TIMEOUT,
         )
+        wait_for_hasura_ready(t, PODS["graphql"], timeout=HASURA_MIGRATION_TIMEOUT)
     else:
         wait_for_pod_available(t, PODS["graphql"], timeout=HASURA_MIGRATION_TIMEOUT)
 
     command = r'''set -eu
     cd /hasura
-    ready_attempts=0
-    until curl -fsS http://127.0.0.1:8080/v1/version >/dev/null; do
-      ready_attempts=$((ready_attempts + 1))
-      if [ "$ready_attempts" -ge 60 ]; then
-        printf '%s\n' 'Hasura did not become ready after the pod reported AVAILABLE.' >&2
-        exit 1
-      fi
-      sleep 5
-    done
     hasura migrate apply --skip-update-check
     hasura metadata apply --skip-update-check
     hasura metadata reload --skip-update-check
@@ -674,6 +666,32 @@ def run_hasura_migrations(t: Any, *, expected_image: str | None = None) -> None:
         raise RuntimeError(
             f"Hasura migration/verification failed with exit code {_field(execution, 'exit_code')}"
         )
+
+
+def wait_for_hasura_ready(t: Any, pod_id: str, *, timeout: float = HASURA_MIGRATION_TIMEOUT) -> Any:
+    """Wait for Hasura's HTTP server, not just the Tapis pod status."""
+    deadline = time.monotonic() + timeout
+    last_error = "connection refused"
+    while time.monotonic() < deadline:
+        try:
+            result = t.pods.exec_pod_commands(
+                pod_id=pod_id,
+                commands=[["sh", "-c", "curl -fsS http://127.0.0.1:8080/v1/version >/dev/null"]],
+                command_timeout=20,
+                total_timeout=25,
+            )
+        except Exception as exc:  # noqa: BLE001
+            if not _is_transient_lookup_error(exc):
+                raise
+            last_error = str(exc)
+        else:
+            results = _field(result, "execution_results", [])
+            execution = results[0] if results else {}
+            if _field(execution, "exit_code") == 0:
+                return result
+            last_error = _field(execution, "stderr", "") or "Hasura endpoint is not ready"
+        time.sleep(min(5, max(0, deadline - time.monotonic())))
+    raise RuntimeError(f"[{pod_id}] Hasura endpoint did not become ready: {last_error}")
 
 
 def wait_for_pod_available(t: Any, pod_id: str, *, timeout: float = POD_RESTART_TIMEOUT) -> Any:

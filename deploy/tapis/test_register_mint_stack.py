@@ -277,12 +277,14 @@ class StorageTests(unittest.TestCase):
             "image": "ghcr.io/mintproject/graphql-engine:sha-abc1234",
             "status_container": {"start_time": "new"},
         }]
-        t.pods.exec_pod_commands.return_value = {
+        t.pods.exec_pod_commands.side_effect = [{
+            "execution_results": [{"exit_code": 0}],
+        }, {
             "execution_results": [{
                 "exit_code": 0,
                 "stdout": "Hasura migration and catalog verification succeeded.\n",
             }],
-        }
+        }]
 
         deploy.run_hasura_migrations(
             t,
@@ -290,8 +292,6 @@ class StorageTests(unittest.TestCase):
         )
 
         command = t.pods.exec_pod_commands.call_args.kwargs["commands"][0][2]
-        self.assertIn("curl -fsS http://127.0.0.1:8080/v1/version", command)
-        self.assertIn("Hasura did not become ready after the pod reported AVAILABLE.", command)
         self.assertIn("hasura migrate apply --skip-update-check", command)
         self.assertIn("hasura metadata apply --skip-update-check", command)
         self.assertIn("status=\"$(hasura migrate status --skip-update-check --no-color 2>&1)\"", command)
@@ -316,9 +316,11 @@ class StorageTests(unittest.TestCase):
             "image": "ghcr.io/mintproject/graphql-engine:sha-abc1234",
             "status_container": {"start_time": "new"},
         }]
-        t.pods.exec_pod_commands.return_value = {
+        t.pods.exec_pod_commands.side_effect = [{
+            "execution_results": [{"exit_code": 0}],
+        }, {
             "execution_results": [{"exit_code": 1, "stderr": "migration failed"}],
-        }
+        }]
 
         with self.assertRaisesRegex(RuntimeError, "Hasura migration/verification failed"):
             deploy.run_hasura_migrations(
