@@ -119,3 +119,60 @@ describe("TapisExecutionService.listJobFiles", () => {
         expect(files).toEqual([]);
     });
 });
+
+describe("TapisExecutionService.listCompositeWorkflowFiles", () => {
+    afterEach(() => {
+        jest.clearAllMocks();
+    });
+
+    it("resolves the composite model job by its logical execution id", async () => {
+        const service = new TapisExecutionService("test-token", "http://tapis.test");
+        const getJobList = jest.fn().mockResolvedValue({
+            result: [
+                {
+                    name: "mint-workflow-model-9d3ef9bc-ca7b-42b5-ad8d-09cd4c68dd9d",
+                    uuid: "provider-job-1"
+                }
+            ]
+        });
+        const getJob = jest.fn().mockResolvedValue({
+            result: {
+                archiveSystemDir:
+                    "/work/06659/wmobley/ls6/mint-workflow-output/run-1/model"
+            }
+        });
+        const listJobFiles = jest.fn().mockResolvedValue([{ name: "mfsim.lst" }]);
+        (service as any).jobsClient.getJobList = getJobList;
+        (service as any).jobsClient.getJob = getJob;
+        service.listJobFiles = listJobFiles;
+
+        const files = await service.listCompositeWorkflowFiles(
+            "9d3ef9bcca7b42b5ad8d09cd4c68dd9d",
+            "mint-workflow-output/run-1/model"
+        );
+
+        expect(getJobList).toHaveBeenCalledWith({
+            limit: 1000,
+            skip: 0,
+            listType: "MY_JOBS"
+        });
+        expect(getJob).toHaveBeenCalledWith({ jobUuid: "provider-job-1" });
+        expect(listJobFiles).toHaveBeenCalledWith("provider-job-1");
+        expect(files).toEqual([{ name: "mfsim.lst" }]);
+    });
+
+    it("resolves semantic cbb output keys to an unambiguous cbc archive file", async () => {
+        const service = new TapisExecutionService("test-token", "http://tapis.test");
+        service.listCompositeWorkflowFiles = jest.fn().mockResolvedValue([
+            { name: "BARTON_SPRINGS.cbc", url: "tapis://ls6/archive/BARTON_SPRINGS.cbc" }
+        ] as any);
+
+        await expect(
+            service.resolveCompositeWorkflowOutput(
+                "execution-1",
+                "mint-workflow-output/run-1/model",
+                "cbb"
+            )
+        ).resolves.toBe("tapis://ls6/archive/BARTON_SPRINGS.cbc");
+    });
+});

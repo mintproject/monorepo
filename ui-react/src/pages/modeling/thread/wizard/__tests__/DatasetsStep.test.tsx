@@ -25,6 +25,7 @@ vi.mock('@/components/datasets/DatasetSpatialMap', () => ({
 
 import {
   DatasetsStep,
+  archiveDateRange,
   assignmentsFromBindings,
   datasetOptionLabel,
   dateCoverage,
@@ -123,6 +124,35 @@ describe('dateCoverage', () => {
     expect(dateCoverage(req, { start: new Date('2000-01-01'), end: new Date('2026-01-01') })).toBe(
       'full',
     );
+  });
+});
+
+describe('archiveDateRange', () => {
+  it('returns the common coverage across selected archives', () => {
+    expect(
+      archiveDateRange([
+        { start_date: new Date('2000-01-01'), end_date: new Date('2015-01-01') },
+        { start_date: new Date('2001-01-01'), end_date: new Date('2010-12-31') },
+      ]),
+    ).toEqual({ start: new Date('2001-01-01'), end: new Date('2010-12-31') });
+  });
+
+  it('does not infer a safe range from an archive with missing bounds', () => {
+    expect(
+      archiveDateRange([
+        { start_date: new Date('2000-01-01'), end_date: new Date('2015-01-01') },
+        { start_date: new Date('2001-01-01'), end_date: null },
+      ]),
+    ).toBeNull();
+  });
+
+  it('returns no range when selected archives do not overlap', () => {
+    expect(
+      archiveDateRange([
+        { start_date: new Date('2000-01-01'), end_date: new Date('2001-01-01') },
+        { start_date: new Date('2002-01-01'), end_date: new Date('2003-01-01') },
+      ]),
+    ).toBeNull();
   });
 });
 

@@ -33,6 +33,42 @@ const toExecutionFile = (file: { name?: string; path?: string; size?: number; ur
     url: file.url ?? ""
 });
 
+const archiveDirectoryFromUri = (uri: unknown): { systemId: string; path: string } | null => {
+    if (typeof uri !== "string" || !uri.startsWith("tapis://")) {
+        return null;
+    }
+
+    try {
+        const parsed = new URL(uri);
+        const segments = parsed.pathname.split("/").filter(Boolean);
+        if (!parsed.hostname || segments.length < 2) {
+            return null;
+        }
+        return {
+            systemId: parsed.hostname,
+            path: segments.slice(0, -1).join("/")
+        };
+    } catch {
+        return null;
+    }
+};
+
+const executionArchiveDirectories = (execution: any) => {
+    const urls = new Set<string>();
+    const addUrl = (value: unknown) => {
+        if (typeof value === "string") urls.add(value);
+    };
+
+    Object.values(execution.results ?? {}).forEach((result: any) => {
+        addUrl(result?.resource?.url);
+        addUrl(result?.url);
+    });
+
+    return Array.from(urls)
+        .map(archiveDirectoryFromUri)
+        .filter((directory): directory is { systemId: string; path: string } => directory !== null);
+};
+
 const executionFilesService: ExecutionFilesService = {
     /**
      * List the files that an execution archived.
@@ -41,9 +77,9 @@ const executionFilesService: ExecutionFilesService = {
      * `$WORK` directory of that user on `ls6`, and Tapis refuses a token of
      * another user.
      *
-     * An execution that Tapis did not start yet has no `runid`. The archive
-     * does not exist, so the answer is an empty list. An archive that holds no
-     * file answers an empty list too.
+     * Composite workflow executions have no legacy `runid`; their output is
+     * listed from the archive directory encoded in the persisted `tapis://`
+     * result URI. An execution that has neither source answers an empty list.
      */
     async listFiles(executionId: string, authorizationHeader: string): Promise<ExecutionFile[]> {
         const access_token = getTokenFromAuthorizationHeader(authorizationHeader);
@@ -59,12 +95,34 @@ const executionFilesService: ExecutionFilesService = {
                     prefs.execution_engine
             );
         }
-        if (!execution.runid) {
+        const tapisExecutionService = new TapisExecutionService(access_token, prefs.tapis.basePath);
+        if (execution.runid) {
+            const files = await tapisExecutionService.listJobFiles(execution.runid);
+            return files.map(toExecutionFile);
+        }
+
+        const archiveDirectories = executionArchiveDirectories(execution);
+        const compositeFiles = await tapisExecutionService.listCompositeWorkflowFiles(
+            executionId,
+            archiveDirectories[0]?.path
+        );
+        if (compositeFiles) {
+            return compositeFiles.map(toExecutionFile);
+        }
+
+        if (archiveDirectories.length === 0) {
             return [];
         }
 
-        const tapisExecutionService = new TapisExecutionService(access_token, prefs.tapis.basePath);
-        const files = await tapisExecutionService.listJobFiles(execution.runid);
+        const files = [];
+        for (const directory of archiveDirectories) {
+            files.push(
+                ...(await tapisExecutionService.listArchiveFiles(
+                    directory.systemId,
+                    directory.path
+                ))
+            );
+        }
         return files.map(toExecutionFile);
     }
 };

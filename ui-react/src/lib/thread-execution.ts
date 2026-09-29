@@ -239,6 +239,27 @@ export function totalConfigs(
   return total;
 }
 
+/**
+ * Count the input-resource combinations shown in the Runs step.
+ *
+ * Optional model inputs may be intentionally unbound. They do not create a
+ * zero-resource ensemble; they contribute the neutral factor of one. A
+ * missing required input remains zero so the display still exposes an
+ * incomplete dataset configuration.
+ */
+export function inputResourceCount(model: ThreadModel, bindings: Record<string, string[]>): number {
+  return model.input_files
+    .map((input) => {
+      if (input.value) {
+        return (input.value.resources ?? []).filter((resource) => resource.selected !== false)
+          .length;
+      }
+      const bound = (bindings[input.id] ?? []).length;
+      return bound > 0 || input.isOptional ? bound || 1 : 0;
+    })
+    .reduce((product, count) => product * count, 1);
+}
+
 // ─── Step completion ─────────────────────────────────────────────────────────
 //
 // One definition per step, shared by the wizard rail and the step component, so

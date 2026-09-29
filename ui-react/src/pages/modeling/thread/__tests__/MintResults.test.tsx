@@ -127,6 +127,31 @@ describe('MintResults', () => {
     expect(screen.getByText('HydroModel')).toBeInTheDocument();
   });
 
+  it('renders the scalar answer from a unified run when file results are empty', () => {
+    renderWithProviders(
+      <MintResults
+        threadData={mockThreadDataSubmitted}
+        executions={emptyExecutions}
+        unifiedRuns={{
+          'model-1': {
+            run_id: 'ue-1',
+            status: 'completed',
+            output_handoff: {
+              result: { schema_version: 1, status: 'ok', value: 49.7, unit: 'cfs' },
+            },
+          },
+        }}
+        canWrite
+        ingestionApiAvailable={false}
+        onContinue={vi.fn()}
+        onFetchRuns={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByTestId('run-answer-card')).toHaveTextContent('49.7');
+    expect(screen.getByTestId('run-answer-card')).toHaveTextContent('cfs');
+  });
+
   it('shows loading spinner when executions are loading', () => {
     renderWithProviders(
       <MintResults

@@ -319,15 +319,44 @@ def test_dfc_live_submit_uses_configured_geo_actor_default(monkeypatch):
 
     monkeypatch.setattr("app.main.tapis.submit_tapis_workflow", fake_submit)
     try:
-        response = client.post("/workflows/submit", json={
-            "plan_id": head["plan_id"],
-            "dry_run": True,
-            "args": {},
-        })
-        assert response.status_code == 200
+        for blank_value in ("", "   "):
+            response = client.post("/workflows/submit", json={
+                "plan_id": head["plan_id"],
+                "dry_run": True,
+                "args": {"geo_actor_id": blank_value},
+            })
+            assert response.status_code == 200
+            assert response.json()["args"]["geo_actor_id"] == {"value": "configured-geo-actor"}
 
         # Verify the settings value is accessible and correctly configured.
         assert settings.geo_actor_id == "configured-geo-actor"
+    finally:
+        settings.geo_actor_id = old_actor_id
+
+
+def test_dfc_live_submit_replaces_nested_blank_geo_actor_but_preserves_explicit_value():
+    head, _ = _gma_dfc_demo_plan_from_modeled_outputs()
+    old_actor_id = settings.geo_actor_id
+    settings.geo_actor_id = "configured-geo-actor"
+    try:
+        blank = client.post("/workflows/submit", json={
+            "plan_id": head["plan_id"],
+            "dry_run": True,
+            "args": {"geo_actor_id": {"value": "", "source": "managed-default"}},
+        })
+        assert blank.status_code == 200
+        assert blank.json()["args"]["geo_actor_id"] == {
+            "value": "configured-geo-actor",
+            "source": "managed-default",
+        }
+
+        explicit = client.post("/workflows/submit", json={
+            "plan_id": head["plan_id"],
+            "dry_run": True,
+            "args": {"geo_actor_id": "explicit-geo-actor"},
+        })
+        assert explicit.status_code == 200
+        assert explicit.json()["args"]["geo_actor_id"] == {"value": "explicit-geo-actor"}
     finally:
         settings.geo_actor_id = old_actor_id
 
@@ -379,6 +408,49 @@ def test_local_fixture_live_submit_requires_auth_and_does_not_fabricate_outputs(
     assert body["uuid"] == "submitted-run"
     assert captured["token"] == "test-token"
     assert captured["args"]["source_uri"] == {"value": CKAN_NTGAM_HEAD_GEOTIFF_URI}
+
+
+def test_workflow_submission_failure_persists_diagnostic_and_provenance(monkeypatch):
+    client.post("/admin/reset")
+    seed = client.post("/admin/seed-subside-werc").json()
+    plan = client.post("/plans", json={
+        "data_object_id": seed["data_object"]["id"],
+        "target_contract": seed["target_contract"],
+    }).json()
+
+    def fail_submit(*args, **kwargs):
+        raise RuntimeError("provider rejected execution_id Authorization: Bearer secret-token")
+
+    monkeypatch.setattr("app.main.tapis.submit_tapis_workflow", fail_submit)
+    response = client.post(
+        "/workflows/submit",
+        headers={"Authorization": "Bearer test-token"},
+        json={
+            "plan_id": plan["plan_id"],
+            "args": {
+                "start_date": "2024-01-01",
+                "end_date": "2025-01-01",
+                "allocation": "PT2050-DataX",
+                "aoi_geojson_uri": "tapis://ls6/demo/aoi.geojson",
+                "min_overlap_percent": 0.5,
+                "num_workers": 1,
+                "reference_mode": "auto",
+            },
+        },
+    )
+
+    assert response.status_code == 502
+    detail = response.json()["detail"]
+    assert detail["code"] == "TAPIS_WORKFLOW_SUBMISSION_FAILED"
+    assert detail["run_id"]
+    assert "provider rejected execution_id" in detail["error_message"]
+    assert "secret-token" not in detail["error_message"]
+
+    run = client.get(f"/runs/{detail['run_id']}").json()
+    assert run["status"] == "failed"
+    assert "provider rejected execution_id" in run["error_message"]
+    events = client.get(f"/runs/{detail['run_id']}/provenance").json()["events"]
+    assert any(event["event_type"] == "workflow_submit_failed" for event in events)
 
 
 def test_local_fixture_run_poll_refreshes_completed_tapis_run(monkeypatch):

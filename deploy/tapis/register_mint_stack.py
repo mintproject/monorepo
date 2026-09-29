@@ -603,6 +603,7 @@ def run_hasura_migrations(t: Any, *, expected_image: str | None = None) -> None:
             previous_start=previous_start,
             timeout=HASURA_MIGRATION_TIMEOUT,
         )
+        wait_for_hasura_ready(t, PODS["graphql"], timeout=HASURA_MIGRATION_TIMEOUT)
     else:
         wait_for_pod_available(t, PODS["graphql"], timeout=HASURA_MIGRATION_TIMEOUT)
 
@@ -665,6 +666,32 @@ def run_hasura_migrations(t: Any, *, expected_image: str | None = None) -> None:
         raise RuntimeError(
             f"Hasura migration/verification failed with exit code {_field(execution, 'exit_code')}"
         )
+
+
+def wait_for_hasura_ready(t: Any, pod_id: str, *, timeout: float = HASURA_MIGRATION_TIMEOUT) -> Any:
+    """Wait for Hasura's HTTP server, not just the Tapis pod status."""
+    deadline = time.monotonic() + timeout
+    last_error = "connection refused"
+    while time.monotonic() < deadline:
+        try:
+            result = t.pods.exec_pod_commands(
+                pod_id=pod_id,
+                commands=[["sh", "-c", "curl -fsS http://127.0.0.1:8080/v1/version >/dev/null"]],
+                command_timeout=20,
+                total_timeout=25,
+            )
+        except Exception as exc:  # noqa: BLE001
+            if not _is_transient_lookup_error(exc):
+                raise
+            last_error = str(exc)
+        else:
+            results = _field(result, "execution_results", [])
+            execution = results[0] if results else {}
+            if _field(execution, "exit_code") == 0:
+                return result
+            last_error = _field(execution, "stderr", "") or "Hasura endpoint is not ready"
+        time.sleep(min(5, max(0, deadline - time.monotonic())))
+    raise RuntimeError(f"[{pod_id}] Hasura endpoint did not become ready: {last_error}")
 
 
 def wait_for_pod_available(t: Any, pod_id: str, *, timeout: float = POD_RESTART_TIMEOUT) -> Any:
@@ -1048,6 +1075,47 @@ def sync_ui_auth(t: Any, spec: dict[str, Any], *, restart: bool = True) -> int:
     return 0
 
 
+def sync_svo_runtime(t: Any, spec: dict[str, Any], *, restart: bool = True) -> int:
+    """Apply the managed Geo actor runtime value without rewriting the pod spec."""
+    pid = spec["pod_id"]
+    configured_actor = _field(spec.get("environment_variables", {}), "SVO_ADAPTER_GEO_ACTOR_ID", "")
+    if not configured_actor:
+        raise RuntimeError("SVO_ADAPTER_GEO_ACTOR_ID is not configured; refusing to clear the SVO runtime value")
+
+    existing = _get_or_missing(t.pods.get_pod, pod_id=pid)
+    if existing is None:
+        raise RuntimeError(f"[{pid}] was not found; runtime sync will not create it")
+    current_image = _field(existing, "image")
+    if not current_image:
+        raise RuntimeError(f"[{pid}] reports no image; refusing to rewrite the runtime configuration")
+    previous_start = _field(_field(existing, "status_container", {}), "start_time")
+    if restart and not previous_start:
+        raise RuntimeError(f"[{pid}] reports no container start time; refusing to restart")
+
+    environment = _plain_data(_field(existing, "environment_variables", {}))
+    if not isinstance(environment, dict):
+        raise RuntimeError(f"[{pid}] returned invalid environment data; refusing to rewrite the runtime configuration")
+    environment["SVO_ADAPTER_GEO_ACTOR_ID"] = configured_actor
+    print(f"  [{pid}] applying Geo actor runtime configuration")
+    t.pods.update_pod(
+        pod_id=pid,
+        image=current_image,
+        environment_variables=environment,
+    )
+
+    applied = _get_or_missing(t.pods.get_pod, pod_id=pid)
+    applied_environment = _plain_data(_field(applied or {}, "environment_variables", {}))
+    if _field(applied_environment, "SVO_ADAPTER_GEO_ACTOR_ID", "") != configured_actor:
+        raise RuntimeError(f"[{pid}] Geo actor runtime configuration did not converge")
+    if not restart:
+        return 0
+
+    t.pods.restart_pod(pod_id=pid)
+    print(f"  [{pid}] restart requested")
+    wait_for_pod_restart(t, pid, current_image, previous_start)
+    return 0
+
+
 def update_pod_images(t: Any, selected: list[str], expected_images: dict[str, str]) -> None:
     """Update only the image field for selected application pods."""
     invalid = [key for key in selected if key not in RESTART_ONLY_PODS]
@@ -1156,9 +1224,19 @@ def main(argv: list[str] | None = None) -> int:
         help="push the UI auth allowlist and restart the pod with its current image",
     )
     parser.add_argument(
+        "--sync-svo-runtime",
+        action="store_true",
+        help="push the managed SVO runtime configuration and restart the pod with its current image",
+    )
+    parser.add_argument(
         "--defer-ui-restart",
         action="store_true",
         help="apply the UI auth allowlist without restarting; a later batch handles it",
+    )
+    parser.add_argument(
+        "--defer-svo-restart",
+        action="store_true",
+        help="apply the SVO runtime configuration without restarting; a later batch handles it",
     )
     parser.add_argument("--no-start", action="store_true")
     parser.add_argument("--dry-run", action="store_true")
@@ -1172,6 +1250,7 @@ def main(argv: list[str] | None = None) -> int:
         or args.recreate_on_image_mismatch
         or args.no_start
         or args.dry_run
+        or args.sync_svo_runtime
     ):
         parser.error("--restart-existing-pods cannot be combined with image or lifecycle options")
     if args.update_images_only and (
@@ -1185,6 +1264,7 @@ def main(argv: list[str] | None = None) -> int:
         or args.migrate_postgres_image
         or args.no_start
         or args.dry_run
+        or args.sync_svo_runtime
     ):
         parser.error("--update-images-only cannot be combined with lifecycle or dry-run options")
     if args.require_all_owner_grants and not args.set_owners_only:
@@ -1201,6 +1281,7 @@ def main(argv: list[str] | None = None) -> int:
         or args.migrate_postgres_image
         or args.no_start
         or args.dry_run
+        or args.sync_svo_runtime
     ):
         parser.error("--migrate-hasura cannot be combined with pod lifecycle options")
     if args.set_owners_only and (
@@ -1212,6 +1293,7 @@ def main(argv: list[str] | None = None) -> int:
         or args.migrate_postgres_image
         or args.no_start
         or args.dry_run
+        or args.sync_svo_runtime
     ):
         parser.error("--set-owners-only cannot be combined with lifecycle or dry-run options")
     if args.sync_ui_auth and (
@@ -1228,6 +1310,12 @@ def main(argv: list[str] | None = None) -> int:
         parser.error("--sync-ui-auth cannot be combined with lifecycle or dry-run options")
     if args.defer_ui_restart and not args.sync_ui_auth:
         parser.error("--defer-ui-restart requires --sync-ui-auth")
+    if args.defer_svo_restart and not args.sync_svo_runtime:
+        parser.error("--defer-svo-restart requires --sync-svo-runtime")
+    if args.sync_ui_auth and args.sync_svo_runtime:
+        parser.error("--sync-ui-auth and --sync-svo-runtime cannot be combined")
+    if args.sync_svo_runtime and args.pods not in {"all", "svo"} and "svo" not in args.pods.split(","):
+        parser.error("--sync-svo-runtime requires --pods svo")
     if args.no_start and (args.restart or args.restart_pods is not None):
         parser.error("--no-start cannot be combined with --restart or --restart-pods")
     if args.recreate and args.recreate_on_image_mismatch:
@@ -1245,6 +1333,8 @@ def main(argv: list[str] | None = None) -> int:
         selected = parse_pods(args.pods)
     if args.update_images_only and any(key not in RESTART_ONLY_PODS for key in selected):
         parser.error("--update-images-only accepts only: " + ", ".join(RESTART_ONLY_PODS))
+    if args.sync_svo_runtime and selected != ["svo"]:
+        parser.error("--sync-svo-runtime requires --pods svo")
     if args.migrate_hasura and selected != ["graphql"]:
         parser.error("--migrate-hasura requires --pods graphql")
     if args.migrate_postgres_image and "postgres" not in selected:
@@ -1276,6 +1366,7 @@ def main(argv: list[str] | None = None) -> int:
         and not args.update_images_only
         and not args.set_owners_only
         and not args.sync_ui_auth
+        and not args.sync_svo_runtime
         and not args.migrate_hasura
     ):
         validate_live_requirements(selected)
@@ -1325,6 +1416,9 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.sync_ui_auth:
         return sync_ui_auth(t, specs["ui"], restart=not args.defer_ui_restart)
+
+    if args.sync_svo_runtime:
+        return sync_svo_runtime(t, specs["svo"], restart=not args.defer_svo_restart)
 
     previous_start = None
     postgres_restarted = False

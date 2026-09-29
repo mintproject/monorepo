@@ -1,4 +1,4 @@
-import { Apps, Jobs } from "@tapis/tapis-typescript";
+import { Apps, Files, Jobs } from "@tapis/tapis-typescript";
 import { Execution, Execution_Result, Model, Region } from "@/classes/mint/mint-types";
 import { TapisComponent, TapisComponentSeed } from "@/classes/tapis/typing";
 import { IExecutionService, ExecutionJob, SubmissionResult } from "@/interfaces/IExecutionService";
@@ -48,6 +48,7 @@ export class TapisExecutionService implements IExecutionService {
     // How deep the adapter reads below the job output directory.
     private static readonly MAX_OUTPUT_DEPTH = 2;
     private appsClient: Apps.ApplicationsApi;
+    private filesClient: Files.FileOperationsApi;
     private jobsClient: Jobs.JobsApi;
     private subscriptionsClient: Jobs.SubscriptionsApi;
     public seeds: TapisComponentSeed[];
@@ -59,6 +60,12 @@ export class TapisExecutionService implements IExecutionService {
         private baseUrl: string
     ) {
         this.jobsClient = apiGenerator<Jobs.JobsApi>(Jobs, Jobs.JobsApi, baseUrl, token);
+        this.filesClient = apiGenerator<Files.FileOperationsApi>(
+            Files,
+            Files.FileOperationsApi,
+            baseUrl,
+            token
+        );
         this.subscriptionsClient = apiGenerator<Jobs.SubscriptionsApi>(
             Jobs,
             Jobs.SubscriptionsApi,
@@ -128,6 +135,7 @@ export class TapisExecutionService implements IExecutionService {
         threadmodel: {
             thread_id: string;
             model_id?: string;
+            output_name?: string;
             adapter_resource_overrides?: Parameters<typeof applyExecutionInputOverrides>[2];
         },
         workflowPath: string,
@@ -136,6 +144,7 @@ export class TapisExecutionService implements IExecutionService {
         execution_id: string;
         output_uri: string;
         output_name: string;
+        output_format?: string;
         job_definition: Jobs.ReqSubmitJob;
     }> {
         if (!threadmodel.model_id) throw new NotFoundError("Model configuration not found");
@@ -198,11 +207,25 @@ export class TapisExecutionService implements IExecutionService {
             jobDefinition.execSystemOutputDir || "${JobWorkingDir}/output";
         const archivePath = `mint-workflow-output/${workflowPath}/model`;
         jobDefinition.archiveSystemDir = `HOST_EVAL($WORK)/${archivePath}`;
-        const output = executionCreation.model.output_files[0];
+        const requestedOutputName = threadmodel.output_name?.trim();
+        const output = requestedOutputName
+            ? executionCreation.model.output_files.find(
+                  (candidate) =>
+                      candidate.name === requestedOutputName || candidate.id === requestedOutputName
+              )
+            : executionCreation.model.output_files[0];
+        if (!output) {
+            const error = new Error(
+                `Composite workflow model does not declare output ${requestedOutputName}`
+            ) as Error & { code?: string };
+            error.code = "MODEL_OUTPUT_NOT_DECLARED";
+            throw error;
+        }
         const outputName = output.name || output.id;
         return {
             execution_id: execution.id,
             output_name: outputName,
+            output_format: output.format || "",
             output_uri: `tapis://${jobDefinition.archiveSystemId}/${archivePath}/${outputName}`,
             job_definition: jobDefinition
         };
@@ -388,6 +411,11 @@ export class TapisExecutionService implements IExecutionService {
         datasetId: string
     ): Promise<Execution_Result[]> {
         const execution = await this.findExecution(executionId);
+        // Unified workflow reconciliation records the model output directly.
+        // There is no legacy Tapis job UUID to query again for these runs.
+        if (execution.results && Object.keys(execution.results).length > 0) {
+            return Object.values(execution.results) as Execution_Result[];
+        }
         const results = await this.findExecutionResults(execution, isPublic);
         if (results.length > 0) {
             const prefs = getConfiguration();
@@ -634,6 +662,108 @@ export class TapisExecutionService implements IExecutionService {
             return files;
         }
         return files.filter((file) => !TapisExecutionService.isControlFile(file));
+    }
+
+    /**
+     * List files in a durable Tapis archive directory.
+     *
+     * Composite workflow model tasks do not create a legacy MINT `run_id`.
+     * Their output is archived by Tapis Jobs and referenced by a `tapis://`
+     * result URI, so the Jobs output-list endpoint cannot locate it. The Files
+     * API lists that archive directly.
+     */
+    async listArchiveFiles(systemId: string, path: string): Promise<Files.FileInfo[]> {
+        const response = await errorDecoder<Files.FileListingResponse>(() =>
+            this.filesClient.listFiles({ systemId, path, recurse: false })
+        );
+        return (response.result ?? []).filter(
+            (file) => file.type !== Files.FileTypeEnum.Dir
+        );
+    }
+
+    /**
+     * Find the provider job created by a composite workflow and list its
+     * archive. The workflow's logical `tapis://` URI does not include the
+     * provider-resolved `$WORK` prefix, while the Jobs API already knows that
+     * physical archive location.
+     */
+    async listCompositeWorkflowFiles(
+        executionId: string,
+        archivePath?: string
+    ): Promise<Jobs.FileInfo[] | null> {
+        const normalizedExecutionId = executionId.replace(/-/g, "").toLowerCase();
+        const pageSize = 1000;
+        const candidates: Jobs.JobListDTO[] = [];
+        for (let skip = 0; ; skip += pageSize) {
+            const jobs = await errorDecoder<Jobs.RespGetJobList>(() =>
+                this.jobsClient.getJobList({
+                    limit: pageSize,
+                    skip,
+                    listType: "MY_JOBS"
+                })
+            );
+            candidates.push(
+                ...(jobs.result ?? []).filter(
+                    (candidate) =>
+                        candidate.name?.toLowerCase().startsWith("mint-workflow-model-") &&
+                        candidate.name
+                            .replace(/-/g, "")
+                            .toLowerCase()
+                            .endsWith(normalizedExecutionId)
+                )
+            );
+            if ((jobs.result ?? []).length < pageSize) break;
+        }
+
+        let fallbackJob: Jobs.JobListDTO | undefined;
+        for (const candidate of candidates) {
+            if (!candidate.uuid) continue;
+            if (!archivePath) return this.listJobFiles(candidate.uuid);
+
+            try {
+                const response = await errorDecoder<Jobs.RespGetJob>(() =>
+                    this.jobsClient.getJob({ jobUuid: candidate.uuid })
+                );
+                const resolvedArchivePath = response.result?.archiveSystemDir;
+                if (!resolvedArchivePath) {
+                    fallbackJob = fallbackJob || candidate;
+                    continue;
+                }
+                if (resolvedArchivePath.replace(/\\/g, "/").endsWith(archivePath)) {
+                    return this.listJobFiles(candidate.uuid);
+                }
+            } catch {
+                // A stale job entry should not prevent trying the next retry.
+            }
+        }
+        return fallbackJob?.uuid ? this.listJobFiles(fallbackJob.uuid) : null;
+    }
+
+    async resolveCompositeWorkflowOutput(
+        executionId: string,
+        archivePath: string,
+        outputName: string
+    ): Promise<string | null> {
+        const files = await this.listCompositeWorkflowFiles(executionId, archivePath);
+        const available = files || [];
+        const exact = available.filter(
+            (file) => file.name?.toLowerCase() === outputName.toLowerCase()
+        );
+        if (exact.length === 1) return exact[0].url || null;
+
+        // MINT output keys are semantic labels (for example `cbb`), while
+        // MODFLOW applications commonly archive the corresponding file as
+        // `*.cbc`. Preserve the declared output key but resolve the provider's
+        // actual archived filename when it is unambiguous.
+        const suffixes =
+            outputName.toLowerCase() === "cbb" || outputName.toLowerCase() === "cbc"
+                ? [".cbc", ".cbb"]
+                : [`.${outputName.toLowerCase()}`];
+        const matches = available.filter((file) =>
+            suffixes.some((suffix) => file.name?.toLowerCase().endsWith(suffix))
+        );
+        const match = matches.length === 1 ? matches[0] : undefined;
+        return match?.url || null;
     }
 
     private static isDirectory(entry: Jobs.FileInfo): boolean {

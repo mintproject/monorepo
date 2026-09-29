@@ -4,7 +4,7 @@ os.environ["SVO_ADAPTER_DEMO_MODE"] = "1"
 
 import pytest
 
-from app.main import _validate_plan_args
+from app.main import _validate_deferred_execution_id, _validate_plan_args
 from app.planner import build_plan_json, parameter_definitions
 
 
@@ -133,3 +133,56 @@ def test_submit_validation_rejects_missing_unknown_and_invalid_values():
         _validate_plan_args(plan, {"threshold": -1}, "token")
     assert invalid.value.status_code == 422
     assert invalid.value.detail["parameters"]["threshold"] == "must be >= 0"
+
+
+def test_submit_validation_accepts_workflow_runtime_parameters():
+    plan = {"parameters": [{"name": "threshold", "type": "number", "required": True}]}
+
+    args = _validate_plan_args(
+        plan,
+        {
+            "threshold": 1,
+            "start_date": "2001-01-01",
+            "end_date": "2010-12-31",
+            "aoi_geojson_uri": "https://example.test/gma/4",
+        },
+        "token",
+    )
+
+    assert args["start_date"]["value"] == "2001-01-01"
+    assert args["end_date"]["value"] == "2010-12-31"
+    assert args["aoi_geojson_uri"]["value"] == "https://example.test/gma/4"
+
+
+def test_deferred_workflow_accepts_coordinator_execution_id():
+    plan = {"parameters": [{"name": "source_uri", "type": "string", "required": True}]}
+
+    args = _validate_plan_args(
+        plan,
+        {"source_uri": "tapis://ls6/output", "execution_id": "ue_parent-1"},
+        "token",
+    )
+
+    assert args["execution_id"]["value"] == "ue_parent-1"
+
+
+def test_bound_deferred_workflow_requires_matching_execution_id_metadata():
+    with pytest.raises(Exception) as missing:
+        _validate_deferred_execution_id("bound:plan:hash", None, {})
+    assert missing.value.status_code == 422
+    assert missing.value.detail["code"] == "DEFERRED_EXECUTION_ID_REQUIRED"
+
+    with pytest.raises(Exception) as mismatch:
+        _validate_deferred_execution_id(
+            "bound:plan:hash",
+            "ue-parent-1",
+            {"execution_id": "ue-parent-2"},
+        )
+    assert mismatch.value.status_code == 409
+    assert mismatch.value.detail["code"] == "DEFERRED_EXECUTION_ID_MISMATCH"
+
+    _validate_deferred_execution_id(
+        "bound:plan:hash",
+        "ue-parent-1",
+        {"execution_id": "ue-parent-1"},
+    )

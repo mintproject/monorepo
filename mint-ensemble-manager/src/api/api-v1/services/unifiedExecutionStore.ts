@@ -45,6 +45,7 @@ export interface UnifiedExecutionStep {
 export interface UnifiedExecutionStore {
     getByPlanId(planId: string): Promise<UnifiedExecutionRecord | null>;
     getById(id: string): Promise<UnifiedExecutionRecord | null>;
+    getByModelChildId?(modelChildId: string): Promise<UnifiedExecutionRecord | null>;
     listByThread?(threadId: string, modelId?: string): Promise<UnifiedExecutionRecord[]>;
     listSteps?(executionId: string): Promise<UnifiedExecutionStep[]>;
     upsertStep?(input: Omit<UnifiedExecutionStep, "id">): Promise<UnifiedExecutionStep>;
@@ -70,6 +71,16 @@ query GetUnifiedExecutionByPlan($planId: String!) {
 const GET_BY_ID = `
 query GetUnifiedExecutionById($id: uuid!) {
   unified_execution_by_pk(id: $id) {
+    id plan_id thread_id model_id execution_engine status idempotency_key plan_hash
+    adapter_steps adapter_run_ids parameter_values parameter_values_hash
+    schema_version state_revision model_child_id model_output_id output_handoff
+    failure_code model_result error_message created_at updated_at
+  }
+}`;
+
+const GET_BY_MODEL_CHILD_ID = `
+query GetUnifiedExecutionByModelChild($modelChildId: String!) {
+  unified_execution(where: {model_child_id: {_eq: $modelChildId}}, limit: 1) {
     id plan_id thread_id model_id execution_engine status idempotency_key plan_hash
     adapter_steps adapter_run_ids parameter_values parameter_values_hash
     schema_version state_revision model_child_id model_output_id output_handoff
@@ -214,6 +225,13 @@ export function createHasuraUnifiedExecutionStore(): UnifiedExecutionStore {
                 unified_execution_by_pk: UnifiedExecutionRecord | null;
             }>(GET_BY_ID, { id });
             return data.unified_execution_by_pk;
+        },
+        async getByModelChildId(modelChildId) {
+            const data = await hasuraRequest<{ unified_execution: UnifiedExecutionRecord[] }>(
+                GET_BY_MODEL_CHILD_ID,
+                { modelChildId }
+            );
+            return data.unified_execution[0] || null;
         },
         async listByThread(threadId, modelId) {
             const data = await hasuraRequest<{ unified_execution: UnifiedExecutionRecord[] }>(

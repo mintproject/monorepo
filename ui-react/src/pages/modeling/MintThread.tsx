@@ -13,7 +13,6 @@
  */
 import { Maximize2, Minimize2 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
 import { useApolloClient } from '@apollo/client';
 import { useParams } from 'react-router-dom';
 
@@ -60,6 +59,7 @@ import {
   adapterParameterDefaults,
   adapterParameterValuesForSubmission,
   adapterPlansByModel,
+  adapterPlansSourceFingerprint,
   fetchThreadAdapterPlans,
   replaceThreadAdapterPlans,
   type ThreadAdapterPlan,
@@ -102,8 +102,6 @@ interface MintThreadProps {
   initialDatasetIds?: string[];
   /** Compatibility fallback for threads created before region propagation was fixed. */
   fallbackSpatialScopeId?: string | null;
-  /** Parent-panel target for the collapsible step list when embedded. */
-  stepNavigationTarget?: HTMLElement | null;
 }
 
 export function MintThread({
@@ -111,7 +109,6 @@ export function MintThread({
   taskName,
   initialDatasetIds = [],
   fallbackSpatialScopeId,
-  stepNavigationTarget,
 }: MintThreadProps = {}) {
   const { id: routeThreadId } = useParams<{ id: string }>();
   const threadId = threadIdProp ?? routeThreadId;
@@ -134,6 +131,7 @@ export function MintThread({
   const [unifiedRunErrors, setUnifiedRunErrors] = useState<Record<string, string>>({});
   const [unifiedRunRefreshing, setUnifiedRunRefreshing] = useState<Record<string, boolean>>({});
   const [adapterPlanRows, setAdapterPlanRows] = useState<ThreadAdapterPlan[]>([]);
+  const [adapterPlansLoaded, setAdapterPlansLoaded] = useState(false);
   const [adapterPlanError, setAdapterPlanError] = useState<string | null>(null);
   const [adapterPlansLoading, setAdapterPlansLoading] = useState(false);
   const [spatialSelection, setSpatialSelection] = useState<SpatialSelection | null>(null);
@@ -159,30 +157,70 @@ export function MintThread({
   const thread = data?.thread_by_pk ?? null;
   const spatialScopeId = thread?.region_id ?? fallbackSpatialScopeId ?? null;
 
+  const savedAdapterSpatialContext = useMemo(() => {
+    const values = adapterPlanRows.flatMap((plan) => Object.entries(plan.parameter_values ?? []));
+    const value = (name: string): string | null => {
+      const entry = values.find(([key]) => key === name)?.[1];
+      return entry === undefined || entry === null || String(entry).trim() === ''
+        ? null
+        : String(entry);
+    };
+    return {
+      geometry_source_uri: value('geometry_source_uri'),
+      geometry_source_type: value('geometry_source_type'),
+      geometry_filter_field: value('geometry_filter_field'),
+      geometry_filter_value: value('geometry_filter_value'),
+      geometry_crs: value('geometry_crs'),
+      geometry_format: value('geometry_format'),
+      spatial_scope_id: value('spatial_scope_id'),
+      spatial_scope_name: value('spatial_scope_name'),
+      spatial_scope_type: value('spatial_scope_type'),
+      spatial_resolution: value('spatial_resolution'),
+    };
+  }, [adapterPlanRows]);
+
   const adapterSpatialContext = useMemo(
     () => ({
-      geometry_source_uri: spatialSelection?.layer?.source_uri ?? spatialSelection?.layer?.uri,
-      geometry_source_type: spatialSelection?.layer?.geometry_type,
+      geometry_source_uri:
+        spatialSelection?.layer?.source_uri ??
+        spatialSelection?.layer?.uri ??
+        savedAdapterSpatialContext.geometry_source_uri,
+      geometry_source_type:
+        spatialSelection?.layer?.geometry_type ?? savedAdapterSpatialContext.geometry_source_type,
       geometry_filter_field:
-        spatialSelection?.feature?.filterField ?? spatialSelection?.layer?.default_filter_field,
-      geometry_filter_value: spatialSelection?.feature?.filterValue,
-      geometry_crs: spatialSelection?.layer?.crs,
-      geometry_format: spatialSelection?.layer?.format,
-      spatial_scope_id: spatialSelection?.feature?.filterValue ?? spatialScopeId,
-      spatial_scope_name: spatialSelection?.feature?.label ?? thread?.region?.name,
+        spatialSelection?.feature?.filterField ??
+        spatialSelection?.layer?.default_filter_field ??
+        savedAdapterSpatialContext.geometry_filter_field,
+      geometry_filter_value:
+        spatialSelection?.feature?.filterValue ?? savedAdapterSpatialContext.geometry_filter_value,
+      geometry_crs: spatialSelection?.layer?.crs ?? savedAdapterSpatialContext.geometry_crs,
+      geometry_format:
+        spatialSelection?.layer?.format ?? savedAdapterSpatialContext.geometry_format,
+      spatial_scope_id:
+        spatialSelection?.feature?.filterValue ??
+        savedAdapterSpatialContext.spatial_scope_id ??
+        spatialScopeId,
+      spatial_scope_name:
+        spatialSelection?.feature?.label ??
+        savedAdapterSpatialContext.spatial_scope_name ??
+        thread?.region?.name,
       spatial_scope_type: spatialSelection?.layer?.tags?.includes('gma')
         ? 'gma'
-        : spatialScopeId
-          ? 'custom'
-          : null,
+        : savedAdapterSpatialContext.spatial_scope_type
+          ? savedAdapterSpatialContext.spatial_scope_type
+          : spatialScopeId
+            ? 'custom'
+            : null,
       spatial_resolution:
         spatialSelection?.layer?.geometry_type === 'polygon'
           ? 'polygon'
-          : spatialScopeId
-            ? 'region'
-            : null,
+          : savedAdapterSpatialContext.spatial_resolution
+            ? savedAdapterSpatialContext.spatial_resolution
+            : spatialScopeId
+              ? 'region'
+              : null,
     }),
-    [spatialScopeId, spatialSelection, thread?.region?.name],
+    [savedAdapterSpatialContext, spatialScopeId, spatialSelection, thread?.region?.name],
   );
 
   const {
@@ -313,14 +351,23 @@ export function MintThread({
   }, [adapterPlanRows, adapterSpatialContext, baseThreadExecutionData]);
 
   const loadAdapterPlans = useCallback(async () => {
-    if (!threadId || !adapterPlanningEnabled) return;
-    const rows = await fetchThreadAdapterPlans(apollo, threadId);
-    setAdapterPlanRows(rows);
+    if (!threadId || !adapterPlanningEnabled) {
+      setAdapterPlansLoaded(false);
+      return;
+    }
+    setAdapterPlansLoaded(false);
+    try {
+      const rows = await fetchThreadAdapterPlans(apollo, threadId);
+      setAdapterPlanRows(rows);
+    } finally {
+      setAdapterPlansLoaded(true);
+    }
   }, [adapterPlanningEnabled, apollo, threadId]);
 
   useEffect(() => {
     if (!adapterPlanningEnabled || !threadId) {
       setAdapterPlanRows([]);
+      setAdapterPlansLoaded(false);
       return;
     }
     void loadAdapterPlans().catch((err: unknown) => {
@@ -446,16 +493,19 @@ export function MintThread({
         const threadModelId = baseThreadExecutionData.model_ensembles[modelId]?.id ?? modelId;
         return model.output_files
           .filter((output) => !output.variables?.length || !output.variables.includes(target))
-          .map(
-            (output) =>
-              `${threadModelId}:post_model:${output.id}:${output.format ?? ''}:${
-                output.variables?.join(',') ?? ''
-              }:${target}`,
-          );
+          .map((output) => `${threadModelId}:post_model:${output.id}:${target}`);
       },
     );
     return [...inputSources, ...outputSources].sort().join('|');
   }, [baseThreadExecutionData]);
+
+  const savedAdapterPlansMatchSources = useMemo(
+    () =>
+      adapterPlansLoaded &&
+      Boolean(adapterSourceFingerprint) &&
+      adapterPlansSourceFingerprint(adapterPlanRows) === adapterSourceFingerprint,
+    [adapterPlanRows, adapterPlansLoaded, adapterSourceFingerprint],
+  );
 
   const discoverAdapterPlans = useCallback(async () => {
     if (!threadId || !baseThreadExecutionData || !adapterSourceFingerprint) return;
@@ -464,6 +514,15 @@ export function MintThread({
       const ensembleManagerApi = window.__MINT_CONFIG__?.ENSEMBLE_MANAGER_API ?? '';
       const discovered: ThreadAdapterPlan[] = [];
       const seen = new Set<string>();
+      const savedByKey = new Map(
+        adapterPlanRows.map((saved) => {
+          const key =
+            saved.stage === 'post_model' || saved.source_kind === 'model_output'
+              ? `${saved.thread_model_id}:post_model:${saved.model_io_id}`
+              : `${saved.thread_model_id}:${saved.model_io_id}:${saved.source_resource_id ?? ''}`;
+          return [key, saved] as const;
+        }),
+      );
 
       for (const [modelId, model] of Object.entries(baseThreadExecutionData.models)) {
         const threadModelId = baseThreadExecutionData.model_ensembles[modelId]?.id;
@@ -498,6 +557,7 @@ export function MintThread({
                   target_dataset_specification_id: input.id,
                 },
               });
+              const saved = savedByKey.get(`${threadModelId}:${input.id}:${resource.id}`);
               discovered.push({
                 thread_model_id: threadModelId,
                 model_io_id: input.id,
@@ -506,10 +566,10 @@ export function MintThread({
                 adapter_plan_id: plan.plan_id?.replace(/^svo_/, '') ?? null,
                 status: plan.plan_id ? 'transform_required' : plan.status || 'ready',
                 plan_json: plan,
-                parameter_values: adapterParameterDefaults(
-                  plan.parameters ?? [],
-                  adapterSpatialContext,
-                ),
+                parameter_values: {
+                  ...(saved?.parameter_values ?? {}),
+                  ...adapterParameterDefaults(plan.parameters ?? [], adapterSpatialContext),
+                },
               });
             }
           }
@@ -527,6 +587,12 @@ export function MintThread({
             if (seen.has(key)) continue;
             seen.add(key);
             try {
+              const saved = savedByKey.get(`${threadModelId}:post_model:${output.id}`);
+              const savedTargetContract = (
+                saved?.plan_json?.post_model_adapter as
+                  | { target_contract?: Record<string, unknown> }
+                  | undefined
+              )?.target_contract;
               const plan = await createExecutionPlan(ensembleManagerApi, {
                 executor: 'ensemble_manager',
                 thread_id: threadId,
@@ -539,7 +605,10 @@ export function MintThread({
                     standard_variable_uri: output.variables?.[0] ?? output.id,
                     format: output.format ?? undefined,
                   },
-                  target_contract: { standard_variable_uri: targetVariable },
+                  target_contract: {
+                    standard_variable_uri: targetVariable,
+                    ...(savedTargetContract?.unit ? { unit: savedTargetContract.unit } : {}),
+                  },
                 },
               });
               postModelCandidates.push({ output, plan });
@@ -576,10 +645,11 @@ export function MintThread({
             adapter_plan_id: postModel?.adapter_plan_id ?? null,
             status: postModel?.adapter_plan_id ? 'transform_required' : plan.status || 'ready',
             plan_json: plan,
-            parameter_values: adapterParameterDefaults(
-              plan.parameters ?? [],
-              adapterSpatialContext,
-            ),
+            parameter_values: {
+              ...(savedByKey.get(`${threadModelId}:post_model:${output.id}`)?.parameter_values ??
+                {}),
+              ...adapterParameterDefaults(plan.parameters ?? [], adapterSpatialContext),
+            },
           });
         }
       }
@@ -591,15 +661,24 @@ export function MintThread({
     } finally {
       setAdapterPlansLoading(false);
     }
-  }, [adapterSourceFingerprint, adapterSpatialContext, apollo, baseThreadExecutionData, threadId]);
+  }, [
+    adapterPlanRows,
+    adapterSourceFingerprint,
+    adapterSpatialContext,
+    apollo,
+    baseThreadExecutionData,
+    threadId,
+  ]);
 
   useEffect(() => {
     if (
       currentSection !== 'parameters' ||
       !adapterPlanningEnabled ||
+      !adapterPlansLoaded ||
       !baseThreadExecutionData ||
       !datasetsComplete(baseThreadExecutionData) ||
       !adapterSourceFingerprint ||
+      savedAdapterPlansMatchSources ||
       discoveredAdapterSources.current === adapterSourceFingerprint
     ) {
       return;
@@ -611,10 +690,12 @@ export function MintThread({
     });
   }, [
     adapterPlanningEnabled,
+    adapterPlansLoaded,
     adapterSourceFingerprint,
     baseThreadExecutionData,
     currentSection,
     discoverAdapterPlans,
+    savedAdapterPlansMatchSources,
   ]);
 
   const handleFetchRuns = useCallback(
@@ -691,6 +772,11 @@ export function MintThread({
       if (postModelPlan && adapterSteps.length) {
         throw new Error('A model cannot submit both pre-model and post-model adapters yet.');
       }
+      if (postModelPlan && (!thread?.start_date || !thread?.end_date)) {
+        throw new Error(
+          'Set both a start date and an end date from the selected archive before sending runs.',
+        );
+      }
       const plan = await createExecutionPlan(ensembleManagerApi, {
         executor: 'ensemble_manager',
         execution_engine: executionEngine,
@@ -700,7 +786,28 @@ export function MintThread({
         ...(postModelSpec ? { post_model_adapter: postModelSpec } : {}),
       });
       if (!plan.plan_id) throw new Error('Ensemble Manager did not return an execution plan.');
-      const adapterParameterValues = adapterParameterValuesForSubmission(adapterPlans, plan);
+      const defaultBoundaryUri = adapterPlans
+        .flatMap((adapterPlan) => adapterPlan.plan_json?.parameters ?? [])
+        .map((parameter) =>
+          parameter.name === 'geometry_source_uri' ? parameter.default : undefined,
+        )
+        .find((value): value is string => typeof value === 'string' && value.trim().length > 0);
+      const selectedBoundaryUri =
+        adapterPlans
+          .map((adapterPlan) => adapterPlan.parameter_values?.geometry_source_uri)
+          .find((value): value is string => typeof value === 'string' && value.trim().length > 0) ??
+        spatialSelection?.layer?.source_uri ??
+        spatialSelection?.layer?.uri ??
+        defaultBoundaryUri;
+      const adapterParameterValues = adapterParameterValuesForSubmission(adapterPlans, plan, {
+        start_date: thread?.start_date?.split('T')[0],
+        end_date: thread?.end_date?.split('T')[0],
+        // The DFC budget workflow consumes geometry_source_uri. Older generated
+        // workflow definitions also retain the SUBSIDE-compatible AOI argument;
+        // provide the selected boundary URI so validation does not reject a
+        // valid DFC run before its actual boundary argument is read.
+        aoi_geojson_uri: selectedBoundaryUri,
+      });
       const submitted = await submitExecutionPlan(ensembleManagerApi, {
         plan_id: plan.plan_id,
         max_minutes: maxMinutes,
@@ -747,8 +854,10 @@ export function MintThread({
       adapterPlansLoading,
       refetchExecution,
       rememberUnifiedRun,
+      thread?.end_date,
       threadExecutionData,
       threadId,
+      thread?.start_date,
       workflowUserKey,
     ],
   );
@@ -959,6 +1068,7 @@ export function MintThread({
           <MintResults
             threadData={execData}
             executions={modelExecutions}
+            unifiedRuns={unifiedRuns}
             canWrite={perm.write}
             ingestionApiAvailable={false}
             onContinue={goNext}
@@ -975,8 +1085,6 @@ export function MintThread({
   const stepNavigation = (
     <WizardRail states={stepStates} currentStep={currentSection} onSelect={setCurrentSection} />
   );
-  const portalStepNavigation =
-    stepNavigationTarget && !maximized ? createPortal(stepNavigation, stepNavigationTarget) : null;
 
   return (
     <div
@@ -996,13 +1104,15 @@ export function MintThread({
           {maximized ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
         </button>
       </div>
-      <div className="flex flex-1 overflow-hidden">
-        <div className="flex-1 overflow-y-auto pr-1">
-          {renderStep()}
-          {(!stepNavigationTarget || maximized) && stepNavigation}
-        </div>
+      <div className="flex min-h-0 flex-1 gap-3 overflow-hidden">
+        <aside
+          className="w-56 shrink-0 overflow-y-auto border-r border-gray-200 pr-3"
+          aria-label="Sub-task step navigation"
+        >
+          {stepNavigation}
+        </aside>
+        <main className="min-w-0 flex-1 overflow-y-auto pr-1">{renderStep()}</main>
       </div>
-      {portalStepNavigation}
     </div>
   );
 }

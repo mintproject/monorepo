@@ -1,11 +1,17 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import {
+  ensembleManagerHeaders,
   fetchRunHistory,
   fetchRunHistoryDetail,
   type RunHistoryDetail,
   type RunHistorySummary,
 } from '@/lib/ensemble-manager';
+import {
+  displayStatusLabel,
+  normalizeRunStatus,
+  statusPillClasses,
+} from '@/lib/modeling/run-status';
 
 function dateValue(value: string | null | undefined): string {
   if (!value) return 'Not recorded';
@@ -14,11 +20,7 @@ function dateValue(value: string | null | undefined): string {
 }
 
 function badge(status: string): string {
-  const value = status.toLowerCase();
-  if (value.includes('fail')) return 'bg-red-100 text-red-800';
-  if (value.includes('success') || value.includes('complete')) return 'bg-green-100 text-green-800';
-  if (value.includes('run') || value.includes('submit')) return 'bg-blue-100 text-blue-800';
-  return 'bg-gray-100 text-gray-700';
+  return statusPillClasses(normalizeRunStatus(status));
 }
 
 function json(value: unknown): string {
@@ -29,9 +31,53 @@ function json(value: unknown): string {
   }
 }
 
-function Detail({ detail, api }: { detail: RunHistoryDetail; api: string }) {
-  const section = (title: string, content: React.ReactNode) => (
-    <details open className="rounded border bg-white">
+function ArtifactLink({ api, endpoint, kind }: { api: string; endpoint: string; kind: string }) {
+  const [error, setError] = useState<string | null>(null);
+
+  async function openArtifact(event: React.MouseEvent<HTMLAnchorElement>) {
+    event.preventDefault();
+    setError(null);
+    // Open synchronously so the browser allows the authenticated response to
+    // be shown in a new tab after the fetch completes.
+    const popup = window.open('', '_blank');
+    try {
+      const response = await fetch(api + endpoint, {
+        headers: ensembleManagerHeaders(),
+      });
+      if (!response.ok) {
+        throw new Error(`Ensemble manager returned ${response.status}`);
+      }
+      const objectUrl = URL.createObjectURL(await response.blob());
+      if (popup) popup.location.href = objectUrl;
+      else window.location.href = objectUrl;
+      window.setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000);
+    } catch (reason) {
+      popup?.close();
+      setError(reason instanceof Error ? reason.message : 'Unable to open artifact');
+    }
+  }
+
+  return (
+    <span>
+      <a href={api + endpoint} onClick={openArtifact} className="text-blue-700 underline">
+        {kind}
+      </a>
+      {error && <span className="ml-2 text-xs text-red-700">({error})</span>}
+    </span>
+  );
+}
+
+export function RunProvenanceDetail({
+  detail,
+  api,
+  technical = false,
+}: {
+  detail: RunHistoryDetail;
+  api: string;
+  technical?: boolean;
+}) {
+  const section = (title: string, content: React.ReactNode, open = false) => (
+    <details open={open || technical} className="rounded border bg-white">
       <summary className="cursor-pointer px-3 py-2 text-sm font-semibold">{title}</summary>
       <div className="border-t px-3 py-3 text-sm">{content}</div>
     </details>
@@ -42,13 +88,23 @@ function Detail({ detail, api }: { detail: RunHistoryDetail; api: string }) {
         <div className="flex flex-wrap items-center gap-2">
           <h2 className="font-semibold">{detail.model.name || detail.model.id}</h2>
           <span className={'rounded px-2 py-0.5 text-xs ' + badge(detail.status)}>
-            {detail.status}
+            {displayStatusLabel(normalizeRunStatus(detail.status))}
           </span>
-          <span className="text-xs text-gray-500">{detail.run_kind}</span>
+          <span className="text-xs text-gray-500">
+            {detail.source === 'workflow' ? 'Workflow run' : 'Legacy model job'}
+          </span>
         </div>
         <p className="mt-1 text-xs text-gray-500">
           Started {dateValue(detail.started_at)} · source {detail.identity.source_id}
         </p>
+        {!technical && (
+          <Link
+            to={`/modeling/thread/${encodeURIComponent(detail.thread_id)}/runs/${encodeURIComponent(detail.run_key)}/diagnostics`}
+            className="mt-2 inline-block text-xs text-blue-700 underline"
+          >
+            Open technical diagnostics
+          </Link>
+        )}
         {detail.tapis_workflow?.workflow_id && (
           <p className="mt-1 text-xs text-blue-700">
             Tapis pipeline <code>{detail.tapis_workflow.workflow_id}</code> · run{' '}
@@ -74,6 +130,7 @@ function Detail({ detail, api }: { detail: RunHistoryDetail; api: string }) {
         ) : (
           <span className="text-gray-500">No input snapshot was recorded.</span>
         ),
+        true,
       )}
       {section(
         'Parameters',
@@ -89,6 +146,7 @@ function Detail({ detail, api }: { detail: RunHistoryDetail; api: string }) {
         ) : (
           <span className="text-gray-500">No parameter snapshot was recorded.</span>
         ),
+        true,
       )}
       {section(
         'Workflow pipeline',
@@ -115,6 +173,7 @@ function Detail({ detail, api }: { detail: RunHistoryDetail; api: string }) {
         ) : (
           <span className="text-gray-500">No output snapshot was recorded.</span>
         ),
+        true,
       )}
       {section(
         'Logs and files',
@@ -123,14 +182,7 @@ function Detail({ detail, api }: { detail: RunHistoryDetail; api: string }) {
             {detail.artifacts.map((artifact) => (
               <li key={artifact.kind + ':' + artifact.source_id}>
                 {artifact.endpoint ? (
-                  <a
-                    href={api + artifact.endpoint}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-blue-700 underline"
-                  >
-                    {artifact.kind}
-                  </a>
+                  <ArtifactLink api={api} endpoint={artifact.endpoint} kind={artifact.kind} />
                 ) : (
                   <span>{artifact.kind}</span>
                 )}{' '}
@@ -142,6 +194,7 @@ function Detail({ detail, api }: { detail: RunHistoryDetail; api: string }) {
             Application logs and workflow provenance remain separate records.
           </p>
         </>,
+        true,
       )}
       {section(
         'Errors and status observations',
@@ -166,7 +219,43 @@ function Detail({ detail, api }: { detail: RunHistoryDetail; api: string }) {
             ))}
           </ul>
         </>,
+        detail.errors.length > 0,
       )}
+      {technical &&
+        section(
+          'Technical identifiers',
+          <dl className="grid gap-2 sm:grid-cols-2">
+            <div>
+              <dt className="font-semibold">Run key</dt>
+              <dd className="break-all font-mono text-xs">{detail.run_key}</dd>
+            </div>
+            <div>
+              <dt className="font-semibold">Run kind</dt>
+              <dd className="break-all font-mono text-xs">{detail.run_kind}</dd>
+            </div>
+            <div>
+              <dt className="font-semibold">Execution engine</dt>
+              <dd className="break-all font-mono text-xs">
+                {detail.identity.execution_engine ?? '—'}
+              </dd>
+            </div>
+            <div>
+              <dt className="font-semibold">Plan ID</dt>
+              <dd className="break-all font-mono text-xs">{detail.plan_id ?? '—'}</dd>
+            </div>
+            <div>
+              <dt className="font-semibold">Plan hash</dt>
+              <dd className="break-all font-mono text-xs">{detail.identity.plan_hash ?? '—'}</dd>
+            </div>
+            <div>
+              <dt className="font-semibold">Parameter values hash</dt>
+              <dd className="break-all font-mono text-xs">
+                {detail.identity.parameter_values_hash ?? '—'}
+              </dd>
+            </div>
+          </dl>,
+          true,
+        )}
     </div>
   );
 }
@@ -229,6 +318,11 @@ export function PreviousRunsPage() {
     [runs, source, status],
   );
 
+  useEffect(() => {
+    if (selected && visible.some((run) => run.run_key === selected)) return;
+    setSelected(visible[0]?.run_key ?? null);
+  }, [selected, visible]);
+
   async function loadMore() {
     if (!threadId || !nextCursor) return;
     try {
@@ -251,9 +345,10 @@ export function PreviousRunsPage() {
           >
             ← Back to run monitor
           </Link>
-          <h1 className="mt-2 text-xl font-semibold">Previous runs &amp; provenance</h1>
+          <h1 className="mt-2 text-xl font-semibold">Run history</h1>
           <p className="text-sm text-gray-600">
-            Server-recorded inputs, parameters, workflow stages, outputs, logs, and errors.
+            Compare prior runs and open technical provenance when you need to diagnose or reproduce
+            one.
           </p>
         </div>
         <div className="flex gap-2">
@@ -306,11 +401,11 @@ export function PreviousRunsPage() {
                   <div className="flex items-center justify-between gap-2">
                     <span className="truncate font-medium">{run.model_name || run.model_id}</span>
                     <span className={'rounded px-2 py-0.5 text-xs ' + badge(run.status)}>
-                      {run.status}
+                      {displayStatusLabel(normalizeRunStatus(run.status))}
                     </span>
                   </div>
                   <div className="mt-1 text-xs text-gray-500">
-                    {run.source === 'workflow' ? 'Workflow pipeline' : 'Legacy model job'} ·{' '}
+                    {run.source === 'workflow' ? 'Workflow run' : 'Legacy model job'} ·{' '}
                     {dateValue(run.effective_started_at)}
                   </div>
                   {run.provenance_completeness !== 'complete' && (
@@ -337,7 +432,7 @@ export function PreviousRunsPage() {
                 Loading provenance…
               </div>
             ) : detail ? (
-              <Detail detail={detail} api={api} />
+              <RunProvenanceDetail detail={detail} api={api} />
             ) : (
               <div className="rounded border px-4 py-8 text-sm text-gray-500">
                 Select a run to inspect its provenance.

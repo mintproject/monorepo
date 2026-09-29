@@ -43,6 +43,7 @@ import listExistingIdStatusGQL from "./queries/execution/list-existing-ids.graph
 import getExecutionsGQL from "./queries/execution/list.graphql";
 import setExecutionsGQL from "./queries/execution/new.graphql";
 import updateExecutionStatusResultsGQL from "./queries/execution/update-status-results.graphql";
+import updateExecutionStatusResultsSummaryGQL from "./queries/execution/update-status-results-summary.graphql";
 import updateExecutionStatusGQL from "./queries/execution/update-status.graphql";
 import updateExecutionRunIdGQL from "./queries/execution/update-run-id.graphql";
 import deleteExecutionsGQL from "./queries/execution/delete.graphql";
@@ -85,6 +86,7 @@ import {
     threadDataBindingsToGQL,
     threadParameterBindingsToGQL,
     executionResultsToGQL,
+    getMd5Hash,
     regionFromGQL,
     eventToGQL,
     modelFromGQL
@@ -567,6 +569,60 @@ export const updateExecutionStatusAndResults = (execution: Execution) => {
                 exres["execution_id"] = execution.id;
                 return exres;
             })
+        }
+    });
+};
+
+/**
+ * Finalize a composite-workflow model execution and its thread summary in one
+ * Hasura transaction. The caller only invokes this after checking that the
+ * execution is not already terminal, so repeated workflow polls do not count
+ * the same run twice.
+ */
+export const updateExecutionStatusResultsAndSummary = (
+    execution: Execution,
+    thread_model_id: string,
+    output?: {
+        model_io_id: string;
+        resource_id: string;
+        name: string;
+        url: string;
+    }
+) => {
+    const APOLLO_CLIENT = GraphQL.instance(KeycloakAdapter.getUser());
+    const results = executionResultsToGQL(execution.results).map((exres: any) => {
+        exres["execution_id"] = execution.id;
+        return exres;
+    });
+    if (output && !results.some((result: any) => result.model_io_id === output.model_io_id)) {
+        results.push({
+            execution_id: execution.id,
+            model_io_id: output.model_io_id,
+            resource: {
+                data: {
+                    id: getMd5Hash(output.url),
+                    dcid: output.resource_id,
+                    name: output.name,
+                    url: output.url
+                },
+                on_conflict: {
+                    constraint: "resource_pkey",
+                    update_columns: ["name"]
+                }
+            }
+        });
+    }
+    return APOLLO_CLIENT.mutate({
+        mutation: updateExecutionStatusResultsSummaryGQL,
+        variables: {
+            id: execution.id,
+            end_time: execution.end_time,
+            run_progress: execution.run_progress,
+            status: execution.status,
+            results,
+            threadModelId: thread_model_id,
+            successfulRuns: execution.status === "SUCCESS" ? 1 : 0,
+            failedRuns: execution.status === "FAILURE" ? 1 : 0
         }
     });
 };
@@ -1283,4 +1339,3 @@ export const getProblemStatements = async (
         throw new InternalServerError("Error getting problem statements " + e.message);
     }
 };
-

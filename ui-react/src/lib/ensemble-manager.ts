@@ -190,6 +190,16 @@ export interface UnifiedRunSnapshot {
   plan_id?: string;
   model_child_id?: string | null;
   model_job_id?: string | null;
+  model_result?: {
+    status?: string | null;
+    [key: string]: unknown;
+  } | null;
+  output_handoff?: {
+    final_output_data_object_id?: string | null;
+    final_resource_uri?: string | null;
+    result?: unknown;
+    [key: string]: unknown;
+  } | null;
   adapter_runs?: UnifiedAdapterRun[];
   failure_code?: string | null;
   error_message?: string | null;

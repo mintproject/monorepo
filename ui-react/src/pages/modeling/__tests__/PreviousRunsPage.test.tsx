@@ -1,4 +1,5 @@
 import { screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Route, Routes } from 'react-router-dom';
 
@@ -11,6 +12,7 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock('@/lib/ensemble-manager', () => ({
+  ensembleManagerHeaders: vi.fn(() => ({ Authorization: 'Bearer test-token' })),
   fetchRunHistory: mocks.fetchRunHistory,
   fetchRunHistoryDetail: mocks.fetchRunHistoryDetail,
 }));
@@ -72,8 +74,8 @@ describe('PreviousRunsPage', () => {
       { initialEntries: ['/modeling/thread/thread-1/runs'] },
     );
 
-    expect(await screen.findByText('Previous runs & provenance')).toBeInTheDocument();
-    expect(await screen.findByText('MODFLOW')).toBeInTheDocument();
+    expect(await screen.findByText('Run history')).toBeInTheDocument();
+    expect((await screen.findAllByText('MODFLOW')).length).toBeGreaterThan(0);
     expect(
       await screen.findByText(/legacy model job has no recorded workflow stages/i),
     ).toBeInTheDocument();
@@ -86,5 +88,69 @@ describe('PreviousRunsPage', () => {
         expect.any(AbortSignal),
       ),
     );
+  });
+
+  it('opens an artifact through an authenticated request', async () => {
+    window.__MINT_CONFIG__ = { ENSEMBLE_MANAGER_API: 'http://ensemble/v1' } as never;
+    mocks.fetchRunHistoryDetail.mockResolvedValueOnce({
+      ...summary,
+      schema_version: 1,
+      identity: {
+        execution_engine: 'tapis',
+        source_id: 'execution-1',
+        plan_hash: null,
+        parameter_values_hash: null,
+      },
+      model: { id: 'model-1', name: 'MODFLOW', configuration_id: 'model-1' },
+      inputs: [],
+      parameters: [],
+      outputs: [],
+      workflow: null,
+      artifacts: [
+        {
+          kind: 'archived_files',
+          provider: 'ensemble_manager',
+          source_id: 'execution-1',
+          endpoint: '/executions/execution-1/files',
+          availability: 'available',
+        },
+      ],
+      errors: [],
+      status_history: [],
+    });
+    const popup = { location: { href: '' }, close: vi.fn() } as unknown as Window;
+    vi.spyOn(window, 'open').mockReturnValue(popup);
+    Object.defineProperty(URL, 'createObjectURL', {
+      configurable: true,
+      value: vi.fn().mockReturnValue('blob:test'),
+    });
+    Object.defineProperty(URL, 'revokeObjectURL', {
+      configurable: true,
+      value: vi.fn(),
+    });
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        blob: () => Promise.resolve(new Blob(['{"files":[]}'], { type: 'application/json' })),
+      }),
+    );
+
+    renderWithProviders(
+      <Routes>
+        <Route path="/modeling/thread/:id/runs" element={<PreviousRunsPage />} />
+      </Routes>,
+      { initialEntries: ['/modeling/thread/thread-1/runs'] },
+    );
+
+    await userEvent.click(await screen.findByRole('link', { name: 'archived_files' }));
+    await waitFor(() =>
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        'http://ensemble/v1/executions/execution-1/files',
+        { headers: { Authorization: 'Bearer test-token' } },
+      ),
+    );
+    expect(popup.location.href).toMatch(/^blob:/);
   });
 });

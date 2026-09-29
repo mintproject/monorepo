@@ -6,13 +6,17 @@ import { getTokenFromAuthorizationHeader } from "@/utils/authUtils";
 import { NotFoundError } from "@/classes/common/errors";
 import { threadFromGQL } from "@/classes/graphql/graphql_adapter";
 import { getThread } from "@/classes/graphql/graphql_functions_v2";
-import { getExecution as getExecutionById } from "@/classes/graphql/graphql_functions";
+import {
+    getExecution as getExecutionById,
+    updateExecutionStatusResultsAndSummary
+} from "@/classes/graphql/graphql_functions";
 import { SubmissionResult } from "@/interfaces/IExecutionService";
 import { applyExecutionInputOverrides } from "@/classes/common/execution-input-overrides";
 
 type AdapterAwareModelThread = ModelThread & {
     adapter_resource_overrides?: Parameters<typeof applyExecutionInputOverrides>[2];
     max_minutes?: number;
+    output_name?: string;
 };
 
 export interface ExecutionsTapisService {
@@ -25,13 +29,84 @@ export interface ExecutionsTapisService {
         execution_id: string;
         output_uri: string;
         output_name: string;
+        output_format?: string;
         job_definition: unknown;
     }>;
+    resolveCompositeWorkflowOutput(
+        executionId: string,
+        archivePath: string,
+        outputName: string,
+        authorization: string
+    ): Promise<string | null>;
+    updateCompositeWorkflowExecution(
+        threadId: string,
+        modelId: string,
+        executionId: string,
+        status: "completed" | "failed",
+        output?: {
+            model_io_id: string;
+            resource_id: string;
+            name: string;
+            url: string;
+        }
+    ): Promise<void>;
     getExecution(executionId: string, token: string): Promise<any>;
     getJobStatus(jobId: string, token: string): Promise<any>;
 }
 
+const compositeFinalizationInFlight = new Map<string, Promise<void>>();
+
 const executionsTapisService = {
+    async updateCompositeWorkflowExecution(
+        threadId: string,
+        modelId: string,
+        executionId: string,
+        status: "completed" | "failed",
+        output?: {
+            model_io_id: string;
+            resource_id: string;
+            name: string;
+            url: string;
+        }
+    ): Promise<void> {
+        const inFlight = compositeFinalizationInFlight.get(executionId);
+        if (inFlight) {
+            await inFlight;
+            return;
+        }
+
+        const finalization = (async () => {
+            const execution = await getExecutionById(executionId);
+            if (!execution) {
+                throw new NotFoundError("Composite workflow execution not found");
+            }
+
+            const nextStatus = status === "completed" ? "SUCCESS" : "FAILURE";
+            // Reconciliation can be triggered by both polling and history reads.
+            // Never rewrite a terminal execution or increment its summary twice.
+            if (execution.status === "SUCCESS" || execution.status === "FAILURE") return;
+
+            execution.status = nextStatus;
+            execution.run_progress = status === "completed" ? 1 : 0;
+            execution.end_time = new Date();
+            const threadResponse = await getThread(threadId);
+            const threadModelId = threadResponse.thread_models.find(
+                (threadModel) => threadModel.modelcatalog_configuration_id === modelId
+            )?.id;
+            if (!threadModelId) {
+                throw new NotFoundError("Thread model not found");
+            }
+            await updateExecutionStatusResultsAndSummary(execution, threadModelId, output);
+        })();
+        compositeFinalizationInFlight.set(executionId, finalization);
+        try {
+            await finalization;
+        } finally {
+            if (compositeFinalizationInFlight.get(executionId) === finalization) {
+                compositeFinalizationInFlight.delete(executionId);
+            }
+        }
+    },
     async getExecution(executionId: string, _authorization: string): Promise<any> {
         const execution = await getExecutionById(executionId);
         if (!execution) throw new NotFoundError("Execution not found");
@@ -43,6 +118,18 @@ const executionsTapisService = {
         const prefs = getConfiguration();
         const tapisExecution = new TapisExecutionService(token, prefs.tapis.basePath);
         return tapisExecution.getJobStatus(jobId);
+    },
+    async resolveCompositeWorkflowOutput(
+        executionId: string,
+        archivePath: string,
+        outputName: string,
+        authorization: string
+    ): Promise<string | null> {
+        const token = getTokenFromAuthorizationHeader(authorization);
+        if (!token) throw new Error("Unauthorized");
+        const prefs = getConfiguration();
+        const tapisExecution = new TapisExecutionService(token, prefs.tapis.basePath);
+        return tapisExecution.resolveCompositeWorkflowOutput(executionId, archivePath, outputName);
     },
     async submitExecution(
         threadmodel: AdapterAwareModelThread,

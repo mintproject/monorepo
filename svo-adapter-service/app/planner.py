@@ -418,6 +418,8 @@ def parameter_definitions(
     # can wire it, but mark it managed so clients do not render it as an input.
     managed_params = {
         "allocation": "adapter_service",
+        "budget_drain_package_candidates": "adapter_service",
+        "budget_river_package_candidates": "adapter_service",
         "geo_actor_id": "adapter_service",
         "source_uri": "execution_handoff",
         "tapis_base_url": "adapter_service",

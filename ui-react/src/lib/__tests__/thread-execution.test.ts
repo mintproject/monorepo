@@ -11,6 +11,7 @@ import {
   datasetsComplete,
   executionFromGQL,
   hasUnfinishedRuns,
+  inputResourceCount,
   parametersComplete,
   runsComplete,
   threadExecutionFromGQL,
@@ -371,5 +372,35 @@ describe('totalConfigs', () => {
 
   it('treats an unbound input as no constraint rather than zero runs', () => {
     expect(totalConfigs(model, { pAdj: ['0.1'] }, {})).toBe(1);
+  });
+});
+
+describe('inputResourceCount', () => {
+  it('does not turn an optional unbound input into zero resources', () => {
+    const model = {
+      id: 'cfgA',
+      name: 'MODFLOW',
+      input_files: [
+        { id: 'archive', name: 'Archive' },
+        { id: 'rch', name: 'Recharge', isOptional: true },
+        { id: 'wel', name: 'Wells', isOptional: true },
+      ],
+      output_files: [],
+      input_parameters: [],
+    };
+
+    expect(inputResourceCount(model, { archive: ['slice-1'] })).toBe(1);
+  });
+
+  it('reports zero when a required input is missing', () => {
+    const model = {
+      id: 'cfgA',
+      name: 'MODFLOW',
+      input_files: [{ id: 'archive', name: 'Archive' }],
+      output_files: [],
+      input_parameters: [],
+    };
+
+    expect(inputResourceCount(model, {})).toBe(0);
   });
 });

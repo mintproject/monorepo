@@ -22,6 +22,8 @@ const USER_SCOPED_ROUTES = [
   '/modeling/problem-statements',
   '/modeling/problem-statement/ps-123',
   '/modeling/thread/th-123',
+  '/modeling/thread/th-123/runs',
+  '/modeling/thread/th-123/runs/run-123/diagnostics',
 ];
 
 describe('modeling routes auth guard', () => {

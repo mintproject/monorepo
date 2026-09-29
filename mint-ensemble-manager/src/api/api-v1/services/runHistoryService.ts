@@ -464,14 +464,17 @@ async function detailsFor(run: CanonicalRun): Promise<RunHistoryDetail> {
                   kind: "application_log",
                   provider: "ensemble_manager",
                   source_id: legacy.id,
-                  endpoint: "/v1/executions/" + encodeURIComponent(legacy.id) + "/logs",
+                  // The UI joins this path to ENSEMBLE_MANAGER_API, which
+                  // already includes the /v1 prefix in local and deployed
+                  // configurations.
+                  endpoint: "/executions/" + encodeURIComponent(legacy.id) + "/logs",
                   availability: "available"
               },
               {
                   kind: "archived_files",
                   provider: "ensemble_manager",
                   source_id: legacy.id,
-                  endpoint: "/v1/executions/" + encodeURIComponent(legacy.id) + "/files",
+                  endpoint: "/executions/" + encodeURIComponent(legacy.id) + "/files",
                   availability: "available"
               }
           ]

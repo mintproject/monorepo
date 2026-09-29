@@ -175,6 +175,18 @@ TAPIS_USERNAME or TAPIS_ID
 TAPIS_PASSWORD
 ```
 
+Configure the active pre-registered Geo/GDAL Abaco actor as an environment
+variable so pod-spec generation includes it on the SVO adapter:
+
+```text
+SVO_ADAPTER_GEO_ACTOR_ID=P7vvvAEPQNWN8
+```
+
+The actor ID is a non-secret identifier. The deploy workflow applies this
+runtime value through its SVO runtime-sync step before the normal application
+restart; image-only updates by themselves do not resubmit environment
+variables.
+
 The deploy workflow does not require database, Hasura-admin, or auth-hook
 secrets because it only updates application image fields and sends restart
 requests. It does require permission to grant `wmobley` `APPROVEDADMIN` on all pods.

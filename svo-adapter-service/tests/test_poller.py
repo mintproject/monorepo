@@ -28,3 +28,40 @@ def test_completed_pipeline_without_failed_tasks_records_completed_at():
 
     assert status == "completed"
     assert update == {"status": "completed", "completed_at": "2026-08-12T00:00:00+00:00"}
+
+
+def test_completed_pipeline_with_json_error_stdout_is_failed():
+    status, update = poller._terminal_update_set(
+        "COMPLETED",
+        {
+            "tasks": [
+                {
+                    "task_id": "step-0-budget_extract_drain",
+                    "status": "COMPLETED",
+                    "stdout": '{"status":"error","message":"GEO_ACTOR_ID is required"}',
+                }
+            ]
+        },
+    )
+
+    assert status == "failed"
+    assert update["status"] == "failed"
+    assert "GEO_ACTOR_ID is required" in update["error_message"]
+
+
+def test_failed_pipeline_without_failed_tasks_preserves_provider_error():
+    status, update = poller._terminal_update_set(
+        "FAILED",
+        {"status": "FAILED", "message": "Workflow submission validation error: missing execution_id"},
+    )
+
+    assert status == "failed"
+    assert update["status"] == "failed"
+    assert update["error_message"] == "Workflow submission validation error: missing execution_id"
+
+
+def test_failed_pipeline_without_provider_error_gets_actionable_fallback():
+    status, update = poller._terminal_update_set("FAILED", {"tasks": []})
+
+    assert status == "failed"
+    assert update["error_message"] == "Tapis workflow reported FAILED"

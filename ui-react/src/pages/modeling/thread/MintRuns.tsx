@@ -23,8 +23,14 @@ import {
   type WorkflowCanvasEdge,
   type WorkflowCanvasPosition,
 } from '@/components/modeling/WorkflowCanvas';
+import { RunConfigurationSummary } from '@/components/modeling/runs/RunConfigurationSummary';
+import { RunAnswerCard } from '@/components/modeling/runs/RunAnswerCard';
+import { RunStageTimeline } from '@/components/modeling/runs/RunStageTimeline';
+import { RunStatusSummary } from '@/components/modeling/runs/RunStatusSummary';
 import { fetchExecutionLog, type UnifiedRunSnapshot } from '@/lib/ensemble-manager';
 import { adapterParametersComplete, type ThreadAdapterPlan } from '@/lib/adapter-execution';
+import { aggregateRunStatus, stageStatusFromLegacyState } from '@/lib/modeling/run-status';
+import { inputResourceCount } from '@/lib/thread-execution';
 import { ExecutionFilesDialog } from './ExecutionFilesDialog';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -175,6 +181,18 @@ function workflowStageState(status?: string | null): WorkflowStageState {
   return 'pending';
 }
 
+export function modelProviderState(run: UnifiedRunSnapshot): WorkflowStageState | null {
+  const status = String(run.model_result?.status ?? '').toLowerCase();
+  if (['success', 'succeeded', 'completed'].includes(status)) return 'success';
+  if (['failure', 'failed', 'error', 'cancelled'].includes(status)) return 'failure';
+  return null;
+}
+
+function modelProviderStatus(run: UnifiedRunSnapshot): string | null {
+  const status = run.model_result?.status;
+  return typeof status === 'string' && status ? status : null;
+}
+
 function contractValue(contract: unknown, ...keys: string[]): string | null {
   if (!contract || typeof contract !== 'object') return null;
   const record = contract as Record<string, unknown>;
@@ -287,8 +305,13 @@ function WorkflowGraph({
   adapterPlans: ThreadAdapterPlan[];
 }) {
   const stages = run.workflow_stages ?? [];
-  const stageFor = (id: string, fallback?: string): WorkflowStageState =>
-    workflowStageState(stages.find((stage) => stage.stage_id === id)?.status ?? fallback);
+  const stageFor = (id: string, fallback?: string): WorkflowStageState => {
+    if (id === 'model') {
+      const providerState = modelProviderState(run);
+      if (providerState) return providerState;
+    }
+    return workflowStageState(stages.find((stage) => stage.stage_id === id)?.status ?? fallback);
+  };
   const prePlans = adapterPlans.filter(
     (plan) =>
       plan.stage !== 'post_model' &&
@@ -528,34 +551,42 @@ function UnifiedExecutionPanel({
             )
           ? 'pending'
           : 'running';
+  const persistedHandoffStage = run.workflow_stages?.find(
+    (stage) => stage.type === 'output_handoff',
+  );
   const handoffStage: WorkflowStageState = !isPipeline
     ? 'not-required'
-    : isWorkflowFailure(run.status) || run.error_message
-      ? 'failure'
-      : isPostModelAdapter
-        ? ['adapter_running', 'completed'].includes(status)
-          ? 'success'
-          : ['output_registering', 'output_verifying', 'adapter_dispatching'].includes(status)
-            ? 'running'
-            : 'pending'
-        : ['model_dispatching', 'model_submitted', 'model_running', 'model_succeeded'].includes(
-              status,
-            )
-          ? 'success'
-          : 'pending';
-  const modelStage: WorkflowStageState = persistedModelStage
-    ? workflowStageState(persistedModelStage.status)
-    : !modelJobId
-      ? isPipeline
-        ? 'pending'
-        : 'not-required'
-      : isWorkflowFailure(run.status)
+    : persistedHandoffStage
+      ? workflowStageState(persistedHandoffStage.status)
+      : isWorkflowFailure(run.status) || run.error_message
         ? 'failure'
-        : run.status === 'model_running'
-          ? 'running'
-          : isWorkflowSuccess(run.status)
+        : isPostModelAdapter
+          ? ['adapter_running', 'completed'].includes(status)
+            ? 'success'
+            : ['output_registering', 'output_verifying', 'adapter_dispatching'].includes(status)
+              ? 'running'
+              : 'pending'
+          : ['model_dispatching', 'model_submitted', 'model_running', 'model_succeeded'].includes(
+                status,
+              )
             ? 'success'
             : 'pending';
+  const modelStage: WorkflowStageState =
+    modelProviderState(run) ??
+    (persistedModelStage
+      ? workflowStageState(persistedModelStage.status)
+      : !modelJobId
+        ? isPipeline
+          ? 'pending'
+          : 'not-required'
+        : isWorkflowFailure(run.status)
+          ? 'failure'
+          : run.status === 'model_running'
+            ? 'running'
+            : isWorkflowSuccess(run.status)
+              ? 'success'
+              : 'pending');
+  const modelStatus = modelProviderStatus(run) ?? run.status;
 
   const stageRows: Array<{ label: string; state: WorkflowStageState; detail: string }> = [
     {
@@ -585,12 +616,17 @@ function UnifiedExecutionPanel({
       label: 'Model application',
       state: modelStage,
       detail: modelJobId
-        ? displayStatus(run.status)
+        ? displayStatus(modelStatus)
         : isPipeline
           ? 'Waiting for adapter output'
           : 'Not submitted yet',
     },
   ];
+  const timelineRows = !isPipeline
+    ? [stageRows[2]!]
+    : isPostModelAdapter
+      ? [stageRows[2]!, stageRows[1]!, stageRows[0]!]
+      : [stageRows[0]!, stageRows[2]!, stageRows[1]!];
 
   return (
     <div
@@ -599,7 +635,7 @@ function UnifiedExecutionPanel({
     >
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-          <span className="font-semibold text-blue-900">Workflow pipeline details</span>
+          <span className="font-semibold text-blue-900">Workflow details</span>
           <span className="font-medium text-blue-900">
             {isPipeline
               ? 'Workflow pipeline'
@@ -607,7 +643,6 @@ function UnifiedExecutionPanel({
                 ? 'SVO workflow'
                 : 'Model job'}
           </span>
-          <span className="text-blue-700">Overall: {displayStatus(run.status)}</span>
         </div>
         {onRefresh && (
           <button
@@ -622,88 +657,91 @@ function UnifiedExecutionPanel({
           </button>
         )}
       </div>
-      {isPipeline ? (
-        <div className="space-y-1 text-blue-800">
-          <div>
-            Tapis workflow run ID: <code>{tapisWorkflow?.run_id ?? 'not submitted yet'}</code>
-          </div>
-          {tapisWorkflow?.workflow_id && (
-            <div>
-              Tapis pipeline ID: <code>{tapisWorkflow.workflow_id}</code>
-            </div>
-          )}
-        </div>
-      ) : (
-        run.run_id && (
-          <div className="text-blue-800">
-            Execution ID: <code>{run.run_id}</code>
-          </div>
-        )
-      )}
-      {isPipeline && (
-        <div className="rounded border border-blue-200 bg-white px-2 py-2 text-blue-800">
-          <span className="font-medium">Tapis Workflows tracking:</span>{' '}
-          {tapisWorkflow?.workflow_id ? (
+      <RunStageTimeline
+        stages={timelineRows.map((stage, index) => ({
+          id: `${stage.label}-${index}`,
+          label:
+            stage.label === 'SVO adapter workflow'
+              ? isPostModelAdapter
+                ? 'Transform results'
+                : 'Prepare inputs'
+              : stage.label === 'Output handoff'
+                ? isPostModelAdapter
+                  ? 'Register outputs'
+                  : 'Pass inputs to model'
+                : 'Run model',
+          detail: stage.detail,
+          status: stageStatusFromLegacyState(stage.state),
+        }))}
+      />
+      <RunAnswerCard
+        result={(run.output_handoff as { result?: unknown } | null | undefined)?.result}
+        label="Modeled spring flow"
+      />
+      <details className="rounded border border-blue-200 bg-white px-2 py-2 text-blue-800">
+        <summary className="cursor-pointer font-medium">Technical identifiers</summary>
+        <div className="mt-2 space-y-1">
+          {isPipeline ? (
             <>
-              pipeline <code>{tapisWorkflow.workflow_id}</code> · run{' '}
-              <code>{tapisWorkflow.run_id ?? 'not started'}</code>
+              <div>
+                Tapis workflow run ID: <code>{tapisWorkflow?.run_id ?? 'not submitted yet'}</code>
+              </div>
+              {tapisWorkflow?.workflow_id && (
+                <div>
+                  Tapis pipeline ID: <code>{tapisWorkflow.workflow_id}</code>
+                </div>
+              )}
+              <div>
+                Tapis Workflows tracking: pipeline{' '}
+                <code>{tapisWorkflow?.workflow_id ?? 'not registered yet'}</code> · run{' '}
+                <code>{tapisWorkflow?.run_id ?? 'not started'}</code>
+              </div>
             </>
-          ) : isPostModelAdapter ? (
-            'provider workflow reference unavailable — this legacy/recovery run was not upgraded'
           ) : (
-            'not registered yet'
+            run.run_id && (
+              <div>
+                Execution ID: <code>{run.run_id}</code>
+              </div>
+            )
+          )}
+          {modelJobId && (
+            <div>
+              <span className="font-medium">Tapis model job ID:</span> <code>{modelJobId}</code>
+            </div>
+          )}
+          {modelExecutionId && !modelProviderJobId && (
+            <div>
+              <span className="font-medium">Model execution ID:</span>{' '}
+              <code>{modelExecutionId}</code>
+            </div>
+          )}
+          {adapterRuns.map((child, index) => (
+            <div key={child.run_id ?? `${child.adapter_plan_id ?? 'workflow'}-${index}`}>
+              <span className="font-medium">SVO workflow:</span>{' '}
+              <code>{child.tapis_workflow_id ?? 'not registered yet'}</code>{' '}
+              <span className="text-blue-700">
+                run {child.tapis_run_id ?? 'not submitted'} · {displayStatus(child.status)}
+              </span>
+            </div>
+          ))}
+          {!isPipeline && (
+            <p className="text-gray-600">This legacy model job has no recorded workflow stages.</p>
+          )}
+          {isPostModelAdapter && !tapisWorkflow?.workflow_id && (
+            <p className="text-gray-600">
+              provider workflow reference unavailable — this legacy/recovery run was not upgraded.
+            </p>
           )}
         </div>
-      )}
-      {isPipeline && (
-        <p className="rounded border border-blue-200 bg-white px-2 py-2 text-blue-800">
-          The model application is a stage in this parent workflow. Its provider ID is shown for
-          troubleshooting and is not a separate pipeline.
-        </p>
-      )}
-      {!isPipeline && (
-        <p className="rounded border border-gray-200 bg-white px-2 py-2 text-blue-800">
-          This run was submitted as a model job, so no SVO workflow stages were recorded. New
-          workflow submissions will show the adapter, output handoff, and model application stages
-          here.
-        </p>
-      )}
-      <WorkflowGraph run={run} modelName={modelName} adapterPlans={adapterPlans} />
-      <div className="grid gap-2 sm:grid-cols-3" data-testid="workflow-stages">
-        {stageRows.map((stage) => (
-          <div
-            key={stage.label}
-            className={`rounded border px-2 py-2 ${workflowStageClass(stage.state)}`}
-          >
-            <div className="flex items-center justify-between gap-2 font-medium">
-              <span>{stage.label}</span>
-              <span>{workflowStageLabel(stage.state)}</span>
-            </div>
-            <div className="mt-1 text-[11px] opacity-80">{stage.detail}</div>
-          </div>
-        ))}
-      </div>
-      <div className="space-y-1 text-blue-900">
-        {modelJobId && (
-          <div>
-            <span className="font-medium">Tapis model job ID:</span> <code>{modelJobId}</code>
-          </div>
-        )}
-        {modelExecutionId && !modelProviderJobId && (
-          <div>
-            <span className="font-medium">Model execution ID:</span> <code>{modelExecutionId}</code>
-          </div>
-        )}
-        {adapterRuns.map((child, index) => (
-          <div key={child.run_id ?? `${child.adapter_plan_id ?? 'workflow'}-${index}`}>
-            <span className="font-medium">SVO workflow:</span>{' '}
-            <code>{child.tapis_workflow_id ?? 'not registered yet'}</code>{' '}
-            <span className="text-blue-700">
-              run {child.tapis_run_id ?? 'not submitted'} · {displayStatus(child.status)}
-            </span>
-          </div>
-        ))}
-      </div>
+      </details>
+      <details className="rounded border border-blue-200 bg-white px-2 py-2">
+        <summary className="cursor-pointer font-medium text-blue-900">
+          Technical workflow graph
+        </summary>
+        <div className="mt-3">
+          <WorkflowGraph run={run} modelName={modelName} adapterPlans={adapterPlans} />
+        </div>
+      </details>
       {(run.failure_code || run.error_message) && (
         <div className="rounded border border-red-200 bg-red-50 px-2 py-2 text-red-800">
           {run.failure_code && <div className="font-medium">Failure: {run.failure_code}</div>}
@@ -716,8 +754,7 @@ function UnifiedExecutionPanel({
         </div>
       )}
       <p className="text-[11px] text-blue-700">
-        Application output logs are separate; use <span className="font-medium">View Log</span> in
-        the run table for the model job log.
+        Application logs and files remain available from the run records below.
       </p>
     </div>
   );
@@ -925,24 +962,47 @@ export function MintRuns({
           const failedRuns = summary.failed_runs ?? 0;
           const successfulRuns = summary.successful_runs ?? 0;
           const finishedRuns = successfulRuns + failedRuns;
-          const runningRuns = submittedRuns - finishedRuns;
-          const pendingRuns = summary.total_runs - submittedRuns;
+          const runningRuns = Math.max(0, submittedRuns - finishedRuns);
+          const pendingRuns = Math.max(0, summary.total_runs - submittedRuns);
           const submitted = summary.submitted_for_execution || summary.submission_time;
-          const finished = finishedRuns >= summary.total_runs && summary.total_runs > 0;
+          const latestExecution = executions[mid]?.executions[0];
+          const persistedRunId = latestExecution?.run_id ?? undefined;
+          const workflowRun =
+            unifiedRuns?.[mid] ??
+            (latestExecution
+              ? {
+                  run_id: persistedRunId,
+                  execution_mode: persistedRunId?.startsWith('ue_') ? 'workflow_pipeline' : 'job',
+                  status: latestExecution.status.toLowerCase(),
+                }
+              : undefined);
+          const displayStatus = aggregateRunStatus({
+            totalRuns: summary.total_runs,
+            submittedRuns,
+            successfulRuns,
+            failedRuns,
+            fallbackStatus: workflowRun?.status,
+          });
+          const nextAction =
+            displayStatus === 'failed'
+              ? 'Review the failed run and its diagnostics before trying again.'
+              : displayStatus === 'completed'
+                ? 'The model run is complete. Continue to review or publish its results.'
+                : displayStatus === 'completing'
+                  ? 'The model finished and its output is being prepared for the next stage.'
+                  : displayStatus === 'running'
+                    ? 'The model is running. Results will appear when it completes.'
+                    : 'The run is waiting to start.';
 
           // ── count inputs × params for display ──────────────────────────
           const nParameters = model.input_parameters
             .map((p) => (threadData.model_ensembles[mid]?.bindings[p.id ?? ''] ?? [0]).length)
             .reduce((a, b) => a * b, 1);
 
-          const nInputs = model.input_files
-            .map((inf) => {
-              if (inf.value) {
-                return (inf.value.resources ?? []).filter((r) => r.selected !== false).length;
-              }
-              return (threadData.model_ensembles[mid]?.bindings[inf.id ?? ''] ?? []).length;
-            })
-            .reduce((a, b) => a * b, 1);
+          const nInputs = inputResourceCount(
+            model,
+            threadData.model_ensembles[mid]?.bindings ?? {},
+          );
 
           // ── adjustable inputs / params for column headers ─────────────
           const adjustableInputs = model.input_files.filter((f) => !f.value);
@@ -950,7 +1010,30 @@ export function MintRuns({
 
           return (
             <li key={mid}>
-              <div className="mb-2 text-sm font-medium">{model.name}</div>
+              {summary.total_runs > 0 && submitted && (
+                <RunStatusSummary
+                  modelName={model.name ?? mid}
+                  status={displayStatus}
+                  totalRuns={summary.total_runs}
+                  submittedRuns={submittedRuns}
+                  successfulRuns={successfulRuns}
+                  failedRuns={failedRuns}
+                  runningRuns={runningRuns}
+                  pendingRuns={pendingRuns}
+                  startedAt={
+                    latestExecution?.start_time ??
+                    (typeof submitted === 'string' ? submitted : undefined)
+                  }
+                  nextAction={nextAction}
+                  context={
+                    <RunConfigurationSummary
+                      inputResources={nInputs}
+                      parameterCombinations={nParameters}
+                      outputsPerRun={model.output_files.length}
+                    />
+                  }
+                />
+              )}
 
               {!summary.total_runs ? (
                 <div className="text-sm text-orange-600">
@@ -958,6 +1041,7 @@ export function MintRuns({
                 </div>
               ) : !submitted ? (
                 <div className="space-y-2">
+                  <div className="text-sm font-medium">{model.name ?? mid}</div>
                   <p className="text-sm text-gray-600">
                     The parameter settings require {summary.total_runs} runs ({nInputs} input
                     resources × {nParameters} parameters).{' '}
@@ -1018,52 +1102,21 @@ export function MintRuns({
                 </div>
               ) : (
                 <div className="space-y-2">
-                  <p className="text-sm text-gray-600">
-                    Below is the status of all runs. A green bar means completed; grey/partial means
-                    in progress; red means failed.
-                  </p>
-                  <p className="text-sm text-gray-600">
-                    {summary.total_runs} runs required ({nInputs} inputs × {nParameters}{' '}
-                    parameters). {!finished ? 'So far, ' : ''}
-                    {submittedRuns} submitted, {successfulRuns} succeeded,{' '}
-                    <span className={failedRuns > 0 ? 'text-red-600' : ''}>
-                      {failedRuns} failed
-                    </span>
-                    . {runningRuns > 0 && `${runningRuns} running`}
-                    {runningRuns > 0 && pendingRuns > 0 && ', '}
-                    {pendingRuns > 0 && `${pendingRuns} waiting`}
-                  </p>
-                  {(() => {
-                    const latestExecution = executions[mid]?.executions[0];
-                    const persistedRunId = latestExecution?.run_id ?? undefined;
-                    const workflowRun =
-                      unifiedRuns?.[mid] ??
-                      (latestExecution
-                        ? {
-                            run_id: persistedRunId,
-                            execution_mode: persistedRunId?.startsWith('ue_')
-                              ? 'workflow_pipeline'
-                              : 'job',
-                            status: latestExecution.status.toLowerCase(),
-                          }
-                        : undefined);
-
-                    return workflowRun ? (
-                      <UnifiedExecutionPanel
-                        run={workflowRun}
-                        modelName={model.name}
-                        adapterPlans={threadData.adapter_plans?.[mid] ?? []}
-                        onRefresh={
-                          onRefreshWorkflow &&
-                          (Boolean(unifiedRuns?.[mid]) || workflowRun.run_id?.startsWith('ue_'))
-                            ? () => onRefreshWorkflow(mid)
-                            : undefined
-                        }
-                        refreshing={workflowRefreshing?.[mid]}
-                        refreshError={workflowRefreshErrors?.[mid]}
-                      />
-                    ) : null;
-                  })()}
+                  {workflowRun ? (
+                    <UnifiedExecutionPanel
+                      run={workflowRun}
+                      modelName={model.name}
+                      adapterPlans={threadData.adapter_plans?.[mid] ?? []}
+                      onRefresh={
+                        onRefreshWorkflow &&
+                        (Boolean(unifiedRuns?.[mid]) || workflowRun.run_id?.startsWith('ue_'))
+                          ? () => onRefreshWorkflow(mid)
+                          : undefined
+                      }
+                      refreshing={workflowRefreshing?.[mid]}
+                      refreshError={workflowRefreshErrors?.[mid]}
+                    />
+                  ) : null}
 
                   {/* Pagination + Reload bar */}
                   <div className="flex items-center gap-2 border border-gray-200 px-2 py-1 text-xs">
@@ -1162,7 +1215,7 @@ export function MintRuns({
                               >
                                 <div className="flex items-center justify-center gap-2">
                                   <span className="h-4 w-4 animate-spin rounded-full border-2 border-blue-400 border-t-transparent" />
-                                  Downloading software image and data…
+                                  Loading run records…
                                 </div>
                               </td>
                             </tr>

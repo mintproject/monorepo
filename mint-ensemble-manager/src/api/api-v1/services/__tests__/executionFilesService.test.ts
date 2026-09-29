@@ -23,8 +23,14 @@ const TAPIS_CONFIG = {
 // Answer the files that Tapis holds for the job of the execution.
 const tapisListsFiles = (files: unknown[]) => {
     const listJobFiles = jest.fn().mockResolvedValue(files);
-    (TapisExecutionService as unknown as jest.Mock).mockImplementation(() => ({ listJobFiles }));
-    return listJobFiles;
+    const listArchiveFiles = jest.fn().mockResolvedValue(files);
+    const listCompositeWorkflowFiles = jest.fn().mockResolvedValue(null);
+    (TapisExecutionService as unknown as jest.Mock).mockImplementation(() => ({
+        listJobFiles,
+        listArchiveFiles,
+        listCompositeWorkflowFiles
+    }));
+    return { listJobFiles, listArchiveFiles, listCompositeWorkflowFiles };
 };
 
 describe("executionFilesService.listFiles", () => {
@@ -69,13 +75,57 @@ describe("executionFilesService.listFiles", () => {
     });
 
     it("answers an empty list when Tapis did not start the execution yet", async () => {
-        const listJobFiles = tapisListsFiles([]);
+        const { listJobFiles, listArchiveFiles, listCompositeWorkflowFiles } = tapisListsFiles([]);
         (getExecution as jest.Mock).mockResolvedValue({ id: EXECUTION_ID, runid: null });
 
         const files = await executionFilesService.listFiles(EXECUTION_ID, AUTH);
 
         expect(files).toEqual([]);
         expect(listJobFiles).not.toHaveBeenCalled();
+        expect(listArchiveFiles).not.toHaveBeenCalled();
+        expect(listCompositeWorkflowFiles).toHaveBeenCalledWith(EXECUTION_ID, undefined);
+    });
+
+    it("lists the archive directory for a composite workflow result without a run id", async () => {
+        const { listArchiveFiles, listCompositeWorkflowFiles } = tapisListsFiles([
+            {
+                name: "mfsim.lst",
+                path: "mint-workflow-output/run-1/model/mfsim.lst",
+                size: 12,
+                url: "tapis://ls6/mint-workflow-output/run-1/model/mfsim.lst"
+            }
+        ]);
+        (getExecution as jest.Mock).mockResolvedValue({
+            id: EXECUTION_ID,
+            runid: null,
+            results: {
+                output: {
+                    resource: {
+                        url: "tapis://ls6/mint-workflow-output/run-1/model/MODFLOW%206%20cell-by-cell%20budget"
+                    }
+                }
+            }
+        });
+        listCompositeWorkflowFiles.mockResolvedValue(null);
+
+        const files = await executionFilesService.listFiles(EXECUTION_ID, AUTH);
+
+        expect(listCompositeWorkflowFiles).toHaveBeenCalledWith(
+            EXECUTION_ID,
+            "mint-workflow-output/run-1/model"
+        );
+        expect(listArchiveFiles).toHaveBeenCalledWith(
+            "ls6",
+            "mint-workflow-output/run-1/model"
+        );
+        expect(files).toEqual([
+            {
+                name: "mfsim.lst",
+                path: "mint-workflow-output/run-1/model/mfsim.lst",
+                size: 12,
+                url: "tapis://ls6/mint-workflow-output/run-1/model/mfsim.lst"
+            }
+        ]);
     });
 
     it("forwards the token of the user to Tapis", async () => {
@@ -90,7 +140,7 @@ describe("executionFilesService.listFiles", () => {
     });
 
     it("reads the files of the job of the execution", async () => {
-        const listJobFiles = tapisListsFiles([]);
+        const { listJobFiles } = tapisListsFiles([]);
 
         await executionFilesService.listFiles(EXECUTION_ID, AUTH);
 
