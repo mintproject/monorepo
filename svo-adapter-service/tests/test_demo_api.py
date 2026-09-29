@@ -319,15 +319,44 @@ def test_dfc_live_submit_uses_configured_geo_actor_default(monkeypatch):
 
     monkeypatch.setattr("app.main.tapis.submit_tapis_workflow", fake_submit)
     try:
-        response = client.post("/workflows/submit", json={
-            "plan_id": head["plan_id"],
-            "dry_run": True,
-            "args": {},
-        })
-        assert response.status_code == 200
+        for blank_value in ("", "   "):
+            response = client.post("/workflows/submit", json={
+                "plan_id": head["plan_id"],
+                "dry_run": True,
+                "args": {"geo_actor_id": blank_value},
+            })
+            assert response.status_code == 200
+            assert response.json()["args"]["geo_actor_id"] == {"value": "configured-geo-actor"}
 
         # Verify the settings value is accessible and correctly configured.
         assert settings.geo_actor_id == "configured-geo-actor"
+    finally:
+        settings.geo_actor_id = old_actor_id
+
+
+def test_dfc_live_submit_replaces_nested_blank_geo_actor_but_preserves_explicit_value():
+    head, _ = _gma_dfc_demo_plan_from_modeled_outputs()
+    old_actor_id = settings.geo_actor_id
+    settings.geo_actor_id = "configured-geo-actor"
+    try:
+        blank = client.post("/workflows/submit", json={
+            "plan_id": head["plan_id"],
+            "dry_run": True,
+            "args": {"geo_actor_id": {"value": "", "source": "managed-default"}},
+        })
+        assert blank.status_code == 200
+        assert blank.json()["args"]["geo_actor_id"] == {
+            "value": "configured-geo-actor",
+            "source": "managed-default",
+        }
+
+        explicit = client.post("/workflows/submit", json={
+            "plan_id": head["plan_id"],
+            "dry_run": True,
+            "args": {"geo_actor_id": "explicit-geo-actor"},
+        })
+        assert explicit.status_code == 200
+        assert explicit.json()["args"]["geo_actor_id"] == {"value": "explicit-geo-actor"}
     finally:
         settings.geo_actor_id = old_actor_id
 

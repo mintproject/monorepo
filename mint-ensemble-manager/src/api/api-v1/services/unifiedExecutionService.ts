@@ -67,7 +67,7 @@ interface AdapterChildRun {
     run_id: string;
     status?: string;
     output_data_object_id?: string | null;
-    execution_kind?: "workflow";
+    execution_kind?: "workflow" | "composite_workflow";
     tapis_workflow_id?: string | null;
     tapis_run_id?: string | null;
     error_message?: string | null;
@@ -204,14 +204,30 @@ async function adapterRequest(
     const body = await response.json().catch(() => ({}));
     if (!response.ok) {
         const detail = body?.detail;
+        const detailMessage =
+            detail && typeof detail === "object" && typeof detail.message === "string"
+                ? detail.message
+                : undefined;
         const message =
             typeof detail === "string"
                 ? detail
-                : body?.message || `SVO adapter returned ${response.status}`;
+                : detailMessage || body?.message || `SVO adapter returned ${response.status}`;
         const code = typeof detail === "object" ? detail?.code : body?.code;
-        throw new UnifiedExecutionError(response.status, message, code, detail);
+        const details =
+            detail && typeof detail === "object" ? detail : body?.details ?? detail;
+        throw new UnifiedExecutionError(response.status, message, code, details);
     }
     return body;
+}
+
+function isRetryableAdapterAuthFailure(record: UnifiedExecutionRecord): boolean {
+    if (!["adapter_unknown", "unknown"].includes(record.status)) return false;
+    const message = String(record.error_message || "").toLowerCase();
+    return (
+        message.includes("tapis token") ||
+        message.includes("authorization") ||
+        message.includes("unauthorized")
+    );
 }
 
 function adapterPlanId(planId: string): string {
@@ -510,8 +526,15 @@ export function createUnifiedExecutionService(
                 execution_id: string;
                 output_uri: string;
                 output_name: string;
+                output_format?: string;
                 job_definition: unknown;
             }>;
+            resolveCompositeWorkflowOutput?: (
+                executionId: string,
+                archivePath: string,
+                outputName: string,
+                authorization: string
+            ) => Promise<string | null>;
             getExecution?: (executionId: string, authorization: string) => Promise<any>;
             getJobStatus?: (jobId: string, authorization: string) => Promise<any>;
             updateCompositeWorkflowExecution?: (
@@ -620,6 +643,7 @@ export function createUnifiedExecutionService(
         const retryableCompositeStatus =
             record.status === "unknown" &&
             record.failure_code === "COMPOSITE_WORKFLOW_STATUS_UNKNOWN";
+        const retryableAdapterAuthFailure = isRetryableAdapterAuthFailure(record);
         const modelResult = (record.model_result || {}) as Record<string, any>;
         const compositeWorkflowRunId =
             modelResult.composite_workflow_run_id || modelResult.tapis_run_id;
@@ -680,7 +704,9 @@ export function createUnifiedExecutionService(
         }
         if (
             ["completed", "failed", "cancelled"].includes(record.status) ||
-            (record.status === "unknown" && !retryableCompositeStatus)
+            (record.status === "unknown" &&
+                !retryableCompositeStatus &&
+                !retryableAdapterAuthFailure)
         ) {
             if (!hasPendingPostModelHandoff) return parentResponse(record);
         }
@@ -737,6 +763,10 @@ export function createUnifiedExecutionService(
                     run.tapis_workflow_id || compositeChild.tapis_workflow_id || null;
                 compositeChild.tapis_run_id =
                     run.tapis_run_id || compositeChild.tapis_run_id || null;
+                const nextModelResult = {
+                    ...((record.model_result as Record<string, unknown>) || {}),
+                    composite_workflow_run: run
+                };
                 if (
                     legacyServices.tapis.updateCompositeWorkflowExecution &&
                     record.model_child_id &&
@@ -747,47 +777,82 @@ export function createUnifiedExecutionService(
                         plan.model_id,
                         record.model_child_id,
                         run.status,
-                        run.status === "completed"
-                            ? compositeOutput({
-                                  ...((record.model_result as Record<string, unknown>) || {}),
-                                  output_uri:
-                                      (record.model_result as Record<string, unknown> | null)
-                                          ?.output_uri || run.output_uri
-                              })
-                            : undefined
+                        undefined
                     );
                 }
-                const modelResult = {
-                    ...((record.model_result as Record<string, unknown>) || {}),
-                    ...(run.output_uri ? { output_uri: run.output_uri } : {}),
-                    composite_workflow_run: run
-                };
                 if (run.status === "completed" && adapter) {
-                    // The composite workflow is the model stage. Remove it
-                    // before continuing so the deferred output adapter is
-                    // dispatched in the same reconciliation pass.
-                    adapterChildren = adapterChildren.filter((child) => child !== compositeChild);
+                    if (!run.output_uri) {
+                        const updated = await store.update(record.id, {
+                            status: "output_verifying",
+                            adapter_run_ids: adapterChildren,
+                            model_result: nextModelResult,
+                            error_message: "Composite workflow completed without a discoverable final output URI"
+                        });
+                        return parentResponse(updated || { ...record, status: "output_verifying" });
+                    }
+                    const registered = await adapterRequest(
+                        `/runs/${encodeURIComponent(compositeChild.run_id)}/register-output`,
+                        {
+                            method: "POST",
+                            body: {
+                                output_data_object: {
+                                    id: `em-final-output-${record.id}`,
+                                    label:
+                                        adapter.target_contract?.standard_variable_uri ||
+                                        adapter.model_output_key,
+                                    resource_uri: run.output_uri,
+                                    source_catalog: "svo-adapter",
+                                    owner_execution_id: parentRunId(record.id),
+                                    owner_model_child_id: record.model_child_id,
+                                    variables: [
+                                        {
+                                            standard_variable_uri:
+                                                adapter.target_contract?.standard_variable_uri,
+                                            unit: adapter.target_contract?.unit
+                                        }
+                                    ]
+                                }
+                            }
+                        },
+                        authorization
+                    );
+                    compositeChild.status = "completed";
+                    compositeChild.output_data_object_id =
+                        registered.output_data_object_id || registered.data_object_id || null;
                     const updated = await store.update(record.id, {
-                        status: "model_succeeded",
+                        status: "completed",
                         adapter_run_ids: adapterChildren,
-                        model_result: modelResult,
+                        model_result: nextModelResult,
+                        output_handoff: {
+                            ...((record.output_handoff as Record<string, unknown> | null) || {}),
+                            final_output_data_object_id: compositeChild.output_data_object_id,
+                            final_resource_uri: run.output_uri,
+                            ...(run.result && typeof run.result === "object"
+                                ? { result: run.result }
+                                : {})
+                        },
                         error_message: null,
                         failure_code: null
                     });
                     record = updated || {
                         ...record,
-                        status: "model_succeeded",
+                        status: "completed",
                         adapter_run_ids: adapterChildren,
-                        model_result: modelResult,
+                        model_result: nextModelResult,
+                        output_handoff: {
+                            final_output_data_object_id: compositeChild.output_data_object_id,
+                            final_resource_uri: run.output_uri
+                        },
                         error_message: null,
                         failure_code: null
                     };
+                    return parentResponse(record);
                 } else {
                     const nextStatus = run.status === "failed" ? "failed" : "model_running";
                     const updated = await store.update(record.id, {
                         status: nextStatus,
                         adapter_run_ids: adapterChildren,
-                        model_result: modelResult,
+                        model_result: nextModelResult,
                         error_message: run.error_message || null,
                         failure_code: run.status === "failed" ? "COMPOSITE_WORKFLOW_FAILED" : null
                     });
@@ -902,7 +967,10 @@ export function createUnifiedExecutionService(
                             ? {
                                   ...((record.output_handoff as Record<string, unknown>) || {}),
                                   final_output_data_object_id: child.output_data_object_id,
-                                  final_resource_uri: run.output_uri || null
+                                  final_resource_uri: run.output_uri || null,
+                                  ...(run.result && typeof run.result === "object"
+                                      ? { result: run.result }
+                                      : {})
                               }
                             : record.output_handoff,
                     error_message: run.error_message || null,
@@ -1152,9 +1220,8 @@ export function createUnifiedExecutionService(
         authorization?: string
     ): Promise<Record<string, unknown>> => {
         if (
-            ["model_submitted", "failed", "adapter_unknown", "model_unknown"].includes(
-                record.status
-            )
+            ["model_submitted", "failed", "model_unknown"].includes(record.status) ||
+            (record.status === "adapter_unknown" && !isRetryableAdapterAuthFailure(record))
         ) {
             return parentResponse(record);
         }
@@ -1610,6 +1677,7 @@ export function createUnifiedExecutionService(
                         {
                             thread_id: plan.thread_id,
                             model_id: plan.model_id,
+                            output_name: adapter.model_output_key,
                             ...(requestedMaxMinutes === undefined
                                 ? {}
                                 : { max_minutes: requestedMaxMinutes })
@@ -1625,8 +1693,7 @@ export function createUnifiedExecutionService(
                                 plan_id: adapter.adapter_plan_id,
                                 args: {
                                     ...adapterValues.values,
-                                    execution_id: parentRunId(parent.id),
-                                    source_uri: modelTask.output_uri
+                                    execution_id: parentRunId(parent.id)
                                 },
                                 execution_id: parentRunId(parent.id),
                                 idempotency_key: `${parentRunId(parent.id)}:${adapter.adapter_plan_id}:${adapterValues.hash}`,
@@ -1634,6 +1701,8 @@ export function createUnifiedExecutionService(
                                     stage_id: "model",
                                     output_uri: modelTask.output_uri,
                                     output_name: modelTask.output_name,
+                                    output_format: modelTask.output_format || "",
+                                    max_minutes: requestedMaxMinutes,
                                     job_definition: modelTask.job_definition
                                 }
                             },
@@ -1661,7 +1730,7 @@ export function createUnifiedExecutionService(
                                 model_io_id: adapter.model_io_id,
                                 stage: "composite",
                                 run_id: submitted.run_id,
-                                status: "queued",
+                                status: submitted.status || "queued",
                                 execution_kind: "composite_workflow",
                                 tapis_workflow_id: submitted.tapis_workflow_id || null,
                                 tapis_run_id: submitted.tapis_run_id || null
@@ -1675,7 +1744,22 @@ export function createUnifiedExecutionService(
                     const responseRecord = updated || {
                         ...parent,
                         status: "model_running",
-                        model_child_id: modelChildId
+                        model_child_id: modelChildId,
+                        model_result: {
+                            execution_id: modelChildId,
+                            output_uri: modelTask.output_uri,
+                            composite_workflow_run_id: submitted.run_id
+                        },
+                        adapter_run_ids: [
+                            {
+                                adapter_plan_id: adapter.adapter_plan_id,
+                                model_io_id: adapter.model_io_id,
+                                stage: "composite",
+                                run_id: submitted.run_id,
+                                status: submitted.status || "queued",
+                                execution_kind: "composite_workflow"
+                            }
+                        ]
                     };
                     await persistWorkflowStages(responseRecord);
                     return parentResponse(responseRecord);

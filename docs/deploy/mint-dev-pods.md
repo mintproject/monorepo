@@ -179,7 +179,7 @@ Configure the active pre-registered Geo/GDAL Abaco actor as an environment
 variable so pod-spec generation includes it on the SVO adapter:
 
 ```text
-SVO_ADAPTER_GEO_ACTOR_ID=z8LGLpm7lVqrK
+SVO_ADAPTER_GEO_ACTOR_ID=P7vvvAEPQNWN8
 ```
 
 The actor ID is a non-secret identifier. The deploy workflow applies this

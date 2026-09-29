@@ -261,6 +261,34 @@ describe('MintRuns', () => {
     expect(screen.getByText(/Tapis Workflows tracking:/)).toBeInTheDocument();
   });
 
+  it('shows the modeled spring-flow scalar in the workflow panel', () => {
+    renderWithProviders(
+      <MintRuns
+        threadData={mockThreadDataSubmitted}
+        executions={emptyExecutions}
+        unifiedRuns={{
+          'model-1': {
+            run_id: 'ue-spring-1',
+            execution_mode: 'workflow_pipeline',
+            status: 'completed',
+            output_handoff: {
+              result: { schema_version: 1, status: 'ok', value: 23.9, unit: 'cfs' },
+            },
+          },
+        }}
+        canWrite
+        canExecute
+        ensembleManagerApi="http://ensemble"
+        onContinue={vi.fn()}
+        onFetchRuns={vi.fn()}
+        onSubmitRuns={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByTestId('run-answer-card')).toHaveTextContent('23.9');
+    expect(screen.getByTestId('run-answer-card')).toHaveTextContent('cfs');
+  });
+
   it('keeps the model successful when only the downstream adapter fails', () => {
     const unifiedRun: UnifiedRunSnapshot = {
       run_id: 'ue-parent-failed-adapter',
@@ -304,9 +332,9 @@ describe('MintRuns', () => {
       />,
     );
 
-    const stageCards = screen.getByTestId('workflow-stages').children;
-    const handoffCard = stageCards[1];
-    const modelCard = stageCards[2];
+    const stageCards = Array.from(screen.getByTestId('workflow-stages').children);
+    const handoffCard = stageCards.find((card) => card.textContent?.includes('Register outputs'))!;
+    const modelCard = stageCards.find((card) => card.textContent?.includes('Run model'))!;
     expect(modelCard).toHaveTextContent('Completed');
     expect(handoffCard).toHaveTextContent('Completed');
     expect(screen.getByText('Workflow pipeline')).toBeInTheDocument();

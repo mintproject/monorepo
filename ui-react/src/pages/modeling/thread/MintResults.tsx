@@ -17,7 +17,12 @@ import {
   ModelOutputFile,
   ThreadExecutionData,
 } from '@/graphql/generated/execution';
-import { EnsembleManagerError, NO_OUTPUTS_DECLARED } from '@/lib/ensemble-manager';
+import { RunAnswerCard } from '@/components/modeling/runs/RunAnswerCard';
+import {
+  EnsembleManagerError,
+  NO_OUTPUTS_DECLARED,
+  type UnifiedRunSnapshot,
+} from '@/lib/ensemble-manager';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -69,6 +74,7 @@ interface MintResultsProps {
   onFetchRuns: (modelId: string, page: number, pageSize: number) => void;
   onIngestResults?: (modelId: string) => void;
   onPublishResults?: (modelId: string) => Promise<void>;
+  unifiedRuns?: Record<string, UnifiedRunSnapshot>;
   /**
    * Take the user to the promote action — the Runs step, where each finished
    * run lists its archived files. Shown instead of the raw 422 text when the
@@ -92,6 +98,7 @@ export function MintResults({
   onIngestResults,
   onPublishResults,
   onPromoteOutputs,
+  unifiedRuns,
 }: MintResultsProps) {
   const modelIds = Object.keys(threadData.execution_summary ?? {});
 
@@ -281,6 +288,10 @@ export function MintResults({
             <li key={mid} className="overflow-hidden rounded-md border">
               <div className="border-b bg-gray-50 px-4 py-2 text-sm font-medium">{model.name}</div>
               <div className="space-y-2 px-4 py-3">
+                <RunAnswerCard
+                  result={unifiedRuns?.[mid]?.output_handoff?.result}
+                  label="Modeled spring flow"
+                />
                 {submitted && (
                   <>
                     <p className="text-sm text-gray-600">

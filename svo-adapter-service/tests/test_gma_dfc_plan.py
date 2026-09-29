@@ -241,6 +241,93 @@ def test_dfc_geotiff_aggregate_passes_boundary_uri_not_inline_geojson():
     assert 'os.environ["DFC_STEPS_B64"]' not in task["code"]
 
 
+def test_dfc_spring_flow_chain_uses_modular_typed_task_handoff():
+    data = _load()
+    path = find_path(
+        _source(next(s for s in data["sources"] if s.get("format") == "cbc-mf6")),
+        _target(data["target_model_input_spring_cfs"]),
+        data["transform_specs"],
+    )
+    workflow = tapis.generate_tapis_workflow(
+        {"id": "dfc-spring-demo", "plan_json": build_plan_json(path)},
+        group_id="adapter-demo",
+    )
+
+    assert [task["id"] for task in workflow["tasks"]] == [
+        "step-0-budget_extract_drain",
+        "step-1-unit_convert",
+    ]
+    extract_task, convert_task = workflow["tasks"]
+    assert extract_task["type"] == "function"
+    assert extract_task["output"] == {"result": {"type": "string"}}
+    assert set(extract_task["input"]) == {
+        "SOURCE_URI",
+        "GMA_ID",
+        "GMA_BOUNDARY_URI",
+        "GEO_ACTOR_ID",
+        "TAPIS_TOKEN",
+        "BUDGET_PACKAGE_CANDIDATES",
+    }
+    assert extract_task["input"]["BUDGET_PACKAGE_CANDIDATES"] == {
+        "type": "string",
+        "value_from": {"args": "budget_drain_package_candidates"},
+    }
+    assert '["DRN", "DRAINS"]' in extract_task["code"]
+    assert convert_task["depends_on"] == [{"id": "step-0-budget_extract_drain"}]
+    assert convert_task["output"] == {"result": {"type": "string"}}
+    assert convert_task["input"]["SOURCE_RESULT"] == {
+        "type": "string",
+        "value_from": {
+            "task_output": {
+                "task_id": "step-0-budget_extract_drain",
+                "output_id": "result",
+            }
+        },
+    }
+    assert "SOURCE_URI" not in convert_task["input"]
+
+
+def test_unit_convert_consumes_scalar_result_and_preserves_zero():
+    code = task_code.get_code("unit_convert")
+    env = {
+        **os.environ,
+        "SOURCE_RESULT": json.dumps({"status": "ok", "value": 1.408, "unit": "m3s"}),
+        "TARGET_UNIT": "cfs",
+    }
+    proc = subprocess.run([sys.executable, "-c", code], env=env, text=True, capture_output=True, check=True)
+    result = json.loads(proc.stdout)
+    assert result["operation"] == "unit_convert"
+    assert result["unit"] == "cfs"
+    assert result["value"] == 1.408 * 35.3147
+
+    zero_proc = subprocess.run(
+        [sys.executable, "-c", code],
+        env={**env, "SOURCE_RESULT": json.dumps({"status": "ok", "value": 0, "unit": "m3s"})},
+        text=True,
+        capture_output=True,
+        check=True,
+    )
+    assert json.loads(zero_proc.stdout)["value"] == 0
+
+
+def test_unit_convert_preserves_upstream_error_contract():
+    code = task_code.get_code("unit_convert")
+    proc = subprocess.run(
+        [sys.executable, "-c", code],
+        env={
+            **os.environ,
+            "SOURCE_RESULT": json.dumps({"status": "error", "message": "model output missing"}),
+            "TARGET_UNIT": "cfs",
+        },
+        text=True,
+        capture_output=True,
+    )
+    assert proc.returncode != 0
+    error = json.loads(proc.stdout)
+    assert error["status"] == "error"
+    assert error["message"] == "model output missing"
+
+
 def test_fused_dfc_chain_has_expected_unit_conversion_rules():
     code = task_code.get_fused_dfc_chain_code([
         {"step": 0, "name": "hds-to-geotiff", "transform_type": "format_convert"},
@@ -391,9 +478,10 @@ def test_boundary_model_run_workflow_preserves_dag_and_step_sources():
         "type": "string",
         "value_from": {"args": "geometry_source_uri"},
     }
-    # generate_tapis_workflow chains tasks sequentially (prev_id pattern),
-    # so step 2 depends on step 1, not on both step 0 and step 1.
+    # The explicit plan DAG is preserved, so the intersect task waits for
+    # both boundary-query inputs before it runs.
     assert tasks[2]["depends_on"] == [
+        {"id": "step-0-gma_boundary_query"},
         {"id": "step-1-county_boundary_query"},
     ]
     # canonical scope names and aquifer are task-level inputs (env_from_args),

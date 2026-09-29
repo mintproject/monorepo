@@ -139,11 +139,22 @@ export class TapisJobService {
 
     private findModelInput(fileInputName: string, model: Model) {
         const exactInput = model.input_files.find((input) => input.name === fileInputName);
-        if (exactInput || !fileInputName.startsWith("mf6-")) {
+        const appInputName = fileInputName.toLowerCase();
+        const semanticInputNames = new Set([
+            "mf6-simulation-archive",
+            "mf6-wel",
+            "mf6-rch",
+            "mf2000-simulation-archive",
+            "mf2000-wel",
+            "mf2000-rch",
+            "mf2005-simulation-archive",
+            "mf2005-wel",
+            "mf2005-rch"
+        ]);
+        if (exactInput || !semanticInputNames.has(appInputName)) {
             return exactInput;
         }
 
-        const appInputName = fileInputName.toLowerCase();
         return model.input_files.find((input) => {
             const inputName = input.name.toLowerCase();
             const inputId = input.id.toLowerCase();
@@ -151,7 +162,7 @@ export class TapisJobService {
             const packageName = (value: string) =>
                 new RegExp(`(^|[^a-z])${value}([^a-z]|$)`).test(inputName);
 
-            if (appInputName === "mf6-simulation-archive") {
+            if (appInputName.endsWith("-simulation-archive")) {
                 return (
                     inputFormat === "zip" ||
                     inputName.includes("simulation archive") ||
@@ -160,23 +171,27 @@ export class TapisJobService {
                 );
             }
 
-            if (appInputName === "mf6-wel") {
+            if (appInputName.endsWith("-wel")) {
                 return (
                     inputFormat === "wel" ||
                     packageName("wel") ||
                     inputName.includes("well override") ||
-                    inputId.endsWith("/modflow6_input_wel")
+                    inputId.endsWith("/modflow6_input_wel") ||
+                    inputId.includes("modflow_2005_well") ||
+                    inputId.includes("modflow-2005-wel-override")
                 );
             }
 
-            if (appInputName === "mf6-rch") {
+            if (appInputName.endsWith("-rch")) {
                 return (
                     (inputFormat === "rch" &&
                         !inputName.includes("rcha") &&
                         !inputName.includes("rchb")) ||
                     packageName("rch") ||
                     inputName.includes("recharge override") ||
-                    inputId.endsWith("/modflow6_input_rch")
+                    inputId.endsWith("/modflow6_input_rch") ||
+                    inputId.includes("modflow_2005_rech") ||
+                    inputId.includes("modflow-2005-rch-override")
                 );
             }
 

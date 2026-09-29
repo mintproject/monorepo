@@ -164,6 +164,34 @@ export function adapterPlansByModel(
   }, {});
 }
 
+/**
+ * Fingerprint the model inputs/outputs represented by persisted adapter plans.
+ * Runtime context such as a selected boundary is intentionally excluded: it
+ * changes parameter values, not the source objects requiring discovery.
+ */
+export function adapterPlansSourceFingerprint(plans: ThreadAdapterPlan[]): string {
+  return plans
+    .map((plan) => {
+      if (plan.stage === 'post_model' || plan.source_kind === 'model_output') {
+        const target = plan.plan_json?.post_model_adapter as
+          | {
+              source_contract?: {
+                standard_variable_uri?: string;
+                format?: string;
+              };
+              target_contract?: { standard_variable_uri?: string };
+            }
+          | undefined;
+        return `${plan.thread_model_id}:post_model:${plan.model_io_id}:${
+          target?.target_contract?.standard_variable_uri ?? ''
+        }`;
+      }
+      return `${plan.thread_model_id}:${plan.model_io_id}:${plan.source_resource_id ?? ''}`;
+    })
+    .sort()
+    .join('|');
+}
+
 export function adapterPlanIsTransformRequired(plan: ThreadAdapterPlan): boolean {
   return plan.status === 'transform_required' || Boolean(plan.adapter_plan_id);
 }
@@ -232,6 +260,7 @@ export function adapterParameterDefaults(
 export function adapterParameterValuesForSubmission(
   plans: ThreadAdapterPlan[],
   executionPlan: Record<string, unknown>,
+  runtimeValues: Record<string, unknown> = {},
 ): Record<string, Record<string, unknown>> {
   const values: Record<string, Record<string, unknown>> = {};
   const postModelAdapter = executionPlan.post_model_adapter as
@@ -242,7 +271,16 @@ export function adapterParameterValuesForSubmission(
     if (plan.status !== 'transform_required') continue;
     const adapterPlanId =
       plan.stage === 'post_model' ? postModelAdapter?.adapter_plan_id : plan.adapter_plan_id;
-    if (adapterPlanId) values[adapterPlanId] = plan.parameter_values ?? {};
+    if (adapterPlanId) {
+      values[adapterPlanId] = {
+        ...(plan.parameter_values ?? {}),
+        ...Object.fromEntries(
+          Object.entries(runtimeValues).filter(
+            ([, value]) => value !== undefined && value !== null,
+          ),
+        ),
+      };
+    }
   }
   return values;
 }

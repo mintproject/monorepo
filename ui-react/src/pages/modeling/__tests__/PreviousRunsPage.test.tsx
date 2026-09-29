@@ -74,7 +74,7 @@ describe('PreviousRunsPage', () => {
       { initialEntries: ['/modeling/thread/thread-1/runs'] },
     );
 
-    expect(await screen.findByText('Previous runs & provenance')).toBeInTheDocument();
+    expect(await screen.findByText('Run history')).toBeInTheDocument();
     expect((await screen.findAllByText('MODFLOW')).length).toBeGreaterThan(0);
     expect(
       await screen.findByText(/legacy model job has no recorded workflow stages/i),

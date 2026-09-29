@@ -24,7 +24,7 @@ The user asks: “I’m in a GMA. Are we expected to meet the DFCs based on the 
 - The previous demo branch returned hardcoded values (`42.5`, `120.3`) and persisted mock `tasks`; this made the UI look complete without real extraction.
 - `examples/gma_dfc_transforms.json` already contains transform specs for GMA boundary query, GCD/county boundary query, DFC area intersection, head aggregation, budget extraction, saturated thickness extraction, and `dfc_compliance`.
 - `app/task_code.py` contains real task snippets for geo_actor-backed operations, but `_DFC_COMPLIANCE_SNIPPET` is still a stub.
-- `app/tapis.py` can generate fused DFC workflow tasks for live execution, but live execution depends on Tapis token, geo_actor ID, source model artifact URI, and boundary/runtime args.
+- `app/tapis.py` generates modular DFC workflow tasks with explicit named task-output handoffs for live execution. Live execution depends on a Tapis token, geo_actor ID, source model artifact URI, and boundary/runtime args.
 - Frontend now renders DFC results honestly and flags GMA-average-vs-area-specific scope mismatches.
 
 ---

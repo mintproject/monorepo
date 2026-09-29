@@ -345,3 +345,152 @@ test("semantic MODFLOW 6 model inputs map to Tapis file-input names", () => {
         { name: "mf6-rch", sourceUrl: "https://example.com/model.rch" }
     ]);
 });
+
+test("semantic MODFLOW 2005 inputs map to the archive-first Tapis contract", () => {
+    const archiveId =
+        "https://w3id.org/okn/i/mint/wmobley-modflow-2005-simulation-archive";
+    const wellId = "https://w3id.org/okn/i/mint/modflow_2005_Well";
+    const rechargeId = "https://w3id.org/okn/i/mint/modflow_2005_Rech";
+    const mf2005App = {
+        ...app,
+        id: "modflow-2005-simulation",
+        version: "0.0.f8480a8",
+        jobAttributes: {
+            ...app.jobAttributes,
+            fileInputs: [
+                {
+                    name: "mf2005-simulation-archive",
+                    description: "Required simulation archive",
+                    inputMode: "REQUIRED",
+                    autoMountLocal: true,
+                    sourceUrl: null,
+                    targetPath: "simulation.zip"
+                },
+                {
+                    name: "mf2005-wel",
+                    description: "Optional well package override",
+                    inputMode: "OPTIONAL",
+                    autoMountLocal: true,
+                    sourceUrl: null,
+                    targetPath: "provided/model.wel"
+                },
+                {
+                    name: "mf2005-rch",
+                    description: "Optional recharge package override",
+                    inputMode: "OPTIONAL",
+                    autoMountLocal: true,
+                    sourceUrl: null,
+                    targetPath: "provided/model.rch"
+                }
+            ]
+        }
+    } as Apps.TapisApp;
+    const mf2005Model = {
+        ...model,
+        id: "mf2005-model",
+        input_files: [
+            {
+                id: archiveId,
+                name: "MODFLOW 2005 simulation archive",
+                type: "",
+                format: "zip",
+                variables: [],
+                is_optional: false
+            },
+            {
+                id: wellId,
+                name: "MODFLOW 2005 well override",
+                type: "",
+                format: "dat",
+                variables: [],
+                is_optional: true
+            },
+            {
+                id: rechargeId,
+                name: "MODFLOW 2005 recharge override",
+                type: "",
+                format: "dat",
+                variables: [],
+                is_optional: true
+            }
+        ]
+    } as Model;
+    const semanticSeed = {
+        ...seeds[0],
+        datasets: {
+            [archiveId]: [{ id: "archive", name: "simulation.zip", url: "https://example.com/simulation.zip", type: "zip" }],
+            [wellId]: [{ id: "well", name: "model.wel", url: "https://example.com/model.wel", type: "wel" }],
+            [rechargeId]: [{ id: "recharge", name: "model.rch", url: "https://example.com/model.rch", type: "rch" }]
+        }
+    };
+    const jobService = new TapisJobService(
+        new Jobs.JobsApi(),
+        new Jobs.SubscriptionsApi(),
+        new Jobs.ShareApi()
+    );
+
+    expect(jobService.createJobFileInputsFromSeed(semanticSeed, mf2005App, mf2005Model)).toEqual([
+        { name: "mf2005-simulation-archive", sourceUrl: "https://example.com/simulation.zip" },
+        { name: "mf2005-wel", sourceUrl: "https://example.com/model.wel" },
+        { name: "mf2005-rch", sourceUrl: "https://example.com/model.rch" }
+    ]);
+});
+
+test("semantic MODFLOW 2000 archive input maps to the archive-first Tapis contract", () => {
+    const archiveId =
+        "https://w3id.org/okn/i/mint/wmobley-modflow-2000-simulation-archive";
+    const mf2000App = {
+        ...app,
+        id: "modflow-2000-simulation",
+        version: "0.0.febed09",
+        jobAttributes: {
+            ...app.jobAttributes,
+            fileInputs: [
+                {
+                    name: "mf2000-simulation-archive",
+                    description: "Required simulation archive",
+                    inputMode: "REQUIRED",
+                    autoMountLocal: true,
+                    sourceUrl: null,
+                    targetPath: "simulation.zip"
+                }
+            ]
+        }
+    } as Apps.TapisApp;
+    const mf2000Model = {
+        ...model,
+        id: "mf2000-model",
+        input_files: [
+            {
+                id: archiveId,
+                name: "MODFLOW 2000 simulation archive",
+                type: "",
+                format: "zip",
+                variables: [],
+                is_optional: false
+            }
+        ]
+    } as Model;
+    const semanticSeed = {
+        ...seeds[0],
+        datasets: {
+            [archiveId]: [
+                {
+                    id: "archive",
+                    name: "simulation.zip",
+                    url: "https://example.com/simulation.zip",
+                    type: "zip"
+                }
+            ]
+        }
+    };
+    const jobService = new TapisJobService(
+        new Jobs.JobsApi(),
+        new Jobs.SubscriptionsApi(),
+        new Jobs.ShareApi()
+    );
+
+    expect(jobService.createJobFileInputsFromSeed(semanticSeed, mf2000App, mf2000Model)).toEqual([
+        { name: "mf2000-simulation-archive", sourceUrl: "https://example.com/simulation.zip" }
+    ]);
+});

@@ -24,6 +24,7 @@ from starlette.concurrency import run_in_threadpool
 
 from .config import settings
 from . import tapis as tapis_mod
+from .result_contract import task_result
 from .error_handling import safe_error_message
 
 log = logging.getLogger(__name__)
@@ -92,6 +93,7 @@ mutation InsertExecutionDataBinding($obj: execution_data_binding_insert_input!) 
 _TERMINAL: dict[str, str] = {
     "COMPLETED": "completed",
     "FINISHED":  "completed",   # older Tapis tenants use FINISHED
+    "NORMAL_COMPLETION": "completed",
     "FAILED":    "failed",
     "CANCELLED": "failed",
     "TERMINATED": "failed",
@@ -121,7 +123,11 @@ def _terminal_update_set(
     if adapter_status is None:
         return None, {}
 
-    failed_tasks = _failed_task_messages(detail or {})
+    detail = detail or {}
+    failed_tasks = _failed_task_messages(detail)
+    _, result_error = task_result(detail)
+    if result_error:
+        failed_tasks.append(result_error)
     if failed_tasks:
         adapter_status = "failed"
 
@@ -276,6 +282,13 @@ async def poll_once(token: str) -> list[dict[str, Any]]:
         run_id = run["id"]
         pipeline_id = run.get("tapis_workflow_id")
         run_uuid = run.get("tapis_run_id")
+        if run.get("execution_id"):
+            # Coordinator-owned runs are polled by Ensemble Manager with the
+            # UI caller's bearer token. This unattended poller only has the
+            # service fallback token; polling here would substitute
+            # tasclient_dsso for the user who submitted the run and can
+            # produce owner-mismatch failures.
+            continue
         if not (pipeline_id and run_uuid):
             log.debug("poller: run %s missing pipeline_id/run_uuid, skipping", run_id)
             continue

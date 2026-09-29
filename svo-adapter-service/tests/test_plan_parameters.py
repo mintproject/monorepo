@@ -135,6 +135,25 @@ def test_submit_validation_rejects_missing_unknown_and_invalid_values():
     assert invalid.value.detail["parameters"]["threshold"] == "must be >= 0"
 
 
+def test_submit_validation_accepts_workflow_runtime_parameters():
+    plan = {"parameters": [{"name": "threshold", "type": "number", "required": True}]}
+
+    args = _validate_plan_args(
+        plan,
+        {
+            "threshold": 1,
+            "start_date": "2001-01-01",
+            "end_date": "2010-12-31",
+            "aoi_geojson_uri": "https://example.test/gma/4",
+        },
+        "token",
+    )
+
+    assert args["start_date"]["value"] == "2001-01-01"
+    assert args["end_date"]["value"] == "2010-12-31"
+    assert args["aoi_geojson_uri"]["value"] == "https://example.test/gma/4"
+
+
 def test_deferred_workflow_accepts_coordinator_execution_id():
     plan = {"parameters": [{"name": "source_uri", "type": "string", "required": True}]}
 

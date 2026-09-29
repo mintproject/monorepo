@@ -58,12 +58,28 @@ plans through the existing adapter workflow tables.
 | Method | Path | Purpose |
 |---|---|---|
 | POST | `/workflows/generate` | Generate and persist a Tapis Workflows definition for a plan. |
-| POST | `/workflows/submit` | Register/run a generated workflow, or return a dry-run. With the server-generated `model_task` payload it submits one composite model-plus-adapter workflow. Bound deferred plans require the same coordinator-owned `execution_id` in both request metadata and `args`; mismatches return `DEFERRED_EXECUTION_ID_MISMATCH`. Tapis submission failures are persisted and returned with `TAPIS_WORKFLOW_SUBMISSION_FAILED` plus a run ID. Accepts `Idempotency-Key` (or the equivalent `idempotency_key` body field) for replay-safe submissions. |
+| POST | `/workflows/submit` | Register/run a generated adapter workflow, or return a dry-run. Deferred plans require a coordinator-owned `execution_id` and a concrete, already-resolved `source_uri`; mismatches return `DEFERRED_EXECUTION_ID_MISMATCH`. Internal Ensemble Manager composite submissions may include a server-generated `model_task`; the adapter then submits/polls that model job, discovers the declared output, and hands its URI to the first transform task. Composite descriptors require Ensemble Manager authentication, an `execution_id`, and contain no bearer credentials. Tapis submission failures are persisted and returned with `TAPIS_WORKFLOW_SUBMISSION_FAILED` plus a run ID. Accepts `Idempotency-Key` (or the equivalent `idempotency_key` body field) for replay-safe submissions. |
 | GET | `/runs` | List recent adapter workflow runs. |
 | GET | `/runs/{run_id}` | Retrieve one run. |
 | POST | `/runs/{run_id}/poll` | Poll Tapis and persist the run status transition. |
 | GET | `/runs/{run_id}/provenance` | Retrieve provenance events for a run. |
 | POST | `/runs/{run_id}/register-output` | Register a workflow output as a data object. |
+
+When a completed hosted function task emits a scalar JSON result instead of a
+URL, `/runs/{run_id}/poll` exposes the Tapis Workflows archived `.stdout` file
+as `output_uri` and exposes a bounded `result` object containing the numeric
+`value` plus optional `unit`/`operation`, so Ensemble Manager can register the
+result as a downstream data object while the facilitator view displays the
+scalar answer separately from the artifact.
+
+If a task exits with a JSON payload whose `status` is `error`, the poller
+marks the adapter run failed even when the workflow wrapper reports
+`COMPLETED`; the response includes the bounded task error in `error_message`.
+
+Hosted transforms remain modular: each function task declares a named `result`
+output, and scalar consumers such as `unit_convert` bind their
+`SOURCE_RESULT` from the preceding task with a Workflows `task_output` reference.
+`depends_on` controls ordering only; it is not treated as a data handoff.
 
 Terminal provider failures always populate `error_message`, including when
 Tapis returns no failed-task details. Provider diagnostics are bounded and
@@ -135,11 +151,12 @@ forecast execution are bespoke to NTGAM.
 
 ### Deferred model-output handoff
 
-The deferred endpoints are retained for legacy and recovery orchestration. A
-new post-model run instead sends a server-generated `model_task` descriptor to
-`/workflows/submit`; the adapter adds that model task and an output-handoff task
-to the same Tapis workflow before the SVO transforms. The model task descriptor
-contains a job definition and output URI, but no Tapis credential. The adapter
-poller skips its normal automatic output binding for plans marked
-`orchestration_mode: "em_deferred_post_model"`; the composite workflow owns
-the model-to-adapter handoff.
+The deferred endpoints remain available for older coordinator-managed
+post-model plans. New MINT post-model runs use the internal composite form of
+`/workflows/submit`: Ensemble Manager supplies a server-generated model job
+descriptor, and the adapter owns model submission, polling, exact output-file
+matching, and the subsequent modular transform tasks in one workflow. The
+adapter captures the provider UUID returned by Tapis Jobs and never correlates
+the output by job name, guessed archive path, or a generic workflow environment
+variable. The model task emits a named `result` URI, which hosted transforms
+consume through a Workflows `task_output` reference.

@@ -199,15 +199,15 @@ INSERT INTO public.modelcatalog_dataset_specification
 VALUES
   (
     'https://w3id.org/okn/i/mint/6b16c7bc-25ef-4afb-bc4b-35b10cc409c9',
-    'Cell budget output', NULL, 'cbc-mf2000', NULL, NULL
+    'Cell budget output', NULL, 'cbc-mf2000', NULL, 2
   ),
   (
     'https://w3id.org/okn/i/mint/9aadd1a3-cd8c-4f52-8eda-4b897e1d786f',
-    'Drawdown output', NULL, 'ddn', NULL, NULL
+    'Drawdown output', NULL, 'ddn', NULL, 4
   ),
   (
     'https://w3id.org/okn/i/mint/d9caf5a9-335e-4883-a50b-699f387cf34a',
-    'Hydraulic head output', NULL, 'hds', NULL, NULL
+    'Hydraulic head output', NULL, 'hds', NULL, 3
   ),
   (
     'https://w3id.org/okn/i/mint/56acb8fe-9b53-4124-83c0-2b0025bf9361',

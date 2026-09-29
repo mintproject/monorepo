@@ -4,6 +4,8 @@ import { Search } from 'lucide-react';
 import {
   Thread,
   getUserPermission,
+  useInsertThreadProvenanceMutation,
+  useUpdateThreadMutation,
   useUpdateThreadDataMutation,
 } from '@/graphql/generated/modeling';
 import type {
@@ -83,6 +85,25 @@ export function dateCoverage(
 
 function validDate(value: Date | null | undefined): Date | null {
   return value && !Number.isNaN(value.getTime()) ? value : null;
+}
+
+/**
+ * Find the date window shared by every selected archive. A range is only
+ * returned when each archive declares both bounds, because an open-ended or
+ * missing bound cannot safely constrain a model run.
+ */
+export function archiveDateRange(
+  periods: Array<DataCatalogTimePeriod | null | undefined>,
+): RequestedRange | null {
+  const bounds = periods.map((period) => ({
+    start: validDate(period?.start_date),
+    end: validDate(period?.end_date),
+  }));
+  if (bounds.length === 0 || bounds.some(({ start, end }) => !start || !end)) return null;
+
+  const start = new Date(Math.max(...bounds.map(({ start }) => start!.getTime())));
+  const end = new Date(Math.min(...bounds.map(({ end }) => end!.getTime())));
+  return start < end ? { start, end } : null;
 }
 
 /** Map a Data Catalog time period onto the {start,end} shape dateCoverage expects. */
@@ -763,15 +784,21 @@ export function DatasetsStep({
     Record<string, DataCatalogDataset>
   >({});
 
+  const [savingArchiveDates, setSavingArchiveDates] = useState(false);
+  const [updateThread] = useUpdateThreadMutation();
+  const [insertThreadProvenance] = useInsertThreadProvenanceMutation();
   const [updateThreadData] = useUpdateThreadDataMutation();
 
   const modelIds = Object.keys(models);
 
-  function assignmentFor(modelId: string, inputId: string): Assignment | null {
-    const override = overrides[modelId]?.[inputId];
-    if (override !== undefined) return override;
-    return persisted[modelId]?.[inputId] ?? null;
-  }
+  const assignmentFor = useCallback(
+    (modelId: string, inputId: string): Assignment | null => {
+      const override = overrides[modelId]?.[inputId];
+      if (override !== undefined) return override;
+      return persisted[modelId]?.[inputId] ?? null;
+    },
+    [overrides, persisted],
+  );
 
   const reportKnownDatasetMetadata = useCallback((dataset: DataCatalogDataset) => {
     setKnownDatasetMetadata((previous) =>
@@ -819,6 +846,68 @@ export function DatasetsStep({
   }, 0);
 
   const allAssigned = requiredInputCount > 0 && assignedCount === requiredInputCount;
+
+  const selectedArchivePeriods = useMemo(() => {
+    const periods: Array<DataCatalogTimePeriod | null> = [];
+    for (const [modelId, model] of Object.entries(models)) {
+      for (const input of model.input_files) {
+        const assignment = assignmentFor(modelId, input.id);
+        if (!assignment) continue;
+        periods.push(
+          assignment.timePeriod ?? knownDatasetMetadata[assignment.datasetId]?.time_period ?? null,
+        );
+      }
+    }
+    return periods;
+  }, [assignmentFor, knownDatasetMetadata, models]);
+
+  const selectedArchiveRange = useMemo(
+    () => archiveDateRange(selectedArchivePeriods),
+    [selectedArchivePeriods],
+  );
+
+  async function handleUseArchiveDates() {
+    if (!selectedArchiveRange || !perm.write) return;
+    const startDate = selectedArchiveRange.start.toISOString().slice(0, 10);
+    const endDate = selectedArchiveRange.end.toISOString().slice(0, 10);
+    setSavingArchiveDates(true);
+    try {
+      await updateThread({
+        variables: {
+          id: thread.id,
+          name: thread.name,
+          startDate,
+          endDate,
+          regionId: thread.region_id,
+          drivingVariableId: thread.driving_variable_id,
+          responseVariableId: thread.response_variable_id,
+        },
+      });
+      if (user?.username) {
+        await insertThreadProvenance({
+          variables: {
+            threadId: thread.id,
+            event: 'UPDATE',
+            userid: user.username,
+            notes: 'Set time period from selected archive coverage',
+          },
+        });
+      }
+      await onUpdated();
+      toast({
+        title: 'Dates set from selected archives',
+        description: `${startDate} – ${endDate}`,
+      });
+    } catch (err) {
+      toast({
+        title: 'Could not set archive dates',
+        description: String(err),
+        variant: 'destructive',
+      });
+    } finally {
+      setSavingArchiveDates(false);
+    }
+  }
 
   function assign(
     modelId: string,
@@ -978,6 +1067,29 @@ export function DatasetsStep({
       onBack={onBack}
     >
       <FilteredByBanner chips={chips} />
+
+      {allAssigned && selectedArchiveRange && (
+        <div
+          className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded border border-blue-200 bg-blue-50 px-3 py-2 text-sm"
+          data-testid="archive-date-suggestion"
+        >
+          <div>
+            <p className="font-medium text-blue-900">Selected archive coverage</p>
+            <p className="text-xs text-blue-800">
+              {selectedArchiveRange.start.toISOString().slice(0, 10)} –{' '}
+              {selectedArchiveRange.end.toISOString().slice(0, 10)}
+            </p>
+          </div>
+          <button
+            type="button"
+            className="rounded border border-blue-300 bg-white px-2.5 py-1.5 text-xs font-medium text-blue-800 hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-50"
+            onClick={() => void handleUseArchiveDates()}
+            disabled={savingArchiveDates || !perm.write}
+          >
+            {savingArchiveDates ? 'Setting dates…' : 'Use archive dates'}
+          </button>
+        </div>
+      )}
 
       <DatasetSpatialMap value={spatialBox} onChange={setSpatialBox} />
 

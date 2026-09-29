@@ -5,6 +5,7 @@ import {
   adapterParameterKey,
   adapterParameterValuesForSubmission,
   adapterParametersComplete,
+  adapterPlansSourceFingerprint,
   type ThreadAdapterPlan,
 } from '@/lib/adapter-execution';
 
@@ -64,6 +65,24 @@ function plan(parameterValues: Record<string, unknown>): ThreadAdapterPlan {
 }
 
 describe('adapter-execution', () => {
+  it('fingerprints persisted source plans without including runtime scope values', () => {
+    const postModel = plan({ spatial_scope_id: '10' });
+    postModel.stage = 'post_model';
+    postModel.source_kind = 'model_output';
+    postModel.model_io_id = 'output-cbb';
+    postModel.plan_json.post_model_adapter = {
+      source_contract: {},
+      target_contract: {
+        standard_variable_uri: 'spring-flow',
+        unit: 'cfs',
+      },
+    } as never;
+
+    expect(adapterPlansSourceFingerprint([postModel])).toBe(
+      'thread-model-1:post_model:output-cbb:spring-flow',
+    );
+  });
+
   it('uses a model-scoped field name for adapter inputs', () => {
     expect(adapterParameterKey('model-1', 'springflow_layer')).toBe(
       'model-1::adapter::springflow_layer',
@@ -111,6 +130,30 @@ describe('adapter-execution', () => {
       'new-deferred-plan-id': {
         gma_id: 'GMA 7',
         gma_boundary_uri: 'https://example.test/gma',
+      },
+    });
+  });
+
+  it('merges execution-time dates and boundary values into adapter submission', () => {
+    const postModel = plan({ geometry_source_uri: 'https://example.test/gma/4' });
+    postModel.stage = 'post_model';
+
+    expect(
+      adapterParameterValuesForSubmission(
+        [postModel],
+        { post_model_adapter: { adapter_plan_id: 'new-deferred-plan-id' } },
+        {
+          start_date: '2001-01-01',
+          end_date: '2010-12-31',
+          aoi_geojson_uri: 'https://example.test/gma/4',
+        },
+      ),
+    ).toEqual({
+      'new-deferred-plan-id': {
+        geometry_source_uri: 'https://example.test/gma/4',
+        start_date: '2001-01-01',
+        end_date: '2010-12-31',
+        aoi_geojson_uri: 'https://example.test/gma/4',
       },
     });
   });

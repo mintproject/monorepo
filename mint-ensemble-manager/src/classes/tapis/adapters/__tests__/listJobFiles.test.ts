@@ -160,4 +160,19 @@ describe("TapisExecutionService.listCompositeWorkflowFiles", () => {
         expect(listJobFiles).toHaveBeenCalledWith("provider-job-1");
         expect(files).toEqual([{ name: "mfsim.lst" }]);
     });
+
+    it("resolves semantic cbb output keys to an unambiguous cbc archive file", async () => {
+        const service = new TapisExecutionService("test-token", "http://tapis.test");
+        service.listCompositeWorkflowFiles = jest.fn().mockResolvedValue([
+            { name: "BARTON_SPRINGS.cbc", url: "tapis://ls6/archive/BARTON_SPRINGS.cbc" }
+        ] as any);
+
+        await expect(
+            service.resolveCompositeWorkflowOutput(
+                "execution-1",
+                "mint-workflow-output/run-1/model",
+                "cbb"
+            )
+        ).resolves.toBe("tapis://ls6/archive/BARTON_SPRINGS.cbc");
+    });
 });

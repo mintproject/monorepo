@@ -116,15 +116,15 @@ export function ETLProcessRegisterPage() {
                   id="visibility"
                   name="visibility"
                   className="mt-1 block w-full rounded border border-input bg-background px-3 py-2 text-sm"
-                  defaultValue="private"
+                  defaultValue="shared"
                 >
                   <option>private</option>
                   <option>shared</option>
                   <option>public</option>
                 </select>
                 <FieldHelp>
-                  Private is visible only to you; shared lets collaborators use it; public makes it
-                  broadly discoverable.
+                  Shared is visible to every signed-in user; public also makes it available to
+                  anonymous catalog readers.
                 </FieldHelp>
               </div>
             </div>

@@ -675,7 +675,17 @@
         "GMA_ID":           "spatial_scope_id",
         "GMA_BOUNDARY_URI": "geometry_source_uri",
         "GEO_ACTOR_ID":    "geo_actor_id",
-        "TAPIS_TOKEN":      "tapis_token"
+        "TAPIS_TOKEN":      "tapis_token",
+        "BUDGET_PACKAGE_CANDIDATES": "budget_drain_package_candidates"
+      },
+      "parameters_schema_json": {
+        "properties": {
+          "budget_drain_package_candidates": {
+            "type": "string",
+            "default": "[\"DRN\", \"DRAINS\"]",
+            "description": "Ordered exact CBC labels for drain discharge; the geo actor selects the first label present."
+          }
+        }
       },
       "contracts": [
         {"id": "c-mf6-drn-in",  "role": "input",  "format": "cbc-mf6"},
@@ -698,7 +708,17 @@
         "GMA_ID":           "spatial_scope_id",
         "GMA_BOUNDARY_URI": "geometry_source_uri",
         "GEO_ACTOR_ID":    "geo_actor_id",
-        "TAPIS_TOKEN":      "tapis_token"
+        "TAPIS_TOKEN":      "tapis_token",
+        "BUDGET_PACKAGE_CANDIDATES": "budget_drain_package_candidates"
+      },
+      "parameters_schema_json": {
+        "properties": {
+          "budget_drain_package_candidates": {
+            "type": "string",
+            "default": "[\"DRN\", \"DRAINS\"]",
+            "description": "Ordered exact CBC labels for drain discharge; the geo actor selects the first label present."
+          }
+        }
       },
       "contracts": [
         {"id": "c-usg-drn-in",  "role": "input",  "format": "cbc-mfusg"},
@@ -721,7 +741,17 @@
         "GMA_ID":           "spatial_scope_id",
         "GMA_BOUNDARY_URI": "geometry_source_uri",
         "GEO_ACTOR_ID":    "geo_actor_id",
-        "TAPIS_TOKEN":      "tapis_token"
+        "TAPIS_TOKEN":      "tapis_token",
+        "BUDGET_PACKAGE_CANDIDATES": "budget_drain_package_candidates"
+      },
+      "parameters_schema_json": {
+        "properties": {
+          "budget_drain_package_candidates": {
+            "type": "string",
+            "default": "[\"DRAINS\", \"DRN\"]",
+            "description": "Ordered exact CBC labels for legacy drain discharge; the geo actor selects the first label present."
+          }
+        }
       },
       "contracts": [
         {"id": "c-m2k-drn-in",  "role": "input",  "format": "cbc-mf2000"},
@@ -744,7 +774,17 @@
         "GMA_ID":           "spatial_scope_id",
         "GMA_BOUNDARY_URI": "geometry_source_uri",
         "GEO_ACTOR_ID":    "geo_actor_id",
-        "TAPIS_TOKEN":      "tapis_token"
+        "TAPIS_TOKEN":      "tapis_token",
+        "BUDGET_PACKAGE_CANDIDATES": "budget_drain_package_candidates"
+      },
+      "parameters_schema_json": {
+        "properties": {
+          "budget_drain_package_candidates": {
+            "type": "string",
+            "default": "[\"DRAINS\", \"DRN\"]",
+            "description": "Ordered exact CBC labels for legacy drain discharge; the geo actor selects the first label present."
+          }
+        }
       },
       "contracts": [
         {"id": "c-m96-drn-in",  "role": "input",  "format": "cbc-mf96"},
@@ -767,7 +807,17 @@
         "GMA_ID":           "spatial_scope_id",
         "GMA_BOUNDARY_URI": "geometry_source_uri",
         "GEO_ACTOR_ID":    "geo_actor_id",
-        "TAPIS_TOKEN":      "tapis_token"
+        "TAPIS_TOKEN":      "tapis_token",
+        "BUDGET_PACKAGE_CANDIDATES": "budget_drain_package_candidates"
+      },
+      "parameters_schema_json": {
+        "properties": {
+          "budget_drain_package_candidates": {
+            "type": "string",
+            "default": "[\"DRAINS\", \"DRN\"]",
+            "description": "Ordered exact labels for MODFLOW-2005 drain discharge; the geo actor selects the first label present."
+          }
+        }
       },
       "contracts": [
         {"id": "c-m2005-drn-in",  "role": "input",  "format": "cbc-mf2005"},
@@ -790,7 +840,17 @@
         "GMA_ID":           "spatial_scope_id",
         "GMA_BOUNDARY_URI": "geometry_source_uri",
         "GEO_ACTOR_ID":    "geo_actor_id",
-        "TAPIS_TOKEN":      "tapis_token"
+        "TAPIS_TOKEN":      "tapis_token",
+        "BUDGET_PACKAGE_CANDIDATES": "budget_river_package_candidates"
+      },
+      "parameters_schema_json": {
+        "properties": {
+          "budget_river_package_candidates": {
+            "type": "string",
+            "default": "[\"RIV\", \"RIVER LEAKAGE\"]",
+            "description": "Ordered exact CBC labels for river leakage; the geo actor selects the first label present."
+          }
+        }
       },
       "contracts": [
         {"id": "c-mf6-riv-in",  "role": "input",  "format": "cbc-mf6"},
@@ -813,7 +873,17 @@
         "GMA_ID":           "spatial_scope_id",
         "GMA_BOUNDARY_URI": "geometry_source_uri",
         "GEO_ACTOR_ID":    "geo_actor_id",
-        "TAPIS_TOKEN":      "tapis_token"
+        "TAPIS_TOKEN":      "tapis_token",
+        "BUDGET_PACKAGE_CANDIDATES": "budget_river_package_candidates"
+      },
+      "parameters_schema_json": {
+        "properties": {
+          "budget_river_package_candidates": {
+            "type": "string",
+            "default": "[\"RIV\", \"RIVER LEAKAGE\"]",
+            "description": "Ordered exact CBC labels for river leakage; the geo actor selects the first label present."
+          }
+        }
       },
       "contracts": [
         {"id": "c-usg-riv-in",  "role": "input",  "format": "cbc-mfusg"},
@@ -836,7 +906,17 @@
         "GMA_ID":           "spatial_scope_id",
         "GMA_BOUNDARY_URI": "geometry_source_uri",
         "GEO_ACTOR_ID":    "geo_actor_id",
-        "TAPIS_TOKEN":      "tapis_token"
+        "TAPIS_TOKEN":      "tapis_token",
+        "BUDGET_PACKAGE_CANDIDATES": "budget_river_package_candidates"
+      },
+      "parameters_schema_json": {
+        "properties": {
+          "budget_river_package_candidates": {
+            "type": "string",
+            "default": "[\"RIV\", \"RIVER LEAKAGE\"]",
+            "description": "Ordered exact CBC labels for river leakage; the geo actor selects the first label present."
+          }
+        }
       },
       "contracts": [
         {"id": "c-m2k-riv-in",  "role": "input",  "format": "cbc-mf2000"},
@@ -859,7 +939,17 @@
         "GMA_ID":           "spatial_scope_id",
         "GMA_BOUNDARY_URI": "geometry_source_uri",
         "GEO_ACTOR_ID":    "geo_actor_id",
-        "TAPIS_TOKEN":      "tapis_token"
+        "TAPIS_TOKEN":      "tapis_token",
+        "BUDGET_PACKAGE_CANDIDATES": "budget_river_package_candidates"
+      },
+      "parameters_schema_json": {
+        "properties": {
+          "budget_river_package_candidates": {
+            "type": "string",
+            "default": "[\"RIV\", \"RIVER LEAKAGE\"]",
+            "description": "Ordered exact CBC labels for river leakage; the geo actor selects the first label present."
+          }
+        }
       },
       "contracts": [
         {"id": "c-m96-riv-in",  "role": "input",  "format": "cbc-mf96"},

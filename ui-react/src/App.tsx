@@ -19,6 +19,7 @@ import { ProblemStatementsList } from './pages/modeling/ProblemStatementsList';
 import { MintProblemStatement } from './pages/modeling/MintProblemStatement';
 import { MintThread } from './pages/modeling/MintThread';
 import { PreviousRunsPage } from './pages/modeling/PreviousRunsPage';
+import { RunDiagnosticsPage } from './pages/modeling/RunDiagnosticsPage';
 import { GuidedModelSetup } from './pages/modeling/GuidedModelSetup';
 
 // Pages — datasets
@@ -110,6 +111,14 @@ export function App() {
             element={
               <ProtectedRoute>
                 <MintProblemStatement />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/modeling/thread/:threadId/runs/:runKey/diagnostics"
+            element={
+              <ProtectedRoute>
+                <RunDiagnosticsPage />
               </ProtectedRoute>
             }
           />

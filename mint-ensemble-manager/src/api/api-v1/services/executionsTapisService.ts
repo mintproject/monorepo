@@ -16,6 +16,7 @@ import { applyExecutionInputOverrides } from "@/classes/common/execution-input-o
 type AdapterAwareModelThread = ModelThread & {
     adapter_resource_overrides?: Parameters<typeof applyExecutionInputOverrides>[2];
     max_minutes?: number;
+    output_name?: string;
 };
 
 export interface ExecutionsTapisService {
@@ -28,8 +29,15 @@ export interface ExecutionsTapisService {
         execution_id: string;
         output_uri: string;
         output_name: string;
+        output_format?: string;
         job_definition: unknown;
     }>;
+    resolveCompositeWorkflowOutput(
+        executionId: string,
+        archivePath: string,
+        outputName: string,
+        authorization: string
+    ): Promise<string | null>;
     updateCompositeWorkflowExecution(
         threadId: string,
         modelId: string,
@@ -110,6 +118,18 @@ const executionsTapisService = {
         const prefs = getConfiguration();
         const tapisExecution = new TapisExecutionService(token, prefs.tapis.basePath);
         return tapisExecution.getJobStatus(jobId);
+    },
+    async resolveCompositeWorkflowOutput(
+        executionId: string,
+        archivePath: string,
+        outputName: string,
+        authorization: string
+    ): Promise<string | null> {
+        const token = getTokenFromAuthorizationHeader(authorization);
+        if (!token) throw new Error("Unauthorized");
+        const prefs = getConfiguration();
+        const tapisExecution = new TapisExecutionService(token, prefs.tapis.basePath);
+        return tapisExecution.resolveCompositeWorkflowOutput(executionId, archivePath, outputName);
     },
     async submitExecution(
         threadmodel: AdapterAwareModelThread,

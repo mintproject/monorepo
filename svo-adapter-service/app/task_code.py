@@ -19,6 +19,7 @@ env_from_args wiring):
   SOURCE_UNIT     — input unit string (e.g. "m")
   TARGET_UNIT     — output unit string (e.g. "ft")
   VARIABLE_NAME   — variable name to extract from the file
+  BUDGET_PACKAGE_CANDIDATES — JSON list of exact CBC labels to try in order
 """
 from __future__ import annotations
 
@@ -27,7 +28,7 @@ import json
 import textwrap
 
 _INPUT_HELPER = """\
-import os
+import json, os
 try:
     from owe_python_sdk.runtime import execution_context as _ctx
 except Exception:
@@ -51,6 +52,30 @@ def _input_alias(canonical, *legacy, default=""):
         if value not in (None, ""):
             return value
     return default
+
+def _emit_result(result):
+    # Keep stdout as a bounded, inspectable record while also publishing the
+    # same value through the Workflows function-task output contract. The
+    # latter is the typed handoff consumed by downstream tasks.
+    text = json.dumps(result)
+    if _ctx is not None:
+        try:
+            _ctx.set_output("result", text)
+        except Exception:
+            pass
+    print(text)
+
+def _die(message):
+    # Keep task failures structured so Workflows and the facilitator UI can
+    # distinguish a failed transform from a successful JSON result.
+    text = json.dumps({"schema_version": 1, "status": "error", "message": message})
+    if _ctx is not None:
+        try:
+            _ctx.set_output("result", text)
+        except Exception:
+            pass
+    print(text)
+    raise SystemExit(1)
 """
 
 _ACTOR_HELPER = """\
@@ -111,7 +136,7 @@ def _actor_run(msg):
         _die(f"geo_actor execution {eid} completed but logs were not JSON: {str(logs)[:1200]}")
 
 def _die(message):
-    print(json.dumps({"status": "error", "message": message}))
+    print(json.dumps({"schema_version": 1, "status": "error", "message": message}))
     raise SystemExit(1)
 """
 _ACTOR_HELPER = _INPUT_HELPER + _ACTOR_HELPER
@@ -126,14 +151,34 @@ result = _actor_run({
     "read_token": _input("TAPIS_TOKEN", ""),
     "params": {"lat": _lat, "lon": _lon, "band": 1},
 })
-print(json.dumps(result))
+_emit_result(result)
 """
 
 _UNIT_CONVERT_SNIPPET = _INPUT_HELPER + """\
-import json
-_src_unit = _input("SOURCE_UNIT", "m")
+_raw_source_result = _input_alias("SOURCE_RESULT", "INTERMEDIATE_RESULT")
+if not _raw_source_result:
+    _die("SOURCE_RESULT is required for modular unit conversion")
+try:
+    _source_payload = json.loads(_raw_source_result) if isinstance(_raw_source_result, str) else _raw_source_result
+except Exception as exc:
+    _die(f"SOURCE_RESULT must be JSON: {exc}")
+if isinstance(_source_payload, dict) and isinstance(_source_payload.get("result"), dict):
+    _source_payload = _source_payload["result"]
+if isinstance(_source_payload, dict) and str(_source_payload.get("status") or "").lower() == "error":
+    _die(_source_payload.get("message") or "upstream transform failed")
+if not isinstance(_source_payload, dict):
+    _die("SOURCE_RESULT must be a JSON object containing a numeric value")
+_source_value = _source_payload.get("value")
+if isinstance(_source_value, bool) or not isinstance(_source_value, (int, float)):
+    for _key in ("spring_flow", "stream_flow", "baseflow", "flow", "total_flow", "mean", "average", "average_value"):
+        _candidate = _source_payload.get(_key)
+        if not isinstance(_candidate, bool) and isinstance(_candidate, (int, float)):
+            _source_value = _candidate
+            break
+if isinstance(_source_value, bool) or not isinstance(_source_value, (int, float)):
+    _die("SOURCE_RESULT did not contain a numeric value")
+_src_unit = str(_source_payload.get("unit") or _source_payload.get("units") or _input("SOURCE_UNIT", "m"))
 _tgt_unit = _input("TARGET_UNIT", "ft")
-_src_uri = _input("SOURCE_URI", "")
 # Linear factor table — extend as needed.
 _FACTORS: dict[tuple[str, str], float] = {
     ("m", "ft"): 3.28084,
@@ -165,14 +210,17 @@ elif _factor is not None:
     def _convert(v): return v * _factor
 else:
     raise RuntimeError(f"No unit conversion defined for {_src_unit!r} -> {_tgt_unit!r}")
+_converted = _convert(_source_value)
 result = {
-    "source_uri": _src_uri,
+    "schema_version": 1,
+    "status": "ok",
+    "operation": "unit_convert",
+    "value": _converted,
     "source_unit": _src_unit,
-    "target_unit": _tgt_unit,
+    "unit": _tgt_unit,
     "conversion_factor": _factor,
-    "status": "passthrough_pending_geo_actor",
 }
-print(json.dumps(result))
+_emit_result(result)
 """
 
 _POINT_EXTRACT_SNIPPET = _GEO_ACTOR_SNIPPET
@@ -212,7 +260,7 @@ def _run(field, value, boundary_type):
         "feature_count": len(data.get("features", [])),
         "geojson": data,
     }
-    print(json.dumps(result))
+    _emit_result(result)
 """
 
 _GMA_BOUNDARY_QUERY_SNIPPET = _BOUNDARY_QUERY_HELPER + """\
@@ -239,7 +287,7 @@ result = _actor_run({
     "read_token": _token,
     "params": {"target_crs": "EPSG:4326"},
 })
-print(json.dumps(result))
+_emit_result(result)
 """
 
 _BOUNDARY_INTERSECT_SNIPPET = _ACTOR_HELPER + """\
@@ -254,14 +302,14 @@ result = _actor_run({
         "aquifer": _input("AQUIFER", "") or _input_alias("SPATIAL_SCOPE_NAME"),
     },
 })
-print(json.dumps(result))
+_emit_result(result)
 """
 
 _PASSTHROUGH_SNIPPET = _INPUT_HELPER + """\
 import json
 result = {k: _input(k, "") for k in ("SOURCE_URI", "VARIABLE_NAME")}
 result["status"] = "passthrough"
-print(json.dumps(result))
+_emit_result(result)
 """
 
 _GEO_AGGREGATE_SNIPPET = _ACTOR_HELPER + """\
@@ -279,7 +327,7 @@ result = _actor_run({
 if isinstance(result, dict):
     result["area"] = _area
     result["scope"] = "gma" if (not _area or _area.lower().startswith("gma")) else "area"
-print(json.dumps(result))
+_emit_result(result)
 """
 
 _DFC_COMPLIANCE_SNIPPET = _INPUT_HELPER + """\
@@ -429,7 +477,8 @@ for record in records:
         "source": record.get("source"),
     })
 
-print(json.dumps({
+result = {
+    "schema_version": 1,
     "status": "ok",
     "operation": "dfc_compliance",
     "source_uri": _source_uri,
@@ -441,39 +490,77 @@ print(json.dumps({
     "modeled_value": modeled,
     "modeled_unit": modeled_unit,
     "results": rows,
-}))
+}
+_emit_result(result)
 """
 
-# Submits extract_budget_gma to the dso-geo Tapis actor with package=DRN.
+# Submits extract_budget_gma to the dso-geo Tapis actor.  The actor resolves
+# these ordered aliases against the CBC file's actual record names.
 _BUDGET_EXTRACT_DRAIN_SNIPPET = _ACTOR_HELPER + """\
+def _budget_candidates(default):
+    raw = _input("BUDGET_PACKAGE_CANDIDATES", "")
+    if not raw:
+        return default
+    try:
+        parsed = json.loads(raw) if isinstance(raw, str) else raw
+    except (TypeError, ValueError):
+        parsed = [part.strip() for part in str(raw).split(",")]
+    if isinstance(parsed, str):
+        parsed = [parsed]
+    if not isinstance(parsed, list) or not parsed or len(parsed) > 8:
+        _die("BUDGET_PACKAGE_CANDIDATES must be a non-empty list of at most 8 labels")
+    candidates = [str(item).strip().upper() for item in parsed]
+    if any(not item or len(item) > 64 for item in candidates):
+        _die("BUDGET_PACKAGE_CANDIDATES contains an invalid label")
+    return list(dict.fromkeys(candidates))
+
 _source_uri   = _input("SOURCE_URI", "")
 _gma_id       = _input_alias("SPATIAL_SCOPE_ID", "GMA_ID")
 _area         = _input_alias("SPATIAL_SCOPE_NAME", "AREA")
 _boundary_uri = _input("DFC_AREA_BOUNDARY_URI", "") or _input_alias("GEOMETRY_SOURCE_URI", "GMA_BOUNDARY_URI")
 _token        = _input("TAPIS_TOKEN", "")
+_packages     = _budget_candidates(["DRN", "DRAINS"])
 result = _actor_run({
     "operation": "extract_budget_gma",
     "input_url": _source_uri,
     "read_token": _token,
-    "params": {"package": "DRN", "gma_id": _gma_id, "area": _area, "boundary_uri": _boundary_uri},
+    "params": {"package": _packages[0], "packages": _packages, "gma_id": _gma_id, "area": _area, "boundary_uri": _boundary_uri},
 })
-print(json.dumps(result))
+_emit_result(result)
 """
 
-# Same as drain but package=RIV for river-leakage / stream-baseflow.
+# Same as drain but candidate labels are for river-leakage / stream-baseflow.
 _BUDGET_EXTRACT_RIVER_SNIPPET = _ACTOR_HELPER + """\
+def _budget_candidates(default):
+    raw = _input("BUDGET_PACKAGE_CANDIDATES", "")
+    if not raw:
+        return default
+    try:
+        parsed = json.loads(raw) if isinstance(raw, str) else raw
+    except (TypeError, ValueError):
+        parsed = [part.strip() for part in str(raw).split(",")]
+    if isinstance(parsed, str):
+        parsed = [parsed]
+    if not isinstance(parsed, list) or not parsed or len(parsed) > 8:
+        _die("BUDGET_PACKAGE_CANDIDATES must be a non-empty list of at most 8 labels")
+    candidates = [str(item).strip().upper() for item in parsed]
+    if any(not item or len(item) > 64 for item in candidates):
+        _die("BUDGET_PACKAGE_CANDIDATES contains an invalid label")
+    return list(dict.fromkeys(candidates))
+
 _source_uri   = _input("SOURCE_URI", "")
 _gma_id       = _input_alias("SPATIAL_SCOPE_ID", "GMA_ID")
 _area         = _input_alias("SPATIAL_SCOPE_NAME", "AREA")
 _boundary_uri = _input("DFC_AREA_BOUNDARY_URI", "") or _input_alias("GEOMETRY_SOURCE_URI", "GMA_BOUNDARY_URI")
 _token        = _input("TAPIS_TOKEN", "")
+_packages     = _budget_candidates(["RIV", "RIVER LEAKAGE"])
 result = _actor_run({
     "operation": "extract_budget_gma",
     "input_url": _source_uri,
     "read_token": _token,
-    "params": {"package": "RIV", "gma_id": _gma_id, "area": _area, "boundary_uri": _boundary_uri},
+    "params": {"package": _packages[0], "packages": _packages, "gma_id": _gma_id, "area": _area, "boundary_uri": _boundary_uri},
 })
-print(json.dumps(result))
+_emit_result(result)
 """
 
 # Submits extract_satthk_gma to the dso-geo actor (returns mean head as proxy;
@@ -491,7 +578,7 @@ result = _actor_run({
     "read_token": _token,
     "params": {"layer": _layer, "gma_id": _gma_id, "area": _area, "boundary_uri": _boundary_uri},
 })
-print(json.dumps(result))
+_emit_result(result)
 """
 
 # Submits hds_to_geotiff to the dso-geo actor. Shared by all four MODFLOW-version
@@ -509,7 +596,7 @@ result = _actor_run({
     "read_token": _token,
     "params": {"layer": _layer, "stress_period": _sp, "timestep": _ts},
 })
-print(json.dumps(result))
+_emit_result(result)
 """
 
 
@@ -532,7 +619,7 @@ result = _actor_run({
     "params": {"value_field": _value_field, "pixel_size": _pixel_size,
                "attribute_filter": _attribute_filter},
 })
-print(json.dumps(result))
+_emit_result(result)
 """
 
 # Submits dis_top_to_geotiff to the dso-geo actor: parses a MODFLOW 6 text DIS
@@ -549,7 +636,7 @@ result = _actor_run({
     "read_token": _token,
     "params": {"crs_wkt": _crs_wkt},
 })
-print(json.dumps(result))
+_emit_result(result)
 """
 
 
@@ -686,12 +773,27 @@ for _step in _STEPS:
         _last_kind = _kind
         _outputs.append({"step": _step.get("step"), "name": _step.get("name"), "status": "ok", "result": _last_result})
     elif _kind in ("budget_extract_drain", "budget_extract_river"):
-        _package = "DRN" if _kind == "budget_extract_drain" else "RIV"
+        _default_packages = ["DRN", "DRAINS"] if _kind == "budget_extract_drain" else ["RIV", "RIVER LEAKAGE"]
+        _raw_packages = _input("BUDGET_PACKAGE_CANDIDATES", "")
+        if _raw_packages:
+            try:
+                _packages = json.loads(_raw_packages) if isinstance(_raw_packages, str) else _raw_packages
+            except (TypeError, ValueError):
+                _packages = [part.strip() for part in str(_raw_packages).split(",")]
+        else:
+            _packages = _default_packages
+        if isinstance(_packages, str):
+            _packages = [_packages]
+        if not isinstance(_packages, list) or not _packages or len(_packages) > 8:
+            _die("BUDGET_PACKAGE_CANDIDATES must be a non-empty list of at most 8 labels")
+        _packages = list(dict.fromkeys(str(item).strip().upper() for item in _packages))
+        if any(not item or len(item) > 64 for item in _packages):
+            _die("BUDGET_PACKAGE_CANDIDATES contains an invalid label")
         _last_result = _checked_actor_run({
             "operation": "extract_budget_gma",
             "input_url": _current_source,
             "read_token": _token,
-            "params": {"package": _package, "gma_id": _gma_id, "area": _area, "boundary_uri": _boundary_uri},
+            "params": {"package": _packages[0], "packages": _packages, "gma_id": _gma_id, "area": _area, "boundary_uri": _boundary_uri},
         })
         _last_kind = _kind
         _outputs.append({"step": _step.get("step"), "name": _step.get("name"), "status": "ok", "result": _last_result})
@@ -712,10 +814,10 @@ if _pending_factor != 1.0 and _last_result is not None:
     _last_result = _scale_payload(_last_result, _pending_factor, _pending_unit)
 
 print(json.dumps({
+    "schema_version": 1,
     "status": "ok",
     "operation": "dfc_transform_chain",
     "source_uri": _source_uri,
-    "output_uri": _current_source,
     "steps": _outputs,
     "result": _last_result,
 }))
@@ -727,12 +829,12 @@ def _json_b64(value: object) -> str:
 
 
 def get_fused_dfc_chain_code(steps: list[dict]) -> str:
-    """Return one hosted function task that executes a linear DFC transform chain.
+    """Return the deprecated fused DFC compatibility task source.
 
-    Hosted Workflows function tasks do not reliably pass actor-generated files to
-    later tasks. DFC calculations need the converted modeled output URI to flow
-    directly into the aggregation/extraction step, so the live workflow fuses the
-    ETL chain while preserving the registry-derived step list in the emitted JSON.
+    The normal workflow generator no longer calls this helper: modular chains
+    use named task outputs and explicit task-output references. Keep the helper
+    temporarily for persisted/legacy callers that still inspect or replay the
+    old fused definition.
     """
     serializable = [
         {

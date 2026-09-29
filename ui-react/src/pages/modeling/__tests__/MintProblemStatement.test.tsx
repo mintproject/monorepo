@@ -205,6 +205,7 @@ describe('MintProblemStatement detail panel', () => {
     expect(
       await screen.findByPlaceholderText('Describe the goal of this sub-task'),
     ).toBeInTheDocument();
-    expect(within(tree).getByTestId('subtask-steps-toggle')).toBeInTheDocument();
+    const stepRail = screen.getByRole('complementary', { name: 'Sub-task step navigation' });
+    expect(within(stepRail).getByTestId('subtask-steps-toggle')).toBeInTheDocument();
   });
 });

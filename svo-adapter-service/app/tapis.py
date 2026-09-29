@@ -28,6 +28,7 @@ from __future__ import annotations
 import base64
 import json
 import time
+import textwrap
 from typing import Any
 
 from .etl_contract import normalize_env_from_args
@@ -67,7 +68,11 @@ STANDARD_PARAMS: dict[str, dict[str, Any]] = {
     "lat": {"type": "number", "required": False, "description": "Point latitude (WGS84)"},
     "lon": {"type": "number", "required": False, "description": "Point longitude (WGS84)"},
     # Tapis Abaco actor ID for the dso-geo GDAL/MODFLOW actor (mcp-suite/servers/geo).
-    "geo_actor_id": {"type": "string", "default": "", "required": False},
+    "geo_actor_id": {
+        "type": "string",
+        "default": getattr(settings, "geo_actor_id", "") or "",
+        "required": False,
+    },
     # CKAN + STAC dual-write (the stac-publish piece). Blank disables publishing,
     # matching SUBSIDE's werc-opera.yaml.
     "stac_url": {"type": "string", "default": "", "required": False},
@@ -75,6 +80,201 @@ STANDARD_PARAMS: dict[str, dict[str, Any]] = {
     "ckan_url": {"type": "string", "default": "https://ckan.tacc.utexas.edu", "required": False},
     "ckan_token": {"type": "string", "default": "", "required": False},
 }
+
+
+def _model_execution_code(model_task: dict[str, Any]) -> str:
+    """Return the SVO-owned model submit/poll/output-discovery function.
+
+    The function captures the provider UUID returned by ``/v3/jobs/submit``.
+    Every later Jobs request uses that exact UUID; no workflow execution ID,
+    job-name search, or guessed archive directory is used as identity.
+    """
+    job_definition = model_task.get("job_definition") or {}
+    output_name = model_task.get("output_name") or ""
+    output_format = model_task.get("output_format") or ""
+    max_minutes = max(1, int(model_task.get("max_minutes") or 60))
+    source = textwrap.dedent(
+        """
+        import json, socket, time, urllib.error as _ue, urllib.parse as _up, urllib.request as _ur
+        try:
+            from owe_python_sdk.runtime import execution_context as _ctx
+        except Exception:
+            _ctx = None
+
+        def _input(name, default="", allow_environment=True):
+            value = None
+            if _ctx is not None:
+                try:
+                    value = _ctx.get_input(name)
+                except Exception:
+                    value = None
+            # Hosted composite tasks must receive the caller's token through
+            # the workflow argument binding.  Environment fallback remains
+            # useful for local/generated-code tests, but is never consulted
+            # when the hosted execution context is present and the caller
+            # token is requested with allow_environment=False.
+            if value in (None, "") and (allow_environment or _ctx is None):
+                import os
+                value = os.environ.get(name, default)
+            return default if value in (None, "") else value
+
+        _attempts = []
+
+        def _die(message, code="MODEL_OUTPUT_DISCOVERY_FAILED", details=None):
+            payload = {"schema_version": 1, "status": "error", "code": code,
+                       "message": message, "attempts": _attempts[-40:]}
+            if details:
+                payload["details"] = details
+            text = json.dumps(payload)
+            if _ctx is not None:
+                try:
+                    _ctx.set_output("result", text)
+                except Exception:
+                    pass
+            print(text)
+            # SystemExit is rendered by Tapis Workflows as `Task Failed: []`,
+            # discarding the structured diagnostic.  A bounded RuntimeError
+            # keeps the task failed while preserving the safe category/message
+            # in the workflow task's last_message.
+            raise RuntimeError("%s: %s" % (code, message))
+
+        _base = _input("TAPIS_BASE_URL", "https://portals.tapis.io").rstrip("/")
+        _token = _input("TAPIS_TOKEN", "", allow_environment=False).strip()
+        _job_definition = __JOB_DEFINITION__
+        _job_name = __JOB_NAME__
+        _output_name = __OUTPUT_NAME__.lower()
+        _output_format = __OUTPUT_FORMAT__.lower()
+        _max_polls = __MAX_POLLS__
+        if not _token:
+            _die("TAPIS_TOKEN is required for the composite model stage", "MODEL_SUBMISSION_AUTH_REQUIRED")
+
+        def _request(path, method="GET", payload=None):
+            body = None if payload is None else json.dumps(payload).encode()
+            headers = {"X-Tapis-Token": _token, "Accept": "application/json"}
+            if body is not None:
+                headers["Content-Type"] = "application/json"
+            request = _ur.Request(_base + path, data=body, headers=headers, method=method)
+            try:
+                with _ur.urlopen(request, timeout=90) as response:
+                    _attempts.append({"method": method, "path": path, "status": response.getcode()})
+                    return json.loads(response.read().decode())
+            except _ue.HTTPError as exc:
+                _attempts.append({"method": method, "path": path, "status": exc.code})
+                if exc.code in (401, 403):
+                    _die(
+                        "the UI Tapis token was rejected during model %s (HTTP %s)"
+                        % (method.lower(), exc.code),
+                        "MODEL_PROVIDER_AUTH_FAILED",
+                        {"http_status": exc.code, "operation": method.lower(), "path": path},
+                    )
+                _die("Tapis model request failed with HTTP %s" % exc.code,
+                     "MODEL_PROVIDER_REQUEST_FAILED")
+            except (_ue.URLError, TimeoutError, socket.timeout) as exc:
+                _attempts.append({"method": method, "path": path,
+                                  "status": "transport_error", "error": type(exc).__name__})
+                _die("Tapis model request failed: %s" % type(exc).__name__,
+                     "MODEL_PROVIDER_REQUEST_FAILED")
+
+        def _find(value, names):
+            if isinstance(value, dict):
+                for name in names:
+                    if value.get(name):
+                        return value[name]
+                for child in value.values():
+                    found = _find(child, names)
+                    if found:
+                        return found
+            elif isinstance(value, list):
+                for child in value:
+                    found = _find(child, names)
+                    if found:
+                        return found
+            return None
+
+        _submitted = _request("/v3/jobs/submit", method="POST", payload=_job_definition)
+        _job_uuid = _find(_submitted, {"uuid", "jobUuid", "jobUUID"})
+        if not _job_uuid:
+            _die("Tapis did not return a model job UUID", "MODEL_PROVIDER_JOB_ID_MISSING")
+        _job_uuid = str(_job_uuid)
+        _status_path = "/v3/jobs/%s/status" % _up.quote(_job_uuid, safe="")
+        _terminal = None
+        for _attempt in range(_max_polls):
+            _status_payload = _request(_status_path)
+            _status_result = ((_status_payload or {}).get("result")
+                              if isinstance(_status_payload, dict) else None)
+            _status = str(_find(_status_result, {"status", "state", "job_status", "jobStatus"})
+                          or _find(_status_payload, {"state", "job_status", "jobStatus"})
+                          or "").upper().replace(" ", "_")
+            if _status in {
+                "FINISHED",
+                "COMPLETED",
+                "SUCCESS",
+                "SUCCEEDED",
+                "NORMAL_COMPLETION",
+            }:
+                _terminal = _status
+                break
+            if _status in {"FAILED", "CANCELLED", "CANCELED", "KILLED", "SYSTEM_ERROR"}:
+                _die("model job %s ended with status %s" % (_job_uuid, _status),
+                     "MODEL_PROVIDER_JOB_FAILED", {"job_uuid": _job_uuid, "status": _status})
+            time.sleep(5)
+        if _terminal is None:
+            _die("model job did not finish within the configured polling window",
+                 "MODEL_PROVIDER_JOB_TIMEOUT", {"job_uuid": _job_uuid})
+
+        _detail = _request("/v3/jobs/%s" % _up.quote(_job_uuid, safe=""))
+        _job = (_detail.get("result") if isinstance(_detail, dict) else None) or {}
+        _files_payload = _request("/v3/jobs/%s/output/list/" % _up.quote(_job_uuid, safe=""))
+        _files_result = (_files_payload or {}).get("result") or []
+        if isinstance(_files_result, dict):
+            _files_result = (_files_result.get("files") or _files_result.get("items") or
+                             _files_result.get("results") or [])
+        _files = [entry for entry in _files_result if isinstance(entry, dict) and entry.get("type") != "dir"]
+        _wanted = _output_name
+        _exact = [entry for entry in _files if str(entry.get("name") or "").lower() == _wanted]
+        if len(_exact) == 1:
+            _selected = _exact[0]
+        else:
+            _extensions = ([".cbc", ".cbb"] if _wanted in {"cbc", "cbb"} or "cbc" in _output_format
+                           else (["." + _wanted] if _wanted else []))
+            _matches = [entry for entry in _files if any(
+                str(entry.get("name") or "").lower().endswith(ext) for ext in _extensions)]
+            if len(_matches) != 1:
+                _die("model output %s was not uniquely matched" % _output_name,
+                     "MODEL_OUTPUT_AMBIGUOUS",
+                     {"job_uuid": _job_uuid, "archived_files": [str(e.get("name") or "") for e in _files[:40]]})
+            _selected = _matches[0]
+
+        _url = str(_selected.get("url") or _selected.get("uri") or "")
+        _parsed = _up.urlparse(_url)
+        if _parsed.scheme == "tapis" and _parsed.netloc and _parsed.path:
+            _resource_uri = _url
+        else:
+            _system = str(_job.get("archiveSystemId") or _job.get("archive_system_id") or
+                          _job_definition.get("archiveSystemId") or "")
+            _path = str(_selected.get("path") or "").lstrip("/")
+            if not _system or not _path:
+                _die("Tapis did not return a complete path for the selected model output",
+                     "MODEL_OUTPUT_PATH_MISSING", {"job_uuid": _job_uuid})
+            _resource_uri = "tapis://%s/%s" % (_system, _path)
+        _manifest = {"schema_version": 1, "status": "ok", "resource_uri": _resource_uri,
+                     "model_output_key": _output_name, "model_job_name": _job_name,
+                     "model_job_uuid": _job_uuid, "archived_name": _selected.get("name")}
+        if _ctx is not None:
+            try:
+                _ctx.set_output("result", _resource_uri)
+            except Exception:
+                pass
+        print(json.dumps(_manifest))
+        """
+    )
+    return (
+        source.replace("__JOB_DEFINITION__", repr(job_definition))
+        .replace("__JOB_NAME__", repr(job_definition.get("name") or ""))
+        .replace("__OUTPUT_NAME__", repr(output_name))
+        .replace("__OUTPUT_FORMAT__", repr(output_format))
+        .replace("__MAX_POLLS__", str(max(1, (max_minutes * 60) // 5)))
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -106,6 +306,14 @@ def generate_tapis_workflow(
         name: dict(definition)
         for name, definition in (params or STANDARD_PARAMS).items()
     }
+    # Transform-specific defaults (including CBC label candidates) are stored
+    # in the immutable plan snapshot.  Declare them in the workflow alongside
+    # the standard runtime params so task env bindings resolve for new plans;
+    # old plans remain supported by the task-code fallback candidates.
+    for definition in plan_json.get("parameters") or []:
+        name = definition.get("name") if isinstance(definition, dict) else None
+        if name and name not in params:
+            params[name] = dict(definition)
 
     # A composite MINT run supplies a server-generated model job definition.
     # Keep it in the same provider pipeline as the adapter transforms. The
@@ -120,11 +328,16 @@ def generate_tapis_workflow(
             "required": True,
             "description": "Ensemble Manager logical workflow execution",
         })
-        params.setdefault("source_uri", {
+        # A composite model produces this URI inside the workflow.  A saved
+        # adapter plan may still carry the legacy `required: true` contract,
+        # so setdefault is not sufficient here: Tapis validates pipeline args
+        # before it can evaluate the model task's task_output handoff.
+        params["source_uri"] = {
+            **params.get("source_uri", {}),
             "type": "string",
-            "required": True,
+            "required": False,
             "description": "Server-owned model-output handoff URI",
-        })
+        }
 
     tasks: list[dict[str, Any]] = []
     prev_id: str | None = None
@@ -132,46 +345,51 @@ def generate_tapis_workflow(
         job_definition = dict(model_task.get("job_definition") or {})
         if not job_definition.get("appId") or not job_definition.get("appVersion"):
             raise ValueError("composite model task requires appId and appVersion")
-        # The Jobs API tolerates omitted execution directories, while
-        # Workflows validates the embedded job definition and rejects null.
+        max_minutes = max(1, int(model_task.get("max_minutes") or 60))
         job_definition.setdefault("execSystemInputDir", "${JobWorkingDir}")
         job_definition.setdefault("execSystemOutputDir", "${JobWorkingDir}/output")
         model_id = str(model_task.get("stage_id") or "model")
         tasks.append({
             "id": model_id,
-            "type": "tapis_job",
-            "execution_profile": {"max_retries": 0},
-            "tapis_job_def": job_definition,
-        })
-        handoff_id = "output-handoff"
-        tasks.append({
-            "id": handoff_id,
             "type": "function",
             "runtime": "python:3.11",
             "installer": "pip",
-            "description": "Publish the model output manifest for downstream adapter stages",
-            "code": (
-                "import json\n"
-                "print(json.dumps({'resource_uri': "
-                + repr(model_task.get("output_uri"))
-                + ", 'model_output_key': "
-                + repr(model_task.get("output_name"))
-                + "}))\n"
-            ),
+            "description": "Run the model and resolve its declared output for adapter stages",
+            "output": {"result": {"type": "string"}},
+            "code": _model_execution_code({**model_task, "job_definition": job_definition}),
             "input": {
-                "source_uri": {
+                "TAPIS_BASE_URL": {
                     "type": "string",
-                    "value_from": {"args": "source_uri"},
-                }
+                    "value_from": {"args": "tapis_base_url"},
+                },
+                "TAPIS_TOKEN": {
+                    "type": "string",
+                    "value_from": {"args": "tapis_token"},
+                },
             },
-            "depends_on": [{"id": model_id}],
+            "execution_profile": {
+                "max_retries": 0,
+                "max_exec_time": max_minutes * 60 + 300,
+            },
         })
-        prev_id = handoff_id
+        prev_id = model_id
+    # Keep each transform as its own task. Hosted function tasks publish a
+    # named `result` output, and scalar-consuming transforms bind explicitly to
+    # that output. Task ordering alone is not a data handoff.
+    from . import task_code as _task_code
+    task_ids_by_step: dict[int, str] = {}
+    function_task_ids_by_step: dict[int, str] = {}
     for s in steps:
         task_id = f"step-{s['step']}-{(s.get('transform_type') or 'transform')}"
         app_id = s.get("tapis_app_id")
+        declared_dependencies = [int(dep) for dep in (s.get("depends_on") or [])]
+        dependency_ids = [
+            task_ids_by_step[dep]
+            for dep in declared_dependencies
+            if dep in task_ids_by_step
+        ]
         if app_id:
-            task: dict[str, Any] = {
+            task = {
                 "id": task_id,
                 "type": "tapis_job",
                 "execution_profile": {"max_retries": 1},
@@ -200,7 +418,6 @@ def generate_tapis_workflow(
             # task_code.get_code(transform_type) so MINT-sourced transforms get
             # the right builder. env_from_args wires pipeline args into the
             # task's env at runtime.
-            from . import task_code as _task_code
             transform_type = s.get("transform_type")
             task = {
                 "id": task_id,
@@ -209,18 +426,67 @@ def generate_tapis_workflow(
                 "installer": "pip",
                 "description": s.get("name"),
                 "code": s.get("python_source") or _task_code.get_code(transform_type),
+                # Built-in and custom hosted transforms use this stable output
+                # name for typed task-to-task handoffs. Custom code must call
+                # ctx.set_output("result", json_text) to populate it.
+                "output": {"result": {"type": "string"}},
             }
             if s.get("python_entrypoint"):
                 task["entrypoint"] = s["python_entrypoint"]
             inputs = {
                 key: {"type": "string", "value_from": {"args": arg}}
-                for key, arg in (normalize_env_from_args(s.get("env_from_args") or {}) or {}).items()
+                for key, arg in (
+                    normalize_env_from_args(s.get("env_from_args") or {}) or {}
+                ).items()
             }
+            # unit_convert is the first scalar consumer in the transform
+            # registry. Its input is the preceding function's named result,
+            # not another copy of the original pipeline argument.
+            source_task_id = next(
+                (
+                    function_task_ids_by_step[dep]
+                    for dep in declared_dependencies
+                    if dep in function_task_ids_by_step
+                ),
+                None,
+            )
+            if transform_type == "unit_convert" and source_task_id:
+                inputs.pop("SOURCE_URI", None)
+                inputs["SOURCE_RESULT"] = {
+                    "type": "string",
+                    "value_from": {
+                        "task_output": {
+                            "task_id": source_task_id,
+                            "output_id": "result",
+                        }
+                    },
+                }
+            # The model task publishes the verified URI as a named output. A
+            # planned source_uri is only a descriptor and must never be passed
+            # directly to the first adapter transform.
+            model_task_id = str(model_task.get("stage_id") or "model") if model_task else None
+            if model_task and prev_id == model_task_id:
+                inputs["SOURCE_URI"] = {
+                    "type": "string",
+                    "value_from": {
+                        "task_output": {
+                            "task_id": model_task_id,
+                            "output_id": "result",
+                        }
+                    },
+                }
             if inputs:
                 task["input"] = inputs
-        if prev_id:
+        if dependency_ids:
+            task["depends_on"] = [{"id": dep_id} for dep_id in dependency_ids]
+        elif prev_id:
+            # Older plans omitted depends_on for a simple chain. Preserve that
+            # compatibility while honoring explicit DAG edges above.
             task["depends_on"] = [{"id": prev_id}]
         tasks.append(task)
+        task_ids_by_step[int(s["step"])] = task_id
+        if not app_id:
+            function_task_ids_by_step[int(s["step"])] = task_id
         prev_id = task_id
 
     if model_task:
@@ -754,6 +1020,67 @@ def get_output_uri(
     except Exception:  # noqa: BLE001
         return None
 
+    def field(execution: Any, *names: str) -> Any:
+        if isinstance(execution, dict):
+            for name in names:
+                if execution.get(name) is not None:
+                    return execution[name]
+            return None
+        for name in names:
+            value = getattr(execution, name, None)
+            if value is not None:
+                return value
+        return None
+
+    from urllib.parse import quote
+
+    def archived_stdout_uri(execution: Any) -> str | None:
+        task_id = field(execution, "task_id", "taskId", "task_name", "taskName")
+        if not task_id:
+            return None
+        data = field(execution, "data") or {}
+        if isinstance(data, str):
+            try:
+                data = json.loads(data)
+            except (TypeError, ValueError):
+                data = {}
+        archive_system = (
+            field(execution, "archive_system_id", "archiveSystemId", "exec_system_id", "execSystemId")
+            or (data.get("archive_system_id") if isinstance(data, dict) else None)
+            or (data.get("archiveSystemId") if isinstance(data, dict) else None)
+            or settings.tapis_exec_system
+        )
+        if not archive_system:
+            return None
+        return (
+            f"tapis://{quote(str(archive_system), safe='')}"
+            f"/workflows/archive/{quote(str(run_uuid), safe='')}"
+            f"/{quote(str(task_id), safe='')}/output/.stdout"
+        )
+
+    # A scalar result is the durable output of a hosted transform. Prefer its
+    # archived stdout over a URI in an earlier model-output handoff, because
+    # that handoff URI identifies the input artifact rather than the result.
+    scalar_keys = (
+        "value", "spring_flow", "stream_flow", "baseflow", "flow",
+        "total_flow", "mean", "average", "average_value", "modeled_value",
+    )
+    for execution in reversed(execs):
+        text_value = field(execution, "stdout")
+        if not text_value:
+            continue
+        try:
+            payload = json.loads(str(text_value))
+        except (TypeError, ValueError):
+            continue
+        node = payload.get("result", payload) if isinstance(payload, dict) else None
+        if not isinstance(node, dict):
+            continue
+        if any(isinstance(node.get(key), (int, float)) and not isinstance(node.get(key), bool) for key in scalar_keys):
+            result_uri = archived_stdout_uri(execution)
+            if result_uri:
+                return result_uri
+
     # Pass 1: any URI in stdout / last_message. The last URI in the last task's
     # output is typically the result (publish/stac-publish prints the CKAN/STAC URL).
     found: list[str] = []
@@ -804,6 +1131,16 @@ def get_output_uri(
                 return f"tapis://{sys_id}/{sys_dir.strip('/')}"
         except Exception:  # noqa: BLE001
             continue
+
+    # Pass 3: hosted OWE function tasks do not have a Jobs API UUID, but their
+    # stdout is archived by Tapis Workflows.  DFC transforms commonly return a
+    # scalar JSON result rather than a URL, so the archived stdout is the
+    # discoverable artifact that should be registered for the downstream model
+    # output handoff.
+    for execution in reversed(execs):
+        result_uri = archived_stdout_uri(execution)
+        if result_uri:
+            return result_uri
 
     return None
 
