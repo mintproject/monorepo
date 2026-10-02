@@ -188,9 +188,10 @@ def _ensemble_config(urls: dict[str, str]) -> str:
         "data_catalog_api": _env("DATA_CATALOG_API", "https://ckan.tacc.utexas.edu"),
         "data_catalog_type": _env("DATA_CATALOG_TYPE", "CKAN"),
         "ensemble_manager_api": f"{urls['ensemble']}/v1",
-        # Internal service-to-service URL; the browser only calls Ensemble
-        # Manager's unified /plans boundary.
-        "svo_adapter_api": _env("SVO_ADAPTER_API_URL", f"http://{PODS['svo']}:8090"),
+        # Tapis Pods do not provide shared DNS between pod IDs. Use the public
+        # pod route so Ensemble Manager can reach the adapter over HTTPS; the
+        # browser still only calls Ensemble Manager's unified /plans boundary.
+        "svo_adapter_api": _env("SVO_ADAPTER_API_URL", urls["svo"]),
         # Required to sign opaque legacy unified-plan IDs. Never reuse the
         # Hasura admin secret for this purpose.
         "unified_plan_secret": _env("UNIFIED_PLAN_SECRET", ""),
