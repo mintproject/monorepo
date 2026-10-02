@@ -241,6 +241,25 @@ describe('token-store', () => {
       expect(mockRefresh).toHaveBeenCalledTimes(1);
     });
 
+    it('clears tokens when refresh is unavailable', async () => {
+      const mockRefresh = vi.fn().mockResolvedValue(false);
+      const tokenChange = vi.fn();
+      setRefreshCallback(mockRefresh);
+      setTokenChangeCallback(tokenChange);
+
+      storeTokens({
+        accessToken: 'expired-soon',
+        refreshToken: 'stale-refresh',
+        accessExpiresIn: 30,
+      });
+      await vi.runAllTimersAsync();
+
+      expect(mockRefresh).toHaveBeenCalledTimes(1);
+      expect(getAccessToken()).toBeNull();
+      expect(getRefreshToken()).toBeNull();
+      expect(tokenChange).toHaveBeenLastCalledWith(null);
+    });
+
     it('does not schedule when no expiry stored', () => {
       const mockRefresh = vi.fn().mockResolvedValue(true);
       setRefreshCallback(mockRefresh);

@@ -230,10 +230,18 @@ export function scheduleRefresh(): void {
   refreshTimer = setTimeout(() => {
     refreshTimer = null;
     if (onRefreshNeeded) {
-      onRefreshNeeded().catch(() => {
-        // Refresh failed — clear tokens so user is prompted to log in again
-        clearTokens();
-      });
+      onRefreshNeeded()
+        .then((refreshed) => {
+          if (!refreshed) {
+            // Refresh unavailable or rejected — clear tokens so the user is
+            // prompted to log in again instead of sending an expired token.
+            clearTokens();
+          }
+        })
+        .catch(() => {
+          // Refresh failed — clear tokens so user is prompted to log in again
+          clearTokens();
+        });
     }
   }, delay);
 }
