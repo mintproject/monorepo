@@ -67,6 +67,12 @@ class StorageTests(unittest.TestCase):
             "https://mintdevsvo.pods.portals.tapis.io",
         )
 
+    def test_ensemble_config_carries_the_dedicated_signing_secret(self):
+        with patch.dict(os.environ, {"UNIFIED_PLAN_SECRET": "test-signing-secret"}, clear=True):
+            specs = deploy.build_specs("mintproject", "develop", "https://portals.tapis.io")
+        config = json.loads(specs["ensemble"]["environment_variables"]["ENSEMBLE_MANAGER_CONFIG_JSON"])
+        self.assertEqual(config["unified_plan_secret"], "test-signing-secret")
+
     def test_svo_uses_configured_geo_actor_id(self):
         with patch.dict(
             os.environ,
@@ -1103,6 +1109,70 @@ class SvoRuntimeSyncTests(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             deploy.sync_svo_runtime(t, spec)
         t.pods.update_pod.assert_not_called()
+
+
+class EnsembleConfigSyncTests(unittest.TestCase):
+    def setUp(self):
+        self.env = patch.dict(os.environ, {"UNIFIED_PLAN_SECRET": "test-signing-secret"}, clear=True)
+        self.env.start()
+        self.addCleanup(self.env.stop)
+        self.spec = deploy.build_specs("mintproject", "sha-new", "https://portals.tapis.io")["ensemble"]
+
+    def _applied(self):
+        return {
+            "environment_variables": {
+                "ENSEMBLE_MANAGER_CONFIG_JSON": self.spec["environment_variables"]["ENSEMBLE_MANAGER_CONFIG_JSON"],
+                "KEEP_ME": "yes",
+            }
+        }
+
+    def test_sync_preserves_existing_environment_and_image(self):
+        running = {
+            "image": "ghcr.io/mintproject/ensemble-manager:sha-old",
+            "status_container": {"start_time": "old-start"},
+            "environment_variables": {"KEEP_ME": "yes"},
+        }
+        ready = {
+            "image": running["image"],
+            "status": "AVAILABLE",
+            "status_container": {"start_time": "new-start"},
+        }
+        t = Mock()
+        t.pods.get_pod.side_effect = [running, self._applied(), ready]
+        with patch.object(deploy.time, "sleep"):
+            rc = deploy.sync_ensemble_config(t, self.spec)
+        self.assertEqual(rc, 0)
+        sent = t.pods.update_pod.call_args.kwargs
+        self.assertEqual(sent["image"], running["image"])
+        self.assertEqual(sent["environment_variables"]["KEEP_ME"], "yes")
+        self.assertEqual(
+            json.loads(sent["environment_variables"]["ENSEMBLE_MANAGER_CONFIG_JSON"])["unified_plan_secret"],
+            "test-signing-secret",
+        )
+        t.pods.restart_pod.assert_called_once_with(pod_id=deploy.PODS["ensemble"])
+
+    def test_sync_can_defer_restart(self):
+        running = {
+            "image": "ghcr.io/mintproject/ensemble-manager:sha-old",
+            "status_container": {"start_time": "old-start"},
+            "environment_variables": {},
+        }
+        t = Mock()
+        t.pods.get_pod.side_effect = [running, self._applied()]
+        rc = deploy.sync_ensemble_config(t, self.spec, restart=False)
+        self.assertEqual(rc, 0)
+        t.pods.restart_pod.assert_not_called()
+
+    def test_sync_refuses_an_empty_signing_secret(self):
+        spec = dict(self.spec)
+        spec["environment_variables"] = dict(self.spec["environment_variables"])
+        config = json.loads(spec["environment_variables"]["ENSEMBLE_MANAGER_CONFIG_JSON"])
+        config["unified_plan_secret"] = ""
+        spec["environment_variables"]["ENSEMBLE_MANAGER_CONFIG_JSON"] = json.dumps(config)
+        t = Mock()
+        with self.assertRaisesRegex(RuntimeError, "UNIFIED_PLAN_SECRET"):
+            deploy.sync_ensemble_config(t, spec)
+        t.pods.get_pod.assert_not_called()
 
 
 if __name__ == "__main__":

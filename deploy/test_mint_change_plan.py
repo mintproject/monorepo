@@ -59,10 +59,10 @@ class MintChangePlanTests(unittest.TestCase):
                 self.assertNotIn("postgres", plan["build_services"])
                 self.assertNotIn("postgres", plan["restart_services"])
 
-    def test_pod_spec_changes_roll_the_affected_ui_service(self):
+    def test_pod_spec_changes_roll_the_affected_ensemble_service(self):
         plan = make_plan(["deploy/tapis/register_mint_stack.py"], "abcdef123456")
-        self.assertEqual(plan["build_services"], ["ui"])
-        self.assertEqual(plan["restart_services"], ["ui"])
+        self.assertEqual(plan["build_services"], ["ensemble"])
+        self.assertEqual(plan["restart_services"], ["ensemble"])
         self.assertFalse(plan["deploy_all"])
 
     def test_ci_and_other_deployment_plumbing_changes_are_noop(self):

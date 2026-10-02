@@ -257,6 +257,20 @@ jobs:
             --defer-svo-restart \
             --pods svo
 
+      - name: Apply Ensemble runtime configuration
+        if: contains(needs.plan.outputs.restart_services, 'ensemble')
+        env:
+          TAPIS_USERNAME: ${{ secrets.TAPIS_USERNAME }}
+          TAPIS_ID: ${{ secrets.TAPIS_ID }}
+          TAPIS_PASSWORD: ${{ secrets.TAPIS_PASSWORD }}
+          UNIFIED_PLAN_SECRET: ${{ secrets.UNIFIED_PLAN_SECRET }}
+        run: |
+          set -euo pipefail
+          python deploy/tapis/register_mint_stack.py \
+            --sync-ensemble-config \
+            --defer-ensemble-restart \
+            --pods ensemble
+
       - name: Restart affected application pods
         env:
           TAPIS_USERNAME: ${{ secrets.TAPIS_USERNAME }}
