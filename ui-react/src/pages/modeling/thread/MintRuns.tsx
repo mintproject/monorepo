@@ -876,6 +876,11 @@ export function MintRuns({
       setWaiting((w) => ({ ...w, [mid]: true }));
       try {
         await onSubmitRuns(mid, minutes);
+      } catch (error) {
+        setRuntimeErrors((errors) => ({
+          ...errors,
+          [mid]: error instanceof Error ? error.message : String(error),
+        }));
       } finally {
         setWaiting((w) => ({ ...w, [mid]: false }));
       }

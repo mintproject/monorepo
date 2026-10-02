@@ -175,6 +175,30 @@ describe('MintRuns', () => {
     await waitFor(() => expect(onSubmit).toHaveBeenCalledWith('model-1', 60));
   });
 
+  it('shows submission errors instead of leaving the rejection unhandled', async () => {
+    const onSubmit = vi
+      .fn()
+      .mockRejectedValue(new Error('Ensemble manager returned 422: no transform path found'));
+    renderWithProviders(
+      <MintRuns
+        threadData={mockThreadData}
+        executions={emptyExecutions}
+        canWrite
+        canExecute
+        ensembleManagerApi="http://ensemble"
+        onContinue={vi.fn()}
+        onFetchRuns={vi.fn()}
+        onSubmitRuns={onSubmit}
+      />,
+    );
+
+    fireEvent.click(screen.getByTestId('submit-runs-model-1'));
+
+    expect(
+      await screen.findByText('Ensemble manager returned 422: no transform path found'),
+    ).toBeInTheDocument();
+  });
+
   it('passes a user-selected maximum runtime when sending runs', async () => {
     const onSubmit = vi.fn().mockResolvedValue(undefined);
     renderWithProviders(
