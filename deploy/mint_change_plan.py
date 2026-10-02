@@ -39,7 +39,7 @@ SCHEMA_PREFIXES = ("graphql_engine/migrations/", "graphql_engine/metadata/")
 # applied to the running service definition.
 CONTROL_ONLY_PREFIXES = (".github/", "deploy/")
 DEPLOYMENT_CONFIG_SERVICES = {
-    "deploy/tapis/register_mint_stack.py": ("ui",),
+    "deploy/tapis/register_mint_stack.py": ("ensemble",),
 }
 SHARED_FILES = {
     "compose.yaml",

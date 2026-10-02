@@ -794,6 +794,8 @@ def validate_live_requirements(selected: list[str]) -> None:
         missing.append("MINTDEV_POSTGRES_PASSWORD (or PGPASSWORD)")
     if any(p in selected for p in ("graphql", "api", "ensemble", "svo")) and not _admin_secret():
         missing.append("HASURA_GRAPHQL_ADMIN_SECRET (or HASURA_ADMIN_SECRET)")
+    if "ensemble" in selected and not _env("UNIFIED_PLAN_SECRET"):
+        missing.append("UNIFIED_PLAN_SECRET")
     if "graphql" in selected and not _hasura_auth_env():
         missing.append("MINTDEV_HASURA_AUTH_HOOK or MINTDEV_HASURA_JWT_SECRET")
     if missing:
@@ -1117,6 +1119,56 @@ def sync_svo_runtime(t: Any, spec: dict[str, Any], *, restart: bool = True) -> i
     return 0
 
 
+def sync_ensemble_config(t: Any, spec: dict[str, Any], *, restart: bool = True) -> int:
+    """Apply the managed Ensemble configuration without changing its image."""
+    pid = spec["pod_id"]
+    desired_json = _field(spec.get("environment_variables", {}), "ENSEMBLE_MANAGER_CONFIG_JSON", "")
+    try:
+        desired_config = json.loads(desired_json)
+    except (TypeError, json.JSONDecodeError) as exc:
+        raise RuntimeError("Ensemble configuration is not valid JSON") from exc
+    if not isinstance(desired_config, dict) or not desired_config.get("unified_plan_secret"):
+        raise RuntimeError("UNIFIED_PLAN_SECRET is required for Ensemble configuration sync")
+
+    existing = _get_or_missing(t.pods.get_pod, pod_id=pid)
+    if existing is None:
+        raise RuntimeError(f"[{pid}] was not found; config-sync mode will not create it")
+    current_image = _field(existing, "image")
+    if not current_image:
+        raise RuntimeError(f"[{pid}] reports no image; refusing to rewrite the runtime configuration")
+    previous_start = _field(_field(existing, "status_container", {}), "start_time")
+    if restart and not previous_start:
+        raise RuntimeError(f"[{pid}] reports no container start time; refusing to restart")
+
+    environment = _plain_data(_field(existing, "environment_variables", {}))
+    if not isinstance(environment, dict):
+        raise RuntimeError(f"[{pid}] returned invalid environment data; refusing to rewrite the runtime configuration")
+    environment["ENSEMBLE_MANAGER_CONFIG_JSON"] = desired_json
+    print(f"  [{pid}] applying Ensemble configuration (signing secret present)")
+    t.pods.update_pod(
+        pod_id=pid,
+        image=current_image,
+        environment_variables=environment,
+    )
+
+    applied = _get_or_missing(t.pods.get_pod, pod_id=pid)
+    applied_environment = _plain_data(_field(applied or {}, "environment_variables", {}))
+    applied_json = _field(applied_environment, "ENSEMBLE_MANAGER_CONFIG_JSON", "")
+    try:
+        applied_config = json.loads(applied_json)
+    except (TypeError, json.JSONDecodeError) as exc:
+        raise RuntimeError(f"[{pid}] reported invalid Ensemble configuration after update") from exc
+    if not isinstance(applied_config, dict) or applied_config.get("unified_plan_secret") != desired_config.get("unified_plan_secret"):
+        raise RuntimeError(f"[{pid}] Ensemble signing configuration did not converge")
+    if not restart:
+        return 0
+
+    t.pods.restart_pod(pod_id=pid)
+    print(f"  [{pid}] restart requested")
+    wait_for_pod_restart(t, pid, current_image, previous_start)
+    return 0
+
+
 def update_pod_images(t: Any, selected: list[str], expected_images: dict[str, str]) -> None:
     """Update only the image field for selected application pods."""
     invalid = [key for key in selected if key not in RESTART_ONLY_PODS]
@@ -1230,6 +1282,11 @@ def main(argv: list[str] | None = None) -> int:
         help="push the managed SVO runtime configuration and restart the pod with its current image",
     )
     parser.add_argument(
+        "--sync-ensemble-config",
+        action="store_true",
+        help="push the managed Ensemble configuration and restart the pod with its current image",
+    )
+    parser.add_argument(
         "--defer-ui-restart",
         action="store_true",
         help="apply the UI auth allowlist without restarting; a later batch handles it",
@@ -1238,6 +1295,11 @@ def main(argv: list[str] | None = None) -> int:
         "--defer-svo-restart",
         action="store_true",
         help="apply the SVO runtime configuration without restarting; a later batch handles it",
+    )
+    parser.add_argument(
+        "--defer-ensemble-restart",
+        action="store_true",
+        help="apply the Ensemble configuration without restarting; a later batch handles it",
     )
     parser.add_argument("--no-start", action="store_true")
     parser.add_argument("--dry-run", action="store_true")
@@ -1252,6 +1314,7 @@ def main(argv: list[str] | None = None) -> int:
         or args.no_start
         or args.dry_run
         or args.sync_svo_runtime
+        or args.sync_ensemble_config
     ):
         parser.error("--restart-existing-pods cannot be combined with image or lifecycle options")
     if args.update_images_only and (
@@ -1266,6 +1329,7 @@ def main(argv: list[str] | None = None) -> int:
         or args.no_start
         or args.dry_run
         or args.sync_svo_runtime
+        or args.sync_ensemble_config
     ):
         parser.error("--update-images-only cannot be combined with lifecycle or dry-run options")
     if args.require_all_owner_grants and not args.set_owners_only:
@@ -1283,6 +1347,7 @@ def main(argv: list[str] | None = None) -> int:
         or args.no_start
         or args.dry_run
         or args.sync_svo_runtime
+        or args.sync_ensemble_config
     ):
         parser.error("--migrate-hasura cannot be combined with pod lifecycle options")
     if args.set_owners_only and (
@@ -1295,6 +1360,7 @@ def main(argv: list[str] | None = None) -> int:
         or args.no_start
         or args.dry_run
         or args.sync_svo_runtime
+        or args.sync_ensemble_config
     ):
         parser.error("--set-owners-only cannot be combined with lifecycle or dry-run options")
     if args.sync_ui_auth and (
@@ -1307,16 +1373,22 @@ def main(argv: list[str] | None = None) -> int:
         or args.migrate_postgres_image
         or args.no_start
         or args.dry_run
+        or args.sync_svo_runtime
+        or args.sync_ensemble_config
     ):
         parser.error("--sync-ui-auth cannot be combined with lifecycle or dry-run options")
     if args.defer_ui_restart and not args.sync_ui_auth:
         parser.error("--defer-ui-restart requires --sync-ui-auth")
     if args.defer_svo_restart and not args.sync_svo_runtime:
         parser.error("--defer-svo-restart requires --sync-svo-runtime")
-    if args.sync_ui_auth and args.sync_svo_runtime:
-        parser.error("--sync-ui-auth and --sync-svo-runtime cannot be combined")
+    if args.defer_ensemble_restart and not args.sync_ensemble_config:
+        parser.error("--defer-ensemble-restart requires --sync-ensemble-config")
+    if sum(bool(flag) for flag in (args.sync_ui_auth, args.sync_svo_runtime, args.sync_ensemble_config)) > 1:
+        parser.error("runtime sync modes cannot be combined")
     if args.sync_svo_runtime and args.pods not in {"all", "svo"} and "svo" not in args.pods.split(","):
         parser.error("--sync-svo-runtime requires --pods svo")
+    if args.sync_ensemble_config and args.pods not in {"all", "ensemble"} and "ensemble" not in args.pods.split(","):
+        parser.error("--sync-ensemble-config requires --pods ensemble")
     if args.no_start and (args.restart or args.restart_pods is not None):
         parser.error("--no-start cannot be combined with --restart or --restart-pods")
     if args.recreate and args.recreate_on_image_mismatch:
@@ -1336,6 +1408,8 @@ def main(argv: list[str] | None = None) -> int:
         parser.error("--update-images-only accepts only: " + ", ".join(RESTART_ONLY_PODS))
     if args.sync_svo_runtime and selected != ["svo"]:
         parser.error("--sync-svo-runtime requires --pods svo")
+    if args.sync_ensemble_config and selected != ["ensemble"]:
+        parser.error("--sync-ensemble-config requires --pods ensemble")
     if args.migrate_hasura and selected != ["graphql"]:
         parser.error("--migrate-hasura requires --pods graphql")
     if args.migrate_postgres_image and "postgres" not in selected:
@@ -1368,6 +1442,7 @@ def main(argv: list[str] | None = None) -> int:
         and not args.set_owners_only
         and not args.sync_ui_auth
         and not args.sync_svo_runtime
+        and not args.sync_ensemble_config
         and not args.migrate_hasura
     ):
         validate_live_requirements(selected)
@@ -1420,6 +1495,9 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.sync_svo_runtime:
         return sync_svo_runtime(t, specs["svo"], restart=not args.defer_svo_restart)
+
+    if args.sync_ensemble_config:
+        return sync_ensemble_config(t, specs["ensemble"], restart=not args.defer_ensemble_restart)
 
     previous_start = None
     postgres_restarted = False
