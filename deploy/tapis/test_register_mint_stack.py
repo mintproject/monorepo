@@ -58,6 +58,15 @@ class StorageTests(unittest.TestCase):
             "https://mintdevapi.pods.portals.tapis.io/v2.0.0",
         )
 
+    def test_ensemble_uses_public_svo_pod_route_by_default(self):
+        specs = deploy.build_specs("mintproject", "develop", "https://portals.tapis.io")
+        config = json.loads(specs["ensemble"]["environment_variables"]["ENSEMBLE_MANAGER_CONFIG_JSON"])
+
+        self.assertEqual(
+            config["svo_adapter_api"],
+            "https://mintdevsvo.pods.portals.tapis.io",
+        )
+
     def test_svo_uses_configured_geo_actor_id(self):
         with patch.dict(
             os.environ,
