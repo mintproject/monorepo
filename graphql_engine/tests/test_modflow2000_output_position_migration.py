@@ -23,13 +23,7 @@ def test_up_migration_repairs_each_modflow2000_output_position():
         assert statement in up
 
 
-def test_down_migration_only_reverts_the_repaired_positions():
+def test_down_migration_does_not_clear_valid_positions():
     down = " ".join((MIGRATION / "down.sql").read_text().split())
-
-    for output_id, position in OUTPUT_POSITIONS.items():
-        statement = (
-            f"UPDATE public.modelcatalog_dataset_specification "
-            f"SET \"position\" = NULL "
-            f"WHERE id = '{output_id}' AND \"position\" = {position};"
-        )
-        assert statement in down
+    assert "UPDATE public.modelcatalog_dataset_specification" not in down
+    assert "not reversible" in down

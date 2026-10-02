@@ -18,7 +18,7 @@ The Ensemble Manager's Tapis execution path converts each model input and output
 
 Add a new idempotent Hasura/PostgreSQL migration that updates the three canonical MODFLOW-2000 output specifications by ID, setting their expected positions while preserving labels, formats, presentations, and configuration links. The repair is data-only; no UI, Ensemble Manager, SVO, or API behavior changes are required.
 
-The migration will use explicit `UPDATE` statements guarded by the known IDs and null-position predicates, and will include a down migration restoring the prior null positions for rollback consistency.
+The migration will use explicit `UPDATE` statements guarded by the known IDs and null-position predicates. Its down migration will be an explicit no-op: because the up migration conditionally changes only null rows, a rollback cannot distinguish repaired rows from rows that already had valid positions, so clearing positions would be unsafe.
 
 ## Files likely affected
 
@@ -49,11 +49,11 @@ None. The existing `position` column is populated with the metadata already requ
 
 - Add a runtime fallback position in Ensemble Manager: rejected because it would hide catalog corruption and could assign incorrect slots to arbitrary models.
 - Mutate the live database manually: rejected because the repair must be reproducible through the repository's migration and deployment workflow.
-- Re-run the original migration: insufficient because its conflict behavior intentionally skips existing rows.
+- Re-run the original normalization migration: not a reliable repair because the live environment may already record it as applied or may have been initialized from older data; a new explicit migration gives deployment a distinct, auditable repair step.
 
 ## Test plan
 
-- Add a migration regression test asserting the repair migration updates all three canonical output IDs and includes a rollback.
+- Add a migration regression test asserting the repair migration updates all three canonical output IDs and that the down migration does not clear valid positions.
 - Run the GraphQL migration-focused test suite and relevant Ensemble Manager tests.
 - After deployment, query the live catalog read-only to verify positions 2, 4, and 3.
 - Verify a new UI submission creates a model job rather than ending in `MODEL_SUBMISSION_UNKNOWN`.
@@ -64,7 +64,7 @@ No user-facing documentation change is required. Keep this design record as the 
 
 ## Rollout/rollback plan
 
-Merge through the normal develop PR workflow. The deploy workflow applies Hasura migrations before restarting affected services. Verify the live catalog after deployment. If the repair causes an unexpected catalog regression, apply the down migration through the approved migration workflow and investigate before retrying runs.
+Merge through the normal develop PR workflow. The deploy workflow applies Hasura migrations before restarting affected services. Verify the live catalog after deployment. If the repair causes an unexpected catalog regression, stop deployment and investigate; the down migration intentionally preserves positions because it cannot safely identify which rows were changed by the conditional repair.
 
 ## Open questions
 
@@ -78,7 +78,7 @@ The live data confirms the repository's intended positions were not present in t
 
 ### 2026-10-02 — Implementation complete
 
-Added migration `1771300000033_repair_modflow2000_output_positions` with guarded up/down updates for the three canonical MODFLOW-2000 outputs and a static regression test covering the exact mapping. Focused migration tests pass. The full GraphQL test suite retains one unrelated pre-existing metadata assertion failure.
+Added migration `1771300000033_repair_modflow2000_output_positions` with guarded updates and a non-destructive no-op down migration for the three canonical MODFLOW-2000 outputs, plus a static regression test covering the exact mapping. Focused migration tests pass. The full GraphQL test suite retains one unrelated pre-existing metadata assertion failure.
 
 ## User feedback / decisions
 
