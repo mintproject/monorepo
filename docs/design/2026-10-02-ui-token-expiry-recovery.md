@@ -1,6 +1,6 @@
 # UI token expiry recovery
 
-Status: Approved
+Status: Implemented
 
 ## Objective
 
@@ -82,6 +82,10 @@ regresses.
 None.
 
 ## Decisions
+
+### 2026-10-02 — Implementation complete
+
+Implemented the approved token-expiry recovery behavior in the UI token store. When refresh is unavailable or fails, the UI now clears the stored access and refresh tokens so the authentication flow can require a fresh sign-in. Focused tests, the full UI test suite, typecheck, and whitespace validation all pass.
 
 ### 2026-10-02 - Clear the session on unsuccessful refresh
 
